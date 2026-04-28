@@ -1,55 +1,71 @@
 import type { APIRoute } from 'astro';
-import { query, queryOne, insert } from '../../../lib/postgres';
+import { queryOne, insert } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Yetkisiz işlem' }), {
+      return problemJson({
         status: 401,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/points-add-unauthorized',
+        instance: '/api/points/add',
       });
     }
 
     const body = await request.json();
     const { amount, reason, type = 'earn' } = body;
 
-    if (!amount || !reason) {
-      return new Response(JSON.stringify({ error: 'Amount and reason required' }), {
+    const amountNum = parseInt(String(amount), 10);
+    if (!reason || !Number.isFinite(amountNum) || amountNum <= 0) {
+      return problemJson({
         status: 400,
-        headers: { 'Content-Type': 'application/json' }
+        title: 'Geçersiz İstek',
+        detail: 'Amount pozitif tam sayı, reason zorunlu',
+        type: '/problems/points-add-validation',
+        instance: '/api/points/add',
       });
+    }
+
+    const VALID_TYPES = new Set(['earn', 'spend', 'bonus', 'penalty']);
+    if (!VALID_TYPES.has(type)) {
+      return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Geçersiz işlem tipi', type: '/problems/points-add-type-invalid', instance: '/api/points/add' });
     }
 
     // Transaction kaydet
     const transaction = await insert('points_transactions', {
       user_id: user.id,
-      amount: type === 'spend' ? -amount : amount,
+      amount: type === 'spend' ? -amountNum : amountNum,
       type,
       reason,
       created_at: new Date().toISOString()
     });
 
-    // Kullanıcı puanını güncelle
-    const profile = await queryOne('SELECT points FROM users WHERE id = $1', [user.id]);
-    const newPoints = (profile?.points || 0) + (type === 'spend' ? -amount : amount);
+    // Atomik UPDATE — eliminates SELECT→UPDATE lost-update race (HARD RULE #47)
+    const delta = type === 'spend' ? -amountNum : amountNum;
+    const updated = await queryOne<{ points: number }>(
+      'UPDATE users SET points = COALESCE(points, 0) + $1 WHERE id = $2 RETURNING points',
+      [delta, user.id]
+    );
+    const newPoints = updated?.points ?? 0;
 
-    await query('UPDATE users SET points = $1 WHERE id = $2', [newPoints, user.id]);
-
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       transaction,
       newPoints
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
-    console.error('Points API error:', error);
-    return new Response(JSON.stringify({ error: 'Server error' }), {
+    logger.error('Points API error:', error);
+    return problemJson({
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
+      title: 'Puan İşlemi Başarısız',
+      detail: 'Sunucu hatası',
+      type: '/problems/points-add-failed',
+      instance: '/api/points/add',
     });
   }
 };

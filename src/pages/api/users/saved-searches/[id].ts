@@ -4,39 +4,35 @@
  */
 
 import type { APIRoute } from 'astro';
-import { deleteSavedSearch } from '../../../../lib/saved-searches';
-import { apiResponse, apiError, HttpStatus } from '../../../../lib/api';
+import { deleteSavedSearch } from '../../../../lib/saved/saved-searches';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 
-export const DELETE: APIRoute = async (context) => {
+export const DELETE: APIRoute = async ({ request, locals, params }) => {
+  const requestId = getRequestId(request);
   try {
-    // Auth required
-    if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
+    if (!locals.user) {
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const userId = context.locals.user.id;
-    const { id } = context.params;
+    const userId = locals.user.id;
+    const { id } = params;
 
     if (!id) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Arama ID gereklidir');
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Search ID is required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
-    // Delete saved search
     const deleted = await deleteSavedSearch(id, userId);
 
     if (!deleted) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'Kayıtlı arama bulunamadı');
+      return apiError(ErrorCode.NOT_FOUND, 'Saved search not found', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
     logger.info('Saved search deleted', { userId, searchId: id });
 
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      message: 'Arama silindi'
-    });
+    return apiResponse({ success: true, message: 'Arama silindi' }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to delete saved search', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Kayıtlı arama silinemedi');
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete saved search', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

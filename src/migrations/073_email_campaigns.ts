@@ -41,6 +41,12 @@ export const migration_073_email_campaigns = async (pool: Pool) => {
       )
     `);
 
+    await pool.query(`
+      ALTER TABLE email_campaigns ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE email_campaigns ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft';
+      ALTER TABLE email_campaigns ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
     // Indexes for campaigns
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_email_campaigns_user
@@ -72,6 +78,12 @@ export const migration_073_email_campaigns = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE campaign_performance ADD COLUMN IF NOT EXISTS campaign_id UUID;
+      ALTER TABLE campaign_performance ADD COLUMN IF NOT EXISTS metric_date DATE;
+      ALTER TABLE campaign_performance ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_campaign_performance_campaign
       ON campaign_performance(campaign_id, metric_date DESC)
     `);
@@ -80,7 +92,7 @@ export const migration_073_email_campaigns = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS campaign_targeting_rules (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+        campaign_id INTEGER NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
         rule_type VARCHAR(50) NOT NULL,
         field VARCHAR(255) NOT NULL,
         operator VARCHAR(50) NOT NULL,
@@ -98,7 +110,7 @@ export const migration_073_email_campaigns = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS campaign_budgets (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE UNIQUE,
+        campaign_id INTEGER NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE UNIQUE,
         budget_cents INT NOT NULL,
         spent_cents INT DEFAULT 0,
         cost_per_1000 INT,
@@ -119,7 +131,7 @@ export const migration_073_email_campaigns = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS campaign_events (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+        campaign_id INTEGER NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
         recipient_id UUID REFERENCES users(id) ON DELETE SET NULL,
         recipient_email VARCHAR(255) NOT NULL,
         event_type VARCHAR(50) NOT NULL,
@@ -128,6 +140,11 @@ export const migration_073_email_campaigns = async (pool: Pool) => {
         user_agent TEXT,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE campaign_events ADD COLUMN IF NOT EXISTS recipient_id UUID;
+      ALTER TABLE campaign_events ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`
@@ -144,7 +161,7 @@ export const migration_073_email_campaigns = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS campaign_variants (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+        campaign_id INTEGER NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
         variant_name VARCHAR(255) NOT NULL,
         is_control BOOLEAN DEFAULT false,
         subject_line TEXT NOT NULL,
@@ -165,7 +182,7 @@ export const migration_073_email_campaigns = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS campaign_subscribers (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        campaign_id UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+        campaign_id INTEGER NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
         user_id UUID REFERENCES users(id) ON DELETE CASCADE,
         email VARCHAR(255) NOT NULL,
         sent_at TIMESTAMP,

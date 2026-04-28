@@ -17,7 +17,7 @@ export const migration_074_email_queue = async (pool: Pool) => {
         html_content TEXT NOT NULL,
         plain_text_content TEXT,
         template_id UUID REFERENCES email_templates(id) ON DELETE SET NULL,
-        campaign_id UUID REFERENCES email_campaigns(id) ON DELETE SET NULL,
+        campaign_id INTEGER,
         message_type VARCHAR(50) NOT NULL,
         priority INT DEFAULT 5,
         status VARCHAR(50) DEFAULT 'pending',
@@ -31,6 +31,16 @@ export const migration_074_email_queue = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS recipient_id UUID;
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS template_id UUID;
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS campaign_id INTEGER;
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending';
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS priority INT DEFAULT 5;
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS scheduled_for TIMESTAMP;
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     // Indexes for queue
@@ -90,7 +100,7 @@ export const migration_074_email_queue = async (pool: Pool) => {
         email_address VARCHAR(255) NOT NULL,
         bounce_type VARCHAR(50) NOT NULL,
         bounce_subtype VARCHAR(100),
-        campaign_id UUID REFERENCES email_campaigns(id) ON DELETE SET NULL,
+        campaign_id INTEGER,
         bounce_reason TEXT,
         provider_bounce_id VARCHAR(255),
         bounced_at TIMESTAMP NOT NULL,
@@ -116,7 +126,7 @@ export const migration_074_email_queue = async (pool: Pool) => {
       CREATE TABLE IF NOT EXISTS email_complaints (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         email_address VARCHAR(255) NOT NULL,
-        campaign_id UUID REFERENCES email_campaigns(id) ON DELETE SET NULL,
+        campaign_id INTEGER,
         complaint_feedback_type VARCHAR(100),
         provider_complaint_id VARCHAR(255),
         complained_at TIMESTAMP NOT NULL,
@@ -159,7 +169,7 @@ export const migration_074_email_queue = async (pool: Pool) => {
       CREATE TABLE IF NOT EXISTS email_engagement (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         queue_id UUID NOT NULL REFERENCES email_queue(id) ON DELETE CASCADE,
-        campaign_id UUID REFERENCES email_campaigns(id) ON DELETE CASCADE,
+        campaign_id INTEGER,
         recipient_id UUID REFERENCES users(id) ON DELETE SET NULL,
         recipient_email VARCHAR(255) NOT NULL,
         engagement_type VARCHAR(50) NOT NULL,

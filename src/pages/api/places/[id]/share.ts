@@ -1,28 +1,38 @@
 import type { APIRoute } from 'astro';
-import { sharePlace, getShareCount } from '../../../../lib/social-interactions';
+import { sharePlace, getShareCount } from '../../../../lib/social/social-interactions';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/places/[id]/share', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: placeId } = params;
     if (!placeId) {
       recordRequest('POST', '/api/places/[id]/share', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Place ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const body = await request.json();
     const { platform, share_url } = body;
+
+    const VALID_SHARE_PLATFORMS = new Set(['twitter', 'facebook', 'whatsapp', 'instagram', 'email', 'copy', 'other']);
+    if (platform !== undefined && platform !== null && (typeof platform !== 'string' || !VALID_SHARE_PLATFORMS.has(platform))) {
+      recordRequest('POST', '/api/places/[id]/share', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz platform', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (share_url !== undefined && share_url !== null && (typeof share_url !== 'string' || share_url.length > 2000)) {
+      recordRequest('POST', '/api/places/[id]/share', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'share_url 2000 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     const shareId = await sharePlace(placeId, locals.user.id, platform, share_url);
     const count = await getShareCount(placeId);
@@ -37,12 +47,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/places/[id]/share', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Share failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Paylaşım kaydedilemedi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
-export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+export const GET: APIRoute = async ({ request, params }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -50,7 +60,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const { id: placeId } = params;
     if (!placeId) {
       recordRequest('GET', '/api/places/[id]/share', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Place ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const count = await getShareCount(placeId);
@@ -62,6 +72,6 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/places/[id]/share', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get shares failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Paylaşım bilgileri alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

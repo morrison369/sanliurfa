@@ -2,7 +2,7 @@
  * Campaign Builder Component
  * Create and manage email campaigns
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState} from 'react';
 
 interface Campaign {
   id: string;
@@ -40,13 +40,13 @@ export function CampaignBuilder() {
         setCampaigns(data.data || []);
       }
     } catch (err) {
-      console.error('Kampanyalar yüklenemedi', err);
+      console.error('Failed to fetch campaigns', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreateCampaign = async (e: React.FormEvent) => {
+  const handleCreateCampaign = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
@@ -69,7 +69,7 @@ export function CampaignBuilder() {
         await fetchCampaigns();
       }
     } catch (err) {
-      console.error('Kampanya oluşturulamadı', err);
+      console.error('Failed to create campaign', err);
     }
   };
 
@@ -95,7 +95,7 @@ export function CampaignBuilder() {
           onClick={() => setShowForm(true)}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
         >
-          + Yeni kampanya oluştur
+          + Yeni Kampanya Oluştur
         </button>
       )}
 
@@ -104,7 +104,7 @@ export function CampaignBuilder() {
         <form onSubmit={handleCreateCampaign} className="bg-white rounded-lg shadow p-6 space-y-4">
           <input
             type="text"
-            placeholder="Kampanya adı"
+            placeholder="Kampanya Adı"
             required
             value={formData.campaign_name}
             onChange={(e) => setFormData({ ...formData, campaign_name: e.target.value })}
@@ -113,7 +113,7 @@ export function CampaignBuilder() {
 
           <input
             type="text"
-            placeholder="Konu başlığı"
+            placeholder="Konu Başlığı"
             required
             value={formData.subject_line}
             onChange={(e) => setFormData({ ...formData, subject_line: e.target.value })}
@@ -123,7 +123,7 @@ export function CampaignBuilder() {
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
-              placeholder="Gönderen adı"
+              placeholder="Gönderenin Adı"
               value={formData.from_name}
               onChange={(e) => setFormData({ ...formData, from_name: e.target.value })}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -131,7 +131,7 @@ export function CampaignBuilder() {
 
             <input
               type="email"
-              placeholder="Gönderici e-posta"
+              placeholder="Gönderici E-posta"
               value={formData.from_email}
               onChange={(e) => setFormData({ ...formData, from_email: e.target.value })}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -139,7 +139,7 @@ export function CampaignBuilder() {
           </div>
 
           <textarea
-            placeholder="HTML içerik"
+            placeholder="HTML İçerik"
             required
             value={formData.html_content}
             onChange={(e) => setFormData({ ...formData, html_content: e.target.value })}
@@ -154,7 +154,7 @@ export function CampaignBuilder() {
             <option value="promotional">Promosyon</option>
             <option value="newsletter">Haber Bülteni</option>
             <option value="transactional">İşlemsel</option>
-            <option value="welcome">Hoş geldin</option>
+            <option value="welcome">Hoşgeldin</option>
           </select>
 
           <div className="flex gap-2">
@@ -208,7 +208,7 @@ export function CampaignBuilder() {
                   <p className="text-xl font-bold text-blue-600">{campaign.sent_count}</p>
                 </div>
                 <div>
-                  <p className="text-gray-600">Açıldı</p>
+                  <p className="text-gray-600">Açılı</p>
                   <p className="text-xl font-bold text-green-600">{campaign.open_count}</p>
                   <p className="text-xs text-gray-500">{getOpenRate(campaign)}%</p>
                 </div>

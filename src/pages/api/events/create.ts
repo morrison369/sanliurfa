@@ -1,18 +1,23 @@
 // API: Event create (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { insert } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
+import { problemJson } from '../../../lib/api';
+import { createAdminEvent } from '../../../lib/admin/events-admin';
 
 export const POST: APIRoute = async ({ request, redirect, locals }) => {
   try {
-    if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Yetkisiz işlem' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (locals.user?.role !== 'admin') {
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/events-create-unauthorized',
+        instance: '/api/events/create',
+      });
     }
 
     const formData = await request.formData();
-
+    
     const title = formData.get('title')?.toString();
     const description = formData.get('description')?.toString();
     const location = formData.get('location')?.toString();
@@ -20,38 +25,38 @@ export const POST: APIRoute = async ({ request, redirect, locals }) => {
     const endDate = formData.get('end_date')?.toString();
     const category = formData.get('category')?.toString();
     const image = formData.get('image')?.toString();
-    const providerImageUrl = formData.get('provider_image_url')?.toString().trim();
-    const isFeatured = formData.get('is_featured') === 'on';
+    const isFeatured = formData.get('is_featured')?.toString();
     const status = formData.get('status')?.toString() || 'draft';
 
     if (!title || !description || !location || !startDate || !category) {
       return redirect('/admin/events/add?error=missing_fields');
     }
 
-    const slug = title.toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 100);
+    const VALID_EVENT_STATUSES = new Set(['draft', 'published', 'cancelled']);
+    if (!VALID_EVENT_STATUSES.has(status)) {
+      return redirect('/admin/events/add?error=invalid_status');
+    }
 
-    await insert('events', {
+    if (title.length > 200) return redirect('/admin/events/add?error=title_too_long');
+    if (description.length > 5000) return redirect('/admin/events/add?error=description_too_long');
+    if (location.length > 500) return redirect('/admin/events/add?error=location_too_long');
+
+    await createAdminEvent({
       title,
-      slug,
       description,
       location,
-      start_date: startDate,
-      end_date: endDate || null,
+      startDate,
+      endDate: endDate || null,
       category,
-      image_url: providerImageUrl || image,
-      is_featured: isFeatured,
+      image: image || null,
+      isFeatured: isFeatured || null,
       status,
-      created_by: locals.user?.id,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      userId: locals.user?.id || null,
     });
 
     return redirect('/admin/events?success=created');
   } catch (err) {
-    console.error('Event create error:', err);
+    logger.error('Event create error:', err);
     return redirect('/admin/events/add?error=server_error');
   }
 };

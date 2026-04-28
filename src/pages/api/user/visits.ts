@@ -4,23 +4,23 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserVisits, getUserVisitStats, getMostVisitedPlaces } from '../../../lib/place-visits';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getUserVisits, getUserVisitStats, getMostVisitedPlaces } from '../../../lib/place/place-visits';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    // Oturum zorunlu
+    // Auth required
     if (!locals.user) {
       recordRequest('GET', '/api/user/visits', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     const userId = locals.user.id;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 200);
     const includeStats = url.searchParams.get('includeStats') === 'true';
     const includeMostVisited = url.searchParams.get('includeMostVisited') === 'true';
 
@@ -59,10 +59,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/user/visits', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Ziyaretler alınamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to get visits', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Ziyaretler alınamadı',
+      'Failed to get visits',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -3,13 +3,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserPreferences, updateUserPreferences } from '../../../lib/email-preferences';
-import { validateWithSchema } from '../../../lib/validation';
+import { getUserPreferences, updateUserPreferences } from '../../../lib/email/email-preferences';
+import { validateWithSchema, ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-const updateSchema = {
+const updateSchema: ValidationSchema = {
   reviewResponse: { type: 'boolean' as const, required: false },
   newReview: { type: 'boolean' as const, required: false },
   weeklySummary: { type: 'boolean' as const, required: false },
@@ -20,14 +20,14 @@ const updateSchema = {
 
 // GET preferences
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/email/preferences', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const prefs = await getUserPreferences(locals.user.id);
@@ -45,24 +45,24 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/email/preferences', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get preferences failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 // PUT update preferences
 export const PUT: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/email/preferences', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, updateSchema as any);
+    const validation = validateWithSchema(body, updateSchema);
 
     if (!validation.valid) {
       recordRequest('PUT', '/api/email/preferences', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -75,13 +75,13 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const updated = await updateUserPreferences(locals.user.id, validation.data as any);
+    const updated = await updateUserPreferences(locals.user.id, validation.data);
 
     if (!updated) {
       recordRequest('PUT', '/api/email/preferences', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Tercihler güncellenemedi',
+        'Failed to update preferences',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -99,6 +99,6 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/email/preferences', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Update preferences failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

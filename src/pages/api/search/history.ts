@@ -11,7 +11,7 @@ import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/search/history', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -54,7 +54,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     logger.error('Failed to get search history', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Arama geçmişi alınamadı',
+      'Failed to get search history',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -73,7 +73,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       recordRequest('DELETE', '/api/search/history', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -99,7 +99,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     logger.error('Failed to delete search history', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Arama geçmişi silinemedi',
+      'Failed to delete search history',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -193,7 +193,7 @@ fi
 # Local Services Check (if running locally)
 print_header "Local Services"
 
-if [ "$DOMAIN" = "http://localhost:3000" ] || [ "$DOMAIN" = "http://127.0.0.1:3000" ]; then
+if [ "$DOMAIN" = "http://localhost:4321" ] || [ "$DOMAIN" = "http://127.0.0.1:4321" ]; then
     if pm2 status sanliurfa &>/dev/null; then
         status=$(pm2 status sanliurfa | grep -E "online|stopped")
         if echo "$status" | grep -q "online"; then

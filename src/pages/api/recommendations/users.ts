@@ -1,13 +1,21 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
+import { apiResponse, problemJson, HttpStatus, safeIntParam } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
     if (!locals.user?.id) {
-      return new Response(JSON.stringify({ error: 'Yetkisiz işlem' }), { status: 401 });
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/recommendations-users-unauthorized',
+        instance: '/api/recommendations/users',
+      });
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 50);
 
     const recommendations = await queryMany(
       `SELECT u.id, u.full_name, u.avatar_url, u.level, u.points,
@@ -21,12 +29,18 @@ export const GET: APIRoute = async ({ locals, url }) => {
       [locals.user.id, limit]
     );
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
-      data: recommendations.rows || []
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      data: recommendations || []
+    }, HttpStatus.OK);
   } catch (error) {
-    console.error('Recommendations error', error);
-    return new Response(JSON.stringify({ error: 'İşlem tamamlanamadı' }), { status: 500 });
+    logger.error('Recommendations error', error);
+    return problemJson({
+      status: 500,
+      title: 'Kullanıcı Önerileri Alınamadı',
+      detail: 'Failed',
+      type: '/problems/recommendations-users-failed',
+      instance: '/api/recommendations/users',
+    });
   }
 };

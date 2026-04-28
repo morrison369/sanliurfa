@@ -27,6 +27,12 @@ export const migration_091_achievements_leaderboards = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE achievements ADD COLUMN IF NOT EXISTS achievement_category VARCHAR(50);
+      ALTER TABLE achievements ADD COLUMN IF NOT EXISTS tier INT DEFAULT 1;
+      ALTER TABLE achievements ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_achievements_category
       ON achievements(achievement_category, tier, display_order)
     `);
@@ -43,6 +49,12 @@ export const migration_091_achievements_leaderboards = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, achievement_id)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE user_achievements ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_achievements ADD COLUMN IF NOT EXISTS earned_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE user_achievements ADD COLUMN IF NOT EXISTS is_discovered BOOLEAN DEFAULT true;
     `);
 
     await pool.query(`
@@ -72,6 +84,13 @@ export const migration_091_achievements_leaderboards = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE leaderboards ADD COLUMN IF NOT EXISTS leaderboard_type VARCHAR(50);
+      ALTER TABLE leaderboards ADD COLUMN IF NOT EXISTS period VARCHAR(50) DEFAULT 'all_time';
+      ALTER TABLE leaderboards ADD COLUMN IF NOT EXISTS rank INT;
+      ALTER TABLE leaderboards ADD COLUMN IF NOT EXISTS score INT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_leaderboards_type
       ON leaderboards(leaderboard_type, period, rank)
     `);
@@ -94,6 +113,11 @@ export const migration_091_achievements_leaderboards = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE leaderboard_snapshots ADD COLUMN IF NOT EXISTS leaderboard_type VARCHAR(50);
+      ALTER TABLE leaderboard_snapshots ADD COLUMN IF NOT EXISTS snapshot_date DATE;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_leaderboard_snapshots_date
       ON leaderboard_snapshots(leaderboard_type, snapshot_date DESC)
     `);
@@ -110,6 +134,10 @@ export const migration_091_achievements_leaderboards = async (pool: Pool) => {
         last_updated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, achievement_id)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE achievement_progress ADD COLUMN IF NOT EXISTS user_id UUID;
     `);
 
     await pool.query(`

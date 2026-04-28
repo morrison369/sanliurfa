@@ -29,6 +29,14 @@ export const migration_072_email_templates = async (pool: Pool) => {
       )
     `);
 
+    await pool.query(`
+      ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS slug VARCHAR(255);
+      ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS template_type VARCHAR(50);
+      ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS subject_line TEXT;
+      ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS html_content TEXT;
+      ALTER TABLE email_templates ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+    `);
+
     // Indexes for templates
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_email_templates_type

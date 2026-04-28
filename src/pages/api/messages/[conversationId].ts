@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Conversation Messages API
  * GET: Retrieve messages in a conversation
@@ -7,28 +6,33 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getMessages, sendMessage, markConversationRead } from '../../../lib/messages';
-import { queryOne, query } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getMessages, sendMessage, markConversationRead } from '../../../lib/message/messages';
+import { queryOne } from '../../../lib/postgres';
+import { isUserBlocked } from '../../../lib/block/blocking';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
-import { canStartConversation } from '../../../lib/social-policy';
-import { enforceApiRateLimit } from '../../../lib/api-rate-limit';
+
+type ConversationRow = {
+  id: string;
+  participant_a: string;
+  participant_b: string;
+};
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const user = locals.user;
-    const { conversationId } = params;
+    const conversationId = params.conversationId;
 
     if (!user) {
       recordRequest('GET', `/api/messages/${conversationId}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -36,13 +40,12 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    const isAllowed = await enforceApiRateLimit(request, 'messages:conversation:get', 180, 15 * 60, user.id);
-    if (!isAllowed) {
-      recordRequest('GET', `/api/messages/${conversationId}`, HttpStatus.RATE_LIMITED, Date.now() - startTime);
+    if (!conversationId) {
+      recordRequest('GET', '/api/messages/unknown', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
-        ErrorCode.RATE_LIMITED,
-        'Çok sık konuşma mesajlarını sorguluyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
-        HttpStatus.RATE_LIMITED,
+        ErrorCode.VALIDATION_ERROR,
+        'Konuşma kimliği gereklidir',
+        HttpStatus.BAD_REQUEST,
         undefined,
         requestId
       );
@@ -50,11 +53,10 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 
     // Get URL parameters
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-    const before = url.searchParams.get('before') || undefined;
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
 
     // Get messages (includes access control check)
-    const messages = await getMessages(conversationId, user.id, limit, before);
+    const messages = await getMessages(conversationId, user.id, limit);
 
     // Auto-mark as read when fetching
     await markConversationRead(conversationId, user.id);
@@ -109,18 +111,18 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const user = locals.user;
-    const { conversationId } = params;
+    const conversationId = params.conversationId;
 
     if (!user) {
       recordRequest('POST', `/api/messages/${conversationId}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -128,19 +130,18 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    const isAllowed = await enforceApiRateLimit(request, 'messages:conversation:send', 200, 15 * 60, user.id);
-    if (!isAllowed) {
-      recordRequest('POST', `/api/messages/${conversationId}`, HttpStatus.RATE_LIMITED, Date.now() - startTime);
+    if (!conversationId) {
+      recordRequest('POST', '/api/messages/unknown', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
-        ErrorCode.RATE_LIMITED,
-        'Çok hızlı mesaj gönderiyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
-        HttpStatus.RATE_LIMITED,
+        ErrorCode.VALIDATION_ERROR,
+        'Konuşma kimliği gereklidir',
+        HttpStatus.BAD_REQUEST,
         undefined,
         requestId
       );
     }
 
-    const body = await request.json();
+    const body = await request.json() as { content?: unknown };
     const { content } = body;
 
     // Validate input
@@ -177,10 +178,8 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    const normalizedContent = content.trim();
-
     // Get conversation to find recipient (optimized: select only needed columns)
-    const conversation = await queryOne(
+    const conversation = await queryOne<ConversationRow>(
       'SELECT id, participant_a, participant_b FROM conversations WHERE id = $1',
       [conversationId]
     );
@@ -199,55 +198,25 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     // Determine recipient
     const recipientId = conversation.participant_a === user.id ? conversation.participant_b : conversation.participant_a;
 
-    const policy = await canStartConversation(user.id, recipientId);
-    if (!policy.allowed) {
-      const statusCode = policy.code === 'target_not_found' ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;
-      recordRequest('POST', `/api/messages/${conversationId}`, statusCode, Date.now() - startTime);
+    // Check if sender is blocked by recipient
+    const isBlocked = await isUserBlocked(recipientId, user.id);
+    if (isBlocked) {
+      recordRequest('POST', `/api/messages/${conversationId}`, HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
-        statusCode === HttpStatus.NOT_FOUND ? ErrorCode.NOT_FOUND : ErrorCode.FORBIDDEN,
-        policy.message,
-        statusCode,
+        ErrorCode.FORBIDDEN,
+        'Bu kullanıcı mesaj almıyor. Sizi engellemiş olabilir.',
+        HttpStatus.FORBIDDEN,
         undefined,
         requestId
       );
     }
 
-    // Simple anti-spam guard: same sender cannot repeat the same message in short window.
-    const lastOwnMessage = await queryOne<{ content: string; created_at: string }>(
-      `SELECT content, created_at
-       FROM direct_messages
-       WHERE conversation_id = $1 AND sender_id = $2
-       ORDER BY created_at DESC
-       LIMIT 1`,
-      [conversationId, user.id]
-    );
-
-    if (lastOwnMessage?.content) {
-      const lastContent = lastOwnMessage.content.trim();
-      const lastCreatedAtMs = new Date(lastOwnMessage.created_at).getTime();
-      const nowMs = Date.now();
-      if (
-        Number.isFinite(lastCreatedAtMs) &&
-        nowMs - lastCreatedAtMs < 30_000 &&
-        lastContent.localeCompare(normalizedContent, 'tr', { sensitivity: 'base' }) === 0
-      ) {
-        recordRequest('POST', `/api/messages/${conversationId}`, HttpStatus.RATE_LIMITED, Date.now() - startTime);
-        return apiError(
-          ErrorCode.RATE_LIMITED,
-          'Aynı mesajı çok hızlı tekrar gönderiyorsunuz. Lütfen kısa süre bekleyin.',
-          HttpStatus.RATE_LIMITED,
-          undefined,
-          requestId
-        );
-      }
-    }
-
     // Send message (includes access control check)
-    const message = await sendMessage(conversationId, user.id, normalizedContent);
+    const message = await sendMessage(conversationId, user.id, content.trim());
 
     const duration = Date.now() - startTime;
     recordRequest('POST', `/api/messages/${conversationId}`, HttpStatus.CREATED, duration);
-    logger.logMutation('create', 'direct_messages', message.id, user.id, { conversationId });
+    logger.info('Direct message created', { messageId: message.id, userId: user.id, conversationId });
 
     return apiResponse(
       {
@@ -294,18 +263,18 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const user = locals.user;
-    const { conversationId } = params;
+    const conversationId = params.conversationId;
 
     if (!user) {
       recordRequest('DELETE', `/api/messages/${conversationId}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -313,21 +282,20 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    const isAllowed = await enforceApiRateLimit(request, 'messages:conversation:hide', 60, 15 * 60, user.id);
-    if (!isAllowed) {
-      recordRequest('DELETE', `/api/messages/${conversationId}`, HttpStatus.RATE_LIMITED, Date.now() - startTime);
+    if (!conversationId) {
+      recordRequest('DELETE', '/api/messages/unknown', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
-        ErrorCode.RATE_LIMITED,
-        'Çok sık konuşma gizleme işlemi yapıyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
-        HttpStatus.RATE_LIMITED,
+        ErrorCode.VALIDATION_ERROR,
+        'Konuşma kimliği gereklidir',
+        HttpStatus.BAD_REQUEST,
         undefined,
         requestId
       );
     }
 
     // Verify user is participant (soft delete via archive table concept)
-    const conversation = await queryOne(
-      'SELECT * FROM conversations WHERE id = $1',
+    const conversation = await queryOne<ConversationRow>(
+      'SELECT id, participant_a, participant_b FROM conversations WHERE id = $1',
       [conversationId]
     );
 
@@ -360,7 +328,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', `/api/messages/${conversationId}`, HttpStatus.OK, duration);
-    logger.logMutation('delete', 'conversations', conversationId, user.id);
+    logger.info('Conversation hidden', { conversationId, userId: user.id });
 
     return apiResponse(
       {

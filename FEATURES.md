@@ -1,5 +1,10 @@
 # ✅ Şanlıurfa.com Özellik Listesi
 
+## 🆓 Faz 1 Ücretlendirme Politikası
+- [x] İlk aşamada tüm özellikler ücretsiz
+- [x] Üyelik duvarı olmadan tam erişim
+- [x] Premium paketler ileriki fazlara ertelendi
+
 ## 🚀 Temel Özellikler
 
 ### 1. Sayfalar
@@ -19,12 +24,18 @@
 - [x] Favorilere Ekleme
 - [x] Puan Sistemi (Gamification)
 - [x] Seviyeler (Başlangıç → Efsanevi)
+- [x] Üyeler arası mesajlaşma
+- [x] Arkadaş ekleme / takip
+- [x] Kullanıcı profiline en fazla 4 görsel ekleme
+- [x] Tinder benzeri swipe eşleşme (sağa/sola kaydır)
+- [x] Eşleşilen üyeyle mesajlaşma akışı
 
 ### 3. Yorum ve Puanlama
 - [x] Yorum Yazma
 - [x] Yıldız Puanlama (1-5)
 - [x] Yorumlara Puan Kazandırma (+50 puan)
 - [x] Yorum Moderasyonu
+- [x] Üyelerin mekan ekleme önerisi gönderebilmesi
 
 ### 4. Admin Paneli
 - [x] Dashboard (İstatistikler)

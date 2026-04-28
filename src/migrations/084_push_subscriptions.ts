@@ -28,6 +28,12 @@ export const migration_084_push_subscriptions = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+      ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS last_verified_at TIMESTAMP;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user
       ON push_subscriptions(user_id, is_active)
     `);

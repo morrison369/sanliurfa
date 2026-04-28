@@ -1,28 +1,34 @@
 import type { APIRoute } from 'astro';
-import { likePlace, unlikePlace, hasUserLikedPlace, getPlaceLikeCount } from '../../../../lib/social-interactions';
+import { likePlace, unlikePlace, hasUserLikedPlace, getPlaceLikeCount } from '../../../../lib/social/social-interactions';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/places/[id]/like', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: placeId } = params;
     if (!placeId) {
       recordRequest('POST', '/api/places/[id]/like', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Place ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const body = await request.json();
     const { action } = body;
+
+    const VALID_LIKE_ACTIONS = new Set(['like', 'unlike']);
+    if (action !== undefined && action !== null && (typeof action !== 'string' || !VALID_LIKE_ACTIONS.has(action))) {
+      recordRequest('POST', '/api/places/[id]/like', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz action (like veya unlike olmalıdır)', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     let success = false;
     if (action === 'unlike') {
@@ -42,12 +48,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/places/[id]/like', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Like failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Beğeni işlemi tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -55,7 +61,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const { id: placeId } = params;
     if (!placeId) {
       recordRequest('GET', '/api/places/[id]/like', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Place ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const count = await getPlaceLikeCount(placeId);
@@ -69,6 +75,6 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/places/[id]/like', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get likes failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Beğeni bilgileri alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

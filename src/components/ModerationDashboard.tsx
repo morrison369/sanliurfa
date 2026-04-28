@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 
 interface Report {
   id: string;
@@ -66,7 +66,7 @@ export default function ModerationDashboard() {
     }
   };
 
-  const handleActionSubmit = async (e: React.FormEvent) => {
+  const handleActionSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!actionForm.report_id || !actionForm.target_user_id) {
       setError('Rapor ID ve kullanıcı ID gereklidir');
@@ -183,7 +183,7 @@ export default function ModerationDashboard() {
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <div className="text-3xl font-bold text-orange-600">{stats.active_bans}</div>
-            <div className="text-gray-600 dark:text-gray-400 text-sm">Aktif Engeller</div>
+            <div className="text-gray-600 dark:text-gray-400 text-sm">Aktif Banlar</div>
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
             <div className="text-3xl font-bold text-blue-600">{stats.total_warnings}</div>
@@ -203,7 +203,7 @@ export default function ModerationDashboard() {
             {['all', 'pending', 'under_review', 'resolved'].map((status) => (
               <button
                 key={status}
-                onClick={() => setReportFilter(status as any)}
+                onClick={() => setReportFilter(status as 'pending' | 'under_review' | 'resolved' | 'all')}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   reportFilter === status
                     ? 'bg-blue-600 text-white'

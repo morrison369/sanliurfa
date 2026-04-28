@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getBillingHistory } from '../../../../lib/subscription-management';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { getBillingHistory } from '../../../../lib/subscription/subscription-management';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -19,14 +19,14 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       recordRequest('GET', '/api/user/subscription/billing', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
       );
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '12'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 12, 1, 50);
 
     const billing = await getBillingHistory(locals.user.id, limit);
 
@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     logger.error('Failed to get billing history', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Ödeme geçmişi alınamadı',
+      'Failed to get billing history',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

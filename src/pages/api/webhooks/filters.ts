@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
+import type { Pool } from 'pg';
 import { pool } from '../../../lib/postgres';
 import {
   createWebhookFilter,
   getWebhookFilters,
   deleteWebhookFilter
-} from '../../../lib/webhook-filters';
+} from '../../../lib/webhook/webhook-filters';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
@@ -13,12 +14,12 @@ import { logger } from '../../../lib/logging';
  * List webhook filters
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -28,7 +29,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Webhook ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const filters = await getWebhookFilters(pool, webhookId, locals.user.id);
+    const filters = await getWebhookFilters(pool as unknown as Pool, webhookId, locals.user.id);
 
     return apiResponse(
       {
@@ -40,8 +41,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to get webhook filters', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Filtreler alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Failed to get webhook filters', error instanceof Error ? error : new Error(String(error)), {});
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get filters', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -50,12 +51,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
  * Create webhook filter
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await request.json();
@@ -65,8 +66,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Missing required fields', HttpStatus.BAD_REQUEST);
     }
 
+    const VALID_FILTER_TYPES = new Set(['string', 'number', 'boolean', 'datetime']);
+    const VALID_OPERATORS = new Set(['equals', 'not_equals', 'contains', 'starts_with', 'ends_with', 'gt', 'lt', 'gte', 'lte', 'in', 'not_in']);
+    if (!VALID_FILTER_TYPES.has(filterType)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz filtre tipi', HttpStatus.BAD_REQUEST);
+    }
+    if (!VALID_OPERATORS.has(operator)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz operatör', HttpStatus.BAD_REQUEST);
+    }
+    if (typeof filterKey !== 'string' || filterKey.length > 255) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'filterKey 255 karakterden uzun olamaz', HttpStatus.BAD_REQUEST);
+    }
+    if (filterValue !== undefined && filterValue !== null && typeof filterValue !== 'string' || filterValue.length > 10000) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'filterValue 10000 karakterden uzun olamaz', HttpStatus.BAD_REQUEST);
+    }
+
     const filter = await createWebhookFilter(
-      pool,
+      pool as unknown as Pool,
       webhookId,
       locals.user.id,
       filterType,
@@ -79,14 +95,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: filter,
-        message: 'Filtre başarıyla oluşturuldu'
+        message: 'Filter created successfully'
       },
       HttpStatus.CREATED,
       requestId
     );
   } catch (error) {
-    logger.error('Failed to create webhook filter', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Filtre oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Failed to create webhook filter', error instanceof Error ? error : new Error(String(error)), {});
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to create filter', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -94,12 +110,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
  * DELETE /api/webhooks/filters/:id
  */
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = params;
@@ -108,19 +124,19 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Filter ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const deleted = await deleteWebhookFilter(pool, id, locals.user.id);
+    const deleted = await deleteWebhookFilter(pool as unknown as Pool, id, locals.user.id);
 
     if (!deleted) {
       return apiError(ErrorCode.NOT_FOUND, 'Filter not found', HttpStatus.NOT_FOUND);
     }
 
     return apiResponse(
-      { success: true, message: 'Filtre silindi' },
+      { success: true, message: 'Filter deleted' },
       HttpStatus.OK,
       requestId
     );
   } catch (error) {
-    logger.error('Failed to delete webhook filter', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Filtre silinemedi', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Failed to delete webhook filter', error instanceof Error ? error : new Error(String(error)), {});
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete filter', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

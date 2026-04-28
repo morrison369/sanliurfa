@@ -1,359 +1,320 @@
 ---
-// @ts-nocheck
-import Layout from "../../layouts/Layout.astro";
-import Breadcrumb from "../../components/Breadcrumb.astro";
-import { getBlogPostBySlug, getBlogPosts } from "../../lib/blog";
-import type { BlogPost } from "../../lib/blog";
-import {
-  getCuratedBlogPostBySlug,
-  getCuratedBlogPosts,
-} from "../../data/curated-blog-posts";
-import {
-  buildArticleRichSnippet,
-  buildBreadcrumbSchema,
-  buildFAQPageSchema,
-  buildOrganizationSchema,
-  buildWebPageSchema,
-  buildWebSiteSchema,
-} from "../../lib/rich-snippets";
+import { Icon } from 'astro-icon/components';
+import Layout from '../../layouts/Layout.astro';
+import { queryOne } from '../../lib/postgres';
+import { resolveContentImage } from '../../lib/content-images';
+import { getSiteBranding } from '../../lib/site-branding';
+import RelatedPosts from '../../components/blog/RelatedPosts.astro';
+import { logger } from '../../lib/logging';
+const { baseUrl } = await getSiteBranding();
 
 const { slug } = Astro.params;
+if (!slug) return Astro.redirect('/blog');
 
-if (!slug) {
-  return Astro.redirect("/blog");
-}
-
-let post: BlogPost | null = null;
-let relatedPosts: BlogPost[] = [];
-let error = "";
+let post: any = null;
 
 try {
-  post = await getBlogPostBySlug(slug);
+  // Try DB first
+  post = await queryOne(
+    "SELECT * FROM blog_posts WHERE slug = $1 AND status = 'published'",
+    [slug]
+  );
 
-  if (!post) {
-    post = getCuratedBlogPostBySlug(slug) as any;
+  if (post) {
+    // Content may contain HTML already
+    post.content_html = post.content;
+    post.reading_time = Math.ceil((post.content || '').split(/\s+/).length / 200);
+    // Related posts query moved to <RelatedPosts server:defer> below.
   }
-
-  // İlişkili yazıları getir (aynı kategorideki diğer yazılar)
-  if (post.categoryId) {
-    const result = await getBlogPosts({
-      status: "published",
-      categoryId: post.categoryId,
-      limit: 3,
-    });
-    relatedPosts = result.posts.filter((p) => p.id !== post?.id);
-  }
-} catch (err) {
-  error = "Blog yazısı yüklenirken hata oluştu";
-  console.error("Blog detail error:", err);
-  post = getCuratedBlogPostBySlug(slug) as any;
+} catch (e) {
+  logger.error('Error loading blog post from DB', e instanceof Error ? e : new Error(String(e)));
 }
 
+// Fallback: try Astro content collection
 if (!post) {
-  return Astro.redirect("/blog");
+  try {
+    const { getPostBySlug: getFromCollection } = await import('../../lib/blog');
+    const collectionPost = await getFromCollection(slug);
+    if (collectionPost) {
+      post = {
+        ...collectionPost,
+        content_html: null,
+        author_name: collectionPost.author,
+        published_at: collectionPost.publishedAt,
+        reading_time: collectionPost.readingTime,
+        featured_image: collectionPost.image,
+      };
+    }
+  } catch { /* content collection not available in SSR */ }
 }
 
-if (relatedPosts.length === 0) {
-  relatedPosts = getCuratedBlogPosts()
-    .filter((item) => item.slug !== post?.slug)
-    .slice(0, 3) as any;
-}
+const fallbackPosts: Record<string, any> = {
+  'sanliurfa-hafta-sonu-rehberi': {
+    slug: 'sanliurfa-hafta-sonu-rehberi',
+    title: 'Şanlıurfa Hafta Sonu Rehberi: 2 Günde Neler Yapılır?',
+    excerpt:
+      "Şanlıurfa'da 2 günlük gezi planı. Cumartesi ve pazar günü yapılacaklar, gezilecek yerler ve yeme içme önerileri.",
+    content: `## 1. Gün: Tarih ve Kültür
+Sabah erken saatlerde Göbeklitepe ile başlayın. Ziyaret için 2-3 saat ayırmak, hem müze alanını hem de ana kazı bölgesini rahat gezmek için yeterlidir.
 
-const currentPost = post as BlogPost;
-const postPath = `/blog/${currentPost.slug}`;
-const postDescription = currentPost.seoDescription || currentPost.excerpt;
-const postImage = currentPost.featuredImage || "/images/og-default.jpg";
-const articleSchemaId = `https://sanliurfa.com${postPath}#article`;
+Öğle saatlerinde şehir merkezine dönüp ciğer kebabı, lahmacun veya patlıcan kebabı tercih edebilirsiniz. Kalabalık saatlere kalmamak için öğle planını erken yapmak daha kullanışlı olur.
 
-const breadcrumbItems = [
-  { label: "Ana Sayfa", href: "/" },
-  { label: "Blog", href: "/blog" },
-  currentPost.categoryName
-    ? {
-        label: currentPost.categoryName,
-        href: `/blog?category=${currentPost.categoryName.toLowerCase().replace(/\s+/g, "-")}`,
-      }
-    : null,
-  { label: currentPost.title, href: `/blog/${currentPost.slug}` },
-].filter((item): item is { label: string; href: string } => item !== null);
+Öğleden sonra Balıklıgöl, Dergah bölgesi, Rızvaniye Camii ve çevredeki tarihi sokaklar için idealdir. Bu rota yürüyerek gezilebilir ve fotoğraf için en güçlü şehir dokusunu verir.
 
-const seo = {
-  title: currentPost.seoTitle || currentPost.title,
-  description: postDescription,
-  image: postImage,
-  type: "article" as const,
-  publishDate: currentPost.publishedAt?.toISOString?.(),
-  modifiedDate: currentPost.updatedAt?.toISOString?.(),
-  author: currentPost.authorName || "sanliurfa.com",
-  tags: currentPost.tags || [],
-  canonicalUrl: `https://sanliurfa.com${postPath}`,
-  schemaMode: "replace" as const,
-  schema: [
-    buildOrganizationSchema(),
-    buildWebSiteSchema(),
-    buildBreadcrumbSchema([
-      { name: "Ana Sayfa", url: "/" },
-      { name: "Blog", url: "/blog" },
-      { name: currentPost.title, url: postPath },
-    ]),
-    buildWebPageSchema({
-      path: postPath,
-      name: currentPost.title,
-      description: postDescription,
-      image: postImage,
-      breadcrumbPath: postPath,
-      primaryEntityId: articleSchemaId,
-    }),
-    buildArticleRichSnippet(currentPost, postPath),
-    buildFAQPageSchema(
-      [
-        {
-          question: `${currentPost.title} yazısı ne anlatıyor?`,
-          answer: postDescription,
-        },
-        {
-          question: "Bu içerik hangi şehirle ilgilidir?",
-          answer:
-            "Bu içerik Şanlıurfa odaklıdır ve sanliurfa.com tarafından Türkçe olarak hazırlanmıştır.",
-        },
-      ],
-      postPath,
-    ),
-  ],
+Akşam Gümrük Hanı çevresinde mırra içebilir, Kapalı Çarşı ve Bakırcılar Çarşısı tarafında yerel ürünlere bakabilirsiniz.
+
+## 2. Gün: Doğa, Lezzet ve Sıra Gecesi
+İkinci gün için Harran kümbet evleri, geleneksel mimari ve ovayı kapsayan yarım günlük bir rota planlanabilir.
+
+Öğle yemeğinde Şanlıurfa mutfağından lahmacun, bostana, kebap çeşitleri veya yöresel ev yemekleri seçilebilir.
+
+Öğleden sonra Halfeti tekne turu için ayrılabilir. Batık şehir, Rumkale çevresi ve Fırat manzarası hafta sonu rotasına farklı bir tempo katar.
+
+Akşam programında sıra gecesi tercih edilecekse rezervasyon, ulaşım ve dönüş saatleri önceden netleştirilmelidir.
+
+## Pratik Planlama Notları
+- Göbeklitepe ve Harran gibi merkez dışı rotalarda ulaşımı önceden planlayın.
+- Yaz aylarında öğle saatlerini kapalı alan, müze veya yemek molası için kullanın.
+- Balıklıgöl ve çarşı rotasını aynı gün içinde yürüyerek gezebilirsiniz.
+- Halfeti için tekne saatlerini gitmeden önce kontrol edin.
+- Şanlıurfa gezisinde rahat ayakkabı ve mevsime uygun kıyafet önemlidir.`,
+    content_html: null,
+    author_name: 'Şanlıurfa Rehberi',
+    published_at: '2026-04-11T00:00:00.000Z',
+    reading_time: 3,
+    featured_image: '/images/blog/tarihi-yerler-rehberi.jpg',
+    category: 'Gezi',
+    tags: [
+      { name: 'Şanlıurfa Gezi', slug: 'sanliurfa-gezi' },
+      { name: 'Hafta Sonu', slug: 'hafta-sonu' },
+    ],
+  },
 };
+
+if (!post && slug && fallbackPosts[slug]) {
+  post = fallbackPosts[slug];
+}
+
+if (!post) return Astro.redirect('/blog');
+
+const title = post.title;
+const description = post.excerpt || post.meta_description || '';
+const getBlogImage = (entry: any, thumb = false) =>
+  resolveContentImage({
+    category: 'blog',
+    slug: entry?.slug,
+    explicit: entry?.featured_image || entry?.cover_image || entry?.image,
+    placeholder: '/images/placeholder-blog.jpg',
+    thumb,
+  });
+const faqItems = [
+  { S: `${post.title} hakkında ne bilinmeli?`, C: post.excerpt || `${post.title} için detaylı bilgiyi yazımızda bulabilirsiniz.` },
+  { S: `Bu yazı hangi kategoride?`, C: `Bu yazı ${post.category || 'Genel'} kategorisinde yayınlanmıştır.` },
+  { S: `Şanlıurfa hakkında daha fazla yazı nerede bulunur?`, C: 'Şanlıurfa rehberiyle ilgili tüm yazılarımıza /blog sayfasından ulaşabilirsiniz.' },
+];
+
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div
-      class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
-    >
-      <div class="container-custom py-4">
-        <Breadcrumb items={breadcrumbItems} />
-      </div>
-    </div>
-
-    {
-      currentPost.featuredImage && (
-        <div class="relative h-[400px] lg:h-[500px]">
-          <img
-            src={currentPost.featuredImage}
-            alt={currentPost.title}
-            class="w-full h-full object-cover"
-          />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-          <div class="absolute bottom-0 left-0 right-0">
-            <div class="container-custom py-8">
-              {currentPost.categoryName && (
-                <span class="inline-block px-3 py-1 bg-blue-600 text-white text-sm rounded-full mb-4">
-                  {currentPost.categoryName}
-                </span>
-              )}
-              <h1 class="text-3xl lg:text-5xl font-display font-bold text-white max-w-3xl">
-                {currentPost.title}
-              </h1>
-            </div>
+<Layout seo={{
+  title,
+  description,
+  ogImage: getBlogImage(post),
+  type: 'article',
+  publishedTime: post.created_at || post.published_at,
+  modifiedTime: post.updated_at,
+  keywords: post.tags?.length ? post.tags : ['Şanlıurfa', 'şehir rehberi', post.category || 'blog'],
+  author: post.author_name || 'Sanliurfa.com',
+  canonical: `/blog/${post.slug}`,
+}}>
+  <article class="min-h-screen bg-white">
+    <!-- Hero -->
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white">
+      <div class="container mx-auto px-4 py-16">
+        <div class="max-w-3xl mx-auto text-center">
+          <a href={`/blog?category=${post.category}`} class="inline-block px-3 py-1 bg-white/10 border border-white/20 rounded-sm text-sm mb-4 hover:bg-white/20 transition-colors text-[#F5EDD6]">
+            {post.category}
+          </a>
+          <h1 class="text-3xl md:text-5xl font-bold mb-6 text-[#F5EDD6]">{post.title}</h1>
+          <div class="flex items-center justify-center gap-6 text-[#9A8470] flex-wrap">
+            <span class="flex items-center gap-2">
+              <Icon name="lucide:user" class="w-5 h-5" />
+              {post.author_name}
+            </span>
+            <span class="flex items-center gap-2">
+              <Icon name="lucide:calendar" class="w-5 h-5" />
+              {new Date(post.published_at!).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </span>
+            <span class="flex items-center gap-2">
+              <Icon name="lucide:clock" class="w-5 h-5" />
+              {post.reading_time} dk okuma
+            </span>
           </div>
         </div>
-      )
-    }
-
-    <div class="container-custom py-8">
-      <div class="grid lg:grid-cols-3 gap-8">
-        <article class="lg:col-span-2">
-          <div
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8"
-          >
-            <div
-              class="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700"
-            >
-              {
-                currentPost.authorName && (
-                  <div class="flex items-center gap-2">
-                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold">
-                      {currentPost.authorName?.charAt(0) || "E"}
-                    </div>
-                    <div>
-                      <p class="font-medium text-gray-900 dark:text-white text-sm">
-                        {currentPost.authorName}
-                      </p>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Yazar
-                      </p>
-                    </div>
-                  </div>
-                )
-              }
-              <div
-                class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 ml-auto"
-              >
-                <span class="flex items-center gap-1">
-                  📅 {
-                    new Date(
-                      currentPost.publishedAt || currentPost.createdAt,
-                    ).toLocaleDateString("tr-TR", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })
-                  }
-                </span>
-                <span class="flex items-center gap-1">
-                  ⏱️ {currentPost.readTimeMinutes || 1} dk okuma
-                </span>
-                <span class="flex items-center gap-1">
-                  👁️ {currentPost.viewCount} görüntüleme
-                </span>
-              </div>
-            </div>
-
-            <div class="prose dark:prose-invert max-w-none">
-              {currentPost.content}
-            </div>
-
-            {
-              currentPost.tags && currentPost.tags.length > 0 && (
-                <div class="flex flex-wrap gap-2 mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  {currentPost.tags.map((tag) => (
-                    <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )
-            }
-
-            <div
-              class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700"
-            >
-              <a
-                href="/blog"
-                class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-              >
-                ← Tüm Yazılar
-              </a>
-              <div class="flex items-center gap-4">
-                <button
-                  class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-red-500 hover:text-red-500 transition-colors"
-                  onclick="toggleLike(event)"
-                >
-                  ❤️ Beğen
-                </button>
-                <button
-                  class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:text-blue-500 transition-colors"
-                  onclick="sharePost()"
-                >
-                  📤 Paylaş
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {
-            currentPost.authorName && (
-              <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mt-6">
-                <div class="flex items-start gap-4">
-                  <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 text-xl font-bold">
-                    {currentPost.authorName?.charAt(0) || "E"}
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-gray-900 dark:text-white">
-                      {currentPost.authorName}
-                    </h3>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">
-                      sanliurfa.com yazarı
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )
-          }
-        </article>
-
-        <aside class="space-y-6">
-          {
-            relatedPosts && relatedPosts.length > 0 && (
-              <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
-                  Benzer Yazılar
-                </h3>
-                <div class="space-y-4">
-                  {relatedPosts.map((related) => (
-                    <a href={`/blog/${related.slug}`} class="flex gap-3 group">
-                      {related.featuredImage && (
-                        <img
-                          src={related.featuredImage}
-                          alt={related.title}
-                          class="w-20 h-16 rounded-lg object-cover flex-shrink-0"
-                        />
-                      )}
-                      <div>
-                        {related.categoryName && (
-                          <span class="text-xs text-blue-600 dark:text-blue-400">
-                            {related.categoryName}
-                          </span>
-                        )}
-                        <h4 class="font-medium text-gray-900 dark:text-white text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
-                          {related.title}
-                        </h4>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )
-          }
-
-          <div class="bg-urfa-600 rounded-xl p-6 text-white">
-            <h3 class="font-semibold mb-2">Bültenimize Abone Olun</h3>
-            <p class="text-sm text-urfa-100 mb-4">
-              En yeni yazılardan haberdar olun.
-            </p>
-            <form
-              action="/api/newsletter/subscribe"
-              method="POST"
-              class="space-y-2"
-            >
-              <input
-                type="email"
-                name="email"
-                placeholder="E-posta adresiniz"
-                required
-                class="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:border-white/40"
-              />
-              <button
-                type="submit"
-                class="w-full py-2 bg-white text-urfa-600 rounded-lg font-medium hover:bg-urfa-50 transition-colors"
-              >
-                Abone Ol
-              </button>
-            </form>
-          </div>
-        </aside>
       </div>
     </div>
-  </div>
-</Layout>
 
-<script is:inline>
-  function toggleLike(event) {
-    const button = event?.currentTarget || event?.target;
-    if (!(button instanceof HTMLElement)) return;
-    button.classList.toggle("text-red-500");
-    button.classList.toggle("border-red-500");
-  }
+    {/* Featured Image */}
+    <div class="container mx-auto px-4 -mt-8">
+      <div class="max-w-4xl mx-auto">
+        <img
+          src={getBlogImage(post)}
+          alt={post.title}
+          class="w-full h-64 md:h-96 object-cover rounded-sm shadow-md"
+          onerror="this.setAttribute('src','/images/placeholder-blog.jpg')"
+        />
+      </div>
+    </div>
 
-  function sharePost() {
-    if (navigator.share) {
-      navigator.share({
-        title: document.title,
-        url: window.location.href,
-      });
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
-      alert("Yazı linki panoya kopyalandı");
+    {/* Content */}
+    <div class="container mx-auto px-4 py-12">
+      <div class="max-w-3xl mx-auto">
+        {/* Excerpt */}
+        <p class="text-xl text-[#9A8470] italic border-l-4 border-urfa-400 pl-6 mb-8">
+          {post.excerpt}
+        </p>
+
+        {/* Main Content */}
+        <div class="prose prose-lg max-w-none">
+          {post.content_html ? (
+            <Fragment set:html={post.content_html} />
+          ) : (
+            <div class="markdown-content">
+              {post.content.split('\n').map((line: string) => {
+                if (line.startsWith('# ')) {
+                  return <h1 class="text-3xl font-bold mt-8 mb-4 text-[#1A1008]">{line.slice(2)}</h1>;
+                } else if (line.startsWith('## ')) {
+                  return <h2 class="text-2xl font-bold mt-8 mb-4 text-[#1A1008]">{line.slice(3)}</h2>;
+                } else if (line.startsWith('### ')) {
+                  return <h3 class="text-xl font-bold mt-6 mb-3 text-[#1A1008]">{line.slice(4)}</h3>;
+                } else if (line.startsWith('- ')) {
+                  return <li class="ml-4 text-[#4A3828]">{line.slice(2)}</li>;
+                } else if (line.startsWith('![')) {
+                  const match = line.match(/!\[(.*?)\]\((.*?)\)/);
+                  if (match) {
+                    return <img src={match[2]} alt={match[1]} class="w-full rounded-sm my-6" />;
+                  }
+                } else if (line.trim()) {
+                  return <p class="mb-4 leading-relaxed text-[#4A3828]">{line}</p>;
+                }
+                return null;
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Tags */}
+        {post.tags && post.tags.length > 0 && (
+          <div class="mt-12 pt-8 border-t border-[rgba(200,160,100,0.2)]">
+            <h4 class="font-bold text-[#1A1008] mb-3">Etiketler</h4>
+            <div class="flex flex-wrap gap-2">
+              {post.tags.map((tag: any) => (
+                <a
+                  href={`/blog/etiket/${tag.slug}`}
+                  class="px-3 py-1 bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.15)] text-[#6B5540] rounded-sm text-sm hover:bg-[rgba(200,160,100,0.12)] hover:text-urfa-700 transition-colors"
+                >
+                  {tag.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Share */}
+        <div class="mt-8 flex items-center gap-4">
+          <span class="font-medium text-[#4A3828]">Paylaş:</span>
+          <div class="flex gap-2">
+            <button onclick="sharePage()" class="h-10 px-4 bg-urfa-600 text-white rounded-sm flex items-center justify-center hover:bg-urfa-700 transition-colors text-sm">
+              Paylaş
+            </button>
+            <button onclick="copyLink()" class="h-10 px-4 border border-[rgba(200,160,100,0.2)] text-[#4A3828] rounded-sm flex items-center justify-center hover:border-urfa-300 transition-colors text-sm">
+              Linki Kopyala
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Related Posts — Server Island, ana içeriği bloklamaz */}
+    <RelatedPosts category={post.category} excludeSlug={post.slug} server:defer>
+      <div slot="fallback" class="bg-[#FDFAF3] border-t border-[rgba(200,160,100,0.1)] py-12">
+        <div class="container mx-auto px-4">
+          <div class="h-8 bg-[rgba(200,160,100,0.1)] rounded-sm w-40 mb-6 animate-pulse"></div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="h-56 bg-[rgba(200,160,100,0.06)] rounded-sm animate-pulse"></div>
+            <div class="h-56 bg-[rgba(200,160,100,0.06)] rounded-sm animate-pulse"></div>
+            <div class="h-56 bg-[rgba(200,160,100,0.06)] rounded-sm animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+    </RelatedPosts>
+  </article>
+
+  <script define:vars={{ slug: post.slug, title: post.title }} is:inline>
+    const url = window.location.href;
+
+    async function copyLink() {
+      try {
+        await navigator.clipboard.writeText(url);
+        window.toast?.success('Link kopyalandı');
+      } catch {
+        window.toast?.error('Link kopyalanamadı');
+      }
     }
-  }
-</script>
+
+    async function sharePage() {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title, url });
+          return;
+        } catch {
+          // fall back to copy
+        }
+      }
+      await copyLink();
+    }
+  </script>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${baseUrl}/blog` },
+      { '@type': 'ListItem', position: 3, name: post.title, item: `${baseUrl}/blog/${post.slug}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt || description,
+    inLanguage: 'tr',
+    url: `${baseUrl}/blog/${post.slug}`,
+    image: (() => { const img = getBlogImage(post); return img.startsWith('http') ? img : `${baseUrl}${img}`; })(),
+    datePublished: post.published_at || post.created_at,
+    dateModified: post.updated_at || post.published_at || post.created_at,
+    author: {
+      '@type': 'Person',
+      name: post.author_name || 'Sanliurfa.com',
+    },
+    '@id': `${baseUrl}/blog/${post.slug}`,
+    publisher: {
+      '@type': 'Organization',
+      name: 'Sanliurfa.com',
+      url: baseUrl,
+      logo: { '@type': 'ImageObject', url: `${baseUrl}/favicon.svg`, width: 200, height: 200 },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `${baseUrl}/blog/${post.slug}`,
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

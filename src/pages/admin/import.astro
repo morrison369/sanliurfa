@@ -1,0 +1,185 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { query } from '../../lib/postgres';
+
+interface ImportCategoryRow {
+  id: string | number;
+  slug: string;
+  name: string;
+}
+
+const catResult = await query<ImportCategoryRow>(
+  `SELECT id, slug, name FROM categories WHERE is_active = true ORDER BY sort_order, name`
+);
+const categories = catResult.rows;
+---
+
+<AdminLayout
+  title="İçe / Dışa Aktar"
+  subtitle="CSV içe aktarma ve veri dışa aktarma"
+  seo={{ title: 'İçe/Dışa Aktar - Yönetim Paneli' }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-4xl space-y-5">
+      <div class="mb-2">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+        <h2 class="text-xl font-bold text-[#1A1008] mb-4 flex items-center gap-2">
+          <span>📥</span> CSV ile İçe Aktar
+        </h2>
+
+        <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-4 mb-6">
+          <h3 class="font-medium text-[#6B5540] mb-2">Beklenen CSV Formatı:</h3>
+          <code class="block bg-white border border-[rgba(200,160,100,0.15)] p-3 rounded-sm text-sm text-[#6B5540] font-mono">
+            isim,adres,telefon,aciklama,enlem,boylam<br/>
+            "Mekan Adı","Adres Bilgisi","0543 123 4567","Açıklama",37.1234,38.5678
+          </code>
+        </div>
+
+        <form id="import-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-[#6B5540] mb-1">Kategori</label>
+            <select name="categoryId" required class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+              <option value="">Kategori Seçin</option>
+              {categories.map(cat => (
+                <option value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#6B5540] mb-1">CSV Dosyası</label>
+            <input
+              type="file"
+              name="file"
+              accept=".csv"
+              required
+              class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm"
+            />
+          </div>
+
+          <button type="submit" class="rounded-sm bg-urfa-600 px-6 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+            İçe Aktar
+          </button>
+        </form>
+
+        <div id="import-result" class="mt-4 hidden"></div>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+        <h2 class="text-xl font-bold text-[#1A1008] mb-4 flex items-center gap-2">
+          <span>📤</span> Dışa Aktar
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <a
+            href="/api/admin/export?type=places&format=csv"
+            class="p-6 border border-[rgba(200,160,100,0.18)] rounded-sm hover:border-[rgba(200,160,100,0.4)] transition-colors text-center"
+          >
+            <div class="text-4xl mb-2">📍</div>
+            <h3 class="font-medium text-[#1A1008]">Mekanlar</h3>
+            <p class="text-sm text-[#9A8470]">CSV olarak indir</p>
+          </a>
+
+          <a
+            href="/api/admin/export?type=reviews&format=csv"
+            class="p-6 border border-[rgba(200,160,100,0.18)] rounded-sm hover:border-[rgba(200,160,100,0.4)] transition-colors text-center"
+          >
+            <div class="text-4xl mb-2">⭐</div>
+            <h3 class="font-medium text-[#1A1008]">Değerlendirmeler</h3>
+            <p class="text-sm text-[#9A8470]">CSV olarak indir</p>
+          </a>
+
+          <a
+            href="/api/admin/export?type=users&format=csv"
+            class="p-6 border border-[rgba(200,160,100,0.18)] rounded-sm hover:border-[rgba(200,160,100,0.4)] transition-colors text-center"
+          >
+            <div class="text-4xl mb-2">👥</div>
+            <h3 class="font-medium text-[#1A1008]">Kullanıcılar</h3>
+            <p class="text-sm text-[#9A8470]">CSV olarak indir</p>
+          </a>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+        <h2 class="text-xl font-bold text-[#1A1008] mb-4 flex items-center gap-2">
+          <span>💾</span> Yedekleme
+        </h2>
+
+        <div class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] p-4 text-sm text-[#6B5540]">
+          Production ortamında manuel uygulama yedeği kullanılmıyor. CentOS Web Panel tarafındaki günlük otomatik sistem yedeği esas alınır; bu panel sadece CSV içe/dışa aktarma için tutulur.
+        </div>
+      </div>
+    </div>
+
+  <script is:inline>
+    document.getElementById('import-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const resultDiv = document.getElementById('import-result');
+
+      const loadP = document.createElement('p');
+      loadP.className = 'text-[#6B5540] text-sm';
+      loadP.textContent = 'İşleniyor...';
+      resultDiv.replaceChildren(loadP);
+      resultDiv.classList.remove('hidden');
+
+      try {
+        const response = await fetch('/api/admin/import', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+          const errP = document.createElement('p');
+          errP.className = 'text-[#9A8470] text-sm';
+          errP.textContent = 'Hata: ' + String(result.error);
+          resultDiv.replaceChildren(errP);
+        } else {
+          const box = document.createElement('div');
+          box.className = 'rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] px-4 py-3';
+          const title = document.createElement('p');
+          title.className = 'text-[#6B5540] font-medium text-sm';
+          title.textContent = 'İşlem Tamamlandı!';
+          const stats = document.createElement('p');
+          stats.className = 'text-[#9A8470] mt-1 text-sm';
+          stats.textContent = 'Toplam: ' + result.total + ' | Başarılı: ' + result.success + ' | Başarısız: ' + result.failed;
+          box.appendChild(title);
+          box.appendChild(stats);
+          if (result.errors && result.errors.length > 0) {
+            const details = document.createElement('details');
+            details.className = 'mt-3';
+            const summary = document.createElement('summary');
+            summary.className = 'cursor-pointer text-sm text-[#9A8470]';
+            summary.textContent = 'Hataları Gör (' + result.errors.length + ')';
+            const ul = document.createElement('ul');
+            ul.className = 'mt-2 text-sm text-[#9A8470] list-disc pl-4';
+            result.errors.slice(0, 10).forEach((err) => {
+              const li = document.createElement('li');
+              li.textContent = String(err);
+              ul.appendChild(li);
+            });
+            if (result.errors.length > 10) {
+              const li = document.createElement('li');
+              li.textContent = '... ve ' + (result.errors.length - 10) + ' hata daha';
+              ul.appendChild(li);
+            }
+            details.appendChild(summary);
+            details.appendChild(ul);
+            box.appendChild(details);
+          }
+          resultDiv.replaceChildren(box);
+        }
+      } catch (error) {
+        const errP = document.createElement('p');
+        errP.className = 'text-[#9A8470] text-sm';
+        errP.textContent = 'Bir hata oluştu';
+        resultDiv.replaceChildren(errP);
+      }
+    });
+  </script>
+</AdminLayout>

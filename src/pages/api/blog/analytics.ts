@@ -5,18 +5,18 @@
 
 import type { APIRoute } from 'astro';
 import { queryOne, queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeErrorDetail } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Yetki kontrolü
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       const duration = Date.now() - startTime;
       recordRequest('GET', '/api/blog/analytics', HttpStatus.FORBIDDEN, duration);
       return apiError(
@@ -132,7 +132,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
             avgReadTimeSeconds: parseInt(engagementStats?.avg_read_time || '0'),
             avgScrollPercentage: Math.round(parseFloat(engagementStats?.avg_scroll || '0'))
           },
-          topPosts: topPosts.map((p: any) => ({
+          topPosts: topPosts.map((p) => ({
             id: p.id,
             title: p.title,
             slug: p.slug,
@@ -140,14 +140,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
             likes: p.like_count,
             publishedAt: p.published_at
           })),
-          recentPosts: recentPosts.map((p: any) => ({
+          recentPosts: recentPosts.map((p) => ({
             id: p.id,
             title: p.title,
             slug: p.slug,
             status: p.status,
             publishedAt: p.published_at
           })),
-          categories: categoryStats.map((c: any) => ({
+          categories: categoryStats.map((c) => ({
             id: c.id,
             name: c.name,
             slug: c.slug,
@@ -162,7 +162,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/blog/analytics', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog analitik hatası')
     });
     logger.error('Blog analitikleri alınamadı', err instanceof Error ? err : new Error(String(err)));
 

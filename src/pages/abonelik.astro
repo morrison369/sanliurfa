@@ -1,80 +1,50 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { SubscriptionManager } from "../components/SubscriptionManager";
-import BillingHistory from "../components/BillingHistory";
-import AuthFeatureLanding from "../components/AuthFeatureLanding.astro";
+import Layout from '../layouts/Layout.astro';
+import { SubscriptionManager } from '../components/SubscriptionManager';
 
 const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/abonelik');
+}
 ---
 
-<Layout title="Abonelik Yönetimi - Şanlıurfa" noindex>
-  {
-    !user ? (
-      <AuthFeatureLanding
-        eyebrow="Üyelik ve abonelik"
-        title="Şanlıurfa hesabınızla üyelik avantajlarını yönetin"
-        description="İlk aşamada temel topluluk, mekân ekleme, yorum ve sosyal özellikler ücretsiz açıktır. Hesap oluşturduğunuzda abonelik durumunuzu, ödeme geçmişinizi ve ileride açılacak premium seçenekleri tek panelden takip edebilirsiniz."
-        loginRedirect="/abonelik"
-        features={[
-          {
-            title: "Ücretsiz başlangıç",
-            description:
-              "Mekân keşfi, yorum, favori, takip, mesajlaşma ve sosyal etkileşim akışları üyeler için açık tutulur.",
-          },
-          {
-            title: "Plan takibi",
-            description:
-              "Aktif plan, ödeme geçmişi ve yükseltme seçenekleri tek ekranda sade şekilde yönetilir.",
-          },
-          {
-            title: "Güvenli hesap",
-            description:
-              "İki faktörlü doğrulama varsayılan olarak kapalıdır; isteyen kullanıcı ayarlardan açabilir.",
-          },
-        ]}
-      />
-    ) : (
-      <div class="max-w-4xl mx-auto px-4 py-8">
-        <div class="mb-8">
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Abonelik yönetimi
-          </h1>
-          <p class="text-gray-600 dark:text-gray-400">
-            Aktif aboneliğinizi yönetin, planınızı değiştirin veya ödeme
-            geçmişinizi görüntüleyin.
-          </p>
-        </div>
+<Layout seo={{ title: "Üyelik Durumu - Şanlıurfa", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="max-w-4xl mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">Hesabım</p>
+        <h1 class="text-3xl font-bold text-[#F5EDD6] mb-2">Üyelik Durumu</h1>
+        <p class="text-[#C4B49A]">Faz 1 açık erişim döneminde tüm özellikler ücretsiz olarak sunulmaktadır.</p>
+      </div>
+    </div>
 
-        <div class="mb-12">
-          <SubscriptionManager
-            client:load
-            onUpgrade={() => (window.location.href = "/fiyatlandirma")}
-          />
-        </div>
+    <div class="max-w-4xl mx-auto px-4 py-8">
+      <div class="mb-12">
+        <SubscriptionManager
+          client:visible={{ rootMargin: '140px' }}
+          onUpgrade={() => window.location.href = '/fiyatlandirma'}
+        />
+      </div>
 
-        <div class="mb-8">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-            Ödeme geçmişi
-          </h2>
-          <BillingHistory client:load />
-        </div>
-
-        <div class="bg-urfa-50 dark:bg-urfa-900/20 border border-urfa-200 dark:border-urfa-800 rounded-lg p-6">
-          <h3 class="text-lg font-semibold text-urfa-900 dark:text-urfa-300 mb-2">
-            Yardıma ihtiyacınız var mı?
-          </h3>
-          <p class="text-urfa-800 dark:text-urfa-400 mb-4">
-            Abonelik ve ödeme konularında iletişim sayfasından bize
-            ulaşabilirsiniz.
-          </p>
-          <a
-            href="/iletisim"
-            class="text-urfa-700 hover:text-urfa-800 dark:text-urfa-300 dark:hover:text-urfa-200 font-medium"
-          >
-            İletişime geç
-          </a>
+      <div class="mb-8">
+        <h2 class="text-2xl font-bold text-[#1A1008] mb-4">Bilgilendirme</h2>
+        <div class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] p-4 text-[#6B5540]">
+          Bu aşamada ücretli faturalama devre dışı. Ödeme geçmişi ekranı daha sonraki fazlarda aktif edilecektir.
         </div>
       </div>
-    )
-  }
+
+      <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6">
+        <h3 class="text-lg font-semibold text-[#1A1008] mb-2">Yardıma İhtiyacınız var mı?</h3>
+        <p class="text-[#6B5540] mb-4">
+          Üyelik modeliyle ilgili sorularınız için bizimle iletişime geçebilirsiniz.
+        </p>
+        <a
+          href="mailto:support@sanliurfa.com"
+          class="text-urfa-600 hover:text-urfa-700 font-medium transition-colors"
+        >
+          Destek E-postası Gönder →
+        </a>
+      </div>
+    </div>
+  </div>
 </Layout>

@@ -1,18 +1,17 @@
-// @ts-nocheck
 /**
  * Place Verification Status
  * GET /api/places/[id]/verification - Get place verification status
  */
 
 import type { APIRoute } from 'astro';
-import { getPlaceVerification } from '../../../../lib/place-verification';
+import { getPlaceVerification } from '../../../../lib/place/place-verification';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 import { queryOne } from '../../../../lib/postgres';
 
 export const GET: APIRoute = async ({ request, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -25,7 +24,7 @@ export const GET: APIRoute = async ({ request, params }) => {
       recordRequest('GET', '/api/places/[id]/verification', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Mekan bulunamadı',
+        'Place not found',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -47,7 +46,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     logger.error('Failed to get verification status', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Doğrulama durumu alınamadı',
+      'Failed to get verification status',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -4,13 +4,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { executeReport } from '../../../../lib/report-engine';
+import { executeReport } from '../../../../lib/report/report-engine';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { queryOne } from '../../../../lib/postgres';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -19,7 +20,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/reports/:reportId/execute', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -32,11 +33,27 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/reports/:reportId/execute', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Rapor ID gereklidir',
+        'Report ID required',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
       );
+    }
+
+    // IDOR guard — verify report belongs to requesting user (or user is admin)
+    if (locals.user.role !== 'admin') {
+      const report = await queryOne<{ user_id: string | null }>(
+        'SELECT user_id FROM reports WHERE id = $1',
+        [reportId]
+      );
+      if (!report) {
+        recordRequest('POST', '/api/reports/:reportId/execute', HttpStatus.NOT_FOUND, Date.now() - startTime);
+        return apiError(ErrorCode.NOT_FOUND, 'Report not found', HttpStatus.NOT_FOUND, undefined, requestId);
+      }
+      if (report.user_id !== locals.user.id) {
+        recordRequest('POST', '/api/reports/:reportId/execute', HttpStatus.FORBIDDEN, Date.now() - startTime);
+        return apiError(ErrorCode.FORBIDDEN, 'Bu rapora erişim izniniz yok', HttpStatus.FORBIDDEN, undefined, requestId);
+      }
     }
 
     const body = await request.json().catch(() => ({}));
@@ -57,7 +74,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
           row_count: result.rowCount,
           content_type: result.contentType
         },
-        message: 'Rapor çalıştırıldı'
+        message: 'Report executed'
       },
       HttpStatus.OK,
       requestId
@@ -66,12 +83,12 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/reports/:reportId/execute', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Rapor çalıştırılamadı',
+      'Failed to execute report',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Rapor çalıştırılamadı',
+      'Failed to execute report',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

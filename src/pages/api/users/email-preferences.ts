@@ -6,7 +6,7 @@ import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const user = locals.user;
     if (!user) {
       recordRequest('GET', '/api/users/email-preferences', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const result = await queryOne(
@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -50,11 +50,23 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     const user = locals.user;
     if (!user) {
       recordRequest('PUT', '/api/users/email-preferences', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
-    const prefs = body;
+
+    // HARD RULE #51-style: allowlist keys before JSONB merge to prevent arbitrary field injection
+    const ALLOWED_PREF_KEYS = new Set(['email_new_message', 'email_new_follower', 'email_place_review', 'email_weekly_digest', 'email_promotions', 'push_notifications']);
+    const prefs: Record<string, boolean> = {};
+    for (const [key, val] of Object.entries(body)) {
+      if (ALLOWED_PREF_KEYS.has(key) && typeof val === 'boolean') {
+        prefs[key] = val;
+      }
+    }
+
+    if (Object.keys(prefs).length === 0) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçerli tercih alanı bulunamadı', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
 
     // Update notification_preferences JSONB
     await query(
@@ -76,3 +88,4 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     return apiError(ErrorCode.INTERNAL_ERROR, 'Tercihler güncellenirken hata oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
+

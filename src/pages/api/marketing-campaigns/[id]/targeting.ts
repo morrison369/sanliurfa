@@ -8,20 +8,20 @@ import type { APIRoute } from 'astro';
 import {
   getCampaignTargeting,
   addCampaignTargetingRule
-} from '../../../../lib/marketing-campaigns';
+} from '../../../../lib/marketing/marketing-campaigns';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/marketing-campaigns/[id]/targeting', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id } = params;
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     logger.error('Get campaign targeting failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Hedefleme kuralları alınamadı',
+      'Failed to get targeting rules',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -55,14 +55,14 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/marketing-campaigns/[id]/targeting', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id } = params;
@@ -106,7 +106,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     logger.error('Add targeting rule failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Hedefleme kuralı eklenemedi',
+      'Failed to add targeting rule',
       statusCode,
       undefined,
       requestId

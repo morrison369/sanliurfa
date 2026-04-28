@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface AuditLog {
   id: string;
   userId: string;
@@ -119,7 +118,7 @@ export default function AuditLogViewer() {
               <option value="users">Kullanıcılar</option>
               <option value="places">Yerler</option>
               <option value="reviews">Yorumlar</option>
-              <option value="admin">Yönetim işlemleri</option>
+              <option value="admin">Admin İşlemleri</option>
             </select>
           </div>
         </div>

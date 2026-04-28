@@ -1,0 +1,66 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AnalyticsDashboard from '../../components/vendor/AnalyticsDashboard';
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/vendor/analytics');
+}
+
+const userId = user.id;
+
+let firstPlace: any = null;
+try {
+  const placeResult = await query(
+    `SELECT id, slug, name FROM places WHERE owner_id = $1 AND status != 'deleted' ORDER BY created_at DESC LIMIT 1`,
+    [userId]
+  );
+  firstPlace = placeResult.rows[0];
+} catch (e) {
+  logger.error('Vendor analytics query failed:', e instanceof Error ? e : new Error(String(e)));
+}
+
+if (!firstPlace) {
+  return Astro.redirect('/vendor/dashboard');
+}
+
+const vendor = {
+  id: userId,
+  name: Astro.locals.user.fullName || 'İşletme Sahibi',
+  placeId: firstPlace.id,
+};
+
+const seo = {
+  title: 'Analitikler - İşletme Paneli',
+  description: 'İşletmenizin performans istatistiklerini görüntüleyin',
+  noIndex: true,
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3] pb-12">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">İşletme Paneli</p>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-3xl font-bold text-[#F5EDD6]">Analitikler</h1>
+            <p class="text-[#9A8470] mt-1">İşletmenizin performansını detaylı inceleyin</p>
+          </div>
+          <a
+            href="/vendor/dashboard"
+            class="px-4 py-2 bg-[rgba(200,160,100,0.08)] text-[#C4B49A] rounded-sm hover:bg-[rgba(200,160,100,0.16)] transition-colors border border-[rgba(200,160,100,0.2)]"
+          >
+            ← Panele Dön
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <AnalyticsDashboard placeId={vendor.placeId} client:visible />
+    </div>
+  </div>
+</Layout>

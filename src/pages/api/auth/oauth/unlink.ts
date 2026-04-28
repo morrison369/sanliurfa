@@ -9,22 +9,28 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
+type OAuthProvider = 'google' | 'facebook' | 'github';
+
+function isOAuthProvider(provider: string): provider is OAuthProvider {
+  return provider === 'google' || provider === 'facebook' || provider === 'github';
+}
+
 export const DELETE: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user) {
       recordRequest('DELETE', '/api/auth/oauth/unlink', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const provider = url.searchParams.get('provider') || '';
 
-    if (!['google', 'facebook', 'github'].includes(provider)) {
+    if (!isOAuthProvider(provider)) {
       recordRequest('DELETE', '/api/auth/oauth/unlink', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.BAD_REQUEST, 'Invalid provider', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.INVALID_INPUT, 'Sağlayıcı geçersiz', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get user's authentication methods (optimized: select only needed columns)
@@ -35,7 +41,7 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
 
     if (!user) {
       recordRequest('DELETE', '/api/auth/oauth/unlink', HttpStatus.NOT_FOUND, Date.now() - startTime);
-      return apiError(ErrorCode.NOT_FOUND, 'User not found', HttpStatus.NOT_FOUND, undefined, requestId);
+      return apiError(ErrorCode.NOT_FOUND, 'Kullanıcı bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
     // Check if user has other authentication methods
@@ -49,8 +55,8 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
     if (authMethods <= 1) {
       recordRequest('DELETE', '/api/auth/oauth/unlink', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
-        ErrorCode.BAD_REQUEST,
-        'Cannot unlink last authentication method',
+        ErrorCode.INVALID_INPUT,
+        'Son giriş yöntemi kaldırılamaz',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -59,7 +65,7 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
 
     // Unlink the provider
     const columnName = `${provider}_id`;
-    const updateData: any = {};
+    const updateData: Record<string, null> = {};
     updateData[columnName] = null;
 
     await updateDb('users', locals.user.id, updateData);
@@ -68,7 +74,7 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
     logger.info('OAuth provider unlinked', { userId: locals.user.id, provider });
 
     return apiResponse(
-      { success: true, message: `${provider} account unlinked successfully` },
+      { success: true, message: `${provider} bağlantısı kaldırıldı` },
       HttpStatus.OK,
       requestId
     );
@@ -78,7 +84,7 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
     logger.error('Failed to unlink OAuth provider', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to unlink provider',
+      'Sağlayıcı bağlantısı kaldırılamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

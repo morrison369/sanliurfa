@@ -4,18 +4,18 @@
  */
 
 import type { APIRoute } from 'astro';
-import { uploadPhoto, getPhotoCount } from '../../../lib/photos';
+import { uploadPhoto, getPhotoCount } from '../../../lib/photo/photos';
 import { queryOne } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
-import { saveFile } from '../../../lib/file-storage';
+import { saveFile, validateImageSignature, validateFileExtension } from '../../../lib/file/file-storage';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('POST', '/api/photos/upload', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -65,7 +65,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Validate MIME type
+    // Validate MIME type (Content-Type header)
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
       recordRequest('POST', '/api/photos/upload', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
@@ -77,9 +77,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    // Validate file extension
+    if (!validateFileExtension(file.name)) {
+      recordRequest('POST', '/api/photos/upload', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz dosya uzantısı', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+
+    // Validate magic bytes — verify actual file content matches declared MIME type
+    const buffer = Buffer.from(await file.arrayBuffer());
+    if (!validateImageSignature(buffer, file.type)) {
+      recordRequest('POST', '/api/photos/upload', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Dosya içeriği geçersiz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+
     // Verify place exists
-    const place = await queryOne<{ id: string; slug: string; name: string }>(
-      'SELECT id, slug, name FROM places WHERE id = $1',
+    const place = await queryOne<{ id: string; owner_id: string | null }>(
+      'SELECT id, owner_id FROM places WHERE id = $1',
       [placeId]
     );
     if (!place) {
@@ -88,6 +101,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
         ErrorCode.NOT_FOUND,
         'Mekan bulunamadı',
         HttpStatus.NOT_FOUND,
+        undefined,
+        requestId
+      );
+    }
+
+    // Yetki: admin > mekan sahibi > diğer (yasak)
+    // Aksi halde herhangi authenticated user her mekana fotoğraf yükleyebilirdi (IDOR + spam riski)
+    const role = user.role;
+    const isOwner = place.owner_id && place.owner_id === user.id;
+    if (role !== 'admin' && !isOwner) {
+      recordRequest('POST', '/api/photos/upload', HttpStatus.FORBIDDEN, Date.now() - startTime);
+      return apiError(
+        ErrorCode.FORBIDDEN,
+        'Sadece mekan sahibi veya admin fotoğraf yükleyebilir',
+        HttpStatus.FORBIDDEN,
         undefined,
         requestId
       );
@@ -107,9 +135,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Save file to storage
-    let fileResult;
+    let fileResult: { filePath: string; publicUrl: string } | undefined;
     try {
-      fileResult = await saveFile(file, placeId, buildPhotoFileName(place.slug || place.name));
+      fileResult = await saveFile(file, placeId, undefined, buffer);
     } catch (storageError) {
       recordRequest('POST', '/api/photos/upload', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       logger.error('File storage failed', storageError instanceof Error ? storageError : new Error(String(storageError)));
@@ -159,6 +187,3 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 };
 
-function buildPhotoFileName(placeSlug: string): string {
-  return `${placeSlug}-${Date.now()}`;
-}

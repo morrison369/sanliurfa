@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getKPIs, defineKPI } from '../../../lib/business-analytics';
+import { getKPIs, defineKPI } from '../../../lib/analytics/business-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -22,7 +22,7 @@ const kpiSchema = {
 };
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -30,8 +30,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/kpi', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -73,7 +73,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -81,8 +81,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/kpi', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId

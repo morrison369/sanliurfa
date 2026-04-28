@@ -1,28 +1,27 @@
-// @ts-nocheck
 /**
  * Verify User Email
  */
 
 import type { APIRoute } from 'astro';
-import { verifyUserEmail, getUserOnboardingStatus } from '../../../lib/user-onboarding';
-import { validateWithSchema } from '../../../lib/validation';
+import { verifyUserEmail, getUserOnboardingStatus } from '../../../lib/user/user-onboarding';
+import { validateWithSchema, ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { verifyToken } from '../../../lib/auth';
 
-const schema = {
+const schema: ValidationSchema = {
   token: { type: 'string' as const, required: true, minLength: 20 }
 };
 
 export const POST: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/onboarding/verify-email', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -74,6 +73,6 @@ export const POST: APIRoute = async ({ request }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/onboarding/verify-email', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Email verification failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -87,6 +87,11 @@ export const migration_053_subscription_admin = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE refund_requests ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';
+      ALTER TABLE refund_requests ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_refund_requests_user
       ON refund_requests(user_id, created_at DESC)
     `);
@@ -112,6 +117,12 @@ export const migration_053_subscription_admin = async (pool: Pool) => {
         completed_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE webhook_deliveries ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';
+      ALTER TABLE webhook_deliveries ADD COLUMN IF NOT EXISTS event_type VARCHAR(100);
+      ALTER TABLE webhook_deliveries ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
     `);
 
     await pool.query(`

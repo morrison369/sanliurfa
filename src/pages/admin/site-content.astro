@@ -1,0 +1,18 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import SiteContentManager from '../../components/admin/SiteContentManager';
+import SiteOperationsOverview from '../../components/admin/SiteOperationsOverview';
+import SitePlatformBlueprint from '../../components/admin/SitePlatformBlueprint';
+---
+
+<AdminLayout
+  title="Site İçerik Yönetimi"
+  subtitle="Tüm kritik içerik alanları admin paneli üzerinden database kaynaklı yönetim modeline geçirildi."
+  seo={{ title: 'Site İçerik Yönetimi - Sanliurfa.com', description: 'Ana sayfa hero ve site içerik bloklarını database üzerinden yönetin.', noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8">
+      <SiteOperationsOverview client:visible />
+      <SitePlatformBlueprint client:visible />
+      <SiteContentManager client:visible />
+    </div>
+</AdminLayout>

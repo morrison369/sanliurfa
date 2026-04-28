@@ -1,18 +1,34 @@
-import React, { useState, useEffect } from 'react';
-import { unwrapApiPayload } from '@/lib/client-api';
-import { getCuratedPlaces } from '@/data/curated-places';
+import { useState, useEffect } from 'react';
+interface Place {
+  id: string;
+  slug?: string;
+  name: string;
+  category: string;
+  image_url?: string;
+  rating?: number;
+}
 
-interface SearchPayload {
-  results?: any[];
-  users?: any[];
-  collections?: any[];
-  query?: string;
-  searchType?: string;
-  resultCount?: number;
+interface User {
+  id: string;
+  full_name: string;
+  username?: string;
+  avatar_url?: string;
+}
+
+interface Collection {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+interface SearchResults {
+  places: Place[];
+  users: User[];
+  collections: Collection[];
 }
 
 export default function SearchResults({ query }: { query?: string }) {
-  const [results, setResults] = useState<SearchPayload | null>(null);
+  const [results, setResults] = useState<SearchResults | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(query || '');
 
@@ -26,19 +42,15 @@ export default function SearchResults({ query }: { query?: string }) {
     setIsLoading(true);
     try {
       const response = await fetch('/api/search?q=' + encodeURIComponent(searchQuery) + '&limit=50');
-      if (!response.ok) throw new Error('Arama başarısız oldu');
-      const data = unwrapApiPayload<{ data?: SearchPayload }>(await response.json());
-      setResults(data.data || null);
+      if (!response.ok) throw new Error('Arama tamamlanamadı.');
+      const data = await response.json();
+      setResults(data.data);
     } catch (err) {
-      console.error('Arama hatası', err);
-      setResults(buildFallbackResults(searchQuery));
+      console.error('Arama hatası:', err);
     } finally {
       setIsLoading(false);
     }
   };
-
-  const placeResults = results?.results || [];
-  const suggestedPlaces = buildFallbackResults(searchQuery || 'Şanlıurfa').results || [];
 
   return (
     <div className="space-y-6">
@@ -47,7 +59,7 @@ export default function SearchResults({ query }: { query?: string }) {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Mekân, kullanıcı veya koleksiyon ara..."
+          placeholder="Mekan, kullanıcı veya koleksiyon ara..."
           className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -55,17 +67,33 @@ export default function SearchResults({ query }: { query?: string }) {
       {searchQuery.length < 2 ? (
         <p className="text-center text-gray-600">En az 2 karakter girin</p>
       ) : isLoading ? (
-        <p className="text-center text-gray-600">Aranıyor...</p>
-      ) : !results ? (
-        <CuratedSearchGrid places={suggestedPlaces} title="Şanlıurfa'da öne çıkanlar" />
+        <div className="space-y-6 animate-pulse">
+          <div>
+            <div className="h-5 bg-gray-200 rounded w-32 mb-3" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-4 border border-gray-100 rounded-lg space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : !results || (results.places.length === 0 && results.users.length === 0 && results.collections.length === 0) ? (
+        <div className="text-center py-12 text-gray-500">
+          <div className="text-4xl mb-3">🔍</div>
+          <p className="font-medium">"{searchQuery}" için sonuç bulunamadı.</p>
+          <p className="text-sm mt-1">Farklı bir anahtar kelime deneyin.</p>
+        </div>
       ) : (
         <div className="space-y-8">
-          {placeResults.length > 0 && (
+          {results.places && results.places.length > 0 && (
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Mekânlar ({placeResults.length})</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Mekanlar ({results.places.length})</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {placeResults.map((place: any) => (
-                  <a key={place.id} href={'/places/' + (place.slug || place.id)} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
+                {results.places.map((place) => (
+                  <a key={place.id} href={place.slug ? `/isletme/${place.slug}` : '/mekanlar'} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     {place.image_url && <img src={place.image_url} alt={place.name} className="w-full h-32 object-cover rounded mb-2" />}
                     <p className="font-medium text-gray-900 dark:text-white">{place.name}</p>
                     <p className="text-sm text-gray-600">{place.category}</p>
@@ -80,7 +108,7 @@ export default function SearchResults({ query }: { query?: string }) {
             <div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Kullanıcılar ({results.users.length})</h3>
               <div className="space-y-2">
-                {results.users.map((user: any) => (
+                {results.users.map((user) => (
                   <a key={user.id} href={'/kullanici/' + user.id} className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     {user.avatar_url ? (
                       <img src={user.avatar_url} alt={user.full_name} className="w-10 h-10 rounded-full object-cover" />
@@ -103,7 +131,7 @@ export default function SearchResults({ query }: { query?: string }) {
             <div>
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Koleksiyonlar ({results.collections.length})</h3>
               <div className="space-y-2">
-                {results.collections.map((col: any) => (
+                {results.collections.map((col) => (
                   <a key={col.id} href={'/koleksiyonlar/' + col.id} className="p-3 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
                     <p className="font-medium text-gray-900 dark:text-white">{col.name}</p>
                     <p className="text-sm text-gray-600">{col.description}</p>
@@ -113,51 +141,11 @@ export default function SearchResults({ query }: { query?: string }) {
             </div>
           )}
 
-          {!placeResults.length && !results.users?.length && !results.collections?.length && (
-            <CuratedSearchGrid places={suggestedPlaces} title="Aramanıza yakın Şanlıurfa önerileri" />
+          {!results.places?.length && !results.users?.length && !results.collections?.length && (
+            <p className="text-center text-gray-600">Sonuç bulunamadı</p>
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-function buildFallbackResults(query: string): SearchPayload {
-  const normalizedQuery = query.trim().toLocaleLowerCase('tr-TR');
-  const curated = getCuratedPlaces();
-  const results = normalizedQuery.length >= 2
-    ? curated.filter((place) =>
-        [place.name, place.description, place.address, place.category, place.tags.join(' ')]
-          .join(' ')
-          .toLocaleLowerCase('tr-TR')
-          .includes(normalizedQuery)
-      )
-    : curated.slice(0, 4);
-
-  return {
-    results: (results.length > 0 ? results : curated.slice(0, 4)).map((place) => ({
-      ...place,
-      image_url: place.images[0],
-    })),
-    query,
-    searchType: 'places',
-    resultCount: results.length,
-  };
-}
-
-function CuratedSearchGrid({ places, title }: { places: any[]; title: string }) {
-  return (
-    <div>
-      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {places.map((place: any) => (
-          <a key={place.id} href={'/places/' + place.slug} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 rounded-lg hover:shadow-md transition-shadow">
-            <img src={place.image_url || place.images?.[0] || '/images/placeholder-place.jpg'} alt={place.name} className="w-full h-32 object-cover rounded mb-2" />
-            <p className="font-medium text-gray-900 dark:text-white">{place.name}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-300">{place.description}</p>
-          </a>
-        ))}
-      </div>
     </div>
   );
 }

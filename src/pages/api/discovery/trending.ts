@@ -1,16 +1,16 @@
 import type { APIRoute } from 'astro';
-import { getTrendingPlaces } from '../../../lib/social-interactions';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getTrendingPlaces } from '../../../lib/social/social-interactions';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    const limit = parseInt(url.searchParams.get('limit') || '20', 10);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 0, 1_000_000);
     const category = url.searchParams.get('category') || undefined;
     const trending = await getTrendingPlaces(limit, category);
     const duration = Date.now() - startTime;
@@ -20,6 +20,6 @@ export const GET: APIRoute = async ({ request, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/discovery/trending', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get trending failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'İşlem tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

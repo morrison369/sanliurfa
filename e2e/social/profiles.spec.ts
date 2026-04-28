@@ -12,9 +12,10 @@ test.describe('Social Features - User Profiles', () => {
         fullName: 'Profile Test User'
       }
     });
-    const { data } = await registerRes.json();
-    userId = data.id;
-    userToken = data.token;
+    const body = await registerRes.json();
+    const data = body.data ?? body;
+    userId = data.user?.id ?? data.id;
+    userToken = registerRes.headers()['set-cookie']?.split(';')[0] ?? '';
   });
 
   test('GET /api/users/:id/profile - public profile', async ({ request }) => {
@@ -63,7 +64,7 @@ test.describe('Social Features - User Profiles', () => {
 
   test('GET /api/users/:id/mentions - user mentions', async ({ request }) => {
     const response = await request.get(`/api/users/${userId}/mentions`, {
-      headers: { 'Cookie': `auth-token=${userToken}` }
+      headers: { Cookie: userToken }
     });
 
     expect(response.ok()).toBeTruthy();

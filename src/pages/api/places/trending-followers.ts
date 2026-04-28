@@ -4,18 +4,18 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getTrendingPlacesByFollowers } from '../../../lib/place-followers';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getTrendingPlacesByFollowers } from '../../../lib/place/place-followers';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
 
     // Get trending places
     const places = await getTrendingPlacesByFollowers(limit);
@@ -33,7 +33,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     logger.error('Failed to get trending places', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Trend mekanlar alınamadı',
+      'Failed to get trending places',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

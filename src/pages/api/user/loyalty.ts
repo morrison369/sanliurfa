@@ -8,27 +8,27 @@ import {
   getLoyaltyBalance,
   getAllLoyaltyTiers,
   getTransactionHistory
-} from '../../../lib/loyalty-system';
+} from '../../../lib/loyalty/loyalty-system';
 import { getAchievementStats, getUserAchievements } from '../../../lib/achievements';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/user/loyalty', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const url = new URL(request.url);
     const section = url.searchParams.get('section') || 'summary';
 
-    let data: any = {};
+    let data: Record<string, unknown> = {};
 
     if (section === 'summary' || section === 'all') {
       const balance = await getLoyaltyBalance(locals.user.id);
@@ -41,8 +41,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     if (section === 'transactions' || section === 'all') {
-      const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-      const offset = parseInt(url.searchParams.get('offset') || '0');
+      const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
+      const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
       const transactions = await getTransactionHistory(locals.user.id, limit, offset);
       data.transactions = transactions;
     }
@@ -63,10 +63,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/user/loyalty', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Sadakat bilgileri alınamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Get loyalty failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Sadakat bilgileri alınamadı',
+      'Failed to get loyalty information',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

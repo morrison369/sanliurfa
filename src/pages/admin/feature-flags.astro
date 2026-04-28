@@ -1,0 +1,216 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout
+  title="Feature Flag Yönetimi"
+  subtitle="Özellikleri canlı ortamda açıp kapatın"
+  seo={{ title: 'Feature Flag Yönetimi - Admin' }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+      <div class="mb-6">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-5 mb-5">
+        <h2 class="font-semibold text-[#6B5540] mb-4">Yeni Flag Oluştur</h2>
+        <form id="createForm" class="flex flex-wrap gap-3">
+          <input
+            name="key"
+            placeholder="flag_key (snake_case)"
+            class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm flex-1 min-w-40"
+            required
+          />
+          <input
+            name="name"
+            placeholder="Açıklayıcı isim"
+            class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm flex-1 min-w-40"
+            required
+          />
+          <select name="type" class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm">
+            <option value="boolean">Boolean</option>
+            <option value="percentage">Yüzde</option>
+          </select>
+          <button
+            type="submit"
+            class="px-4 py-2 rounded-sm bg-urfa-600 text-white text-sm hover:bg-urfa-700"
+          >
+            Oluştur
+          </button>
+        </form>
+        <p id="createMsg" class="text-sm mt-2 hidden"></p>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)] flex items-center justify-between">
+          <h2 class="font-semibold text-[#6B5540] text-sm">Mevcut Flagler</h2>
+          <button id="refreshBtn" class="text-xs text-urfa-600 hover:underline">Yenile</button>
+        </div>
+        <div id="flagsContainer">
+          <div class="p-8 text-center text-[#9A8470] text-sm">Yükleniyor...</div>
+        </div>
+      </div>
+    </div>
+</AdminLayout>
+
+<script is:inline>
+  function isEnabled(flag) {
+    return flag.value === true || flag.value === 'true' || flag.value === 1;
+  }
+
+  function renderFlags(flags) {
+    const container = document.getElementById('flagsContainer');
+    container.textContent = '';
+
+    if (!flags || flags.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'p-8 text-center text-[#9A8470] text-sm';
+      empty.textContent = 'Henüz flag yok.';
+      container.appendChild(empty);
+      return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'overflow-x-auto';
+
+    const table = document.createElement('table');
+    table.className = 'w-full text-sm';
+
+    const thead = document.createElement('thead');
+    thead.className = 'border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)]';
+    const headRow = document.createElement('tr');
+    ['Key', 'Ad', 'Tür', 'Durum', ''].forEach(label => {
+      const th = document.createElement('th');
+      th.className = 'py-3 px-4 text-left font-medium text-[#6B5540]';
+      th.textContent = label;
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+
+    flags.forEach(f => {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-[rgba(200,160,100,0.08)] last:border-0 hover:bg-[rgba(200,160,100,0.04)]';
+
+      const keyTd = document.createElement('td');
+      keyTd.className = 'py-3 px-4';
+      const keySpan = document.createElement('span');
+      keySpan.className = 'font-mono text-xs text-[#6B5540] bg-[rgba(200,160,100,0.06)] px-2 py-0.5 rounded-sm inline-block';
+      keySpan.textContent = f.key;
+      keyTd.appendChild(keySpan);
+
+      const nameTd = document.createElement('td');
+      nameTd.className = 'py-3 px-4 font-medium text-[#1A1008]';
+      nameTd.textContent = f.name || '—';
+
+      const typeTd = document.createElement('td');
+      typeTd.className = 'py-3 px-4 text-[#9A8470] text-xs';
+      typeTd.textContent = f.type || 'boolean';
+
+      const toggleTd = document.createElement('td');
+      toggleTd.className = 'py-3 px-4';
+      const label = document.createElement('label');
+      label.className = 'relative inline-flex items-center cursor-pointer';
+      label.innerHTML = '<input type="checkbox" class="sr-only peer toggle-check">' +
+        '<div class="w-10 h-6 bg-[rgba(200,160,100,0.2)] peer-checked:bg-urfa-600 rounded-full peer-focus:ring-2 peer-focus:ring-urfa-300 after:content-[\'\'] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>';
+      const cb = label.querySelector('input');
+      cb.checked = isEnabled(f);
+      cb.addEventListener('change', async () => {
+        await fetch('/api/admin/flags', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: f.key, value: cb.checked }),
+        });
+      });
+      toggleTd.appendChild(label);
+
+      const actionTd = document.createElement('td');
+      actionTd.className = 'py-3 px-4';
+      const delBtn = document.createElement('button');
+      delBtn.className = 'text-xs text-[#9A8470] hover:text-[#1A1008] hover:underline';
+      delBtn.textContent = 'Sil';
+      delBtn.addEventListener('click', async () => {
+        if (!await window.showConfirm(`"${f.key}" flagini silmek istiyor musunuz?`)) return;
+        const res = await fetch('/api/admin/flags', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: f.key }),
+        });
+        if (res.ok) loadFlags();
+        else window.toast?.error('Silinemedi.');
+      });
+      actionTd.appendChild(delBtn);
+
+      tr.appendChild(keyTd);
+      tr.appendChild(nameTd);
+      tr.appendChild(typeTd);
+      tr.appendChild(toggleTd);
+      tr.appendChild(actionTd);
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    container.appendChild(wrapper);
+  }
+
+  async function loadFlags() {
+    const container = document.getElementById('flagsContainer');
+    container.textContent = '';
+    const loading = document.createElement('div');
+    loading.className = 'p-8 text-center text-[#9A8470] text-sm';
+    loading.textContent = 'Yükleniyor...';
+    container.appendChild(loading);
+
+    try {
+      const res = await fetch('/api/admin/flags');
+      if (!res.ok) {
+        container.textContent = '';
+        const err = document.createElement('div');
+        err.className = 'p-8 text-center text-[#9A8470] text-sm';
+        err.textContent = 'Yüklenemedi.';
+        container.appendChild(err);
+        return;
+      }
+      const { flags } = await res.json();
+      renderFlags(flags);
+    } catch {
+      container.textContent = '';
+      const err = document.createElement('div');
+      err.className = 'p-8 text-center text-[#9A8470] text-sm';
+      err.textContent = 'Hata oluştu.';
+      container.appendChild(err);
+    }
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', loadFlags);
+
+  document.getElementById('createForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const msg = document.getElementById('createMsg');
+    const data = { key: form.key.value.trim(), name: form.name.value.trim(), type: form.type.value };
+    const res = await fetch('/api/admin/flags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) {
+      form.reset();
+      msg.textContent = 'Flag oluşturuldu.';
+      msg.className = 'text-sm mt-2 text-[#6B5540]';
+      msg.classList.remove('hidden');
+      loadFlags();
+      setTimeout(() => msg.classList.add('hidden'), 3000);
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      msg.textContent = errData.detail || 'Oluşturulamadı.';
+      msg.className = 'text-sm mt-2 text-[#9A8470]';
+      msg.classList.remove('hidden');
+    }
+  });
+
+  loadFlags();
+</script>

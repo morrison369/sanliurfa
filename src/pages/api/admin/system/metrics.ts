@@ -4,15 +4,15 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSystemMetrics } from '../../../../lib/admin-dashboard';
-import { getModerationStats } from '../../../../lib/admin-moderation';
-import { getModerationQueue, getContentFlags } from '../../../../lib/admin-moderation';
+import { getSystemMetrics } from '../../../../lib/admin/admin-dashboard';
+import { getModerationStats } from '../../../../lib/admin/admin-moderation';
+import { getModerationQueue, getContentFlags } from '../../../../lib/admin/admin-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Admin erişimi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const [systemMetrics, modStats, pendingQueue, pendingFlags] = await Promise.all([
+    const [systemMetrics, modStats] = await Promise.all([
       getSystemMetrics(),
       getModerationStats(),
       getModerationQueue('pending', 1),

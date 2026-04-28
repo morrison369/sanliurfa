@@ -4,32 +4,31 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getBadgeDefinitions } from '../../../lib/place-verification';
+import { getBadgeDefinitions } from '../../../lib/place/place-verification';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { getCache, setCache } from '../../../lib/cache';
+import { getCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Check cache
     const cacheKey = 'badge:definitions';
-    const cached = await getCache<any[]>(cacheKey);
+    const cached = await getCache<string>(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/badges/definitions', HttpStatus.OK, Date.now() - startTime);
       return apiResponse({
         success: true,
-        definitions: cached
+        definitions: JSON.parse(cached)
       }, HttpStatus.OK, requestId);
     }
 
     // Get badge definitions
     const definitions = await getBadgeDefinitions();
-    await setCache(cacheKey, definitions, 3600);
 
     recordRequest('GET', '/api/badges/definitions', HttpStatus.OK, Date.now() - startTime);
 

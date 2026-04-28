@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
 import { format } from 'date-fns';
 import { tr } from 'date-fns/locale';
 import { Trash2, Eye, TrendingUp, Plus } from 'lucide-react';
@@ -26,7 +26,6 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
   const [listings, setListings] = useState<FeaturedListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     place_id: '',
     title: '',
@@ -50,13 +49,13 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
         setListings(json.data);
       }
     } catch (error) {
-      console.error('Öne çıkan listelemeler yüklenemedi:', error);
+      console.error('Failed to fetch listings:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleCreate = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       const response = await fetch('/api/featured-listings', {
@@ -81,12 +80,12 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
         onListingCreated?.();
       }
     } catch (error) {
-      console.error('Öne çıkan listeleme oluşturulamadı:', error);
+      console.error('Failed to create listing:', error);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Öne çıkan listelemeyi silmek istediğinizden emin misiniz?')) return;
+    if (!await (window as any).showConfirm?.('Öne çıkan listeyi silmek istediğinizden emin misiniz?')) return;
 
     try {
       const response = await fetch(`/api/featured-listings/${id}`, {
@@ -98,7 +97,7 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
         fetchListings();
       }
     } catch (error) {
-      console.error('Öne çıkan listeleme silinemedi:', error);
+      console.error('Failed to delete listing:', error);
     }
   };
 
@@ -113,7 +112,7 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Öne çıkan listelemeler</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Öne Çıkan Listeler</h2>
         <button
           onClick={() => setShowForm(!showForm)}
           className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -125,12 +124,12 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
 
       {showForm && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Yeni öne çıkan listeleme oluştur</h3>
+          <h3 className="text-lg font-semibold mb-4">Yeni Öne Çıkan Liste Oluştur</h3>
           <form onSubmit={handleCreate} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <input
                 type="text"
-                placeholder="Listeleme başlığı"
+                placeholder="Başlık"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
@@ -143,12 +142,12 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
               >
                 <option value="standard">Standart</option>
                 <option value="premium">Premium</option>
-                <option value="featured">Öne çıkan</option>
+                <option value="featured">Öne Çıkan</option>
               </select>
             </div>
 
             <textarea
-              placeholder="Listeleme açıklaması"
+              placeholder="Açıklama"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
@@ -172,7 +171,7 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
               />
               <input
                 type="number"
-                placeholder="Günlük maliyet"
+                placeholder="Günlük Maliyet"
                 value={formData.cost_per_day}
                 onChange={(e) => setFormData({ ...formData, cost_per_day: parseFloat(e.target.value) })}
                 className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
@@ -192,7 +191,7 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
                 onClick={() => setShowForm(false)}
                 className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors"
               >
-                İptal et
+                İptal Et
               </button>
             </div>
           </form>
@@ -202,7 +201,7 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
       <div className="grid gap-4">
         {listings.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            Henüz öne çıkan listeleme yok. Yeni bir listeleme oluşturarak işletmenizi daha görünür hale getirebilirsiniz.
+            Henüz öne çıkan liste yok. Yeni bir tane oluşturmak için yukarıdaki butona tıklayın.
           </div>
         ) : (
           listings.map((listing) => (
@@ -219,14 +218,14 @@ export default function FeaturedListingsManager({ onListingCreated }: FeaturedLi
                         ? 'Standart'
                         : listing.position_tier === 'premium'
                         ? 'Premium'
-                        : 'Öne çıkan'}
+                        : 'Öne Çıkan'}
                     </span>
                     <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded capitalize">
                       {listing.status === 'active'
                         ? 'Aktif'
                         : listing.status === 'scheduled'
                         ? 'Planlanmış'
-                        : 'Süresi dolmuş'}
+                        : 'Süresi Dolmuş'}
                     </span>
                   </div>
 

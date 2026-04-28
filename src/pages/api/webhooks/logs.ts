@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
-import { pool } from '../../../lib/postgres';
-import { getWebhookLogs, getWebhookLogsSummary, clearOldWebhookLogs } from '../../../lib/webhook-logs';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import type { Pool } from 'pg';
+import { pool as postgresPool } from '../../../lib/postgres';
+import { getWebhookLogs, getWebhookLogsSummary, clearOldWebhookLogs } from '../../../lib/webhook/webhook-logs';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 /**
@@ -9,19 +10,19 @@ import { logger } from '../../../lib/logging';
  * Get webhook delivery logs
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
     const webhookId = url.searchParams.get('webhookId');
     const summary = url.searchParams.get('summary') === 'true';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     if (!webhookId) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Webhook ID required', HttpStatus.BAD_REQUEST);
@@ -29,7 +30,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     if (summary) {
       // Return summary only
-      const summaryData = await getWebhookLogsSummary(pool, webhookId, locals.user.id);
+      const summaryData = await getWebhookLogsSummary(postgresPool as unknown as Pool, webhookId, locals.user.id);
       return apiResponse(
         { success: true, data: summaryData },
         HttpStatus.OK,
@@ -38,7 +39,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Return paginated logs
-    const { logs, total } = await getWebhookLogs(pool, webhookId, locals.user.id, limit, offset);
+    const { logs, total } = await getWebhookLogs(postgresPool as unknown as Pool, webhookId, locals.user.id, limit, offset);
 
     return apiResponse(
       {
@@ -56,7 +57,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Failed to get webhook logs', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Kayıtlar alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get logs', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -65,23 +66,23 @@ export const GET: APIRoute = async ({ request, locals }) => {
  * Clear old webhook logs
  */
 export const DELETE: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
     const webhookId = url.searchParams.get('webhookId');
-    const olderThanDays = parseInt(url.searchParams.get('olderThanDays') || '30');
+    const olderThanDays = safeIntParam(url.searchParams.get('olderThanDays'), 30, 0, 1_000_000);
 
     if (!webhookId) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Webhook ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const deletedCount = await clearOldWebhookLogs(pool, webhookId, locals.user.id, olderThanDays);
+    const deletedCount = await clearOldWebhookLogs(postgresPool as unknown as Pool, webhookId, locals.user.id, olderThanDays);
 
     logger.info('Webhook logs cleared', {
       webhookId,
@@ -101,6 +102,6 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     logger.error('Failed to clear webhook logs', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Kayıtlar temizlenemedi', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to clear logs', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

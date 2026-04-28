@@ -1,21 +1,21 @@
 import type { APIRoute } from 'astro';
-import { getRecommendationsForUser, recordRecommendationClick, generateRecommendations } from '../../../lib/recommendations';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getRecommendationsForUser, recordRecommendationClick, generateRecommendations } from '../../../lib/recommendation/recommendations';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/discovery/recommendations', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const limit = parseInt(url.searchParams.get('limit') || '10', 10);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 0, 1_000_000);
     const recs = await getRecommendationsForUser(locals.user.id, limit);
 
     const duration = Date.now() - startTime;
@@ -25,20 +25,20 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/discovery/recommendations', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Öneriler alınamadı', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Öneriler alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Get recommendations failed', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/discovery/recommendations', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/discovery/recommendations', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Öneri işlemi tamamlanamadı', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Öneri işlemi tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Recommendation action failed', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

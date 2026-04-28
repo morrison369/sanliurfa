@@ -1,0 +1,159 @@
+---
+import { Icon } from 'astro-icon/components';
+import Layout from '../../layouts/Layout.astro';
+import ProfileSidebar from '../../components/profile/ProfileSidebar.astro';
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect('/giris?redirect=/profil/aktivite');
+}
+
+let activities: any[] = [];
+let activityTypeConfig: Record<string, { iconName: string; color: string; label: string; actionText: string }> = {};
+const seo = {
+    title: 'Aktivite Geçmişim - Sanliurfa.com',
+    description: 'Tüm aktivite geçmişinizi görüntüleyin.',
+    noIndex: true,
+  };
+
+function getTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  const diffWeeks = Math.floor(diffDays / 7);
+
+  if (diffMins < 1) return 'Az önce';
+  if (diffMins < 60) return `${diffMins} dakika önce`;
+  if (diffHours < 24) return `${diffHours} saat önce`;
+  if (diffDays < 7) return `${diffDays} gün önce`;
+  if (diffWeeks < 4) return `${diffWeeks} hafta önce`;
+  return date.toLocaleDateString('tr-TR');
+}
+
+try {
+
+  const result = await query(
+    `SELECT ua.*, p.name as place_name, p.slug as place_slug
+     FROM user_activity ua
+     LEFT JOIN places p ON ua.reference_type = 'place' AND ua.reference_id = p.id::text
+     WHERE ua.user_id = $1
+     ORDER BY ua.created_at DESC
+     LIMIT 50`,
+    [user.id]
+  );
+  activities = result.rows;
+
+  activityTypeConfig = {
+    review_created:  { iconName: 'message-square', color: 'bg-urfa-50 text-urfa-600',                      label: 'Yorum',       actionText: 'yorum yaptı' },
+    place_visited:   { iconName: 'map-pin',        color: 'bg-[rgba(200,160,100,0.12)] text-[#6B5540]',    label: 'Ziyaret',     actionText: 'ziyaret etti' },
+    favorite_added:  { iconName: 'heart',          color: 'bg-isot-50 text-isot-600',                      label: 'Favori',      actionText: 'favorilere ekledi' },
+    badge_earned:    { iconName: 'award',          color: 'bg-urfa-50 text-urfa-700',                      label: 'Rozet',       actionText: 'rozet kazandı' },
+    profile_updated: { iconName: 'user',           color: 'bg-urfa-50 text-urfa-600',                      label: 'Profil',      actionText: 'profilini güncelledi' },
+    place_viewed:    { iconName: 'eye',            color: 'bg-[rgba(200,160,100,0.08)] text-[#9A8470]',    label: 'Görüntüleme', actionText: 'görüntüledi' },
+    review_liked:    { iconName: 'heart',          color: 'bg-isot-50 text-isot-500',                      label: 'Beğeni',      actionText: 'yorumunu beğendi' },
+    place_shared:    { iconName: 'share-2',        color: 'bg-urfa-50 text-urfa-600',                      label: 'Paylaşım',    actionText: 'mekanı paylaştı' },
+  };
+
+} catch (e) {
+  logger.error('Error loading data:', e instanceof Error ? e : new Error(String(e)));
+}
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3] py-8">
+    <div class="container mx-auto px-4">
+      <div class="grid lg:grid-cols-4 gap-8">
+        <ProfileSidebar activeKey="activity" />
+
+        <main class="lg:col-span-3">
+          <div class="bg-white rounded-sm shadow-sm border border-[rgba(200,160,100,0.18)] p-6">
+            <h2 class="font-bold text-xl text-[#1A1008] mb-6 flex items-center gap-2">
+              <Icon name="lucide:activity" class="w-4 h-4" />
+              Aktivite Geçmişi
+            </h2>
+
+            {activities.length > 0 ? (
+              <div class="relative">
+                <div class="absolute left-5 top-0 bottom-0 w-0.5 bg-[rgba(200,160,100,0.2)]"></div>
+
+                <div class="space-y-4">
+                  {activities.map((activity) => {
+                    const typeConfig = activityTypeConfig[activity.action_type] || {
+                      iconName: 'activity',
+                      color: 'bg-[rgba(200,160,100,0.08)] text-[#9A8470]',
+                      label: 'Aktivite',
+                      actionText: 'aktivite gerçekleştirdi',
+                    };
+                    const timeAgo = getTimeAgo(new Date(activity.created_at));
+                    const metadata = activity.metadata || {};
+
+                    return (
+                      <div class="activity-item relative flex gap-4 pl-2">
+                        <div class={`relative z-10 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${typeConfig.color}`}>
+                          <Icon name={`lucide:${typeConfig.iconName}`} class="w-4 h-4" />
+                        </div>
+
+                        <div class="flex-1 min-w-0 pb-4">
+                          <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                              <div class="flex items-center gap-2 flex-wrap">
+                                <span class={`text-xs px-2 py-0.5 rounded-full font-medium ${typeConfig.color}`}>
+                                  {typeConfig.label}
+                                </span>
+                                <span class="text-sm text-[#9A8470]">{timeAgo}</span>
+                              </div>
+                              <p class="text-[#1A1008] mt-1">
+                                {activity.place_name ? (
+                                  <>
+                                    <a href={`/isletme/${activity.place_slug}`} class="font-medium hover:text-urfa-600">
+                                      {activity.place_name}
+                                    </a>
+                                    {' '}{typeConfig.actionText}
+                                  </>
+                                ) : (
+                                  <>
+                                    {metadata.title || 'Bir aktivite gerçekleştirildi'}
+                                  </>
+                                )}
+                              </p>
+                              {metadata.content && (
+                                <p class="text-[#6B5540] mt-1 text-sm line-clamp-2">
+                                  {metadata.content}
+                                </p>
+                              )}
+                              {metadata.rating && (
+                                <div class="flex items-center gap-1 mt-1 text-yellow-500">
+                                  {[...Array(5)].map((_, i) => (
+                                    <Icon name="lucide:star" class={`w-4 h-4 ${i < metadata.rating ? 'fill-current' : 'text-[rgba(200,160,100,0.25)]'}`} />
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <Icon name="lucide:activity" class="w-16 h-16 text-[rgba(200,160,100,0.3)] mx-auto mb-4" />
+                <h3 class="text-xl font-semibold text-[#1A1008] mb-2">Henüz aktivite yok</h3>
+                <p class="text-[#6B5540] mb-4">Şehri keşfedin, yorum yapın ve aktivite geçmişiniz dolsun!</p>
+                <a href="/mekanlar" class="inline-block px-6 py-3 bg-urfa-600 text-white rounded-sm font-medium hover:bg-urfa-700 transition-colors">
+                  Mekanları Keşfet
+                </a>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</Layout>

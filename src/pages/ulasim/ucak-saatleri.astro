@@ -1,0 +1,155 @@
+---
+
+import Layout from '../../layouts/Layout.astro';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Şanlıurfa Uçak Saatleri | GAP Havalimanı Uçuş Rehberi',
+  description:
+    'Şanlıurfa uçak saatleri için GAP Havalimanı rehberi. Uçuş planlama, terminal hazırlık adımları ve havalimanı ulaşım önerileri.',
+  keywords: ['şanlıurfa uçak saatleri', 'gap havalimanı uçuşlar', 'şanlıurfa istanbul uçak', 'urfa havalimanı', 'şanlıurfa uçak bileti', 'gap havalimanı ulaşım'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/ulasim/ucak-saatleri',
+};
+
+const flightBands = [
+  { label: 'Sabah Uçuşları', range: '06:00 - 09:30', note: 'İş ve bağlantılı seferler için yoğun saat aralığı.' },
+  { label: 'Öğle Uçuşları', range: '11:00 - 15:00', note: 'Şehirler arası düzenli sefer yoğunluğu.' },
+  { label: 'Akşam Uçuşları', range: '17:00 - 22:30', note: 'Gün sonu dönüş ve bağlantı uçuşları.' },
+];
+
+const planningChecklist = [
+  'Uçuştan en az 2 saat önce havalimanında olun.',
+  'Bilet ve kimlik doğrulamasını online check-in ile önceden tamamlayın.',
+  'Şehir merkezinden GAP Havalimanı transfer süresi için trafik payı bırakın.',
+  'Bagaj kurallarını havayolu şirketine göre kontrol edin.',
+];
+
+const faqItems = [
+  {
+    q: 'Şanlıurfa uçak saatlerini nereden takip edebilirim?',
+    a: 'GAP Havalimanı ve havayolu şirketlerinin güncel planları üzerinden uçuş saatlerini takip edebilirsiniz.',
+  },
+  {
+    q: 'Şehir merkezinden GAP Havalimanı kaç dakika sürer?',
+    a: 'Trafik durumuna göre ortalama 45-60 dakika sürebilir.',
+  },
+  {
+    q: 'Uçuş öncesi havalimanına ne kadar erken gitmeliyim?',
+    a: 'İç hat uçuşlarında en az 2 saat önce havalimanında olmanız önerilir.',
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <section class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-14">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold text-[#F5EDD6] mb-3">Şanlıurfa Uçak Saatleri</h1>
+        <p class="text-[#C4B49A] max-w-2xl">
+          Şanlıurfa GAP Havalimanı için uçuş planlama rehberi, yoğun saat aralıkları ve pratik ulaşım bilgileri.
+        </p>
+        <p id="transport-freshness" class="mt-2 text-xs text-[#9A8470]">Veri tazeliği kontrol ediliyor...</p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <a href="/ulasim/havalimani" class="px-4 py-2 rounded-sm bg-[#F5EDD6] text-[#1A1008] font-semibold hover:bg-[#EDE0C4]">
+            Havalimanı Detayı
+          </a>
+          <a href="/ulasim" class="px-4 py-2 rounded-sm border border-white/40 hover:bg-white/10">
+            Ulaşım Rehberi
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-10">
+      <div class="container mx-auto px-4 grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-3 bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-5">
+          <p class="text-sm font-semibold uppercase tracking-wide text-[#9A8470]">Hızlı Cevap</p>
+          <h2 class="mt-1 text-xl font-bold text-[#1A1008]">Şanlıurfa uçak saatleri nasıl planlanır?</h2>
+          <p class="mt-2 text-sm leading-6 text-[#6B5540]">
+            Şanlıurfa uçak saatleri için GAP Havalimanı hazırlık adımlarını, yoğun uçuş aralıklarını ve şehir merkezi
+            ulaşım notlarını bu sayfadan takip edebilirsiniz. Kesin sefer bilgisi havayolu ve resmi uçuş ekranıyla doğrulanmalıdır.
+          </p>
+        </div>
+
+        <div class="lg:col-span-2 bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-6 shadow-sm">
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-4">Uçuş Yoğunluk Aralıkları</h2>
+          <div class="space-y-3">
+            {flightBands.map((item) => (
+              <div class="border border-[rgba(200,160,100,0.18)] rounded-sm p-4">
+                <div class="flex items-center justify-between gap-4">
+                  <p class="font-semibold text-[#1A1008]">{item.label}</p>
+                  <span class="text-sm text-[#6B5540] bg-[rgba(200,160,100,0.08)] px-3 py-1 rounded-sm">{item.range}</span>
+                </div>
+                <p class="text-sm text-[#6B5540] mt-1">{item.note}</p>
+              </div>
+            ))}
+          </div>
+          <p class="text-xs text-[#9A8470] mt-4">
+            Not: Kesin uçuş saatleri havayolu operasyonlarına göre değişebilir. Son bilgiyi resmi uçuş ekranından doğrulayın.
+          </p>
+        </div>
+
+        <aside class="space-y-4">
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-5 shadow-sm">
+            <h3 class="font-bold text-[#1A1008] mb-3">Uçuş Öncesi Kontrol Listesi</h3>
+            <ul class="space-y-2 text-sm text-[#6B5540]">
+              {planningChecklist.map((item) => (
+                <li class="flex items-start gap-2"><span>•</span><span>{item}</span></li>
+              ))}
+            </ul>
+          </div>
+          <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-5">
+            <h3 class="font-bold text-[#1A1008]">Hızlı Erişim</h3>
+            <div class="mt-3 space-y-2 text-sm">
+              <a href="/ulasim/otobus-saatleri" class="block text-urfa-600 hover:underline">Otobüs Saatleri</a>
+              <a href="/ulasim/havalimani" class="block text-urfa-600 hover:underline">GAP Havalimanı</a>
+              <a href="/saglik/nobetci-eczaneler" class="block text-urfa-600 hover:underline">Nöbetçi Eczaneler</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a,
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Ulaşım', item: `${baseUrl}/ulasim` },
+      { '@type': 'ListItem', position: 3, name: 'Uçak Saatleri', item: `${baseUrl}/ulasim/ucak-saatleri` },
+    ],
+  })} is:inline />
+</Layout>
+<script is:inline>
+  async function loadTransportFreshness() {
+    try {
+      const res = await fetch('/api/transport/status');
+      if (!res.ok) return;
+      const json = await res.json();
+      const el = document.getElementById('transport-freshness');
+      if (!el || !json?.success) return;
+      const updatedAt = json?.data?.updatedAt;
+      const stale = Boolean(json?.data?.stale);
+      el.textContent = updatedAt
+        ? `Son güncelleme: ${new Date(updatedAt).toLocaleString('tr-TR')} (${stale ? 'eski veri' : 'güncel'})`
+        : 'Son güncelleme bilgisi yok';
+    } catch {
+      // silent
+    }
+  }
+  void loadTransportFreshness();
+</script>

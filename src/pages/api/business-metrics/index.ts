@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { recordBusinessMetrics, getBusinessMetrics } from '../../../lib/business-analytics';
+import { recordBusinessMetrics, getBusinessMetrics } from '../../../lib/analytics/business-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -26,7 +26,7 @@ const metricsSchema = {
 };
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -34,8 +34,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/business-metrics', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/business-metrics', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Başlangıç ve bitiş tarihi gereklidir',
+        'startDate and endDate required',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -76,12 +76,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/business-metrics', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'İşletme metrikleri alınamadı',
+      'Failed to get business metrics',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'İşletme metrikleri alınamadı',
+      'Failed to get business metrics',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -90,7 +90,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -98,8 +98,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/business-metrics', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -113,7 +113,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/business-metrics', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Geçersiz metrik verisi',
+        'Invalid metrics data',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
@@ -126,7 +126,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/business-metrics', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Metrikler kaydedilemedi',
+        'Failed to record metrics',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -141,7 +141,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: metrics,
-        message: 'Metrikler kaydedildi'
+        message: 'Metrics recorded'
       },
       HttpStatus.CREATED,
       requestId
@@ -150,12 +150,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/business-metrics', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Metrikler kaydedilemedi',
+      'Failed to record metrics',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Metrikler kaydedilemedi',
+      'Failed to record metrics',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

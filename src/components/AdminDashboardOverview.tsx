@@ -2,7 +2,7 @@
  * Admin Dashboard Overview Component
  * Main dashboard with metrics and alerts
  */
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
 import { AlertCircle, Users, FileText, Flag, ShieldAlert } from 'lucide-react';
 
 interface DashboardData {
@@ -13,8 +13,12 @@ interface DashboardData {
     moderation: { totalActions: number; warnings: number; suspensions: number; bans: number };
     period: number;
   };
-  metrics: any;
-  moderation: any;
+  metrics: Record<string, unknown>;
+  moderation: {
+    queue: { pending: number; inReview: number };
+    flags: { highSeverity: number };
+    actions: { suspensions: number };
+  } | null;
 }
 
 export default function AdminDashboardOverview() {

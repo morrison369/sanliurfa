@@ -1,37 +1,23 @@
 import type { APIRoute } from 'astro';
-import { getConversations, getOrCreateConversation } from '../../../lib/messages';
+import { getConversations, getOrCreateConversation, sendMessage } from '../../../lib/message/messages';
 import { queryOne } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
-import { canStartConversation } from '../../../lib/social-policy';
-import { enforceApiRateLimit } from '../../../lib/api-rate-limit';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/messages', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const isAllowed = await enforceApiRateLimit(request, 'messages:inbox:list', 120, 15 * 60, locals.user.id);
-    if (!isAllowed) {
-      recordRequest('GET', '/api/messages', HttpStatus.RATE_LIMITED, Date.now() - startTime);
-      return apiError(
-        ErrorCode.RATE_LIMITED,
-        'Çok sık mesaj kutusu sorguluyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
-        HttpStatus.RATE_LIMITED,
-        undefined,
-        requestId
-      );
-    }
-
-    const limit = parseInt(url.searchParams.get('limit') || '50', 10);
-    const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 0, 1_000_000);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     const convos = await getConversations(locals.user.id, limit, offset);
     const duration = Date.now() - startTime;
@@ -42,64 +28,52 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/messages', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get messages failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'İşlem tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Konuşmalar alınırken bir hata oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/messages', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const isAllowed = await enforceApiRateLimit(request, 'messages:conversation:create', 60, 15 * 60, locals.user.id);
-    if (!isAllowed) {
-      recordRequest('POST', '/api/messages', HttpStatus.RATE_LIMITED, Date.now() - startTime);
-      return apiError(
-        ErrorCode.RATE_LIMITED,
-        'Çok sık konuşma başlatıyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
-        HttpStatus.RATE_LIMITED,
-        undefined,
-        requestId
-      );
-    }
+    const body = await request.json() as {
+      recipient_id?: unknown;
+      recipientId?: unknown;
+      content?: unknown;
+    };
+    const rawRecipientId = body.recipient_id ?? body.recipientId;
 
-    const body = await request.json();
-    const { recipient_id } = body;
-
-    if (!recipient_id) {
+    if (typeof rawRecipientId !== 'string' || rawRecipientId.trim().length === 0 || rawRecipientId.length > 36) {
       recordRequest('POST', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'recipient_id required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Alıcı kimliği gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
-    const policy = await canStartConversation(locals.user.id, recipient_id);
-    if (!policy.allowed) {
-      const statusCode = policy.code === 'target_not_found' ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;
-      recordRequest('POST', '/api/messages', statusCode, Date.now() - startTime);
-      return apiError(
-        statusCode === HttpStatus.NOT_FOUND ? ErrorCode.NOT_FOUND : ErrorCode.FORBIDDEN,
-        policy.message,
-        statusCode,
-        undefined,
-        requestId
-      );
+    const recipientId = rawRecipientId.trim();
+    const recipient = await queryOne<{ id: string }>('SELECT id FROM users WHERE id = $1', [recipientId]);
+    if (!recipient) {
+      recordRequest('POST', '/api/messages', HttpStatus.NOT_FOUND, Date.now() - startTime);
+      return apiError(ErrorCode.NOT_FOUND, 'Kullanıcı bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
-    const convo = await getOrCreateConversation(locals.user.id, recipient_id);
+    const convo = await getOrCreateConversation(locals.user.id, recipientId);
+    const content = typeof body.content === 'string' ? body.content.trim() : '';
+    const message = content.length > 0 ? await sendMessage(convo.id, locals.user.id, content) : null;
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/messages', HttpStatus.CREATED, duration);
 
     logger.info('Conversation created', { id: convo.id, userId: locals.user.id });
-    return apiResponse({ success: true, data: convo }, HttpStatus.CREATED, requestId);
+    return apiResponse({ success: true, data: convo, message }, HttpStatus.CREATED, requestId);
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/messages', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Create conversation failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'İşlem tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Konuşma oluşturulurken bir hata oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

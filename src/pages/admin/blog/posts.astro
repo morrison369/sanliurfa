@@ -1,0 +1,142 @@
+---
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getPosts, getCategories } from '../../../lib/blog/db';
+import { safeIntParam } from '../../../lib/api';
+
+const url = new URL(Astro.request.url);
+const status = url.searchParams.get('status') || undefined;
+const category = url.searchParams.get('category') || undefined;
+const search = url.searchParams.get('search') || undefined;
+const page = safeIntParam(url.searchParams.get('page'), 1, 1, 1_000_000);
+const limit = 20;
+const offset = (page - 1) * limit;
+
+const [{ posts, total }, categories] = await Promise.all([
+  getPosts({ status, category, search, limit, offset }),
+  getCategories(),
+]);
+
+const totalPages = Math.ceil(total / limit);
+
+---
+
+<AdminLayout
+  title="Tüm Yazılar"
+  subtitle={`${total} yazı bulundu`}
+  seo={{ title: 'Tüm Yazılar - Yönetim Paneli', noIndex: true }}
+>
+  <a slot="hero-action" href="/admin/blog/new" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700 inline-flex items-center gap-2">
+    <Icon name="lucide:plus" class="w-4 h-4" />
+    Yeni Yazı
+  </a>
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl space-y-5">
+      <div class="mb-2">
+        <a href="/admin/blog" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Blog Yönetimi</a>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+        <form class="flex flex-wrap gap-4" method="get">
+          <div class="flex-1 min-w-[200px]">
+            <input
+              type="text"
+              name="search"
+              value={search}
+              placeholder="Yazı ara..."
+              class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+            />
+          </div>
+
+          <select name="status" class="rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+            <option value="">Tüm Durumlar</option>
+            <option value="published" selected={status === 'published'}>Yayında</option>
+            <option value="draft" selected={status === 'draft'}>Taslak</option>
+            <option value="scheduled" selected={status === 'scheduled'}>Planlandı</option>
+          </select>
+
+          <select name="category" class="rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+            <option value="">Tüm Kategoriler</option>
+            {categories.map(cat => (
+              <option value={cat.slug} selected={category === cat.slug}>{cat.name}</option>
+            ))}
+          </select>
+
+          <button type="submit" class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5c4839]">
+            Filtrele
+          </button>
+        </form>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)]">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Yazı</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Kategori</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Durum</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Görüntülenme</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Tarih</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-[#9A8470] uppercase">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[rgba(200,160,100,0.08)]">
+              {posts.map(post => (
+                <tr class="hover:bg-[rgba(200,160,100,0.04)]">
+                  <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                      {post.featured_image && (
+                        <img src={post.featured_image} alt="" class="w-10 h-10 rounded-sm object-cover" />
+                      )}
+                      <div>
+                        <div class="text-sm font-medium text-[#1A1008]">{post.title}</div>
+                        <div class="text-sm text-[#9A8470]">/{post.slug}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-[#6B5540]">{post.category_name || '-'}</td>
+                  <td class="px-6 py-4">
+                    <span class={`inline-flex px-2 py-0.5 text-xs font-medium rounded-sm ${
+                      post.status === 'published' ? 'bg-[rgba(200,160,100,0.15)] text-[#6B5540]' :
+                      post.status === 'draft' ? 'bg-[rgba(200,160,100,0.08)] text-[#9A8470]' :
+                      'bg-[rgba(200,160,100,0.1)] text-[#6B5540]'
+                    }`}>
+                      {post.status === 'published' ? 'Yayında' : post.status === 'draft' ? 'Taslak' : 'Planlandı'}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-sm text-[#6B5540]">{post.view_count.toLocaleString('tr-TR')}</td>
+                  <td class="px-6 py-4 text-sm text-[#9A8470]">{new Date(post.created_at).toLocaleDateString('tr-TR')}</td>
+                  <td class="px-6 py-4 text-right text-sm">
+                    <a href={`/admin/blog/edit/${post.id}`} class="text-[#9A8470] hover:text-urfa-600 mr-3">Düzenle</a>
+                    <a href={`/blog/${post.slug}`} target="_blank" rel="noopener" class="text-[#9A8470] hover:text-[#6B5540]">Görüntüle</a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {posts.length === 0 && (
+          <div class="py-12 text-center text-sm text-[#9A8470]">Yazı bulunamadı</div>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <div class="flex justify-center gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <a
+              href={`?page=${p}${status ? `&status=${status}` : ''}${category ? `&category=${category}` : ''}${search ? `&search=${search}` : ''}`}
+              class={`px-3 py-1 rounded-sm text-sm ${
+                p === page
+                  ? 'bg-urfa-600 text-white'
+                  : 'bg-[rgba(200,160,100,0.08)] text-[#6B5540] hover:bg-[rgba(200,160,100,0.15)]'
+              }`}
+            >
+              {p}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+</AdminLayout>

@@ -23,6 +23,13 @@ export const migration_121_mentions_shares = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_mentions ADD COLUMN IF NOT EXISTS mentioned_user_id UUID;
+      ALTER TABLE user_mentions ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false;
+      ALTER TABLE user_mentions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE user_mentions ADD COLUMN IF NOT EXISTS mentioned_by_user_id UUID;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_mentions_user
       ON user_mentions(mentioned_user_id, is_read, created_at DESC)
     `);
@@ -45,6 +52,13 @@ export const migration_121_mentions_shares = async (pool: Pool) => {
         shared_at TIMESTAMP DEFAULT NOW(),
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE content_shares ADD COLUMN IF NOT EXISTS shared_by_user_id UUID;
+      ALTER TABLE content_shares ADD COLUMN IF NOT EXISTS content_type VARCHAR(100);
+      ALTER TABLE content_shares ADD COLUMN IF NOT EXISTS content_id UUID;
+      ALTER TABLE content_shares ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`
@@ -73,6 +87,10 @@ export const migration_121_mentions_shares = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE share_analytics ADD COLUMN IF NOT EXISTS share_count INT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_share_analytics_count
       ON share_analytics(share_count DESC)
     `);
@@ -87,6 +105,11 @@ export const migration_121_mentions_shares = async (pool: Pool) => {
         sent_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE mention_notifications ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE mention_notifications ADD COLUMN IF NOT EXISTS notification_sent BOOLEAN DEFAULT false;
     `);
 
     await pool.query(`

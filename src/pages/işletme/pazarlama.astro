@@ -1,0 +1,81 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import FeaturedListingsManager from '../../components/FeaturedListingsManager';
+import MarketingCampaignBuilder from '../../components/MarketingCampaignBuilder';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/işletme/pazarlama');
+}
+
+const seo = {
+  title: 'Pazarlama & Öne Çıkan Listeler',
+  description: 'İşletmenizi pazarlayın ve öne çıkan liste oluşturun',
+  noIndex: true
+};
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-10">
+      <div class="max-w-6xl mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">İŞLETME PANELİ</p>
+        <h1 class="text-3xl font-bold text-[#F5EDD6] mb-2">Pazarlama & Öne Çıkan Listeler</h1>
+        <p class="text-[#C4B49A]">
+          İşletmenizi pazarlayın, kampanyalar oluşturun ve öne çıkan listeler yönetin
+        </p>
+      </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="grid md:grid-cols-2 gap-8">
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-6 pb-4 border-b border-[rgba(200,160,100,0.14)]">
+            Öne Çıkan Listeler
+          </h2>
+          <div class="text-sm text-[#6B5540] mb-6">
+            <p>
+              Öne çıkan listeler, işletmenizi platformda öne çıkarmak için premium bir özelliktir.
+              Daha fazla görünürlük kazanın, müşteri trafiğini artırın ve başarıyı ölçün.
+            </p>
+          </div>
+          <FeaturedListingsManager client:visible />
+        </div>
+
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-6 pb-4 border-b border-[rgba(200,160,100,0.14)]">
+            Pazarlama Kampanyaları
+          </h2>
+          <div class="text-sm text-[#6B5540] mb-6">
+            <p>
+              Hedeflenen pazarlama kampanyaları oluşturun. Bütçe yönetimi, performans takibi
+              ve detaylı analizler ile başarınızı maksimize edin.
+            </p>
+          </div>
+          <MarketingCampaignBuilder client:visible />
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6 mt-8">
+        <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-4">
+          <h3 class="font-semibold text-[#1A1008] mb-2">Analitik</h3>
+          <p class="text-sm text-[#6B5540]">
+            Her kampanya ve öne çıkan listeninizin performansını gerçek zamanlı olarak izleyin.
+          </p>
+        </div>
+        <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-4">
+          <h3 class="font-semibold text-[#1A1008] mb-2">Bütçe Kontrolü</h3>
+          <p class="text-sm text-[#6B5540]">
+            Pazarlama harcamalarınızı kontrol edin ve ROI'nizi takip edin.
+          </p>
+        </div>
+        <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-4">
+          <h3 class="font-semibold text-[#1A1008] mb-2">Hedefleme</h3>
+          <p class="text-sm text-[#6B5540]">
+            Kampanyalarınız için özel hedefler belirleyin ve doğru müşterilere ulaşın.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

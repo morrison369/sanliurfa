@@ -1,0 +1,144 @@
+---
+
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+const { baseUrl } = await getSiteBranding();
+
+const { kategori } = Astro.params;
+
+const categoryMeta: Record<string, { name: string; icon: string }> = {
+  'kuaforler': { name: 'Kuaförler', icon: '💇' },
+  'berberler': { name: 'Berberler', icon: '✂️' },
+  'temizlik-firmalari': { name: 'Temizlik Firmaları', icon: '🧹' },
+  'nakliyat': { name: 'Nakliyat', icon: '🚚' },
+  'cilingir': { name: 'Çilingir', icon: '🔑' },
+  'elektrikci': { name: 'Elektrikçi', icon: '⚡' },
+  'tesisatci': { name: 'Tesisatçı', icon: '🔧' },
+};
+
+const meta = categoryMeta[kategori || ''] || { name: kategori || '', icon: '🛠️' };
+
+let places: any[] = [];
+
+try {
+  const result = await query(
+    `SELECT p.*, d.name as district_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     LEFT JOIN districts d ON p.district_id = d.id
+     WHERE c.slug = $1 AND p.status = 'active'
+     ORDER BY p.is_featured DESC, p.rating DESC`,
+    [kategori]
+  );
+  places = result.rows;
+} catch (e) {
+  logger.error('Error loading hizmetler kategori:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: `Şanlıurfa ${meta.name} | Hizmetler Rehberi`,
+  description: `Şanlıurfa'da ${meta.name.toLowerCase()}. Adres, telefon ve iletişim bilgileri.`,
+  keywords: ['şanlıurfa ' + meta.name.toLowerCase(), 'urfa ' + meta.name.toLowerCase(), meta.name + ' şanlıurfa', 'şanlıurfa hizmetler'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: `/hizmetler/${kategori}`,
+};
+const faqItems = [
+  { S: `Şanlıurfa'da ${meta.name.toLowerCase()} seçenekleri nelerdir?`, C: `Şanlıurfa'da ${meta.name.toLowerCase()} için güncel liste ve değerlendirmeler rehberimizde yer almaktadır.` },
+  { S: `${meta.name} için hangi ilçeler öne çıkıyor?`, C: `Eyyübiye, Haliliye ve Karaköprü ilçeleri hizmet yoğunluğu açısından öne çıkan bölgeler arasındadır.` },
+  { S: `${meta.name} bilgilerini nasıl güncelleyebilirim?`, C: `Mekan sayfasına giriş yaparak güncelleme talebinde bulunabilir veya iletişim formu üzerinden bildirimde bulunabilirsiniz.` },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#FDFAF3] border-b border-[rgba(200,160,100,0.14)]">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-[#9A8470]">
+          <a href="/" class="hover:text-urfa-600">Ana Sayfa</a>
+          <span>/</span>
+          <a href="/hizmetler" class="hover:text-urfa-600">Hizmetler</a>
+          <span>/</span>
+          <span class="text-[#1A1008] font-medium">{meta.name}</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center gap-4">
+          <span class="text-5xl">{meta.icon}</span>
+          <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-[#F5EDD6]">Şanlıurfa {meta.name}</h1>
+            <p class="text-[#9A8470] mt-1">{places.length} firma bulundu</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      {places.length > 0 ? (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {places.map((place) => (
+            <a href={`/isletme/${place.slug}`} class="bg-white rounded-sm p-5 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group">
+              <div class="flex items-start gap-3">
+                <span class="text-3xl">{meta.icon}</span>
+                <div>
+                  <h2 class="font-bold text-[#1A1008] group-hover:text-urfa-700">{place.name}</h2>
+                  {place.district_name && <p class="text-xs text-[#9A8470]">{place.district_name}</p>}
+                  {place.address && <p class="text-sm text-[#9A8470] mt-1">📍 {place.address}</p>}
+                  {place.phone && <p class="text-sm text-[#9A8470]">📞 {place.phone}</p>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <div class="text-6xl mb-4">{meta.icon}</div>
+          <p class="text-[#9A8470] text-lg">Bu kategoride henüz kayıt bulunmuyor.</p>
+          <a href="/hizmetler" class="mt-4 inline-block text-urfa-600 hover:underline">Hizmetler Rehberine Dön →</a>
+        </div>
+      )}
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `Şanlıurfa ${meta.name}`,
+    description: `Şanlıurfa'da ${meta.name.toLowerCase()}. Adres, telefon ve iletişim bilgileri.`,
+    url: `${baseUrl}/hizmetler/${kategori}`,
+    about: { '@type': 'City', name: 'Şanlıurfa' },
+    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'LocalBusiness',
+        '@id': `${baseUrl}/isletme/${p.slug}`,
+        name: p.name,
+        url: `${baseUrl}/isletme/${p.slug}`,
+        ...(p.address ? { address: p.address } : {}),
+        ...(p.phone ? { telephone: p.phone } : {}),
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Hizmetler', item: `${baseUrl}/hizmetler` },
+      { '@type': 'ListItem', position: 3, name: meta.name, item: `${baseUrl}/hizmetler/${kategori}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

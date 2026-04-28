@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Blog API - Yazılar
  * GET /api/blog/posts - Blog yazılarını listele (filtreleme, sıralama, sayfalama)
@@ -7,29 +6,53 @@
 
 import type { APIRoute } from 'astro';
 import { getBlogPosts, createBlogPost } from '../../../../lib/blog';
-import { validateWithSchema, commonSchemas } from '../../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam, safeErrorDetail } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { generateSlug } from '../../../../lib/seo-utils';
+
+type BlogPostStatus = 'published' | 'draft' | 'all';
+
+const VALID_POST_STATUSES = new Set<BlogPostStatus>(['published', 'draft', 'all']);
+
+type BlogPostCreateInput = {
+  title: string;
+  content: string;
+  excerpt?: string;
+  category?: string;
+  categoryId?: number;
+  featuredImage?: string;
+  thumbnail?: string;
+  status?: 'draft' | 'published';
+  seoTitle?: string;
+  seoDescription?: string;
+  seoKeywords?: string;
+  tags?: string;
+};
+
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    const status = (url.searchParams.get('status') || 'published') as string;
-    const categoryId = url.searchParams.get('categoryId') ? parseInt(url.searchParams.get('categoryId')!) : undefined;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
-    const sort = (url.searchParams.get('sort') || 'recent') as 'recent' | 'featured' | 'popular';
+    const rawStatus = url.searchParams.get('status') || 'published';
+    const status: BlogPostStatus = VALID_POST_STATUSES.has(rawStatus as BlogPostStatus)
+      ? (rawStatus as BlogPostStatus)
+      : 'published';
+    const rawCategory = url.searchParams.get('category') || url.searchParams.get('categoryId');
+    const category = rawCategory ? rawCategory.substring(0, 100) : undefined;
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
+    const page = Math.floor(Math.max(offset, 0) / Math.max(limit, 1)) + 1;
 
     const { posts, total } = await getBlogPosts({
       status,
-      categoryId,
+      category,
       limit,
-      offset,
-      sort
+      page,
     });
 
     const duration = Date.now() - startTime;
@@ -54,7 +77,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/blog/posts', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog yazısı işlemi başarısız')
     });
     logger.error('Blog yazıları alınamadı', err instanceof Error ? err : new Error(String(err)));
 
@@ -69,13 +92,13 @@ export const GET: APIRoute = async ({ request, url }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Yetki kontrolü - sadece admin
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/blog/posts', HttpStatus.FORBIDDEN, duration);
       return apiError(
@@ -90,10 +113,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const body = await request.json();
 
     // Validasyon
-    const postSchema = {
+    const postSchema: ValidationSchema = {
       title: { type: 'string' as const, required: true, minLength: 3, maxLength: 255, sanitize: true },
-      content: { type: 'string' as const, required: true, minLength: 10, sanitize: true },
+      content: { type: 'string' as const, required: true, minLength: 10, maxLength: 100000, sanitize: true },
       excerpt: { type: 'string' as const, required: false, maxLength: 500, sanitize: true },
+      category: { type: 'string' as const, required: false, maxLength: 120, sanitize: true },
       categoryId: { type: 'number' as const, required: false, min: 1 },
       featuredImage: { type: 'string' as const, required: false, sanitize: true },
       thumbnail: { type: 'string' as const, required: false, sanitize: true },
@@ -105,7 +129,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       tags: { type: 'string' as const, required: false }
     };
 
-    const validation = validateWithSchema(body, postSchema as any);
+    const validation = validateWithSchema(body, postSchema);
     if (!validation.valid) {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/blog/posts', HttpStatus.UNPROCESSABLE_ENTITY, duration);
@@ -118,23 +142,27 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    const data = validation.data as BlogPostCreateInput;
+
     // Blog yazısı oluştur
-    const tags = typeof body.tags === 'string' ? body.tags.split(',').map((t: string) => t.trim()) : [];
+    const tags =
+      typeof data.tags === 'string'
+        ? data.tags
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+        : [];
 
     const post = await createBlogPost({
-      title: validation.data.title,
-      content: validation.data.content,
-      excerpt: validation.data.excerpt,
-      categoryId: validation.data.categoryId,
-      featuredImage: validation.data.featuredImage,
-      thumbnail: validation.data.thumbnail,
-      status: validation.data.status || 'draft',
-      isFeatured: validation.data.isFeatured || false,
-      seoTitle: validation.data.seoTitle,
-      seoDescription: validation.data.seoDescription,
-      seoKeywords: validation.data.seoKeywords,
+      slug: generateSlug(data.seoTitle || data.title),
+      title: data.title,
+      content: data.content,
+      excerpt: data.excerpt || data.seoDescription || data.content.slice(0, 180),
+      category: data.category || (data.categoryId ? String(data.categoryId) : 'genel'),
+      cover_image: data.featuredImage || data.thumbnail,
+      status: data.status || 'draft',
       tags,
-      authorId: locals.user?.id
+      author_id: locals.user?.id || 'system',
     });
 
     if (!post) {
@@ -143,7 +171,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/blog/posts', HttpStatus.CREATED, duration);
-    logger.logMutation('create', 'blog_posts', post.id, locals.user?.id, { duration });
+    logger.logMutation('create', 'blog_posts', post.id, locals.user?.id);
 
     return apiResponse(
       {
@@ -156,7 +184,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/blog/posts', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog yazısı işlemi başarısız')
     });
     logger.error('Blog yazısı oluşturulamadı', err instanceof Error ? err : new Error(String(err)));
 

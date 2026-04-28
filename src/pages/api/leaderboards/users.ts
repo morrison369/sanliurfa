@@ -3,47 +3,32 @@
  * GET: Retrieve top users by different metrics (points, level, activity, recent)
  */
 
-import type { APIRoute } from "astro";
-import { queryMany } from "../../../lib/postgres";
-import {
-  apiResponse,
-  apiError,
-  HttpStatus,
-  ErrorCode,
-  getRequestId,
-} from "../../../lib/api";
-import { recordRequest } from "../../../lib/metrics";
-import { logger } from "../../../lib/logging";
-import { getCache, setCache } from "../../../lib/cache";
-import { getCuratedLeaderboard } from "../../../data/curated-users";
+import type { APIRoute } from 'astro';
+import { queryMany } from '../../../lib/postgres';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
+import { recordRequest } from '../../../lib/metrics';
+import { logger } from '../../../lib/logging';
+import { getCache, setCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Get query parameters
-    const sortBy = url.searchParams.get("sortBy") || "points"; // points, level, activity, recent
-    const limit = Math.min(
-      parseInt(url.searchParams.get("limit") || "50"),
-      100,
-    );
+    const sortBy = url.searchParams.get('sortBy') || 'points'; // points, level, activity, recent
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
 
     // Validate sortBy
-    if (!["points", "level", "activity", "recent"].includes(sortBy)) {
-      recordRequest(
-        "GET",
-        "/api/leaderboards/users",
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        Date.now() - startTime,
-      );
+    if (!['points', 'level', 'activity', 'recent'].includes(sortBy)) {
+      recordRequest('GET', '/api/leaderboards/users', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        "Geçersiz sıralama türü",
+        'Geçersiz sıralama türü',
         HttpStatus.UNPROCESSABLE_ENTITY,
         undefined,
-        requestId,
+        requestId
       );
     }
 
@@ -52,17 +37,17 @@ export const GET: APIRoute = async ({ request, url }) => {
     const cached = await getCache<any[]>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
-      recordRequest("GET", "/api/leaderboards/users", HttpStatus.OK, duration);
+      recordRequest('GET', '/api/leaderboards/users', HttpStatus.OK, duration);
       return apiResponse(
         {
           success: true,
           data: cached,
           count: cached.length,
-          sortBy,
+          sortBy
         },
         HttpStatus.OK,
         requestId,
-        { "X-Cache": "HIT" },
+        { 'X-Cache': 'HIT' }
       );
     }
 
@@ -89,16 +74,16 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     // Add ordering
     switch (sortBy) {
-      case "points":
+      case 'points':
         sql += ` ORDER BY u.points DESC, u.level DESC, u.created_at ASC`;
         break;
-      case "level":
+      case 'level':
         sql += ` ORDER BY u.level DESC, u.points DESC, u.created_at ASC`;
         break;
-      case "activity":
+      case 'activity':
         sql += ` ORDER BY activity_count DESC, u.points DESC, u.created_at ASC`;
         break;
-      case "recent":
+      case 'recent':
         sql += ` ORDER BY u.created_at DESC`;
         break;
     }
@@ -108,7 +93,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const result = await queryMany(sql, [limit]);
 
     // Format response with ranks
-    const leaderboard = result.rows.map((row: any, index: number) => ({
+    const leaderboard = result.map((row, index: number) => ({
       rank: index + 1,
       id: row.id,
       full_name: row.full_name,
@@ -117,62 +102,38 @@ export const GET: APIRoute = async ({ request, url }) => {
       points: row.points,
       level: row.level,
       created_at: row.created_at,
-      activity_count: parseInt(row.activity_count || "0"),
-      badge_count: parseInt(row.badge_count || "0"),
-      review_count: parseInt(row.review_count || "0"),
-      favorite_count: parseInt(row.favorite_count || "0"),
+      activity_count: parseInt(row.activity_count || '0'),
+      badge_count: parseInt(row.badge_count || '0'),
+      review_count: parseInt(row.review_count || '0'),
+      favorite_count: parseInt(row.favorite_count || '0')
     }));
 
-    const responseLeaderboard =
-      leaderboard.length > 0
-        ? leaderboard
-        : getCuratedLeaderboard(sortBy, limit);
-
     // Cache for 10 minutes
-    await setCache(cacheKey, responseLeaderboard, 600);
+    await setCache(cacheKey, leaderboard, 600);
 
     const duration = Date.now() - startTime;
-    recordRequest("GET", "/api/leaderboards/users", HttpStatus.OK, duration);
+    recordRequest('GET', '/api/leaderboards/users', HttpStatus.OK, duration);
 
     return apiResponse(
       {
         success: true,
-        data: responseLeaderboard,
-        count: responseLeaderboard.length,
-        sortBy,
+        data: leaderboard,
+        count: leaderboard.length,
+        sortBy
       },
       HttpStatus.OK,
-      requestId,
+      requestId
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest(
-      "GET",
-      "/api/leaderboards/users",
+    recordRequest('GET', '/api/leaderboards/users', HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    logger.error('Get leaderboards failed', error instanceof Error ? error : new Error(String(error)));
+    return apiError(
+      ErrorCode.INTERNAL_ERROR,
+      'Liderlik tablosu alınırken bir hata oluştu',
       HttpStatus.INTERNAL_SERVER_ERROR,
-      duration,
-    );
-    logger.error(
-      "Get leaderboards failed",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    const sortBy = url.searchParams.get("sortBy") || "points";
-    const limit = Math.min(
-      parseInt(url.searchParams.get("limit") || "50"),
-      100,
-    );
-    const fallbackLeaderboard = getCuratedLeaderboard(sortBy, limit);
-
-    return apiResponse(
-      {
-        success: true,
-        data: fallbackLeaderboard,
-        count: fallbackLeaderboard.length,
-        sortBy,
-        fallback: true,
-      },
-      HttpStatus.OK,
-      requestId,
+      undefined,
+      requestId
     );
   }
 };

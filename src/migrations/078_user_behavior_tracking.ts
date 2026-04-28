@@ -60,6 +60,12 @@ export const migration_078_user_behavior_tracking = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE page_views ADD COLUMN IF NOT EXISTS viewed_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE page_views ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE page_views ADD COLUMN IF NOT EXISTS session_id VARCHAR(255);
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_page_views_session
       ON page_views(session_id, viewed_at DESC)
     `);

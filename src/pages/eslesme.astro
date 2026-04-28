@@ -1,0 +1,115 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { requireAuth } from '../lib/auth';
+import SwipeMatchExperience from '../components/SwipeMatchExperience';
+import { getSiteBranding } from '../lib/site-branding';
+
+const auth = await requireAuth(Astro.request);
+const isAuthenticated = Boolean(auth.user);
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa eşleşme özelliği ücretsiz mi?',
+    C: 'Evet. İlk aşamada eşleşme, profil görüntüleme ve mesajlaşma başlangıcı ücretsiz olarak açık tutulur.',
+  },
+  {
+    S: 'Eşleşme profilinde kaç fotoğraf olabilir?',
+    C: 'Kullanıcılar eşleşme profiline en fazla 4 fotoğraf ekleyebilir.',
+  },
+  {
+    S: 'Eşleşme sonrası mesajlaşma yapılabilir mi?',
+    C: 'Karşılıklı eşleşme sonrası üyeler mesajlaşma akışına geçebilir.',
+  },
+];
+---
+
+<Layout
+  title="Eşleşme - Şanlıurfa"
+  seo={{
+    title: 'Şanlıurfa Eşleşme | Tinder Benzeri Swipe',
+    description: 'Profiline en fazla 4 fotoğraf ekle, üyeleri sağa/sola kaydırarak eşleş ve mesajlaş.',
+    ogImage: '/images/hero/hero-home.webp',
+    canonical: '/eslesme',
+  }}
+>
+  {isAuthenticated ? (
+    <div class="min-h-screen bg-[#FDFAF3]">
+      <SwipeMatchExperience client:idle />
+    </div>
+  ) : (
+    <div class="min-h-screen bg-[#0D0A08] text-white">
+      <div class="container mx-auto max-w-5xl px-4 py-24">
+        <div class="rounded-sm border border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)] p-8 shadow-2xl shadow-black/30">
+          <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470]">Eşleşme ücretsiz açık</p>
+          <h1 class="mt-4 text-4xl font-extrabold md:text-6xl text-[#F5EDD6]">Şanlıurfa topluluğunda kaydır, eşleş, mesajlaş</h1>
+          <p class="mt-5 max-w-3xl text-lg text-[#C4B49A]">
+            Profiline en fazla 4 fotoğraf ekleyebilir, üyeleri sağa/sola kaydırarak eşleşebilir ve eşleşme sonrası
+            mesajlaşmaya başlayabilirsin. Özellik ilk aşamada ücretsizdir; kötüye kullanım için sadece güvenlik
+            limitleri uygulanır.
+          </p>
+          <div class="mt-6 rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] p-5">
+            <p class="text-sm font-semibold uppercase tracking-wide text-[#9A8470]">Hızlı Cevap</p>
+            <h2 class="mt-1 text-xl font-bold text-[#F5EDD6]">Şanlıurfa eşleşme modülünde nasıl başlanır?</h2>
+            <p class="mt-2 text-sm leading-6 text-[#C4B49A]">
+              Ücretsiz hesap açtıktan sonra 4 fotoğraflı profilini tamamlayabilir, Şanlıurfa topluluğundaki üyeleri
+              sağa/sola kaydırarak değerlendirebilir ve eşleşme sonrası mesajlaşmaya başlayabilirsin.
+            </p>
+          </div>
+          <div class="mt-8 grid gap-4 md:grid-cols-3">
+            <div class="rounded-sm border border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.06)] p-5">
+              <div class="text-3xl font-black text-urfa-400">4</div>
+              <p class="mt-1 text-sm text-[#C4B49A]">Fotoğraflı profil</p>
+            </div>
+            <div class="rounded-sm border border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.06)] p-5">
+              <div class="text-3xl font-black text-urfa-300">Swipe</div>
+              <p class="mt-1 text-sm text-[#C4B49A]">Sağa beğen, sola geç</p>
+            </div>
+            <div class="rounded-sm border border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.06)] p-5">
+              <div class="text-3xl font-black text-urfa-300">Mesaj</div>
+              <p class="mt-1 text-sm text-[#C4B49A]">Eşleşme sonrası sohbet</p>
+            </div>
+          </div>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="/kayit?redirect=/eslesme" class="rounded-sm bg-urfa-600 px-5 py-3 font-bold text-white hover:bg-urfa-700 transition-colors">
+              Ücretsiz Hesap Aç
+            </a>
+            <a href="/giris?redirect=/eslesme" class="rounded-sm border border-[rgba(200,160,100,0.2)] px-5 py-3 font-bold text-[#C4B49A] hover:bg-[rgba(200,160,100,0.08)] transition-colors">
+              Giriş Yap
+            </a>
+            <a href="/topluluk" class="rounded-sm border border-[rgba(200,160,100,0.2)] px-5 py-3 font-bold text-[#C4B49A] hover:bg-[rgba(200,160,100,0.08)] transition-colors">
+              Topluluk Sayfası
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.C,
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Şanlıurfa Eşleşme',
+    url: `${baseUrl}/eslesme`,
+    description: 'Şanlıurfa topluluğu için ücretsiz swipe, eşleşme ve mesajlaşma başlangıç sayfası.',
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Eşleşme', item: `${baseUrl}/eslesme` },
+    ],
+  })} is:inline />
+</Layout>

@@ -1,21 +1,21 @@
-// @ts-nocheck
 /**
  * React hook for API error handling
  */
 
 import { useState, useCallback } from 'react';
-import { AppError, unknownToAppError, fetchWithErrorHandling } from './error-handling';
-import { toast } from './toast';
+import { type AppError, unknownToAppError } from './error-handling';
+
 
 interface UseApiErrorOptions {
   showToast?: boolean;
-  lang?: 'tr';
+  lang?: 'tr' | 'en';
   onError?: (error: AppError) => void;
 }
 
 export function useApiError(options: UseApiErrorOptions = {}) {
   const {
     showToast = true,
+    lang = 'tr',
     onError
   } = options;
 
@@ -23,18 +23,13 @@ export function useApiError(options: UseApiErrorOptions = {}) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleError = useCallback(
-    (err: unknown, context?: string) => {
-      const appError = unknownToAppError(err, context);
+    (err: unknown, _context?: string) => {
+      const appError = unknownToAppError(err);
       setError(appError);
-
-      if (showToast) {
-        const message = appError.userMessage || `${appError.type}: ${appError.message}`;
-        toast.error(message);
-      }
 
       onError?.(appError);
     },
-    [showToast, onError]
+    [showToast, lang, onError]
   );
 
   const clearError = useCallback(() => {
@@ -60,39 +55,12 @@ export function useApiError(options: UseApiErrorOptions = {}) {
     [handleError]
   );
 
-  const fetchWithHandler = useCallback(
-    async <T,>(
-      url: string,
-      options?: RequestInit
-    ): Promise<T | null> => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const response = await fetchWithErrorHandling(url, options);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        return await response.json() as T;
-      } catch (err) {
-        handleError(err, url);
-        return null;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [handleError]
-  );
-
   return {
     error,
     isLoading,
     clearError,
     handleError,
-    executeAsync,
-    fetchWithHandler
+    executeAsync
   };
 }
 

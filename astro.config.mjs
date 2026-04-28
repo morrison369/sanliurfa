@@ -1,66 +1,250 @@
-import { defineConfig } from 'astro/config';
+import { defineConfig, envField } from 'astro/config';
 import node from '@astrojs/node';
-import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
+import react from '@astrojs/react';
 import partytown from '@astrojs/partytown';
+import icon from 'astro-icon';
 import compress from 'astro-compress';
 import tailwindcss from '@tailwindcss/vite';
 
 const site = process.env.SITE_URL || 'https://sanliurfa.com';
-const appPort = Number(process.env.PORT || 4321);
+const port = parseInt(process.env.PORT || '4321', 10);
+
+// astro-compress: HTML/CSS/JS/SVG production sıkıştırma. SW dosyaları exclude
+// (workbox runtime hash compare bozulur).
+const compressionPlugin = compress({
+  CSS: true,
+  HTML: true,
+  JavaScript: true,
+  Image: false,
+  SVG: true,
+  Exclude: [
+    (file) => file.includes('service-worker') || file.includes('sw-advanced') || file.includes('sw.js'),
+  ],
+});
 
 export default defineConfig({
   site,
   output: 'server',
+  devToolbar: {
+    enabled: true,
+  },
+  // Astro 6.x built-in CSRF protection — verifies Origin header matches Astro.site for form POSTs
+  security: {
+    checkOrigin: true,
+  },
+  env: {
+    schema: {
+      PORT: envField.number({ context: 'server', access: 'public', default: 4321 }),
+      NODE_ENV: envField.enum({
+        context: 'server',
+        access: 'public',
+        values: ['development', 'production', 'test'],
+        default: 'development',
+      }),
+      SITE_URL: envField.string({
+        context: 'server',
+        access: 'public',
+        optional: true,
+        default: 'https://sanliurfa.com',
+      }),
+      PUBLIC_SITE_URL: envField.string({
+        context: 'client',
+        access: 'public',
+        optional: true,
+        default: 'https://sanliurfa.com',
+      }),
+      DATABASE_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
+      JWT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+      REDIS_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
+      RESEND_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      STRIPE_SECRET_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      GOOGLE_ANALYTICS_ID: envField.string({ context: 'server', access: 'public', optional: true }),
+      PUBLIC_GA_MEASUREMENT_ID: envField.string({ context: 'client', access: 'public', optional: true }),
+      VAPID_PUBLIC_KEY: envField.string({ context: 'server', access: 'public', optional: true }),
+      PUBLIC_VAPID_PUBLIC_KEY: envField.string({ context: 'client', access: 'public', optional: true }),
+      VAPID_PRIVATE_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      PUBLIC_SUPABASE_URL: envField.string({ context: 'client', access: 'public', optional: true }),
+      PUBLIC_SUPABASE_ANON_KEY: envField.string({ context: 'client', access: 'public', optional: true }),
+
+      // Auth & internal
+      ADMIN_EMAIL: envField.string({ context: 'server', access: 'public', optional: true, default: 'admin@sanliurfa.com' }),
+      INTERNAL_API_TOKEN: envField.string({ context: 'server', access: 'secret', optional: true }),
+      BCRYPT_ROUNDS: envField.number({ context: 'server', access: 'public', optional: true, default: 12 }),
+      JWT_REFRESH_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+
+      // OAuth (Google + Facebook)
+      GOOGLE_CLIENT_ID: envField.string({ context: 'server', access: 'public', optional: true }),
+      GOOGLE_CLIENT_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+      FACEBOOK_APP_ID: envField.string({ context: 'server', access: 'public', optional: true }),
+      FACEBOOK_APP_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+
+      // Image providers (Pexels free, Unsplash free)
+      PEXELS_API_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      UNSPLASH_ACCESS_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+
+      // Email + CORS
+      EMAIL_FROM: envField.string({ context: 'server', access: 'public', optional: true }),
+      ALLOWED_ORIGINS: envField.string({ context: 'server', access: 'public', optional: true }),
+
+      // DB read replica
+      READ_REPLICA_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
+
+      // E2E test bypass
+      E2E_ADMIN_BYPASS: envField.string({ context: 'server', access: 'public', optional: true }),
+      E2E_RATE_LIMIT_BYPASS: envField.string({ context: 'server', access: 'public', optional: true }),
+
+      // Auth & session
+      AUTH_REDIS_SESSION_REQUIRED: envField.string({ context: 'server', access: 'public', optional: true }),
+      EXPORT_TOKEN_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+      METRICS_API_TOKEN: envField.string({ context: 'server', access: 'secret', optional: true }),
+      SESSION_TIMEOUT: envField.number({ context: 'server', access: 'public', optional: true, default: 86400 }),
+
+      // DB connection components (DATABASE_URL fallback)
+      DB_HOST: envField.string({ context: 'server', access: 'public', optional: true }),
+      DB_PORT: envField.number({ context: 'server', access: 'public', optional: true }),
+      DB_NAME: envField.string({ context: 'server', access: 'public', optional: true }),
+      DB_USER: envField.string({ context: 'server', access: 'public', optional: true }),
+      DB_PASSWORD: envField.string({ context: 'server', access: 'secret', optional: true }),
+
+      // Redis connection components (REDIS_URL fallback)
+      REDIS_HOST: envField.string({ context: 'server', access: 'public', optional: true }),
+      REDIS_PORT: envField.number({ context: 'server', access: 'public', optional: true }),
+      REDIS_PASSWORD: envField.string({ context: 'server', access: 'secret', optional: true }),
+      REDIS_DB: envField.number({ context: 'server', access: 'public', optional: true }),
+      REDIS_KEY_PREFIX: envField.string({ context: 'server', access: 'public', optional: true, default: 'sanliurfa:' }),
+
+
+      // Sentry observability (optional, SaaS or self-hosted; SENTRY_DSN yoksa silent skip)
+      SENTRY_DSN: envField.string({ context: 'server', access: 'secret', optional: true }),
+      SENTRY_RELEASE: envField.string({ context: 'server', access: 'public', optional: true }),
+      SENTRY_ENVIRONMENT: envField.string({ context: 'server', access: 'public', optional: true }),
+      PUBLIC_SENTRY_DSN: envField.string({ context: 'client', access: 'public', optional: true }),
+      PUBLIC_SENTRY_RELEASE: envField.string({ context: 'client', access: 'public', optional: true }),
+      PUBLIC_SENTRY_ENVIRONMENT: envField.string({ context: 'client', access: 'public', optional: true }),
+      SENTRY_TEST_ERROR_ENABLED: envField.string({ context: 'server', access: 'public', optional: true }),
+
+      // SMTP connection
+      SMTP_HOST: envField.string({ context: 'server', access: 'public', optional: true }),
+      SMTP_PORT: envField.number({ context: 'server', access: 'public', optional: true, default: 587 }),
+      SMTP_SECURE: envField.string({ context: 'server', access: 'public', optional: true }),
+      SMTP_USER: envField.string({ context: 'server', access: 'public', optional: true }),
+      SMTP_PASS: envField.string({ context: 'server', access: 'secret', optional: true }),
+      SMTP_FROM: envField.string({ context: 'server', access: 'public', optional: true }),
+      SMTP_FROM_NAME: envField.string({ context: 'server', access: 'public', optional: true }),
+      EMAIL_MOCK: envField.string({ context: 'server', access: 'public', optional: true }),
+
+      // Social / matching features
+      SOCIAL_OPEN_ACCESS: envField.string({ context: 'server', access: 'public', optional: true }),
+      SOCIAL_TINDER_ENABLED: envField.string({ context: 'server', access: 'public', optional: true }),
+      SOCIAL_AUTO_CONVERSATION: envField.string({ context: 'server', access: 'public', optional: true }),
+      SOCIAL_SWIPE_DAILY_LIMIT: envField.number({ context: 'server', access: 'public', optional: true, default: 100 }),
+
+      // Rate limiting & ops
+      RATE_LIMIT_WINDOW: envField.number({ context: 'server', access: 'public', optional: true }),
+      CORS_ORIGINS: envField.string({ context: 'server', access: 'public', optional: true }),
+      CLAMAV_ENABLED: envField.string({ context: 'server', access: 'public', optional: true }),
+      PHASE1_FREE_MODE: envField.string({ context: 'server', access: 'public', optional: true }),
+      PLACE_PENDING_SLA_HOURS: envField.number({ context: 'server', access: 'public', optional: true, default: 72 }),
+      GA_TRACKING_ID: envField.string({ context: 'server', access: 'public', optional: true }),
+
+      // Blog webhooks
+      BLOG_WEBHOOKS: envField.string({ context: 'server', access: 'public', optional: true }),
+      BLOG_WEBHOOK_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
+
+      // Public app URL (client-side accessible)
+      PUBLIC_APP_URL: envField.string({ context: 'client', access: 'public', optional: true }),
+    },
+  },
+  // Astro core prefetch: daha hizli MPA gecisleri icin tum dahili linklerde prefetch.
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'hover',
+  },
   adapter: node({
     mode: 'standalone',
-    port: appPort,
+    host: process.env.HOST || '0.0.0.0',
+    port,
   }),
   integrations: [
-    mdx(),
     react(),
+    mdx(),
+    {
+      name: 'sanliurfa-devtools',
+      hooks: {
+        'astro:config:setup': ({ addDevToolbarApp }) => {
+          addDevToolbarApp({
+            id: 'sanliurfa-devtools',
+            name: 'Şanlıurfa DevTools',
+            icon: '🌙',
+            entrypoint: new URL('./src/devtools/sanliurfa-toolbar.ts', import.meta.url),
+          });
+        },
+      },
+    },
     partytown({
       config: {
-        forward: ['dataLayer.push'],
+        forward: ['dataLayer.push', 'fbq', 'ttq.track'],
       },
     }),
-    compress({
-      CSS: true,
-      HTML: true,
-      JavaScript: true,
-      Image: false,
-      SVG: true,
-      Exclude: ['.*service-worker\\.js$', '.*sw\\.js$'],
+    // astro-icon — Iconify entegrasyonu (200K+ icon).
+    // Default collection: lucide (Icon.astro shim'i bare name'leri lucide:* olarak map eder).
+    icon({
+      iconDir: 'src/icons',
+      include: {
+        lucide: ['*'],
+        heroicons: ['*'],
+      },
     }),
+    compressionPlugin,
   ],
   image: {
+    // Remote image optimization için yetkili kaynaklar (Pexels/Unsplash).
+    // Astro 6: `domains` deprecated → sadece `remotePatterns` kullan.
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.pexels.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'source.unsplash.com' },
+    ],
     service: {
       entrypoint: 'astro/assets/services/sharp',
     },
   },
   build: {
     inlineStylesheets: 'auto',
+    // Split chunks for better caching
+    splitVendorChunk: true,
   },
   vite: {
     plugins: [tailwindcss()],
-    server: {
-      host: '127.0.0.1',
-      port: 4321,
-      strictPort: true,
-    },
-    preview: {
-      host: '127.0.0.1',
-      port: 4321,
-      strictPort: true,
-    },
     build: {
       cssCodeSplit: true,
+      // Tailwind 4 Lightning CSS minify dahili — Vite cssMinify true yapılabilir.
+      cssMinify: true,
+      // Reduce chunk size
+      chunkSizeWarningLimit: 200,
       rollupOptions: {
-        onwarn(warning, warn) {
-          if (warning.message?.includes('Generated an empty chunk')) return;
-          if (warning.message?.includes('@astrojs/internal-helpers/remote')) return;
-          warn(warning);
-        },
+        external: ['nodemailer'],
+      },
+    },
+    ssr: {
+      noExternal: ['@astrojs/internal-helpers'],
+      external: ['nodemailer'],
+    },
+    // Optimize deps for faster dev/build
+    // Sadece installed + actually-imported paketler — yoksa vite warning üretir.
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'date-fns',
+        'zod',
+      ],
+    },
+    // Exclude SvelteKit routes
+    server: {
+      watch: {
+        ignored: ['**/src/routes/**'],
       },
     },
   },

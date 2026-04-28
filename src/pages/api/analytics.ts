@@ -1,17 +1,39 @@
 import type { APIRoute } from 'astro';
 import { queryOne, queryMany } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../lib/api';
+
+interface CountRow {
+  count: string | number;
+}
+
+interface AvgRow {
+  avg: string | number | null;
+}
+
+function toInteger(value: string | number | null | undefined): number {
+  if (typeof value === 'number') return Math.trunc(value);
+  if (typeof value === 'string') return parseInt(value, 10) || 0;
+  return 0;
+}
 
 export const GET: APIRoute = async ({ locals }) => {
   try {
-    if (!locals.user?.isAdmin) {
-      return new Response(JSON.stringify({ error: 'Yetkisiz işlem' }), { status: 403 });
+    if (locals.user?.role !== 'admin') {
+      return problemJson({
+        status: 403,
+        title: 'Yetkisiz İşlem',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/analytics-unauthorized',
+        instance: '/api/analytics',
+      });
     }
 
-    const totalUsers = await queryOne('SELECT COUNT(*) as count FROM users');
-    const totalReviews = await queryOne('SELECT COUNT(*) as count FROM reviews');
-    const totalPlaces = await queryOne('SELECT COUNT(*) as count FROM places');
-    const avgRating = await queryOne('SELECT AVG(rating) as avg FROM reviews');
-    const activeToday = await queryOne(
+    const totalUsers = await queryOne<CountRow>('SELECT COUNT(*) as count FROM users');
+    const totalReviews = await queryOne<CountRow>('SELECT COUNT(*) as count FROM reviews');
+    const totalPlaces = await queryOne<CountRow>('SELECT COUNT(*) as count FROM places');
+    const avgRating = await queryOne<AvgRow>('SELECT AVG(rating) as avg FROM reviews');
+    const activeToday = await queryOne<CountRow>(
       `SELECT COUNT(DISTINCT user_id) as count FROM user_activity WHERE created_at > NOW() - INTERVAL '24 hours'`
     );
 
@@ -26,22 +48,29 @@ export const GET: APIRoute = async ({ locals }) => {
        FROM users ORDER BY points DESC LIMIT 5`
     );
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       data: {
         summary: {
-          totalUsers: parseInt(totalUsers?.count || '0'),
-          totalReviews: parseInt(totalReviews?.count || '0'),
-          totalPlaces: parseInt(totalPlaces?.count || '0'),
-          avgRating: parseFloat(avgRating?.avg || '0').toFixed(2),
-          activeToday: parseInt(activeToday?.count || '0')
+          totalUsers: toInteger(totalUsers?.count),
+          totalReviews: toInteger(totalReviews?.count),
+          totalPlaces: toInteger(totalPlaces?.count),
+          avgRating: parseFloat(String(avgRating?.avg || '0')).toFixed(2),
+          activeToday: toInteger(activeToday?.count)
         },
-        topPlaces: topPlaces.rows || [],
-        topUsers: topUsers.rows || []
+        topPlaces,
+        topUsers
       }
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }, HttpStatus.OK);
   } catch (error) {
-    console.error('Analytics error', error);
-    return new Response(JSON.stringify({ error: 'İşlem tamamlanamadı' }), { status: 500 });
+    logger.error('Analytics error', error);
+    return problemJson({
+      status: 500,
+      title: 'Analitik Verisi Alınamadı',
+      detail: safeErrorDetail(error, 'analytics_failed'),
+      type: '/problems/analytics-fetch-failed',
+      instance: '/api/analytics',
+    });
   }
 };
+

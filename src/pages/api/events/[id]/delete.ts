@@ -1,28 +1,32 @@
 // API: Event delete (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { remove } from '../../../../lib/postgres';
+import { apiResponse, problemJson, HttpStatus } from '../../../../lib/api';
+import { deleteAdminEvent } from '../../../../lib/admin/events-admin';
 
 export const POST: APIRoute = async ({ params, locals }) => {
   try {
     const { id } = params;
-
-    if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Yetkisiz işlem' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+    
+    if (locals.user?.role !== 'admin') {
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/events-delete-unauthorized',
+        instance: `/api/events/${id}/delete`,
+      });
     }
 
-    await remove('events', id);
+    await deleteAdminEvent(id || '');
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    return apiResponse({ success: true }, HttpStatus.OK);
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: 'Server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Etkinlik Silinemedi',
+      detail: 'Sunucu hatası',
+      type: '/problems/events-delete-failed',
+      instance: `/api/events/${params.id}/delete`,
+    });
   }
 };

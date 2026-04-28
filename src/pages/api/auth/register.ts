@@ -1,98 +1,77 @@
-// API: Kullanıcı kaydı (PostgreSQL + Validation + Logging)
 import type { APIRoute } from 'astro';
-import { signUp, signIn } from '../../../lib/auth';
-import { validateWithSchema, commonSchemas } from '../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
-import { recordRequest, isSlowRequest, metricsCollector } from '../../../lib/metrics';
+import { apiResponse, problemJson, safeErrorDetail, HttpStatus } from '../../../lib/api';
+import { validateEmail } from '../../../lib/validation';
+import { validatePasswordStrength } from '../../../lib/auth';
+import { runRegisterFlow } from '../../../lib/auth/auth-flows';
 
-export const POST: APIRoute = async ({ request, cookies }) => {
-  const requestId = getRequestId({ request } as any);
-  const startTime = Date.now();
-  logger.setRequestId(requestId);
-
+export const POST: APIRoute = async (context) => {
   try {
-    const body = await request.json();
+    const body = await context.request.json();
+    const { fullName, email, password } = body;
 
-    // Validate request body
-    const validation = validateWithSchema(body, commonSchemas.register);
-
-    if (!validation.valid) {
-      const duration = Date.now() - startTime;
-      recordRequest('POST', '/api/auth/register', HttpStatus.UNPROCESSABLE_ENTITY, duration);
-      logger.warn('Register validation failed', { errors: validation.errors });
-
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Validation failed',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        validation.errors,
-        requestId
-      );
-    }
-
-    const { email, password, full_name: fullName } = validation.data;
-
-    // Attempt registration
-    const { data, error } = await signUp(email, password, fullName);
-
-    if (error) {
-      const duration = Date.now() - startTime;
-      recordRequest('POST', '/api/auth/register', HttpStatus.CONFLICT, duration, { error: error.message });
-      logger.logAuth('register', 'unknown', false, { email, reason: error.message, duration });
-
-      return apiError(ErrorCode.CONFLICT, error.message, HttpStatus.CONFLICT, undefined, requestId);
-    }
-
-    // Auto login after registration
-    const loginResult = await signIn(email, password);
-    if (loginResult.data?.token) {
-      cookies.set('auth-token', loginResult.data.token, {
-        path: '/',
-        httpOnly: true,
-        secure: import.meta.env.PROD,
-        sameSite: 'strict',
-        maxAge: 60 * 60 * 24
+    if (typeof fullName !== 'string' || typeof email !== 'string' || typeof password !== 'string' || !fullName || !email || !password) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Tüm alanlar gerekli',
+        type: '/problems/auth-register-validation',
+        instance: '/api/auth/register',
       });
     }
 
-    const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/auth/register', HttpStatus.CREATED, duration);
-    logger.logAuth('register', data.user.id, true, { email: data.user.email, duration });
-
-    return apiResponse(
-      {
-        success: true,
-        user: data.user,
-        message: 'Kayıt başarılı! Hoş geldiniz.'
-      },
-      HttpStatus.CREATED,
-      requestId
-    );
-  } catch (err) {
-    const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/auth/register', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
-    });
-
-    if (isSlowRequest(duration)) {
-      metricsCollector.recordSlowOperation(
-        'request',
-        'Register endpoint slow',
-        duration,
-        { path: '/api/auth/register' },
-        err instanceof Error ? err.stack : undefined
-      );
+    if (fullName.length > 200) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Ad soyad 200 karakterden uzun olamaz',
+        type: '/problems/auth-register-fullname-too-long',
+        instance: '/api/auth/register',
+      });
     }
 
-    logger.error('Register error', err instanceof Error ? err : new Error(String(err)), { duration });
+    if (!validateEmail(email)) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz E-posta',
+        detail: 'Geçerli bir e-posta adresi giriniz.',
+        type: '/problems/auth-register-email-invalid',
+        instance: '/api/auth/register',
+      });
+    }
 
-    return apiError(
-      ErrorCode.INTERNAL_ERROR,
-      'Kayıt işlemi sırasında bir hata oluştu',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      undefined,
-      requestId
-    );
+    const strength = validatePasswordStrength(password);
+    if (!strength.valid) {
+      return problemJson({
+        status: 400,
+        title: 'Zayıf Şifre',
+        detail: strength.error || 'Şifre gereksinimleri karşılanmadı.',
+        type: '/problems/auth-register-weak-password',
+        instance: '/api/auth/register',
+      });
+    }
+
+    const authResult = await runRegisterFlow({ fullName, email, password }, context.cookies);
+
+    return apiResponse({
+      success: true,
+      ...authResult,
+    }, HttpStatus.CREATED);
+
+  } catch (error) {
+    logger.error('Register error:', error);
+    const rawMessage = error instanceof Error ? error.message : '';
+    // Email existence must not be revealed — prevents account enumeration.
+    // Other runRegisterFlow errors (DB failures) get safeErrorDetail (fallback in production).
+    const detail = rawMessage.includes('zaten kayıtlı')
+      ? 'Kayıt işlemi tamamlanamadı. Lütfen bilgilerinizi kontrol edin.'
+      : safeErrorDetail(error, 'Kayıt işlemi tamamlanamadı.');
+    return problemJson({
+      status: 400,
+      title: 'Kayıt Tamamlanamadı',
+      detail,
+      type: '/problems/auth-register-failed',
+      instance: '/api/auth/register',
+    });
   }
 };

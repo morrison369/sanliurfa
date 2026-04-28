@@ -1,0 +1,179 @@
+---
+
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+const { baseUrl } = await getSiteBranding();
+
+const today = new Date().toISOString().split('T')[0];
+let onDutyPharmacies: any[] = [];
+let districts: any[] = [];
+
+try {
+  const [result, distResult] = await Promise.all([
+    query(
+      `SELECT p.*, d.name as district_name
+       FROM pharmacies p
+       LEFT JOIN districts d ON p.district_id = d.id
+       WHERE p.is_on_duty = true AND (p.duty_date = $1 OR p.duty_date IS NULL)
+       ORDER BY d.name, p.name`,
+      [today]
+    ),
+    query("SELECT DISTINCT d.id, d.name, d.slug FROM districts d JOIN pharmacies p ON p.district_id = d.id WHERE p.is_on_duty = true ORDER BY d.name"),
+  ]);
+  onDutyPharmacies = result.rows;
+  districts = distResult.rows;
+} catch (e) {
+  logger.error('Error loading pharmacies:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const formatDate = (date: string) => new Date(date).toLocaleDateString('tr-TR', {
+  day: 'numeric', month: 'long', year: 'numeric', weekday: 'long'
+});
+
+const seo = {
+  title: `Şanlıurfa Nöbetçi Eczaneler - ${formatDate(today)}`,
+  description: `Şanlıurfa'da bugün nöbetçi olan eczaneler. ${formatDate(today)} tarihli güncel nöbetçi eczane listesi. Adres ve telefon bilgileri.`,
+  keywords: ['şanlıurfa nöbetçi eczane', 'urfa nöbetçi eczane bugün', 'şanlıurfa eczane açık', 'urfa gece eczane', 'şanlıurfa eczane listesi'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/saglik/nobetci-eczaneler',
+};
+
+const faqItems = [
+  {
+    q: 'Şanlıurfa nöbetçi eczane listesi ne kadar güncel?',
+    a: 'Nöbetçi eczane listesi gün içinde düzenli kontrol edilerek yenilenir.',
+  },
+  {
+    q: 'Nöbetçi eczanelere nasıl hızlı ulaşırım?',
+    a: 'Listeden doğrudan telefon bağlantısını kullanabilir veya ilçe filtresi ile arama daraltabilirsiniz.',
+  },
+  {
+    q: 'Nöbetçi eczaneler hangi saatlerde hizmet verir?',
+    a: 'Nöbetçi eczaneler gece ve resmi tatil dönemlerinde kesintisiz hizmet için nöbet planına göre açık kalır.',
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-wider text-[#9A8470]">Sağlık</p>
+        <h1 class="mt-3 text-3xl md:text-4xl font-bold text-[#F5EDD6]">Şanlıurfa Nöbetçi Eczaneler</h1>
+        <p class="text-[#9A8470] text-lg mt-2">{formatDate(today)}</p>
+        <p class="text-[#9A8470] mt-1">{onDutyPharmacies.length} nöbetçi eczane</p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <section class="mb-8 rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] p-5">
+        <p class="text-sm font-semibold uppercase tracking-wide text-[#6B5540]">Hızlı Cevap</p>
+        <h2 class="mt-1 text-xl font-bold text-[#1A1008]">Şanlıurfa nöbetçi eczane bilgisi nasıl kullanılır?</h2>
+        <p class="mt-2 text-sm leading-6 text-[#4A3828]">
+          Şanlıurfa nöbetçi eczaneler sayfası, bugün açık olan eczaneleri ilçe, adres ve telefon bilgisiyle
+          hızlıca bulmanız için hazırlanır. Veri admin onaylı kayıtlar ve tazelik kontrolüyle yönetilir.
+        </p>
+        <div class="mt-3 flex flex-wrap gap-3 text-sm">
+          <a href="/saglik/nobetci-eczaneler" class="font-semibold text-urfa-700 underline underline-offset-4">Nöbetçi eczane listesi</a>
+          <a href="/saglik" class="font-semibold text-urfa-700 underline underline-offset-4">Sağlık rehberi</a>
+          <a href="/ulasim/otobus-saatleri" class="font-semibold text-urfa-700 underline underline-offset-4">Otobüs saatleri</a>
+        </div>
+      </section>
+
+      {districts.length > 0 && (
+        <div class="flex flex-wrap gap-2 mb-8">
+          <button class="px-4 py-2 bg-urfa-600 text-white rounded-sm text-sm font-medium" data-filter="all">Tümü</button>
+          {districts.map((d) => (
+            <button class="px-4 py-2 bg-white border border-[rgba(200,160,100,0.3)] rounded-sm text-sm font-medium hover:border-urfa-400 hover:text-urfa-600 transition-colors" data-filter={d.id}>
+              {d.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {onDutyPharmacies.length > 0 ? (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {onDutyPharmacies.map((pharm) => (
+            <div class="bg-white rounded-sm p-5 border border-[rgba(200,160,100,0.18)] shadow-sm" data-district={pharm.district_id}>
+              <div class="flex items-start gap-3">
+                <div class="w-10 h-10 bg-[rgba(200,160,100,0.1)] rounded-sm flex items-center justify-center text-urfa-600 flex-shrink-0">
+                  💊
+                </div>
+                <div class="flex-1">
+                  <h3 class="font-bold text-[#1A1008]">{pharm.name}</h3>
+                  {pharm.district_name && <span class="text-xs text-urfa-600 font-medium">{pharm.district_name}</span>}
+                  <p class="text-sm text-[#9A8470] mt-2">{pharm.address}</p>
+                  {pharm.phone && (
+                    <a href={`tel:${pharm.phone}`} class="inline-flex items-center gap-1 mt-3 text-urfa-600 font-medium text-sm hover:underline">
+                      📞 {pharm.phone}
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16 bg-white rounded-sm border border-[rgba(200,160,100,0.18)]">
+          <div class="text-6xl mb-4">💊</div>
+          <h2 class="text-xl font-bold text-[#1A1008] mb-2">Nöbetçi Eczane Verisi Bekleniyor</h2>
+          <p class="text-[#9A8470]">Bugün için veritabanında aktif nöbetçi eczane kaydı bulunamadı.</p>
+          <p class="text-sm text-[#9A8470] mt-4">Acil durumlar için: <a href="tel:182" class="text-urfa-600 font-bold">182</a> (ALO Eczane)</p>
+        </div>
+      )}
+
+      <div class="mt-8 bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6">
+        <h3 class="font-bold text-[#1A1008] mb-2">Acil Durumda</h3>
+        <ul class="text-[#4A3828] space-y-1 text-sm">
+          <li>📞 <strong>182</strong> — ALO Eczane (7/24)</li>
+          <li>📞 <strong>112</strong> — Acil Sağlık</li>
+          <li>📞 <strong>155</strong> — Polis İmdat</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelectorAll('[data-filter]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const filter = btn.getAttribute('data-filter');
+        document.querySelectorAll('[data-district]').forEach((card) => {
+          const el = card as HTMLElement;
+          if (filter === 'all' || card.getAttribute('data-district') === filter) {
+            el.style.display = '';
+          } else {
+            el.style.display = 'none';
+          }
+        });
+        document.querySelectorAll('[data-filter]').forEach((b) => {
+          b.className = b === btn
+            ? 'px-4 py-2 bg-urfa-600 text-white rounded-sm text-sm font-medium'
+            : 'px-4 py-2 bg-white border border-[rgba(200,160,100,0.3)] rounded-sm text-sm font-medium hover:border-urfa-400 hover:text-urfa-600 transition-colors';
+        });
+      });
+    });
+  </script>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a,
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Sağlık', item: `${baseUrl}/saglik` },
+      { '@type': 'ListItem', position: 3, name: 'Nöbetçi Eczaneler', item: `${baseUrl}/saglik/nobetci-eczaneler` },
+    ],
+  })} is:inline />
+</Layout>

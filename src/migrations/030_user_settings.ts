@@ -1,13 +1,16 @@
 /**
  * Migration 030: User Settings & Preferences
- * Adds settings columns to users table for notifications, privacy, 2FA, language, theme, etc.
+ * Adds settings columns to users table for notifications, privacy, 2FA, theme, etc.
+ * 
+ * NOT: language_preference SADECE 'tr' olarak kullanılabilir. Çok dilli destek YASAKTIR.
+ * @see AGENTS.md - Yasaklar bölümü
  */
 
 import type { Migration } from '../lib/migrations';
 
 export const migration_030_user_settings: Migration = {
   version: '030_user_settings',
-  description: 'User settings and preferences (notifications, privacy, 2FA, language, theme, security)',
+  description: 'User settings and preferences (notifications, privacy, 2FA, theme, security)',
 
   up: async (pool: any) => {
     await pool.query(`
@@ -23,6 +26,13 @@ export const migration_030_user_settings: Migration = {
       ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP,
       ADD COLUMN IF NOT EXISTS login_attempts INTEGER DEFAULT 0,
       ADD COLUMN IF NOT EXISTS account_locked_until TIMESTAMP
+    `);
+
+    // Tüm kullanıcıların dil tercihini Türkçe'ye sabitle
+    await pool.query(`
+      UPDATE users 
+      SET language_preference = 'tr' 
+      WHERE language_preference IS NULL OR language_preference != 'tr'
     `);
 
     // Create indexes for performance

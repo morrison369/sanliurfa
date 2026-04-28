@@ -1,25 +1,24 @@
-// @ts-nocheck
 /**
  * File Access & Analytics Endpoint
  * Track file access and get statistics
  */
 
 import type { APIRoute } from 'astro';
-import { getFileById, recordFileAccess, getFileAccessStats } from '../../../lib/file-management';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getFileById, recordFileAccess, getFileAccessStats } from '../../../lib/file/file-management';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const fileId = url.searchParams.get('file_id');
-    const days = parseInt(url.searchParams.get('days') || '30');
+    const days = safeIntParam(url.searchParams.get('days'), 30, 0, 1_000_000);
 
     if (!fileId) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'File ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
@@ -38,12 +37,12 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to get file access stats', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 export const POST: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
@@ -63,6 +62,6 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to record file access', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

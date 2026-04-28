@@ -4,26 +4,26 @@
  */
 
 import type { APIRoute } from 'astro';
-import { flagReview } from '../../../../lib/review-moderation';
+import { flagReview } from '../../../../lib/review/review-moderation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/reviews/[id]/flag', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: reviewId } = params;
     if (!reviewId) {
       recordRequest('POST', '/api/reviews/[id]/flag', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Review ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const body = await request.json();
@@ -33,7 +33,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/reviews/[id]/flag', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Neden gereklidir',
+        'Reason required',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -56,7 +56,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/reviews/[id]/flag', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Geçersiz neden',
+        'Invalid reason',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -85,7 +85,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     logger.error('Flag review failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Yorum bildirilemedi',
+      'Failed to flag review',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

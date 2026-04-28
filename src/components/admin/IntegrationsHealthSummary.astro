@@ -1,0 +1,98 @@
+---
+/**
+ * IntegrationsHealthSummary — Server Island
+ *
+ * Admin dashboard widget: at-a-glance status of all 5 admin-managed integrations.
+ * Reads the same in-process cache `/api/health` uses (30s TTL) — no extra DB load.
+ *
+ *   <IntegrationsHealthSummary server:defer>
+ *     <div slot="fallback" class="..." />
+ *   </IntegrationsHealthSummary>
+ *
+ * Each integration is a clickable card linking to /admin/integrations.
+ */
+import { queryOne } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+type Status = 'configured' | 'unconfigured';
+
+const summary: Record<string, Status> = {
+  resend: 'unconfigured',
+  smtp: 'unconfigured',
+  stripe: 'unconfigured',
+  analytics: 'unconfigured',
+  image_providers: 'unconfigured',
+};
+
+try {
+  const rows = await Promise.all([
+    queryOne<{ setting_value: { api_key?: string } }>(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.email'`,
+      [],
+    ),
+    queryOne<{ setting_value: { host?: string; user?: string; pass?: string } }>(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.smtp'`,
+      [],
+    ),
+    queryOne<{ setting_value: { secret_key?: string } }>(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.payment'`,
+      [],
+    ),
+    queryOne<{ setting_value: { ga_id?: string } }>(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.analytics'`,
+      [],
+    ),
+    queryOne<{ setting_value: { unsplash_access_key?: string; pexels_api_key?: string } }>(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.image_providers'`,
+      [],
+    ),
+  ]);
+  if (rows[0]?.setting_value?.api_key || process.env.RESEND_API_KEY) summary.resend = 'configured';
+  const smtp = rows[1]?.setting_value;
+  if ((smtp?.host && smtp?.user && smtp?.pass) || (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)) summary.smtp = 'configured';
+  if (rows[2]?.setting_value?.secret_key || process.env.STRIPE_SECRET_KEY) summary.stripe = 'configured';
+  if (rows[3]?.setting_value?.ga_id) summary.analytics = 'configured';
+  const ip = rows[4]?.setting_value;
+  if (ip?.unsplash_access_key || ip?.pexels_api_key || process.env.UNSPLASH_ACCESS_KEY || process.env.PEXELS_API_KEY) summary.image_providers = 'configured';
+} catch (e) {
+  logger.error('IntegrationsHealthSummary lookup failed', e instanceof Error ? e : new Error(String(e)));
+}
+
+const cards: Array<{ key: string; name: string; icon: string; status: Status }> = [
+  { key: 'resend', name: 'E-posta (Resend)', icon: '✉️', status: summary.resend },
+  { key: 'smtp', name: 'SMTP (Yedek)', icon: '📮', status: summary.smtp },
+  { key: 'stripe', name: 'Stripe (Ödeme)', icon: '💳', status: summary.stripe },
+  { key: 'analytics', name: 'Google Analytics', icon: '📊', status: summary.analytics },
+  { key: 'image_providers', name: 'Resim (Unsplash/Pexels)', icon: '🖼️', status: summary.image_providers },
+];
+
+const configuredCount = cards.filter((c) => c.status === 'configured').length;
+---
+
+<section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h2 class="text-lg font-semibold text-gray-900">Entegrasyonlar</h2>
+      <p class="text-sm text-gray-500 mt-0.5">{configuredCount}/{cards.length} servis yapılandırıldı</p>
+    </div>
+    <a href="/admin/integrations" class="text-sm text-blue-600 hover:underline">Yönet →</a>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+    {cards.map((c) => (
+      <a
+        href="/admin/integrations"
+        class={`block rounded-lg border p-3 text-center transition-colors ${
+          c.status === 'configured'
+            ? 'border-emerald-200 bg-emerald-50 hover:bg-emerald-100'
+            : 'border-amber-200 bg-amber-50 hover:bg-amber-100'
+        }`}
+      >
+        <div class="text-2xl mb-1">{c.icon}</div>
+        <div class="text-xs font-medium text-gray-900">{c.name}</div>
+        <div class={`text-[10px] mt-1 font-semibold ${c.status === 'configured' ? 'text-emerald-700' : 'text-amber-700'}`}>
+          {c.status === 'configured' ? '✓ Aktif' : '⚠ Eksik'}
+        </div>
+      </a>
+    ))}
+  </div>
+</section>

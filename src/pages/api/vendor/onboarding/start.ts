@@ -3,32 +3,32 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createVendorProfile } from '../../../../lib/vendor-onboarding';
-import { validateWithSchema } from '../../../../lib/validation';
+import { createVendorProfile } from '../../../../lib/vendor/vendor-onboarding';
+import { validateWithSchema, ValidationSchema } from '../../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
-const schema = {
-  businessName: { type: 'string' as const, required: true, minLength: 3 },
+const schema: ValidationSchema = {
+  businessName: { type: 'string' as const, required: true, minLength: 3, maxLength: 200 },
   businessPhone: { type: 'string' as const, required: true, pattern: '^[0-9\\+\\-\\s\\(\\)]{10,}$' },
-  businessCategory: { type: 'string' as const, required: true, minLength: 2 },
-  businessType: { type: 'string' as const, required: true, minLength: 2 }
+  businessCategory: { type: 'string' as const, required: true, minLength: 2, maxLength: 100 },
+  businessType: { type: 'string' as const, required: true, minLength: 2, maxLength: 100 }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/vendor/onboarding/start', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/vendor/onboarding/start', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { businessName, businessPhone, businessCategory, businessType } = validation.data as any;
+    const { businessName, businessPhone, businessCategory, businessType } = validation.data;
 
     const profile = await createVendorProfile(locals.user.id, {
       businessName,
@@ -75,6 +75,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/vendor/onboarding/start', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Onboarding start failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
+

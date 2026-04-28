@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface Metrics {
   requestCount: number;
   errorCount: number;
@@ -7,7 +6,6 @@ interface Metrics {
   avgDuration: number;
   p95Duration: number;
   cacheHitRate: number;
-  slowRequestRate?: number;
   slowestEndpoints: Array<{ path: string; avgDuration: number; count: number }>;
   slowQueries: Array<{ sql: string; duration: number; count: number; timestamp: string }>;
   poolStatus?: {
@@ -34,7 +32,7 @@ export default function AdminDashboard() {
 
   const loadMetrics = async () => {
     try {
-      const res = await fetch('/api/metrics');
+      const res = await fetch('/api/metrics', { headers: { Accept: 'application/json' } });
       if (!res.ok) throw new Error('Metrikler yüklenemedi');
       const data = await res.json();
       setMetrics(data.data || null);
@@ -132,11 +130,11 @@ export default function AdminDashboard() {
           <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">P95: {Math.round(metrics.p95Duration)}ms</div>
         </div>
 
-        {/* Önbellek verimliliği */}
+        {/* Önbellek isabet oranı */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 border border-gray-200 dark:border-gray-700">
           <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Önbellek İsabet Oranı</div>
           <div className="text-3xl font-bold text-blue-600">{(metrics.cacheHitRate * 100).toFixed(1)}%</div>
-          <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">{metrics.slowRequestRate || 0} slow</div>
+          <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">{slowRequestRate || 0}% yavaş</div>
         </div>
       </div>
 
@@ -183,7 +181,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Database Pool Status */}
+        {/* Veritabanı bağlantı havuzu */}
         {metrics.poolStatus && (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
@@ -191,7 +189,7 @@ export default function AdminDashboard() {
             </div>
             <div className="px-6 py-6">
               <div className="space-y-6">
-                {/* Active Connections */}
+                {/* Aktif bağlantılar */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Aktif Bağlantılar</span>
@@ -212,7 +210,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Idle Connections */}
+                {/* Boşta bağlantılar */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Boşta Bağlantılar</span>

@@ -1,0 +1,128 @@
+---
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+  // Eski kullanim (ayri props)
+  title?: string;
+  description?: string;
+  image?: string;
+  thumb?: string;
+  category?: string;
+  rating?: number;
+  reviewCount?: number;
+  slug?: string;
+  // Yeni kullanim (place objesi)
+  place?: {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    image_url?: string;
+    category?: string;
+    rating?: number | string;
+    review_count?: number | string;
+    price_range?: string;
+    address?: string;
+  };
+  compact?: boolean;
+}
+
+const { 
+  title, description, image, category, rating, reviewCount, slug,
+  place, compact = false 
+} = Astro.props;
+
+// Place objesi varsa onu kullan, yoksa ayri propslari kullan
+const name = place?.name || title || '';
+const placeSlug = place?.slug || slug || '';
+const placeDesc = place?.description || description || '';
+const placeImage = place?.image_url || image || '/images/placeholder.jpg';
+const placeCategory = place?.category || category || 'general';
+const rawRating = place?.rating ?? rating ?? 0;
+const ratingNumber = typeof rawRating === 'number' ? rawRating : Number(rawRating);
+const placeRating = Number.isFinite(ratingNumber) ? ratingNumber : 0;
+const rawReviewCount = place?.review_count ?? reviewCount ?? 0;
+const reviewCountNumber = typeof rawReviewCount === 'number' ? rawReviewCount : Number(rawReviewCount);
+const placeReviewCount = Number.isFinite(reviewCountNumber) ? reviewCountNumber : 0;
+const priceRange = place?.price_range || '';
+
+const categoryColors: Record<string, string> = {
+  restaurant: 'bg-rose-100 text-rose-800',
+  hotel: 'bg-blue-100 text-blue-800',
+  shopping: 'bg-purple-100 text-purple-800',
+  attraction: 'bg-amber-100 text-amber-800',
+  service: 'bg-gray-100 text-gray-800',
+  entertainment: 'bg-pink-100 text-pink-800',
+  dini: 'bg-emerald-100 text-emerald-800',
+  tarihi: 'bg-amber-100 text-amber-800',
+  yemek: 'bg-rose-100 text-rose-800',
+  doga: 'bg-sky-100 text-sky-800',
+  general: 'bg-gray-100 text-gray-800',
+};
+
+const categoryNames: Record<string, string> = {
+  restaurant: 'Restoran',
+  hotel: 'Otel',
+  shopping: 'Alisveris',
+  attraction: 'Turistik Yer',
+  service: 'Hizmet',
+  entertainment: 'Eglence',
+};
+---
+
+<article class={`group bg-white border border-[rgba(200,160,100,0.18)] rounded-sm shadow-sm overflow-hidden hover:shadow-md hover:border-urfa-300 transition-all ${compact ? '' : ''}`}>
+  <a href={`/isletme/${placeSlug}`} class="block">
+    <!-- Image Container -->
+    <div class="relative overflow-hidden aspect-[4/3]">
+      <img
+        src={placeImage}
+        alt={name}
+        loading="lazy"
+        class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
+        onerror="this.setAttribute('src','/images/placeholder.jpg')"
+      />
+
+      <!-- Category Badge -->
+      <span class={`absolute top-3 left-3 px-2 py-1 rounded-sm text-xs font-medium ${categoryColors[placeCategory] || categoryColors.general}`}>
+        {categoryNames[placeCategory] || placeCategory.charAt(0).toUpperCase() + placeCategory.slice(1)}
+      </span>
+
+      <!-- Rating Badge -->
+      {placeRating > 0 && (
+        <div class="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-sm flex items-center gap-1 border border-[rgba(200,160,100,0.2)]">
+          <svg class="w-4 h-4 text-urfa-400 fill-current" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+          </svg>
+          <span class="text-sm font-bold text-[#1A1008]">{placeRating.toFixed(1)}</span>
+          {placeReviewCount > 0 && <span class="text-xs text-[#9A8470]">({placeReviewCount})</span>}
+        </div>
+      )}
+    </div>
+
+    <!-- Content -->
+    <div class={compact ? 'p-3' : 'p-4'}>
+      <h3 class={`font-bold text-[#1A1008] group-hover:text-urfa-700 transition-colors ${compact ? 'text-base mb-1' : 'text-lg mb-2'}`}>
+        {name}
+      </h3>
+
+      {!compact && placeDesc && (
+        <p class="text-[#9A8470] text-sm line-clamp-2 mb-3">
+          {placeDesc}
+        </p>
+      )}
+
+      {compact && priceRange && (
+        <div class="flex items-center gap-2 text-sm text-[#9A8470]">
+          <span>{'₺'.repeat(parseInt(priceRange))}</span>
+        </div>
+      )}
+
+      {!compact && (
+        <div class="flex items-center text-urfa-600 font-medium text-sm mt-3">
+          <span>Detayları Gör</span>
+          <Icon name="lucide:chevron-right" class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" />
+        </div>
+      )}
+    </div>
+  </a>
+</article>

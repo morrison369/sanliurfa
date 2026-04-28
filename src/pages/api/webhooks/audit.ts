@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
-import { getWebhookAuditHistory, getUserActivitySummary } from '../../../lib/webhook-audit';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getWebhookAuditHistory, getUserActivitySummary } from '../../../lib/webhook/webhook-audit';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 /**
@@ -9,19 +9,19 @@ import { logger } from '../../../lib/logging';
  * Get audit logs or activity summary
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
     const webhookId = url.searchParams.get('webhookId');
     const summary = url.searchParams.get('summary') === 'true';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     if (summary) {
       // Return activity summary
@@ -55,7 +55,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Denetim kayıtları alınamadı', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Denetim kayıtları alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Failed to get audit logs', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get audit logs', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

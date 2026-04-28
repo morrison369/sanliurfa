@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { unwrapApiPayload } from "@/lib/client-api";
-
+import {  useState, useEffect  } from 'react';
 interface Activity {
   id: string;
   user_id: string;
@@ -21,9 +19,7 @@ interface ActivityFeedProps {
 
 export default function ActivityFeed({ userId }: ActivityFeedProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [filter, setFilter] = useState<
-    "all" | "reviews" | "favorites" | "comments" | "badges"
-  >("all");
+  const [filter, setFilter] = useState<'all' | 'reviews' | 'favorites' | 'comments' | 'badges'>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
@@ -39,27 +35,25 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
     try {
       setIsLoading(true);
       setError(null);
+      const userParam = encodeURIComponent(userId);
       const response = await fetch(
-        `/api/feed/activity?filter=${filter}&limit=20&offset=${newOffset}`,
+        `/api/feed/activity?userId=${userParam}&filter=${filter}&limit=20&offset=${newOffset}`
       );
 
       if (!response.ok) {
-        throw new Error("Aktivite akışı yüklenemedi");
+        throw new Error('Aktivite akışı yüklenemedi');
       }
 
-      const data = unwrapApiPayload<{ data?: Activity[] }>(
-        await response.json(),
-      );
-      const items = data.data || [];
+      const data = await response.json();
       if (newOffset === 0) {
-        setActivities(items);
+        setActivities(data.data || []);
       } else {
-        setActivities([...activities, ...items]);
+        setActivities([...activities, ...(data.data || [])]);
       }
 
-      setHasMore(items.length >= 20);
+      setHasMore(data.data.length >= 20);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+      setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {
       setIsLoading(false);
     }
@@ -73,39 +67,39 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
 
   const getActivityIcon = (actionType: string) => {
     switch (actionType) {
-      case "review_created":
-        return "Yorum";
-      case "favorite_added":
-        return "Favori";
-      case "badge_earned":
-        return "Rozet";
-      case "comment_posted":
-        return "Yanıt";
-      case "level_up":
-        return "Seviye";
-      case "points_earned":
-        return "Puan";
+      case 'review_created':
+        return '✍️';
+      case 'favorite_added':
+        return '❤️';
+      case 'badge_earned':
+        return '🏅';
+      case 'comment_posted':
+        return '💬';
+      case 'level_up':
+        return '⬆️';
+      case 'points_earned':
+        return '⭐';
       default:
-        return "Akış";
+        return '📌';
     }
   };
 
   const getActivityDescription = (activity: Activity): string => {
     switch (activity.action_type) {
-      case "review_created":
-        return `"${activity.metadata?.placeName || "bir yere"}" yorum yaptı`;
-      case "favorite_added":
-        return `"${activity.metadata?.placeName || "bir yeri"}" favorilerine ekledi`;
-      case "badge_earned":
-        return `"${activity.metadata?.badgeName || "Rozet"}" rozeti kazandı`;
-      case "comment_posted":
-        return "Blog yazısına yorum yaptı";
-      case "points_earned":
+      case 'review_created':
+        return `"${activity.metadata?.placeName || 'bir yere'}" yorum yaptı`;
+      case 'favorite_added':
+        return `"${activity.metadata?.placeName || 'bir yeri'}" favorilerine ekledi`;
+      case 'badge_earned':
+        return `"${activity.metadata?.badgeName || 'Rozet'}" rozeti kazandı`;
+      case 'comment_posted':
+        return 'Blog yazısına yorum yaptı';
+      case 'points_earned':
         return `${activity.metadata?.points || 0} puan kazandı`;
-      case "level_up":
-        return `Seviye ${activity.metadata?.newLevel || "?"} oldu`;
+      case 'level_up':
+        return `Level ${activity.metadata?.newLevel || '?'} oldu`;
       default:
-        return "Bir eylem gerçekleştirdi";
+        return 'Bir eylem gerçekleştirdi';
     }
   };
 
@@ -117,20 +111,20 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return "Az önce";
+    if (diffMins < 1) return 'Az önce';
     if (diffMins < 60) return `${diffMins}d`;
     if (diffHours < 24) return `${diffHours}s`;
     if (diffDays < 7) return `${diffDays}g`;
-    return date.toLocaleDateString("tr-TR");
+    return date.toLocaleDateString('tr-TR');
   };
 
   const formatDetailedTime = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString("tr-TR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      day: "2-digit",
-      month: "2-digit",
+    return date.toLocaleTimeString('tr-TR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit'
     });
   };
 
@@ -139,19 +133,19 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
       {/* Filter Buttons */}
       <div className="mb-6 flex flex-wrap gap-2">
         {[
-          { value: "all" as const, label: "Tümü" },
-          { value: "reviews" as const, label: "Yorumlar" },
-          { value: "favorites" as const, label: "Favoriler" },
-          { value: "comments" as const, label: "Yorum Yanıtları" },
-          { value: "badges" as const, label: "Rozetler" },
+          { value: 'all' as const, label: 'Tümü' },
+          { value: 'reviews' as const, label: 'Yorumlar' },
+          { value: 'favorites' as const, label: 'Favoriler' },
+          { value: 'comments' as const, label: 'Yorum Yanıtları' },
+          { value: 'badges' as const, label: 'Rozetler' }
         ].map((option) => (
           <button
             key={option.value}
             onClick={() => setFilter(option.value)}
             className={`px-4 py-2 rounded-lg transition-colors font-medium text-sm ${
               filter === option.value
-                ? "bg-urfa-700 text-white"
-                : "bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600"
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600'
             }`}
           >
             {option.label}
@@ -161,7 +155,7 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400">
           {error}
         </div>
       )}
@@ -169,21 +163,17 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
       {/* Loading State */}
       {isLoading && activities.length === 0 && (
         <div className="flex justify-center py-12">
-          <p className="text-gray-600 dark:text-gray-400">
-            Aktivite akışı yükleniyor...
-          </p>
+          <p className="text-gray-600 dark:text-gray-400">Aktivite akışı yükleniyor...</p>
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && activities.length === 0 && (
         <div className="text-center py-16">
-          <p className="text-gray-600 dark:text-gray-400 text-lg">
-            Aktivite akışı henüz boş
-          </p>
+          <p className="text-4xl mb-4">🌊</p>
+          <p className="text-gray-600 dark:text-gray-400 text-lg">Aktivite yok</p>
           <p className="text-gray-500 dark:text-gray-500 text-sm mt-2">
-            Takip ettiğiniz kullanıcıların yeni aktiviteleri bu akışta
-            listelenir.
+            Takip ettiğiniz kullanıcıların aktiviteleri burada görünecek
           </p>
         </div>
       )}
@@ -195,7 +185,7 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
             <a
               key={activity.id}
               href={`/kullanici/${activity.user_id}`}
-              className="block p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-urfa-300 dark:hover:border-urfa-700 transition-all"
+              className="block p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-blue-300 dark:hover:border-blue-600 transition-all"
             >
               <div className="flex gap-4">
                 {/* User Avatar & Icon */}
@@ -208,13 +198,11 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
                         className="w-12 h-12 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-urfa-700 to-isot-700 flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-400 flex items-center justify-center text-white font-bold text-sm">
                         {activity.user_name.charAt(0)}
                       </div>
                     )}
-                    <span className="absolute -bottom-2 -right-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-urfa-900 shadow-sm dark:bg-amber-900 dark:text-amber-100">
-                      {getActivityIcon(activity.action_type)}
-                    </span>
+                    <span className="absolute -bottom-1 -right-1 text-lg">{getActivityIcon(activity.action_type)}</span>
                   </div>
                 </div>
 
@@ -232,8 +220,8 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
                           </p>
                         )}
                         {activity.user_level > 1 && (
-                          <span className="px-2 py-0.5 text-xs font-bold rounded bg-urfa-100 dark:bg-urfa-900 text-urfa-800 dark:text-urfa-100">
-                            Seviye {activity.user_level}
+                          <span className="px-2 py-0.5 text-xs font-bold rounded bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                            Lv{activity.user_level}
                           </span>
                         )}
                       </div>
@@ -264,9 +252,9 @@ export default function ActivityFeed({ userId }: ActivityFeedProps) {
         <div className="mt-8 flex justify-center">
           <button
             onClick={handleLoadMore}
-            className="px-6 py-2 bg-urfa-700 text-white rounded-lg hover:bg-urfa-800 transition-colors font-medium"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
-            Daha fazla yükle
+            Daha Fazla Yükle
           </button>
         </div>
       )}

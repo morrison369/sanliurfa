@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
+import type { Pool } from 'pg';
 import { pool } from '../../../lib/postgres';
-import { requestEventReplay, getReplayHistory, cancelReplay } from '../../../lib/webhook-replay';
+import { requestEventReplay, getReplayHistory, cancelReplay } from '../../../lib/webhook/webhook-replay';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
@@ -9,12 +10,12 @@ import { logger } from '../../../lib/logging';
  * Request event replay
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await request.json();
@@ -24,7 +25,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Webhook ID and Event ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const replayRequest = await requestEventReplay(pool, webhookId, eventId, locals.user.id);
+    const replayRequest = await requestEventReplay(pool as unknown as Pool, webhookId, eventId, locals.user.id);
 
     logger.info('Event replay requested', {
       webhookId,
@@ -36,14 +37,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: replayRequest,
-        message: 'Olay yeniden oynatma kuyruğa alındı'
+        message: 'Event replay queued'
       },
       HttpStatus.CREATED,
       requestId
     );
   } catch (error) {
-    logger.error('Failed to request event replay', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Yeniden oynatma talebi oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Failed to request event replay', error instanceof Error ? error : new Error(String(error)), {});
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to request replay', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -52,12 +53,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
  * Get replay history
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const url = new URL(request.url);
@@ -79,8 +80,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to get replay history', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Geçmiş alınamadı', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Failed to get replay history', error instanceof Error ? error : new Error(String(error)), {});
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get history', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
 
@@ -89,12 +90,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
  * Cancel pending replay
  */
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = params;
@@ -106,18 +107,18 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     const cancelled = await cancelReplay(pool, id, locals.user.id);
 
     if (!cancelled) {
-      return apiError(ErrorCode.NOT_FOUND, 'Yeniden oynatma bulunamadı veya zaten işlendi', HttpStatus.NOT_FOUND);
+      return apiError(ErrorCode.NOT_FOUND, 'Replay not found or already processed', HttpStatus.NOT_FOUND);
     }
 
     logger.info('Event replay cancelled', { replayId: id, userId: locals.user.id });
 
     return apiResponse(
-      { success: true, message: 'Yeniden oynatma iptal edildi' },
+      { success: true, message: 'Replay cancelled' },
       HttpStatus.OK,
       requestId
     );
   } catch (error) {
-    logger.error('Yeniden oynatma iptal edilemedi', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Yeniden oynatma iptal edilemedi', HttpStatus.INTERNAL_SERVER_ERROR);
+    logger.error('Failed to cancel replay', error instanceof Error ? error : new Error(String(error)), {});
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to cancel replay', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

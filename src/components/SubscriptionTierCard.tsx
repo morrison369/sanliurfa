@@ -2,9 +2,6 @@
  * Subscription Tier Card Component
  * Display subscription tier options
  */
-
-import React from "react";
-
 interface SubscriptionTierCardProps {
   id: string;
   name: string;
@@ -14,11 +11,7 @@ interface SubscriptionTierCardProps {
   annualPrice?: number;
   tierLevel: number;
   isActive?: boolean;
-  features?: {
-    featureName: string;
-    featureLimit?: number;
-    description?: string;
-  }[];
+  features?: { featureName: string; featureLimit?: number; description?: string }[];
   currentTier?: string;
   onSelect?: (tierId: string) => void;
   isLoading?: boolean;
@@ -35,30 +28,30 @@ export function SubscriptionTierCard({
   features = [],
   currentTier,
   onSelect,
-  isLoading = false,
+  isLoading = false
 }: SubscriptionTierCardProps) {
-  const isCurrent = currentTier === id || currentTier === name;
+  const isCurrent = currentTier === name;
   const isPopular = tierLevel === 2;
 
   return (
     <div
       className={`rounded-lg border-2 overflow-hidden transition-all ${
         isPopular
-          ? "border-urfa-600 shadow-lg scale-105"
+          ? 'border-blue-500 shadow-lg scale-105'
           : isCurrent
-            ? "border-isot-600 shadow-md"
-            : "border-gray-200 hover:shadow-md"
-      } ${!isLoading && "cursor-pointer"}`}
+          ? 'border-green-500 shadow-md'
+          : 'border-gray-200 hover:shadow-md'
+      } ${!isLoading && 'cursor-pointer'}`}
     >
       {isPopular && (
-        <div className="bg-urfa-700 text-white text-center py-2 text-sm font-bold">
-          En çok tercih edilen
+        <div className="bg-blue-500 text-white text-center py-2 text-sm font-bold">
+          ⭐ En Popüler
         </div>
       )}
 
       {isCurrent && (
-        <div className="bg-isot-700 text-white text-center py-2 text-sm font-bold">
-          Mevcut plan
+        <div className="bg-green-500 text-white text-center py-2 text-sm font-bold">
+          ✓ Mevcut Plan
         </div>
       )}
 
@@ -71,15 +64,12 @@ export function SubscriptionTierCard({
 
         <div className="mt-6 mb-6">
           <div className="flex items-baseline gap-1">
-            <span className="text-4xl font-bold text-gray-900">
-              ₺{monthlyPrice.toFixed(0)}
-            </span>
+            <span className="text-4xl font-bold text-gray-900">₺{monthlyPrice.toFixed(0)}</span>
             <span className="text-gray-600">/ay</span>
           </div>
           {annualPrice && (
             <p className="text-sm text-gray-600 mt-1">
-              veya ₺{annualPrice.toFixed(0)}/yıl (
-              {(annualPrice / 12).toFixed(0)}₺/ay)
+              veya ₺{annualPrice.toFixed(0)}/yıl ({(annualPrice / 12).toFixed(0)}₺/ay)
             </p>
           )}
         </div>
@@ -93,10 +83,7 @@ export function SubscriptionTierCard({
                 <span className="text-sm text-gray-700">
                   {feature.featureName}
                   {feature.featureLimit && (
-                    <span className="text-gray-500">
-                      {" "}
-                      ({feature.featureLimit})
-                    </span>
+                    <span className="text-gray-500"> ({feature.featureLimit})</span>
                   )}
                 </span>
               </li>
@@ -114,21 +101,21 @@ export function SubscriptionTierCard({
           disabled={isLoading || isCurrent}
           className={`w-full py-3 rounded-lg font-medium transition-colors ${
             isCurrent
-              ? "bg-gray-200 text-gray-700 cursor-not-allowed"
+              ? 'bg-gray-200 text-gray-700 cursor-not-allowed'
               : isPopular
-                ? "bg-urfa-700 hover:bg-urfa-800 text-white"
-                : "bg-gray-200 hover:bg-gray-300 text-gray-900"
+              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+              : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
           }`}
         >
           {isLoading ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <span className="animate-spin">⏳</span>
               İşleniyor...
             </span>
           ) : isCurrent ? (
-            "Mevcut plan"
+            'Mevcut Plan'
           ) : (
-            "Seç"
+            'Seç'
           )}
         </button>
       </div>

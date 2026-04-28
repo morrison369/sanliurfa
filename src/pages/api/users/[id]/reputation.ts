@@ -11,7 +11,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ request, params }) => {
       return apiError(ErrorCode.NOT_FOUND, 'Kullanıcı bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
-    const tier = await getRepuationTier(reputation.totalScore);
+    const tier = getRepuationTier(reputation.totalScore);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/users/${userId}/reputation`, HttpStatus.OK, duration);
@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request, params }) => {
           rank,
           tier,
           badgeCount,
-          featuredBadges: badges.filter((b: any) => b.is_featured).slice(0, 5)
+          featuredBadges: badges.filter((b) => b.is_featured).slice(0, 5)
         }
       },
       HttpStatus.OK,

@@ -1,39 +1,185 @@
 import type { APIRoute } from 'astro';
-import { getPlaceAnalytics } from '../../../lib/analytics';
-import { queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { recordRequest } from '../../../lib/metrics';
+import { query } from '../../../lib/postgres';
+import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
 
-export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
-  const startTime = Date.now();
-  logger.setRequestId(requestId);
-
+export const GET: APIRoute = async (context) => {
   try {
-    if (!locals.user?.id) {
-      recordRequest('GET', '/api/analytics/dashboard', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    const auth = await authenticateUser(context);
+    if (!auth) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Giriş yapmalısınız',
+        type: '/problems/analytics-dashboard-unauthorized',
+        instance: '/api/analytics/dashboard',
+      });
     }
 
-    const days = parseInt(url.searchParams.get('days') || '30', 10);
-    const endDate = new Date();
-    const startDate = new Date(endDate.getTime() - days * 24 * 60 * 60 * 1000);
+    const url = new URL(context.request.url);
+    const placeId = url.searchParams.get('placeId');
+    const period = url.searchParams.get('period') || '30d'; // 7d, 30d, 90d, 1y
 
-    const places = await queryMany('SELECT id FROM places WHERE user_id = $1 LIMIT 10', [locals.user.id]);
-    const analyticsData: any = {};
-    for (const place of places) {
-      const { metrics, summary } = await getPlaceAnalytics(place.id, startDate, endDate);
-      analyticsData[place.id] = { metrics, summary };
+    if (!placeId) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'placeId zorunludur',
+        type: '/problems/analytics-dashboard-validation',
+        instance: '/api/analytics/dashboard',
+      });
     }
 
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/analytics/dashboard', HttpStatus.OK, duration);
-    return apiResponse({ success: true, data: analyticsData }, HttpStatus.OK, requestId);
+    // Yetki: admin > vendor (sahip olduğu mekan) > diğer (yasak)
+    // Analytics rakip işletmelere leak olmamalı; rastgele user erişememeli
+    if (auth.user.role === 'admin') {
+      // admin her mekanın analytics'ini görebilir
+    } else if (auth.user.role === 'vendor') {
+      const placeCheck = await query(
+        'SELECT id FROM places WHERE id = $1 AND owner_id = $2',
+        [placeId, auth.user.id]
+      );
+      if (placeCheck.rows.length === 0) {
+        return problemJson({
+          status: 403,
+          title: 'Forbidden',
+          detail: 'Bu kaydı görüntüleme yetkiniz yok',
+          type: '/problems/analytics-dashboard-forbidden',
+          instance: '/api/analytics/dashboard',
+        });
+      }
+    } else {
+      return problemJson({
+        status: 403,
+        title: 'Forbidden',
+        detail: 'Sadece mekan sahibi veya admin analytics görebilir',
+        type: '/problems/analytics-dashboard-forbidden',
+        instance: '/api/analytics/dashboard',
+      });
+    }
+
+    // Tarih araligi
+    const VALID_PERIODS: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 };
+    const days = VALID_PERIODS[period] ?? 30;
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    // Ana metrikler
+    const metricsResult = await query(`
+      SELECT 
+        COALESCE(SUM(views), 0) as total_views,
+        COALESCE(SUM(phone_clicks), 0) as total_phone_clicks,
+        COALESCE(SUM(direction_clicks), 0) as total_direction_clicks,
+        COALESCE(SUM(website_clicks), 0) as total_website_clicks,
+        COALESCE(SUM(share_count), 0) as total_shares,
+        COALESCE(SUM(save_count), 0) as total_saves,
+        COUNT(DISTINCT date) as active_days
+      FROM place_daily_analytics
+      WHERE place_id = $1 AND date >= $2
+    `, [placeId, startDate.toISOString().split('T')[0]]);
+
+    // Günlük veriler (grafik için)
+    const dailyResult = await query(`
+      SELECT 
+        date,
+        views,
+        phone_clicks,
+        direction_clicks,
+        website_clicks,
+        share_count,
+        save_count
+      FROM place_daily_analytics
+      WHERE place_id = $1 AND date >= $2
+      ORDER BY date ASC
+    `, [placeId, startDate.toISOString().split('T')[0]]);
+
+    // Cihaz istatistikleri
+    const deviceResult = await query(`
+      SELECT 
+        device_type,
+        COUNT(*) as count
+      FROM place_analytics_events
+      WHERE place_id = $1 AND created_at >= $2
+      GROUP BY device_type
+    `, [placeId, startDate.toISOString()]);
+
+    // Kaynak/trafik istatistikleri
+    const sourceResult = await query(`
+      SELECT 
+        source,
+        COUNT(*) as count
+      FROM place_analytics_events
+      WHERE place_id = $1 AND created_at >= $2 AND source IS NOT NULL
+      GROUP BY source
+      ORDER BY count DESC
+      LIMIT 5
+    `, [placeId, startDate.toISOString()]);
+
+    // Saatlik dagilim
+    const hourlyResult = await query(`
+      SELECT 
+        EXTRACT(HOUR FROM created_at) as hour,
+        COUNT(*) as count
+      FROM place_analytics_events
+      WHERE place_id = $1 AND created_at >= $2
+      GROUP BY EXTRACT(HOUR FROM created_at)
+      ORDER BY hour
+    `, [placeId, startDate.toISOString()]);
+
+    // Onceki donem karsilastirmasi
+    const prevStartDate = new Date(startDate);
+    prevStartDate.setDate(prevStartDate.getDate() - days);
+
+    const prevPeriodResult = await query(`
+      SELECT 
+        COALESCE(SUM(views), 0) as prev_views,
+        COALESCE(SUM(phone_clicks), 0) as prev_phone_clicks
+      FROM place_daily_analytics
+      WHERE place_id = $1 AND date >= $2 AND date < $3
+    `, [placeId, prevStartDate.toISOString().split('T')[0], startDate.toISOString().split('T')[0]]);
+
+    const metrics = metricsResult.rows[0];
+    const prevMetrics = prevPeriodResult.rows[0];
+
+    // Degisim yuzdeleri
+    const calculateChange = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? 100 : 0;
+      return Math.round(((current - previous) / previous) * 100);
+    };
+
+    return apiResponse({
+      success: true,
+      period,
+      summary: {
+        views: {
+          total: parseInt(metrics.total_views),
+          change: calculateChange(parseInt(metrics.total_views), parseInt(prevMetrics.prev_views))
+        },
+        phoneClicks: {
+          total: parseInt(metrics.total_phone_clicks),
+          change: calculateChange(parseInt(metrics.total_phone_clicks), parseInt(prevMetrics.prev_phone_clicks))
+        },
+        directionClicks: parseInt(metrics.total_direction_clicks),
+        websiteClicks: parseInt(metrics.total_website_clicks),
+        shares: parseInt(metrics.total_shares),
+        saves: parseInt(metrics.total_saves),
+        activeDays: parseInt(metrics.active_days)
+      },
+      daily: dailyResult.rows,
+      devices: deviceResult.rows,
+      sources: sourceResult.rows,
+      hourly: hourlyResult.rows
+    }, HttpStatus.OK);
+
   } catch (error) {
-    const duration = Date.now() - startTime;
-    recordRequest('GET', '/api/analytics/dashboard', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Dashboard analytics failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'İşlem tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Analytics error:', error);
+    return problemJson({
+      status: 500,
+      title: 'Dashboard Analitiği Alınamadı',
+      detail: safeErrorDetail(error, 'server_error'),
+      type: '/problems/analytics-dashboard-failed',
+      instance: '/api/analytics/dashboard',
+    });
   }
 };

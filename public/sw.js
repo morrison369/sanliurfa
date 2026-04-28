@@ -1,159 +1,198 @@
 /**
- * Service Worker - PWA support
- * - Offline caching
- * - Push notifications
- * - Background sync (future)
+ * Service Worker for PWA
+ * Phase 2.4: Progressive Web App
  */
 
-const CACHE_VERSION = 'sanliurfa-v1';
-const RUNTIME_CACHE = 'sanliurfa-runtime';
-
-// Assets to cache on install
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'sanliurfa-v1';
+const STATIC_ASSETS = [
   '/',
-  '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png',
+  '/offline.html',
 ];
 
-// Install event - cache essential assets
+// Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Install event');
   event.waitUntil(
-    caches.open(CACHE_VERSION)
-      .then((cache) => {
-        console.log('[SW] Caching essential assets');
-        return cache.addAll(ASSETS_TO_CACHE);
-      })
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
+    })
   );
+  self.skipWaiting();
 });
 
-// Activate event - cleanup old caches
+// Activate event - clean old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activate event');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_VERSION && cacheName !== RUNTIME_CACHE) {
-            console.log('[SW] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
       );
-    }).then(() => self.clients.claim())
+    })
   );
+  self.clients.claim();
 });
 
-// Fetch event - cache-first with network fallback
+// Fetch event - serve from cache or network
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip API calls and external requests
-  if (url.pathname.startsWith('/api/') || url.origin !== self.location.origin) {
+  // Skip non-GET requests
+  if (request.method !== 'GET') return;
+
+  // Skip cross-origin requests
+  if (url.origin !== self.location.origin) return;
+
+  // API calls - network first, cache fallback
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(networkFirst(request));
     return;
   }
 
-  // HTML pages: network-first
-  if (request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const cloned = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, cloned));
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
+  // Static assets - cache first
+  if (isStaticAsset(request)) {
+    event.respondWith(cacheFirst(request));
     return;
   }
 
-  // Images, CSS, JS: cache-first
-  event.respondWith(
-    caches.match(request)
-      .then((response) => response || fetch(request))
-      .then((response) => {
-        if (response && (request.destination === 'image' || 
-            request.destination === 'style' || 
-            request.destination === 'script')) {
-          const cloned = response.clone();
-          caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, cloned));
-        }
-        return response;
-      })
-      .catch(() => {
-        // Fallback for offline
-        if (request.destination === 'image') {
-          return new Response(null, { status: 204 });
-        }
-      })
-  );
+  // HTML pages - stale while revalidate
+  if (request.mode === 'navigate') {
+    event.respondWith(staleWhileRevalidate(request));
+    return;
+  }
+
+  // Default - network first
+  event.respondWith(networkFirst(request));
 });
 
-// Push notification event
+// Background sync for offline mutations
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-reviews') {
+    event.waitUntil(syncReviews());
+  }
+  if (event.tag === 'sync-favorites') {
+    event.waitUntil(syncFavorites());
+  }
+});
+
+// Push notifications
 self.addEventListener('push', (event) => {
-  console.log('[SW] Push notification received');
-  
-  if (!event.data) {
-    console.log('[SW] Push event with no data');
-    return;
-  }
+  if (!event.data) return;
 
-  let notificationData = {};
-  try {
-    notificationData = event.data.json();
-  } catch (e) {
-    notificationData = { body: event.data.text() };
-  }
-
+  const data = event.data.json();
   const options = {
-    body: notificationData.body || '',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: notificationData.tag || 'notification',
-    requireInteraction: notificationData.requireInteraction || false,
-    data: notificationData.data || {},
-    actions: notificationData.actions || [],
-    ...notificationData
+    body: data.body,
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/badge-72x72.png',
+    data: data.url,
+    actions: data.actions || [],
   };
 
   event.waitUntil(
-    self.registration.showNotification(notificationData.title || 'Şanlıurfa', options)
+    self.registration.showNotification(data.title, options)
   );
 });
 
-// Notification click event
+// Notification click
 self.addEventListener('notificationclick', (event) => {
-  console.log('[SW] Notification clicked', event.action);
   event.notification.close();
+  
+  event.waitUntil(
+    clients.openWindow(event.notification.data || '/')
+  );
+});
 
-  const urlToOpen = event.notification.data.url || '/';
-  const action = event.action;
-
-  if (action === 'close') {
-    return;
+// Cache strategies
+async function cacheFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+  
+  if (cached) {
+    return cached;
   }
 
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        // Check if window already open
-        for (let i = 0; i < clientList.length; i++) {
-          const client = clientList[i];
-          if (client.url === urlToOpen && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        // Open new window if not found
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
-  );
-});
+  const response = await fetch(request);
+  if (response.ok) {
+    cache.put(request, response.clone());
+  }
+  return response;
+}
 
-// Notification close event (for analytics)
-self.addEventListener('notificationclose', (event) => {
-  console.log('[SW] Notification dismissed');
-});
+async function networkFirst(request) {
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    const cache = await caches.open(CACHE_NAME);
+    const cached = await cache.match(request);
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+
+  const networkPromise = fetch(request).then((response) => {
+    if (response.ok) {
+      cache.put(request, response.clone());
+    }
+    return response;
+  });
+
+  return cached || networkPromise;
+}
+
+function isStaticAsset(request) {
+  const staticExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.woff', '.woff2'];
+  return staticExtensions.some(ext => request.url.endsWith(ext));
+}
+
+// Background sync implementations
+async function syncReviews() {
+  const db = await openDB('sanliurfa-db', 1);
+  const reviews = await db.getAll('pending-reviews');
+  
+  for (const review of reviews) {
+    try {
+      await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(review),
+      });
+      await db.delete('pending-reviews', review.id);
+    } catch (error) {
+      console.error('Sync failed for review:', review.id);
+    }
+  }
+}
+
+async function syncFavorites() {
+  // Similar implementation
+}
+
+// IndexedDB helper
+function openDB(name, version) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(name, version);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('pending-reviews')) {
+        db.createObjectStore('pending-reviews', { keyPath: 'id' });
+      }
+    };
+  });
+}

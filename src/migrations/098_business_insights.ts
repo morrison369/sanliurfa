@@ -27,6 +27,12 @@ export const migration_098_business_insights = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE business_trends ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE business_trends ADD COLUMN IF NOT EXISTS trend_type VARCHAR(100);
+      ALTER TABLE business_trends ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_trends_place
       ON business_trends(place_id, trend_type, created_at DESC)
     `);
@@ -46,6 +52,11 @@ export const migration_098_business_insights = async (pool: Pool) => {
         updated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(place_id, metric_name, month, day_of_week)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE seasonality_patterns ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE seasonality_patterns ADD COLUMN IF NOT EXISTS metric_name VARCHAR(100);
     `);
 
     await pool.query(`
@@ -71,6 +82,11 @@ export const migration_098_business_insights = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE satisfaction_scores ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE satisfaction_scores ADD COLUMN IF NOT EXISTS score_date DATE;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_satisfaction_place_date
       ON satisfaction_scores(place_id, score_date DESC)
     `);
@@ -91,6 +107,11 @@ export const migration_098_business_insights = async (pool: Pool) => {
         updated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(place_id, model_type, prediction_target)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE predictive_models ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE predictive_models ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
     `);
 
     await pool.query(`
@@ -118,6 +139,11 @@ export const migration_098_business_insights = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE competitor_analysis ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE competitor_analysis ADD COLUMN IF NOT EXISTS comparison_date DATE;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_competitor_analysis
       ON competitor_analysis(place_id, comparison_date DESC)
     `);
@@ -139,6 +165,12 @@ export const migration_098_business_insights = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         implemented_at TIMESTAMP
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE action_suggestions ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE action_suggestions ADD COLUMN IF NOT EXISTS priority INT;
+      ALTER TABLE action_suggestions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`

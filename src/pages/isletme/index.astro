@@ -1,0 +1,240 @@
+---
+
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+const { baseUrl } = await getSiteBranding();
+
+let categories: any[] = [];
+let featuredPlaces: any[] = [];
+let totalCount = 0;
+
+try {
+  const [catResult, featResult, countResult] = await Promise.all([
+    query(
+      `SELECT c.id, c.name, c.slug, c.icon, c.description,
+         COUNT(p.id)::int AS place_count
+       FROM categories c
+       LEFT JOIN places p ON p.category_id = c.id AND p.status = 'active'
+       WHERE c.is_active = true AND c.parent_id IS NOT NULL
+       GROUP BY c.id
+       HAVING COUNT(p.id) > 0
+       ORDER BY COUNT(p.id) DESC
+       LIMIT 12`,
+      []
+    ),
+    query(
+      `SELECT p.id, p.name, p.slug, p.short_description, p.address,
+         p.rating, p.review_count, p.price_range, p.is_verified,
+         c.name AS category_name, c.slug AS category_slug,
+         d.name AS district_name
+       FROM places p
+       LEFT JOIN categories c ON c.id = p.category_id
+       LEFT JOIN districts d ON d.id = p.district_id
+       WHERE p.status = 'active' AND p.is_featured = true
+       ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+       LIMIT 8`,
+      []
+    ),
+    query(
+      `SELECT COUNT(*)::int AS total FROM places WHERE status = 'active'`,
+      []
+    ),
+  ]);
+  categories = catResult.rows;
+  featuredPlaces = featResult.rows;
+  totalCount = countResult.rows[0]?.total || 0;
+} catch (e) {
+  logger.error('isletme index error:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: 'Şanlıurfa İşletmeler | Tüm Mekan ve İşletme Listesi',
+  description: `Şanlıurfa'da ${totalCount > 0 ? totalCount + ' ' : ''}aktif işletme ve mekan. Restoran, kafe, market, hizmet noktaları ve daha fazlası.`,
+  canonical: '/isletme',
+  keywords: ['şanlıurfa işletmeler', 'urfa mekanlar listesi', 'şanlıurfa tüm işletmeler', 'urfa restoran listesi', 'şanlıurfa mekan ara', 'urfa işletme rehberi'],
+  ogImage: '/images/hero/hero-home.webp',
+};
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa işletme rehberinde nasıl arama yapabilirim?',
+    C: 'Kategori kartlarından ilgilendiğiniz sektörü seçin ya da arama sayfasından isim veya adres ile sorgulayın.',
+  },
+  {
+    S: 'İşletmemi bu platforma nasıl ekleyebilirim?',
+    C: "İşletme Ekle sayfasından başvurabilirsiniz. Başvurular 24-48 saat içinde incelenir.",
+  },
+  {
+    S: 'İşletme bilgileri nasıl güncellenir?',
+    C: 'İşletme sahibi hesabıyla giriş yaparak bilgilerinizi düzenleyebilir veya güncelleme talebi oluşturabilirsiniz.',
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <!-- Hero -->
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-16">
+      <div class="container mx-auto px-4">
+        <div class="max-w-3xl">
+          <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">İŞLETME REHBERİ</p>
+          <h1 class="text-4xl md:text-5xl font-bold text-[#F5EDD6] mb-4">Şanlıurfa İşletmeleri</h1>
+          <p class="text-xl text-[#C4B49A] max-w-2xl">
+            Restoranlardan hizmet noktalarına, marketlerden sağlık kuruluşlarına — Şanlıurfa'nın tüm işletmeleri tek platformda.
+          </p>
+          {totalCount > 0 && (
+            <p class="mt-4 text-sm text-[#9A8470]">{totalCount} aktif işletme kayıtlı</p>
+          )}
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a href="/isletme-kayit" class="inline-flex items-center gap-2 rounded-sm bg-urfa-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-urfa-700 transition-colors">
+              + İşletmenizi Ekleyin
+            </a>
+            <a href="/arama" class="inline-flex items-center gap-2 rounded-sm bg-white/10 border border-white/20 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition-colors">
+              İşletme Ara
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-10">
+
+      <!-- Hızlı Bilgi -->
+      <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 mb-8 shadow-sm">
+        <h2 class="text-base font-bold text-[#1A1008]">Hızlı Cevap</h2>
+        <p class="mt-1 text-sm text-[#6B5540]">
+          Şanlıurfa işletme rehberi; restoran, kafe, sağlık kuruluşu, market, eğitim merkezi ve yerel hizmet noktalarını kapsar.
+          Her işletme için adres, telefon, çalışma saatleri ve kullanıcı yorumları mevcuttur.
+        </p>
+      </div>
+
+      <!-- Kategoriler -->
+      {categories.length > 0 && (
+        <section class="mb-12">
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Kategoriler</h2>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {categories.map((cat) => (
+              <a
+                href={`/mekanlar/${cat.slug}`}
+                class="group rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-4 shadow-sm hover:border-urfa-300 hover:shadow-md transition-all"
+              >
+                {cat.icon && <span class="text-2xl mb-2 block">{cat.icon}</span>}
+                <p class="font-semibold text-[#1A1008] group-hover:text-urfa-700 transition-colors">{cat.name}</p>
+                <p class="text-xs text-[#9A8470] mt-0.5">{cat.place_count} işletme</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- Öne Çıkan İşletmeler -->
+      {featuredPlaces.length > 0 && (
+        <section class="mb-12">
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Öne Çıkan İşletmeler</h2>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {featuredPlaces.map((place) => (
+              <a
+                href={`/isletme/${place.slug}`}
+                class="group rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-4 shadow-sm hover:border-urfa-300 hover:shadow-md transition-all"
+              >
+                <div class="flex items-start justify-between gap-2 mb-2">
+                  <p class="font-semibold text-[#1A1008] group-hover:text-urfa-700 transition-colors leading-tight">{place.name}</p>
+                  {place.is_verified && (
+                    <span class="shrink-0 text-xs bg-[rgba(200,160,100,0.15)] text-[#5A4020] border border-[rgba(200,160,100,0.3)] px-1.5 py-0.5 rounded-sm">✓</span>
+                  )}
+                </div>
+                {place.short_description && (
+                  <p class="text-xs text-[#9A8470] mb-3 line-clamp-2">{place.short_description}</p>
+                )}
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-[#9A8470]">{place.category_name}</span>
+                  {place.rating && (
+                    <span class="text-xs font-semibold text-urfa-600">★ {Number(place.rating).toFixed(1)}</span>
+                  )}
+                </div>
+                {place.district_name && (
+                  <p class="text-xs text-[#9A8470] mt-1">{place.district_name}</p>
+                )}
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <!-- İşletme Sahibi CTA -->
+      <section class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] p-6 mb-12">
+        <div class="flex flex-col md:flex-row md:items-center gap-4 justify-between">
+          <div>
+            <h2 class="text-lg font-bold text-[#1A1008]">İşletmenizi platforma ekleyin</h2>
+            <p class="text-sm text-[#6B5540] mt-1">
+              Şanlıurfa'da işletme sahibi misiniz? Ücretsiz listeleme ile müşterilerinize ulaşın.
+            </p>
+          </div>
+          <a
+            href="/isletme-kayit"
+            class="shrink-0 rounded-sm bg-urfa-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-urfa-700 transition-colors text-center"
+          >
+            Başvuru Formu
+          </a>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="mb-12">
+        <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Sık Sorulan Sorular</h2>
+        <div class="space-y-3">
+          {faqItems.map((item) => (
+            <details class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white shadow-sm group">
+              <summary class="flex cursor-pointer items-center justify-between p-4 font-semibold text-[#1A1008] hover:text-urfa-700 transition-colors list-none">
+                {item.S}
+                <span class="ml-4 shrink-0 text-[#9A8470] group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <p class="px-4 pb-4 text-sm text-[#6B5540]">{item.C}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Şanlıurfa İşletme Rehberi',
+    description: 'Şanlıurfa\'da aktif işletme ve mekan listesi',
+    url: `${baseUrl}/isletme`,
+    numberOfItems: totalCount || undefined,
+    itemListElement: featuredPlaces.slice(0, 5).map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'LocalBusiness',
+        '@id': `${baseUrl}/isletme/${p.slug}`,
+        name: p.name,
+        url: `${baseUrl}/isletme/${p.slug}`,
+        address: { '@type': 'PostalAddress', addressLocality: p.district_name || 'Şanlıurfa', addressCountry: 'TR' },
+      },
+    })),
+  })} is:inline />
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map(item => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'İşletmeler', item: `${baseUrl}/isletme` },
+    ],
+  })} is:inline />
+</Layout>

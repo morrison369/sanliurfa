@@ -1,233 +1,331 @@
 # Task Tracker
 
-Last updated: 2026-04-22
+Last updated: 2026-04-08
 
 ## Closed
-- `T-154` Phase 1307-1312 planning — closed
+- `Phase 137-142 Advanced DevOps & Infrastructure` — closed (completed and documented in `PHASE_137_142_ADVANCED_DEVOPS_INFRASTRUCTURE.md`)
+- `Phase 161-166 Advanced Governance & Policy` — closed (commit `268e299`, tests + docs delivered)
+- `T-001` Unit-test runtime stabilization verification — closed
+  - `src/lib/__tests__/governance-policy.test.ts`: 24/24 passing
+  - mitigation applied in `vitest.config.ts` and `src/lib/logger.ts`
+- `T-002` Phase 167-172 kickoff — closed
+  - 6 libraries implemented under `src/lib/`
+  - 24 tests added in `src/lib/__tests__/org-governance-ops.test.ts`
+  - documentation completed in `PHASE_167_172_ORG_GOVERNANCE_OPS.md`
+  - `src/lib/index.ts` exports updated
+- `T-003` Phase 173-178 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-assurance-automation.test.ts`
+  - docs in `PHASE_173_178_GOVERNANCE_ASSURANCE_AUTOMATION.md`
+  - `src/lib/index.ts` exports updated
+- `T-004` Phase 179-184 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-release-automation.test.ts`
+  - docs in `PHASE_179_184_GOVERNANCE_RELEASE_AUTOMATION.md`
+  - `src/lib/index.ts` exports updated
+- `T-005` Phase 185-190 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-command-ops.test.ts`
+  - docs in `PHASE_185_190_GOVERNANCE_COMMAND_OPS.md`
+  - `src/lib/index.ts` exports updated
+- `T-006` Phase 191-196 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-strategy-intelligence.test.ts`
+  - docs in `PHASE_191_196_GOVERNANCE_STRATEGY_INTELLIGENCE.md`
+  - `src/lib/index.ts` exports updated
+- `T-007` Phase 197-202 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-autonomy-foresight.test.ts`
+  - docs in `PHASE_197_202_GOVERNANCE_AUTONOMY_FORESIGHT.md`
+  - `src/lib/index.ts` exports updated
+- `T-008` Phase 203-208 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-federated-intelligence.test.ts`
+  - docs in `PHASE_203_208_GOVERNANCE_FEDERATED_INTELLIGENCE.md`
+  - `src/lib/index.ts` exports updated
+- `T-009` Phase 209-214 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-mesh-swarm.test.ts`
+  - docs in `PHASE_209_214_GOVERNANCE_MESH_SWARM.md`
+  - `src/lib/index.ts` exports updated
+- `T-010` Phase 215-220 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-fabric-economics.test.ts`
+  - docs in `PHASE_215_220_GOVERNANCE_FABRIC_ECONOMICS.md`
+  - `src/lib/index.ts` exports updated
+- `T-011` Phase 221-226 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-runtime-marketplace.test.ts`
+  - docs in `PHASE_221_226_GOVERNANCE_RUNTIME_MARKETPLACE.md`
+  - `src/lib/index.ts` exports updated
+- `T-012` Phase 227-232 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-treaty-replay.test.ts`
+  - docs in `PHASE_227_232_GOVERNANCE_TREATY_REPLAY.md`
+  - `src/lib/index.ts` exports updated
+- `T-013` Phase 233-238 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-experimentation-trust.test.ts`
+  - docs in `PHASE_233_238_GOVERNANCE_EXPERIMENTATION_TRUST.md`
+  - `src/lib/index.ts` exports updated
+- `T-014` Phase 239-244 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-runtime-fusion-arbitration.test.ts`
+  - docs in `PHASE_239_244_GOVERNANCE_RUNTIME_FUSION_ARBITRATION.md`
+  - `src/lib/index.ts` exports updated
+- `T-015` Phase 245-250 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-explainability-settlement-exchange.test.ts`
+  - docs in `PHASE_245_250_GOVERNANCE_EXPLAINABILITY_SETTLEMENT_EXCHANGE.md`
+  - `src/lib/index.ts` exports updated
+- `T-016` Phase 251-256 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-continuity-resilience.test.ts`
+  - docs in `PHASE_251_256_GOVERNANCE_CONTINUITY_RESILIENCE.md`
+  - `src/lib/index.ts` exports updated
+- `T-017` Phase 257-262 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-horizon-incident-liquidity.test.ts`
+  - docs in `PHASE_257_262_GOVERNANCE_HORIZON_INCIDENT_LIQUIDITY.md`
+  - `src/lib/index.ts` exports updated
+- `T-018` Phase 263-268 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-recovery-capital-router.test.ts`
+  - docs in `PHASE_263_268_GOVERNANCE_RECOVERY_CAPITAL_ROUTER.md`
+  - `src/lib/index.ts` exports updated
+- `T-019` Phase 269-274 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-shock-settlement-forecaster.test.ts`
+  - docs in `PHASE_269_274_GOVERNANCE_SHOCK_SETTLEMENT_FORECASTER.md`
+  - `src/lib/index.ts` exports updated
+- `T-020` Phase 275-280 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-wavefront-liquidity-exchange.test.ts`
+  - docs in `PHASE_275_280_GOVERNANCE_WAVEFRONT_LIQUIDITY_EXCHANGE.md`
+  - `src/lib/index.ts` exports updated
+- `T-021` Phase 281-286 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-pressure-recovery-arbitration.test.ts`
+  - docs in `PHASE_281_286_GOVERNANCE_PRESSURE_RECOVERY_ARBITRATION.md`
+  - `src/lib/index.ts` exports updated
+- `T-022` Phase 287-292 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-feedback-drift-continuity.test.ts`
+  - docs in `PHASE_287_292_GOVERNANCE_FEEDBACK_DRIFT_CONTINUITY.md`
+  - `src/lib/index.ts` exports updated
+- `T-023` Phase 293-298 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-harmonics-continuity-coordinator.test.ts`
+  - docs in `PHASE_293_298_GOVERNANCE_HARMONICS_CONTINUITY.md`
+  - `src/lib/index.ts` exports updated
+- `T-024` Phase 299-304 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-signal-assurance-stability.test.ts`
+  - docs in `PHASE_299_304_GOVERNANCE_SIGNAL_ASSURANCE_STABILITY.md`
+  - `src/lib/index.ts` exports updated
+- `T-025` Phase 305-310 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-assurance-continuity-confidence.test.ts`
+  - docs in `PHASE_305_310_GOVERNANCE_ASSURANCE_CONTINUITY_CONFIDENCE.md`
+  - `src/lib/index.ts` exports updated
+- `T-026` Phase 311-316 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-continuity-recovery-stability.test.ts`
+  - docs in `PHASE_311_316_GOVERNANCE_CONTINUITY_RECOVERY_STABILITY.md`
+  - `src/lib/index.ts` exports updated
+- `T-027` Phase 317-322 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-stability-recovery-confidence.test.ts`
+  - docs in `PHASE_317_322_GOVERNANCE_STABILITY_CONTINUITY_RECOVERY_CONFIDENCE.md`
+  - `src/lib/index.ts` exports updated
+- `T-028` Phase 323-328 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-continuity-assurance-resilience.test.ts`
+  - docs in `PHASE_323_328_GOVERNANCE_CONTINUITY_STABILITY_ASSURANCE_RESILIENCE.md`
+  - `src/lib/index.ts` exports updated
+- `T-029` Phase 329-334 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-trust-stability-continuity.test.ts`
+  - docs in `PHASE_329_334_GOVERNANCE_TRUST_STABILITY_RESILIENCE_CONTINUITY.md`
+  - `src/lib/index.ts` exports updated
+- `T-030` Phase 335-340 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-continuity-assurance-stability-cycle.test.ts`
+  - docs in `PHASE_335_340_GOVERNANCE_CONTINUITY_ASSURANCE_STABILITY_RESILIENCE.md`
+  - `src/lib/index.ts` exports updated
+- `T-031` Phase 341-346 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-stability-confidence-assurance-continuity.test.ts`
+  - docs in `PHASE_341_346_GOVERNANCE_STABILITY_CONFIDENCE_ASSURANCE_CONTINUITY.md`
+  - `src/lib/index.ts` exports updated
+- `T-032` Phase 347-352 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-assurance-stability-trust-continuity.test.ts`
+  - docs in `PHASE_347_352_GOVERNANCE_ASSURANCE_STABILITY_TRUST_CONTINUITY.md`
+  - `src/lib/index.ts` exports updated
+  - shared factory introduced in `src/lib/governance-kit.ts`
+- `T-033` Phase 353-358 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-continuity-stability-trust-resilience-v3.test.ts`
+  - docs in `PHASE_353_358_GOVERNANCE_CONTINUITY_STABILITY_TRUST_RESILIENCE_V3.md`
+  - `src/lib/index.ts` exports updated
+  - shared factory backport extended across phase 317-340 modules
+- `T-034` Phase 359-364 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-trust-continuity-suite-v3.test.ts`
+  - docs in `PHASE_359_364_GOVERNANCE_TRUST_CONTINUITY_V3.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:359-364`
+- `T-035` Phase 365-370 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-recovery-assurance-suite-v4.test.ts`
+  - docs in `PHASE_365_370_GOVERNANCE_RECOVERY_ASSURANCE_V4.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:365-370`
+- `T-036` Phase 371-376 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-assurance-continuity-suite-v5.test.ts`
+  - docs in `PHASE_371_376_GOVERNANCE_ASSURANCE_CONTINUITY_V5.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:371-376`
+- `T-037` Phase 377-382 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-continuity-assurance-suite-v6.test.ts`
+  - docs in `PHASE_377_382_GOVERNANCE_CONTINUITY_ASSURANCE_V6.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:377-382`
+- `T-038` Phase 383-388 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-stability-assurance-suite-v7.test.ts`
+  - docs in `PHASE_383_388_GOVERNANCE_STABILITY_ASSURANCE_V7.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:383-388`
+- `T-039` Phase 389-394 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-assurance-recovery-suite-v8.test.ts`
+  - docs in `PHASE_389_394_GOVERNANCE_ASSURANCE_RECOVERY_V8.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:389-394`
+- `T-040` Phase 395-400 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-stability-recovery-suite-v9.test.ts`
+  - docs in `PHASE_395_400_GOVERNANCE_STABILITY_RECOVERY_V9.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:395-400`
+- `T-041` Phase 401-406 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-continuity-recovery-suite-v10.test.ts`
+  - docs in `PHASE_401_406_GOVERNANCE_CONTINUITY_RECOVERY_V10.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:401-406`
+- `T-042` Phase 407-412 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-recovery-assurance-suite-v11.test.ts`
+  - docs in `PHASE_407_412_GOVERNANCE_RECOVERY_ASSURANCE_V11.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:407-412`
+- `T-043` Phase 413-418 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-continuity-assurance-suite-v12.test.ts`
+  - docs in `PHASE_413_418_GOVERNANCE_CONTINUITY_ASSURANCE_V12.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:latest` moved to `test:phase:413-418`
+- `T-044` Phase 419-424 planning — closed
+  - scope and implementation completed in the same cycle
+  - 6 libraries under `src/lib/`
+  - 24 tests in `src/lib/__tests__/governance-stability-recovery-suite-v13.test.ts`
+  - docs in `PHASE_419_424_GOVERNANCE_STABILITY_RECOVERY_V13.md`
+  - `src/lib/index.ts` exports updated
+  - `test:phase:prev/latest` now automated via `scripts/phase-runner.ts`
+  - `tsconfig.phase.json` versioned entries now maintainable via `scripts/update-phase-tsconfig.ts`
+- `T-045` Phase 425-430 planning — closed
   - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v161.test.ts`
-  - docs: `PHASE_1307_1312_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V161.md`
-
-- `T-155` Phase 1325-1330 planning — closed
+  - tests: `src/lib/__tests__/governance-continuity-recovery-suite-v14.test.ts`
+  - docs: `PHASE_425_430_GOVERNANCE_CONTINUITY_RECOVERY_V14.md`
+  - automation: `phase:check:tsconfig` enforced in `test:phase:gate:ci`
+- `T-046` Phase 431-436 planning — closed
   - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v164.test.ts`
-  - docs: `PHASE_1325_1330_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V164.md`
-
-- `T-156` Phase 1343-1348 planning — closed
+  - tests: `src/lib/__tests__/governance-assurance-continuity-suite-v15.test.ts`
+  - docs: `PHASE_431_436_GOVERNANCE_ASSURANCE_CONTINUITY_V15.md`
+  - automation: `phase-automation-scripts.test.ts` coverage expanded and `phase:changelog` script added
+- `T-047` Phase 437-442 planning — closed
   - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v167.test.ts`
-  - docs: `PHASE_1343_1348_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V167.md`
-
-- `T-157` Phase 1361-1366 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v170.test.ts`
-  - docs: `PHASE_1361_1366_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V170.md`
-
-- `T-158` Phase 1379-1384 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v173.test.ts`
-  - docs: `PHASE_1379_1384_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V173.md`
-
-- `T-159` Phase 1397-1402 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v176.test.ts`
-  - docs: `PHASE_1397_1402_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V176.md`
-
-- `T-160` Phase 1415-1420 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v179.test.ts`
-  - docs: `PHASE_1415_1420_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V179.md`
-
-- `T-161` Phase 1433-1438 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v182.test.ts`
-  - docs: `PHASE_1433_1438_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V182.md`
-
-- `T-162` Phase 1451-1456 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v185.test.ts`
-  - docs: `PHASE_1451_1456_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V185.md`
-
-- `T-163` Phase 1457-1462 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v186.test.ts`
-  - docs: `PHASE_1457_1462_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V186.md`
-
-- `T-164` Phase 1463-1468 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v187.test.ts`
-  - docs: `PHASE_1463_1468_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V187.md`
-
-- `T-165` Phase 1469-1474 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v188.test.ts`
-  - docs: `PHASE_1469_1474_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V188.md`
-
-- `T-166` Phase 1475-1480 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v189.test.ts`
-  - docs: `PHASE_1475_1480_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V189.md`
-
-- `T-167` Phase 1481-1486 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v190.test.ts`
-  - docs: `PHASE_1481_1486_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V190.md`
-
-- `T-168` Phase 1487-1492 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v191.test.ts`
-  - docs: `PHASE_1487_1492_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V191.md`
-
-- `T-169` Phase 1493-1498 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v192.test.ts`
-  - docs: `PHASE_1493_1498_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V192.md`
-
-- `T-170` Phase 1499-1504 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v193.test.ts`
-  - docs: `PHASE_1499_1504_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V193.md`
-
-- `T-171` Phase 1505-1510 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v194.test.ts`
-  - docs: `PHASE_1505_1510_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V194.md`
-
-- `T-172` Phase 1511-1516 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v195.test.ts`
-  - docs: `PHASE_1511_1516_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V195.md`
-
-- `T-173` Phase 1517-1522 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v196.test.ts`
-  - docs: `PHASE_1517_1522_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V196.md`
-
-- `T-174` Phase 1523-1528 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v197.test.ts`
-  - docs: `PHASE_1523_1528_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V197.md`
-
-- `T-175` Phase 1529-1534 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v198.test.ts`
-  - docs: `PHASE_1529_1534_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V198.md`
-
-- `T-176` Phase 1535-1540 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v199.test.ts`
-  - docs: `PHASE_1535_1540_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V199.md`
-
-- `T-177` Phase 1541-1546 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v200.test.ts`
-  - docs: `PHASE_1541_1546_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V200.md`
-
-- `T-178` Phase 1547-1552 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v201.test.ts`
-  - docs: `PHASE_1547_1552_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V201.md`
-
-- `T-179` Phase 1553-1558 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v202.test.ts`
-  - docs: `PHASE_1553_1558_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V202.md`
-
-- `T-180` Phase 1559-1564 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v203.test.ts`
-  - docs: `PHASE_1559_1564_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V203.md`
-
-- `T-181` Phase 1565-1570 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v204.test.ts`
-  - docs: `PHASE_1565_1570_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V204.md`
-
-- `T-182` Phase 1571-1576 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v205.test.ts`
-  - docs: `PHASE_1571_1576_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V205.md`
-
-- `T-183` Phase 1577-1582 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v206.test.ts`
-  - docs: `PHASE_1577_1582_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V206.md`
-
-- `T-184` Phase 1583-1588 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v207.test.ts`
-  - docs: `PHASE_1583_1588_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V207.md`
-
-- `T-185` Phase 1589-1594 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v208.test.ts`
-  - docs: `PHASE_1589_1594_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V208.md`
-
-- `T-186` Phase 1595-1600 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v209.test.ts`
-  - docs: `PHASE_1595_1600_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V209.md`
-
-- `T-187` Phase 1601-1606 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v210.test.ts`
-  - docs: `PHASE_1601_1606_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V210.md`
-
-- `T-188` Phase 1607-1612 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v211.test.ts`
-  - docs: `PHASE_1607_1612_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V211.md`
-
-- `T-189` Phase 1613-1618 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v212.test.ts`
-  - docs: `PHASE_1613_1618_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V212.md`
-
-- `T-190` Phase 1619-1624 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v213.test.ts`
-  - docs: `PHASE_1619_1624_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V213.md`
-
-- `T-191` Phase 1625-1630 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v214.test.ts`
-  - docs: `PHASE_1625_1630_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V214.md`
-
-- `T-192` Phase 1631-1636 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v215.test.ts`
-  - docs: `PHASE_1631_1636_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V215.md`
-
-- `T-193` Phase 1637-1642 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v216.test.ts`
-  - docs: `PHASE_1637_1642_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V216.md`
-
-- `T-194` Phase 1643-1648 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v217.test.ts`
-  - docs: `PHASE_1643_1648_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V217.md`
-
-- `T-195` Phase 1649-1654 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v218.test.ts`
-  - docs: `PHASE_1649_1654_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V218.md`
-
-- `T-196` Phase 1655-1660 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-recovery-assurance-suite-v219.test.ts`
-  - docs: `PHASE_1655_1660_GOVERNANCE_RECOVERY_ASSURANCE_CONTINUITY_V219.md`
-
-- `T-197` Phase 1661-1666 planning — closed
-  - completed with standard phase template (6 libs, 24 tests, docs, exports, gate green)
-  - tests: `src/lib/__tests__/governance-assurance-stability-suite-v220.test.ts`
-  - docs: `PHASE_1661_1666_GOVERNANCE_ASSURANCE_STABILITY_CONTINUITY_V220.md`
+  - tests: `src/lib/__tests__/governance-stability-continuity-suite-v16.test.ts`
+  - docs: `PHASE_437_442_GOVERNANCE_STABILITY_CONTINUITY_V16.md`
 
 ## Open
-- `T-198` Phase 1667-1672 planning
-  - Scope: define architecture, contracts, and acceptance gates for next 6-phase block.
-  - Owner: engineering
-  - Status: ready
+- `T-048` Phase 443-448 — İPTAL EDİLDİ (2026-04-23)
+  - Neden: Governance/enterprise modülleri şehir rehberi platformuyla ilgisiz. Gerçek platform ihtiyaçlarına geçildi.
+  - Yerine yapılanlar: T-049 - T-056
+
+- `T-049` Admin entegrasyon ayarları — TAMAMLANDI (2026-04-23)
+  - `/api/admin/site/integrations` endpoint
+  - `IntegrationsSettings.tsx` bileşeni
+  - `/admin/integrations.astro` sayfası
+
+- `T-050` Runtime email/GA key DB'den oku — TAMAMLANDI (2026-04-23)
+  - `email.ts`: 60 saniyelik cache ile `site_settings.integrations.email` okur
+  - `Layout.astro`: GA ID `site_settings.integrations.analytics` okur
+
+- `T-051` SEO meta tag iyileştirmeleri — TAMAMLANDI (2026-04-23)
+  - Blog sayfaları: type:article, publishedTime, keywords, author
+  - Mekan listesi: dinamik title/description, keywords
+
+- `T-052` Sitemap ilçe sayfaları — TAMAMLANDI (2026-04-23)
+  - `sitemap-dynamic.xml.ts`: districts tablosundan `/ilceler/{slug}` ekler
+
+- `T-053` Fotoğraf yükleme UX — TAMAMLANDI (2026-04-23)
+  - Çoklu dosya seçimi, gerçek XHR progress, yükleme öncesi önizleme
+
+- `T-054` Migration 162 bus_schedules — TAMAMLANDI (2026-04-23)
+  - bus_routes + bus_schedules tabloları, 4 temel Şanlıurfa hattı seed
+
+- `T-055` Admin eczane API — TAMAMLANDI (2026-04-23)
+  - `/api/admin/pharmacies`: nöbetçi listeleme, toplu nöbet atama, eczane ekleme
+
+- `T-056` Otobüs sayfası DB entegrasyonu — TAMAMLANDI (2026-04-23)
+  - `otobus-saatleri.astro`: bus_routes + bus_schedules tablosundan okur
 
 ## Closed Template
 - Standard closure format: `6 libs + 24 tests + docs + index exports + gate green`.

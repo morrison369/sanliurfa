@@ -1,28 +1,27 @@
-// @ts-nocheck
 /**
  * Request Place Verification
  * POST /api/places/[id]/request-verification - Request verification for a place
  */
 
 import type { APIRoute } from 'astro';
-import { requestPlaceVerification } from '../../../../lib/place-verification';
+import { requestPlaceVerification } from '../../../../lib/place/place-verification';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 import { queryOne } from '../../../../lib/postgres';
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    // Oturum zorunlu
+    // Auth required
     if (!locals.user) {
       recordRequest('POST', '/api/places/[id]/request-verification', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -31,14 +30,29 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
     const { id: placeId } = params;
 
-    // Verify place exists
-    const place = await queryOne('SELECT id FROM places WHERE id = $1', [placeId]);
+    // Verify place exists and check ownership (IDOR guard)
+    const place = await queryOne<{ id: string; owner_id: string | null }>(
+      'SELECT id, owner_id FROM places WHERE id = $1',
+      [placeId]
+    );
     if (!place) {
       recordRequest('POST', '/api/places/[id]/request-verification', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Mekan bulunamadı',
+        'Place not found',
         HttpStatus.NOT_FOUND,
+        undefined,
+        requestId
+      );
+    }
+
+    // Only the owner or admin can request verification
+    if (locals.user.role !== 'admin' && place.owner_id !== locals.user.id) {
+      recordRequest('POST', '/api/places/[id]/request-verification', HttpStatus.FORBIDDEN, Date.now() - startTime);
+      return apiError(
+        ErrorCode.FORBIDDEN,
+        'Bu mekan için doğrulama talebinde bulunma yetkiniz yok',
+        HttpStatus.FORBIDDEN,
         undefined,
         requestId
       );
@@ -47,6 +61,10 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     // Get request body
     const body = await request.json();
     const documents = body.documents || [];
+    if (!Array.isArray(documents) || documents.length > 20) {
+      recordRequest('POST', '/api/places/[id]/request-verification', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'documents dizisi en fazla 20 öğe içerebilir', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     // Request verification
     const verification = await requestPlaceVerification(placeId, documents);
@@ -55,7 +73,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/places/[id]/request-verification', HttpStatus.CONFLICT, Date.now() - startTime);
       return apiError(
         ErrorCode.CONFLICT,
-        'Bu mekanın bekleyen veya onaylanmış doğrulama talebi zaten var',
+        'This place already has a pending or verified verification request',
         HttpStatus.CONFLICT,
         undefined,
         requestId
@@ -74,7 +92,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     logger.error('Failed to request verification', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Doğrulama talebi gönderilemedi',
+      'Failed to request verification',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

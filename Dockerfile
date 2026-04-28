@@ -1,37 +1,50 @@
+# Sanliurfa.com - Production Dockerfile
+FROM node:20-alpine AS base
+
 # Build stage
-FROM node:18-alpine AS builder
+FROM base AS builder
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci
 
+# Copy source code
 COPY . .
+
+# Build application
+ENV NODE_ENV=production
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine
+FROM base AS runner
 
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
-
-# Copy built app from builder
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 astro
 
-USER nodejs
+# Copy built application
+COPY --from=builder --chown=astro:nodejs /app/dist ./dist
+COPY --from=builder --chown=astro:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=astro:nodejs /app/package.json ./package.json
 
+# Set environment
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
+# Switch to non-root user
+USER astro
+
+# Expose port
 EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "--enable-source-maps", "dist/index.js"]
+# Start command
+CMD ["node", "./dist/server/entry.mjs"]

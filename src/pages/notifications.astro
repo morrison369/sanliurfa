@@ -1,8 +1,24 @@
 ---
-return new Response(null, {
-  status: 301,
-  headers: {
-    Location: '/bildirimler',
-  },
-});
+import Layout from '../layouts/Layout.astro';
+import NotificationCenter from '../components/NotificationCenter';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/notifications');
+}
 ---
+
+<Layout seo={{ title: "Bildirimler | Sanliurfa.com", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-10">
+      <div class="max-w-2xl mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">HESABIM</p>
+        <h1 class="text-3xl font-bold text-[#F5EDD6]">Bildirimler</h1>
+        <p class="text-[#9A8470] mt-1">Tüm bildirimlerinizi buradan takip edin</p>
+      </div>
+    </div>
+    <div class="max-w-2xl mx-auto px-4 py-8">
+      <NotificationCenter client:visible={{ rootMargin: '120px' }} />
+    </div>
+  </div>
+</Layout>

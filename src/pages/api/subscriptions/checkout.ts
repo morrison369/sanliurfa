@@ -5,12 +5,14 @@
 
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../lib/postgres';
-import { createCheckoutSession } from '../../../lib/stripe-client';
-import { getSubscriptionTiers } from '../../../lib/subscription-management';
+import { createCheckoutSession } from '../../../lib/stripe/stripe-client';
+import { getSubscriptionTiers } from '../../../lib/subscription/subscription-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getPublicAppUrl } from '../../../lib/public-app-url';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { validateWithSchema } from '../../../lib/validation';
+import { validateWithSchema, type ValidationSchema } from '../../../lib/validation';
+import { PHASE1_FREE_MODE } from '../../../lib/runtime/phase-policy';
 
 const checkoutSchema = {
   tierId: {
@@ -32,20 +34,33 @@ const checkoutSchema = {
     type: 'string' as const,
     required: false,
   },
-} as any;
+} as ValidationSchema;
 
-export const POST: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+export const POST: APIRoute = async ({ request, locals }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
+    if (PHASE1_FREE_MODE) {
+      return apiResponse(
+        {
+          success: true,
+          phase1FreeMode: true,
+          checkoutDisabled: true,
+          message: 'Faz 1 döneminde tüm özellikler ücretsizdir. Checkout devre dışıdır.',
+        },
+        HttpStatus.OK,
+        requestId
+      );
+    }
+
     // Check authentication
     if (!locals.user) {
       recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -60,7 +75,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Geçersiz veri',
+        'Invalid input',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
@@ -70,20 +85,41 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
     const { tierId, billingCycle = 'monthly' } = validation.data;
     let { successUrl, cancelUrl } = validation.data;
 
-    // Set default URLs
-    const baseUrl = `${url.protocol}//${url.host}`;
-    successUrl = successUrl || `${baseUrl}/abonelik?success=true`;
-    cancelUrl = cancelUrl || `${baseUrl}/fiyatlandirma?cancelled=true`;
+    // Set default URLs using canonical domain (HARD RULE #40 — never url.host)
+    const appUrl = getPublicAppUrl();
+    if (successUrl) {
+      // Validate user-supplied URL: must be same-origin to prevent open redirect
+      try {
+        const suppliedOrigin = new URL(successUrl).origin;
+        if (suppliedOrigin !== appUrl) {
+          return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz successUrl', HttpStatus.BAD_REQUEST, undefined, requestId);
+        }
+      } catch {
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz successUrl', HttpStatus.BAD_REQUEST, undefined, requestId);
+      }
+    }
+    if (cancelUrl) {
+      try {
+        const suppliedOrigin = new URL(cancelUrl).origin;
+        if (suppliedOrigin !== appUrl) {
+          return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz cancelUrl', HttpStatus.BAD_REQUEST, undefined, requestId);
+        }
+      } catch {
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz cancelUrl', HttpStatus.BAD_REQUEST, undefined, requestId);
+      }
+    }
+    successUrl = successUrl || `${appUrl}/abonelik?success=true`;
+    cancelUrl = cancelUrl || `${appUrl}/fiyatlandirma?cancelled=true`;
 
     // Get tier details
     const tiers = await getSubscriptionTiers();
-    const tier = tiers.find((t: any) => t.id === tierId);
+    const tier = tiers.find((t) => t.id === tierId);
 
     if (!tier) {
       recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Paket bulunamadı',
+        'Tier not found',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -100,7 +136,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
       recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Bu pakete zaten abonesiniz',
+        'Already subscribed to this tier',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -140,10 +176,10 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Ödeme oturumu oluşturulamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to create checkout session', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Ödeme oturumu oluşturulamadı',
+      'Failed to create checkout session',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

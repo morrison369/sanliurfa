@@ -34,12 +34,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const rewards = await queryMany('SELECT * FROM rewards ORDER BY is_active DESC, display_order ASC');
 
     // Cache for 2 minutes
-    await setCache(cacheKey, rewards.rows || [], 120);
+    await setCache(cacheKey, rewards || [], 120);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/loyalty/rewards', 200, duration);
 
-    return apiResponse({ success: true, data: rewards.rows || [] }, 200, requestId);
+    return apiResponse({ success: true, data: rewards || [] }, 200, requestId);
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/loyalty/rewards', 500, duration);
@@ -67,8 +67,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!reward_name || !category || typeof points_cost !== 'number') {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/admin/loyalty/rewards', 422, duration);
-      return apiError('VALIDATION_ERROR', 'Missing required fields', 422, undefined, requestId);
+      return apiError('VALIDATION_ERROR', 'Zorunlu alanlar eksik', 422, undefined, requestId);
     }
+    if (typeof reward_name !== 'string' || reward_name.length > 200) return apiError('VALIDATION_ERROR', 'Ödül adı 200 karakterden uzun olamaz', 422, undefined, requestId);
+    if (typeof category !== 'string' || category.length > 100) return apiError('VALIDATION_ERROR', 'Kategori 100 karakterden uzun olamaz', 422, undefined, requestId);
+    if (description !== undefined && description !== null && (typeof description !== 'string' || description.length > 2000)) return apiError('VALIDATION_ERROR', 'Açıklama 2000 karakterden uzun olamaz', 422, undefined, requestId);
 
     // Create reward
     const reward = await insert('rewards', {
@@ -82,11 +85,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
 
     // Create inventory if stock_quantity provided
-    if (stock_quantity && stock_quantity > 0) {
+    const stockNum = parseInt(String(stock_quantity), 10);
+    if (Number.isFinite(stockNum) && stockNum > 0) {
       await insert('reward_inventory', {
         reward_id: reward.id,
-        available_stock: stock_quantity,
-        total_stock: stock_quantity
+        available_stock: stockNum,
+        total_stock: stockNum
       });
     }
 

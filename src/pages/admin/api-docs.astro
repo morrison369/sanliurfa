@@ -1,0 +1,54 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout
+  title="API Dokümantasyonu"
+  subtitle="Tüm API endpoint'lerini inceleyin ve test edin"
+  seo={{ title: 'API Dokümantasyonu - Admin' }}
+>
+  <a slot="hero-action" href="/api/docs" target="_blank" rel="noopener" class="px-4 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 text-sm transition-colors">
+    OpenAPI JSON
+  </a>
+
+    <div class="container mx-auto px-4 py-8">
+      <div class="mb-6">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm overflow-hidden">
+        <div id="swagger-ui"></div>
+      </div>
+    </div>
+</AdminLayout>
+
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
+<script is:inline src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script is:inline>
+  window.addEventListener('load', () => {
+    SwaggerUIBundle({
+      url: '/api/docs',
+      dom_id: '#swagger-ui',
+      deepLinking: true,
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIBundle.presets.standalone
+      ],
+      plugins: [
+        SwaggerUIBundle.plugins.DownloadUrl
+      ],
+      requestInterceptor: (req) => {
+        return req;
+      }
+    });
+  });
+</script>
+
+<style is:global>
+  .swagger-ui {
+    padding: 20px;
+  }
+  .swagger-ui .topbar {
+    display: none;
+  }
+</style>

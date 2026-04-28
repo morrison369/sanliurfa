@@ -1,0 +1,394 @@
+---
+/**
+ * /isletme/[slug] — İşletme detay sayfası (SEO canonical URL)
+ * kategoriler.txt section 7: /isletme/{ad}/
+ * Bu sayfa, places tablosundaki işletme verilerini gösterir.
+ */
+import Layout from '../../layouts/Layout.astro';
+import { queryOne } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import RelatedPlaces from '../../components/places/RelatedPlaces.astro';
+import { logger } from '../../lib/logging';
+
+const { slug } = Astro.params;
+
+let place: any = null;
+
+const fallbackPlaces: Record<string, any> = {
+  gobeklitepe: {
+    slug: 'gobeklitepe',
+    name: 'Göbeklitepe',
+    category_name: 'Tarihi Yer',
+    category_slug: 'tarihi-yerler',
+    district_name: 'Haliliye',
+    district_slug: 'haliliye',
+    short_description: 'UNESCO Dünya Mirası listesinde yer alan, insanlık tarihinin bilinen en eski anıtsal tapınak merkezi.',
+    description:
+      'Göbeklitepe, Şanlıurfa şehir merkezine yaklaşık 18 km mesafede bulunan ve Neolitik döneme tarihlenen arkeolojik alandır. T biçimli dikilitaşları, hayvan kabartmaları ve ritüel yapılarıyla dünya arkeoloji tarihinde özel bir yere sahiptir.',
+    address: 'Örencik Mahallesi, Haliliye/Şanlıurfa',
+    phone: '+90 414 318 10 00',
+    rating: 4.9,
+    review_count: 4521,
+    price_range: '₺₺',
+    images: ['/images/places/gobeklitepe.jpg'],
+    is_verified: true,
+    is_featured: true,
+  },
+  balikligol: {
+    slug: 'balikligol',
+    name: 'Balıklıgöl',
+    category_name: 'Tarihi Yer',
+    category_slug: 'tarihi-yerler',
+    district_name: 'Eyyübiye',
+    district_slug: 'eyyubiye',
+    short_description: "Şanlıurfa'nın sembolü olan, Hz. İbrahim anlatısıyla bilinen kutsal göl ve tarihi ziyaret alanı.",
+    description:
+      'Balıklıgöl, Şanlıurfa merkezde yer alan ve kutsal balıklarıyla tanınan tarihi bir ziyaret noktasıdır. Rızvaniye Camii, Aynzeliha Gölü, çarşı bölgesi ve Şanlıurfa Kalesi ile aynı gezi aksı üzerinde bulunur.',
+    address: 'Balıklıgöl Mahallesi, Eyyübiye/Şanlıurfa',
+    phone: '+90 414 318 10 00',
+    rating: 4.9,
+    review_count: 2847,
+    price_range: 'Ücretsiz',
+    images: ['/images/places/balikligol.jpg'],
+    is_verified: true,
+    is_featured: true,
+  },
+  harran: {
+    slug: 'harran',
+    name: 'Harran',
+    category_name: 'Tarihi Yer',
+    category_slug: 'tarihi-yerler',
+    district_name: 'Harran',
+    district_slug: 'harran',
+    short_description: 'Kümbet evleri, tarihi üniversite kalıntıları ve Mezopotamya mirasıyla öne çıkan ilçe.',
+    description:
+      "Harran, konik kubbeli evleri ve tarih boyunca bilim merkezi olarak bilinen geçmişiyle Şanlıurfa'nın en önemli gezi rotalarından biridir.",
+    address: 'Harran/Şanlıurfa',
+    rating: 4.7,
+    review_count: 1200,
+    price_range: '₺',
+    images: ['/images/tarihi-yerler/harran-kumbet-evleri.jpg'],
+    is_verified: true,
+    is_featured: true,
+  },
+  halfeti: {
+    slug: 'halfeti',
+    name: 'Halfeti',
+    category_name: 'Doğa ve Tarih',
+    category_slug: 'tarihi-yerler',
+    district_name: 'Halfeti',
+    district_slug: 'halfeti',
+    short_description: 'Sular altında kalan tarihi dokusu, tekne turları ve sakin şehir atmosferiyle bilinen ilçe.',
+    description:
+      "Halfeti, Fırat kıyısındaki manzarası, tekne turları ve tarihi taş mimarisiyle Şanlıurfa'nın en özel gezi duraklarından biridir.",
+    address: 'Halfeti/Şanlıurfa',
+    rating: 4.8,
+    review_count: 980,
+    price_range: '₺₺',
+    images: ['/images/placeholder-historical.jpg'],
+    is_verified: true,
+    is_featured: true,
+  },
+  'urfa-kalesi': {
+    slug: 'urfa-kalesi',
+    name: 'Urfa Kalesi',
+    category_name: 'Tarihi Yer',
+    category_slug: 'tarihi-yerler',
+    district_name: 'Eyyübiye',
+    district_slug: 'eyyubiye',
+    short_description: 'Şanlıurfa şehir manzarasını gören tarihi kale ve çevresindeki inanç turizmi rotası.',
+    description:
+      'Urfa Kalesi, Balıklıgöl ve Dergah bölgesinin üzerinde konumlanan, şehir panoraması ve tarihi sütunlarıyla bilinen önemli bir Şanlıurfa durağıdır.',
+    address: 'Kale Mahallesi, Eyyübiye/Şanlıurfa',
+    rating: 4.7,
+    review_count: 740,
+    price_range: '₺',
+    images: ['/images/placeholder-historical.jpg'],
+    is_verified: true,
+    is_featured: true,
+  },
+  'ayna-carsi': {
+    slug: 'ayna-carsi',
+    name: 'Aynalı Çarşı',
+    category_name: 'Alışveriş ve Tarih',
+    category_slug: 'tarihi-yerler',
+    district_name: 'Eyyübiye',
+    district_slug: 'eyyubiye',
+    short_description: 'Tarihi çarşı dokusu içinde yerel ürünler, el sanatları ve şehir hafızasını bir araya getiren alışveriş noktası.',
+    description:
+      'Aynalı Çarşı, Şanlıurfa merkez çarşı rotasının karakteristik duraklarından biridir. Bakırcılar, baharatçılar ve geleneksel alışveriş akslarıyla birlikte gezilebilir.',
+    address: 'Tarihi Çarşı Bölgesi, Eyyübiye/Şanlıurfa',
+    rating: 4.6,
+    review_count: 520,
+    price_range: 'Ücretsiz',
+    images: ['/images/placeholder-historical.jpg'],
+    is_verified: true,
+    is_featured: true,
+  },
+  'kapali-carsi': {
+    slug: 'kapali-carsi',
+    name: 'Kapalı Çarşı',
+    category_name: 'Alışveriş ve Tarih',
+    category_slug: 'tarihi-yerler',
+    district_name: 'Eyyübiye',
+    district_slug: 'eyyubiye',
+    short_description: 'İsot, bakır, yöresel tekstil, hediyelik eşya ve geleneksel çarşı kültürü için merkezi rota.',
+    description:
+      'Şanlıurfa Kapalı Çarşı, yerel ürünler, baharat, bakır işçiliği ve gündelik şehir yaşamını aynı aks üzerinde sunan güçlü bir gezi ve alışveriş noktasıdır.',
+    address: 'Tarihi Çarşı Bölgesi, Eyyübiye/Şanlıurfa',
+    rating: 4.8,
+    review_count: 950,
+    price_range: 'Ücretsiz',
+    images: ['/images/placeholder-historical.jpg'],
+    is_verified: true,
+    is_featured: true,
+  },
+};
+
+try {
+  place = await queryOne(
+    `SELECT p.*, c.name as category_name, c.slug as category_slug,
+            d.name as district_name, d.slug as district_slug
+     FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     LEFT JOIN districts d ON p.district_id = d.id
+     WHERE p.slug = $1 AND p.status = 'active'`,
+    [slug]
+  );
+
+  if (!place) {
+    place = fallbackPlaces[String(slug || '')];
+  }
+
+  if (!place) {
+    return Astro.redirect('/mekanlar');
+  }
+  // Related places query moved to <RelatedPlaces server:defer> below — runs in parallel
+  // with the rest of the page render instead of blocking the main HTML response.
+} catch (e) {
+  logger.error('Error loading isletme detail:', e instanceof Error ? e : new Error(String(e)));
+  if (!place) {
+    place = fallbackPlaces[String(slug || '')];
+  }
+  if (!place) return Astro.redirect('/mekanlar');
+}
+
+const seo = {
+  title: `${place.name} Şanlıurfa | Adres, Menü, Telefon ve Yorumlar`,
+  description: place.short_description || `${place.name} - ${place.address || 'Şanlıurfa'}. Adres, telefon, çalışma saatleri ve yorumlar.`,
+  keywords: [place.name, 'şanlıurfa ' + place.name.toLowerCase(), place.category_name || '', 'urfa ' + (place.category_name || '').toLowerCase()],
+  ogImage: place.cover_image || place.images?.[0] || '/images/placeholder-blog.jpg',
+};
+const { baseUrl } = await getSiteBranding();
+
+const breadcrumbs = [
+  { label: 'Ana Sayfa', href: '/' },
+  { label: 'Mekanlar', href: '/mekanlar' },
+  ...(place.category_slug ? [{ label: place.category_name, href: `/mekanlar/${place.category_slug}` }] : []),
+  { label: place.name, href: `/isletme/${slug}` },
+];
+const faqItems = [
+  { S: `${place.name} nerede?`, C: `${place.name} için adres bilgisi: ${place.address || 'Şanlıurfa'}.` },
+  { S: `${place.name} çalışma saatleri nedir?`, C: place.open_hours || `${place.name} çalışma saatleri için lütfen işletmeyi arayın.` },
+  { S: `${place.name} telefon numarası nedir?`, C: place.phone ? `${place.name} telefonu: ${place.phone}` : `${place.name} iletişim bilgileri için sayfamızı inceleyin.` },
+];
+
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <!-- Breadcrumb -->
+    <div class="bg-white border-b border-[rgba(200,160,100,0.1)]">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-[#9A8470] flex-wrap">
+          {breadcrumbs.map((crumb, i) => (
+            <>
+              {i > 0 && <span>/</span>}
+              {i === breadcrumbs.length - 1 ? (
+                <span class="text-[#1A1008] font-medium">{crumb.label}</span>
+              ) : (
+                <a href={crumb.href} class="hover:text-urfa-600 transition-colors">{crumb.label}</a>
+              )}
+            </>
+          ))}
+        </nav>
+      </div>
+    </div>
+
+    <!-- Hero -->
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-10">
+      <div class="container mx-auto px-4">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-3 mb-3">
+              {place.is_verified && (
+                <span class="px-2 py-1 bg-white/10 border border-white/20 rounded-sm text-xs font-medium">✓ Doğrulanmış</span>
+              )}
+              {place.is_featured && (
+                <span class="px-2 py-1 bg-urfa-500/80 rounded-sm text-xs font-medium">⭐ Öne Çıkan</span>
+              )}
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-[#F5EDD6]">{place.name}</h1>
+            {place.category_name && (
+              <p class="text-[#9A8470] mt-1">{place.category_name}</p>
+            )}
+            {place.rating && (
+              <div class="flex items-center gap-2 mt-3">
+                <span class="text-urfa-300 text-xl">★</span>
+                <span class="text-2xl font-bold text-[#F5EDD6]">{place.rating}</span>
+                <span class="text-[#9A8470]">({place.review_count || 0} yorum)</span>
+              </div>
+            )}
+          </div>
+          {place.price_range && (
+            <div class="text-right">
+              <div class="text-3xl font-bold text-[#F5EDD6]">{place.price_range}</div>
+              <div class="text-[#9A8470] text-sm">fiyat aralığı</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+        <!-- Ana İçerik -->
+        <div class="lg:col-span-2 space-y-6">
+          {/* Açıklama */}
+          {(place.description || place.short_description) && (
+            <div class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm p-6 shadow-sm">
+              <h2 class="text-xl font-bold text-[#1A1008] mb-3">Hakkında</h2>
+              <p class="text-[#9A8470] leading-relaxed">{place.description || place.short_description}</p>
+            </div>
+          )}
+
+          {/* Özellikler */}
+          {place.features && place.features.length > 0 && (
+            <div class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm p-6 shadow-sm">
+              <h2 class="text-xl font-bold text-[#1A1008] mb-4">Özellikler</h2>
+              <div class="flex flex-wrap gap-2">
+                {place.features.map((f: string) => (
+                  <span class="px-3 py-1 bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.15)] text-urfa-700 rounded-sm text-sm font-medium">
+                    {f.replace(/_/g, ' ')}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Benzer Mekanlar — Server Island, ana içeriği bloklamaz */}
+          <RelatedPlaces categoryId={place.category_id} excludePlaceId={place.id} server:defer>
+            <div slot="fallback" class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm p-6 shadow-sm animate-pulse">
+              <div class="h-6 bg-[rgba(200,160,100,0.1)] rounded-sm w-40 mb-4"></div>
+              <div class="grid sm:grid-cols-2 gap-4">
+                <div class="h-12 bg-[rgba(200,160,100,0.06)] rounded-sm"></div>
+                <div class="h-12 bg-[rgba(200,160,100,0.06)] rounded-sm"></div>
+                <div class="h-12 bg-[rgba(200,160,100,0.06)] rounded-sm"></div>
+                <div class="h-12 bg-[rgba(200,160,100,0.06)] rounded-sm"></div>
+              </div>
+            </div>
+          </RelatedPlaces>
+        </div>
+
+        <!-- Kenar Bilgi Paneli -->
+        <div class="space-y-4">
+          <div class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm p-6 shadow-sm">
+            <h3 class="font-bold text-[#1A1008] mb-4">İletişim ve Konum</h3>
+            <div class="space-y-3 text-sm">
+              {place.address && (
+                <div class="flex items-start gap-2">
+                  <span class="text-lg flex-shrink-0">📍</span>
+                  <span class="text-[#9A8470]">{place.address}</span>
+                </div>
+              )}
+              {place.phone && (
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">📞</span>
+                  <a href={`tel:${place.phone}`} class="text-urfa-600 font-medium hover:underline">{place.phone}</a>
+                </div>
+              )}
+              {place.website && (
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🌐</span>
+                  <a href={place.website} target="_blank" rel="noopener noreferrer" class="text-urfa-600 hover:underline truncate">{place.website}</a>
+                </div>
+              )}
+              {place.district_name && (
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🏘️</span>
+                  <a href={`/ilceler/${place.district_slug}`} class="text-[#9A8470] hover:text-urfa-600 transition-colors">{place.district_name}</a>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {(place.open_hours || place.visiting_hours) && (
+            <div class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm p-6 shadow-sm">
+              <h3 class="font-bold text-[#1A1008] mb-3">Çalışma Saatleri</h3>
+              <p class="text-sm text-[#9A8470]">{place.open_hours || place.visiting_hours}</p>
+            </div>
+          )}
+
+          {place.price_min && place.price_max && (
+            <div class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm p-6 shadow-sm">
+              <h3 class="font-bold text-[#1A1008] mb-3">Fiyat Aralığı</h3>
+              <p class="text-[#9A8470] text-sm">{place.price_min}₺ — {place.price_max}₺</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
+      ...(place.category_slug ? [{ '@type': 'ListItem', position: 3, name: place.category_name || 'Kategori', item: `${baseUrl}/mekanlar/${place.category_slug}` }] : []),
+      { '@type': 'ListItem', position: place.category_slug ? 4 : 3, name: place.name, item: `${baseUrl}/isletme/${slug}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    '@id': `${baseUrl}/isletme/${slug}`,
+    name: place.name,
+    description: place.short_description,
+    url: `${baseUrl}/isletme/${slug}`,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: place.address,
+      addressLocality: place.district_name || 'Şanlıurfa',
+      addressRegion: 'Şanlıurfa',
+      addressCountry: 'TR',
+    },
+    ...(place.phone ? { telephone: place.phone } : {}),
+    ...(place.website ? { sameAs: place.website } : {}),
+    ...(place.latitude && place.longitude ? { geo: {
+      '@type': 'GeoCoordinates',
+      latitude: place.latitude,
+      longitude: place.longitude,
+    }} : {}),
+    ...(place.open_hours ? { openingHours: place.open_hours } : {}),
+    ...(place.price_range ? { priceRange: place.price_range } : {}),
+    ...(place.images?.length ? { image: place.images.slice(0, 3).map((img: string) => img.startsWith('http') ? img : `${baseUrl}${img}`) } : {}),
+    ...(place.rating ? { aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: place.rating,
+      bestRating: 5,
+      worstRating: 1,
+      reviewCount: place.review_count || 1,
+    }} : {}),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

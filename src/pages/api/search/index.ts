@@ -4,15 +4,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { searchPlaces, searchReviews, searchEvents, recordSearchQuery, getTrendingSearches } from '../../../lib/search-engine';
-import { recordSuggestionImpression, updateAutocompleteIndex, recordZeroResultSearch } from '../../../lib/search-suggestions';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { searchPlaces, searchReviews, searchEvents, recordSearchQuery } from '../../../lib/search/search-engine';
+import { recordSuggestionImpression, updateAutocompleteIndex, recordZeroResultSearch } from '../../../lib/search/search-suggestions';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam, safeFloatParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
-import { getCuratedPlaces } from '../../../data/curated-places';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -20,9 +19,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const query = url.searchParams.get('q');
     const searchType = url.searchParams.get('type') || 'places';
-    const sortBy = url.searchParams.get('sort') || 'relevance';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const rawSortBy = url.searchParams.get('sort') || 'rating';
+    const VALID_SORT_OPTIONS = new Set(['rating', 'newest', 'name', 'distance']);
+    const sortBy = VALID_SORT_OPTIONS.has(rawSortBy) ? rawSortBy : 'rating';
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     if (!query || query.trim().length < 2) {
       recordRequest('GET', '/api/search', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -35,14 +36,23 @@ export const GET: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    if (query.length > 500) {
+      recordRequest('GET', '/api/search', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Arama terimi 500 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+
     // Parse filters
-    const filters: any = {};
-    if (url.searchParams.get('category')) filters.category = url.searchParams.get('category');
-    if (url.searchParams.get('city')) filters.city = url.searchParams.get('city');
-    if (url.searchParams.get('minRating')) filters.minRating = parseFloat(url.searchParams.get('minRating')!);
+    const filters: Record<string, unknown> = {};
+    const rawCategory = url.searchParams.get('category');
+    if (rawCategory) filters.category = rawCategory.substring(0, 100);
+    const rawCity = url.searchParams.get('city');
+    if (rawCity) filters.city = rawCity.substring(0, 100);
+    if (url.searchParams.get('minRating')) {
+      filters.minRating = safeFloatParam(url.searchParams.get('minRating'), 0, 0, 5);
+    }
     if (url.searchParams.get('placeId')) filters.placeId = url.searchParams.get('placeId');
 
-    let results: any[] = [];
+    let results: Record<string, unknown>[] = [];
     let resultCount = 0;
 
     if (searchType === 'reviews') {
@@ -65,11 +75,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
     updateAutocompleteIndex(query, searchType).catch(err => {
       logger.error('Failed to update autocomplete', err);
     });
-
-    if (resultCount === 0 && searchType === 'places') {
-      results = searchCuratedPlaces(query, limit, offset);
-      resultCount = results.length;
-    }
 
     // Record zero results
     if (resultCount === 0) {
@@ -106,48 +111,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/search', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Search failed', error instanceof Error ? error : new Error(String(error)));
-    const url = new URL(request.url);
-    const query = url.searchParams.get('q') || '';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
-    const results = query.trim().length >= 2 ? searchCuratedPlaces(query, limit, offset) : [];
-
-    if (results.length > 0) {
-      return apiResponse(
-        {
-          success: true,
-          data: {
-            results,
-            query,
-            searchType: 'places',
-            resultCount: results.length,
-            limit,
-            offset,
-            hasMore: false
-          }
-        },
-        HttpStatus.OK,
-        requestId
-      );
-    }
-
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Arama başarısız oldu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(
+      ErrorCode.INTERNAL_ERROR,
+      'Arama başarısız oldu',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      undefined,
+      requestId
+    );
   }
 };
-
-function searchCuratedPlaces(query: string, limit: number, offset: number): any[] {
-  const normalizedQuery = query.trim().toLocaleLowerCase('tr-TR');
-  return getCuratedPlaces()
-    .filter((place) =>
-      [place.name, place.description, place.address, place.category, place.tags.join(' ')]
-        .join(' ')
-        .toLocaleLowerCase('tr-TR')
-        .includes(normalizedQuery)
-    )
-    .slice(offset, offset + limit)
-    .map((place) => ({
-      ...place,
-      image_url: place.images[0],
-      engagement_score: place.rating * 20 + place.review_count,
-    }));
-}

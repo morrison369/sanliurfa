@@ -5,12 +5,12 @@
  */
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { getRewardsCatalog, redeemReward, getPromotionalOffers } from '../../../lib/rewards';
+import { getRewardsList, processRewardRedemption, getPromotionalOffers } from '../../../lib/rewards';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -19,12 +19,23 @@ export const GET: APIRoute = async ({ request, url }) => {
     const tier = url.searchParams.get('tier');
     const includePromos = url.searchParams.get('includePromos') === 'true';
 
+    const VALID_REWARD_CATEGORIES = new Set(['food', 'entertainment', 'travel', 'shopping', 'experiences', 'digital', 'lifestyle']);
+    const VALID_REWARD_TIERS = new Set(['bronze', 'silver', 'gold', 'platinum', 'vip']);
+    if (category !== undefined && category !== null && (typeof category !== 'string' || !VALID_REWARD_CATEGORIES.has(category))) {
+      recordRequest('GET', '/api/loyalty/rewards', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz kategori', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (tier !== undefined && tier !== null && (typeof tier !== 'string' || !VALID_REWARD_TIERS.has(tier))) {
+      recordRequest('GET', '/api/loyalty/rewards', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz üyelik kademesi', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+
     const filters = {
       category: category || undefined,
       tier: tier || undefined
     };
 
-    const rewards = await getRewardsCatalog(filters);
+    const rewards = await getRewardsList(filters);
     const promos = includePromos ? await getPromotionalOffers() : [];
 
     const duration = Date.now() - startTime;
@@ -44,20 +55,20 @@ export const GET: APIRoute = async ({ request, url }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/loyalty/rewards', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Ödüller alınamadı', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Failed to get rewards', err instanceof Error ? err : new Error(String(err)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/loyalty/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -65,26 +76,26 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!rewardId) {
       recordRequest('POST', '/api/loyalty/rewards', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Ödül ID gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Reward ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
-    const result = await redeemReward(locals.user.id, rewardId);
+    const result = await processRewardRedemption(locals.user.id, rewardId);
 
     if (!result.success) {
       recordRequest('POST', '/api/loyalty/rewards', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.BAD_REQUEST, result.error || 'Ödül kullanılamadı', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, result.error || 'Redemption failed', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/loyalty/rewards', HttpStatus.OK, duration);
-    logger.logMutation('redeem_reward', 'reward_redemptions', rewardId, locals.user?.id);
+    logger.info('Reward redeemed', { userId: locals.user?.id, rewardId, redemptionCode: result.redemptionCode });
 
     return apiResponse(
       {
         success: true,
         data: {
           redemptionCode: result.redemptionCode,
-          message: 'Ödül başarıyla kullanıldı'
+          message: 'Reward redeemed successfully'
         }
       },
       HttpStatus.OK,
@@ -93,7 +104,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/loyalty/rewards', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Ödül kullanılamadı', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Failed to redeem reward', err instanceof Error ? err : new Error(String(err)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -1,20 +1,110 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
 import ModerationDashboard from '../../components/ModerationDashboard';
-
-// Require admin authentication
-if (!Astro.locals.user?.isAdmin) {
-  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
-}
 ---
 
-<Layout title="Moderasyon Yönetimi - Şanlıurfa" noindex>
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Moderasyon Yönetimi</h1>
-      <p class="text-gray-600 dark:text-gray-400">Raporları inceleyin ve moderasyon işlemleri gerçekleştirin</p>
+<AdminLayout
+  title="Moderasyon Yönetimi"
+  subtitle="Raporları inceleyin ve moderasyon işlemleri gerçekleştirin"
+  seo={{ title: 'Moderasyon Yönetimi - Admin', noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-6xl space-y-5">
+      <div class="mb-2">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+      </div>
+
+      <ModerationDashboard client:visible />
+
+      <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 shadow-sm">
+        <h2 class="text-xl font-bold text-[#1A1008] mb-2">Social Abuse Kayıtları</h2>
+        <p class="text-sm text-[#9A8470] mb-4">
+          Swipe/follow/messages uçlarında yakalanan abuse ihlallerini gösterir.
+        </p>
+        <div class="flex flex-wrap items-center gap-3 mb-4">
+          <button id="loadSocialAbuse" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+            Social Abuse Yükle
+          </button>
+          <a
+            id="exportSocialAbuse"
+            href="/api/admin/site/audit/export?action=social_abuse&limit=2000"
+            class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4A3A28]"
+          >
+            CSV Dışa Aktar
+          </a>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)] text-left text-[#6B5540]">
+                <th class="px-2 py-3 font-medium">Tarih</th>
+                <th class="px-2 py-3 font-medium">Key</th>
+                <th class="px-2 py-3 font-medium">Action</th>
+                <th class="px-2 py-3 font-medium">Email</th>
+                <th class="px-2 py-3 font-medium">IP</th>
+                <th class="px-2 py-3 font-medium">Metadata</th>
+              </tr>
+            </thead>
+            <tbody id="socialAbuseBody">
+              <tr><td colspan="6" class="px-2 py-6 text-center text-[#9A8470]">Henüz yüklenmedi</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
-    <ModerationDashboard client:load />
-  </div>
-</Layout>
+  <script>
+    function setBodyText(tbody: HTMLElement, colSpan: number, text: string, cls: string) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = colSpan;
+      td.className = cls;
+      td.textContent = text;
+      tr.appendChild(td);
+      tbody.replaceChildren(tr);
+    }
+
+    function buildAuditRow(r: any): HTMLTableRowElement {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-[rgba(200,160,100,0.08)]';
+      const cells: [string, string][] = [
+        ['px-2 py-2 text-xs text-[#9A8470]', new Date(r.created_at).toLocaleString('tr-TR')],
+        ['px-2 py-2 text-xs font-mono text-[#6B5540]', r.setting_key || '-'],
+        ['px-2 py-2 text-xs text-urfa-600', r.action || '-'],
+        ['px-2 py-2 text-xs text-[#6B5540]', r.actor_email || '-'],
+        ['px-2 py-2 text-xs text-[#9A8470]', r.ip_address || '-'],
+        ['px-2 py-2 text-xs font-mono text-[#9A8470]', JSON.stringify(r.metadata || {}).slice(0, 140)],
+      ];
+      cells.forEach(([cls, text]) => {
+        const td = document.createElement('td');
+        td.className = cls;
+        td.textContent = text;
+        tr.appendChild(td);
+      });
+      return tr;
+    }
+
+    const btn = document.getElementById('loadSocialAbuse');
+    const body = document.getElementById('socialAbuseBody') as HTMLElement;
+
+    async function loadSocialAbuse() {
+      try {
+        const res = await fetch('/api/admin/site/audit?action=social_abuse&limit=80');
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          setBodyText(body, 6, data.error || 'Hata', 'px-2 py-6 text-center text-[#9A8470]');
+          return;
+        }
+        const rows: any[] = Array.isArray(data.items) ? data.items : [];
+        if (rows.length === 0) {
+          setBodyText(body, 6, 'Kayıt bulunamadı', 'px-2 py-6 text-center text-[#9A8470]');
+          return;
+        }
+        body.replaceChildren(...rows.map(buildAuditRow));
+      } catch (err) {
+        setBodyText(body, 6, 'Yükleme hatası', 'px-2 py-6 text-center text-[#9A8470]');
+      }
+    }
+
+    btn?.addEventListener('click', loadSocialAbuse);
+  </script>
+</AdminLayout>

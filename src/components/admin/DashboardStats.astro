@@ -1,0 +1,96 @@
+---
+/**
+ * Server Island: Yavaş DB sorguları yapan admin istatistik kartları.
+ * server:defer ile ana sayfanın HTML'i beklemeden render edilir.
+ *
+ * Kullanım: <DashboardStats server:defer>
+ *             <div slot="fallback" class="animate-pulse ...">Loading</div>
+ *           </DashboardStats>
+ */
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+interface Stats {
+  totalUsers: number;
+  newUsersThisMonth: number;
+  totalPlaces: number;
+  pendingPlaces: number;
+  totalReviews: number;
+  pendingReviews: number;
+  totalRevenue: number;
+}
+
+let stats: Stats = {
+  totalUsers: 0,
+  newUsersThisMonth: 0,
+  totalPlaces: 0,
+  pendingPlaces: 0,
+  totalReviews: 0,
+  pendingReviews: 0,
+  totalRevenue: 0,
+};
+
+try {
+  const [usersResult, placesResult, reviewsResult] = await Promise.all([
+    query(`SELECT
+      COUNT(*) AS total,
+      COUNT(*) FILTER (WHERE created_at >= date_trunc('month', NOW())) AS new_this_month
+      FROM users WHERE status != 'deleted'`),
+    query(`SELECT
+      COUNT(*) AS total,
+      COUNT(*) FILTER (WHERE status = 'pending') AS pending
+      FROM places WHERE status != 'deleted'`),
+    query(`SELECT
+      COUNT(*) AS total,
+      COUNT(*) FILTER (WHERE status = 'pending') AS pending
+      FROM reviews`),
+  ]);
+
+  stats = {
+    totalUsers: parseInt(usersResult.rows[0]?.total || '0'),
+    newUsersThisMonth: parseInt(usersResult.rows[0]?.new_this_month || '0'),
+    totalPlaces: parseInt(placesResult.rows[0]?.total || '0'),
+    pendingPlaces: parseInt(placesResult.rows[0]?.pending || '0'),
+    totalReviews: parseInt(reviewsResult.rows[0]?.total || '0'),
+    pendingReviews: parseInt(reviewsResult.rows[0]?.pending || '0'),
+    totalRevenue: 0,
+  };
+} catch (e) {
+  logger.error('DashboardStats query failed', e instanceof Error ? e : new Error(String(e)));
+}
+---
+
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+  <div class="bg-white rounded-xl shadow-sm p-5">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-500">Toplam Kullanıcı</p>
+        <p class="text-2xl font-bold text-gray-900 mt-1">{stats.totalUsers.toLocaleString('tr-TR')}</p>
+      </div>
+      <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">👥</div>
+    </div>
+    <p class="text-xs text-green-600 mt-2">+{stats.newUsersThisMonth} bu ay</p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm p-5">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-500">İşletmeler</p>
+        <p class="text-2xl font-bold text-gray-900 mt-1">{stats.totalPlaces.toLocaleString('tr-TR')}</p>
+      </div>
+      <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">🏪</div>
+    </div>
+    <p class="text-xs text-amber-600 mt-2">{stats.pendingPlaces} onay bekliyor</p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm p-5">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-sm text-gray-500">Yorumlar</p>
+        <p class="text-2xl font-bold text-gray-900 mt-1">{stats.totalReviews.toLocaleString('tr-TR')}</p>
+      </div>
+      <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl">⭐</div>
+    </div>
+    <p class="text-xs text-gray-500 mt-2">{stats.pendingReviews} onay bekliyor</p>
+  </div>
+</div>

@@ -7,14 +7,24 @@
 
 import type { APIRoute } from 'astro';
 import { getBlogPostBySlug, updateBlogPost, deleteBlogPost } from '../../../../lib/blog';
-import { queryOne } from '../../../../lib/postgres';
-import { validateWithSchema } from '../../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeErrorDetail } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
+type BlogPostUpdateInput = Partial<{
+  title: string;
+  content: string;
+  excerpt: string;
+  category: string;
+  categoryId: number;
+  featuredImage: string;
+  status: 'draft' | 'published' | 'archived';
+  tags: string | string[];
+}>;
+
 export const GET: APIRoute = async ({ params, request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -59,7 +69,7 @@ export const GET: APIRoute = async ({ params, request }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/blog/posts/${params.slug}`, HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog yazısı işlemi başarısız')
     });
     logger.error('Blog yazısı alınamadı', err instanceof Error ? err : new Error(String(err)));
 
@@ -74,13 +84,13 @@ export const GET: APIRoute = async ({ params, request }) => {
 };
 
 export const PUT: APIRoute = async ({ params, request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Yetki kontrolü
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       const duration = Date.now() - startTime;
       recordRequest('PUT', `/api/blog/posts/${params.slug}`, HttpStatus.FORBIDDEN, duration);
       return apiError(
@@ -104,8 +114,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
-    // Post'u ID ile bul
-    const post = await queryOne('SELECT id FROM blog_posts WHERE slug = $1', [slug]);
+    const post = await getBlogPostBySlug(slug);
 
     if (!post) {
       const duration = Date.now() - startTime;
@@ -122,10 +131,11 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     const body = await request.json();
 
     // Kısmi validasyon (tüm alanlar opsiyonel)
-    const updateSchema = {
+    const updateSchema: ValidationSchema = {
       title: { type: 'string' as const, required: false, minLength: 3, maxLength: 255, sanitize: true },
-      content: { type: 'string' as const, required: false, minLength: 10, sanitize: true },
+      content: { type: 'string' as const, required: false, minLength: 10, maxLength: 100000, sanitize: true },
       excerpt: { type: 'string' as const, required: false, maxLength: 500, sanitize: true },
+      category: { type: 'string' as const, required: false, maxLength: 120, sanitize: true },
       categoryId: { type: 'number' as const, required: false, min: 1 },
       featuredImage: { type: 'string' as const, required: false, sanitize: true },
       status: { type: 'string' as const, required: false },
@@ -136,7 +146,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
       tags: { type: 'string' as const, required: false }
     };
 
-    const validation = validateWithSchema(body, updateSchema as any);
+    const validation = validateWithSchema(body, updateSchema);
     if (!validation.valid) {
       const duration = Date.now() - startTime;
       recordRequest('PUT', `/api/blog/posts/${slug}`, HttpStatus.UNPROCESSABLE_ENTITY, duration);
@@ -149,17 +159,27 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
+    const data = validation.data as BlogPostUpdateInput;
+
     // Etiketleri dönüştür
-    const tags = validation.data.tags
-      ? typeof validation.data.tags === 'string'
-        ? validation.data.tags.split(',').map((t: string) => t.trim())
-        : validation.data.tags
+    const tags = data.tags
+      ? typeof data.tags === 'string'
+        ? data.tags
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean)
+        : data.tags
       : undefined;
 
     // Blog yazısını güncelle
-    const updatedPost = await updateBlogPost(post.id, {
-      ...validation.data,
-      tags
+    const updatedPost = await updateBlogPost(slug, {
+      title: data.title,
+      content: data.content,
+      excerpt: data.excerpt,
+      category: data.category || (data.categoryId ? String(data.categoryId) : undefined),
+      cover_image: data.featuredImage,
+      status: data.status,
+      tags,
     });
 
     if (!updatedPost) {
@@ -168,7 +188,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('PUT', `/api/blog/posts/${slug}`, HttpStatus.OK, duration);
-    logger.logMutation('update', 'blog_posts', post.id, locals.user?.id, { duration });
+    logger.logMutation('update', 'blog_posts', post.id, locals.user?.id);
 
     return apiResponse(
       {
@@ -181,7 +201,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('PUT', `/api/blog/posts/${params.slug}`, HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog yazısı işlemi başarısız')
     });
     logger.error('Blog yazısı güncellenemedi', err instanceof Error ? err : new Error(String(err)));
 
@@ -196,13 +216,13 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ params, request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Yetki kontrolü
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       const duration = Date.now() - startTime;
       recordRequest('DELETE', `/api/blog/posts/${params.slug}`, HttpStatus.FORBIDDEN, duration);
       return apiError(
@@ -226,8 +246,7 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
       );
     }
 
-    // Post'u ID ile bul
-    const post = await queryOne('SELECT id FROM blog_posts WHERE slug = $1', [slug]);
+    const post = await getBlogPostBySlug(slug);
 
     if (!post) {
       const duration = Date.now() - startTime;
@@ -242,15 +261,11 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
     }
 
     // Blog yazısını sil
-    const success = await deleteBlogPost(post.id);
-
-    if (!success) {
-      throw new Error('Blog yazısı silinemedi');
-    }
+    await deleteBlogPost(slug);
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', `/api/blog/posts/${slug}`, HttpStatus.OK, duration);
-    logger.logMutation('delete', 'blog_posts', post.id, locals.user?.id, { duration });
+    logger.logMutation('delete', 'blog_posts', post.id, locals.user?.id);
 
     return apiResponse(
       {
@@ -263,7 +278,7 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', `/api/blog/posts/${params.slug}`, HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog yazısı işlemi başarısız')
     });
     logger.error('Blog yazısı silinemedi', err instanceof Error ? err : new Error(String(err)));
 
@@ -276,3 +291,4 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
     );
   }
 };
+

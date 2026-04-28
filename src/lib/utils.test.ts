@@ -1,29 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { slugify, formatDate, truncate } from './utils';
 
-// Test utility functions
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-function formatDate(date: string | Date): string {
-  const d = new Date(date);
-  return d.toLocaleDateString('tr-TR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
-function truncate(str: string, length: number): string {
-  if (str.length <= length) return str;
-  return str.slice(0, length) + '...';
-}
-
+// Local test helper
 function calculateRatingAverage(ratings: number[]): number {
   if (ratings.length === 0) return 0;
   const sum = ratings.reduce((a, b) => a + b, 0);

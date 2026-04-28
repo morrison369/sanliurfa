@@ -1,0 +1,116 @@
+---
+
+import Layout from '../layouts/Layout.astro';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Gizlilik Politikası - Sanliurfa.com',
+  description: 'Sanliurfa.com gizlilik politikası ve veri koruma hakkında bilgi.',
+  keywords: ['şanlıurfa.com gizlilik', 'gizlilik politikası', 'veri güvenliği'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/gizlilik-politikasi',
+};
+
+const sections = [
+  {
+    title: '1. Giriş',
+    content: `Sanliurfa.com olarak kullanıcılarımızın gizliliğine önem veriyoruz. Bu Gizlilik Politikası, web sitemizi kullandığınızda topladığımız bilgilerin nasıl kullanıldığını, saklandığını ve korunduğunu açıklar.`
+  },
+  {
+    title: '2. Topladığımız Bilgiler',
+    content: `Aşağıdaki bilgileri toplayabiliriz:
+• Ad ve soyad
+• E-posta adresi
+• Telefon numarası
+• Konum bilgileri (izin verildiğinde)
+• Kullanım istatistikleri ve tercihler
+• Cihaz ve tarayıcı bilgileri`
+  },
+  {
+    title: '3. Bilgilerin Kullanımı',
+    content: `Topladığımız bilgileri şu amaçlarla kullanırız:
+• Hizmetlerimizi sağlamak ve geliştirmek
+• Kişiselleştirilmiş içerik sunmak
+• İletişim ve bildirimler göndermek
+• Güvenliği sağlamak ve kötüye kullanımı önlemek
+• Analitik ve araştırma amaçları`
+  },
+  {
+    title: '4. Çerezler',
+    content: `Web sitemizde deneyiminizi iyileştirmek için çerezler kullanıyoruz. Çerezler, tarayıcınızda saklanan küçük metin dosyalarıdır. Tarayıcı ayarlarınızdan çerezleri yönetebilir veya devre dışı bırakabilirsiniz.`
+  },
+  {
+    title: '5. Veri Güvenliği',
+    content: `Verilerinizi korumak için uygun teknik ve idari güvenlik önlemleri alıyoruz. Ancak internet üzerinden iletişimin yüzde yüz güvenli olduğunu garanti edemeyiz.`
+  },
+  {
+    title: '6. Haklarınız',
+    content: `Kişisel verilerinizle ilgili olarak aşağıdaki haklara sahipsiniz:
+• Bilgilerinize erişim talep etme
+• Bilgilerinizi düzeltme veya güncelleme
+• Bilgilerinizi silme talep etme
+• İşlemeyi kısıtlama talep etme
+• Veri taşınabilirliği talep etme`
+  },
+  {
+    title: '7. İletişim',
+    content: `Gizlilik politikamızla ilgili sorularınız için bizimle iletişime geçebilirsiniz:
+E-posta: privacy@sanliurfa.com
+Telefon: +90 (414) 123 45 67`
+  }
+];
+const faqItems = [
+  { S: "Kişisel verilerim nasıl korunur?", C: "Sanliurfa.com, kişisel verilerinizi KVKK ve GDPR kapsamında şifreleme ve güvenli sunucu altyapısıyla korumaktadır." },
+  { S: "Hangi verilerim saklanır?", C: "Hesap bilgileri, yorum ve değerlendirmeler ile platform kullanım istatistikleri saklanabilmektedir." },
+  { S: "Gizlilik politikası nasıl güncellenir?", C: "Politika değişiklikleri bu sayfada duyurulur ve kayıtlı kullanıcılara bildirim gönderilir." },
+];
+
+---
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-16">
+      <div class="container mx-auto px-4 max-w-3xl">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">Yasal Belgeler</p>
+        <h1 class="text-4xl md:text-5xl font-bold text-[#F5EDD6] mb-4">Gizlilik Politikası</h1>
+        <p class="text-[#C4B49A]">Son güncelleme: 13 Nisan 2026</p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-3xl py-12">
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-8 md:p-12">
+        <div class="space-y-8">
+          {sections.map(section => (
+            <section>
+              <h2 class="text-xl font-bold text-[#1A1008] mb-3">{section.title}</h2>
+              <div class="text-[#6B5540] whitespace-pre-line leading-relaxed">{section.content}</div>
+            </section>
+          ))}
+        </div>
+
+        <div class="mt-12 pt-8 border-t border-[rgba(200,160,100,0.2)]">
+          <p class="text-[#9A8470] text-sm">
+            Bu gizlilik politikası zaman zaman güncellenebilir. Değişikliklerden haberdar olmak için bu sayfayı düzenli olarak ziyaret edin.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Gizlilik', item: `${baseUrl}/gizlilik` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

@@ -3,30 +3,30 @@
  */
 
 import type { APIRoute } from 'astro';
-import { saveOnboardingProgress } from '../../../../lib/vendor-onboarding';
-import { validateWithSchema } from '../../../../lib/validation';
+import { saveOnboardingProgress } from '../../../../lib/vendor/vendor-onboarding';
+import { validateWithSchema, ValidationSchema } from '../../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
-const schema = {
+const schema: ValidationSchema = {
   step: { type: 'number' as const, required: true, min: 1, max: 10 },
-  data: { type: 'string' as const, required: true }
+  data: { type: 'string' as const, required: true, maxLength: 50000 }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/vendor/onboarding/step', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/vendor/onboarding/step', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -39,7 +39,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { step, data } = validation.data as any;
+    const { step, data } = validation.data;
 
     // Parse data if it's a JSON string
     let parsedData: Record<string, any> = {};
@@ -71,6 +71,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/vendor/onboarding/step', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Onboarding step save failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

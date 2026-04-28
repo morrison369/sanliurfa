@@ -5,14 +5,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { checkFeaturesAccess, hasFeatureAccess, getUserTierInfo, PREMIUM_FEATURES } from '../../../lib/feature-gating';
+import { checkFeaturesAccess, getUserTierInfo, PREMIUM_FEATURES } from '../../../lib/feature/feature-gating';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
 // GET - Get all available features and user's access status
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/user/features', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -56,10 +56,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/user/features', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Özellik erişimleri alınamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to get user features', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Özellik erişimleri alınamadı',
+      'Failed to get features',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -69,7 +69,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
 // POST - Check access to specific features
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -78,7 +78,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/user/features', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -92,7 +92,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/user/features', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Özellik listesi gereklidir',
+        'Features array required',
         HttpStatus.UNPROCESSABLE_ENTITY,
         undefined,
         requestId
@@ -101,7 +101,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Filter valid features
     const validFeatures = featuresToCheck.filter(
-      (f): f is keyof typeof PREMIUM_FEATURES => f in PREMIUM_FEATURES
+      (f): f is keyof typeof PREMIUM_FEATURES => typeof f === 'string' && f in PREMIUM_FEATURES
     );
 
     const accessMap = await checkFeaturesAccess(locals.user.id, validFeatures);
@@ -119,10 +119,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/user/features', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Özellik erişimi kontrol edilemedi', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to check features', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Özellik erişimi kontrol edilemedi',
+      'Failed to check features',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

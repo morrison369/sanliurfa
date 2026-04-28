@@ -4,20 +4,20 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getCampaignPerformance } from '../../../../lib/marketing-campaigns';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { getCampaignPerformance } from '../../../../lib/marketing/marketing-campaigns';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/marketing-campaigns/[id]/analytics', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id } = params;
@@ -27,7 +27,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     }
 
     const url = new URL(request.url);
-    const days = Math.min(parseInt(url.searchParams.get('days') || '30'), 365);
+    const days = safeIntParam(url.searchParams.get('days'), 30, 1, 365);
 
     const performance = await getCampaignPerformance(id, locals.user.id, days);
 
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     logger.error('Get campaign analytics failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Analitikler alınamadı',
+      'Failed to get analytics',
       statusCode,
       undefined,
       requestId

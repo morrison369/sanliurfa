@@ -1,18 +1,16 @@
-// @ts-nocheck
 /**
  * Photo Management API
  * DELETE: Delete a photo
  */
 
 import type { APIRoute } from 'astro';
-import { deletePhoto, getPhotoById } from '../../../../lib/photos';
-import { queryOne } from '../../../../lib/postgres';
+import { deletePhoto, getPhotoById } from '../../../../lib/photo';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

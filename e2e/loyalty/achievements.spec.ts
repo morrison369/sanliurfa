@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
 
+function authCookieFrom(response: { headers(): Record<string, string> }) {
+  return response.headers()['set-cookie']?.split(';')[0] || '';
+}
+
 test.describe('Loyalty - Achievements API', () => {
   test('GET /api/loyalty/achievements - get user achievements', async ({ request }) => {
     // Create user and get auth token
@@ -11,15 +15,16 @@ test.describe('Loyalty - Achievements API', () => {
       }
     });
     expect(registerRes.ok()).toBeTruthy();
-    const { data: user } = await registerRes.json();
+    const authCookie = authCookieFrom(registerRes);
 
     // Get achievements (should be empty initially)
     const response = await request.get('/api/loyalty/achievements', {
-      headers: { 'Cookie': `auth-token=${user.token}` }
+      headers: authCookie ? { Cookie: authCookie } : undefined
     });
 
     expect(response.ok()).toBeTruthy();
-    const { success, data } = await response.json();
+    const body = await response.json();
+    const { success, data } = body.data ?? body;
     expect(success).toBe(true);
     expect(Array.isArray(data)).toBeTruthy();
   });
@@ -32,14 +37,15 @@ test.describe('Loyalty - Achievements API', () => {
         fullName: 'Test User'
       }
     });
-    const { data: user } = await registerRes.json();
+    const authCookie = authCookieFrom(registerRes);
 
     const response = await request.get('/api/loyalty/achievements?view=stats', {
-      headers: { 'Cookie': `auth-token=${user.token}` }
+      headers: authCookie ? { Cookie: authCookie } : undefined
     });
 
     expect(response.ok()).toBeTruthy();
-    const { data } = await response.json();
+    const body = await response.json();
+    const { data } = body.data ?? body;
     expect(data).toHaveProperty('total_unlocked');
     expect(data).toHaveProperty('total_available');
     expect(data).toHaveProperty('unlock_percentage');
@@ -54,14 +60,15 @@ test.describe('Loyalty - Achievements API', () => {
         fullName: 'Test User'
       }
     });
-    const { data: user } = await registerRes.json();
+    const authCookie = authCookieFrom(registerRes);
 
     const response = await request.get('/api/loyalty/achievements?view=unviewed', {
-      headers: { 'Cookie': `auth-token=${user.token}` }
+      headers: authCookie ? { Cookie: authCookie } : undefined
     });
 
     expect(response.ok()).toBeTruthy();
-    const { success, data } = await response.json();
+    const body = await response.json();
+    const { success, data } = body.data ?? body;
     expect(success).toBe(true);
     expect(Array.isArray(data)).toBeTruthy();
   });
@@ -75,23 +82,25 @@ test.describe('Loyalty - Achievements API', () => {
         fullName: 'Test User'
       }
     });
-    const { data: user } = await registerRes.json();
+    const authCookie = authCookieFrom(registerRes);
 
     // Get achievements first
     const getRes = await request.get('/api/loyalty/achievements', {
-      headers: { 'Cookie': `auth-token=${user.token}` }
+      headers: authCookie ? { Cookie: authCookie } : undefined
     });
-    const { data: achievements } = await getRes.json();
+    const getBody = await getRes.json();
+    const { data: achievements } = getBody.data ?? getBody;
 
-    if (achievements.length > 0) {
+    if (Array.isArray(achievements) && achievements.length > 0) {
       // Mark as viewed
       const markRes = await request.post('/api/loyalty/achievements', {
         data: { userAchievementId: achievements[0].id },
-        headers: { 'Cookie': `auth-token=${user.token}` }
+        headers: authCookie ? { Cookie: authCookie } : undefined
       });
 
       expect(markRes.ok()).toBeTruthy();
-      const { success } = await markRes.json();
+      const markBody = await markRes.json();
+      const { success } = markBody.data ?? markBody;
       expect(success).toBe(true);
     }
   });

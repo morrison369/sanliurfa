@@ -1,256 +1,150 @@
-/**
- * Service Worker - PWA ve Push Notifications
- * Offline destek, cache, push notifications
- */
+// Service Worker for caching and offline support
+const CACHE_NAME = 'sanliurfa-v1';
+const STATIC_ASSETS = [
+  '/',
+  '/mekanlar',
+  '/etkinlikler',
+  '/blog',
+  '/manifest.json',
+  '/favicon.svg',
+  '/apple-touch-icon.png',
+];
 
-const CACHE_VERSION = "2026-04-10";
-const CACHE_NAME = `sanliurfa-${CACHE_VERSION}`;
-const STATIC_ASSETS = ["/", "/index.html", "/manifest.json", "/offline.html"];
-
-// Install event - static assets'i cache'e ekle
-self.addEventListener("install", (event) => {
+// Install event - cache static assets
+self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log("Service Worker: Cache oluşturuluyor");
-      return cache.addAll(STATIC_ASSETS).catch(() => {
-        console.warn("Service Worker: Bazi assets cache'e eklenemedi");
-      });
-    }),
+      return cache.addAll(STATIC_ASSETS);
+    })
   );
   self.skipWaiting();
 });
 
-// Activate event - eski cache'leri temizle
-self.addEventListener("activate", (event) => {
+// Activate event - clean old caches
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName.startsWith("sanliurfa-") && cacheName !== CACHE_NAME) {
-            console.log("Service Worker: Eski cache siliniyor:", cacheName);
-            return caches.delete(cacheName);
-          }
-        }),
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
       );
-    }),
+    })
   );
   self.clients.claim();
 });
 
-// Fetch event - network first, fallback to cache
-self.addEventListener("fetch", (event) => {
+// Fetch event - cache strategies
+self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  if (request.method !== "GET") {
+  // Skip non-GET requests
+  if (request.method !== 'GET') return;
+
+  // Skip API requests
+  if (url.pathname.startsWith('/api/')) return;
+
+  // Skip admin routes
+  if (url.pathname.startsWith('/admin/')) return;
+
+  // Cache strategies
+  // 1. Cache First for static assets
+  if (isStaticAsset(url.pathname)) {
+    event.respondWith(cacheFirst(request));
     return;
   }
 
-  // API istekleri - network first
-  if (url.pathname.startsWith("/api/")) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            return response;
-          }
-          return caches.match(request).catch(() => {
-            return new Response(
-              JSON.stringify({ error: "Offline - veri yüklenemedi" }),
-              { headers: { "Content-Type": "application/json" } },
-            );
-          });
-        })
-        .catch(() => {
-          return caches.match(request).catch(() => {
-            return new Response(
-              JSON.stringify({ error: "Offline - veri yüklenemedi" }),
-              { headers: { "Content-Type": "application/json" } },
-            );
-          });
-        }),
-    );
+  // 2. Network First for HTML pages
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirst(request));
     return;
   }
 
-  // Statik dosyalar - cache first
-  event.respondWith(
-    caches.match(request).then((response) => {
-      if (response) {
-        return response;
-      }
-      return fetch(request)
-        .then((response) => {
-          if (response.status === 404) {
-            return caches.match("/offline.html");
-          }
-          // HTML sayfalarını cache'e ekle
-          if (request.headers.get("accept")?.includes("text/html")) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          return caches.match("/offline.html");
-        });
-    }),
-  );
+  // 3. Stale While Revalidate for other assets
+  event.respondWith(staleWhileRevalidate(request));
 });
 
-// Push notification event
-self.addEventListener("push", (event) => {
-  if (!event.data) {
-    console.log("Service Worker: Push bildirimi verisi yok");
-    return;
+// Helper functions
+function isStaticAsset(pathname) {
+  const staticExtensions = ['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.woff', '.woff2'];
+  return staticExtensions.some((ext) => pathname.endsWith(ext));
+}
+
+async function cacheFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+  
+  if (cached) {
+    return cached;
   }
 
+  const response = await fetch(request);
+  cache.put(request, response.clone());
+  return response;
+}
+
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+  
   try {
-    const data = event.data.json();
-    const options = {
-      body: data.body || "Yeni bildirim",
-      icon: data.icon || "/icon-192.png",
-      badge: "/badge-72.png",
-      tag: data.tag || "notification",
-      requireInteraction: data.requireInteraction || false,
-      actions: data.actions || [
-        { action: "open", title: "Aç" },
-        { action: "close", title: "Kapat" },
-      ],
-      data: {
-        url: data.url || "/",
-        ...data,
-      },
-    };
-
-    event.waitUntil(
-      self.registration.showNotification(
-        data.title || "sanliurfa.com",
-        options,
-      ),
-    );
+    const networkResponse = await fetch(request);
+    cache.put(request, networkResponse.clone());
+    return networkResponse;
   } catch (error) {
-    console.error("Service Worker: Push notification hata:", error);
-    event.waitUntil(
-      self.registration.showNotification("sanliurfa.com Bildirimi", {
-        body: event.data.text(),
-        icon: "/icon-192.png",
-      }),
-    );
+    const cached = await cache.match(request);
+    if (cached) {
+      return cached;
+    }
+    throw error;
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
+
+  const fetchPromise = fetch(request).then((networkResponse) => {
+    cache.put(request, networkResponse.clone());
+    return networkResponse;
+  }).catch(() => cached);
+
+  return cached || fetchPromise;
+}
+
+// Background sync for form submissions
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-forms') {
+    event.waitUntil(syncFormSubmissions());
   }
 });
 
-// Notification click event
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
+async function syncFormSubmissions() {
+  // Implement form sync logic here
+  console.log('[SW] Syncing form submissions...');
+}
 
-  if (event.action === "close") {
-    return;
-  }
-
-  const urlToOpen = event.notification.data.url || "/";
+// Push notifications
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() || {};
+  
+  const options = {
+    body: data.body || 'Yeni bir bildiriminiz var!',
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/badge-72x72.png',
+    data: data.data || {},
+    actions: data.actions || [],
+  };
 
   event.waitUntil(
-    clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clientList) => {
-        // Mevcut tab'ı kontrol et
-        for (let i = 0; i < clientList.length; i++) {
-          const client = clientList[i];
-          if (client.url === urlToOpen && "focus" in client) {
-            return client.focus();
-          }
-        }
-        // Yeni tab aç
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      }),
+    self.registration.showNotification(data.title || 'Şanlıurfa.com', options)
   );
 });
 
-// Background sync - çevrimdışında yapılan işlemleri senkronize et
-self.addEventListener("sync", (event) => {
-  if (event.tag === "sync-comments") {
-    event.waitUntil(syncComments());
-  } else if (event.tag === "sync-favorites") {
-    event.waitUntil(syncFavorites());
-  }
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  event.waitUntil(
+    clients.openWindow(event.notification.data?.url || '/')
+  );
 });
-
-async function syncComments() {
-  try {
-    const db = await openDatabase();
-    const comments = await db.getAll("pending-comments");
-
-    for (const comment of comments) {
-      const response = await fetch("/api/blog/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(comment),
-      });
-
-      if (response.ok) {
-        await db.delete("pending-comments", comment.id);
-      }
-    }
-  } catch (error) {
-    console.error("Yorum senkronizasyonu başarısız:", error);
-  }
-}
-
-async function syncFavorites() {
-  try {
-    const db = await openDatabase();
-    const pending = await db.getAll("pending-favorites");
-
-    for (const item of pending) {
-      const response = await fetch("/api/favorites", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(item),
-      });
-
-      if (response.ok) {
-        await db.delete("pending-favorites", item.id);
-      }
-    }
-  } catch (error) {
-    console.error("Favori senkronizasyonu başarısız:", error);
-  }
-}
-
-function openDatabase() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open("sanliurfa-db", 1);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => {
-      const db = request.result;
-      resolve({
-        getAll: (store) =>
-          new Promise((r) => {
-            const tx = db.transaction(store, "readonly");
-            const result = [];
-            tx.objectStore(store).openCursor().onsuccess = (e) => {
-              const cursor = e.target.result;
-              if (cursor) {
-                result.push(cursor.value);
-                cursor.continue();
-              } else {
-                r(result);
-              }
-            };
-          }),
-        delete: (store, key) =>
-          new Promise((r) => {
-            const tx = db.transaction(store, "readwrite");
-            tx.objectStore(store).delete(key);
-            tx.oncomplete = () => r();
-          }),
-      });
-    };
-  });
-}

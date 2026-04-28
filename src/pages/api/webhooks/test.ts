@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
-import { triggerWebhook } from '../../../lib/webhooks';
+import { triggerWebhook } from '../../../lib/webhook/webhooks';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
@@ -9,14 +9,14 @@ import { logger } from '../../../lib/logging';
  * Test a webhook by sending a test event
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -59,7 +59,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       test: true,
       timestamp: new Date().toISOString(),
       event: webhook.event,
-      message: 'Bu bir test webhook olayıdır'
+      message: 'This is a test webhook event'
     };
 
     await triggerWebhook(webhook.event, testPayload, locals.user.id);
@@ -69,7 +69,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Test webhook başarıyla gönderildi',
+        message: 'Test webhook sent successfully',
         data: {
           webhookId,
           event: webhook.event,
@@ -81,10 +81,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Webhook testi başarısız oldu', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to test webhook', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Webhook testi başarısız oldu',
+      'Failed to test webhook',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

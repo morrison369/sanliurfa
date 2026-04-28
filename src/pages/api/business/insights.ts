@@ -3,13 +3,23 @@
  * GET - AI-driven insights and recommendations
  */
 import type { APIRoute } from 'astro';
-import { queryOne, queryMany, update, insert } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { queryOne, queryMany, update } from '../../../lib/postgres';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
+interface PlaceOwnerRow {
+  owner_id: string | null;
+}
+
+interface InsightActionBody {
+  placeId?: string;
+  insightId?: string;
+  action?: 'acknowledge' | string;
+}
+
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -26,13 +36,13 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     }
 
     // Verify ownership
-    const place = await queryOne('SELECT owner_id FROM places WHERE id = $1', [placeId]);
+    const place = await queryOne<PlaceOwnerRow>('SELECT owner_id FROM places WHERE id = $1', [placeId]);
     if (!place || place.owner_id !== locals.user.id) {
       recordRequest('GET', '/api/business/insights', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Erişim reddedildi', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 50);
 
     const insights = await queryMany(`
       SELECT
@@ -66,12 +76,12 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/business/insights', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to get insights', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'İşletme önerileri alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'İçgörüler alınırken hata oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -81,16 +91,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as InsightActionBody;
     const { placeId, insightId, action } = body;
 
     if (!placeId || !insightId || !action) {
       recordRequest('POST', '/api/business/insights', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan, öneri ve işlem bilgisi gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Zorunlu alanlar eksik', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Verify ownership
-    const place = await queryOne('SELECT owner_id FROM places WHERE id = $1', [placeId]);
+    const place = await queryOne<PlaceOwnerRow>('SELECT owner_id FROM places WHERE id = $1', [placeId]);
     if (!place || place.owner_id !== locals.user.id) {
       recordRequest('POST', '/api/business/insights', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Erişim reddedildi', HttpStatus.FORBIDDEN, undefined, requestId);
@@ -106,12 +116,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/business/insights', HttpStatus.OK, duration);
-    logger.logMutation('insight_action', 'business_insights', insightId, locals.user?.id, { action });
+    logger.logMutation('insight_action', 'business_insights', insightId, locals.user.id);
 
     return apiResponse(
       {
         success: true,
-        message: action === 'acknowledge' ? 'Öneri görüldü olarak işaretlendi' : 'Öneri işlemi tamamlandı'
+        message: 'İçgörü işlemi başarıyla tamamlandı'
       },
       HttpStatus.OK,
       requestId
@@ -120,6 +130,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/business/insights', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Failed to process insight action', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Öneri işlemi tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'İçgörü işlemi tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

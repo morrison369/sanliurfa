@@ -1,8 +1,362 @@
 ---
-return new Response(null, {
-  status: 301,
-  headers: {
-    Location: '/profil',
-  },
-});
+import { Icon } from 'astro-icon/components';
+import Layout from '../layouts/Layout.astro';
+import { requireAuth } from '../lib/auth';
+import { getUserProfile } from '../lib/user/users';
+import { getSocialStats } from '../lib/social/friendship-db';
+import { query } from '../lib/postgres';
+
+const auth = await requireAuth(Astro.request);
+if (!auth.user) return Astro.redirect(auth.redirect || '/giris');
+
+const [profile, socialStats, reviewsResult, submissionsResult, favoritesResult] = await Promise.all([
+  getUserProfile(auth.user.id),
+  getSocialStats(auth.user.id),
+  query(
+    `SELECT r.id, r.rating, r.content, r.created_at, r.helpful_count AS likes,
+            p.slug AS place_slug, p.name AS place_name
+     FROM reviews r
+     JOIN places p ON p.id = r.place_id
+     WHERE r.user_id = $1 AND r.status != 'deleted'
+     ORDER BY r.created_at DESC`,
+    [auth.user.id]
+  ),
+  query(
+    `SELECT id, name, category, status, created_at
+     FROM places
+     WHERE owner_id = $1 AND status IN ('draft','pending','active','rejected','needs_info')
+    ORDER BY created_at DESC`,
+    [auth.user.id]
+  ),
+  query(
+    `SELECT f.id, f.created_at,
+            p.name AS place_name,
+            p.slug AS place_slug,
+            p.images AS place_images,
+            p.rating AS place_rating,
+            p.address AS place_address
+     FROM favorites f
+     JOIN places p ON p.id = f.place_id
+     WHERE f.user_id = $1
+     ORDER BY f.created_at DESC`,
+    [auth.user.id]
+  ),
+]);
+
+const reviews    = reviewsResult.rows;
+const submissions = submissionsResult.rows;
+const favorites = favoritesResult.rows;
+const activityItems = [
+  ...reviews.map((review) => ({
+    type: 'review',
+    title: `${review.place_name} için değerlendirme yazıldı`,
+    description: `${review.rating}/5 puan`,
+    href: `/isletme/${review.place_slug}`,
+    created_at: review.created_at,
+  })),
+  ...submissions.map((submission) => ({
+    type: 'place',
+    title: `${submission.name} mekan önerisi gönderildi`,
+    description: submission.status === 'active'
+      ? 'Yayında'
+      : submission.status === 'pending'
+        ? 'Onay bekliyor'
+        : submission.status === 'rejected'
+          ? 'Reddedildi'
+          : 'Taslak',
+    href: '/isletme-kayit',
+    created_at: submission.created_at,
+  })),
+  ...favorites.map((favorite) => ({
+    type: 'favorite',
+    title: `${favorite.place_name} kaydedildi`,
+    description: favorite.place_address || 'Favori mekan',
+    href: `/isletme/${favorite.place_slug}`,
+    created_at: favorite.created_at,
+  })),
+].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 12);
 ---
+
+<Layout seo={{ title: `${profile?.full_name || 'Profil'} - Şanlıurfa Rehberi`, noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    {/* Profile Header */}
+    <section class="bg-white border-b border-[rgba(200,160,100,0.14)]">
+      <div class="container-custom py-8">
+        <div class="flex flex-col md:flex-row items-center gap-6">
+          {/* Avatar */}
+          <div class="relative">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name}
+                class="w-32 h-32 rounded-full object-cover border-4 border-[rgba(200,160,100,0.3)]"
+              />
+            ) : (
+              <div class="w-32 h-32 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-4xl font-bold border-4 border-[rgba(200,160,100,0.3)]">
+                {profile?.full_name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+            )}
+            <button
+              onclick="changeAvatar()"
+              class="absolute bottom-0 right-0 w-10 h-10 bg-[#1A1008] text-white rounded-sm flex items-center justify-center hover:bg-[#2A1F12] transition-colors"
+              title="Fotoğraf değiştir"
+            >
+              <Icon name="lucide:camera" class="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Info */}
+          <div class="flex-1 text-center md:text-left">
+            <h1 class="text-3xl font-bold text-[#1A1008]">{profile?.full_name}</h1>
+            <p class="text-[#9A8470] mt-1">
+              @{profile?.username || auth.user.full_name || auth.user.email.split('@')[0]}
+            </p>
+            <p class="text-[#6B5540] mt-2 max-w-lg">{profile?.bio || 'Henüz biyografi eklenmemiş.'}</p>
+
+            {/* Stats */}
+            <div class="flex items-center justify-center md:justify-start gap-6 mt-4">
+              <a href="/takipciler" class="text-center hover:text-urfa-700 transition-colors">
+                <div class="text-2xl font-bold text-[#1A1008]">{socialStats?.follower_count || 0}</div>
+                <div class="text-sm text-[#9A8470]">Takipçi</div>
+              </a>
+              <a href="/takip-edilenler" class="text-center hover:text-urfa-700 transition-colors">
+                <div class="text-2xl font-bold text-[#1A1008]">{socialStats?.following_count || 0}</div>
+                <div class="text-sm text-[#9A8470]">Takip</div>
+              </a>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-[#1A1008]">{reviews.length}</div>
+                <div class="text-sm text-[#9A8470]">Değerlendirme</div>
+              </div>
+              <div class="text-center">
+                <div class="text-2xl font-bold text-[#1A1008]">{profile?.points || 0}</div>
+                <div class="text-sm text-[#9A8470]">Puan</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div class="flex flex-col gap-2">
+            <a
+              href="/ayarlar"
+              class="px-6 py-2 bg-[rgba(200,160,100,0.08)] text-[#6B5540] rounded-sm hover:bg-[rgba(200,160,100,0.16)] transition-colors text-center"
+            >
+              Profili Düzenle
+            </a>
+            <a
+              href="/isletme-kayit"
+              class="px-6 py-2 bg-urfa-600 text-white rounded-sm hover:bg-urfa-700 transition-colors text-center"
+            >
+              Mekan Ekle
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Content Tabs */}
+    <section class="container-custom py-8">
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm overflow-hidden">
+        {/* Tab Navigation */}
+        <div class="border-b border-[rgba(200,160,100,0.14)]">
+          <nav class="flex">
+            <button onclick="switchTab('reviews')" class="tab-btn active px-6 py-4 font-medium border-b-2 border-urfa-600 text-urfa-600" data-tab="reviews">
+              Değerlendirmelerim ({reviews.length})
+            </button>
+            <button onclick="switchTab('saved')" class="tab-btn px-6 py-4 font-medium border-b-2 border-transparent text-[#9A8470] hover:text-[#6B5540]" data-tab="saved">
+              Kaydedilenler ({favorites.length})
+            </button>
+            <button onclick="switchTab('submissions')" class="tab-btn px-6 py-4 font-medium border-b-2 border-transparent text-[#9A8470] hover:text-[#6B5540]" data-tab="submissions">
+              Mekan Önerilerim ({submissions.length})
+            </button>
+            <button onclick="switchTab('activity')" class="tab-btn px-6 py-4 font-medium border-b-2 border-transparent text-[#9A8470] hover:text-[#6B5540]" data-tab="activity">
+              Aktivite
+            </button>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <div class="p-6">
+          {/* Reviews Tab */}
+          <div id="tab-reviews" class="tab-content">
+            {reviews.length > 0 ? (
+              <div class="space-y-6">
+                {reviews.map(review => (
+                  <div class="border-b border-[rgba(200,160,100,0.12)] pb-6 last:border-0">
+                    <div class="flex items-center justify-between mb-3">
+                      <a href={`/isletme/${review.place_slug}`} class="font-medium text-lg text-[#1A1008] hover:text-urfa-700">
+                        {review.place_name}
+                      </a>
+                      <div class="flex text-yellow-400">
+                        {'★'.repeat(review.rating)}
+                        <span class="text-[#9A8470]">{'★'.repeat(5 - review.rating)}</span>
+                      </div>
+                    </div>
+                    <p class="text-[#6B5540]">{review.content}</p>
+                    <div class="flex items-center gap-4 mt-3 text-sm text-[#9A8470]">
+                      <span>{new Date(review.created_at).toLocaleDateString('tr-TR')}</span>
+                      <span>{review.likes} beğeni</span>
+                      <button onclick="deleteReview('${review.id}')" class="text-red-500 hover:text-red-700">
+                        Sil
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <div class="text-5xl mb-4">📝</div>
+                <h3 class="text-lg font-medium text-[#1A1008] mb-2">Henüz değerlendirme yok</h3>
+                <p class="text-[#9A8470] mb-4">Ziyaret ettiğiniz mekanları değerlendirin</p>
+                <a href="/mekanlar" class="px-6 py-2 bg-urfa-600 text-white rounded-sm hover:bg-urfa-700 transition-colors">
+                  Mekanları Keşfet
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Saved Tab */}
+          <div id="tab-saved" class="tab-content hidden">
+            {favorites.length > 0 ? (
+              <div class="grid gap-4 md:grid-cols-2">
+                {favorites.map((favorite) => (
+                  <a href={`/isletme/${favorite.place_slug}`} class="flex gap-4 rounded-sm border border-[rgba(200,160,100,0.18)] bg-[#FDFAF3] p-4 transition-colors hover:border-urfa-300 hover:bg-[rgba(200,160,100,0.04)]">
+                    <img
+                      src={favorite.place_images?.[0] || '/images/placeholder.jpg'}
+                      alt={`${favorite.place_name} görseli`}
+                      class="h-20 w-24 shrink-0 rounded-sm object-cover"
+                      loading="lazy"
+                    />
+                    <div class="min-w-0 flex-1">
+                      <h4 class="truncate font-medium text-[#1A1008]">{favorite.place_name}</h4>
+                      <p class="mt-1 line-clamp-2 text-sm text-[#9A8470]">
+                        {favorite.place_address || 'Şanlıurfa'}
+                      </p>
+                      <p class="mt-2 text-sm font-medium text-urfa-700">
+                        {favorite.place_rating ? `${Number(favorite.place_rating).toFixed(1)} puan` : 'Puan bekleniyor'}
+                      </p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <div class="text-5xl mb-4">🔖</div>
+                <h3 class="text-lg font-medium text-[#1A1008] mb-2">Henüz kaydedilmiş mekan yok</h3>
+                <p class="text-[#9A8470] mb-4">Beğendiğiniz mekanları kaydedin</p>
+                <a href="/mekanlar" class="px-6 py-2 bg-urfa-600 text-white rounded-sm hover:bg-urfa-700 transition-colors">
+                  Mekanları Keşfet
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Submissions Tab */}
+          <div id="tab-submissions" class="tab-content hidden">
+            {submissions.length > 0 ? (
+              <div class="space-y-4">
+                {submissions.map(sub => (
+                  <div class="flex items-center justify-between p-4 bg-[#FDFAF3] rounded-sm border border-[rgba(200,160,100,0.14)]">
+                    <div>
+                      <h4 class="font-medium text-[#1A1008]">{sub.name}</h4>
+                      <p class="text-sm text-[#9A8470]">{sub.category} • {new Date(sub.created_at).toLocaleDateString('tr-TR')}</p>
+                    </div>
+                    <span class={`px-3 py-1 text-sm rounded-sm ${
+                      sub.status === 'approved' ? 'bg-green-100 text-green-700' :
+                      sub.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                      sub.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                      'bg-[rgba(200,160,100,0.08)] text-[#6B5540]'
+                    }`}>
+                      {sub.status === 'approved' ? 'Onaylandı' :
+                       sub.status === 'pending' ? 'Beklemede' :
+                       sub.status === 'rejected' ? 'Reddedildi' : 'Taslak'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <div class="text-5xl mb-4">📍</div>
+                <h3 class="text-lg font-medium text-[#1A1008] mb-2">Henüz mekan önerisi yok</h3>
+                <p class="text-[#9A8470] mb-4">Bildiğiniz mekanları ekleyin</p>
+                <a href="/isletme-kayit" class="px-6 py-2 bg-urfa-600 text-white rounded-sm hover:bg-urfa-700 transition-colors">
+                  Mekan Ekle
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Activity Tab */}
+          <div id="tab-activity" class="tab-content hidden">
+            {activityItems.length > 0 ? (
+              <div class="space-y-4">
+                {activityItems.map((item) => (
+                  <a href={item.href} class="flex items-center justify-between rounded-sm border border-[rgba(200,160,100,0.18)] bg-[#FDFAF3] p-4 transition-colors hover:border-urfa-300 hover:bg-[rgba(200,160,100,0.04)]">
+                    <div>
+                      <h4 class="font-medium text-[#1A1008]">{item.title}</h4>
+                      <p class="text-sm text-[#9A8470]">{item.description}</p>
+                    </div>
+                    <time class="text-sm text-[#9A8470]" datetime={new Date(item.created_at).toISOString()}>
+                      {new Date(item.created_at).toLocaleDateString('tr-TR')}
+                    </time>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <div class="text-5xl mb-4">📌</div>
+                <h3 class="text-lg font-medium text-[#1A1008] mb-2">Henüz aktivite yok</h3>
+                <p class="text-[#9A8470] mb-4">Mekan ekleyerek veya değerlendirme yazarak profilinizi hareketlendirin</p>
+                <a href="/mekanlar" class="px-6 py-2 bg-urfa-600 text-white rounded-sm hover:bg-urfa-700 transition-colors">
+                  Mekanları Keşfet
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script is:inline>
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+      });
+
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('border-urfa-600', 'text-urfa-600');
+        btn.classList.add('border-transparent', 'text-[#9A8470]');
+      });
+
+      const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+      if (targetBtn instanceof Element) {
+        targetBtn.classList.remove('border-transparent', 'text-[#9A8470]');
+        targetBtn.classList.add('border-urfa-600', 'text-urfa-600');
+      }
+    }
+
+    function changeAvatar() {
+      window.location.href = '/ayarlar';
+    }
+
+    async function deleteReview(reviewId) {
+      if (!await window.showConfirm('Bu değerlendirmeyi silmek istediğinize emin misiniz?')) return;
+
+      try {
+        const response = await fetch(`/api/reviews`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', reviewId }),
+        });
+
+        if (response.ok) {
+          window.location.reload();
+        }
+      } catch (error) {
+        window.toast?.error('Silme işlemi başarısız');
+      }
+    }
+  </script>
+</Layout>

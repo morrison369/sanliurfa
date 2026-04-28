@@ -1,16 +1,20 @@
 // API: Review delete (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { remove } from '../../../../lib/postgres';
+import { problemJson, safeErrorDetail } from '../../../../lib/api';
 
 export const POST: APIRoute = async ({ params, locals }) => {
   try {
     const { id } = params;
-
+    
     if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Yetkisiz işlem' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/review-delete-unauthorized',
+        instance: '/api/reviews/{id}/delete',
+      });
     }
 
     await remove('reviews', id);
@@ -20,9 +24,12 @@ export const POST: APIRoute = async ({ params, locals }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
-    return new Response(
-      JSON.stringify({ error: 'Server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Yorum Silinemedi',
+      detail: safeErrorDetail(err, 'server_error'),
+      type: '/problems/review-delete-failed',
+      instance: '/api/reviews/{id}/delete',
+    });
   }
 };

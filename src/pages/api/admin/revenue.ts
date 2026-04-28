@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
 import { queryOne, queryMany } from '../../../lib/postgres';
 import { verifyToken } from '../../../lib/auth';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeErrorDetail } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, cookies }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -15,17 +15,19 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const token = cookies.get('auth-token')?.value;
     if (!token) {
       recordRequest('GET', '/api/admin/revenue', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const sessionData = await verifyToken(token);
     if (!sessionData) {
       recordRequest('GET', '/api/admin/revenue', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Invalid or expired token', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Invalid or expired token', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    // Check admin role (would be done via RBAC, for now check if role includes admin)
-    // In real implementation: await hasPermission(sessionData.userId, 'admin.access')
+    if (sessionData.role !== 'admin') {
+      recordRequest('GET', '/api/admin/revenue', HttpStatus.FORBIDDEN, Date.now() - startTime);
+      return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
+    }
 
     // Get current active subscriptions by tier
     const subscriptionsByTier = await queryMany(
@@ -54,13 +56,11 @@ export const GET: APIRoute = async ({ request, cookies }) => {
     const tiers: Record<string, any> = {};
 
     for (const row of mrrQuery) {
-      const subscriberCount = Number(row.subscriber_count || 0);
-      const tierMrr = Number(row.tier_mrr || 0);
       tiers[row.tier] = {
-        count: subscriberCount,
-        monthlyRevenue: tierMrr
+        count: row.subscriber_count,
+        monthlyRevenue: row.tier_mrr
       };
-      totalMRR += tierMrr;
+      totalMRR += row.tier_mrr;
     }
 
     // Get daily revenue for last 30 days
@@ -89,11 +89,11 @@ export const GET: APIRoute = async ({ request, cookies }) => {
        AND expires_at >= NOW() - INTERVAL '30 days'`
     );
 
-    const totalActiveSubscriptions = (subscriptionsByTier as any[])
-      .reduce((sum, item) => sum + Number(item.count || 0), 0);
+    const totalActiveSubscriptions = subscriptionsByTier
+      .reduce((sum, item) => sum + (item.count || 0), 0);
 
     const churnRate = totalActiveSubscriptions > 0
-      ? (Number(churnQuery?.churned_30d || 0) / totalActiveSubscriptions * 100).toFixed(2)
+      ? ((churnQuery?.churned_30d || 0) / totalActiveSubscriptions * 100).toFixed(2)
       : 0;
 
     // Get total revenue all time
@@ -121,10 +121,10 @@ export const GET: APIRoute = async ({ request, cookies }) => {
             totalMRR: parseFloat(totalMRR.toFixed(2)),
             totalActiveSubscriptions,
             churnRatePercent: parseFloat(churnRate as string),
-            totalRevenueAllTime: Number(totalRevenueQuery?.total || 0)
+            totalRevenueAllTime: totalRevenueQuery?.total || 0
           },
           byTier: tiers,
-          dailyRevenue: dailyRevenue.map((row: any) => ({
+          dailyRevenue: dailyRevenue.map((row) => ({
             date: row.date,
             revenue: parseFloat(row.revenue.toFixed(2))
           }))
@@ -136,7 +136,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/revenue', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: error instanceof Error ? error.message : String(error)
+      error: safeErrorDetail(error, 'Revenue data fetch failed')
     });
     logger.error('Revenue dashboard request failed', error instanceof Error ? error : new Error(String(error)), {
       duration

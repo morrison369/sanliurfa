@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
-import { getLeaderboard } from '../../lib/gamification';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../lib/api';
+import { getLeaderboard } from '../../lib/gamification/gamification';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam, safeErrorDetail } from '../../lib/api';
 import { recordRequest } from '../../lib/metrics';
 import { logger } from '../../lib/logging';
 
 export const GET: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ request }) => {
     // Get query parameters
     const url = new URL(request.url);
     const period = (url.searchParams.get('period') || 'all') as 'weekly' | 'monthly' | 'all';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '100'), 1000);
+    const limit = safeIntParam(url.searchParams.get('limit'), 100, 1, 1_000);
 
     // Validate period
     if (!['weekly', 'monthly', 'all'].includes(period)) {
@@ -44,7 +44,7 @@ export const GET: APIRoute = async ({ request }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/leaderboard', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: error instanceof Error ? error.message : String(error)
+      error: safeErrorDetail(error, 'Leaderboard fetch failed')
     });
     logger.error('Leaderboard request failed', error instanceof Error ? error : new Error(String(error)), {
       duration

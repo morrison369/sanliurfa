@@ -1,8 +1,18 @@
-import React, { useState, useEffect } from "react";
-import { unwrapApiPayload } from "@/lib/client-api";
+import {  useState, useEffect  } from 'react';
+interface Profile {
+  full_name: string;
+  bio?: string;
+  is_own_profile: boolean;
+  stats: {
+    review_count: number;
+    follower_count: number;
+    followers?: number;
+    following?: number;
+  };
+}
 
 export default function UserPublicProfile({ userId, currentUserId }: { userId: string; currentUserId?: string }) {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBlocking, setIsBlocking] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -12,30 +22,19 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
   useEffect(() => {
     fetch("/api/users/" + userId + "/profile")
       .then(r => r.json())
-      .then(d => {
-        const payload = unwrapApiPayload<{ data?: any }>(d);
-        setProfile(payload.data);
-        setIsLoading(false);
-      })
+      .then(d => { setProfile(d.data); setIsLoading(false); })
       .catch(() => setIsLoading(false));
 
-    // Check blocking status if current user exists
+    // Oturum sahibi kullanıcı varsa engel ve takip durumunu kontrol et.
     if (currentUserId) {
       fetch("/api/blocking/check?user_id=" + userId)
         .then(r => r.json())
-        .then(d => {
-          const payload = unwrapApiPayload<{ data?: { blocked_user?: boolean } }>(d);
-          setIsBlocked(payload.data?.blocked_user || false);
-        })
+        .then(d => setIsBlocked(d.data?.blocked_user || false))
         .catch(() => {});
 
-      // Check following status
       fetch("/api/following/check?user_id=" + userId)
         .then(r => r.json())
-        .then(d => {
-          const payload = unwrapApiPayload<{ data?: { is_following?: boolean } }>(d);
-          setIsFollowing(payload.data?.is_following || false);
-        })
+        .then(d => setIsFollowing(d.data?.is_following || false))
         .catch(() => {});
     }
   }, [userId, currentUserId]);
@@ -56,7 +55,7 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
         setIsFollowing(!currentlyFollowing);
       }
     } catch (err) {
-      console.error('Follow error:', err);
+      console.error('Takip işlemi hatası:', err);
     } finally {
       setIsFollowingLoading(false);
     }
@@ -79,14 +78,14 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
         setIsBlocked(!isBlocked);
       }
     } catch (err) {
-      console.error('Block error:', err);
+      console.error('Engelleme işlemi hatası:', err);
     } finally {
       setIsBlocking(false);
     }
   };
 
   if (isLoading) return <div className="text-center py-12">Yükleniyor...</div>;
-  if (!profile) return <div>Profil bulunamadı</div>;
+  if (!profile) return <div>Profil bulunamadı.</div>;
 
   return (
     <div className="space-y-6">
@@ -103,14 +102,14 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
             {!profile.is_own_profile && currentUserId && (
               <div className="flex gap-2">
                 <a href="/mesajlar" className="px-4 py-2 bg-blue-500 text-white rounded inline-block">
-                  Mesaj gönder
+                  Mesaj Gönder
                 </a>
                 <button
                   onClick={handleFollow}
                   disabled={isFollowingLoading}
                   className={`px-4 py-2 rounded text-white ${isFollowing ? 'bg-gray-600 hover:bg-gray-700' : 'bg-green-600 hover:bg-green-700'}`}
                 >
-                  {isFollowingLoading ? 'İşleniyor...' : isFollowing ? 'Takipten çık' : 'Takip et'}
+                  {isFollowingLoading ? 'İşleniyor...' : isFollowing ? 'Takipten Çık' : 'Takip Et'}
                 </button>
                 <button
                   onClick={handleBlock}

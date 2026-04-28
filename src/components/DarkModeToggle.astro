@@ -1,14 +1,14 @@
 ---
-import { Sun, Moon } from 'lucide-react';
+import { Icon } from 'astro-icon/components';
 ---
 
-<button 
-  id="theme-toggle" 
-  class="w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors"
+<button
+  id="theme-toggle"
+  class="w-10 h-10 rounded-lg bg-stone-100 hover:bg-stone-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 flex items-center justify-center transition-colors"
   aria-label="Tema değiştir"
 >
-  <Sun id="sun-icon" className="w-5 h-5 text-gray-700" />
-  <Moon id="moon-icon" className="w-5 h-5 text-gray-700 hidden" />
+  <Icon name="lucide:sun" id="sun-icon" class="text-zinc-700 dark:text-zinc-300 w-5 h-5" />
+  <Icon name="lucide:moon" id="moon-icon" class="text-zinc-700 dark:text-zinc-300 w-5 h-5 hidden" />
 </button>
 
 <script>
@@ -17,11 +17,11 @@ import { Sun, Moon } from 'lucide-react';
   const sunIcon = document.getElementById('sun-icon');
   const moonIcon = document.getElementById('moon-icon');
   const html = document.documentElement;
-  
+
   // Check saved theme or system preference
   const savedTheme = localStorage.getItem('theme');
   const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
+
   function setTheme(dark: boolean) {
     if (dark) {
       html.classList.add('dark');
@@ -35,29 +35,30 @@ import { Sun, Moon } from 'lucide-react';
       localStorage.setItem('theme', 'light');
     }
   }
-  
+
   // Initialize
   if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
     setTheme(true);
   } else {
     setTheme(false);
   }
-  
+
   // Toggle
   themeToggle?.addEventListener('click', () => {
     const isDark = html.classList.contains('dark');
     setTheme(!isDark);
   });
-  
+
   // Listen for system changes
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
     if (!localStorage.getItem('theme')) {
       setTheme(e.matches);
     }
   });
-  
+
   // Listen for theme changes from other toggles
   window.addEventListener('themechange', (e: Event) => {
-    setTheme(Boolean((e as CustomEvent<{ dark: boolean }>).detail.dark));
+    const detail = (e as CustomEvent<{ dark: boolean }>).detail;
+    setTheme(Boolean(detail?.dark));
   });
 </script>

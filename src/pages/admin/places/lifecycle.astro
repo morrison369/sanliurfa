@@ -1,0 +1,165 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout
+  title="Mekan Yaşam Döngüsü"
+  subtitle="Durum geçişlerini ve SLA ihlallerini izleyin."
+  seo={{ title: 'Mekan Yaşam Döngüsü - Yönetim Paneli', noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8 space-y-5">
+      <div class="mb-2">
+        <a href="/admin/places" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Mekan Yönetimi</a>
+      </div>
+
+      <div class="grid md:grid-cols-4 gap-4" id="slaCards">
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-5">
+          <p class="text-sm text-[#9A8470]">SLA Saat</p>
+          <p class="text-2xl font-bold text-[#1A1008] mt-1" id="slaHours">-</p>
+        </div>
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-5">
+          <p class="text-sm text-[#9A8470]">Beklemede</p>
+          <p class="text-2xl font-bold text-[#1A1008] mt-1" id="pendingCount">-</p>
+        </div>
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-5">
+          <p class="text-sm text-[#9A8470]">Bilgi Gerekli</p>
+          <p class="text-2xl font-bold text-[#1A1008] mt-1" id="needsInfoCount">-</p>
+        </div>
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-5">
+          <p class="text-sm text-[#9A8470]">SLA İhlali</p>
+          <p class="text-2xl font-bold text-red-700 mt-1" id="breachedCount">-</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold text-[#1A1008]">Son Geçişler</h2>
+          <div class="flex items-center gap-2">
+            <a
+              id="exportLink"
+              href="/api/admin/places/lifecycle/export"
+              class="rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-1.5 text-sm text-[#6B5540] hover:bg-[rgba(200,160,100,0.04)]"
+            >
+              CSV Dışa Aktar
+            </a>
+            <button id="signedLinkBtn" class="rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-1.5 text-sm text-[#6B5540] hover:bg-[rgba(200,160,100,0.04)]" type="button">
+              5dk İmzalı Link
+            </button>
+            <button id="refreshBtn" class="rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-1.5 text-sm text-[#6B5540] hover:bg-[rgba(200,160,100,0.04)]">Yenile</button>
+          </div>
+        </div>
+        <input id="signedLinkOut" class="rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 mb-3 w-full text-xs" readonly placeholder="İmzalı export linki burada" />
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)]">
+              <tr>
+                <th class="px-2 py-2 text-left text-xs font-medium text-[#9A8470] uppercase">Zaman</th>
+                <th class="px-2 py-2 text-left text-xs font-medium text-[#9A8470] uppercase">Mekan</th>
+                <th class="px-2 py-2 text-left text-xs font-medium text-[#9A8470] uppercase">Önceki Durum</th>
+                <th class="px-2 py-2 text-left text-xs font-medium text-[#9A8470] uppercase">Yeni Durum</th>
+                <th class="px-2 py-2 text-left text-xs font-medium text-[#9A8470] uppercase">İşlem Yapan</th>
+                <th class="px-2 py-2 text-left text-xs font-medium text-[#9A8470] uppercase">Gerekçe</th>
+              </tr>
+            </thead>
+            <tbody id="timelineRows">
+              <tr><td class="px-2 py-3 text-[#9A8470]" colspan="6">Yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  <script is:inline>
+    async function loadSla() {
+      const res = await fetch('/api/admin/places/lifecycle/sla');
+      const json = await res.json();
+      if (!res.ok || !json?.success) return;
+      document.getElementById('slaHours').textContent = String(json.slaHours || '-');
+      document.getElementById('pendingCount').textContent = String(json.summary?.pending_count ?? '-');
+      document.getElementById('needsInfoCount').textContent = String(json.summary?.needs_info_count ?? '-');
+      document.getElementById('breachedCount').textContent = String(json.summary?.pending_breached_count ?? '-');
+    }
+
+    async function loadTimeline() {
+      const rows = document.getElementById('timelineRows');
+      const res = await fetch('/api/admin/places/lifecycle?limit=100&offset=0');
+      const json = await res.json();
+      if (!res.ok || !json?.success) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.className = 'px-2 py-3 text-[#9A8470]';
+        td.textContent = 'Yüklenemedi';
+        tr.appendChild(td);
+        rows.replaceChildren(tr);
+        return;
+      }
+      const items = Array.isArray(json.items) ? json.items : [];
+      if (!items.length) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 6;
+        td.className = 'px-2 py-3 text-[#9A8470]';
+        td.textContent = 'Kayıt yok';
+        tr.appendChild(td);
+        rows.replaceChildren(tr);
+        return;
+      }
+      function buildLifecycleRow(x) {
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-[rgba(200,160,100,0.08)] hover:bg-[rgba(200,160,100,0.04)]';
+        const monoTd = (cls, text) => {
+          const td = document.createElement('td'); td.className = cls;
+          const span = document.createElement('span'); span.className = 'font-mono text-[#6B5540]'; span.textContent = text;
+          td.appendChild(span); return td;
+        };
+        const plainTd = (cls, text) => {
+          const td = document.createElement('td'); td.className = cls + ' text-[#6B5540]'; td.textContent = text; return td;
+        };
+        tr.appendChild(plainTd('px-2 py-2 whitespace-nowrap', x.created_at ? new Date(x.created_at).toLocaleString('tr-TR') : '-'));
+        tr.appendChild(plainTd('px-2 py-2', x.place_name || x.place_id));
+        tr.appendChild(monoTd('px-2 py-2', x.from_status || '-'));
+        tr.appendChild(monoTd('px-2 py-2', x.to_status || '-'));
+        tr.appendChild(monoTd('px-2 py-2', x.actor_email || x.actor_user_id || '-'));
+        tr.appendChild(plainTd('px-2 py-2', x.reason || '-'));
+        return tr;
+      }
+      rows.replaceChildren(...items.map(buildLifecycleRow));
+      const firstStatus = items[0]?.to_status || '';
+      document.getElementById('exportLink').setAttribute(
+        'href',
+        `/api/admin/places/lifecycle/export?${new URLSearchParams({
+          ...(firstStatus ? { toStatus: firstStatus } : {}),
+          limit: '1000',
+        }).toString()}`,
+      );
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      void loadSla();
+      void loadTimeline();
+    });
+    document.getElementById('signedLinkBtn').addEventListener('click', async () => {
+      const res = await fetch('/api/admin/exports/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resourceKey: 'admin.places.lifecycle.export',
+          payload: {},
+          ttlSeconds: 300,
+          maxDownloads: 1,
+        }),
+      });
+      const json = await res.json();
+      const out = document.getElementById('signedLinkOut');
+      if (!res.ok || !json?.success) {
+        out.value = 'Token üretilemedi';
+        return;
+      }
+      out.value = `${location.origin}/api/admin/places/lifecycle/export?token=${encodeURIComponent(json.token)}`;
+    });
+
+    void loadSla();
+    void loadTimeline();
+  </script>
+</AdminLayout>

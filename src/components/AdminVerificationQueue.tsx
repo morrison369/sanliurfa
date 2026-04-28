@@ -2,9 +2,7 @@
  * Admin Verification Queue Component
  * Shows pending verification requests for admin review
  */
-
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface VerificationRequest {
   id: string;
   placeId: string;
@@ -23,9 +21,11 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
   const [verifications, setVerifications] = useState<VerificationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState<{ [key: string]: string }>({});
   const [showRejectForm, setShowRejectForm] = useState<string | null>(null);
+  const [rejectValidationError, setRejectValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVerifications();
@@ -37,14 +37,14 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
       const response = await fetch('/api/admin/verifications?limit=50');
 
       if (!response.ok) {
-        throw new Error('Doğrulama talepleri alınamadı');
+        throw new Error('Doğrulama kuyruğu yüklenemedi.');
       }
 
       const data = await response.json();
       setVerifications(data.verifications || []);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
+      setError(err instanceof Error ? err.message : 'Bilinmeyen hata oluştu.');
       setVerifications([]);
     } finally {
       setLoading(false);
@@ -64,14 +64,14 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
       });
 
       if (!response.ok) {
-        throw new Error('Doğrulama onaylanamadı');
+        throw new Error('Doğrulama talebi onaylanamadı.');
       }
 
-      // Remove from list
+      // İşlenen talebi kuyruktan kaldır.
       setVerifications(verifications.filter(v => v.id !== verificationId));
       onRefresh?.();
     } catch (err) {
-      alert(`Hata: ${err instanceof Error ? err.message : 'Bilinmeyen hata'}`);
+      setActionError(err instanceof Error ? err.message : 'Onaylama işlemi başarısız oldu.');
     } finally {
       setProcessingId(null);
     }
@@ -80,9 +80,10 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
   const handleReject = async (verificationId: string) => {
     const reason = rejectReason[verificationId];
     if (!reason || reason.trim().length < 10) {
-      alert('Lütfen reddetme nedenini en az 10 karakter giriniz.');
+      setRejectValidationError('Reddetme nedeni en az 10 karakter olmalıdır.');
       return;
     }
+    setRejectValidationError(null);
 
     setProcessingId(verificationId);
 
@@ -96,15 +97,15 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
       });
 
       if (!response.ok) {
-        throw new Error('Doğrulama reddedilemedi');
+        throw new Error('Doğrulama talebi reddedilemedi.');
       }
 
-      // Remove from list
+      // İşlenen talebi kuyruktan kaldır.
       setVerifications(verifications.filter(v => v.id !== verificationId));
       setShowRejectForm(null);
       onRefresh?.();
     } catch (err) {
-      alert(`Hata: ${err instanceof Error ? err.message : 'Bilinmeyen hata'}`);
+      setActionError(err instanceof Error ? err.message : 'Reddetme işlemi başarısız oldu.');
     } finally {
       setProcessingId(null);
     }
@@ -138,6 +139,12 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
 
   return (
     <div className="space-y-4">
+      {actionError && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+          <p className="text-red-700 text-sm">{actionError}</p>
+          <button onClick={() => setActionError(null)} className="text-red-400 hover:text-red-600 ml-4 text-lg leading-none">×</button>
+        </div>
+      )}
       {verifications.map(verification => (
         <div
           key={verification.id}
@@ -147,7 +154,7 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
             <div>
               <h4 className="font-semibold text-gray-900">{verification.placeName}</h4>
               <p className="text-sm text-gray-600 mt-1">
-                Kategori: {verification.category} • Puan: {verification.rating.toFixed(1)}⭐
+                Kategori: {verification.category} • Puan: {verification.rating.toFixed(1)}
               </p>
               <p className="text-xs text-gray-500 mt-2">
                 Talep Tarihi: {new Date(verification.requestedAt).toLocaleDateString('tr-TR')}
@@ -162,14 +169,17 @@ export function AdminVerificationQueue({ onRefresh }: AdminVerificationQueueProp
               </label>
               <textarea
                 value={rejectReason[verification.id] || ''}
-                onChange={(e) => setRejectReason({
-                  ...rejectReason,
-                  [verification.id]: e.target.value
-                })}
+                onChange={(e) => {
+                  setRejectReason({ ...rejectReason, [verification.id]: e.target.value });
+                  if (rejectValidationError) setRejectValidationError(null);
+                }}
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-blue-500 ${rejectValidationError ? 'border-red-400 bg-red-50' : 'border-gray-300'}`}
                 placeholder="Reddetme nedenini açıklayın..."
               />
+              {rejectValidationError && (
+                <p className="text-red-600 text-xs mt-1">{rejectValidationError}</p>
+              )}
             </div>
           ) : null}
 

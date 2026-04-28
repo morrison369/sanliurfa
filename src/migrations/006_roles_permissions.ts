@@ -79,8 +79,8 @@ export const migration_006_roles_permissions: Migration = {
         ('reviews.moderate', 'Yorumları moderatör', 'reviews', 'moderate'),
         ('analytics.view', 'İstatistikleri görebilir', 'analytics', 'read'),
         ('audit_logs.view', 'Audit loglarını görebilir', 'audit_logs', 'read'),
-        ('alerts.manage', 'Alert'leri yönetebilir', 'alerts', 'manage'),
-        ('webhooks.manage', 'Webhook'ları yönetebilir', 'webhooks', 'manage'),
+        ('alerts.manage', 'Alert''leri yönetebilir', 'alerts', 'manage'),
+        ('webhooks.manage', 'Webhook''ları yönetebilir', 'webhooks', 'manage'),
         ('admin.access', 'Admin paneline erişebilir', 'admin', 'access')
       ON CONFLICT (name) DO NOTHING;
 

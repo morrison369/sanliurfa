@@ -1,108 +1,106 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
+Core app code is under `src/`.
+- `src/pages/`: Astro routes and API handlers (including `src/pages/api/`).
+- `src/components/`, `src/layouts/`, `src/styles/`: UI composition and styling.
+- `src/lib/`: domain logic, governance libraries, shared utilities.
+- `src/lib/__tests__/`: phase-focused Vitest suites.
+- `public/`: static files and PWA assets.
+- `scripts/`: operational utilities (migrate, checks, deploy).
 
-- `src/pages/`: Astro SSR routes and `src/pages/api/` handlers.
-- `src/components/`, `src/layouts/`, `src/styles/`: UI and layout code.
-- `src/lib/`: shared logic plus phase libraries; tests live in `src/lib/__tests__/`.
-- `src/content/` with `src/content.config.ts`: content collections; loader and schema edits must ship together.
-- `public/`: static assets and PWA files.
-- Root phase records: `PHASE_*.md`, `PHASE_INDEX.md`, `TASK_TRACKER.md`, `memory.md`, `PHASE_CHANGELOG.md`.
-- Archived phase and cleanup notes live under `docs/archive/`.
-
-## Source Of Truth
-
-- Treat `origin/master` plus a clean `git worktree` as the only safe delivery base.
-- Do not trust a dirty local root worktree for phase status, docs, or tracker state.
-- If local root and `origin/master` disagree, use the clean worktree created from `origin/master`.
-- Use [docs/WORKTREE_SOURCE_OF_TRUTH.md](docs/WORKTREE_SOURCE_OF_TRUTH.md) as the binding policy reference.
-- Use [STALE_WORKTREE.md](STALE_WORKTREE.md) as the visible root warning.
-- Use [ROOT_INVENTORY_ONLY_POLICY.md](ROOT_INVENTORY_ONLY_POLICY.md) for the dirty-root boundary.
+Phase delivery artifacts are tracked at repo root:
+- `PHASE_*.md`, `PHASE_INDEX.md`, `memory.md`, `TASK_TRACKER.md`.
 
 ## Build, Test, and Development Commands
+- `npm run dev`: run Astro dev server.
+- `npm run build`: production build to `dist/`.
+- `npm run preview`: preview built output.
+- `npm run lint`: `astro check` + TypeScript no-emit.
+- `npm run test:unit`: run all unit tests.
+- `npm run test:phase:311-316`: run current phase regression quickly.
+- `npm run test:e2e`: run Playwright tests.
 
-- `npm run dev`: local Astro server on `127.0.0.1:4321` only.
-- `npm run dev:raw`: run Astro dev directly on `127.0.0.1:4321` without pre-stop helper.
-- `npm run dev:stop`: stop only repo-scoped listeners on local port `4321`.
-- `npm run preview`: local Astro preview on `127.0.0.1:4321` only.
-- `ecosystem.config.cjs`: canonical production PM2 runtime uses `PORT=4321`; do not reintroduce `6000`, `3000`, `1111`, `1112`, `1113`, or fallback ports.
-- Legacy SSH/CWP mutation scripts are disabled. Do not re-enable scripts that SSH to production, rewrite `.env.production`, alter Apache/CWP, modify PostgreSQL auth, install cron/backup jobs, or start Node outside `ecosystem.config.cjs`.
-- `docs/ACTIVE_DEPLOYMENT_CWP_4321.md`: source of truth for CWP + Astro Node standalone deployment. Older `DEPLOYMENT*`, `CWP-*`, and `FINAL_*` files are archival if they conflict with this file.
-- `npm run redis:check`: verify the project Redis connection from ignored `.env.local` without printing secrets or touching other Redis services.
-- `npm run build`: SSR production build to `dist/`.
-- `npm run lint`: `astro check` plus `tsc --noEmit`.
-- `npm run test:unit`: full Vitest run.
-- `npm run test:phase:785-790`: run one phase suite.
-- `npm run test:phase:range -- 947-952`: run one explicit phase range through the shared runner.
-- `npm run test:phase:batch -- 947-952 953-958 959-964`: run multiple explicit phase ranges sequentially.
-- `npm run phase:doctor`: check source-of-truth docs and changelog hygiene.
-- `npm run phase:changelog:normalize`: normalize malformed or duplicate phase changelog rows.
-- `npm run phase:scripts:report`: show runner-first vs compatibility script surface.
-- `npm run deps:audit:triage`: summarize actionable dependency risk buckets before any dependency PR.
-- `npm run phase:changelog -- --ref <commit>`: append one canonical changelog row for an explicit commit ref.
-- `npm run phase:generate:block:write -- scripts/phase-blocks/phase-803-808.json`: reliable write path for generator output on Windows/npm wrapper setups.
-- `npm run phase:prepare:block -- --phase-script test:phase:785-790`: serialized phase gate for one block.
-- `npm run phase:prepare:batch -- --phase-script test:phase:785-790 --phase-script test:phase:791-796`: serialized batch gate for multiple blocks.
-- `npm run test:phase:gate:ci`: locked smoke/build gate for CI parity.
+Recommended local gate for phase work:
+`npm run test:unit -- <phase-test-file> && npm run build`
 
 ## Coding Style & Naming Conventions
-
-- TypeScript + Astro, 2-space indentation, Prettier-compatible output.
-- Use `kebab-case` filenames in `src/lib/`; exports stay `PascalCase`.
-- Keep phase modules pure unless the contract explicitly needs infra imports.
-- Tests use `*.test.ts` and live beside other governance suites in `src/lib/__tests__/`.
-
-## Astro Rules
-
-- This repo is SSR-first: `output: "server"` with `@astrojs/node`.
-- Do not create route collisions such as `src/pages/x.ts` and `src/pages/x/index.ts`.
-- `sw.js` is the emitted PWA worker; keep build exclusions aligned to that filename.
-- Do not inline bundled scripts that rely on `import.meta.env`.
-- Never run parallel Astro build or gate chains in the same worktree.
-- Do not start multiple dev servers or allow fallback ports. The only local app port is `4321`; stop the server after manual checks.
-- Do not add `1111`, `1112`, `1113`, or any other alternate local app port scripts back into `package.json`.
-- Dev, preview, and production Node runtime are pinned to `127.0.0.1:4321` / `PORT=4321`; if 4321 is busy, stop the repo-scoped listener instead of opening a new port.
-- Astro-first is locked: before writing custom infrastructure, check Astro core, official `@astrojs/*` integrations, and Astro-compatible packages already installed in this repo.
-- Do not hand-roll features that an Astro integration/package in the repo already provides. For structured data, render JSON-LD through `astro-seo-schema` inside Astro head/layout flow.
-- If Astro has no built-in equivalent, keep custom code minimal, server-rendered, documented, and connected to Astro components instead of adding client-side runtime scripts.
-- Do not ship fake public integrations. Analytics scripts require `PUBLIC_GOOGLE_ANALYTICS_ID`; if it is missing or invalid, no analytics tag is rendered.
-- Do not display social media account links or social login buttons unless the real account/provider is configured and working.
-- Do not use the Tailwind CDN. Tailwind must come from the Astro build pipeline via `src/styles/global.css` and `tailwind.config.js`.
-- Tailwind 4 uses the official `@tailwindcss/vite` plugin. Do not reintroduce deprecated `@astrojs/tailwind`, Tailwind PostCSS config, or `autoprefixer`.
-- Keep React as Astro islands for real interactivity only. Prefer `.astro` server-rendered markup for public SEO content, and prefer `client:idle`/`client:visible` over `client:load` when immediate interaction is not required.
-
-## Architecture Reference
-
-- Use `ARCHITECTURE.md` for runtime invariants and the separation between Astro application rules and phase delivery rules.
+- TypeScript + Astro strict mode.
+- 2-space indentation; keep formatting Prettier-compatible.
+- Prefer descriptive `kebab-case` for `src/lib` modules.
+- Keep phase modules small and composable (store/scorer/gate/reporter pattern).
+- Test files use `*.test.ts` and live in `src/lib/__tests__/`.
 
 ## Testing Guidelines
-
-- Each phase block ships with 6 libs and 24 Vitest assertions.
-- Run the block suite first, then the locked phase wrapper, then PR checks.
-- When changing phase automation, extend `src/lib/__tests__/phase-automation-scripts.test.ts`.
+- Each phase block ships with 24 unit tests (6 modules x 4 tests).
+- Test categories per module: store/add, compute/score, gate/route, report.
+- For changed phase blocks, run only relevant suite first, then full build.
 
 ## Commit & Pull Request Guidelines
+- Use milestone-style commit titles: `Phase 311-316: <short title>`.
+- One logical delivery per commit (code + tests + docs + trackers).
+- PR must include:
+  - affected phase range,
+  - commands executed,
+  - test/build results,
+  - any known warnings not addressed.
 
-- Use milestone commits: `Phase 785-790: ...`.
-- Phase deliveries keep two commits by design:
-- `Phase <range>: ...`
-- `Chore: update phase changelog for <range>`
-- Append the phase row with `npm run phase:changelog -- --ref <phase-commit>`.
-- Do not append changelog-maintenance chore rows; normalize `PHASE_CHANGELOG.md` before PR open if `phase:doctor` reports drift.
-- Open PRs through the API-safe wrappers (`phase:pr:open:file`, `phase:pr:view`) and verify merge from remote state, not local fast-forward output.
+## Phase Workflow (Required)
+For every new phase range:
+1. Add 6 `src/lib` modules.
+2. Add one 24-test suite in `src/lib/__tests__/`.
+3. Export modules from `src/lib/index.ts`.
+4. Add `PHASE_<range>_*.md` and register in `PHASE_INDEX.md`.
+5. Update `memory.md` and `TASK_TRACKER.md`.
+6. Keep `tsconfig.phase.json` scoped (`include: []` + explicit phase `files` list).
+7. Prefer pure phase modules; avoid direct infra imports (`logger`, `postgres`) unless phase contract requires them.
+8. Verify with `npm run test:phase:gate:ci` before handoff.
 
-## Environment & Ops Notes
+## 🚫 YASAKLAR (Strict Prohibitions)
 
-- Use Node `22.13.0` or newer 22.x; `.nvmrc` is the repo source of truth.
-- Keep `npm` cache repo-local through `.npmrc`.
-- Do phase delivery work in clean `git worktree` branches, not in the dirty root worktree.
-- If the active shell is below policy, use the `:preferred` wrappers instead of forcing a partial local run.
-- Archive dated cleanup and verification files under `docs/archive/cleanup/` instead of leaving them in repo root.
-- The public site is Turkish-only and focuses on the `Şanlıurfa` keyword for `https://sanliurfa.com`.
-- All source files, API responses, XML feeds, CSV exports, and database client connections must stay UTF-8. Do not add ISO-8859-9, Windows-1254, ASCII transliteration, or mojibake workarounds.
-- Do not add language selectors, non-TR translation dictionaries, `/api/i18n` language switching, `/tr`, `/en`, hreflang, or Accept-Language based redirects.
-- `docs/ASTRO_FIRST_LOCK.md` is the project rule for Astro-first implementation decisions.
-- Public media uploads default to local CWP/shared-hosting storage: `STORAGE_TYPE=local`, `PHOTO_UPLOAD_DIR=public/uploads/photos`, `UPLOAD_PUBLIC_PATH=/uploads/photos`. Keep uploaded image filenames slug-based and never commit provider API keys.
-- Image provider credentials are fixed for this project and must not be asked from the user again. Runtime code reads `PEXELS_API_KEY`, `UNSPLASH_APPLICATION_ID`, `UNSPLASH_ACCESS_KEY`, and `UNSPLASH_SECRET_KEY` from environment variables. Real values stay in ignored `.env.local` for local work and hosting secret/env settings for production; tracked docs/source must contain placeholders only.
-- Redis is project-scoped through `REDIS_URL` and `REDIS_KEY_PREFIX=sanliurfa:`. Local Windows uses the existing `Redis` service on `127.0.0.1:6379`; do not stop, flush, reconfigure, or reuse other services such as `RedisMacedonia6380`. Real Redis credentials stay only in ignored `.env.local` or hosting secrets.
-- Server runtime code must read server secrets from `process.env`, not dynamic `import.meta.env[key]`, to avoid Astro module-runner failures.
+**Multi-language / i18n YASAĞI:**
+- Bu proje **sadece Türkçe** dil desteği içerir
+- **KESİNLİKLE YASAK:** Çoklu dil desteği (i18n, l10n)
+- **KESİNLİKLE YASAK:** Dil seçici (language selector) UI
+- **KESİNLİKLE YASAK:** `hreflang` etiketleri
+- **KESİNLİKLE YASAK:** Dil tercihi API'si veya veritabanı alanları
+- **KESİNLİKLE YASAK:** `accept-language` header'ına göre içerik değiştirme
+- **KESİNLİKLE YASAK:** Dil dosyaları (en.json, ar.json vb.)
+
+**Neden:** Proje sahibi açıkça tek dil (Türkçe) istemiştir. Tüm UI metinleri, SEO içerikleri ve kullanıcı mesajları Türkçe olarak sabitlenmiştir.
+
+**Ücretli Servis ve Harici CDN YASAĞI:**
+- **KESİNLİKLE YASAK:** Image CDN servisleri (Cloudinary, Cloudflare Images, Imgix vb.)
+- **KESİNLİKLE YASAK:** Ücretli görseller (Shutterstock, Getty Images vb.)
+- **KESİNLİKLE YASAK:** Ücretli API'ler (Google Maps API, SendGrid, AWS SES vb.)
+- **KESİNLİKLE YASAK:** Üçüncü parti haritalama servisleri (Google Maps, Mapbox vb.)
+- **İZİN VERİLEN:** Ücretsiz alternatifler (OpenStreetMap, Ücretsiz SMTP, Local image processing)
+
+**Neden:** Proje sahibi açıkça ücretsiz, açık kaynak çözümler istemiştir.
+
+## 🧭 DB-First İçerik Yönetimi (Zorunlu)
+
+**Kalıcı Kural:**
+- Sitedeki tüm yönetilebilir içerikler admin panelinden ve database üzerinden yönetilir.
+- Ana sayfa hero metinleri ve hero görseli dahil hiçbir kritik landing içeriği dosya içinde sabit kalmaz.
+
+**Uygulama Standardı:**
+- Yeni yönetilebilir alan eklendiğinde önce DB şeması (`site_settings`, `site_content_blocks`, `site_media_assets`) hazırlanır.
+- Ardından admin API endpoint'i eklenir.
+- Son olarak admin panel ekranı eklenir.
+- Hardcoded değerler yalnızca fallback olarak kalabilir.
+
+**Referans Doküman:**
+- `docs/DB_FIRST_SITE_MANAGEMENT.md`
+
+## 🎯 MVP Bitirme Modu (Varsayılan)
+
+**Kalıcı Kural:**
+- Bu proje varsayılan olarak MVP bitirme modunda ilerler.
+- Öncelik altyapı, test, CI veya deploy döngüleri değil; kullanıcıya görünen site, admin paneli ve temel kullanıcı akışlarıdır.
+- Zorunlu runtime hatası dışında port/Redis/dev-server operasyonlarına geri dönülmez.
+- Test yazımı ve büyük gate çalıştırmaları kullanıcı açıkça istemedikçe ertelenir.
+- Her çalışma turu ana sayfa, mekan sistemi, admin yönetimi, sosyal MVP veya SEO/AEO/GEO yüzeyinden somut bir eksik kapatmalıdır.
+
+**Referans Doküman:**
+- `docs/MVP_BITIRME_MODU.md`

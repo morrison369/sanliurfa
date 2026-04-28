@@ -10,14 +10,14 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const user = locals.user;
 
-    if (!user || !user.isAdmin) {
+    if (!user || !locals.isAdmin) {
       recordRequest('GET', '/api/admin/moderation/stats', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
@@ -29,7 +29,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     const stats = await getModerationStats();
-    const queue = await getModerationQueue('pending', 'urgent', 10);
+    const queue = await getModerationQueue('pending', 10);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/moderation/stats', HttpStatus.OK, duration);

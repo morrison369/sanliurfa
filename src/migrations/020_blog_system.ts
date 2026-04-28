@@ -23,7 +23,7 @@ export const migration_020_blog_system = {
     // Blog yazıları
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blog_posts (
-        id SERIAL PRIMARY KEY,
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         title VARCHAR(255) NOT NULL,
         slug VARCHAR(255) NOT NULL UNIQUE,
         content TEXT NOT NULL,
@@ -46,6 +46,22 @@ export const migration_020_blog_system = {
       )
     `);
 
+    // Mevcut kurulumlar için blog_posts şemasını ileriye uyumlu hale getir
+    await pool.query(`
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS excerpt TEXT;
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS category_id INTEGER;
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS featured_image VARCHAR(500);
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS thumbnail VARCHAR(500);
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'draft';
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0;
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS like_count INTEGER DEFAULT 0;
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS read_time_minutes INTEGER;
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS seo_title VARCHAR(255);
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS seo_description VARCHAR(500);
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS seo_keywords VARCHAR(255);
+    `);
+
     // Blog yazı etiketleri
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blog_tags (
@@ -60,7 +76,7 @@ export const migration_020_blog_system = {
     // Blog yazı-etiket ilişkisi
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blog_post_tags (
-        post_id INTEGER REFERENCES blog_posts(id) ON DELETE CASCADE,
+        post_id UUID REFERENCES blog_posts(id) ON DELETE CASCADE,
         tag_id INTEGER REFERENCES blog_tags(id) ON DELETE CASCADE,
         PRIMARY KEY (post_id, tag_id)
       )
@@ -70,7 +86,7 @@ export const migration_020_blog_system = {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS blog_comments (
         id SERIAL PRIMARY KEY,
-        post_id INTEGER NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
+        post_id UUID NOT NULL REFERENCES blog_posts(id) ON DELETE CASCADE,
         user_id UUID REFERENCES users(id) ON DELETE SET NULL,
         author_name VARCHAR(100),
         author_email VARCHAR(100),
@@ -102,7 +118,7 @@ export const migration_020_blog_system = {
       CREATE TABLE IF NOT EXISTS blog_reading_history (
         id SERIAL PRIMARY KEY,
         user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-        post_id INTEGER REFERENCES blog_posts(id) ON DELETE CASCADE,
+        post_id UUID REFERENCES blog_posts(id) ON DELETE CASCADE,
         time_spent_seconds INTEGER,
         scroll_percentage INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

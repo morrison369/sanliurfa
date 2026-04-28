@@ -1,103 +1,113 @@
 ---
+
 import Layout from "../../layouts/Layout.astro";
 import TrendingPlaces from "../../components/TrendingPlaces";
 import UserRecommendations from "../../components/UserRecommendations";
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const { locals } = Astro;
+const isAuthenticated = Boolean(locals.user);
+
+const seo = {
+  title: 'Keşfet | Şanlıurfa Mekanlar ve Topluluk Önerileri',
+  description: 'Şanlıurfa\'nın trend mekanlarını ve topluluk önerilerini keşfedin. Popüler restoranlar, tarihi yerler ve yerel favoriteler.',
+  keywords: ['şanlıurfa keşfet', 'urfa popüler mekanlar', 'şanlıurfa trend', 'urfa topluluk önerileri', 'şanlıurfa yeni mekanlar'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/kesfet',
+};
+const faqItems = [
+  { S: "Şanlıurfa'da en popüler mekanlar hangileri?", C: 'Balıklıgöl çevresi, Göbeklitepe, Harran ve Halfeti bölgesi en çok ziyaret edilen rotalar arasındadır.' },
+  { S: 'Keşfet sayfasında hangi içerikler yer alır?', C: 'Kullanıcı puanlamasına göre öne çıkan mekanlar, güncel yorumlar ve topluluk önerileri listelenir.' },
+  { S: "Şanlıurfa'da yeni açılan mekanları nasıl takip edebilirim?", C: 'Keşfet sayfası düzenli olarak güncellenir; yeni eklenen mekanlar ve öneriler burada öne çıkar.' },
+];
 ---
 
-<Layout
-  seo={{
-    title: "Şanlıurfa Keşfet - Mekânlar, Lezzetler ve Şehir Rotaları",
-    description:
-      "Şanlıurfa'da trend mekânları, tarihi durakları, gastronomi önerilerini ve şehir servislerini keşfedin.",
-    canonicalUrl: "https://sanliurfa.com/kesfet",
-  }}
->
-  <section
-    class="bg-gradient-to-br from-urfa-950 via-urfa-900 to-isot-900 text-white"
-  >
-    <div class="container-custom py-14">
-      <p class="text-sm uppercase tracking-wide text-urfa-200">
-        Şanlıurfa keşif merkezi
-      </p>
-      <h1 class="text-4xl md:text-5xl font-display font-bold mt-3">
-        Şanlıurfa'da bugün ne keşfedilir?
-      </h1>
-      <p class="max-w-3xl text-urfa-100 mt-4 text-lg">
-        Tarihi yerler, yöresel lezzetler, popüler mekânlar ve günlük şehir
-        servisleri tek ekranda.
-      </p>
-      <div class="flex flex-wrap gap-3 mt-8">
-        <a href="/places" class="btn-accent">Mekânları keşfet</a>
-        <a
-          href="/sehir-servisleri"
-          class="btn bg-white/10 text-white hover:bg-white/20"
-          >Şehir servisleri</a
-        >
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="max-w-6xl mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">Şanlıurfa Platformu</p>
+        <h1 class="text-4xl font-bold text-[#F5EDD6] mb-2">Keşfet</h1>
+        <p class="text-[#C4B49A]">Yeni mekanlar ve kullanıcılar bul</p>
       </div>
     </div>
-  </section>
 
-  <div class="container-custom py-10">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div class="lg:col-span-2">
-        <div class="mb-12">
-          <TrendingPlaces client:visible />
-        </div>
-      </div>
-
-      <div class="space-y-6">
-        <div
-          class="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700"
-        >
-          <UserRecommendations client:idle />
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+          <div class="mb-12">
+            <TrendingPlaces client:visible={{ rootMargin: '160px' }} />
+          </div>
         </div>
 
-        <div
-          class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-lg border border-blue-200 dark:border-blue-800"
-        >
-          <h3 class="font-bold text-gray-900 dark:text-white mb-4">
-            Hızlı Bağlantılar
-          </h3>
-          <div class="space-y-2">
-            <a
-              href="/places"
-              class="block text-sm text-blue-600 hover:text-blue-700"
-            >
-              - Mekânlar
-            </a>
-            <a
-              href="/arama/gelismis"
-              class="block text-sm text-blue-600 hover:text-blue-700"
-            >
-              - Gelişmiş Arama
-            </a>
-            <a
-              href="/gastronomi"
-              class="block text-sm text-blue-600 hover:text-blue-700"
-            >
-              - Gastronomi
-            </a>
-            <a
-              href="/tarihi-yerler"
-              class="block text-sm text-blue-600 hover:text-blue-700"
-            >
-              - Tarihi yerler
-            </a>
-            <a
-              href="/etkinlikler"
-              class="block text-sm text-blue-600 hover:text-blue-700"
-            >
-              - Etkinlikler
-            </a>
-            <a
-              href="/sehir-servisleri"
-              class="block text-sm text-blue-600 hover:text-blue-700"
-            >
-              - Şehir Servisleri
-            </a>
+        <div class="space-y-6">
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-6 shadow-sm">
+            {isAuthenticated ? (
+              <UserRecommendations client:visible={{ rootMargin: '140px' }} />
+            ) : (
+              <div class="space-y-3">
+                <h2 class="text-lg font-bold text-[#1A1008]">Topluluk önerileri</h2>
+                <p class="text-sm text-[#6B5540]">
+                  Üye olduğunuzda Şanlıurfa'daki kullanıcıları takip edebilir, mesajlaşabilir ve eşleşme özelliğini kullanabilirsiniz.
+                </p>
+                <div class="flex flex-wrap gap-2">
+                  <a href="/kayit" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+                    Ücretsiz Katıl
+                  </a>
+                  <a href="/topluluk" class="rounded-sm border border-[rgba(200,160,100,0.3)] px-4 py-2 text-sm font-semibold text-urfa-700 hover:bg-[rgba(200,160,100,0.06)]">
+                    Topluluğu İncele
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6">
+            <h3 class="font-bold text-[#1A1008] mb-4">Hızlı Bağlantılar</h3>
+            <div class="space-y-2">
+              <a href="/siralamalar" class="block text-sm text-urfa-600 hover:text-urfa-700">
+                - Sıralamalar
+              </a>
+              <a href="/arama" class="block text-sm text-urfa-600 hover:text-urfa-700">
+                - Gelişmiş Arama
+              </a>
+              <a href={isAuthenticated ? '/bildirimler' : '/giris?redirect=/bildirimler'} class="block text-sm text-urfa-600 hover:text-urfa-700">
+                - Bildirimler
+              </a>
+              <a href={isAuthenticated ? '/mesajlar' : '/giris?redirect=/mesajlar'} class="block text-sm text-urfa-600 hover:text-urfa-700">
+                - Mesajlar
+              </a>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Şanlıurfa\'yı Keşfet',
+    url: `${baseUrl}/kesfet`,
+    description: 'Şanlıurfa\'nın popüler mekanlarını, trend içeriklerini ve kişisel önerileri keşfedin.',
+    about: { '@type': 'City', name: 'Şanlıurfa', url: `${baseUrl}` },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Keşfet', item: `${baseUrl}/kesfet` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

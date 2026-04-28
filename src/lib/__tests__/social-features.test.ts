@@ -36,7 +36,7 @@ describe('Social Features Library', () => {
       ]);
 
       // Assuming getTrendingHashtags exists
-      const cacheKey = 'sanliurfa:hashtags:list:week:10';
+      const cacheKey = 'hashtags:list:week:10';
       const cached = await mockCache.getCache(cacheKey);
 
       expect(cached).toEqual(expect.any(Array));

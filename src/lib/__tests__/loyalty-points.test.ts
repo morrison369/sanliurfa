@@ -5,6 +5,7 @@ import { getUserPoints, awardPoints, spendPoints } from '../loyalty-points';
 vi.mock('../postgres', () => ({
   queryOne: vi.fn(),
   queryMany: vi.fn(),
+  query: vi.fn(),
   insert: vi.fn(),
   update: vi.fn()
 }));
@@ -40,7 +41,7 @@ describe('Loyalty Points Library', () => {
       const result = await getUserPoints('user-123');
 
       expect(result.currentBalance).toBe(100);
-      expect(mockCache.getCache).toHaveBeenCalledWith('sanliurfa:loyalty:balance:user-123');
+      expect(mockCache.getCache).toHaveBeenCalledWith('loyalty:balance:user-123');
     });
 
     it('fetches from database if not cached', async () => {
@@ -69,9 +70,8 @@ describe('Loyalty Points Library', () => {
       const mockDb = await import('../postgres');
       const mockCache = await import('../cache');
 
-      mockDb.queryOne.mockResolvedValueOnce({ current_balance: 100 });
       mockDb.insert.mockResolvedValueOnce({});
-      mockDb.update.mockResolvedValueOnce({});
+      mockDb.query.mockResolvedValueOnce({});
 
       const result = await awardPoints('user-789', 50, 'test award', 'test_type', 'ref-123');
 
@@ -81,12 +81,12 @@ describe('Loyalty Points Library', () => {
         points_amount: 50,
         transaction_reason: 'test award'
       }));
-      expect(mockCache.deleteCache).toHaveBeenCalledWith('sanliurfa:loyalty:balance:user-789');
+      expect(mockCache.deleteCache).toHaveBeenCalledWith('loyalty:balance:user-789');
     });
 
     it('returns false on error', async () => {
       const mockDb = await import('../postgres');
-      mockDb.queryOne.mockRejectedValueOnce(new Error('DB Error'));
+      mockDb.insert.mockRejectedValueOnce(new Error('DB Error'));
 
       const result = await awardPoints('user-error', 50, 'failed award');
 
@@ -97,12 +97,12 @@ describe('Loyalty Points Library', () => {
   describe('spendPoints', () => {
     it('checks balance before spending', async () => {
       const mockDb = await import('../postgres');
-      mockDb.queryOne.mockResolvedValueOnce({ current_balance: 30 });
+      mockDb.queryOne.mockResolvedValueOnce(null);
 
       const result = await spendPoints('user-low', 50, 'insufficient points');
 
       expect(result).toBe(false);
-      expect(mockDb.insert).not.toHaveBeenCalled();
+      expect(mockDb.query).not.toHaveBeenCalled();
     });
 
     it('spends points and updates balance', async () => {
@@ -110,16 +110,15 @@ describe('Loyalty Points Library', () => {
       const mockCache = await import('../cache');
 
       mockDb.queryOne.mockResolvedValueOnce({ current_balance: 200 });
-      mockDb.insert.mockResolvedValueOnce({});
-      mockDb.update.mockResolvedValueOnce({});
+      mockDb.query.mockResolvedValueOnce({});
 
       const result = await spendPoints('user-rich', 100, 'reward redemption', 'reward-456');
 
       expect(result).toBe(true);
-      expect(mockDb.insert).toHaveBeenCalledWith('loyalty_transactions', expect.objectContaining({
-        transaction_type: 'spend',
-        points_amount: 100
-      }));
+      expect(mockDb.query).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO loyalty_transactions'),
+        ['user-rich', 100, 'reward redemption']
+      );
     });
   });
 });

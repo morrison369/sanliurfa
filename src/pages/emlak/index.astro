@@ -1,0 +1,153 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+
+let featuredPlaces: any[] = [];
+
+const emlakCategories = [
+  { slug: 'satilik-daire', name: 'Satılık Daire', icon: '🏠', desc: 'Satılık konutlar' },
+  { slug: 'kiralik-daire', name: 'Kiralık Daire', icon: '🔑', desc: 'Kiralık konutlar' },
+  { slug: 'emlak-ofisleri', name: 'Emlak Ofisleri', icon: '🏢', desc: 'Emlakçı ve danışmanlar' },
+];
+
+try {
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE c.slug IN ('satilik-daire','kiralik-daire','emlak-ofisleri')
+     AND p.status = 'active'
+     ORDER BY p.rating DESC LIMIT 6`
+  );
+  featuredPlaces = placesResult.rows;
+} catch (e) {
+  logger.error('Error loading emlak:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const ilceler = [
+  { name: 'Eyyübiye', slug: 'eyyubiye' },
+  { name: 'Haliliye', slug: 'haliliye' },
+  { name: 'Karaköprü', slug: 'karakopru' },
+  { name: 'Siverek', slug: 'siverek' },
+  { name: 'Viranşehir', slug: 'viransehir' },
+  { name: 'Halfeti', slug: 'halfeti' },
+];
+
+const seo = {
+  title: 'Şanlıurfa Emlak Rehberi | Satılık ve Kiralık Daireler',
+  description: 'Şanlıurfa\'da satılık daireler, kiralık konutlar ve emlak ofisleri. İlçelere göre emlak listesi.',
+  keywords: ['şanlıurfa emlak', 'urfa satılık daire', 'şanlıurfa kiralık daire', 'urfa ev fiyatları', 'şanlıurfa konut', 'urfa emlak ofisi', 'şanlıurfa arazi'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/emlak',
+};
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa\'da kiralık daire fiyatları nasıl?',
+    C: 'Şanlıurfa\'da kira fiyatları ilçeye ve dairenin büyüklüğüne göre değişmektedir. Eyyübiye ve Haliliye merkezi konumlarda fiyatlar biraz daha yüksek olabilir.',
+  },
+  {
+    S: 'Şanlıurfa\'da satılık konut almak için hangi ilçeler tercih edilir?',
+    C: 'Haliliye ve Eyyübiye, şehir merkezi konumuyla en çok tercih edilen ilçelerdir. Karaköprü ise yeni gelişen konut projeleriyle öne çıkmaktadır.',
+  },
+  {
+    S: 'Şanlıurfa\'da emlak ofisi nasıl bulunur?',
+    C: 'Emlak rehberindeki emlak ofisleri kategorisinden lisanslı emlak danışmanlarına ve şehirdeki ofislere ulaşabilirsiniz.',
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-16">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">EMLAK REHBERİ</p>
+        <h1 class="text-4xl md:text-5xl font-bold text-[#F5EDD6] mb-4">Emlak Rehberi</h1>
+        <p class="text-xl text-[#C4B49A] max-w-2xl">
+          Şanlıurfa'da satılık ve kiralık daireler, emlak ofisleri
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <!-- Ana Kategoriler -->
+      <div class="grid md:grid-cols-3 gap-6 mb-12">
+        {emlakCategories.map((cat) => (
+          <a
+            href={`/emlak/${cat.slug}`}
+            class="bg-white rounded-sm p-8 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 hover:-translate-y-1 transition-all group text-center"
+          >
+            <div class="text-5xl mb-4">{cat.icon}</div>
+            <h3 class="text-xl font-bold text-[#1A1008] group-hover:text-urfa-700 transition-colors">{cat.name}</h3>
+            <p class="text-[#9A8470] mt-2">{cat.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      <!-- İlçeye Göre Emlak -->
+      <div class="bg-white rounded-sm p-8 border border-[rgba(200,160,100,0.18)] shadow-sm mb-10">
+        <h2 class="text-2xl font-bold text-[#1A1008] mb-6">İlçeye Göre Emlak</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {ilceler.map((ilce) => (
+            <a
+              href={`/ilceler/${ilce.slug}`}
+              class="flex items-center gap-2 p-3 rounded-sm hover:bg-[rgba(200,160,100,0.06)] group transition-colors"
+            >
+              <span class="text-urfa-600">📍</span>
+              <span class="font-medium text-[#4A3828] group-hover:text-urfa-700">{ilce.name} Emlak</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {featuredPlaces.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Emlak Ofisleri</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredPlaces.map((place) => (
+              <a href={`/isletme/${place.slug}`} class="bg-white rounded-sm p-5 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group">
+                <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-700">{place.name}</h3>
+                <span class="text-xs text-urfa-600">{place.category_name}</span>
+                {place.address && <p class="text-xs text-[#9A8470] mt-2">📍 {place.address}</p>}
+                {place.phone && <p class="text-xs text-[#9A8470]">📞 {place.phone}</p>}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Şanlıurfa Emlak Rehberi',
+    description: 'Şanlıurfa\'da satılık ve kiralık daireler, emlak ofisleri ve konut bilgileri.',
+    url: `${baseUrl}/emlak`,
+    about: { '@type': 'City', name: 'Şanlıurfa' },
+    itemListElement: featuredPlaces.slice(0, 10).map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: { '@type': 'RealEstateAgent', name: p.name, url: `${baseUrl}/isletme/${p.slug}` },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Emlak', item: `${baseUrl}/emlak` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

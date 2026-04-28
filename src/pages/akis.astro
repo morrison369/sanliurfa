@@ -4,52 +4,24 @@
  * Show personalized feed of activity from followed users
  */
 
-import Layout from "../layouts/Layout.astro";
-import ActivityFeed from "../components/ActivityFeed";
-import AuthFeatureLanding from "../components/AuthFeatureLanding.astro";
+import Layout from '../layouts/Layout.astro';
+import ActivityFeed from '../components/ActivityFeed';
 
 const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/akis');
+}
 ---
 
-<Layout title="Aktivite Akışı - sanliurfa.com" noindex>
-  {
-    !user ? (
-      <AuthFeatureLanding
-        eyebrow="Aktivite akışı"
-        title="Şanlıurfa topluluğunda neler olduğunu takip edin"
-        description="Takip ettiğiniz kullanıcıların yorum, favori, koleksiyon ve mekân katkıları aktivite akışında toplanır. Ücretsiz hesapla kişisel akışınızı açabilirsiniz."
-        loginRedirect="/akis"
-        features={[
-          {
-            title: "Takip edilen kullanıcılar",
-            description:
-              "Şanlıurfa gezginleri, gastronomi meraklıları ve tarih katkıcılarını takip edin.",
-          },
-          {
-            title: "Canlı topluluk sinyali",
-            description:
-              "Yeni yorum, favori, koleksiyon ve etkinlik hareketlerini tek akışta görün.",
-          },
-          {
-            title: "Keşfe dönüşen sosyal akış",
-            description:
-              "Aktivitelerden doğrudan mekân, etkinlik ve içerik detaylarına geçin.",
-          },
-        ]}
-      />
-    ) : (
-      <div class="container-custom py-8">
-        <div class="mb-8">
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
-            Aktivite akışı
-          </h1>
-          <p class="text-gray-600 dark:text-gray-400 mt-2">
-            Takip ettiğiniz kullanıcıların Şanlıurfa katkılarını görün.
-          </p>
-        </div>
-
-        <ActivityFeed client:load userId={user.id} />
+<Layout seo={{ title: "Aktivite Akışı - Sanliurfa.com", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="container mx-auto px-4 py-8">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-[#1A1008]">Aktivite Akışı</h1>
+        <p class="text-[#9A8470] mt-2">Takip ettiğin kullanıcıların aktivitelerini gör</p>
       </div>
-    )
-  }
+
+      <ActivityFeed client:visible={{ rootMargin: '130px' }} userId={Astro.locals.user.id} />
+    </div>
+  </div>
 </Layout>

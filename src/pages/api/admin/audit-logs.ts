@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { getAuditLogs, getUserActivitySummary, getResourceHistory, findSuspiciousActivity } from '../../../lib/audit';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
+import { getAuditLogs, getUserActivitySummary, getResourceHistory, findSuspiciousActivity, type AuditAction } from '../../../lib/audit/audit';
 import { logger } from '../../../lib/logging';
 
 /**
@@ -17,12 +17,12 @@ import { logger } from '../../../lib/logging';
  *   - summary: true ise sadece özet göster
  */
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   // Sadece admin erişebilir
-  if (!locals.isAdmin) {
-    logger.warn('Yetkisiz audit log erişim', { userId: locals.user?.id });
+  if (locals.user?.role !== 'admin') {
+    logger.warn('Yetkisiz audit log erişim', Object.assign(new Error('Yetkisiz audit log erişim'), { userId: locals.user?.id }));
     return apiError(ErrorCode.FORBIDDEN, 'Yetkisiz', HttpStatus.FORBIDDEN, undefined, requestId);
   }
 
@@ -36,7 +36,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
         return apiError(ErrorCode.VALIDATION_ERROR, 'userId gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
       }
 
-      const summary = await getUserActivitySummary(userId, parseInt(query.get('days') || '7'));
+      const summary = await getUserActivitySummary(userId, safeIntParam(query.get('days'), 7, 1, 365));
       return apiResponse({ summary }, HttpStatus.OK, requestId);
     }
 
@@ -61,7 +61,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     // Şüpheli aktivite modu
     if (query.get('suspicious') === 'true') {
-      const suspicious = await findSuspiciousActivity(parseInt(query.get('hours') || '24'));
+      const suspicious = await findSuspiciousActivity(safeIntParam(query.get('hours'), 24, 1, 1440));
       return apiResponse({ suspicious }, HttpStatus.OK, requestId);
     }
 
@@ -69,12 +69,12 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const filters = {
       userId: query.get('userId') || undefined,
       resourceType: query.get('resourceType') || undefined,
-      action: (query.get('action') || undefined) as any,
+      action: (query.get('action') || undefined) as AuditAction | undefined,
       status: query.get('status') || undefined,
       startDate: query.get('startDate') ? new Date(query.get('startDate')!) : undefined,
       endDate: query.get('endDate') ? new Date(query.get('endDate')!) : undefined,
-      limit: Math.min(parseInt(query.get('limit') || '50'), 500),
-      offset: parseInt(query.get('offset') || '0')
+      limit: safeIntParam(query.get('limit'), 50, 1, 500),
+      offset: safeIntParam(query.get('offset'), 0, 0, 1_000_000)
     };
 
     const logs = await getAuditLogs(filters);

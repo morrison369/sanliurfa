@@ -4,48 +4,48 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createCollaborationSession, getCollaborationSession, addParticipant, removeParticipant, getActiveParticipants, getCollaborationStats } from '../../../lib/collaborative-editing';
+import { createCollaborationSession, getCollaborationSession, getActiveParticipants, getCollaborationStats } from '../../../lib/collaborative/collaborative-editing';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
     const { content_id, max_participants } = body;
 
     if (!content_id) {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'İçerik ID gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Content ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     const session = await createCollaborationSession(content_id, locals.user.id, max_participants || 10);
 
     if (!session) {
-      return apiError(ErrorCode.INTERNAL_ERROR, 'Oturum oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+      return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to create session', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
     }
 
     return apiResponse({ success: true, data: session }, HttpStatus.CREATED, requestId);
   } catch (error) {
-    logger.error('Oturum oluşturulamadı', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Failed to create session', error instanceof Error ? error : new Error(String(error)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     const sessionToken = url.searchParams.get('token');
 
     if (!sessionToken) {
-      if (!locals.isAdmin) {
+      if (locals.user?.role !== 'admin') {
         return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
       }
 
@@ -66,6 +66,6 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to get session', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

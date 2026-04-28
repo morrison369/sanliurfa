@@ -26,6 +26,11 @@ export const migration_097_business_dashboard = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE business_dashboard_settings ADD COLUMN IF NOT EXISTS owner_id UUID;
+      ALTER TABLE business_dashboard_settings ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_dashboard_settings_owner
       ON business_dashboard_settings(owner_id, created_at DESC)
     `);
@@ -47,6 +52,12 @@ export const migration_097_business_dashboard = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE business_goals ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE business_goals ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'active';
+      ALTER TABLE business_goals ADD COLUMN IF NOT EXISTS end_date DATE;
     `);
 
     await pool.query(`
@@ -73,6 +84,11 @@ export const migration_097_business_dashboard = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE business_reports ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE business_reports ADD COLUMN IF NOT EXISTS period_end DATE;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_reports_place_period
       ON business_reports(place_id, period_end DESC)
     `);
@@ -92,6 +108,11 @@ export const migration_097_business_dashboard = async (pool: Pool) => {
         updated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(category, metric_name, period)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE category_benchmarks ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+      ALTER TABLE category_benchmarks ADD COLUMN IF NOT EXISTS metric_name VARCHAR(100);
     `);
 
     await pool.query(`
@@ -115,6 +136,12 @@ export const migration_097_business_dashboard = async (pool: Pool) => {
         acknowledged_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE business_insights ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE business_insights ADD COLUMN IF NOT EXISTS priority VARCHAR(20);
+      ALTER TABLE business_insights ADD COLUMN IF NOT EXISTS generated_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`

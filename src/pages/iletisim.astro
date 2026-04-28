@@ -1,180 +1,291 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
+
+import Layout from '../layouts/Layout.astro';
+import { actions, isInputError } from 'astro:actions';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const seo = {
-  title: "İletişim - Bizimle İletişime Geçin",
-  description:
-    "sanliurfa.com ile iletişime geçin. Öneri, şikayet ve işbirliği talepleriniz için bize ulaşın.",
+  title: 'İletişim - Sanliurfa.com',
+  description: 'Bize ulaşın, işletmenizi ekleyin veya destek alın. Sanliurfa.com ekibi size yardımcı olmaya hazır.',
+  keywords: ['sanliurfa.com iletişim', 'şanlıurfa rehber destek', 'urfa mekan ekle', 'sanliurfa.com yardım'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/iletisim',
 };
 
 const contactInfo = [
   {
-    icon: MapPin,
-    title: "Adres",
-    content: "Haliliye, Şanlıurfa, Türkiye",
+    icon: '📧',
+    title: 'E-posta',
+    value: 'info@sanliurfa.com',
+    link: 'mailto:info@sanliurfa.com',
   },
   {
-    icon: Phone,
-    title: "Telefon",
-    content: "+90 414 123 45 67",
-    href: "tel:+904141234567",
+    icon: '📱',
+    title: 'Telefon',
+    value: '+90 (414) 123 45 67',
+    link: 'tel:+904141234567',
   },
   {
-    icon: Mail,
-    title: "E-posta",
-    content: "info@sanliurfa.com",
-    href: "mailto:info@sanliurfa.com",
+    icon: '📍',
+    title: 'Adres',
+    value: 'Eyyübiye, Şanlıurfa',
+    link: '#',
   },
   {
-    icon: Clock,
-    title: "Çalışma Saatleri",
-    content: "Pzt-Cum: 09:00 - 18:00",
+    icon: '💼',
+    title: 'İşletme Başvurusu',
+    value: 'business@sanliurfa.com',
+    link: 'mailto:business@sanliurfa.com',
   },
+];
+
+const contactTypes = [
+  { value: 'general', label: 'Genel Bilgi' },
+  { value: 'business_inquiry', label: 'İşletme Başvurusu' },
+  { value: 'technical_support', label: 'Teknik Destek' },
+  { value: 'complaint', label: 'Şikayet' },
+  { value: 'suggestion', label: 'Öneri' },
+  { value: 'partnership', label: 'İşbirliği' },
+];
+
+const contactResult = Astro.getActionResult(actions.submitContactRequest);
+const contactInputErrors = isInputError(contactResult?.error) ? contactResult.error.fields : {};
+const contactSubmitError =
+  !isInputError(contactResult?.error) && contactResult?.error?.message
+    ? contactResult.error.message
+    : null;
+const faqItems = [
+  { S: 'Sanliurfa.com ile nasıl iletişime geçebilirim?', C: 'İletişim formunu doldurup mesajınızı gönderebilir veya info@sanliurfa.com adresine e-posta atabilirsiniz.' },
+  { S: 'İşletmemi siteye nasıl ekleyebilirim?', C: 'İşletme Ekle sayfasından başvurunuzu ücretsiz olarak yapabilirsiniz. Başvurular incelendikten sonra yayına alınır.' },
+  { S: 'Yanlış bilgi bildirmek istiyorum, ne yapmalıyım?', C: 'İletişim formu üzerinden yanlış bilgi içeren mekanı ve doğru bilgiyi belirterek bize ulaşabilirsiniz.' },
 ];
 ---
 
 <Layout seo={seo}>
-  <!-- Page Header -->
-  <div class="page-header">
-    <div class="page-header-content">
-      <h1 class="page-header-title">İletişim</h1>
-      <p class="page-header-description">
-        Sorularınız, önerileriniz veya işbirliği talepleriniz için bize ulaşın.
-      </p>
-    </div>
-  </div>
+  <div class="min-h-screen bg-[#FDFAF3] pt-20 pb-12">
+    <div class="container mx-auto px-4">
+      {/* Header */}
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h1 class="text-4xl font-bold text-[#1A1008] mb-4">Bize Ulaşın</h1>
+        <p class="text-[#9A8470] text-lg">
+          Sorularınız mı var? İşletmenizi mi eklemek istiyorsunuz?
+          Veya önerileriniz mi var? Size yardımcı olmaktan memnuniyet duyarız.
+        </p>
+      </div>
 
-  <section class="section bg-gray-50 dark:bg-gray-900">
-    <div class="container-custom">
-      <div class="grid lg:grid-cols-2 gap-12">
-        <!-- Contact Form -->
-        <div
-          class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8"
-        >
-          <h2
-            class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-2"
-          >
-            Bize mesaj gönderin
-          </h2>
-          <p class="text-gray-600 dark:text-gray-400 mb-6">
-            Formu doldurun, en kısa sürede size dönüş yapalım.
-          </p>
+      <div class="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {/* Contact Form */}
+        <div class="lg:col-span-2">
+          <div class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm shadow-sm p-8">
+            <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Mesaj Gönderin</h2>
+            {contactResult?.data?.success && (
+              <div class="mb-5 rounded-sm border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+                Mesajınız alındı. Talep numarası: {contactResult.data.ticket.ticketNumber || contactResult.data.ticket.id}
+              </div>
+            )}
 
-          <form action="/api/contact" method="POST" class="space-y-5">
-            <div class="grid sm:grid-cols-2 gap-5">
+            {contactSubmitError && (
+              <div class="mb-5 rounded-sm border border-isot-200 bg-isot-50 p-4 text-sm text-isot-700">
+                {contactSubmitError}
+              </div>
+            )}
+
+            <form action={actions.submitContactRequest} method="POST" class="space-y-5">
+              <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-[#4A3828] mb-1">Adınız Soyadınız *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    class="w-full px-4 py-2 border border-[rgba(200,160,100,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-400 focus:border-transparent"
+                    placeholder="Örn: Ahmet Yılmaz"
+                  />
+                  {contactInputErrors.name && (
+                    <p class="mt-2 text-sm text-isot-600">{contactInputErrors.name.join(', ')}</p>
+                  )}
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-[#4A3828] mb-1">E-posta Adresiniz *</label>
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    class="w-full px-4 py-2 border border-[rgba(200,160,100,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-400 focus:border-transparent"
+                    placeholder="ornek@email.com"
+                  />
+                  {contactInputErrors.email && (
+                    <p class="mt-2 text-sm text-isot-600">{contactInputErrors.email.join(', ')}</p>
+                  )}
+                </div>
+              </div>
+
+              <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-[#4A3828] mb-1">Telefon (İsteğe bağlı)</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    class="w-full px-4 py-2 border border-[rgba(200,160,100,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-400 focus:border-transparent"
+                    placeholder="5XX XXX XX XX"
+                  />
+                  {contactInputErrors.phone && (
+                    <p class="mt-2 text-sm text-isot-600">{contactInputErrors.phone.join(', ')}</p>
+                  )}
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-[#4A3828] mb-1">Konu Tipi *</label>
+                  <select
+                    name="type"
+                    required
+                    class="w-full px-4 py-2 border border-[rgba(200,160,100,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-400 focus:border-transparent bg-white"
+                  >
+                    {contactTypes.map(type => (
+                      <option value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                  {contactInputErrors.type && (
+                    <p class="mt-2 text-sm text-isot-600">{contactInputErrors.type.join(', ')}</p>
+                  )}
+                </div>
+              </div>
+
               <div>
-                <label for="name" class="label">Adınız</label>
+                <label class="block text-sm font-medium text-[#4A3828] mb-1">Konu Başlığı *</label>
                 <input
                   type="text"
-                  id="name"
-                  name="name"
+                  name="subject"
                   required
-                  class="input mt-1"
-                  placeholder="Adınız Soyadınız"
+                  class="w-full px-4 py-2 border border-[rgba(200,160,100,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-400 focus:border-transparent"
+                  placeholder="Mesajınızın konusu..."
                 />
+                {contactInputErrors.subject && (
+                  <p class="mt-2 text-sm text-isot-600">{contactInputErrors.subject.join(', ')}</p>
+                )}
               </div>
+
               <div>
-                <label for="email" class="label">E-posta</label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
+                <label class="block text-sm font-medium text-[#4A3828] mb-1">Mesajınız *</label>
+                <textarea
+                  name="message"
                   required
-                  class="input mt-1"
-                  placeholder="adiniz@sanliurfa.com"
-                />
+                  rows="5"
+                  class="w-full px-4 py-2 border border-[rgba(200,160,100,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-400 focus:border-transparent resize-none"
+                  placeholder="Mesajınızı buraya yazın..."
+                ></textarea>
+                {contactInputErrors.message && (
+                  <p class="mt-2 text-sm text-isot-600">{contactInputErrors.message.join(', ')}</p>
+                )}
               </div>
-            </div>
 
-            <div>
-              <label for="subject" class="label">Konu</label>
-              <select id="subject" name="subject" required class="input mt-1">
-                <option value="">Konu seçin</option>
-                <option value="general">Genel Bilgi</option>
-                <option value="business">İşbirliği</option>
-                <option value="advertising">Reklam</option>
-                <option value="place">Mekân ekleme</option>
-                <option value="complaint">Şikayet</option>
-                <option value="other">Diğer</option>
-              </select>
-            </div>
+              <button
+                type="submit"
+                class="w-full py-3 bg-urfa-600 text-white font-semibold rounded-sm hover:bg-urfa-700 transition-colors tracking-wide"
+              >
+                Mesajı Gönder
+              </button>
 
-            <div>
-              <label for="message" class="label">Mesajınız</label>
-              <textarea
-                id="message"
-                name="message"
-                rows={5}
-                required
-                class="input mt-1 resize-none"
-                placeholder="Mesajınızı yazın..."></textarea>
-            </div>
-
-            <button
-              type="submit"
-              class="btn-primary w-full flex items-center justify-center gap-2"
-            >
-              <Send className="w-4 h-4" />
-              Gönder
-            </button>
-          </form>
+              <p class="text-xs text-[#9A8470] text-center">
+                Mesaj göndererek <a href="/gizlilik-politikasi" class="text-urfa-600 hover:underline">gizlilik politikamızı</a> kabul etmiş olursunuz.
+              </p>
+            </form>
+          </div>
         </div>
 
-        <!-- Contact Info -->
-        <div class="space-y-8">
-          <div>
-            <h2
-              class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-6"
-            >
-              İletişim Bilgileri
-            </h2>
-            <div class="space-y-6">
-              {
-                contactInfo.map((item) => (
-                  <div class="flex items-start gap-4">
-                    <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <item.icon className="w-6 h-6 text-urfa-600 dark:text-urfa-400" />
-                    </div>
-                    <div>
-                      <h3 class="font-medium text-gray-900 dark:text-white">
-                        {item.title}
-                      </h3>
-                      {item.href ? (
-                        <a
-                          href={item.href}
-                          class="text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors"
-                        >
-                          {item.content}
-                        </a>
-                      ) : (
-                        <p class="text-gray-600 dark:text-gray-400">
-                          {item.content}
-                        </p>
-                      )}
-                    </div>
+        {/* Contact Info Sidebar */}
+        <div class="space-y-6">
+          <div class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm shadow-sm p-6">
+            <h3 class="font-bold text-[#1A1008] mb-4">İletişim Bilgileri</h3>
+            <div class="space-y-4">
+              {contactInfo.map((item) => (
+                <a
+                  href={item.link}
+                  class="flex items-start gap-3 p-3 rounded-sm hover:bg-[rgba(200,160,100,0.06)] transition-colors"
+                >
+                  <span class="text-2xl">{item.icon}</span>
+                  <div>
+                    <div class="font-medium text-[#1A1008]">{item.title}</div>
+                    <div class="text-[#9A8470] text-sm">{item.value}</div>
                   </div>
-                ))
-              }
+                </a>
+              ))}
             </div>
           </div>
 
-          <!-- Map -->
-          <div
-            class="rounded-2xl overflow-hidden h-80 bg-gray-200 dark:bg-gray-700"
-          >
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12515.5!2d38.7969!3d37.1591!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzfCsDA5JzMyLjciTiAzOMKwNDcnNDguOCJF!5e0!3m2!1str!2str!4v1609459200000!5m2!1str!2str"
-              width="100%"
-              height="100%"
-              style="border:0;"
-              allowfullscreen=""
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              title="Şanlıurfa Harita"></iframe>
+          {/* Business CTA */}
+          <div class="bg-[#1A1008] border border-[rgba(200,160,100,0.2)] rounded-sm shadow-sm p-6 text-white">
+            <h3 class="font-bold text-xl mb-2 text-[#F5EDD6]">İşletmenizi Ekleyin</h3>
+            <p class="text-[#9A8470] text-sm mb-4">
+              Sanliurfa.com'da yer alın, binlerce potansiyel müşteriye ulaşın.
+            </p>
+            <a
+              href="/isletme-kayit"
+              class="inline-block px-4 py-2 bg-urfa-600 text-white rounded-sm font-medium hover:bg-urfa-700 transition-colors text-sm"
+            >
+              Hemen Başvurun →
+            </a>
+          </div>
+
+          {/* FAQ Link */}
+          <div class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm shadow-sm p-6">
+            <h3 class="font-bold text-[#1A1008] mb-2">Sıkça Sorulan Sorular</h3>
+            <p class="text-[#9A8470] text-sm mb-4">
+              Hızlı cevaplar için SSS sayfamıza göz atın.
+            </p>
+            <a
+              href="/sss"
+              class="text-urfa-600 font-medium hover:underline text-sm"
+            >
+              SSS'yi Görüntüle →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Map Section */}
+      <div class="max-w-6xl mx-auto mt-12">
+        <div class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm shadow-sm overflow-hidden">
+          <div class="aspect-[21/9] bg-[#F5EDD6]/40 flex items-center justify-center">
+            <div class="text-center text-[#9A8470]">
+              <div class="text-6xl mb-4">🗺️</div>
+              <p>Harita entegrasyonu burada görüntülenecek</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'ContactPage',
+    name: 'Sanliurfa.com İletişim',
+    url: `${baseUrl}/iletisim`,
+    description: 'Sanliurfa.com ile iletişime geçin.',
+    mainEntity: {
+      '@type': 'Organization',
+      name: 'Sanliurfa.com',
+      url: `${baseUrl}`,
+      email: 'iletisim@sanliurfa.com',
+      address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' },
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'İletişim', item: `${baseUrl}/iletisim` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

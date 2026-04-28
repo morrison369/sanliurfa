@@ -1,8 +1,142 @@
 ---
-return new Response(null, {
-  status: 301,
-  headers: {
-    Location: '/hakkinda',
-  },
-});
+
+import Layout from '../layouts/Layout.astro';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Hakkımızda - Sanliurfa.com',
+  description: 'Sanliurfa.com hakkında bilgi edinin. Misyonumuz, vizyonumuz ve Şanlıurfa şehir rehberi yaklaşımımız.',
+  keywords: ['şanlıurfa.com hakkında', 'sanliurfa.com', 'şanlıurfa rehberi ekibi'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/hakkimizda',
+};
+
+const stats = [
+  { value: '500+', label: 'Mekan' },
+  { value: '50K+', label: 'Aylık Ziyaretçi' },
+  { value: '10K+', label: 'Yorum' },
+  { value: '100+', label: 'Rehber' },
+];
+
+const features = [
+  { icon: '🏛️', title: 'Tarihi Mekanlar', desc: 'Göbeklitepe ve diğer tarihi yerler hakkında detaylı bilgi' },
+  { icon: '🍽️', title: 'Lezzet Durakları', desc: 'Çiğ köfteden baklavaya, Şanlıurfa mutfağının özgün tatları' },
+  { icon: '🏨', title: 'Konaklama', desc: 'Her bütçeye uygun otel ve konaklama seçenekleri' },
+  { icon: '📱', title: 'Mobil Uyumlu', desc: 'Her yerden erişim, kullanıcı dostu arayüz' },
+];
+const faqItems = [
+  { S: 'Sanliurfa.com ne zaman kuruldu?', C: 'Sanliurfa.com, 2025 yılında Şanlıurfa için kapsamlı bir dijital şehir rehberi olarak kurulmuştur.' },
+  { S: 'Siteye mekan veya etkinlik nasıl eklenir?', C: 'İşletme sayfasından başvuru formunu doldurarak mekan ekleyebilir, etkinlik takvimi için iletişim sayfamızı kullanabilirsiniz.' },
+  { S: 'Sanliurfa.com ile iletişime nasıl geçilir?', C: 'İletişim sayfası veya business@sanliurfa.com adresi üzerinden bize ulaşabilirsiniz.' },
+];
+
 ---
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3] pt-20">
+    {/* Hero */}
+    <section class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-20">
+      <div class="container mx-auto px-4 text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6 text-[#F5EDD6]">Şanlıurfa'nın Keşif Platformu</h1>
+        <p class="text-xl text-[#9A8470] max-w-2xl mx-auto">
+          Sanliurfa.com, şehrin mekanlarını, tarihini, lezzetlerini ve günlük yaşam bilgilerini tek çatı altında sunan yerel rehber platformudur.
+        </p>
+      </div>
+    </section>
+
+    {/* Stats */}
+    <section class="py-12 bg-white border-b border-[rgba(200,160,100,0.1)]">
+      <div class="container mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
+          {stats.map(stat => (
+            <div class="text-center">
+              <div class="text-4xl font-bold text-urfa-600">{stat.value}</div>
+              <div class="text-[#9A8470]">{stat.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Mission */}
+    <section class="py-16">
+      <div class="container mx-auto px-4 max-w-4xl">
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <h2 class="text-3xl font-bold text-[#1A1008] mb-4">Misyonumuz</h2>
+            <p class="text-[#6B5540] mb-6">
+              Şanlıurfa'nın zengin kültürünü, tarihini ve lezzetlerini doğru, güncel ve erişilebilir bilgilerle tanıtmak.
+              Yerel işletmeleri destekleyerek şehrin dijital görünürlüğüne katkı sağlamak.
+            </p>
+            <h2 class="text-3xl font-bold text-[#1A1008] mb-4">Vizyonumuz</h2>
+            <p class="text-[#6B5540]">
+              Türkiye'nin en güvenilir yerel şehir rehberlerinden biri olmak.
+              Teknoloji, yerel bilgi ve topluluk katkısını birleştirerek kullanıcılara profesyonel bir deneyim sunmak.
+            </p>
+          </div>
+          <div class="border border-[rgba(200,160,100,0.18)] rounded-sm bg-[rgba(200,160,100,0.06)] aspect-square flex items-center justify-center">
+            <span class="text-8xl">🎯</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Features */}
+    <section class="py-16 bg-white border-y border-[rgba(200,160,100,0.1)]">
+      <div class="container mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center text-[#1A1008] mb-12">Neler Sunuyoruz?</h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          {features.map(feat => (
+            <div class="border border-[rgba(200,160,100,0.18)] rounded-sm bg-[#FDFAF3] p-6 text-center">
+              <div class="text-5xl mb-4">{feat.icon}</div>
+              <h3 class="font-bold text-[#1A1008] mb-2">{feat.title}</h3>
+              <p class="text-[#9A8470] text-sm">{feat.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* CTA */}
+    <section class="py-16 bg-[#0D0A08] border-t border-[rgba(200,160,100,0.14)] text-white">
+      <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl font-bold mb-4 text-[#F5EDD6]">İşletmenizi Eklemek İster Misiniz?</h2>
+        <p class="text-[#9A8470] mb-8 max-w-xl mx-auto">
+          Sanliurfa.com'a katılın, yerel kullanıcıya ulaşın ve işletme profilinizi ücretsiz yönetin.
+        </p>
+        <a href="/isletme-kayit" class="inline-block px-8 py-3 bg-urfa-600 rounded-sm hover:bg-urfa-700 transition-colors font-medium tracking-wide">
+          Hemen Başvurun
+        </a>
+      </div>
+    </section>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Hakkımızda', item: `${baseUrl}/hakkimizda` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: 'Sanliurfa.com Hakkında',
+    description: 'Sanliurfa.com, Şanlıurfa mekanlarını, tarihini, lezzetlerini ve günlük yaşam bilgilerini tek çatı altında sunan yerel rehber platformudur.',
+    url: `${baseUrl}/hakkimizda`,
+    publisher: {
+      '@type': 'Organization',
+      name: 'Sanliurfa.com',
+      url: `${baseUrl}`,
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-04-28T18:38:45.884Z",
+  "requiredRoutes": [
+    "/saglik/nobetci-eczaneler",
+    "/ulasim/otobus-saatleri",
+    "/ulasim/ucak-saatleri",
+    "/mekanlar"
+  ],
+  "pageChecks": [
+    {
+      "filePath": "src/pages/saglik/nobetci-eczaneler.astro",
+      "exists": true
+    },
+    {
+      "filePath": "src/pages/ulasim/otobus-saatleri.astro",
+      "exists": true
+    },
+    {
+      "filePath": "src/pages/ulasim/ucak-saatleri.astro",
+      "exists": true
+    },
+    {
+      "filePath": "src/pages/mekanlar/index.astro",
+      "exists": true
+    }
+  ],
+  "primaryActionHrefs": [
+    "/saglik/nobetci-eczaneler",
+    "/ulasim/otobus-saatleri",
+    "/ulasim/ucak-saatleri",
+    "/etkinlikler",
+    "/yemek-tarifleri",
+    "/ilceler",
+    "/mekanlar"
+  ],
+  "localImageStats": {
+    "places": 4,
+    "blog": 19,
+    "tarihiYerler": 2,
+    "etkinlikler": 2
+  },
+  "dbUnavailable": false,
+  "issueCount": 0,
+  "issues": []
+}

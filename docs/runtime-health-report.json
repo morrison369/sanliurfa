@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-04-18T23:11:05.169Z",
+  "port": 4321,
+  "locks": {
+    "devLock": {
+      "exists": false,
+      "pid": null,
+      "stale": false
+    },
+    "taskLock": {
+      "exists": false,
+      "pid": null,
+      "stale": false
+    }
+  },
+  "pids": {
+    "devPid": null,
+    "devAlive": false,
+    "watchdogPid": null,
+    "watchdogAlive": false
+  },
+  "health": {
+    "ok": true,
+    "status": 0,
+    "mode": "stopped",
+    "error": "fetch failed",
+    "data": null
+  },
+  "doctor": {
+    "ok": true,
+    "status": 0,
+    "stdout": "## Isolated Runtime Doctor\ndev.lock: missing\ntask.lock: missing\ndev.pid: missing\nwatchdog.pid: missing\ndev.process: stopped\nwatchdog.process: stopped\nhealth: down (0, down)\nresult: healthy",
+    "stderr": ""
+  },
+  "orphanCheck": {
+    "ok": true,
+    "status": 0,
+    "stdout": "no orphan dev process detected",
+    "stderr": ""
+  },
+  "runtimeStopped": true,
+  "fixAttempted": false
+}

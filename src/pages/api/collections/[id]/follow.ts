@@ -12,14 +12,12 @@ import { logger } from '../../../../lib/logging';
 export const POST: APIRoute = async (context) => {
   try {
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
     }
 
     const { id } = context.params;
-    const body = await context.request.json();
-
     if (!id) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Koleksiyon ID gereklidir');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Collection ID is required');
     }
 
     // Check if already following
@@ -28,21 +26,14 @@ export const POST: APIRoute = async (context) => {
       [id, context.locals.user.id]
     );
 
-    let success = false;
     let message = '';
 
     if (isFollowing) {
-      // Unfollow
-      success = await unfollowCollection(id, context.locals.user.id);
+      await unfollowCollection(id, context.locals.user.id);
       message = 'Koleksiyondan çıkıldı';
     } else {
-      // Follow
-      success = await followCollection(id, context.locals.user.id);
+      await followCollection(id, context.locals.user.id);
       message = 'Koleksiyona katıldı';
-    }
-
-    if (!success) {
-      return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'İşlem başarısız oldu');
     }
 
     logger.info('Collection follow status toggled', {
@@ -51,13 +42,9 @@ export const POST: APIRoute = async (context) => {
       following: !isFollowing
     });
 
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      message,
-      following: !isFollowing
-    });
+    return apiResponse({ success: true, message, following: !isFollowing }, HttpStatus.OK);
   } catch (error) {
     logger.error('Failed to toggle collection follow', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Koleksiyon takip işlemi başarısız oldu');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to toggle collection follow');
   }
 };

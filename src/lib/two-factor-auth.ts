@@ -128,7 +128,13 @@ function generateBackupCodes(count: number = 10): string[] {
 
 // Hash backup code for storage
 function hashBackupCode(code: string): string {
-  return createHmac('sha256', process.env.JWT_SECRET || 'secret')
+  const jwtSecret =
+    process.env.JWT_SECRET ||
+    (process.env.NODE_ENV === 'test' ? 'test-jwt-secret-key-minimum-32-characters-long' : '');
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return createHmac('sha256', jwtSecret)
     .update(code)
     .digest('hex');
 }
@@ -160,10 +166,10 @@ export async function create2FAMethod(userId: string, methodType: 'totp' | 'emai
 export async function get2FAMethods(userId: string): Promise<TwoFAMethod[]> {
   try {
     const cacheKey = `user:2fa:${userId}`;
-    const cached = await getCache<TwoFAMethod[]>(cacheKey);
+    let cached = await getCache(cacheKey);
 
     if (cached) {
-      return cached;
+      return JSON.parse(cached as string);
     }
 
     const methods = await queryMany(
@@ -171,7 +177,7 @@ export async function get2FAMethods(userId: string): Promise<TwoFAMethod[]> {
       [userId]
     );
 
-    await setCache(cacheKey, methods, 600);
+    await setCache(cacheKey, JSON.stringify(methods), 600);
     return methods;
   } catch (error) {
     logger.error('Failed to get 2FA methods', error instanceof Error ? error : new Error(String(error)));
@@ -319,9 +325,19 @@ export async function verify2FASession(sessionToken: string, code: string): Prom
 }
 
 async function verify2FAVerificationCode(userId: string, code: string): Promise<boolean> {
-  // This would integrate with email/SMS service to verify sent codes
-  // For now, returning false - implement with your email/SMS provider
-  return false;
+  // Retrieve OTP stored in cache when the session was created
+  const cacheKey = `2fa:otp:${userId}`;
+  const stored = await getCache(cacheKey);
+  if (!stored) return false;
+
+  const storedStr = String(stored);
+  const matches =
+    storedStr.length === code.length &&
+    crypto.timingSafeEqual(Buffer.from(storedStr), Buffer.from(code));
+  if (matches) {
+    await deleteCache(cacheKey);
+  }
+  return matches;
 }
 
 async function recordFailedAttempt(sessionId: string, userId: string): Promise<void> {

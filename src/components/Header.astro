@@ -1,362 +1,460 @@
 ---
-import { Menu, X, User, Search, MapPin, ChevronDown, Sun, Moon } from 'lucide-react';
-import NotificationCenter from './NotificationCenter.astro';
-import NotificationBadge from './NotificationBadge';
-import { DEFAULT_PUBLIC_SITE_SETTINGS, type HeaderMenuItem } from '../lib/site-settings';
+import { Icon } from 'astro-icon/components';
+import RealtimeNotificationBadge from './RealtimeNotificationBadge';
+import { getSiteSetting } from '../lib/site-content';
 
-interface Props {
-  user?: any;
-  menuItems?: HeaderMenuItem[];
+type UserRole = 'admin' | 'vendor' | 'user' | 'moderator';
+
+interface HeaderUser {
+  id: string;
+  email?: string;
+  fullName?: string;
+  name?: string;
+  role?: UserRole;
 }
 
-const { user, menuItems = [] } = Astro.props;
+interface HeaderLinkItem {
+  href: string;
+  label: string;
+}
 
-const navItems =
-  Array.isArray(menuItems) && menuItems.length > 0
-    ? menuItems
-    : DEFAULT_PUBLIC_SITE_SETTINGS.headerMenu;
+interface HeaderMenuGroup {
+  title: string;
+  links: HeaderLinkItem[];
+}
 
-const isCurrentPage = (href: string) => {
-  const currentPath = Astro.url.pathname;
-  if (href === '/') return currentPath === '/';
-  return currentPath.startsWith(href);
+interface HeaderMenuSection {
+  label: string;
+  href: string;
+  sub: HeaderLinkItem[];
+  groups: HeaderMenuGroup[];
+}
+
+interface HeaderBrandConfig {
+  topStripText: string;
+  logoTitle: string;
+  logoHighlight: string;
+}
+
+interface HeaderLabelsConfig {
+  viewAllLabel: string;
+  loginLabel: string;
+  registerLabel: string;
+  mobileBusinessCtaLabel: string;
+}
+
+export interface Props {
+  user?: HeaderUser | null;
+}
+
+const { user } = Astro.props;
+const brandFallback: HeaderBrandConfig = {
+  topStripText: 'ŞANLIURFA ODAKLI DİJİTAL ŞEHİR REHBERİ',
+  logoTitle: 'Sanliurfa',
+  logoHighlight: '.com',
 };
+const labelsFallback: HeaderLabelsConfig = {
+  viewAllLabel: 'Tümünü Gör',
+  loginLabel: 'Giriş',
+  registerLabel: 'Kayıt Ol',
+  mobileBusinessCtaLabel: 'İşletmenizi Ekleyin',
+};
+const brandSettings = await getSiteSetting('header.brand', brandFallback);
+const labelsSettings = await getSiteSetting('header.labels', labelsFallback);
+
+const brand: HeaderBrandConfig = {
+  topStripText: String((brandSettings as any)?.topStripText || brandFallback.topStripText),
+  logoTitle: String((brandSettings as any)?.logoTitle || brandFallback.logoTitle),
+  logoHighlight: String((brandSettings as any)?.logoHighlight || brandFallback.logoHighlight),
+};
+const labels: HeaderLabelsConfig = {
+  viewAllLabel: String((labelsSettings as any)?.viewAllLabel || labelsFallback.viewAllLabel),
+  loginLabel: String((labelsSettings as any)?.loginLabel || labelsFallback.loginLabel),
+  registerLabel: String((labelsSettings as any)?.registerLabel || labelsFallback.registerLabel),
+  mobileBusinessCtaLabel: String(
+    (labelsSettings as any)?.mobileBusinessCtaLabel || labelsFallback.mobileBusinessCtaLabel,
+  ),
+};
+
+const utilityLinksFallback = {
+  items: [
+    { href: '/saglik/nobetci-eczaneler', label: 'Nöbetçi Eczaneler' },
+    { href: '/ulasim/otobus-saatleri', label: 'Otobüs Saatleri' },
+    { href: '/ulasim/ucak-saatleri', label: 'Uçak Saatleri' },
+    { href: '/topluluk', label: 'Topluluk' },
+    { href: '/eslesme', label: 'Eşleşme' },
+    { href: '/yemek-tarifleri', label: 'Yemek Tarifleri' },
+    { href: '/isletme-kayit', label: 'İşletme Ekle' },
+  ],
+};
+const utilityLinkSettings = await getSiteSetting('header.utilityLinks', utilityLinksFallback);
+const utilityLinks = Array.isArray((utilityLinkSettings as any)?.items)
+  ? (utilityLinkSettings as any).items
+  : utilityLinksFallback.items;
+
+const megaMenuFallback = [
+  {
+    label: 'Mekanlar',
+    href: '/mekanlar',
+    sub: [
+      { href: '/mekanlar/kebapcilar', label: 'Kebapçılar' },
+      { href: '/mekanlar/cigerciler', label: 'Ciğerciler' },
+      { href: '/mekanlar/lahmacuncular', label: 'Lahmacuncular' },
+      { href: '/mekanlar/pideciler', label: 'Pideciler' },
+      { href: '/mekanlar/cig-kofteciler', label: 'Çiğ Köfteciler' },
+      { href: '/mekanlar/yoresel-yemekler', label: 'Yöresel Yemekler' },
+      { href: '/mekanlar/kahvalti-mekanlari', label: 'Kahvaltı Mekanları' },
+      { href: '/mekanlar/tatlicilar', label: 'Tatlıcılar' },
+      { href: '/mekanlar/kafeler', label: 'Kafeler' },
+      { href: '/mekanlar/cay-bahceleri', label: 'Çay Bahçeleri' },
+      { href: '/mekanlar/firinlar', label: 'Fırınlar' },
+      { href: '/mekanlar/pastaneler', label: 'Pastaneler' },
+      { href: '/mekanlar/balik-restoranlari', label: 'Balık Restoranları' },
+    ],
+  },
+  {
+    label: 'Gezilecek Yerler',
+    href: '/gezilecek-yerler',
+    sub: [
+      { href: '/isletme/gobeklitepe', label: 'Göbeklitepe' },
+      { href: '/isletme/balikligol', label: 'Balıklıgöl' },
+      { href: '/isletme/harran', label: 'Harran' },
+      { href: '/isletme/halfeti', label: 'Halfeti' },
+      { href: '/isletme/urfa-kalesi', label: 'Urfa Kalesi' },
+      { href: '/isletme/ayna-carsi', label: 'Aynalı Çarşı' },
+      { href: '/isletme/kapali-carsi', label: 'Kapalı Çarşı' },
+      { href: '/tarihi-yerler', label: 'Müzeler' },
+      { href: '/tarihi-yerler', label: 'Tarihi Yerler' },
+    ],
+  },
+  {
+    label: 'İlçeler',
+    href: '/ilceler',
+    sub: [
+      { href: '/ilceler/eyyubiye', label: 'Eyyübiye' },
+      { href: '/ilceler/haliliye', label: 'Haliliye' },
+      { href: '/ilceler/karakopru', label: 'Karaköprü' },
+      { href: '/ilceler/siverek', label: 'Siverek' },
+      { href: '/ilceler/viransehir', label: 'Viranşehir' },
+      { href: '/ilceler/suruc', label: 'Suruç' },
+      { href: '/ilceler/birecik', label: 'Birecik' },
+      { href: '/ilceler/akcakale', label: 'Akçakale' },
+      { href: '/ilceler/ceylanpinar', label: 'Ceylanpınar' },
+      { href: '/ilceler/halfeti', label: 'Halfeti' },
+      { href: '/ilceler/harran', label: 'Harran' },
+    ],
+  },
+  {
+    label: 'Günlük Yaşam',
+    href: '/kesfet',
+    sub: [
+      { href: '/saglik', label: 'Sağlık' },
+      { href: '/saglik/nobetci-eczaneler', label: 'Nöbetçi Eczaneler' },
+      { href: '/ulasim', label: 'Ulaşım' },
+      { href: '/ulasim/otobus-hatlari', label: 'Otobüs Hatları' },
+      { href: '/ulasim/otobus-saatleri', label: 'Otobüs Saatleri' },
+      { href: '/ulasim/ucak-saatleri', label: 'Uçak Saatleri' },
+      { href: '/etkinlikler', label: 'Etkinlikler' },
+      { href: '/blog', label: 'Blog' },
+      { href: '/topluluk', label: 'Topluluk' },
+      { href: '/eslesme', label: 'Eşleşme' },
+      { href: '/yeme-icme', label: 'Yeme İçme' },
+      { href: '/yemek-tarifleri', label: 'Yemek Tarifleri' },
+    ],
+  },
+  {
+    label: 'Diğer Kategoriler',
+    href: '/kesfet',
+    sub: [
+      { href: '/egitim', label: 'Eğitim' },
+      { href: '/hizmetler', label: 'Hizmetler' },
+      { href: '/alisveris', label: 'Alışveriş' },
+      { href: '/konaklama', label: 'Konaklama' },
+      { href: '/emlak', label: 'Emlak' },
+      { href: '/mahalleler', label: 'Mahalleler' },
+    ],
+  },
+];
+
+const mobileQuickLinksFallback = [
+  { href: '/mekanlar', label: 'Mekanlar' },
+  { href: '/gezilecek-yerler', label: 'Gezilecek Yerler' },
+  { href: '/ilceler', label: 'İlçeler' },
+  { href: '/saglik', label: 'Sağlık' },
+  { href: '/ulasim/otobus-saatleri', label: 'Otobüs Saatleri' },
+  { href: '/ulasim/ucak-saatleri', label: 'Uçak Saatleri' },
+  { href: '/etkinlikler', label: 'Etkinlikler' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/topluluk', label: 'Topluluk' },
+  { href: '/eslesme', label: 'Eşleşme' },
+];
+
+const mobileAllLinksFallback = [
+  { href: '/konaklama', label: 'Konaklama' },
+  { href: '/alisveris', label: 'Alışveriş' },
+  { href: '/ulasim', label: 'Ulaşım' },
+  { href: '/ulasim/otobus-saatleri', label: 'Otobüs Saatleri' },
+  { href: '/ulasim/ucak-saatleri', label: 'Uçak Saatleri' },
+  { href: '/yeme-icme', label: 'Yeme İçme' },
+  { href: '/yemek-tarifleri', label: 'Yemek Tarifleri' },
+  { href: '/topluluk', label: 'Topluluk' },
+  { href: '/eslesme', label: 'Eşleşme' },
+  { href: '/saglik/nobetci-eczaneler', label: 'Nöbetçi Eczane' },
+  { href: '/mahalleler', label: 'Mahalleler' },
+  { href: '/emlak', label: 'Emlak' },
+  { href: '/hizmetler', label: 'Hizmetler' },
+  { href: '/egitim', label: 'Eğitim' },
+];
+
+const sanitizeLink = (item: any): HeaderLinkItem => ({
+  href: String(item?.href || '').trim(),
+  label: String(item?.label || '').trim(),
+});
+
+const sanitizeMenuGroup = (group: any): HeaderMenuGroup => ({
+  title: String(group?.title || '').trim(),
+  links: Array.isArray(group?.links)
+    ? group.links.map(sanitizeLink).filter((x: HeaderLinkItem) => x.href && x.label)
+    : [],
+});
+
+const sanitizeMenuSection = (section: any): HeaderMenuSection => ({
+  label: String(section?.label || '').trim(),
+  href: String(section?.href || '').trim(),
+  sub: Array.isArray(section?.sub)
+    ? section.sub.map(sanitizeLink).filter((x: HeaderLinkItem) => x.href && x.label)
+    : [],
+  groups: Array.isArray(section?.groups)
+    ? section.groups
+        .map(sanitizeMenuGroup)
+        .filter((x: HeaderMenuGroup) => x.title && x.links.length > 0)
+    : [],
+});
+
+const megaMenuSettings = await getSiteSetting('header.megaMenu', { items: megaMenuFallback });
+const mobileQuickLinksSettings = await getSiteSetting('header.mobileQuickLinks', { items: mobileQuickLinksFallback });
+const mobileAllLinksSettings = await getSiteSetting('header.mobileAllLinks', { items: mobileAllLinksFallback });
+
+const megaMenu =
+  Array.isArray((megaMenuSettings as any)?.items) && (megaMenuSettings as any).items.length > 0
+    ? (megaMenuSettings as any).items
+        .map(sanitizeMenuSection)
+        .filter((x: HeaderMenuSection) => x.href && x.label)
+    : megaMenuFallback;
+
+const mobileQuickLinks =
+  Array.isArray((mobileQuickLinksSettings as any)?.items) && (mobileQuickLinksSettings as any).items.length > 0
+    ? (mobileQuickLinksSettings as any).items.map(sanitizeLink).filter((x: any) => x.href && x.label)
+    : mobileQuickLinksFallback;
+
+const mobileAllLinks =
+  Array.isArray((mobileAllLinksSettings as any)?.items) && (mobileAllLinksSettings as any).items.length > 0
+    ? (mobileAllLinksSettings as any).items.map(sanitizeLink).filter((x: any) => x.href && x.label)
+    : mobileAllLinksFallback;
+
+const currentPath = Astro.url.pathname;
 ---
 
-<header class="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
-  <div class="container-custom">
-    <div class="flex items-center justify-between h-16 lg:h-20">
-      <!-- Logo -->
-      <a href="/" class="flex items-center space-x-2 group">
-        <div class="w-10 h-10 bg-urfa-600 rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:bg-urfa-700 transition-colors">
-          Ş
-        </div>
-        <span class="hidden sm:block font-display font-bold text-xl text-gray-900 dark:text-white">
-          Şanlıurfa<span class="text-urfa-600">.com</span>
+<style>
+  @media (min-width: 768px) {
+    #mobileMenuBtn {
+      display: none !important;
+    }
+  }
+</style>
+
+<header class="fixed top-0 left-0 right-0 z-50" style="background:rgba(13,10,8,0.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(200,160,100,0.12);">
+  {/* Top strip */}
+  <div class="hidden lg:block" style="background:#0A0806;border-bottom:1px solid rgba(200,160,100,0.08);">
+    <div class="container mx-auto px-6" style="height:2rem;display:flex;align-items:center;justify-content:space-between;">
+      <p style="font-size:0.625rem;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#6B5540;">
+        {brand.topStripText}
+      </p>
+      <div style="display:flex;align-items:center;gap:1.5rem;">
+        {utilityLinks.map((item: { href: string; label: string }) => (
+          <a href={item.href} style="font-size:0.625rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#6B5540;transition:color 0.15s;" onmouseover="this.style.color='#C27530'" onmouseout="this.style.color='#6B5540'">{item.label}</a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  {/* Main nav bar */}
+  <div class="container mx-auto px-4 sm:px-6">
+    <div style="display:flex;align-items:center;justify-content:space-between;height:3.75rem;">
+
+      {/* Logo */}
+      <a href="/" style="flex-shrink:0;text-decoration:none;display:flex;align-items:baseline;gap:0.0625rem;">
+        <span style="font-family:'Cormorant Garamond',Georgia,serif;font-size:1.625rem;font-weight:600;font-style:italic;color:#F5EDD6;letter-spacing:-0.02em;line-height:1;">
+          {brand.logoTitle}
+        </span>
+        <span style="font-family:'Jost',system-ui,sans-serif;font-size:0.9375rem;font-weight:700;color:#C27530;letter-spacing:0.04em;">
+          {brand.logoHighlight}
         </span>
       </a>
 
-      <!-- Desktop Navigation -->
-      <nav class="hidden lg:flex items-center space-x-1">
-        {navItems.map((item) => (
+      {/* Desktop Nav */}
+      <nav class="hidden md:flex items-center" style="gap:0.125rem;">
+        {megaMenu.map((item: HeaderMenuSection) => (
           <div class="relative group">
             <a
               href={item.href}
-              class={`nav-link flex items-center gap-1 px-3 py-2 rounded-lg transition-colors ${
-                isCurrentPage(item.href)
-                  ? 'text-urfa-600 bg-urfa-50 dark:bg-urfa-900/20'
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-200'
-              }`}
+              style={`display:inline-flex;align-items:center;gap:0.25rem;padding:0.5rem 0.875rem;font-family:'Jost',sans-serif;font-size:0.8125rem;font-weight:400;letter-spacing:0.02em;transition:color 0.15s;text-decoration:none;${item.href !== '#' && currentPath.startsWith(item.href) ? 'color:#CE8E38;' : 'color:#9A8470;'}`}
+              onmouseover="if(this.style.color!=='rgb(206, 142, 56)')this.style.color='#F5EDD6'"
+              onmouseout={`if('${item.href}'!=='#'&&location.pathname.startsWith('${item.href}'))this.style.color='#CE8E38';else this.style.color='#9A8470'`}
             >
               {item.label}
-              {item.dropdown && <ChevronDown className="w-4 h-4" />}
+              <Icon name="lucide:chevron-down" class="w-3 h-3 opacity-50" />
             </a>
-
-            {item.dropdown && (
-              <div class="absolute top-full left-0 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 min-w-[280px]">
-                  {item.dropdown.map((subItem) => (
-                    <a
-                      href={subItem.href}
-                      class="flex flex-col p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <span class="font-medium text-gray-900 dark:text-white">{subItem.label}</span>
-                      {subItem.description && (
-                        <span class="text-sm text-gray-500 dark:text-gray-400">{subItem.description}</span>
-                      )}
-                    </a>
-                  ))}
+            {/* Dropdown */}
+            <div class="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50" style="min-width:14rem;">
+              <div style="background:#161210;border:1px solid rgba(200,160,100,0.16);border-radius:0.375rem;box-shadow:0 16px 48px rgb(0 0 0/0.5);padding:0.5rem 0;overflow:hidden;">
+                {(item.groups && item.groups.length > 0
+                  ? item.groups
+                  : [{ title: '', links: item.sub }]).map((group: HeaderMenuGroup) => (
+                  <div style="padding:0 0.25rem 0.25rem;">
+                    {group.title && (
+                      <p style="padding:0.375rem 0.75rem;font-size:0.5625rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#6B5540;">
+                        {group.title}
+                      </p>
+                    )}
+                    {group.links.map((sub: HeaderLinkItem) => (
+                      <a
+                        href={sub.href}
+                        style="display:block;padding:0.4375rem 0.875rem;font-size:0.8125rem;color:#A89880;transition:color 0.15s,background 0.15s;text-decoration:none;"
+                        onmouseover="this.style.color='#F5EDD6';this.style.background='rgba(200,160,100,0.08)'"
+                        onmouseout="this.style.color='#A89880';this.style.background=''"
+                      >
+                        {sub.label}
+                      </a>
+                    ))}
+                  </div>
+                ))}
+                <div style="border-top:1px solid rgba(200,160,100,0.1);margin:0.25rem 0.5rem 0;padding-top:0.375rem;">
+                  <a href={item.href} style="display:block;padding:0.375rem 0.375rem;font-size:0.625rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#CE8E38;text-decoration:none;">
+                    {labels.viewAllLabel} →
+                  </a>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         ))}
       </nav>
 
-      <!-- Right Side Actions -->
-      <div class="flex items-center space-x-2">
-        <!-- Search Button -->
-        <!-- Theme Toggle (Mobile/Tablet) -->
-        <button
-          id="theme-toggle-mobile"
-          class="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors lg:hidden"
-          aria-label="Tema değiştir"
-        >
-          <Sun id="sun-icon-mobile" className="w-5 h-5 hidden dark:block" />
-          <Moon id="moon-icon-mobile" className="w-5 h-5 block dark:hidden" />
-        </button>
-
-        <!-- Notifications Badge -->
-        <NotificationBadge client:idle />
-
-        <!-- Notifications -->
-        <NotificationCenter user={user} />
-
-        <!-- Search Button -->
-        <button
-          id="search-trigger"
-          class="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          aria-label="Ara"
-        >
-          <Search className="w-5 h-5" />
-        </button>
-
-        <!-- Add Place Button (Desktop) -->
+      {/* Right side */}
+      <div style="display:flex;align-items:center;gap:0.625rem;">
+        {/* Search */}
         <a
-          href="/places/ekle"
-          class="hidden md:flex items-center gap-1.5 btn-outline text-sm py-2"
+          href="/arama"
+          aria-label="Ara"
+          style="width:2.25rem;height:2.25rem;display:flex;align-items:center;justify-content:center;color:#8A7A68;border:1px solid rgba(200,160,100,0.14);border-radius:0.125rem;transition:all 0.15s;"
+          onmouseover="this.style.color='#F5EDD6';this.style.borderColor='rgba(200,160,100,0.35)'"
+          onmouseout="this.style.color='#8A7A68';this.style.borderColor='rgba(200,160,100,0.14)'"
         >
-          <MapPin className="w-4 h-4" />
-          <span>Mekân ekle</span>
+          <Icon name="lucide:search" class="w-4 h-4" />
         </a>
 
-        <!-- Auth Buttons -->
+        {user && <RealtimeNotificationBadge userId={user.id} client:idle />}
+
+        {/* User menu */}
         {user ? (
           <div class="relative group">
-            <button class="flex items-center gap-2 p-1 pr-3 rounded-full hover:bg-gray-100 transition-colors">
-              <div class="w-8 h-8 bg-urfa-100 rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-urfa-600" />
+            <button style="display:flex;align-items:center;gap:0.5rem;padding:0.25rem 0.5rem;border:1px solid rgba(200,160,100,0.18);border-radius:0.125rem;background:transparent;cursor:pointer;transition:border-color 0.15s;" onmouseover="this.style.borderColor='rgba(200,160,100,0.35)'" onmouseout="this.style.borderColor='rgba(200,160,100,0.18)'">
+              <div style="width:1.875rem;height:1.875rem;background:linear-gradient(135deg,#A85D22,#CE8E38);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#FBF5EB;font-size:0.75rem;font-weight:700;font-family:'Jost',sans-serif;">
+                {(user.fullName || user.name || user.email || 'U').charAt(0).toUpperCase()}
               </div>
-              <span class="hidden sm:block text-sm font-medium text-gray-700">
-                {(user.fullName || user.full_name || '').split(' ')[0]}
+              <span class="hidden lg:block" style="font-size:0.8125rem;font-weight:400;color:#C4B49A;font-family:'Jost',sans-serif;">
+                {user.fullName?.split(' ')[0] || user.name || user.email}
               </span>
             </button>
-
-            <div class="absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-              <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 min-w-[200px]">
-                <a href="/profil" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm dark:text-gray-200">
-                  <User className="w-4 h-4" />
-                  Profilim
-                </a>
-                <a href="/profil/favoriler" class="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-sm dark:text-gray-200">
-                  Favorilerim
-                </a>
-                <hr class="my-1 border-gray-100" />
-                <form action="/api/auth/logout" method="POST">
-                  <button type="submit" class="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-50 text-sm text-red-600 text-left">
-                    Çıkış Yap
-                  </button>
-                </form>
+            <div class="absolute right-0 top-full mt-1.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50" style="width:12rem;">
+              <div style="background:#161210;border:1px solid rgba(200,160,100,0.16);border-radius:0.375rem;box-shadow:0 16px 48px rgb(0 0 0/0.5);padding:0.375rem 0;">
+                <a href="/profil" style="display:block;padding:0.5rem 1rem;font-size:0.8125rem;color:#A89880;transition:all 0.12s;text-decoration:none;" onmouseover="this.style.color='#F5EDD6';this.style.background='rgba(200,160,100,0.08)'" onmouseout="this.style.color='#A89880';this.style.background=''">Profilim</a>
+                {user.role === 'vendor' && (
+                  <a href="/vendor/dashboard" style="display:block;padding:0.5rem 1rem;font-size:0.8125rem;color:#A89880;transition:all 0.12s;text-decoration:none;" onmouseover="this.style.color='#F5EDD6';this.style.background='rgba(200,160,100,0.08)'" onmouseout="this.style.color='#A89880';this.style.background=''">İşletme Paneli</a>
+                )}
+                {(user.role === 'admin' || user.role === 'moderator') && (
+                  <a href="/admin" style="display:block;padding:0.5rem 1rem;font-size:0.8125rem;color:#A89880;transition:all 0.12s;text-decoration:none;" onmouseover="this.style.color='#F5EDD6';this.style.background='rgba(200,160,100,0.08)'" onmouseout="this.style.color='#A89880';this.style.background=''">Yönetim Paneli</a>
+                )}
+                <div style="height:1px;background:rgba(200,160,100,0.1);margin:0.25rem 0;"></div>
+                <a href="/api/auth/logout" style="display:block;padding:0.5rem 1rem;font-size:0.8125rem;color:#E03028;transition:all 0.12s;text-decoration:none;" onmouseover="this.style.background='rgba(224,48,40,0.08)'" onmouseout="this.style.background=''">Çıkış Yap</a>
               </div>
             </div>
           </div>
         ) : (
-          <div class="hidden sm:flex items-center space-x-2">
-            <a href="/giris" class="btn-secondary text-sm py-2">
-              Giriş Yap
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <a href="/giris" class="hidden sm:block" style="font-size:0.8125rem;font-weight:400;color:#9A8470;text-decoration:none;padding:0.375rem 0.625rem;transition:color 0.15s;" onmouseover="this.style.color='#F5EDD6'" onmouseout="this.style.color='#9A8470'">
+              {labels.loginLabel}
             </a>
-            <a href="/kayit" class="btn-primary text-sm py-2">
-              Üye Ol
+            <a href="/kayit" style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#FBF5EB;background:#A85D22;border:1px solid #A85D22;padding:0.4375rem 1rem;text-decoration:none;transition:background 0.15s;" onmouseover="this.style.background='#884418';this.style.borderColor='#884418'" onmouseout="this.style.background='#A85D22';this.style.borderColor='#A85D22'">
+              {labels.registerLabel}
             </a>
           </div>
         )}
 
-        <!-- Mobile Menu Button -->
+        {/* Mobile menu button */}
         <button
-          id="mobile-menu-trigger"
-          class="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+          id="mobileMenuBtn"
+          class="flex md:hidden items-center justify-center"
           aria-label="Menü"
+          aria-controls="mobileMenu"
           aria-expanded="false"
-          aria-controls="mobile-menu"
+          style="width:2.25rem;height:2.25rem;color:#8A7A68;border:1px solid rgba(200,160,100,0.14);border-radius:0.125rem;background:transparent;cursor:pointer;transition:all 0.15s;"
         >
-          <Menu id="menu-icon-open" className="w-6 h-6" />
-          <X id="menu-icon-close" className="w-6 h-6 hidden" />
+          <Icon name="lucide:menu" class="w-5 h-5" />
         </button>
       </div>
     </div>
   </div>
 
-  <!-- Mobile Menu -->
-  <div
-    id="mobile-menu"
-    class="lg:hidden fixed inset-0 top-16 bg-white dark:bg-gray-900 z-40 transform translate-x-full transition-transform duration-300 overflow-y-auto"
-  >
-    <div class="container-custom py-6 space-y-4">
-      <!-- Mobile Search -->
-      <form action="/arama" class="relative">
-        <input
-          type="search"
-          name="q"
-          placeholder="Mekân, tarihi yer veya yemek ara..."
-          class="input pr-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-        />
-        <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-          <Search className="w-5 h-5" />
-        </button>
-      </form>
-
-      <!-- Mobile Nav Links -->
-      <nav class="space-y-1">
-        {navItems.map((item) => (
-          <div>
-            <a
-              href={item.href}
-              class={`flex items-center justify-between px-4 py-3 rounded-lg font-medium ${
-                isCurrentPage(item.href)
-                  ? 'bg-urfa-50 dark:bg-urfa-900/20 text-urfa-600'
-                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
-              }`}
-            >
-              {item.label}
-              {item.dropdown && <ChevronDown className="w-5 h-5" />}
-            </a>
-
-            {item.dropdown && (
-              <div class="ml-4 mt-1 space-y-1 border-l-2 border-gray-100 dark:border-gray-700 pl-4">
-                {item.dropdown.map((subItem) => (
-                  <a
-                    href={subItem.href}
-                    class="block px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400"
-                  >
-                    {subItem.label}
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
+  {/* Mobile Menu */}
+  <div id="mobileMenu" class="hidden md:hidden" style="background:#0D0A08;border-top:1px solid rgba(200,160,100,0.12);max-height:80vh;overflow-y:auto;">
+    <div class="container mx-auto px-4 py-5">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:1.25rem;">
+        {mobileQuickLinks.map((item: HeaderLinkItem) => (
+          <a href={item.href} style="display:flex;align-items:center;justify-content:center;padding:0.625rem;border:1px solid rgba(200,160,100,0.12);text-align:center;text-decoration:none;transition:all 0.15s;" onmouseover="this.style.borderColor='rgba(200,160,100,0.3)';this.querySelector('span').style.color='#CE8E38'" onmouseout="this.style.borderColor='rgba(200,160,100,0.12)';this.querySelector('span').style.color='#9A8470'">
+            <span style="font-size:0.6875rem;font-weight:600;letter-spacing:0.06em;color:#9A8470;transition:color 0.15s;">{item.label}</span>
+          </a>
         ))}
-      </nav>
-
-      <!-- Mobile Auth -->
-      {!user && (
-        <div class="grid grid-cols-2 gap-3 pt-4 border-t border-gray-200">
-          <a href="/giris" class="btn-secondary text-center">
-            Giriş Yap
-          </a>
-          <a href="/kayit" class="btn-primary text-center">
-            Üye Ol
-          </a>
-        </div>
-      )}
-
-      <!-- Mobile Add Place -->
-      <a
-        href="/places/ekle"
-        class="flex items-center justify-center gap-2 btn-accent w-full"
-      >
-        <MapPin className="w-5 h-5" />
-        Mekân ekle
-      </a>
+      </div>
+      <div style="border-top:1px solid rgba(200,160,100,0.1);padding-top:1rem;display:flex;flex-direction:column;gap:0.125rem;">
+        {mobileAllLinks.map((item: HeaderLinkItem) => (
+          <a href={item.href} style="display:block;padding:0.5rem 0.75rem;font-size:0.875rem;color:#8A7A68;text-decoration:none;transition:color 0.15s;" onmouseover="this.style.color='#F5EDD6'" onmouseout="this.style.color='#8A7A68'">{item.label}</a>
+        ))}
+      </div>
+      <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid rgba(200,160,100,0.1);">
+        <a href="/isletme-kayit" style="display:block;padding:0.75rem 1rem;background:#A85D22;color:#FBF5EB;text-align:center;font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;transition:background 0.15s;" onmouseover="this.style.background='#884418'" onmouseout="this.style.background='#A85D22'">
+          {labels.mobileBusinessCtaLabel}
+        </a>
+      </div>
     </div>
   </div>
 </header>
 
-<!-- Search Modal -->
-<div
-  id="search-modal"
-  class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm opacity-0 invisible transition-all duration-300"
->
-  <div class="container-custom pt-20">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl mx-auto overflow-hidden">
-      <form action="/arama" class="relative">
-        <input
-          type="search"
-          name="q"
-          placeholder="Mekân, tarihi yer veya yemek ara..."
-          class="w-full px-6 py-5 text-lg border-0 focus:ring-0 placeholder-gray-400"
-          autofocus
-        />
-        <button
-          type="submit"
-          class="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-urfa-600 text-white rounded-lg hover:bg-urfa-700 transition-colors"
-        >
-          <Search className="w-5 h-5" />
-        </button>
-      </form>
-
-      <div class="border-t border-gray-100 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800">
-        <p class="text-sm text-gray-500 mb-2">Popüler aramalar:</p>
-        <div class="flex flex-wrap gap-2">
-          {['Göbeklitepe', 'Balıklıgöl', 'Ciğer Kebabı', 'Harran', 'Urfa Kalesi'].map((term) => (
-            <a
-              href={`/arama?q=${encodeURIComponent(term)}`}
-              class="px-3 py-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full text-sm text-gray-600 dark:text-gray-300 hover:border-urfa-300 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors"
-            >
-              {term}
-            </a>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
-  // Mobile menu toggle
-  const mobileMenuTrigger = document.getElementById('mobile-menu-trigger');
-  const mobileMenu = document.getElementById('mobile-menu');
-  const menuIconOpen = document.getElementById('menu-icon-open');
-  const menuIconClose = document.getElementById('menu-icon-close');
+  const btn = document.getElementById('mobileMenuBtn') as HTMLButtonElement | null;
+  const menu = document.getElementById('mobileMenu');
 
-  mobileMenuTrigger?.addEventListener('click', () => {
-    const isExpanded = mobileMenuTrigger.getAttribute('aria-expanded') === 'true';
-    mobileMenuTrigger.setAttribute('aria-expanded', String(!isExpanded));
+  const setMenuState = (open: boolean) => {
+    if (!menu || !btn) return;
+    menu.classList.toggle('hidden', !open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    document.body.classList.toggle('overflow-hidden', open);
+  };
 
-    if (isExpanded) {
-      mobileMenu?.classList.add('translate-x-full');
-      menuIconOpen?.classList.remove('hidden');
-      menuIconClose?.classList.add('hidden');
-      document.body.style.overflow = '';
-    } else {
-      mobileMenu?.classList.remove('translate-x-full');
-      menuIconOpen?.classList.add('hidden');
-      menuIconClose?.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
+  btn?.addEventListener('click', () => {
+    if (!menu) return;
+    const isOpen = !menu.classList.contains('hidden');
+    setMenuState(!isOpen);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!menu || !btn) return;
+    if (!btn.contains(e.target as Node) && !menu.contains(e.target as Node)) {
+      setMenuState(false);
     }
   });
 
-  // Search modal
-  const searchTrigger = document.getElementById('search-trigger');
-  const searchModal = document.getElementById('search-modal');
-
-  searchTrigger?.addEventListener('click', () => {
-    searchModal?.classList.remove('opacity-0', 'invisible');
-    searchModal?.querySelector('input')?.focus();
-  });
-
-  searchModal?.addEventListener('click', (e) => {
-    if (e.target === searchModal) {
-      searchModal?.classList.add('opacity-0', 'invisible');
-    }
-  });
-
-  // Close search modal on escape
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      searchModal?.classList.add('opacity-0', 'invisible');
-    }
+    if (e.key === 'Escape') setMenuState(false);
   });
-
-  // Mobile theme toggle
-  const themeToggleMobile = document.getElementById('theme-toggle-mobile');
-  const sunIconMobile = document.getElementById('sun-icon-mobile');
-  const moonIconMobile = document.getElementById('moon-icon-mobile');
-
-  function setMobileTheme(dark: boolean) {
-    if (dark) {
-      document.documentElement.classList.add('dark');
-      sunIconMobile?.classList.remove('hidden');
-      moonIconMobile?.classList.add('hidden');
-    } else {
-      document.documentElement.classList.remove('dark');
-      sunIconMobile?.classList.add('hidden');
-      moonIconMobile?.classList.remove('hidden');
-    }
-  }
-
-  themeToggleMobile?.addEventListener('click', () => {
-    const isDark = !document.documentElement.classList.contains('dark');
-    setMobileTheme(isDark);
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    // Sync with desktop toggle
-    const event = new CustomEvent('themechange', { detail: { dark: isDark } });
-    window.dispatchEvent(event);
-  });
-
-  // Initialize mobile theme
-  const savedTheme = localStorage.getItem('theme');
-  const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if (savedTheme === 'dark' || (!savedTheme && systemDark)) {
-    setMobileTheme(true);
-  }
 </script>

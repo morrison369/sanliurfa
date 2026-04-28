@@ -23,6 +23,16 @@ export const migration_029_comments = {
       )
     `);
 
+    // Existing installations may already have a simpler comments table.
+    await pool.query(`
+      ALTER TABLE comments ADD COLUMN IF NOT EXISTS target_type VARCHAR(50) DEFAULT 'review';
+      ALTER TABLE comments ADD COLUMN IF NOT EXISTS target_id UUID;
+      ALTER TABLE comments ADD COLUMN IF NOT EXISTS parent_comment_id UUID;
+      ALTER TABLE comments ADD COLUMN IF NOT EXISTS helpful_count INTEGER DEFAULT 0;
+      ALTER TABLE comments ADD COLUMN IF NOT EXISTS unhelpful_count INTEGER DEFAULT 0;
+      ALTER TABLE comments ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP;
+    `);
+
     // Indexes for fast lookups
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_comments_target

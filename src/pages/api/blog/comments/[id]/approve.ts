@@ -9,8 +9,12 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../../lib/metrics';
 import { logger } from '../../../../../lib/logging';
 
+type CommentIdRow = {
+  id: string;
+};
+
 export const PATCH: APIRoute = async ({ params, request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -21,8 +25,13 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
       return apiError(ErrorCode.UNAUTHORIZED, 'Yönetici yetkisi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const commentId = parseInt(params.id as string);
-    const comment = await queryOne('SELECT id FROM blog_comments WHERE id = $1', [commentId]);
+    const commentId = params.id;
+
+    if (!commentId) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+
+    const comment = await queryOne<CommentIdRow>('SELECT id FROM blog_comments WHERE id = $1', [commentId]);
 
     if (!comment) {
       const duration = Date.now() - startTime;
@@ -34,7 +43,7 @@ export const PATCH: APIRoute = async ({ params, request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('PATCH', `/api/blog/comments/${params.id}/approve`, HttpStatus.OK, duration);
-    logger.logMutation('approve', 'blog_comments', commentId, locals.user?.id, { duration });
+    logger.logMutation('approve', 'blog_comments', comment.id, locals.user?.id);
 
     return apiResponse({ success: true, message: 'Yorum onaylandı' }, HttpStatus.OK, requestId);
   } catch (err) {

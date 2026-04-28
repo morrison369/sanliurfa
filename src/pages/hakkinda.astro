@@ -1,185 +1,152 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { MapPin, Users, Star, Award, Heart, Globe } from "lucide-react";
+import { Icon } from 'astro-icon/components';
+import Layout from '../layouts/Layout.astro';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 const seo = {
-  title: "Hakkımızda - sanliurfa.com Ekibi",
-  description:
-    "sanliurfa.com, Şanlıurfa'nın en kapsamlı şehir rehberi olarak 2025 yılında kurulmuştur. Amacımız şehri keşfetmenin en iyi yolunu sunmak.",
+  title: 'Hakkımızda - Sanliurfa.com Ekibi',
+  description: 'Sanliurfa.com, Şanlıurfa\'nın en kapsamlı şehir rehberi olarak 2025 yılında kurulmuştur.',
+  keywords: ['sanliurfa.com hakkında', 'şanlıurfa şehir rehberi', 'urfa dijital rehber', 'sanliurfa.com ekibi'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/hakkinda',
 };
 
 const values = [
-  {
-    icon: Heart,
-    title: "Tutku",
-    description:
-      "Şanlıurfa'ya olan sevgimizle her içeriği özenle hazırlıyoruz.",
-  },
-  {
-    icon: Users,
-    title: "Topluluk",
-    description:
-      "Kullanıcılarımızın değerlendirmeleriyle daha iyi hizmet sunuyoruz.",
-  },
-  {
-    icon: Star,
-    title: "Kalite",
-    description: "Sadece en iyi mekânları ve deneyimleri öneriyoruz.",
-  },
-  {
-    icon: Globe,
-    title: "Erişilebilirlik",
-    description: "Şehrin tüm güzelliklerini herkese ulaştırmayı hedefliyoruz.",
-  },
+  { icon: 'heart', title: 'Tutku', description: 'Şanlıurfa\'ya olan sevgimizle her içeriği özenle hazırlıyoruz.' },
+  { icon: 'users', title: 'Topluluk', description: 'Kullanıcılarımızın değerlendirmeleriyle daha iyi hizmet sunuyoruz.' },
+  { icon: 'star', title: 'Kalite', description: 'Sadece en iyi mekanları ve deneyimleri öneriyoruz.' },
+  { icon: 'globe', title: 'Erişilebilirlik', description: 'Şehrin tüm güzelliklerini herkese ulaştırmayı hedefliyoruz.' },
 ];
 
 const stats = [
-  { value: "500+", label: "Mekân" },
-  { value: "50K+", label: "Kullanıcı" },
-  { value: "10K+", label: "Yorum" },
-  { value: "100+", label: "Blog Yazısı" },
+  { value: '500+', label: 'Mekan' },
+  { value: '50K+', label: 'Kullanıcı' },
+  { value: '10K+', label: 'Yorum' },
+  { value: '100+', label: 'Blog Yazısı' },
+];
+const faqItems = [
+  { S: "Sanliurfa.com ne zaman kuruldu?", C: "Sanliurfa.com, Şanlıurfa'nın kapsamlı dijital rehberi olarak 2025 yılında kurulmuştur." },
+  { S: 'Siteye mekan ekleyebilir miyim?', C: 'Evet, İşletme Ekle sayfasından mekanınızı ücretsiz olarak kaydedebilirsiniz.' },
+  { S: "Sanliurfa.com'a nasıl iletişim kurabilirim?", C: 'İletişim sayfamız üzerinden mesaj gönderebilir veya sosyal medya kanallarımızdan bize ulaşabilirsiniz.' },
 ];
 ---
 
 <Layout seo={seo}>
-  <!-- Hero Section -->
-  <section class="relative py-24 bg-urfa-900 overflow-hidden">
+  <!-- Hero -->
+  <div class="relative overflow-hidden bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-20">
     <div class="absolute inset-0 opacity-10">
-      <img
-        src="/images/historical/balikligol.jpg"
-        alt=""
-        class="w-full h-full object-cover"
-      />
+      <img src="/images/historical/balikligol.jpg" alt="" class="w-full h-full object-cover" loading="eager" />
     </div>
-    <div class="relative container-custom text-center">
-      <h1 class="text-4xl lg:text-6xl font-display font-bold text-white mb-6">
-        Hakkımızda
-      </h1>
-      <p class="text-xl text-urfa-100 max-w-2xl mx-auto">
-        Şanlıurfa'yı keşfetmenin en iyi yolunu sunmak için çalışıyoruz.
-      </p>
+    <div class="absolute inset-0 bg-[#0D0A08]/70"></div>
+    <div class="relative container mx-auto px-4 text-center">
+      <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-3">HAKKIMIZDA</p>
+      <h1 class="text-4xl lg:text-6xl font-bold text-[#F5EDD6] mb-6">Hakkımızda</h1>
+      <p class="text-xl text-[#C4B49A] max-w-2xl mx-auto">Şanlıurfa'yı keşfetmenin en iyi yolunu sunmak için çalışıyoruz.</p>
     </div>
-  </section>
+  </div>
 
-  <!-- Mission Section -->
-  <section class="section bg-white dark:bg-gray-900">
-    <div class="container-custom">
+  <!-- Misyon -->
+  <div class="py-16 bg-[#FDFAF3]">
+    <div class="container mx-auto px-4">
       <div class="grid lg:grid-cols-2 gap-12 items-center">
         <div>
-          <span class="text-urfa-600 dark:text-urfa-400 font-medium"
-            >Misyonumuz</span
-          >
-          <h2
-            class="text-3xl lg:text-4xl font-display font-bold text-gray-900 dark:text-white mt-2 mb-4"
-          >
-            Şanlıurfa'yı Dünyaya Tanıtmak
-          </h2>
-          <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-            sanliurfa.com, 2025 yılında Şanlıurfa'nın eşsiz güzelliklerini,
-            tarihi zenginliklerini ve lezzetlerini daha geniş kitlelere
-            ulaştırmak amacıyla kurulmuştur.
-          </p>
-          <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-            12.000 yıllık tarihe sahip bu kadim şehrin, Göbeklitepe'sinden
-            Balıklıgölü'ne, Harran'ından Halfeti'sine kadar tüm değerlerini
-            modern bir platformda bir araya getiriyoruz.
-          </p>
-          <p class="text-gray-600 leading-relaxed">
-            Amacımız, yerel halk ve ziyaretçiler için en güncel ve doğru bilgiyi
-            sunarak, Şanlıurfa deneyimini en üst seviyeye çıkarmaktır.
-          </p>
+          <span class="text-urfa-600 font-medium text-sm uppercase tracking-wide">Misyonumuz</span>
+          <h2 class="text-3xl lg:text-4xl font-bold text-[#1A1008] mt-2 mb-4">Şanlıurfa'yı Dünyaya Tanıtmak</h2>
+          <p class="text-[#6B5540] leading-relaxed mb-4">Sanliurfa.com, 2025 yılında Şanlıurfa'nın eşsiz güzelliklerini, tarihi zenginliklerini ve lezzetlerini daha geniş kitlelere ulaştırmak amacıyla kurulmuştur.</p>
+          <p class="text-[#6B5540] leading-relaxed mb-4">12.000 yıllık tarihe sahip bu kadim şehrin, Göbeklitepe'sinden Balıklıgölü'ne, Harran'ından Halfeti'sine kadar tüm değerlerini modern bir platformda bir araya getiriyoruz.</p>
+          <p class="text-[#6B5540] leading-relaxed">Amacımız, yerel halk ve ziyaretçiler için en güncel ve doğru bilgiyi sunarak, Şanlıurfa deneyimini en üst seviyeye çıkarmaktır.</p>
         </div>
         <div class="relative">
-          <img
-            src="/images/historical/gobeklitepe.jpg"
-            alt="Göbeklitepe"
-            class="rounded-2xl shadow-2xl"
-          />
-          <div
-            class="absolute -bottom-6 -right-6 bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 hidden lg:block"
-          >
-            <div class="text-4xl font-bold text-urfa-600 dark:text-urfa-400">
-              2025
-            </div>
-            <div class="text-gray-600 dark:text-gray-400">Kuruluş Yılı</div>
+          <img src="/images/historical/gobeklitepe.jpg" alt="Göbeklitepe" class="rounded-sm shadow-2xl w-full" />
+          <div class="absolute -bottom-6 -right-6 bg-white rounded-sm shadow-xl border border-[rgba(200,160,100,0.2)] p-6 hidden lg:block">
+            <div class="text-4xl font-bold text-urfa-600">2025</div>
+            <div class="text-[#6B5540]">Kuruluş Yılı</div>
           </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Stats Section -->
-  <section class="py-16 bg-urfa-50 dark:bg-gray-800">
-    <div class="container-custom">
+  <!-- İstatistikler -->
+  <div class="py-16 bg-[rgba(200,160,100,0.06)] border-y border-[rgba(200,160,100,0.14)]">
+    <div class="container mx-auto px-4">
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
-        {
-          stats.map((stat) => (
-            <div class="text-center">
-              <div class="text-4xl font-bold text-urfa-600 dark:text-urfa-400">
-                {stat.value}
-              </div>
-              <div class="text-gray-600 dark:text-gray-400 mt-1">
-                {stat.label}
-              </div>
-            </div>
-          ))
-        }
+        {stats.map((stat) => (
+          <div class="text-center">
+            <div class="text-4xl font-bold text-urfa-600">{stat.value}</div>
+            <div class="text-[#6B5540] mt-1">{stat.label}</div>
+          </div>
+        ))}
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Values Section -->
-  <section class="section bg-white dark:bg-gray-900">
-    <div class="container-custom">
+  <!-- Değerlerimiz -->
+  <div class="py-16 bg-[#FDFAF3]">
+    <div class="container mx-auto px-4">
       <div class="text-center max-w-2xl mx-auto mb-12">
-        <span class="text-urfa-600 dark:text-urfa-400 font-medium"
-          >Değerlerimiz</span
-        >
-        <h2 class="section-title dark:text-white">Bizi Biz Yapanlar</h2>
-        <p class="section-subtitle dark:text-gray-400">
-          Her kararımızda ve her içeriğimizde önceliğimiz kullanıcılarımızdır.
-        </p>
+        <span class="text-urfa-600 font-medium text-sm uppercase tracking-wide">Değerlerimiz</span>
+        <h2 class="text-3xl font-bold text-[#1A1008] mt-2 mb-3">Bizi Biz Yapanlar</h2>
+        <p class="text-[#6B5540]">Her kararımızda ve her içeriğimizde önceliğimiz kullanıcılarımızdır.</p>
       </div>
 
       <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {
-          values.map((value) => (
-            <div class="text-center p-6 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-urfa-50 dark:hover:bg-urfa-900/20 transition-colors">
-              <div class="w-14 h-14 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <value.icon className="w-7 h-7 text-urfa-600 dark:text-urfa-400" />
-              </div>
-              <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
-                {value.title}
-              </h3>
-              <p class="text-gray-600 dark:text-gray-400 text-sm">
-                {value.description}
-              </p>
+        {values.map((value) => (
+          <div class="text-center p-6 rounded-sm border border-[rgba(200,160,100,0.18)] bg-white hover:bg-[rgba(200,160,100,0.04)] transition-colors shadow-sm">
+            <div class="w-14 h-14 bg-[rgba(200,160,100,0.12)] rounded-sm flex items-center justify-center mx-auto mb-4">
+              <Icon name={`lucide:${value.icon}`} class="w-7 h-7 text-urfa-600" />
             </div>
-          ))
-        }
+            <h3 class="font-semibold text-[#1A1008] mb-2">{value.title}</h3>
+            <p class="text-[#6B5540] text-sm">{value.description}</p>
+          </div>
+        ))}
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- CTA Section -->
-  <section class="section bg-urfa-900">
-    <div class="container-custom text-center">
-      <h2 class="text-3xl font-display font-bold text-white mb-4">
-        Bize Katılın
-      </h2>
-      <p class="text-urfa-100 max-w-xl mx-auto mb-8">
-        sanliurfa.com olarak büyüyen ekibimizin bir parçası olun veya mekânınızı
-        platformumuza ekleyin.
-      </p>
+  <!-- CTA -->
+  <div class="py-16 bg-[#0D0A08] border-t border-[rgba(200,160,100,0.14)]">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl font-bold text-[#F5EDD6] mb-4">Bize Katılın</h2>
+      <p class="text-[#9A8470] max-w-xl mx-auto mb-8">Sanliurfa.com olarak büyüyen ekibimizin bir parçası olun veya mekanınızı platformumuza ekleyin.</p>
       <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="/iletisim" class="btn-accent"> İletişime Geç </a>
-        <a
-          href="/places/ekle"
-          class="btn bg-white/10 text-white hover:bg-white/20"
-        >
-          Mekân ekle
-        </a>
+        <a href="/iletisim" class="inline-block rounded-sm bg-urfa-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-urfa-700 transition-colors">İletişime Geç</a>
+        <a href="/isletme-kayit" class="inline-block rounded-sm bg-white/10 border border-white/20 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/20 transition-colors">Mekan Ekle</a>
       </div>
     </div>
-  </section>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'AboutPage',
+    name: 'Sanliurfa.com Hakkında',
+    url: `${baseUrl}/hakkinda`,
+    description: 'Sanliurfa.com, Şanlıurfa\'nın en kapsamlı dijital şehir rehberidir.',
+    mainEntity: {
+      '@type': 'Organization',
+      name: 'Sanliurfa.com',
+      url: `${baseUrl}`,
+      description: 'Şanlıurfa\'nın mekan rehberi, etkinlik takvimi ve yaşam platformu.',
+      areaServed: { '@type': 'City', name: 'Şanlıurfa' },
+      foundingLocation: { '@type': 'City', name: 'Şanlıurfa' },
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Hakkımızda', item: `${baseUrl}/hakkinda` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

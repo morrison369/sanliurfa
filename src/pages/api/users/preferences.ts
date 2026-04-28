@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserProfile, updateNotificationPreferences } from '../../../lib/users';
+import { getUserProfile, updateNotificationPreferences } from '../../../lib/user/users';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -32,7 +32,7 @@ const updatePreferencesSchema = {
 };
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('GET', '/api/users/preferences', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -89,7 +89,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -99,7 +99,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('PUT', '/api/users/preferences', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -182,3 +182,4 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     );
   }
 };
+

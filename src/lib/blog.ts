@@ -1,650 +1,944 @@
 /**
- * Blog Yönetim Sistemi
- * Blog yazıları, kategoriler, yorumlar ve arama
+ * Blog System
+ * Content management for blog posts
  */
 
-import { queryMany, queryOne, insert, update } from "./postgres";
-import { logger } from "./logging";
-import { getCache, setCache, deleteCache, deleteCachePattern } from "./cache";
-
-export interface BlogCategory {
-  id: number;
-  name: string;
-  slug: string;
-  description?: string;
-  icon?: string;
-  orderIndex: number;
-  postCount?: number;
-}
+import { getCollection } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import { query as dbQuery } from './postgres';
+import { getPublicAppUrl } from './public-app-url';
 
 export interface BlogPost {
-  id: number;
-  title: string;
+  id: string;
   slug: string;
+  title: string;
+  excerpt: string;
   content: string;
-  excerpt?: string;
-  authorId?: string;
-  authorName?: string;
-  categoryId?: number;
-  categoryName?: string;
-  featuredImage?: string;
-  thumbnail?: string;
-  status: "draft" | "published" | "archived";
-  isFeatured: boolean;
-  viewCount: number;
-  likeCount: number;
-  readTimeMinutes?: number;
-  seoTitle?: string;
-  seoDescription?: string;
-  seoKeywords?: string;
+  category: string;
   tags: string[];
-  publishedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  author: string;
+  authorAvatar?: string;
+  publishedAt: Date;
+  updatedAt?: Date;
+  readingTime: number;
+  image?: string;
+  featured?: boolean;
+  views?: number;
 }
 
-export interface BlogComment {
-  id: number;
-  postId: number;
-  userId?: string;
-  authorName: string;
-  authorEmail?: string;
-  content: string;
-  status: "pending" | "approved" | "rejected";
-  replies?: BlogComment[];
-  createdAt: Date;
+export interface BlogCategory {
+  slug: string;
+  name: string;
+  count: number;
+  description?: string;
 }
 
-/**
- * Blog Kategorileri
- */
-export async function getBlogCategories(): Promise<BlogCategory[]> {
-  try {
-    const cacheKey = "blog:categories";
-    const cached = await getCache<BlogCategory[]>(cacheKey);
+type BlogCollectionEntry = CollectionEntry<'blog'>;
 
-    if (cached) {
-      return cached;
-    }
-
-    const result = await queryMany(
-      `SELECT id, name, slug, description, icon, order_index as "orderIndex",
-              (SELECT COUNT(*) FROM blog_posts WHERE category_id = blog_categories.id AND status = 'published') as "postCount"
-       FROM blog_categories ORDER BY order_index ASC`,
-    );
-
-    const categories = result.map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      slug: row.slug,
-      description: row.description,
-      icon: row.icon,
-      orderIndex: row.orderIndex,
-      postCount: parseInt(row.postCount || "0"),
-    }));
-
-    await setCache(cacheKey, categories, 3600);
-    return categories;
-  } catch (error) {
-    logger.error(
-      "Blog kategorileri alınamadı",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return [];
-  }
+function resolveBlogSlug(post: BlogCollectionEntry): string {
+  return post.data.slug ?? post.id.replace(/\.md$/i, '');
 }
 
-/**
- * Blog Yazıları - Listele
- */
-export async function getBlogPosts(
-  options: {
-    status?: string;
-    categoryId?: number;
-    limit?: number;
-    offset?: number;
-    sort?: "recent" | "featured" | "popular";
-  } = {},
-): Promise<{ posts: BlogPost[]; total: number }> {
-  try {
-    const {
-      status = "published",
-      categoryId,
-      limit = 20,
-      offset = 0,
-      sort = "recent",
-    } = options;
-
-    let query = `
-      SELECT bp.*, bc.name as category_name, u.full_name as author_name,
-             array_agg(DISTINCT bt.name) FILTER (WHERE bt.name IS NOT NULL) as tags
-      FROM blog_posts bp
-      LEFT JOIN blog_categories bc ON bp.category_id = bc.id
-      LEFT JOIN users u ON bp.author_id = u.id
-      LEFT JOIN blog_post_tags bpt ON bp.id = bpt.post_id
-      LEFT JOIN blog_tags bt ON bpt.tag_id = bt.id
-      WHERE bp.status = $1
-    `;
-
-    const params: any[] = [status];
-
-    if (categoryId) {
-      query += ` AND bp.category_id = $${params.length + 1}`;
-      params.push(categoryId);
-    }
-
-    query += `
-      GROUP BY bp.id, bc.name, u.full_name
-    `;
-
-    // Sıralama
-    if (sort === "featured") {
-      query += ` ORDER BY bp.is_featured DESC, bp.published_at DESC`;
-    } else if (sort === "popular") {
-      query += ` ORDER BY bp.view_count DESC`;
-    } else {
-      query += ` ORDER BY bp.published_at DESC`;
-    }
-
-    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
-
-    const posts = await queryMany(query, params);
-
-    // Toplam sayı
-    let countQuery =
-      "SELECT COUNT(*) as total FROM blog_posts WHERE status = $1";
-    const countParams: any[] = [status];
-
-    if (categoryId) {
-      countQuery += ` AND category_id = $${countParams.length + 1}`;
-      countParams.push(categoryId);
-    }
-
-    const countResult = await queryOne(countQuery, countParams);
-    const total = parseInt(countResult?.total || "0");
-
-    return {
-      posts: posts.map(formatBlogPost),
-      total,
-    };
-  } catch (error) {
-    logger.error(
-      "Blog yazıları alınamadı",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return { posts: [], total: 0 };
-  }
-}
-
-/**
- * Blog Yazısı - Detay
- */
-export async function getBlogPostBySlug(
-  slug: string,
-): Promise<BlogPost | null> {
-  try {
-    const cacheKey = `blog:post:${slug}`;
-    const cached = await getCache<BlogPost>(cacheKey);
-
-    if (cached) {
-      return cached;
-    }
-
-    const result = await queryOne(
-      `SELECT bp.*, bc.name as category_name, u.full_name as author_name,
-              array_agg(DISTINCT bt.name) FILTER (WHERE bt.name IS NOT NULL) as tags
-       FROM blog_posts bp
-       LEFT JOIN blog_categories bc ON bp.category_id = bc.id
-       LEFT JOIN users u ON bp.author_id = u.id
-       LEFT JOIN blog_post_tags bpt ON bp.id = bpt.post_id
-       LEFT JOIN blog_tags bt ON bpt.tag_id = bt.id
-       WHERE bp.slug = $1 AND bp.status = 'published'
-       GROUP BY bp.id, bc.id, u.id`,
-      [slug],
-    );
-
-    if (!result) {
-      return null;
-    }
-
-    const post = formatBlogPost(result);
-
-    // Görüntüleme sayısını artır
-    await update("blog_posts", String(result.id), {
-      view_count: result.view_count + 1,
-    });
-
-    await setCache(cacheKey, post, 1800); // 30 dakika cache
-    return post;
-  } catch (error) {
-    logger.error(
-      "Blog yazısı alınamadı",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return null;
-  }
-}
-
-/**
- * Blog Yazısı Oluştur
- */
-export async function createBlogPost(
-  data: Omit<
-    BlogPost,
-    "id" | "createdAt" | "updatedAt" | "viewCount" | "likeCount"
-  >,
-): Promise<BlogPost | null> {
-  try {
-    const slug = generateSlug(data.title);
-    const readTime = calculateReadTime(data.content);
-
-    const result = await insert("blog_posts", {
-      title: data.title,
-      slug,
-      content: data.content,
-      excerpt: data.excerpt,
-      author_id: data.authorId,
-      category_id: data.categoryId,
-      featured_image: data.featuredImage,
-      thumbnail: data.thumbnail,
-      status: data.status || "draft",
-      is_featured: data.isFeatured || false,
-      read_time_minutes: readTime,
-      seo_title: data.seoTitle || data.title,
-      seo_description: data.seoDescription || data.excerpt,
-      seo_keywords: data.seoKeywords,
-      published_at: data.publishedAt,
-    });
-
-    // Etiketleri ekle
-    if (data.tags && data.tags.length > 0) {
-      await addTagsToPost(result.id, data.tags);
-    }
-
-    // Cache temizle
-    await deleteCachePattern("blog:*");
-
-    logger.info("Blog yazısı oluşturuldu", {
-      postId: result.id,
-      title: data.title,
-    });
-    return getBlogPostBySlug(slug);
-  } catch (error) {
-    logger.error(
-      "Blog yazısı oluşturulamadı",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return null;
-  }
-}
-
-/**
- * Blog Yazısını Güncelle
- */
-export async function updateBlogPost(
-  id: number,
-  data: Partial<BlogPost>,
-): Promise<BlogPost | null> {
-  try {
-    const updates: Record<string, any> = {
-      updated_at: new Date().toISOString(),
-    };
-
-    if (data.title) {
-      updates.title = data.title;
-      updates.slug = generateSlug(data.title);
-    }
-    if (data.content) {
-      updates.content = data.content;
-      updates.read_time_minutes = calculateReadTime(data.content);
-    }
-    if (data.excerpt) updates.excerpt = data.excerpt;
-    if (data.categoryId) updates.category_id = data.categoryId;
-    if (data.featuredImage) updates.featured_image = data.featuredImage;
-    if (data.isFeatured !== undefined) updates.is_featured = data.isFeatured;
-    if (data.status) updates.status = data.status;
-    if (data.seoTitle) updates.seo_title = data.seoTitle;
-    if (data.seoDescription) updates.seo_description = data.seoDescription;
-
-    await update("blog_posts", String(id), updates);
-
-    // Etiketleri güncelle
-    if (data.tags) {
-      await deleteCache(`blog:post_tags:${id}`);
-      await queryMany(`DELETE FROM blog_post_tags WHERE post_id = $1`, [id]);
-      await addTagsToPost(id, data.tags);
-    }
-
-    // Cache temizle
-    await deleteCachePattern("blog:*");
-
-    const post = await queryOne("SELECT slug FROM blog_posts WHERE id = $1", [
-      id,
-    ]);
-    return getBlogPostBySlug(post.slug);
-  } catch (error) {
-    logger.error(
-      "Blog yazısı güncellenemedi",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return null;
-  }
-}
-
-/**
- * Blog Yazısını Sil
- */
-export async function deleteBlogPost(id: number): Promise<boolean> {
-  try {
-    await queryMany("DELETE FROM blog_posts WHERE id = $1", [id]);
-    await deleteCachePattern("blog:*");
-
-    logger.info("Blog yazısı silindi", { postId: id });
-    return true;
-  } catch (error) {
-    logger.error(
-      "Blog yazısı silinemedi",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return false;
-  }
-}
-
-/**
- * Blog Yazılarında Ara
- */
-export async function searchBlogPosts(
-  query: string,
-  limit: number = 20,
-): Promise<BlogPost[]> {
-  try {
-    const results = await queryMany(
-      `SELECT bp.*, bc.name as category_name, u.full_name as author_name,
-              array_agg(DISTINCT bt.name) FILTER (WHERE bt.name IS NOT NULL) as tags
-       FROM blog_posts bp
-       LEFT JOIN blog_categories bc ON bp.category_id = bc.id
-       LEFT JOIN users u ON bp.author_id = u.id
-       LEFT JOIN blog_post_tags bpt ON bp.id = bpt.post_id
-       LEFT JOIN blog_tags bt ON bpt.tag_id = bt.id
-       WHERE bp.status = 'published'
-       AND to_tsvector('turkish', bp.title || ' ' || COALESCE(bp.excerpt, '') || ' ' || bp.content)
-           @@ plainto_tsquery('turkish', $1)
-       GROUP BY bp.id, bc.id, u.id
-       ORDER BY ts_rank(to_tsvector('turkish', bp.title || ' ' || COALESCE(bp.excerpt, '') || ' ' || bp.content),
-                        plainto_tsquery('turkish', $1)) DESC
-       LIMIT $2`,
-      [query, limit],
-    );
-
-    return results.map(formatBlogPost);
-  } catch (error) {
-    logger.error(
-      "Blog arama başarısız",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return [];
-  }
-}
-
-/**
- * Blog Yorumları
- */
-export async function getBlogComments(
-  postId: number,
-  approved: boolean = true,
-): Promise<BlogComment[]> {
-  try {
-    const status = approved ? "approved" : "pending";
-
-    const results = await queryMany(
-      `SELECT * FROM blog_comments
-       WHERE post_id = $1 AND status = $2 AND parent_comment_id IS NULL
-       ORDER BY created_at DESC`,
-      [postId, status],
-    );
-
-    return results.map((row: any) => ({
-      id: row.id,
-      postId: row.post_id,
-      userId: row.user_id,
-      authorName: row.author_name,
-      authorEmail: row.author_email,
-      content: row.content,
-      status: row.status,
-      createdAt: row.created_at,
-    }));
-  } catch (error) {
-    logger.error(
-      "Blog yorumları alınamadı",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return [];
-  }
-}
-
-/**
- * Blog Yorumu Ekle
- */
-export async function addBlogComment(
-  postId: number,
-  data: {
-    authorName: string;
-    authorEmail?: string;
-    userId?: string;
-    content: string;
-  },
-): Promise<BlogComment | null> {
-  try {
-    const result = await insert("blog_comments", {
-      post_id: postId,
-      user_id: data.userId,
-      author_name: data.authorName,
-      author_email: data.authorEmail,
-      content: data.content,
-      status: "pending", // Yöneticinin onayı gerekli
-    });
-
-    logger.info("Blog yorumu eklendi", { commentId: result.id, postId });
-
-    return {
-      id: result.id,
-      postId,
-      authorName: data.authorName,
-      authorEmail: data.authorEmail,
-      content: data.content,
-      status: "pending",
-      createdAt: new Date(),
-    };
-  } catch (error) {
-    logger.error(
-      "Blog yorumu eklenemedi",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return null;
-  }
-}
-
-/**
- * Yardımcı Fonksiyonlar
- */
-
-function formatBlogPost(row: any): BlogPost {
+function mapCollectionPost(post: BlogCollectionEntry): BlogPost {
   return {
-    id: row.id,
-    title: row.title,
-    slug: row.slug,
-    content: row.content,
-    excerpt: row.excerpt,
-    authorId: row.author_id,
-    authorName: row.author_name,
-    categoryId: row.category_id,
-    categoryName: row.category_name,
-    featuredImage: row.featured_image,
-    thumbnail: row.thumbnail,
-    status: row.status,
-    isFeatured: row.is_featured,
-    viewCount: row.view_count || 0,
-    likeCount: row.like_count || 0,
-    readTimeMinutes: row.read_time_minutes,
-    seoTitle: row.seo_title,
-    seoDescription: row.seo_description,
-    seoKeywords: row.seo_keywords,
-    tags: Array.isArray(row.tags)
-      ? row.tags.filter((t: any) => t !== null)
-      : [],
-    publishedAt: row.published_at,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    id: post.id,
+    slug: resolveBlogSlug(post),
+    title: post.data.title,
+    excerpt: post.data.excerpt,
+    content: post.body,
+    category: post.data.category,
+    tags: post.data.tags,
+    author: post.data.author,
+    authorAvatar: post.data.authorAvatar,
+    publishedAt: post.data.publishedAt,
+    updatedAt: post.data.updatedAt ?? post.data.updatedDate,
+    readingTime: post.data.readingTime,
+    image: post.data.image ?? post.data.heroImage ?? post.data.thumb,
+    featured: post.data.featured,
+    views: post.data.views,
   };
 }
 
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .replace(/ş/g, "s")
-    .replace(/ç/g, "c")
-    .replace(/ğ/g, "g")
-    .replace(/ı/g, "i")
-    .replace(/ö/g, "o")
-    .replace(/ü/g, "u")
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
+/**
+ * Get all blog posts
+ */
+export async function getAllPosts(): Promise<BlogPost[]> {
+  const posts = await getCollection('blog');
+  
+  return posts
+    .filter((post: BlogCollectionEntry) => !post.data.draft)
+    .map(mapCollectionPost)
+    .sort((a: BlogPost, b: BlogPost) => b.publishedAt.getTime() - a.publishedAt.getTime());
 }
 
-function calculateReadTime(content: string): number {
+/**
+ * Get featured posts
+ */
+export async function getFeaturedPosts(limit = 3): Promise<BlogPost[]> {
+  const posts = await getAllPosts();
+  return posts.filter(p => p.featured).slice(0, limit);
+}
+
+/**
+ * Get post by slug
+ */
+export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
+  const posts = await getAllPosts();
+  return posts.find(p => p.slug === slug) || null;
+}
+
+/**
+ * Get posts by category
+ */
+export async function getPostsByCategory(category: string): Promise<BlogPost[]> {
+  const posts = await getAllPosts();
+  const lowerCategory = (category || '').toLowerCase();
+  return posts.filter(p => 
+    (p.category || '').toLowerCase() === lowerCategory
+  );
+}
+
+/**
+ * Get posts by tag
+ */
+export async function getPostsByTag(tag: string): Promise<BlogPost[]> {
+  const posts = await getAllPosts();
+  const lowerTag = (tag || '').toLowerCase();
+  return posts.filter(p => 
+    (p.tags || []).some(t => (t || '').toLowerCase() === lowerTag)
+  );
+}
+
+/**
+ * Get related posts
+ */
+export async function getRelatedPosts(
+  currentPost: BlogPost,
+  limit = 3
+): Promise<BlogPost[]> {
+  const posts = await getAllPosts();
+  
+  return posts
+    .filter(p => p.id !== currentPost.id)
+    .filter(p => 
+      p.category === currentPost.category ||
+      p.tags.some(t => currentPost.tags.includes(t))
+    )
+    .slice(0, limit);
+}
+
+/**
+ * Search posts
+ */
+export async function searchPosts(query: string): Promise<BlogPost[]> {
+  const posts = await getAllPosts();
+  const lowerQuery = (query || '').toLowerCase();
+  
+  return posts.filter(p =>
+    (p.title || '').toLowerCase().includes(lowerQuery) ||
+    (p.excerpt || '').toLowerCase().includes(lowerQuery) ||
+    (p.tags || []).some(t => (t || '').toLowerCase().includes(lowerQuery))
+  );
+}
+
+/**
+ * Get all categories with counts
+ */
+export async function getCategories(): Promise<BlogCategory[]> {
+  const posts = await getAllPosts();
+  const categoryMap = new Map<string, number>();
+  
+  posts.forEach(post => {
+    const count = categoryMap.get(post.category) || 0;
+    categoryMap.set(post.category, count + 1);
+  });
+  
+  return Array.from(categoryMap.entries()).map(([slug, count]) => ({
+    slug: slugify(slug),
+    name: slug,
+    count,
+  }));
+}
+
+/**
+ * Get all tags with counts
+ */
+export async function getTags(): Promise<{ name: string; count: number }[]> {
+  const posts = await getAllPosts();
+  const tagMap = new Map<string, number>();
+  
+  posts.forEach(post => {
+    post.tags.forEach(tag => {
+      const count = tagMap.get(tag) || 0;
+      tagMap.set(tag, count + 1);
+    });
+  });
+  
+  return Array.from(tagMap.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/**
+ * Calculate reading time
+ */
+export function calculateReadingTime(content: string): number {
   const wordsPerMinute = 200;
-  const words = content.split(/\s+/).length;
+  const words = content.trim().split(/\s+/).length;
   return Math.ceil(words / wordsPerMinute);
 }
 
-// ==================== REVISIONS / VERSION CONTROL ====================
-
 /**
- * Get all revisions for a blog post
+ * Generate RSS feed
  */
-export async function getBlogPostRevisions(postId: number): Promise<any[]> {
-  try {
-    return await queryMany(
-      `SELECT id, post_id, title, editor_id, change_summary, created_at
-       FROM blog_post_revisions
-       WHERE post_id = $1
-       ORDER BY created_at DESC
-       LIMIT 50`,
-      [postId],
-    );
-  } catch (error) {
-    logger.error(
-      "Blog yazı geçmişi alınamadı",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return [];
-  }
+export async function generateRSS(): Promise<string> {
+  const posts = await getAllPosts();
+  const latest = posts[0];
+  const publicAppUrl = getPublicAppUrl();
+  
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Şanlıurfa Rehberi Blog</title>
+    <link>${publicAppUrl}/blog</link>
+    <description>Şanlıurfa hakkında en güncel bilgiler, rehberler ve öneriler</description>
+    <language>tr</language>
+    <lastBuildDate>${latest?.publishedAt.toUTCString() || new Date().toUTCString()}</lastBuildDate>
+    <atom:link href="${publicAppUrl}/blog/rss.xml" rel="self" type="application/rss+xml"/>
+    ${posts.slice(0, 20).map(post => `
+    <item>
+      <title>${escapeXml(post.title)}</title>
+      <link>${publicAppUrl}/blog/${post.slug}</link>
+      <guid isPermaLink="true">${publicAppUrl}/blog/${post.slug}</guid>
+      <pubDate>${post.publishedAt.toUTCString()}</pubDate>
+      <description>${escapeXml(post.excerpt)}</description>
+      ${post.tags.map(tag => `<category>${escapeXml(tag)}</category>`).join('')}
+    </item>
+    `).join('')}
+  </channel>
+</rss>`;
+}
+
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 /**
- * Save current post state as revision before updating
+ * Get blog categories (alias for getCategories)
  */
-export async function savePostRevision(
-  postId: number,
-  editorId: string,
-  changeSummary?: string,
-): Promise<void> {
-  try {
-    const post = await queryOne(
-      "SELECT title, content FROM blog_posts WHERE id = $1",
-      [postId],
-    );
-    if (!post) return;
+export async function getBlogCategories(): Promise<BlogCategory[]> {
+  return getCategories();
+}
 
-    await queryMany(
-      `INSERT INTO blog_post_revisions (post_id, title, content, editor_id, change_summary)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [
-        postId,
-        post.title,
-        post.content,
-        editorId,
-        changeSummary || "Manual edit",
-      ],
-    );
+// Blog categories
+export const BLOG_CATEGORIES = [
+  { slug: 'tarih', name: 'Tarih', description: 'Şanlıurfa\'nın zengin tarihi ve kültürel mirası' },
+  { slug: 'yemek', name: 'Yemek', description: 'Urfa mutfağından eşsiz lezzetler' },
+  { slug: 'gezi', name: 'Gezi', description: 'Şanlıurfa gezi rehberleri ve rotaları' },
+  { slug: 'kultur', name: 'Kültür', description: 'Yerel kültür ve gelenekler' },
+  { slug: 'otel', name: 'Otel', description: 'Konaklama önerileri ve değerlendirmeler' },
+  { slug: 'restoran', name: 'Restoran', description: 'Restoran incelemeleri ve öneriler' },
+] as const;
 
-    logger.info("Blog yazı revizyon kaydedildi", { postId, editorId });
-  } catch (error) {
-    logger.error(
-      "Revizyon kaydedilemedi",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-  }
+
+// Blog Comments Interface
+export interface BlogComment {
+  id: string;
+  post_id: string;
+  user_id?: string;
+  author_name: string;
+  author_email: string;
+  content: string;
+  parent_id?: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: Date;
+  updated_at?: Date;
 }
 
 /**
- * Restore post to a previous revision
+ * Get blog comments for a post
  */
-export async function restoreBlogPostRevision(
-  postId: number,
-  revisionId: number,
-): Promise<boolean> {
-  try {
-    const revision = await queryOne(
-      "SELECT title, content FROM blog_post_revisions WHERE id = $1 AND post_id = $2",
-      [revisionId, postId],
-    );
+export async function getBlogComments(
+  postId: string,
+  options: { approved?: boolean; limit?: number; offset?: number } = {}
+): Promise<BlogComment[]> {
+  const { approved = true, limit = 50, offset = 0 } = options;
+  
+  const result = await dbQuery(
+    `SELECT * FROM blog_comments 
+     WHERE post_id = $1 ${approved ? "AND status = 'approved'" : ''}
+     ORDER BY created_at DESC
+     LIMIT $2 OFFSET $3`,
+    [postId, limit, offset]
+  );
+  
+  return result.rows.map(row => ({
+    id: row.id,
+    post_id: row.post_id,
+    user_id: row.user_id,
+    author_name: row.author_name,
+    author_email: row.author_email,
+    content: row.content,
+    parent_id: row.parent_id,
+    status: row.status,
+    created_at: new Date(row.created_at),
+    updated_at: row.updated_at ? new Date(row.updated_at) : undefined,
+  }));
+}
 
-    if (!revision) {
-      logger.warn("Revizyon bulunamadı", { postId, revisionId });
-      return false;
+/**
+ * Add a blog comment
+ */
+export async function addBlogComment(data: {
+  post_id: string;
+  user_id?: string;
+  author_name: string;
+  author_email: string;
+  content: string;
+  parent_id?: string;
+}): Promise<BlogComment> {
+  const result = await dbQuery(
+    `INSERT INTO blog_comments (post_id, user_id, author_name, author_email, content, parent_comment_id, status, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW())
+     RETURNING *`,
+    [data.post_id, data.user_id || null, data.author_name, data.author_email, data.content, data.parent_id || null]
+  );
+  
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    post_id: row.post_id,
+    user_id: row.user_id,
+    author_name: row.author_name,
+    author_email: row.author_email,
+    content: row.content,
+    parent_id: row.parent_id,
+    status: row.status,
+    created_at: new Date(row.created_at),
+    updated_at: row.updated_at ? new Date(row.updated_at) : undefined,
+  };
+}
+
+/**
+ * Approve a comment
+ */
+export async function approveComment(commentId: string): Promise<void> {
+  await dbQuery(
+    `UPDATE blog_comments SET status = 'approved', updated_at = NOW() WHERE id = $1`,
+    [commentId]
+  );
+}
+
+/**
+ * Reject a comment
+ */
+export async function rejectComment(commentId: string): Promise<void> {
+  await dbQuery(
+    `UPDATE blog_comments SET status = 'rejected', updated_at = NOW() WHERE id = $1`,
+    [commentId]
+  );
+}
+
+/**
+ * Delete a comment
+ */
+export async function deleteComment(commentId: string): Promise<void> {
+  await dbQuery(
+    `DELETE FROM blog_comments WHERE id = $1`,
+    [commentId]
+  );
+}
+
+/**
+ * Get pending comments (for admin)
+ */
+export async function getPendingComments(limit = 20): Promise<BlogComment[]> {
+  const result = await dbQuery(
+    `SELECT * FROM blog_comments 
+     WHERE status = 'pending'
+     ORDER BY created_at DESC
+     LIMIT $1`,
+    [limit]
+  );
+  
+  return result.rows.map(row => ({
+    id: row.id,
+    post_id: row.post_id,
+    user_id: row.user_id,
+    author_name: row.author_name,
+    author_email: row.author_email,
+    content: row.content,
+    parent_id: row.parent_id,
+    status: row.status,
+    created_at: new Date(row.created_at),
+    updated_at: row.updated_at ? new Date(row.updated_at) : undefined,
+  }));
+}
+
+
+// Blog Revision Interface
+export interface BlogPostRevision {
+  id: string;
+  post_id: string;
+  title: string;
+  content: string;
+  excerpt?: string;
+  editor_id: string;
+  editor_name: string;
+  change_summary?: string;
+  created_at: Date;
+}
+
+/**
+ * Get blog post revisions
+ */
+export async function getBlogPostRevisions(postId: string): Promise<BlogPostRevision[]> {
+  const result = await dbQuery(
+    `SELECT r.*, u.full_name as editor_name
+     FROM blog_post_revisions r
+     LEFT JOIN users u ON r.editor_id = u.id
+     WHERE r.post_id = $1
+     ORDER BY r.created_at DESC`,
+    [postId]
+  );
+  
+  return result.rows.map(row => ({
+    id: row.id,
+    post_id: row.post_id,
+    title: row.title,
+    content: row.content,
+    excerpt: row.excerpt,
+    editor_id: row.editor_id,
+    editor_name: row.editor_name,
+    change_summary: row.change_summary,
+    created_at: new Date(row.created_at),
+  }));
+}
+
+/**
+ * Create a new revision
+ */
+export async function createBlogPostRevision(data: {
+  post_id: string;
+  title: string;
+  content: string;
+  excerpt?: string;
+  editor_id: string;
+  change_summary?: string;
+}): Promise<BlogPostRevision> {
+  const result = await dbQuery(
+    `INSERT INTO blog_post_revisions (post_id, title, content, excerpt, editor_id, change_summary, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, NOW())
+     RETURNING *`,
+    [data.post_id, data.title, data.content, data.excerpt || null, data.editor_id, data.change_summary || null]
+  );
+  
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    post_id: row.post_id,
+    title: row.title,
+    content: row.content,
+    excerpt: row.excerpt,
+    editor_id: row.editor_id,
+    editor_name: '', // Will be populated by caller if needed
+    change_summary: row.change_summary,
+    created_at: new Date(row.created_at),
+  };
+}
+
+/**
+ * Restore a revision
+ */
+export async function restoreBlogPostRevision(revisionId: string, postId: string): Promise<void> {
+  // Get the revision
+  const revisionResult = await dbQuery(
+    `SELECT * FROM blog_post_revisions WHERE id = $1`,
+    [revisionId]
+  );
+  
+  if (revisionResult.rows.length === 0) {
+    throw new Error('Revision not found');
+  }
+  
+  const revision = revisionResult.rows[0];
+  
+  // Update the post with revision content
+  await dbQuery(
+    `UPDATE blog_posts 
+     SET title = $1, content = $2, excerpt = $3, updated_at = NOW()
+     WHERE id = $4`,
+    [revision.title, revision.content, revision.excerpt, postId]
+  );
+}
+
+/**
+ * Delete old revisions (cleanup)
+ */
+export async function deleteOldRevisions(postId: string, keepCount = 10): Promise<void> {
+  await dbQuery(
+    `DELETE FROM blog_post_revisions 
+     WHERE id NOT IN (
+       SELECT id FROM blog_post_revisions 
+       WHERE post_id = $1 
+       ORDER BY created_at DESC 
+       LIMIT $2
+     )
+     AND post_id = $1`,
+    [postId, keepCount]
+  );
+}
+
+
+// Database Blog Post Interface
+export interface DBBlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  tags: string[];
+  author_id: string;
+  status: 'draft' | 'published' | 'archived';
+  cover_image?: string;
+  published_at?: Date;
+  created_at: Date;
+  updated_at: Date;
+}
+
+/**
+ * Get blog post by slug (from database)
+ */
+export async function getBlogPostBySlug(slug: string): Promise<DBBlogPost | null> {
+  const result = await dbQuery(
+    `SELECT * FROM blog_posts WHERE slug = $1`,
+    [slug]
+  );
+  
+  if (result.rows.length === 0) return null;
+  
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    content: row.content,
+    category: row.category,
+    tags: row.tags || [],
+    author_id: row.author_id,
+    status: row.status,
+    cover_image: row.cover_image,
+    published_at: row.published_at ? new Date(row.published_at) : undefined,
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+  };
+}
+
+/**
+ * Create a new blog post
+ */
+export async function createBlogPost(data: {
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  tags?: string[];
+  author_id: string;
+  status?: 'draft' | 'published';
+  cover_image?: string;
+}): Promise<DBBlogPost> {
+  const result = await dbQuery(
+    `INSERT INTO blog_posts (slug, title, excerpt, content, category, tags, author_id, status, cover_image, published_at, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CASE WHEN $8 = 'published' THEN NOW() ELSE NULL END, NOW(), NOW())
+     RETURNING *`,
+    [data.slug, data.title, data.excerpt, data.content, data.category, data.tags || [], data.author_id, data.status || 'draft', data.cover_image || null]
+  );
+  
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    content: row.content,
+    category: row.category,
+    tags: row.tags || [],
+    author_id: row.author_id,
+    status: row.status,
+    cover_image: row.cover_image,
+    published_at: row.published_at ? new Date(row.published_at) : undefined,
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+  };
+}
+
+/**
+ * Update a blog post
+ */
+export async function updateBlogPost(
+  slug: string,
+  data: Partial<{
+    title: string;
+    excerpt: string;
+    content: string;
+    category: string;
+    tags: string[];
+    status: 'draft' | 'published' | 'archived';
+    cover_image: string;
+  }>
+): Promise<DBBlogPost | null> {
+  // Build dynamic update query
+  const updates: string[] = [];
+  const values: any[] = [];
+  let paramCount = 1;
+  
+  if (data.title !== undefined) {
+    updates.push(`title = $${paramCount++}`);
+    values.push(data.title);
+  }
+  if (data.excerpt !== undefined) {
+    updates.push(`excerpt = $${paramCount++}`);
+    values.push(data.excerpt);
+  }
+  if (data.content !== undefined) {
+    updates.push(`content = $${paramCount++}`);
+    values.push(data.content);
+  }
+  if (data.category !== undefined) {
+    updates.push(`category = $${paramCount++}`);
+    values.push(data.category);
+  }
+  if (data.tags !== undefined) {
+    updates.push(`tags = $${paramCount++}`);
+    values.push(data.tags);
+  }
+  if (data.status !== undefined) {
+    updates.push(`status = $${paramCount++}`);
+    values.push(data.status);
+    if (data.status === 'published') {
+      updates.push(`published_at = COALESCE(published_at, NOW())`);
     }
-
-    // Update post with revision data
-    await update("blog_posts", String(postId), {
-      title: revision.title,
-      content: revision.content,
-      slug: generateSlug(revision.title),
-      read_time_minutes: calculateReadTime(revision.content),
-      updated_at: new Date().toISOString(),
-    });
-
-    // Clear cache
-    await deleteCachePattern("blog:*");
-
-    logger.info("Blog yazı revizyon geri yüklendi", { postId, revisionId });
-    return true;
-  } catch (error) {
-    logger.error(
-      "Revizyon geri yüklenemedi",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    return false;
   }
+  if (data.cover_image !== undefined) {
+    updates.push(`cover_image = $${paramCount++}`);
+    values.push(data.cover_image);
+  }
+  
+  updates.push(`updated_at = NOW()`);
+  values.push(slug); // For WHERE clause
+  
+  const result = await dbQuery(
+    `UPDATE blog_posts SET ${updates.join(', ')} WHERE slug = $${paramCount} RETURNING *`,
+    values
+  );
+  
+  if (result.rows.length === 0) return null;
+  
+  const row = result.rows[0];
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    content: row.content,
+    category: row.category,
+    tags: row.tags || [],
+    author_id: row.author_id,
+    status: row.status,
+    cover_image: row.cover_image,
+    published_at: row.published_at ? new Date(row.published_at) : undefined,
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+  };
 }
 
-async function addTagsToPost(
-  postId: number,
-  tagNames: string[],
-): Promise<void> {
-  for (const tagName of tagNames) {
-    const tag = await queryOne("SELECT id FROM blog_tags WHERE name = $1", [
-      tagName,
-    ]);
-
-    let tagId: number;
-
-    if (!tag) {
-      const newTag = await insert("blog_tags", {
-        name: tagName,
-        slug: generateSlug(tagName),
-      });
-      tagId = newTag.id;
-    } else {
-      tagId = tag.id;
-    }
-
-    await insert("blog_post_tags", {
-      post_id: postId,
-      tag_id: tagId,
-    });
-  }
+/**
+ * Delete a blog post
+ */
+export async function deleteBlogPost(slug: string): Promise<void> {
+  await dbQuery(
+    `DELETE FROM blog_posts WHERE slug = $1`,
+    [slug]
+  );
 }
+
+/**
+ * Get all blog posts (database)
+ */
+export async function getAllDBPosts(options: {
+  status?: 'published' | 'draft' | 'all';
+  limit?: number;
+  offset?: number;
+  category?: string;
+} = {}): Promise<DBBlogPost[]> {
+  const { status = 'published', limit = 20, offset = 0, category } = options;
+  
+  let sql = `SELECT * FROM blog_posts WHERE 1=1`;
+  const params: any[] = [];
+  let paramCount = 1;
+  
+  if (status !== 'all') {
+    sql += ` AND status = $${paramCount++}`;
+    params.push(status);
+  }
+  
+  if (category) {
+    sql += ` AND category = $${paramCount++}`;
+    params.push(category);
+  }
+  
+  sql += ` ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT $${paramCount++} OFFSET $${paramCount++}`;
+  params.push(limit, offset);
+  
+  const result = await dbQuery(sql, params);
+  
+  return result.rows.map(row => ({
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    content: row.content,
+    category: row.category,
+    tags: row.tags || [],
+    author_id: row.author_id,
+    status: row.status,
+    cover_image: row.cover_image,
+    published_at: row.published_at ? new Date(row.published_at) : undefined,
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+  }));
+}
+
+/**
+ * Get blog posts with pagination
+ * Alias for getAllDBPosts with better API
+ */
+export async function getBlogPosts(options: {
+  status?: 'published' | 'draft' | 'all';
+  page?: number;
+  limit?: number;
+  category?: string;
+  tag?: string;
+  author?: string;
+  search?: string;
+} = {}): Promise<{ posts: DBBlogPost[]; total: number }> {
+  const { 
+    status = 'published', 
+    page = 1, 
+    limit = 10, 
+    category, 
+    tag, 
+    author,
+    search 
+  } = options;
+  
+  const offset = (page - 1) * limit;
+  
+  let sql = `SELECT * FROM blog_posts WHERE 1=1`;
+  let countSql = `SELECT COUNT(*) as total FROM blog_posts WHERE 1=1`;
+  const params: any[] = [];
+  const countParams: any[] = [];
+  let paramCount = 1;
+  
+  if (status !== 'all') {
+    sql += ` AND status = $${paramCount}`;
+    countSql += ` AND status = $${paramCount}`;
+    params.push(status);
+    countParams.push(status);
+    paramCount++;
+  }
+  
+  if (category) {
+    sql += ` AND category = $${paramCount}`;
+    countSql += ` AND category = $${paramCount}`;
+    params.push(category);
+    countParams.push(category);
+    paramCount++;
+  }
+  
+  if (author) {
+    sql += ` AND author_id = $${paramCount}`;
+    countSql += ` AND author_id = $${paramCount}`;
+    params.push(author);
+    countParams.push(author);
+    paramCount++;
+  }
+  
+  if (search) {
+    sql += ` AND (title ILIKE $${paramCount} OR content ILIKE $${paramCount} OR excerpt ILIKE $${paramCount})`;
+    countSql += ` AND (title ILIKE $${paramCount} OR content ILIKE $${paramCount} OR excerpt ILIKE $${paramCount})`;
+    params.push(`%${search}%`);
+    countParams.push(`%${search}%`);
+    paramCount++;
+  }
+  
+  // Get total count
+  const countResult = await dbQuery(countSql, countParams);
+  const total = parseInt(countResult.rows[0].total);
+  
+  // Add ordering and pagination
+  sql += ` ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+  params.push(limit, offset);
+  
+  const result = await dbQuery(sql, params);
+  
+  let posts = result.rows.map(row => ({
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    content: row.content,
+    category: row.category,
+    tags: row.tags || [],
+    author_id: row.author_id,
+    status: row.status,
+    cover_image: row.cover_image,
+    published_at: row.published_at ? new Date(row.published_at) : undefined,
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+  }));
+  
+  // Filter by tag in memory if needed (since tags is an array)
+  if (tag) {
+    posts = posts.filter(post => post.tags.includes(tag));
+  }
+  
+  return { posts, total };
+}
+
+/**
+ * Get related posts by category and tags
+ */
+export async function getRelatedDBPosts(postId: string, limit = 3): Promise<DBBlogPost[]> {
+  // First get the current post to find category and tags
+  const currentResult = await dbQuery(
+    `SELECT category, tags FROM blog_posts WHERE id = $1`,
+    [postId]
+  );
+  
+  if (currentResult.rows.length === 0) return [];
+  
+  const { category, tags } = currentResult.rows[0];
+  
+  const result = await dbQuery(
+    `SELECT * FROM blog_posts 
+     WHERE id != $1 
+     AND status = 'published'
+     AND (category = $2 OR tags && $3)
+     ORDER BY published_at DESC
+     LIMIT $4`,
+    [postId, category, tags || [], limit]
+  );
+  
+  return result.rows.map(row => ({
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    content: row.content,
+    category: row.category,
+    tags: row.tags || [],
+    author_id: row.author_id,
+    status: row.status,
+    cover_image: row.cover_image,
+    published_at: row.published_at ? new Date(row.published_at) : undefined,
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+  }));
+}
+
+/**
+ * Increment post views
+ */
+export async function incrementPostViews(postId: string): Promise<void> {
+  await dbQuery(
+    `UPDATE blog_posts SET view_count = COALESCE(view_count, 0) + 1 WHERE id = $1`,
+    [postId]
+  );
+}
+
+/**
+ * Search blog posts
+ */
+export async function searchBlogPosts(query: string, options: {
+  limit?: number;
+  offset?: number;
+} = {}): Promise<{ posts: DBBlogPost[]; total: number }> {
+  const { limit = 20, offset = 0 } = options;
+  
+  const searchTerm = `%${query}%`;
+  
+  // Get total count
+  const countResult = await dbQuery(
+    `SELECT COUNT(*) as total FROM blog_posts 
+     WHERE status = 'published'
+     AND (title ILIKE $1 OR content ILIKE $1 OR excerpt ILIKE $1 OR category ILIKE $1 OR tags::text ILIKE $1)`,
+    [searchTerm]
+  );
+  
+  const total = parseInt(countResult.rows[0].total);
+  
+  // Get posts
+  const result = await dbQuery(
+    `SELECT * FROM blog_posts 
+     WHERE status = 'published'
+     AND (title ILIKE $1 OR content ILIKE $1 OR excerpt ILIKE $1 OR category ILIKE $1 OR tags::text ILIKE $1)
+     ORDER BY 
+       CASE WHEN title ILIKE $1 THEN 0 ELSE 1 END,
+       published_at DESC
+     LIMIT $2 OFFSET $3`,
+    [searchTerm, limit, offset]
+  );
+  
+  const posts = result.rows.map(row => ({
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    content: row.content,
+    category: row.category,
+    tags: row.tags || [],
+    author_id: row.author_id,
+    status: row.status,
+    cover_image: row.cover_image,
+    published_at: row.published_at ? new Date(row.published_at) : undefined,
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+  }));
+  
+  return { posts, total };
+}
+
+
+/**
+ * Get posts (alias for getBlogPosts for backward compatibility)
+ */
+export async function getPosts(options: {
+  page?: number;
+  limit?: number;
+  category?: string;
+} = {}): Promise<{ posts: DBBlogPost[]; total: number }> {
+  return getBlogPosts({ ...options, status: 'published' });
+}
+

@@ -1,41 +1,24 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
 import MyActivityLog from "../../components/MyActivityLog";
 
 const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect("/giris?redirect=/aktivitelerim");
+}
 ---
 
-<Layout title="Aktivitelerim - sanliurfa.com" noindex>
-  {
-    user ? (
-      <div class="max-w-2xl mx-auto px-4 py-8">
-        <MyActivityLog client:load />
+<Layout seo={{ title: "Aktivitelerim - Sanliurfa.com", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="max-w-2xl mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">Hesabım</p>
+        <h1 class="text-3xl font-bold text-[#F5EDD6] mb-2">Aktivitelerim</h1>
       </div>
-    ) : (
-      <AuthFeatureLanding
-        eyebrow="Şanlıurfa aktivite geçmişi"
-        title="Katkılarınızı ve keşiflerinizi takip edin"
-        description="Yorumlarınızı, favorilerinizi, koleksiyonlarınızı ve Şanlıurfa rehberine yaptığınız katkıları kişisel aktivite geçmişinizde görün."
-        loginRedirect="/aktivitelerim"
-        features={[
-          {
-            title: "Yorum geçmişi",
-            description:
-              "Şanlıurfa mekânları ve içerikleri için yaptığınız yorumları takip edin.",
-          },
-          {
-            title: "Favori ve koleksiyonlar",
-            description:
-              "Kaydettiğiniz mekânları ve oluşturduğunuz rotaları tek yerde görün.",
-          },
-          {
-            title: "Puan ve rozet ilerlemesi",
-            description:
-              "Topluluk katkılarınızın puan ve rozet sistemine etkisini izleyin.",
-          },
-        ]}
-      />
-    )
-  }
+    </div>
+
+    <div class="max-w-2xl mx-auto px-4 py-8">
+      <MyActivityLog client:visible={{ rootMargin: '120px' }} />
+    </div>
+  </div>
 </Layout>

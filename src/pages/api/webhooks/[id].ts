@@ -4,14 +4,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { deleteWebhook } from '../../../lib/webhooks';
+import { deleteWebhook } from '../../../lib/webhook';
 import { apiResponse, apiError, HttpStatus, ErrorCode } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const DELETE: APIRoute = async ({ locals, params }) => {
   try {
     if (!locals.user) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = params;
@@ -25,12 +25,12 @@ export const DELETE: APIRoute = async ({ locals, params }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Webhook başarıyla silindi'
+        message: 'Webhook deleted successfully'
       },
       HttpStatus.OK
     );
   } catch (error) {
     logger.error('Delete webhook failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Webhook silinemedi', HttpStatus.INTERNAL_SERVER_ERROR);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete webhook', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

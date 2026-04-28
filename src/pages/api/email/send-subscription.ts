@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Send Subscription Confirmation Email
  */
@@ -6,19 +5,19 @@
 import type { APIRoute } from 'astro';
 import { sendEmail, getSubscriptionEmailHTML } from '../../../lib/email';
 import { queryOne } from '../../../lib/postgres';
-import { validateWithSchema } from '../../../lib/validation';
+import { validateWithSchema, ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-const schema = {
+const schema: ValidationSchema = {
   userId: { type: 'string' as const, required: true },
   tier: { type: 'string' as const, required: true, pattern: '^(premium|pro)$' },
   price: { type: 'number' as const, required: true, min: 0 }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -26,11 +25,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     // Check authentication
     if (!locals.user?.id) {
       recordRequest('POST', '/api/email/send-subscription', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/email/send-subscription', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -43,7 +42,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { userId, tier, price } = validation.data as { userId: string; tier: 'premium' | 'pro'; price: number };
+    const { userId, tier } = validation.data as { userId: string; tier: 'premium' | 'pro'; price: number };
 
     // Get user info
     const user = await queryOne('SELECT email, full_name FROM users WHERE id = $1', [userId]);
@@ -53,7 +52,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.NOT_FOUND, 'User not found', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
-    const html = getSubscriptionEmailHTML(user.full_name || 'Kullanıcı', tier, price);
+    const html = getSubscriptionEmailHTML(user.full_name || 'Kullanıcı');
 
     const sent = await sendEmail({
       to: user.email,
@@ -61,11 +60,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       html
     });
 
-    if (!sent) {
+    if (!sent.success) {
       recordRequest('POST', '/api/email/send-subscription', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'E-posta gönderilemedi',
+        'Failed to send email',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -81,6 +80,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/email/send-subscription', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Subscription email error', error instanceof Error ? error : new Error(String(error)), { duration });
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

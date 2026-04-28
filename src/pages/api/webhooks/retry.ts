@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
-import { retryFailedWebhooks } from '../../../lib/webhook-analytics';
+import { retryFailedWebhooks } from '../../../lib/webhook/webhook-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
@@ -9,14 +9,14 @@ import { logger } from '../../../lib/logging';
  * Retry failed webhook events
  */
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -97,10 +97,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Webhook tekrar denemesi yapılamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to retry webhooks', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Webhook tekrar denemesi yapılamadı',
+      'Failed to retry webhooks',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

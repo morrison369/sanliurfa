@@ -2,7 +2,7 @@
  * Moderation Queue Manager Component
  * Manage pending moderation items
  */
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
 import { AlertCircle, CheckCircle, Clock, Loader } from 'lucide-react';
 
 interface QueueItem {
@@ -130,7 +130,7 @@ export default function ModerationQueueManager() {
       {/* Queue Items */}
       <div className="space-y-2">
         {items.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">İncelenecek içerik bulunmuyor.</div>
+          <div className="text-center py-8 text-gray-500">Kuyruk boş</div>
         ) : (
           items.map((item) => (
             <div

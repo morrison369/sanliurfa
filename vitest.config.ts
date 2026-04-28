@@ -1,19 +1,29 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
     globals: true,
-    // Default to Node to avoid jsdom worker boot issues on current Node runtime.
-    // DOM-specific tests can opt in with `// @vitest-environment jsdom`.
     environment: 'node',
-    include: ['src/**/*.{test,spec}.{js,ts,tsx}'],
+    include: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
+    exclude: ['node_modules', 'dist', '.astro'],
     coverage: {
+      provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
-        'src/**/*.d.ts',
-        'src/**/*.astro',
+        'dist/',
+        '.astro/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        '**/migrations/**',
       ],
+    },
+    setupFiles: ['./vitest.setup.ts'],
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
     },
   },
 });

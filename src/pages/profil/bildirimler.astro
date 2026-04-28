@@ -1,3 +1,238 @@
 ---
-return Astro.redirect('/bildirimler', 301);
+import { Icon } from 'astro-icon/components';
+import Layout from '../../layouts/Layout.astro';
+import ProfileSidebar from '../../components/profile/ProfileSidebar.astro';
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+const user = Astro.locals.user;
+
+if (!user) {
+  return Astro.redirect('/giris?redirect=/profil/bildirimler');
+}
+
+let notifications: any[] = [];
+let unreadCount: any = null;
+let notificationTypeConfig: Record<string, { iconName: string; color: string; label: string }> = {};
+const seo = {
+    title: 'Bildirimlerim - Sanliurfa.com',
+    description: 'Bildirimlerinizi görüntüleyin ve yönetin.',
+    noIndex: true,
+  };
+
+function getTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Az önce';
+  if (diffMins < 60) return `${diffMins} dakika önce`;
+  if (diffHours < 24) return `${diffHours} saat önce`;
+  if (diffDays < 7) return `${diffDays} gün önce`;
+  return date.toLocaleDateString('tr-TR');
+}
+
+try {
+
+  const [result, unreadResult] = await Promise.all([
+    query(
+      `SELECT * FROM notifications
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       LIMIT 100`,
+      [user.id]
+    ),
+    query(
+      `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND read = false`,
+      [user.id]
+    ),
+  ]);
+  notifications = result.rows;
+  unreadCount = parseInt(unreadResult.rows[0]?.count || '0');
+
+  notificationTypeConfig = {
+    review:    { iconName: 'star',  color: 'bg-urfa-50 text-urfa-600',                   label: 'Yorum' },
+    comment:   { iconName: 'star',  color: 'bg-urfa-50 text-urfa-600',                   label: 'Yorum' },
+    like:      { iconName: 'heart', color: 'bg-isot-50 text-isot-600',                   label: 'Beğeni' },
+    follow:    { iconName: 'user',  color: 'bg-[rgba(200,160,100,0.12)] text-[#6B5540]', label: 'Takip' },
+    badge:     { iconName: 'bell',  color: 'bg-urfa-50 text-urfa-700',                   label: 'Rozet' },
+    system:    { iconName: 'bell',  color: 'bg-[rgba(200,160,100,0.08)] text-[#9A8470]', label: 'Sistem' },
+    booking:   { iconName: 'bell',  color: 'bg-urfa-50 text-urfa-600',                   label: 'Rezervasyon' },
+    promotion: { iconName: 'bell',  color: 'bg-isot-50 text-isot-500',                   label: 'Kampanya' },
+  };
+
+} catch (e) {
+  logger.error('Error loading data:', e instanceof Error ? e : new Error(String(e)));
+}
 ---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3] py-8">
+    <div class="container mx-auto px-4">
+      <div class="grid lg:grid-cols-4 gap-8">
+        <ProfileSidebar activeKey="notifications" unreadCount={unreadCount} />
+
+        <main class="lg:col-span-3">
+          <div class="bg-white rounded-sm shadow-sm border border-[rgba(200,160,100,0.18)] p-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="font-bold text-xl text-[#1A1008] flex items-center gap-2">
+                <Icon name="lucide:bell" class="w-4 h-4" />
+                Bildirimler
+              </h2>
+              <div class="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    id="mark-all-read"
+                    class="text-sm px-3 py-1.5 border border-[rgba(200,160,100,0.3)] rounded-sm text-[#6B5540] hover:border-urfa-400 hover:text-urfa-700 transition-colors flex items-center gap-1"
+                  >
+                    <Icon name="lucide:check-check" class="w-4 h-4" />
+                    Tümünü Oku
+                  </button>
+                )}
+                <button
+                  id="clear-notifications"
+                  class="text-sm text-isot-600 hover:text-isot-700 transition-colors flex items-center gap-1"
+                >
+                  <Icon name="lucide:trash-2" class="w-4 h-4" />
+                  Temizle
+                </button>
+              </div>
+            </div>
+
+            {notifications.length > 0 ? (
+              <div class="space-y-2">
+                {notifications.map((notification) => {
+                  const typeConfig = notificationTypeConfig[notification.type] || notificationTypeConfig.system;
+                  const isUnread = !notification.read;
+                  const timeAgo = getTimeAgo(new Date(notification.created_at));
+
+                  return (
+                    <div
+                      class={`notification-item flex items-start gap-4 p-4 rounded-sm transition-colors cursor-pointer ${
+                        isUnread
+                          ? 'bg-urfa-50 border border-urfa-100'
+                          : 'bg-[rgba(200,160,100,0.04)]'
+                      }`}
+                      data-notification-id={notification.id}
+                    >
+                      <div class={`p-2 rounded-sm flex-shrink-0 ${typeConfig.color}`}>
+                        <Icon name={`lucide:${typeConfig.iconName}`} class="w-4 h-4" />
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2">
+                          <div>
+                            {notification.link ? (
+                              <a href={notification.link} class="font-medium text-[#1A1008] hover:text-urfa-600">
+                                {notification.title}
+                              </a>
+                            ) : (
+                              <span class="font-medium text-[#1A1008]">{notification.title}</span>
+                            )}
+                            <p class="text-sm text-[#6B5540] mt-1">{notification.message}</p>
+                            <span class="text-xs text-[#9A8470] mt-1 inline-block">{timeAgo}</span>
+                          </div>
+                          <div class="flex items-center gap-2 flex-shrink-0">
+                            {isUnread && (
+                              <span class="w-2 h-2 bg-urfa-600 rounded-full flex-shrink-0"></span>
+                            )}
+                            <button
+                              class="delete-notification p-1 text-[#9A8470] hover:text-isot-600"
+                              data-notification-id={notification.id}
+                              title="Bildirimi Sil"
+                            >
+                              <Icon name="lucide:trash-2" class="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div class="text-center py-12">
+                <Icon name="lucide:bell" class="w-16 h-16 text-[rgba(200,160,100,0.3)] mx-auto mb-4" />
+                <h3 class="text-xl font-semibold text-[#1A1008] mb-2">Bildirim yok</h3>
+                <p class="text-[#6B5540]">Yeni bildirimleriniz burada görünecek.</p>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('click', async (e: Event) => {
+      const target = e.target as HTMLElement;
+      const item = target.closest('.notification-item') as HTMLElement | null;
+      if (item && !target.closest('.delete-notification')) {
+        const id = item.dataset.notificationId;
+        if (id) {
+          await markAsRead(id);
+          const link = item.querySelector('a');
+          if (link) {
+            window.location.href = link.href;
+          }
+        }
+      }
+    });
+
+    document.addEventListener('click', async (e: Event) => {
+      const target = e.target as HTMLElement;
+      const btn = target.closest('.delete-notification') as HTMLElement | null;
+      if (!btn) return;
+
+      e.stopPropagation();
+      const id = btn.dataset.notificationId;
+      await deleteNotification(id!);
+      btn.closest('.notification-item')?.remove();
+    });
+
+    document.addEventListener('click', async (e: Event) => {
+      const target = e.target as HTMLElement;
+      const btn = target.closest('#mark-all-read');
+      if (!btn) return;
+
+      try {
+        await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+        window.location.reload();
+      } catch (error) {
+        console.error('Tümünü oku hatası:', error);
+      }
+    });
+
+    document.addEventListener('click', async (e: Event) => {
+      const target = e.target as HTMLElement;
+      const btn = target.closest('#clear-notifications');
+      if (!btn) return;
+
+      if (!await window.showConfirm('Tüm bildirimleriniz silinecek. Emin misiniz?')) return;
+
+      try {
+        await fetch('/api/notifications/clear', { method: 'DELETE' });
+        window.location.reload();
+      } catch (error) {
+        console.error('Temizleme hatası:', error);
+      }
+    });
+
+    async function markAsRead(id: string) {
+      try {
+        await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+      } catch (error) {
+        console.error('Okundu işaretleme hatası:', error);
+      }
+    }
+
+    async function deleteNotification(id: string) {
+      try {
+        await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+      } catch (error) {
+        console.error('Silme hatası:', error);
+      }
+    }
+  </script>
+</Layout>

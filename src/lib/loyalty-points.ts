@@ -1,179 +1,223 @@
 /**
- * Loyalty Points Library
- * Points earning, spending, and transaction management
+ * Loyalty Points Module
+ * Manages user loyalty points, transactions, and rewards
  */
-import { query, queryOne, queryMany, insert, update } from './postgres';
+
+import { queryOne, queryMany, query, insert } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
-export async function getUserPoints(userId: string): Promise<any> {
-  const cacheKey = `loyalty:balance:${userId}`;
+export interface LoyaltyPoints {
+  currentBalance: number;
+  lifetimeEarned: number;
+  lifetimeSpent: number;
+}
 
+export interface LoyaltyTransaction {
+  id: string;
+  userId: string;
+  points: number;
+  type: 'earn' | 'spend' | 'expire';
+  description: string;
+  createdAt: Date;
+}
+
+const CACHE_TTL = 300; // 5 minutes
+const CACHE_PREFIX = 'loyalty';
+
+/**
+ * Get user's current loyalty points
+ */
+export async function getUserPoints(userId: string): Promise<LoyaltyPoints> {
   try {
-    // Check cache first (optimized)
-    const cached = await getCache(cacheKey);
-    if (cached) return cached;
-
-    let points = await queryOne('SELECT * FROM loyalty_points WHERE user_id = $1', [userId]);
-
-    if (!points) {
-      await insert('loyalty_points', { user_id: userId });
-      points = await queryOne('SELECT * FROM loyalty_points WHERE user_id = $1', [userId]);
+    // Check cache first
+    const cached = await getCache<LoyaltyPoints>(`${CACHE_PREFIX}:balance:${userId}`);
+    if (cached) {
+      return cached;
     }
 
-    const result = {
-      currentBalance: points.current_balance,
-      lifetimeEarned: points.lifetime_earned,
-      lifetimeSpent: points.lifetime_spent,
-      pendingPoints: points.pending_points,
-      lastEarned: points.last_earned_at
+    // Fetch from database
+    const result = await queryOne(
+      `SELECT 
+        COALESCE(current_balance, 0) as current_balance,
+        COALESCE(lifetime_earned, 0) as lifetime_earned,
+        COALESCE(lifetime_spent, 0) as lifetime_spent
+      FROM user_loyalty 
+      WHERE user_id = $1`,
+      [userId]
+    );
+
+    if (!result) {
+      return { currentBalance: 0, lifetimeEarned: 0, lifetimeSpent: 0 };
+    }
+
+    const points: LoyaltyPoints = {
+      lifetimeEarned: parseInt(result.lifetime_earned || '0'),
+      lifetimeSpent: parseInt(result.lifetime_spent || '0'),
+      currentBalance: parseInt(result.current_balance || '0')
     };
 
-    // Cache for 5 minutes (300s)
-    await setCache(cacheKey, result, 300);
-    return result;
+    // Cache the result
+    await setCache(`${CACHE_PREFIX}:balance:${userId}`, JSON.stringify(points), CACHE_TTL);
+
+    return points;
   } catch (error) {
-    logger.error('Failed to get user points', error instanceof Error ? error : new Error(String(error)));
-    return null;
+    logger.error('Failed to get user points', Object.assign(new Error('Failed to get user points'), { userId, error: error as Error }));
+    return { currentBalance: 0, lifetimeEarned: 0, lifetimeSpent: 0 };
   }
 }
 
-export async function awardPoints(userId: string, points: number, reason: string, relatedEntityType?: string, relatedEntityId?: string, expiryDays?: number): Promise<boolean> {
+/**
+ * Award points to a user
+ */
+export async function awardPoints(
+  userId: string, 
+  points: number, 
+  description: string,
+  _type: string = 'manual',
+  _referenceId?: string
+): Promise<boolean> {
   try {
-    const userPoints = await queryOne('SELECT current_balance FROM loyalty_points WHERE user_id = $1', [userId]);
-    if (!userPoints) {
-      await insert('loyalty_points', { user_id: userId });
-    }
-
-    const newBalance = (userPoints?.current_balance || 0) + points;
-    const expiresAt = expiryDays ? new Date(Date.now() + (expiryDays * 24 * 60 * 60 * 1000)) : null;
-
+    // Insert transaction
     await insert('loyalty_transactions', {
       user_id: userId,
+      points_amount: points,
       transaction_type: 'earn',
-      points_amount: points,
-      transaction_reason: reason,
-      related_entity_type: relatedEntityType,
-      related_entity_id: relatedEntityId,
-      balance_before: userPoints?.current_balance || 0,
-      balance_after: newBalance,
-      expires_at: expiresAt
+      transaction_reason: description,
+      created_at: new Date().toISOString()
     });
 
-    await update('loyalty_points', { user_id: userId }, {
-      current_balance: newBalance,
-      lifetime_earned: (userPoints?.lifetime_earned || 0) + points,
-      last_earned_at: new Date(),
-      updated_at: new Date()
-    });
+    await query(
+      `INSERT INTO user_loyalty (user_id, current_balance, lifetime_earned, lifetime_spent)
+       VALUES ($1, $2, $2, 0)
+       ON CONFLICT (user_id) DO UPDATE
+       SET current_balance = user_loyalty.current_balance + $2,
+           lifetime_earned = user_loyalty.lifetime_earned + $2,
+           updated_at = NOW()`,
+      [userId, points]
+    );
 
     // Invalidate cache
-    await deleteCache(`loyalty:balance:${userId}`);
+    await deleteCache(`${CACHE_PREFIX}:balance:${userId}`);
 
-    logger.info('Points awarded', { userId, points, reason });
+    logger.info('Points awarded', { userId, points, description });
     return true;
   } catch (error) {
-    logger.error('Failed to award points', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to award points', Object.assign(new Error('Failed to award points'), { userId, points, error: error as Error }));
     return false;
   }
 }
 
-export async function spendPoints(userId: string, points: number, reason: string, relatedEntityId?: string): Promise<boolean> {
+/**
+ * Spend points from user's balance
+ */
+export async function spendPoints(
+  userId: string,
+  points: number,
+  description: string,
+  _referenceId?: string
+): Promise<boolean> {
   try {
-    const userPoints = await queryOne('SELECT current_balance FROM loyalty_points WHERE user_id = $1', [userId]);
-    if (!userPoints) {
-      logger.warn('User has no points account', { userId });
-      return false;
+    // Atomic deduct — WHERE guard prevents negative balance (HARD RULE #47)
+    const deducted = await queryOne<{ current_balance: number }>(
+      `UPDATE user_loyalty
+       SET current_balance = current_balance - $1,
+           lifetime_spent  = lifetime_spent  + $1,
+           updated_at      = NOW()
+       WHERE user_id = $2 AND current_balance >= $1
+       RETURNING current_balance`,
+      [points, userId]
+    );
+
+    if (!deducted) {
+      return false; // insufficient balance (or user row doesn't exist)
     }
 
-    if (userPoints.current_balance < points) {
-      logger.warn('Insufficient points', { userId, available: userPoints.current_balance, required: points });
-      return false;
-    }
+    await query(
+      `INSERT INTO loyalty_transactions (user_id, points_amount, transaction_type, transaction_reason, created_at)
+       VALUES ($1, $2, 'spend', $3, NOW())`,
+      [userId, points, description]
+    );
 
-    const newBalance = userPoints.current_balance - points;
+    await deleteCache(`${CACHE_PREFIX}:balance:${userId}`);
 
-    await insert('loyalty_transactions', {
-      user_id: userId,
-      transaction_type: 'spend',
-      points_amount: points,
-      transaction_reason: reason,
-      related_entity_id: relatedEntityId,
-      balance_before: userPoints.current_balance,
-      balance_after: newBalance
-    });
-
-    await update('loyalty_points', { user_id: userId }, {
-      current_balance: newBalance,
-      lifetime_spent: (userPoints.lifetime_spent || 0) + points,
-      last_spent_at: new Date(),
-      updated_at: new Date()
-    });
-
-    // Invalidate cache
-    await deleteCache(`loyalty:balance:${userId}`);
-
-    logger.info('Points spent', { userId, points, reason });
+    logger.info('Points spent', { userId, points, description });
     return true;
   } catch (error) {
-    logger.error('Failed to spend points', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to spend points', Object.assign(new Error('Failed to spend points'), { userId, points, error: error as Error }));
     return false;
   }
 }
 
-export async function getPointsHistory(userId: string, limit: number = 50): Promise<any[]> {
+/**
+ * Get transaction history for a user
+ */
+export async function getTransactionHistory(userId: string, limit: number = 50): Promise<LoyaltyTransaction[]> {
   try {
-    const history = await queryMany(`
-      SELECT
-        id,
-        transaction_type,
-        points_amount,
-        transaction_reason,
-        balance_before,
-        balance_after,
-        created_at
-      FROM loyalty_transactions
-      WHERE user_id = $1
-      ORDER BY created_at DESC
-      LIMIT $2
-    `, [userId, limit]);
-    return history;
+    const results = await queryMany(
+      `SELECT id, user_id, points_amount as points, transaction_type as type, transaction_reason as description, created_at
+       FROM loyalty_transactions 
+       WHERE user_id = $1 
+       ORDER BY created_at DESC 
+       LIMIT $2`,
+      [userId, limit]
+    ) as any[];
+
+    return results.map((row: any) => ({
+      id: row.id,
+      userId: row.user_id,
+      points: Math.abs(parseInt(row.points)),
+      type: row.type === 'spend' ? 'spend' : 'earn',
+      description: row.description,
+      createdAt: new Date(row.created_at)
+    }));
   } catch (error) {
-    logger.error('Failed to get points history', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to get transaction history', Object.assign(new Error('Failed to get transaction history'), { userId, error: error as Error }));
     return [];
   }
 }
 
-export async function getEarningRules(): Promise<any[]> {
+/**
+ * Get leaderboard of top users by points
+ */
+export async function getLeaderboard(limit: number = 10): Promise<{ userId: string; balance: number }[]> {
   try {
-    const rules = await queryMany(`
-      SELECT * FROM earning_rules
-      WHERE is_active = true
-      ORDER BY rule_name
-    `);
-    return rules;
+    const results = await queryMany(
+      `SELECT user_id, current_balance as balance
+       FROM user_loyalty 
+       WHERE current_balance > 0
+       ORDER BY current_balance DESC
+       LIMIT $1`,
+      [limit]
+    ) as any[];
+
+    return results.map((row: any) => ({
+      userId: row.user_id,
+      balance: parseInt(row.balance)
+    }));
   } catch (error) {
-    logger.error('Failed to get earning rules', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to get leaderboard', Object.assign(new Error('Failed to get leaderboard'), { error: error as Error }));
     return [];
   }
 }
 
-export async function expirePoints(): Promise<number> {
-  try {
-    const result = await queryOne(`
-      UPDATE loyalty_transactions
-      SET is_expired = true
-      WHERE expires_at < NOW() AND is_expired = false
-      RETURNING COUNT(*) as count
-    `);
+// Legacy class-based API for backward compatibility
+export class LoyaltyPointsManager {
+  async getUserPoints(userId: string): Promise<LoyaltyPoints> {
+    return getUserPoints(userId);
+  }
 
-    const count = parseInt(result?.count || '0');
-    if (count > 0) {
-      logger.info('Expired points', { count });
-    }
-    return count;
-  } catch (error) {
-    logger.error('Failed to expire points', error instanceof Error ? error : new Error(String(error)));
-    return 0;
+  async addPoints(userId: string, points: number, description: string): Promise<boolean> {
+    return awardPoints(userId, points, description);
+  }
+
+  async spendPoints(userId: string, points: number, description: string): Promise<boolean> {
+    return spendPoints(userId, points, description);
+  }
+
+  async getTransactionHistory(userId: string, limit?: number): Promise<LoyaltyTransaction[]> {
+    return getTransactionHistory(userId, limit);
   }
 }
+
+export const loyaltyPointsManager = new LoyaltyPointsManager();

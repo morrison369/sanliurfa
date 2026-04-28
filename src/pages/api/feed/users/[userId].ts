@@ -4,9 +4,9 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserActivities } from '../../../../lib/activity-feed';
-import { getActivityDescription, getActivityIcon } from '../../../../lib/activity';
-import { apiResponse, apiError, HttpStatus } from '../../../../lib/api';
+import { getUserActivities } from '../../../../lib/feed/activity-feed';
+import { getActivityDescription, getActivityIcon } from '../../../../lib/activity/activity';
+import { apiResponse, apiError, HttpStatus, safeIntParam } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async (context) => {
@@ -15,10 +15,10 @@ export const GET: APIRoute = async (context) => {
     const { limit } = Object.fromEntries(context.url.searchParams);
 
     if (!userId) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Kullanıcı ID gereklidir');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'User ID is required');
     }
 
-    const activities = await getUserActivities(userId, limit ? parseInt(limit) : 20);
+    const activities = await getUserActivities(userId, safeIntParam(limit, 20, 1, 100));
 
     const feed = activities.map((item) => ({
       ...item,
@@ -27,15 +27,10 @@ export const GET: APIRoute = async (context) => {
       timeAgo: getTimeAgo(new Date(item.createdAt))
     }));
 
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      data: feed,
-      count: feed.length,
-      userId
-    });
+    return apiResponse({ success: true, data: feed, count: feed.length, userId }, HttpStatus.OK);
   } catch (error) {
     logger.error('Failed to get user activities', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Kullanıcı aktiviteleri alınamadı');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to get user activities');
   }
 };
 

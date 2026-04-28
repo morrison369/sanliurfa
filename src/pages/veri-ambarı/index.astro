@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import OLAPExplorer from '../../components/OLAPExplorer';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect('/giris?redirect=/veri-ambarı');
+}
+---
+
+<Layout seo={{ title: "Veri Ambarı - Şanlıurfa", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-10">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">ANALİTİK</p>
+        <h1 class="text-3xl font-bold text-[#F5EDD6] mb-2">Veri Ambarı & OLAP</h1>
+        <p class="text-[#9A8470]">Çok boyutlu analitik sorgular ve veri keşfi</p>
+      </div>
+    </div>
+    <div class="container mx-auto px-4 py-8">
+      <OLAPExplorer client:visible />
+    </div>
+  </div>
+</Layout>

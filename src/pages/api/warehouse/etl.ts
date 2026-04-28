@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { runWarehouseETL } from '../../../lib/data-warehouse';
+import { runWarehouseETL } from '../../../lib/data/data-warehouse';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id || locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/warehouse/etl', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Admin access required',
         HttpStatus.FORBIDDEN,
         undefined,
@@ -58,7 +58,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           duration_ms: result.duration_ms,
           executed_by: locals.user.id
         },
-        message: 'ETL tamamlandı'
+        message: 'ETL completed'
       },
       HttpStatus.OK,
       requestId

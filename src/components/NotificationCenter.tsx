@@ -2,9 +2,8 @@
  * Notification Center Component
  * Displays user notifications with read/archive actions
  */
-import React, { useState, useEffect } from 'react';
-import { Bell, Archive, Trash2, AlertCircle, Loader } from 'lucide-react';
-import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
+import {  useState, useEffect  } from 'react';
+import { Bell, Archive, AlertCircle, Loader } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -34,15 +33,14 @@ export default function NotificationCenter() {
       setLoading(true);
       const res = await fetch(`/api/notifications/center?archived=${showArchived}`);
       const json = await res.json();
-      const payload = unwrapApiPayload<{ success?: boolean; data?: { notifications?: Notification[]; unreadCount?: number } }>(json);
 
-      if (!res.ok || !payload.success) {
-        setError(getApiErrorMessage(json, 'Bildirimler alınırken hata oluştu'));
+      if (!json.success) {
+        setError(json.error || 'Bildirimler alınırken hata oluştu');
         return;
       }
 
-      setNotifications(payload.data?.notifications || []);
-      setUnreadCount(payload.data?.unreadCount || 0);
+      setNotifications(json.data.notifications || []);
+      setUnreadCount(json.data.unreadCount || 0);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu');
@@ -61,11 +59,10 @@ export default function NotificationCenter() {
       });
 
       const json = await res.json();
-      const payload = unwrapApiPayload<{ success?: boolean }>(json);
-      if (res.ok && payload.success) {
+      if (json.success) {
         await fetchNotifications();
       } else {
-        setError(getApiErrorMessage(json, 'İşlem başarısız'));
+        setError(json.error || 'İşlem başarısız');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu');
@@ -84,11 +81,10 @@ export default function NotificationCenter() {
       });
 
       const json = await res.json();
-      const payload = unwrapApiPayload<{ success?: boolean }>(json);
-      if (res.ok && payload.success) {
+      if (json.success) {
         await fetchNotifications();
       } else {
-        setError(getApiErrorMessage(json, 'İşlem başarısız'));
+        setError(json.error || 'İşlem başarısız');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu');

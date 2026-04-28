@@ -3,17 +3,19 @@ import { getPendingEmails, sendEmailViaService } from '../../../lib/email';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
+import { verifyInternalToken } from '../../../lib/auth/internal-token';
 
 export const POST: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader || !authHeader.includes('Bearer ')) {
+    const authResult = verifyInternalToken(request);
+    if (!authResult.ok) {
       recordRequest('POST', '/api/emails/process', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Yetkisiz işlem', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      logger.warn('Internal email-process call rejected', { reason: authResult.reason });
+      return apiError(ErrorCode.UNAUTHORIZED, 'Unauthorized', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const pendingEmails = await getPendingEmails(50);
@@ -22,14 +24,14 @@ export const POST: APIRoute = async ({ request }) => {
 
     for (const email of pendingEmails) {
       try {
-        const success = await sendEmailViaService(email);
-        if (success) {
+        const result = await sendEmailViaService(email);
+        if (result.success) {
           processed++;
         } else {
           failed++;
         }
       } catch (err) {
-        logger.error('E-posta gönderilemedi', err instanceof Error ? err : new Error(String(err)), { emailId: email.id });
+        logger.error('Failed to send email', err instanceof Error ? err : new Error(String(err)), { emailId: email.id });
         failed++;
       }
     }
@@ -40,7 +42,7 @@ export const POST: APIRoute = async ({ request }) => {
     return apiResponse(
       {
         success: true,
-        message: 'E-postalar işlendi',
+        message: 'Emails processed',
         processed,
         failed
       },

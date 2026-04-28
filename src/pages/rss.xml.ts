@@ -1,47 +1,49 @@
-import type { APIRoute } from "astro";
-import rss, { type RSSFeedItem } from "@astrojs/rss";
-import { getCuratedBlogPosts } from "../data/curated-blog-posts";
+import type { APIRoute } from 'astro';
+import { query } from '../lib/postgres';
+import { getSiteBranding } from '../lib/site-branding';
 
-export const GET: APIRoute = async (context) => {
-  let posts = getCuratedBlogPosts().map((post) => ({
-    title: post.title,
-    slug: post.slug,
-    excerpt: post.excerpt,
-    published_at: post.publishedAt,
-  }));
+export const GET: APIRoute = async () => {
+  const { baseUrl, siteName } = await getSiteBranding();
+  
+  const result = await query(
+    "SELECT title, slug, excerpt, published_at FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC LIMIT 20",
+    []
+  );
+  const posts = result.rows;
 
-  try {
-    const { query } = await import("../lib/postgres");
-    const result = await query(
-      "SELECT title, slug, excerpt, published_at FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC NULLS LAST, updated_at DESC LIMIT 20",
-      [],
-    );
-    posts = result.rows.length > 0 ? result.rows : posts;
-  } catch (error) {
-    console.warn(
-      "RSS blog sorgusu başarısız, curated Şanlıurfa blog yazıları kullanılıyor.",
-      error,
-    );
-  }
+  const rss = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>${siteName} Blog</title>
+    <link>${baseUrl}</link>
+    <description>Şanlıurfa hakkında en güncel yazılar, gezi rehberleri ve gastronomi önerileri.</description>
+    <language>tr</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+    ${posts?.map(post => `
+    <item>
+      <title>${escapeXml(post.title)}</title>
+      <link>${baseUrl}/blog/${post.slug}</link>
+      <guid isPermaLink="true">${baseUrl}/blog/${post.slug}</guid>
+      <pubDate>${new Date(post.published_at).toUTCString()}</pubDate>
+      <description>${escapeXml(post.excerpt || '')}</description>
+    </item>
+    `).join('')}
+  </channel>
+</rss>`;
 
-  const items: RSSFeedItem[] = posts.map((post) => ({
-    title: post.title,
-    link: `/blog/${post.slug}`,
-    pubDate: toRssDate(post.published_at),
-    description: post.excerpt || "Şanlıurfa blog yazısı",
-  }));
-
-  return rss({
-    title: "sanliurfa.com Blog",
-    description:
-      "Şanlıurfa hakkında en güncel yazılar, gezi rehberleri ve gastronomi önerileri.",
-    site: context.site || new URL("https://sanliurfa.com"),
-    items,
-    customData: `<language>tr-TR</language>`,
+  return new Response(rss, {
+    headers: {
+      'Content-Type': 'application/xml',
+      'Cache-Control': 'public, max-age=3600',
+    },
   });
 };
 
-function toRssDate(value: string | Date | null | undefined): Date {
-  const date = value ? new Date(value) : new Date();
-  return Number.isNaN(date.getTime()) ? new Date() : date;
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }

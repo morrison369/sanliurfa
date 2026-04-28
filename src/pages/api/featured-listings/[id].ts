@@ -11,13 +11,13 @@ import {
   updateFeaturedListing,
   deleteFeaturedListing,
   recordFeaturedListingClick
-} from '../../../lib/featured-listings';
+} from '../../../lib/feature/featured-listings';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -65,14 +65,14 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/featured-listings/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id } = params;
@@ -82,8 +82,24 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     }
 
     const body = await request.json();
+    const { title, description } = body;
 
-    const updated = await updateFeaturedListing(id, locals.user.id, body);
+    if (title !== undefined) {
+      if (typeof title !== 'string' || title.length < 1 || title.length > 200) {
+        recordRequest('PUT', '/api/featured-listings/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Başlık 1-200 karakter arasında olmalıdır', HttpStatus.BAD_REQUEST, undefined, requestId);
+      }
+    }
+    if (description !== undefined && (typeof description !== 'string' || description.length > 2000)) {
+      recordRequest('PUT', '/api/featured-listings/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Açıklama 2000 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+
+    const safeUpdates: Record<string, unknown> = {};
+    if (title !== undefined) safeUpdates.title = title;
+    if (description !== undefined) safeUpdates.description = description;
+
+    const updated = await updateFeaturedListing(id, locals.user.id, safeUpdates);
 
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/featured-listings/[id]', HttpStatus.OK, duration);
@@ -109,14 +125,14 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/featured-listings/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id } = params;
@@ -136,7 +152,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     recordRequest('DELETE', '/api/featured-listings/[id]', HttpStatus.OK, duration);
 
     return apiResponse(
-      { success: true, message: 'Öne çıkan listeleme silindi' },
+      { success: true, message: 'Featured listing deleted' },
       HttpStatus.OK,
       requestId
     );

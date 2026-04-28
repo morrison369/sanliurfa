@@ -1,0 +1,220 @@
+---
+
+import Layout from '../../../layouts/Layout.astro';
+import { query, queryOne } from '../../../lib/postgres';
+import { getMediaAsset, getSeoOverride } from '../../../lib/site-platform';
+import { getSiteBranding } from '../../../lib/site-branding';
+import DistrictCategoryFilter from '../../../components/places/DistrictCategoryFilter.astro';
+import { logger } from '../../../lib/logging';
+const { baseUrl } = await getSiteBranding();
+
+const { ilce } = Astro.params;
+let district: any = null;
+let places: any[] = [];
+let heroImage = '/images/hero/hero-home.webp';
+let seoOverridePayload: Record<string, any> | null = null;
+let seoOverrideCanonical = '';
+
+const fallbackDistricts: Record<string, any> = {
+  eyyubiye: { slug: 'eyyubiye', name: 'Eyyübiye', description: 'Balıklıgöl, tarihi çarşılar, hanlar ve inanç turizmi rotalarının merkezinde yer alan Şanlıurfa ilçesi.' },
+  haliliye: { slug: 'haliliye', name: 'Haliliye', description: 'Şehir merkezi, kamu hizmetleri, alışveriş, yeme içme ve günlük yaşam noktalarının yoğun olduğu ilçe.' },
+  karakopru: { slug: 'karakopru', name: 'Karaköprü', description: 'Modern konut bölgeleri, kafeler, restoranlar ve yeni şehir yaşamıyla öne çıkan merkez ilçe.' },
+  siverek: { slug: 'siverek', name: 'Siverek', description: 'Takoran Vadisi, doğal güzellikler ve güçlü yerel kültürüyle öne çıkan büyük ilçe.' },
+  viransehir: { slug: 'viransehir', name: 'Viranşehir', description: 'Tarih, tarım, ticaret ve bölgesel ulaşım akslarıyla önemli bir Şanlıurfa ilçesi.' },
+  suruc: { slug: 'suruc', name: 'Suruç', description: 'Yerel kültür, tarım, sınır hattı ticareti ve kırsal yaşam dinamikleriyle bilinen ilçe.' },
+  birecik: { slug: 'birecik', name: 'Birecik', description: 'Fırat Nehri, kelaynak kuşları ve nehir kıyısı gezi rotalarıyla tanınan ilçe.' },
+  akcakale: { slug: 'akcakale', name: 'Akçakale', description: 'Sınır ticareti, tarım alanları ve yerel pazar kültürüyle öne çıkan ilçe.' },
+  ceylanpinar: { slug: 'ceylanpinar', name: 'Ceylanpınar', description: 'Geniş tarım arazileri ve sınır hattı yaşamıyla bilinen Şanlıurfa ilçesi.' },
+  halfeti: { slug: 'halfeti', name: 'Halfeti', description: 'Saklı cennet olarak bilinen, tekne turları ve sular altında kalan tarihi dokusuyla ünlü ilçe.' },
+  harran: { slug: 'harran', name: 'Harran', description: 'Kümbet evleri, tarihi üniversite kalıntıları ve Mezopotamya mirasıyla öne çıkan ilçe.' },
+  hilvan: { slug: 'hilvan', name: 'Hilvan', description: 'Atatürk Barajı çevresi ve kırsal gezi rotalarıyla bilinen ilçe.' },
+  bozova: { slug: 'bozova', name: 'Bozova', description: 'Atatürk Barajı, su sporları ve doğa rotalarıyla öne çıkan Şanlıurfa ilçesi.' },
+};
+
+try {
+  district = await queryOne("SELECT * FROM districts WHERE slug = $1", [ilce]);
+  if (!district) {
+    district = fallbackDistricts[String(ilce || '')];
+  }
+
+  if (!district) return Astro.redirect('/ilceler');
+
+  if (district.id) {
+    const placesResult = await query(
+      `SELECT p.*, c.name as category_name, c.slug as category_slug
+       FROM places p
+       LEFT JOIN categories c ON p.category_id = c.id
+       WHERE p.district_id = $1 AND p.status = 'active'
+       ORDER BY p.is_featured DESC, p.rating DESC LIMIT 20`,
+      [district.id]
+    );
+    places = placesResult.rows;
+  }
+} catch (e) {
+  logger.error('Error loading district:', e instanceof Error ? e : new Error(String(e)));
+}
+
+try {
+  const [heroAsset, seoOverride] = await Promise.all([
+    getMediaAsset(`district.${String(ilce || '').trim()}.hero`),
+    getSeoOverride('district', String(ilce || '').trim()),
+  ]);
+  heroImage = String(heroAsset?.url || heroImage);
+  seoOverridePayload = seoOverride?.seo_payload || null;
+  seoOverrideCanonical = String(seoOverride?.canonical_path || '').trim();
+} catch (e) {
+  logger.error('Error loading district platform data:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: district?.meta_title || `${district?.name || ilce} Rehberi - Şanlıurfa`,
+  description: district?.meta_description || district?.description || `${district?.name} ilçesindeki mekanlar ve yaşam rehberi.`,
+  canonical: `/ilceler/${ilce}`,
+  keywords: ['şanlıurfa ' + (district?.name || ilce).toLowerCase(), (district?.name || ilce) + ' rehberi', 'urfa ' + ilce + ' ilçesi'],
+  ogImage: '/images/hero/hero-home.webp',
+};
+
+if (seoOverridePayload) {
+  Object.assign(seo, seoOverridePayload, {
+    canonical: seoOverrideCanonical || seoOverridePayload.canonical || seo.canonical,
+  });
+}
+
+const districtName = district?.name || String(ilce || '');
+const faqItems = [
+  {
+    S: `${districtName} ilçesinde hangi mekanlar bulunuyor?`,
+    C: `${districtName} ilçesinde restoran, kafe, market, sağlık ve hizmet noktaları dahil pek çok mekan rehberimizde listelenmektedir.`,
+  },
+  {
+    S: `${districtName} ilçesi hakkında bilgi nereden alınır?`,
+    C: district?.description || `${districtName}, Şanlıurfa'ya bağlı bir ilçedir. İlçe rehberinde mekan kategorileri ve yerel hizmetlere ulaşabilirsiniz.`,
+  },
+  {
+    S: `${districtName} ilçesine nasıl gidilir?`,
+    C: `${districtName} ilçesine Şanlıurfa GAP Otogarı'ndan düzenli minibüs ve otobüs seferleriyle ulaşabilirsiniz.`,
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#FDFAF3] border-b border-[rgba(200,160,100,0.14)]">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-[#9A8470]">
+          <a href="/" class="hover:text-urfa-600">Ana Sayfa</a>
+          <span>/</span>
+          <a href="/ilceler" class="hover:text-urfa-600">İlçeler</a>
+          <span>/</span>
+          <span class="text-[#1A1008] font-medium">{district?.name || ilce}</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="relative overflow-hidden bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <img
+        src={heroImage}
+        alt={`${district?.name || ilce} hero`}
+        class="absolute inset-0 h-full w-full object-cover opacity-10"
+        loading="eager"
+        onerror="this.style.display='none'"
+      />
+      <div class="absolute inset-0 bg-[#0D0A08]/85"></div>
+      <div class="container mx-auto px-4">
+        <div class="relative">
+          <h1 class="text-3xl md:text-4xl font-bold text-[#F5EDD6] mb-2">{district?.name || ilce} Rehberi</h1>
+          <p class="text-[#9A8470]">{district?.description}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      {district?.id && (
+        <DistrictCategoryFilter districtId={district.id} districtSlug={ilce} server:defer>
+          <div slot="fallback" class="mb-8 animate-pulse">
+            <div class="h-6 bg-[rgba(200,160,100,0.15)] rounded-sm w-32 mb-4"></div>
+            <div class="flex flex-wrap gap-2">
+              <div class="h-9 w-24 bg-[rgba(200,160,100,0.08)] rounded-sm"></div>
+              <div class="h-9 w-28 bg-[rgba(200,160,100,0.08)] rounded-sm"></div>
+              <div class="h-9 w-20 bg-[rgba(200,160,100,0.08)] rounded-sm"></div>
+              <div class="h-9 w-32 bg-[rgba(200,160,100,0.08)] rounded-sm"></div>
+            </div>
+          </div>
+        </DistrictCategoryFilter>
+      )}
+
+      {places.length > 0 ? (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {places.map((place) => (
+            <a href={`/isletme/${place.slug}`} class="bg-white rounded-sm overflow-hidden border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group">
+              <div class="h-40 overflow-hidden bg-[rgba(200,160,100,0.06)] flex items-center justify-center">
+                {place.cover_image || place.images?.[0] ? (
+                  <img
+                    src={place.cover_image || place.images?.[0]}
+                    alt={place.name}
+                    class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                ) : (
+                  <img
+                    src={heroImage}
+                    alt={place.name}
+                    class="h-full w-full object-cover opacity-80 transition duration-300 group-hover:scale-105"
+                    loading="lazy"
+                    onerror="this.style.display='none'"
+                  />
+                )}
+              </div>
+              <div class="p-5">
+                <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-600">{place.name}</h3>
+                {place.category_name && <span class="text-xs text-urfa-600 font-medium">{place.category_name}</span>}
+                <p class="text-sm text-[#9A8470] mt-2 line-clamp-2">{place.short_description || place.address}</p>
+                <div class="flex items-center gap-1 mt-3">
+                  <span class="text-yellow-500">★</span>
+                  <span class="font-medium text-[#1A1008]">{place.rating || '-'}</span>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <p class="text-[#9A8470]">Bu ilçede henüz kayıtlı mekan bulunmuyor.</p>
+        </div>
+      )}
+    </div>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'City',
+    name: district?.name || ilce,
+    description: district?.description || `${district?.name || ilce} ilçesi, Şanlıurfa`,
+    containedInPlace: {
+      '@type': 'City',
+      name: 'Şanlıurfa',
+      url: `${baseUrl}`,
+    },
+    url: `${baseUrl}/ilceler/${ilce}`,
+    ...(places.length > 0 && {
+      hasMap: `${baseUrl}/ilceler/${ilce}`,
+    }),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'İlçeler', item: `${baseUrl}/ilceler` },
+      { '@type': 'ListItem', position: 3, name: district?.name || ilce, item: `${baseUrl}/ilceler/${ilce}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

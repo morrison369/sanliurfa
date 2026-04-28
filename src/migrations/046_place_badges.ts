@@ -38,18 +38,29 @@ export const migration_046_place_badges = {
       )
     `);
 
+    await pool.query(`
+      ALTER TABLE badge_definitions ADD COLUMN IF NOT EXISTS badge_type VARCHAR(50);
+      ALTER TABLE badge_definitions ADD COLUMN IF NOT EXISTS type VARCHAR(50);
+      ALTER TABLE badge_definitions ADD COLUMN IF NOT EXISTS name VARCHAR(100);
+      ALTER TABLE badge_definitions ADD COLUMN IF NOT EXISTS icon VARCHAR(10);
+      ALTER TABLE badge_definitions ADD COLUMN IF NOT EXISTS description TEXT;
+      ALTER TABLE badge_definitions ADD COLUMN IF NOT EXISTS criteria JSONB;
+      ALTER TABLE badge_definitions ADD COLUMN IF NOT EXISTS auto_award BOOLEAN DEFAULT false;
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_badge_definitions_type ON badge_definitions(type);
+    `);
+
     // Insert default badge types
     await pool.query(`
-      INSERT INTO badge_definitions (type, name, icon, description, auto_award)
+      INSERT INTO badge_definitions (badge_type, type, name, icon, description, auto_award)
       VALUES
-        ('verified', 'Doğrulanmış', '✅', 'Resmi olarak doğrulanmış mekan', true),
-        ('top_rated', 'Yüksek Puanlı', '⭐', '4.5+ puanla en iyi mekanlardan', true),
-        ('popular', 'Popüler', '🔥', 'Çok ziyaret edilen ve beğenilen mekan', true),
-        ('new', 'Yeni', '🆕', 'Son eklenen mekanlar', true),
-        ('featured', 'Öne Çıkan', '💎', 'Platform tarafından öne çıkarılan mekan', false),
-        ('award_winner', 'Ödül Sahibi', '🏆', 'Hizmet ödülü kazanmış mekan', false),
-        ('trusted', 'Güvenilir', '🛡️', 'Yüksek güven puanına sahip mekan', true),
-        ('responsive', 'Yanıt Verici', '📞', 'Hızlı yanıt veren mekan', true)
+        ('verified', 'verified', 'Doğrulanmış', '✅', 'Resmi olarak doğrulanmış mekan', true),
+        ('top_rated', 'top_rated', 'Yüksek Puanlı', '⭐', '4.5+ puanla en iyi mekanlardan', true),
+        ('popular', 'popular', 'Popüler', '🔥', 'Çok ziyaret edilen ve beğenilen mekan', true),
+        ('new', 'new', 'Yeni', '🆕', 'Son eklenen mekanlar', true),
+        ('featured', 'featured', 'Öne Çıkan', '💎', 'Platform tarafından öne çıkarılan mekan', false),
+        ('award_winner', 'award_winner', 'Ödül Sahibi', '🏆', 'Hizmet ödülü kazanmış mekan', false),
+        ('trusted', 'trusted', 'Güvenilir', '🛡️', 'Yüksek güven puanına sahip mekan', true),
+        ('responsive', 'responsive', 'Yanıt Verici', '📞', 'Hızlı yanıt veren mekan', true)
       ON CONFLICT DO NOTHING
     `);
 

@@ -1,0 +1,285 @@
+---
+
+// Search Results Page
+import Layout from '../layouts/Layout.astro';
+import Image from '../components/Image.astro';
+import { searchPlaces } from '../lib/places/db';
+import { searchPosts } from '../lib/blog';
+
+const url = new URL(Astro.request.url);
+const query = url.searchParams.get('q') || '';
+
+let places = [];
+let posts = [];
+let historicalSites = [];
+let districts = [];
+
+import { query as dbQuery } from '../lib/postgres';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+if (query.length >= 2) {
+  const [placesResult, postsResult, sitesResult, distResult] = await Promise.all([
+    searchPlaces(query),
+    searchPosts(query),
+    dbQuery(
+      `SELECT id, name, slug, short_description, 'historical_site' as type
+       FROM historical_sites
+       WHERE status = 'active' AND (name ILIKE $1 OR short_description ILIKE $1 OR description ILIKE $1)
+       LIMIT 6`,
+      [`%${query}%`]
+    ).catch(() => ({ rows: [] })),
+    dbQuery(
+      `SELECT id, name, slug, description, 'district' as type
+       FROM districts
+       WHERE name ILIKE $1 OR description ILIKE $1
+       LIMIT 6`,
+      [`%${query}%`]
+    ).catch(() => ({ rows: [] })),
+  ]);
+  places = placesResult.places;
+  posts = postsResult;
+  historicalSites = sitesResult.rows;
+  districts = distResult.rows;
+}
+
+const totalResults = places.length + posts.length + historicalSites.length + districts.length;
+
+const seo = {
+  title: query ? `"${query}" Arama Sonuçları - Şanlıurfa Rehberi` : 'Ara - Şanlıurfa Rehberi',
+  description: query ? `"${query}" için ${totalResults} sonuç bulundu.` : 'Şanlıurfa mekanları ve blog yazılarında arayın.',
+  keywords: ['şanlıurfa arama', 'urfa mekan ara', 'şanlıurfa mekan bul'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/ara',
+  noIndex: true,
+};
+const faqItems = [
+  { S: 'Şanlıurfa arama sayfasında ne arayabilirim?', C: 'Mekan adı, restoran, kafe, tarihi yer, eczane veya hizmet gibi anahtar kelimelerle arama yapabilirsiniz.' },
+  { S: 'Arama sonuçları nasıl sıralanır?', C: 'Sonuçlar alaka düzeyi, kullanıcı puanı ve aktiflik durumuna göre otomatik olarak sıralanır.' },
+  { S: 'Mekan bulamadım, ne yapabilirim?', C: 'Farklı anahtar kelimelerle tekrar arayabilir ya da Mekanlar sayfasından kategori seçerek ilerliyebilirsiniz.' },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <!-- Search Header -->
+    <div class="bg-[#FDFAF3] py-12 border-b border-[rgba(200,160,100,0.14)]">
+      <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold text-[#1A1008] mb-6">Ara</h1>
+
+        <form action="/ara" method="get" class="max-w-2xl">
+          <div class="relative">
+            <input
+              type="text"
+              name="q"
+              value={query}
+              placeholder="Mekan, kategori veya blog yazısı ara..."
+              class="w-full px-6 py-4 pr-32 text-lg border border-[rgba(200,160,100,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-500 focus:border-transparent bg-white text-[#1A1008]"
+              autofocus
+            />
+            <button
+              type="submit"
+              class="absolute right-2 top-2 bottom-2 px-6 bg-urfa-600 text-white font-medium rounded-sm hover:bg-urfa-700 transition-colors"
+            >
+              Ara
+            </button>
+          </div>
+        </form>
+
+        {query && (
+          <p class="text-[#6B5540] mt-4">
+            <strong class="text-[#1A1008]">"{query}"</strong> için <strong class="text-[#1A1008]">{totalResults}</strong> sonuç bulundu
+          </p>
+        )}
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="py-12">
+      <div class="container mx-auto px-4">
+        {query.length < 2 ? (
+          <div class="text-center py-16">
+            <div class="text-6xl mb-4">🔍</div>
+            <p class="text-[#9A8470]">Arama yapmak için en az 2 karakter girin</p>
+          </div>
+        ) : totalResults === 0 ? (
+          <div class="text-center py-16">
+            <div class="text-6xl mb-4">😕</div>
+            <h2 class="text-xl font-bold text-[#1A1008] mb-2">Sonuç Bulunamadı</h2>
+            <p class="text-[#9A8470]">"{query}" için herhangi bir sonuç bulunamadı.</p>
+            <div class="mt-6">
+              <p class="text-[#9A8470] mb-4">Şunları deneyebilirsiniz:</p>
+              <div class="flex flex-wrap gap-2 justify-center">
+                {['Göbeklitepe', 'Balıklıgöl', 'Kebapçı', 'Ciğerci', 'Harran', 'Otel', 'Eczane', 'Kahvaltı'].map(suggestion => (
+                  <a
+                    href={`/ara?q=${encodeURIComponent(suggestion)}`}
+                    class="px-4 py-2 bg-[rgba(200,160,100,0.08)] text-[#6B5540] rounded-sm hover:bg-[rgba(200,160,100,0.15)] transition-colors"
+                  >
+                    {suggestion}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div class="space-y-12">
+            {/* Places Results */}
+            {places.length > 0 && (
+              <div>
+                <h2 class="text-2xl font-bold text-[#1A1008] mb-6 flex items-center gap-2">
+                  <span>📍</span> Mekanlar ({places.length})
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {places.map(place => (
+                    <a href={`/isletme/${place.slug}`} class="group">
+                      <article class="bg-white rounded-sm overflow-hidden border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all">
+                        <div class="h-48 bg-[rgba(200,160,100,0.08)]">
+                          {place.thumbnail ? (
+                            <Image
+                              src={place.thumbnail}
+                              alt={place.name}
+                              class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              width={720}
+                              height={480}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div class="w-full h-full flex items-center justify-center text-[#9A8470] text-4xl">📍</div>
+                          )}
+                        </div>
+                        <div class="p-5">
+                          <span class="text-xs text-[#9A8470] uppercase">{place.category_name}</span>
+                          <h3 class="font-bold text-lg text-[#1A1008] mt-1 group-hover:text-urfa-700 transition-colors">{place.name}</h3>
+                          <div class="flex items-center gap-2 mt-2">
+                            <div class="flex text-yellow-400 text-sm">
+                              {'★'.repeat(Math.floor(place.rating || 0))}
+                              <span class="text-[rgba(200,160,100,0.25)]">{'★'.repeat(5 - Math.floor(place.rating || 0))}</span>
+                            </div>
+                            <span class="text-sm text-[#9A8470]">({place.review_count})</span>
+                          </div>
+                          <p class="text-[#6B5540] text-sm mt-2 line-clamp-2">{place.short_description}</p>
+                        </div>
+                      </article>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Historical Sites */}
+            {historicalSites.length > 0 && (
+              <div>
+                <h2 class="text-2xl font-bold text-[#1A1008] mb-6 flex items-center gap-2">
+                  <span>🏛️</span> Gezilecek Yerler ({historicalSites.length})
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {historicalSites.map((site: any) => (
+                    <a href={`/gezilecek-yerler/${site.slug}`} class="group">
+                      <article class="bg-white rounded-sm p-5 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all">
+                        <div class="flex items-start gap-3">
+                          <span class="text-3xl">🏛️</span>
+                          <div>
+                            <h3 class="font-bold text-lg text-[#1A1008] group-hover:text-urfa-700 transition-colors">{site.name}</h3>
+                            <p class="text-[#6B5540] text-sm mt-1 line-clamp-2">{site.short_description}</p>
+                          </div>
+                        </div>
+                      </article>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Districts */}
+            {districts.length > 0 && (
+              <div>
+                <h2 class="text-2xl font-bold text-[#1A1008] mb-6 flex items-center gap-2">
+                  <span>🏙️</span> İlçeler ({districts.length})
+                </h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {districts.map((d: any) => (
+                    <a href={`/ilceler/${d.slug}`} class="bg-white rounded-sm p-4 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group flex items-center gap-3">
+                      <span class="text-2xl">🏙️</span>
+                      <div>
+                        <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-700">{d.name}</h3>
+                        {d.description && <p class="text-xs text-[#9A8470] line-clamp-1">{d.description}</p>}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Blog Results */}
+            {posts.length > 0 && (
+              <div>
+                <h2 class="text-2xl font-bold text-[#1A1008] mb-6 flex items-center gap-2">
+                  <span>📝</span> Blog Yazıları ({posts.length})
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {posts.map(post => (
+                    <a href={`/blog/${post.slug}`} class="group">
+                      <article class="bg-white rounded-sm overflow-hidden border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all">
+                        <div class="h-48 bg-[rgba(200,160,100,0.08)]">
+                          {post.featured_image ? (
+                            <Image
+                              src={post.featured_image}
+                              alt={post.title}
+                              class="w-full h-full object-cover"
+                              width={720}
+                              height={480}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div class="w-full h-full flex items-center justify-center text-[#9A8470] text-4xl">📝</div>
+                          )}
+                        </div>
+                        <div class="p-5">
+                          <span class="text-xs text-urfa-600 font-medium uppercase">{post.category_name}</span>
+                          <h3 class="font-bold text-lg text-[#1A1008] mt-1 group-hover:text-urfa-700 transition-colors line-clamp-2">{post.title}</h3>
+                          <p class="text-[#6B5540] text-sm mt-2 line-clamp-2">{post.excerpt}</p>
+                          <div class="flex items-center gap-4 mt-4 text-sm text-[#9A8470]">
+                            <span>{post.reading_time} dk okuma</span>
+                          </div>
+                        </div>
+                      </article>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Sanliurfa.com',
+    url: `${baseUrl}`,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: `${baseUrl}/ara?q={search_term_string}` },
+      'query-input': 'required name=search_term_string',
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Arama', item: `${baseUrl}/ara` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

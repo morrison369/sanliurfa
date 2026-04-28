@@ -1,10 +1,10 @@
 {
-  "name": "sanliurfa.com - Şehir Rehberi",
-  "short_name": "sanliurfa.com",
+  "name": "Şanlıurfa.com - Şehir Rehberi",
+  "short_name": "Şanlıurfa.com",
   "description": "Şanlıurfa'nın en kapsamlı şehir rehberi. Göbeklitepe, Balıklıgöl, gastronomi ve daha fazlası.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#2a130b",
+  "background_color": "#a18072",
   "theme_color": "#a18072",
   "orientation": "portrait-primary",
   "icons": [
@@ -51,6 +51,5 @@
   ],
   "categories": ["travel", "food", "lifestyle"],
   "lang": "tr",
-  "dir": "ltr",
-  "scope": "/"
+  "dir": "ltr"
 }

@@ -1,122 +1,91 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import { verifyToken } from '../../lib/auth';
-
-// Check authentication
-const token = Astro.cookies.get('auth-token')?.value;
-if (!token) {
-  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
-}
-
-const sessionData = await verifyToken(token);
-if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
-  return Astro.redirect('/?error=unauthorized');
-}
-
+import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 
-<Layout title="Gelir Yönetimi - Yönetim Paneli" noindex>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 px-4">
-    <div class="container max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">💰 Gelir Yönetimi</h1>
-        <p class="text-gray-600 dark:text-gray-400">Abonelik geliri, MRR ve kayıp abonelik oranı analitikleri</p>
+<AdminLayout
+  title="Gelir Yönetimi"
+  subtitle="Abonelik geliri, MRR ve kayıp oranı analitikleri"
+>
+    <div class="container mx-auto px-4 py-8">
+      <div class="mb-6">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
       </div>
 
-      <!-- Summary Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Total MRR -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Aylık Gelir (MRR)</h3>
-            <span class="text-2xl">📈</span>
+            <h3 class="text-sm font-medium text-[#6B5540]">Aylık Gelir (MRR)</h3>
           </div>
-          <div class="text-3xl font-bold text-gray-900 dark:text-white" id="totalMRR">
-            ₺0,00
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Aktif aboneliklerden</p>
+          <div class="text-3xl font-bold text-[#1A1008]" id="totalMRR">$0.00</div>
+          <p class="text-sm text-[#9A8470] mt-2">Aktif aboneliklerden</p>
         </div>
 
-        <!-- Active Subscriptions -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Aktif Abonelikler</h3>
-            <span class="text-2xl">👥</span>
+            <h3 class="text-sm font-medium text-[#6B5540]">Aktif Abonelikler</h3>
           </div>
-          <div class="text-3xl font-bold text-gray-900 dark:text-white" id="activeSubscriptions">
-            0
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tüm katmanlar</p>
+          <div class="text-3xl font-bold text-[#1A1008]" id="activeSubscriptions">0</div>
+          <p class="text-sm text-[#9A8470] mt-2">Tüm katmanlar</p>
         </div>
 
-        <!-- Churn Rate -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Kayıp Abonelik Oranı (30g)</h3>
-            <span class="text-2xl">📉</span>
+            <h3 class="text-sm font-medium text-[#6B5540]">Kayıp Oranı (30g)</h3>
           </div>
-          <div class="text-3xl font-bold text-red-600 dark:text-red-400" id="churnRate">
-            %0
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Kaybedilen abonelikler</p>
+          <div class="text-3xl font-bold text-urfa-600" id="churnRate">0%</div>
+          <p class="text-sm text-[#9A8470] mt-2">Kaybedilen abonelikler</p>
         </div>
 
-        <!-- Total Revenue -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-300">Toplam Gelir</h3>
-            <span class="text-2xl">💵</span>
+            <h3 class="text-sm font-medium text-[#6B5540]">Toplam Gelir</h3>
           </div>
-          <div class="text-3xl font-bold text-green-600 dark:text-green-400" id="totalRevenue">
-            ₺0,00
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tüm zamanlar</p>
+          <div class="text-3xl font-bold text-[#1A1008]" id="totalRevenue">$0.00</div>
+          <p class="text-sm text-[#9A8470] mt-2">Tüm zamanlar</p>
         </div>
       </div>
 
-      <!-- Tiers Breakdown -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {['free', 'premium', 'pro'].map((tier) => (
-          <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 capitalize">
-              {tier === 'free' && '🎁 Ücretsiz'}
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-[#1A1008] mb-4 capitalize">
+              {tier === 'free' && 'Ücretsiz'}
               {tier === 'premium' && '⭐ Premium'}
-              {tier === 'pro' && '👑 Pro'}
+              {tier === 'pro' && 'Pro'}
             </h3>
 
             {tier === 'free' && (
-              <div class="text-sm text-gray-600 dark:text-gray-300">
+              <div class="text-sm text-[#6B5540]">
                 <p class="mb-4">Ücretli olmayan hesaplar. Ücretsiz özellikler sunarlar.</p>
-                <div class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                <div class="text-2xl font-bold text-[#1A1008] mb-2">
                   <span id="freeTierCount">0</span> kullanıcı
                 </div>
               </div>
             )}
 
             {tier === 'premium' && (
-              <div class="text-sm text-gray-600 dark:text-gray-300">
-                <p class="mb-4">Premium üyeliklerden gelen aylık gelir.</p>
+              <div class="text-sm text-[#6B5540]">
+                <p class="mb-4">$2.99/ay fiyatlandırma.</p>
                 <div class="mb-4">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div class="text-2xl font-bold text-[#1A1008]">
                     <span id="premiumTierCount">0</span> aktif abone
                   </div>
-                  <div class="text-lg text-orange-600 dark:text-orange-400 mt-2">
-                    <span id="premiumTierRevenue">₺0,00</span>/ay
+                  <div class="text-lg text-urfa-600 mt-2">
+                    <span id="premiumTierRevenue">$0.00</span>/ay
                   </div>
                 </div>
               </div>
             )}
 
             {tier === 'pro' && (
-              <div class="text-sm text-gray-600 dark:text-gray-300">
-                <p class="mb-4">Pro üyeliklerden gelen aylık gelir.</p>
+              <div class="text-sm text-[#6B5540]">
+                <p class="mb-4">$5.99/ay fiyatlandırma.</p>
                 <div class="mb-4">
-                  <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div class="text-2xl font-bold text-[#1A1008]">
                     <span id="proTierCount">0</span> aktif abone
                   </div>
-                  <div class="text-lg text-green-600 dark:text-green-400 mt-2">
-                    <span id="proTierRevenue">₺0,00</span>/ay
+                  <div class="text-lg text-urfa-600 mt-2">
+                    <span id="proTierRevenue">$0.00</span>/ay
                   </div>
                 </div>
               </div>
@@ -125,100 +94,43 @@ if (!sessionData || !['admin', 'moderator'].includes(sessionData.role)) {
         ))}
       </div>
 
-      <!-- Revenue Trend -->
-      <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-6">
-        <div class="flex items-center justify-between gap-4 mb-4">
-          <div>
-            <h3 class="font-semibold text-gray-900 dark:text-white">📊 Son 30 Gün Gelir Trendi</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Üyelik başlangıçlarına göre günlük gelir özeti</p>
-          </div>
-          <span id="revenueStatus" class="text-xs text-gray-500 dark:text-gray-400">Yükleniyor...</span>
-        </div>
-        <div id="dailyRevenueChart" class="min-h-48 flex items-end gap-2 border-b border-gray-200 dark:border-gray-700 pt-6"></div>
-        <div id="dailyRevenueEmpty" class="hidden text-sm text-gray-500 dark:text-gray-400 py-8">
-          Son 30 gün için gelir kaydı bulunmuyor.
-        </div>
+      <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6">
+        <h3 class="font-semibold text-[#1A1008] mb-2">Grafik Yükleniyor</h3>
+        <p class="text-sm text-[#6B5540]">
+          Günlük gelir grafiği burada gösterilecek (Chart.js ile). Son 30 günün gelir trendini takip et.
+        </p>
       </div>
     </div>
-  </div>
 
   <script>
-    // @ts-nocheck
-    // Fetch revenue data
     async function loadRevenueData() {
       try {
         const response = await fetch('/api/admin/revenue');
-        if (!response.ok) throw new Error('Gelir verisi alınamadı');
+        if (!response.ok) throw new Error('Gelir verisi alınamadı.');
 
         const result = await response.json();
-        const payload = result.data?.data || result.data;
-        const { summary, byTier, dailyRevenue } = payload;
-        const formatCurrency = (value) => new Intl.NumberFormat('tr-TR', {
-          style: 'currency',
-          currency: 'TRY'
-        }).format(Number(value || 0));
+        const { summary, byTier } = result.data;
 
-        // Update summary cards
-        setText('totalMRR', formatCurrency(summary.totalMRR));
-        setText('activeSubscriptions', summary.totalActiveSubscriptions.toString());
-        setText('churnRate', `%${summary.churnRatePercent}`);
-        setText('totalRevenue', formatCurrency(summary.totalRevenueAllTime));
+        document.getElementById('totalMRR')!.textContent = `$${summary.totalMRR.toFixed(2)}`;
+        document.getElementById('activeSubscriptions')!.textContent = summary.totalActiveSubscriptions.toString();
+        document.getElementById('churnRate')!.textContent = `${summary.churnRatePercent}%`;
+        document.getElementById('totalRevenue')!.textContent = `$${summary.totalRevenueAllTime.toFixed(2)}`;
 
-        // Update tier breakdowns
         if (byTier.premium) {
-          setText('premiumTierCount', byTier.premium.count.toString());
-          setText('premiumTierRevenue', formatCurrency(byTier.premium.monthlyRevenue));
+          document.getElementById('premiumTierCount')!.textContent = byTier.premium.count.toString();
+          document.getElementById('premiumTierRevenue')!.textContent = `$${byTier.premium.monthlyRevenue.toFixed(2)}`;
         }
 
         if (byTier.pro) {
-          setText('proTierCount', byTier.pro.count.toString());
-          setText('proTierRevenue', formatCurrency(byTier.pro.monthlyRevenue));
+          document.getElementById('proTierCount')!.textContent = byTier.pro.count.toString();
+          document.getElementById('proTierRevenue')!.textContent = `$${byTier.pro.monthlyRevenue.toFixed(2)}`;
         }
-
-        renderDailyRevenue(dailyRevenue || [], formatCurrency);
-        setText('revenueStatus', 'Güncel');
       } catch (error) {
-        console.error('Gelir verisi yükleme hatası:', error);
-        setText('revenueStatus', 'Veri alınamadı');
+        console.error('Gelir verisi yüklenemedi:', error);
       }
     }
 
-    function setText(id, value) {
-      const element = document.getElementById(id);
-      if (element) element.textContent = value;
-    }
-
-    function renderDailyRevenue(rows, formatCurrency) {
-      const chart = document.getElementById('dailyRevenueChart');
-      const empty = document.getElementById('dailyRevenueEmpty');
-      if (!chart || !empty) return;
-
-      chart.innerHTML = '';
-      if (!rows.length) {
-        chart.classList.add('hidden');
-        empty.classList.remove('hidden');
-        return;
-      }
-
-      chart.classList.remove('hidden');
-      empty.classList.add('hidden');
-      const maxRevenue = Math.max(...rows.map((row) => Number(row.revenue || 0)), 1);
-
-      rows.forEach((row) => {
-        const revenue = Number(row.revenue || 0);
-        const height = Math.max(6, Math.round((revenue / maxRevenue) * 160));
-        const bar = document.createElement('div');
-        bar.className = 'flex-1 min-w-2 rounded-t-lg bg-gradient-to-t from-urfa-700 to-isot-500';
-        bar.style.height = `${height}px`;
-        bar.title = `${new Date(row.date).toLocaleDateString('tr-TR')}: ${formatCurrency(revenue)}`;
-        chart.appendChild(bar);
-      });
-    }
-
-    // Load on page load
     loadRevenueData();
-
-    // Refresh every 5 minutes
     setInterval(loadRevenueData, 5 * 60 * 1000);
   </script>
-</Layout>
+</AdminLayout>

@@ -15,11 +15,15 @@ export const migration_027_direct_messages = async (pool: Pool) => {
         participant_b UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         last_message_id UUID,
         last_activity_at TIMESTAMP DEFAULT NOW(),
-        created_at TIMESTAMP DEFAULT NOW(),
-        CONSTRAINT unique_conversation UNIQUE (
-          LEAST(participant_a::text, participant_b::text),
-          GREATEST(participant_a::text, participant_b::text)
-        )
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_conversations_unique_pair
+      ON conversations (
+        LEAST(participant_a::text, participant_b::text),
+        GREATEST(participant_a::text, participant_b::text)
       )
     `);
 

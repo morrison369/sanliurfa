@@ -8,20 +8,20 @@ import type { APIRoute } from 'astro';
 import {
   createMarketingCampaign,
   getUserCampaigns
-} from '../../../lib/marketing-campaigns';
+} from '../../../lib/marketing/marketing-campaigns';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/marketing-campaigns', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const campaigns = await getUserCampaigns(locals.user.id);
@@ -40,7 +40,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     logger.error('Get campaigns failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Kampanyalar alınamadı',
+      'Failed to get campaigns',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -49,14 +49,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/marketing-campaigns', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -77,18 +77,36 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/marketing-campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Missing required fields: place_id, name, campaign_type',
+        'Zorunlu alanlar eksik: place_id, name, campaign_type',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
       );
+    }
+    if (name.length > 200) {
+      recordRequest('POST', '/api/marketing-campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Kampanya adı 200 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (description !== undefined && description !== null && (typeof description !== 'string' || description.length > 2000)) {
+      recordRequest('POST', '/api/marketing-campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Açıklama 2000 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const VALID_CAMPAIGN_TYPES = new Set(['promotion', 'awareness', 'conversion', 'promotional']);
+    if (!VALID_CAMPAIGN_TYPES.has(campaign_type)) {
+      recordRequest('POST', '/api/marketing-campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz kampanya tipi', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const budgetNum = budget !== undefined ? parseFloat(String(budget)) : 0;
+    if (!Number.isFinite(budgetNum) || budgetNum < 0) {
+      recordRequest('POST', '/api/marketing-campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz bütçe değeri', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const campaign = await createMarketingCampaign(place_id, locals.user.id, {
       name,
       description,
       campaign_type,
-      budget: budget || 0,
+      budget: budgetNum,
       targeting,
       creative_content,
       schedule_config,
@@ -111,7 +129,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Create campaign failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Kampanya oluşturulamadı',
+      'Failed to create campaign',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -5,27 +5,27 @@
 
 import type { APIRoute } from 'astro';
 import { queryOne, queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const slug = params.slug as string;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 50);
 
     // Check cache
     const cacheKey = `hashtag:slug:${slug}`;
-    const cached = await getCache<any>(cacheKey);
+    const cached = await getCache(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/hashtags/${slug}`, HttpStatus.OK, duration);
-      return apiResponse(cached, HttpStatus.OK, requestId);
+      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
     }
 
     // Fetch hashtag metadata
@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
 
     // Fetch tagged places
     const places = await queryMany(
-      `SELECT DISTINCT p.id, p.name, p.slug, p.category, p.rating_avg, p.address,
+      `SELECT DISTINCT p.id, p.name, p.slug, p.category, COALESCE(p.rating, p.avg_rating, 0) as rating_avg, p.address,
               hu.used_at as tagged_at
        FROM places p
        INNER JOIN hashtag_usage hu ON p.id = hu.content_id
@@ -92,7 +92,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     };
 
     // Cache result (10 min TTL)
-    await setCache(cacheKey, response, 600);
+    await setCache(cacheKey, JSON.stringify(response), 600);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/hashtags/${slug}`, HttpStatus.OK, duration);

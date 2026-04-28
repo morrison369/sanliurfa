@@ -1,25 +1,24 @@
-// @ts-nocheck
 /**
  * Place Photos API
  * GET: Retrieve photos for a place
  */
 
 import type { APIRoute } from 'astro';
-import { getPlacePhotos } from '../../../../lib/photos';
+import { getPlacePhotos } from '../../../../lib/photo';
 import { queryOne } from '../../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const { id: placeId } = params;
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
 
     // Verify place exists
     const place = await queryOne('SELECT id FROM places WHERE id = $1', [placeId]);

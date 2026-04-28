@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, safeErrorDetail, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { pool } from '../../../lib/postgres';
-import { getOptionalRedisClient } from '../../../lib/cache';
-import { query } from '../../../lib/postgres';
+import { getRedisClient } from '../../../lib/cache';
+import { logger } from '../../../lib/logging';
 
 interface DetailedHealth {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -43,11 +43,11 @@ interface DetailedHealth {
  * GET /api/health/detailed - Detailed health check with system metrics
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
 
   // Only admin can access detailed health
   if (!locals.isAdmin) {
-    return apiError(ErrorCode.FORBIDDEN, 'Yetkisiz işlem', HttpStatus.FORBIDDEN, undefined, requestId);
+    return apiError(ErrorCode.FORBIDDEN, 'Unauthorized', HttpStatus.FORBIDDEN, undefined, requestId);
   }
 
   try {
@@ -67,25 +67,22 @@ export const GET: APIRoute = async ({ request, locals }) => {
         dbStatus = 'up';
       }
     } catch (error) {
-      console.error('Database health check failed:', error);
+      logger.error('Database health check failed:', error);
       dbStatus = 'down';
-      dbError = error instanceof Error ? error.message : String(error);
+      dbError = safeErrorDetail(error, 'DB sağlık kontrolü başarısız');
     }
 
     // Check Redis
     try {
       const redisStart = Date.now();
-      const redis = await getOptionalRedisClient({ silent: true });
-      if (redis) {
-        await redis.ping();
-        redisResponseTime = Date.now() - redisStart;
-        redisStatus = 'up';
-      } else {
-        redisError = 'Redis unavailable';
-      }
+      const redis = await getRedisClient();
+      await redis.ping();
+      redisResponseTime = Date.now() - redisStart;
+      redisStatus = 'up';
     } catch (error) {
+      logger.error('Redis health check failed:', error);
       redisStatus = 'down';
-      redisError = error instanceof Error ? error.message : String(error);
+      redisError = safeErrorDetail(error, 'Redis sağlık kontrolü başarısız');
     }
 
     // Get memory usage
@@ -139,7 +136,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     return apiResponse(healthData, statusCode, requestId);
   } catch (error) {
-    console.error('Detailed health check error:', error);
+    logger.error('Detailed health check error:', error);
     return apiError(ErrorCode.INTERNAL_ERROR, 'Health check failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

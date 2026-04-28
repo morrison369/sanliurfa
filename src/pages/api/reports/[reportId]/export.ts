@@ -1,17 +1,17 @@
-// @ts-nocheck
 /**
  * Report Export API
  * Download reports in CSV/JSON/Excel format
  */
 
 import type { APIRoute } from 'astro';
-import { executeReport } from '../../../../lib/report-engine';
+import { executeReport } from '../../../../lib/report/report-engine';
 import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { queryOne } from '../../../../lib/postgres';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Rapor ID gereklidir',
+        'Report ID required',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -46,11 +46,27 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Geçersiz format. csv, json veya excel olmalıdır',
+        'Invalid format. Must be csv, json, or excel',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
       );
+    }
+
+    // IDOR guard — verify report belongs to requesting user (or user is admin)
+    if (locals.user.role !== 'admin') {
+      const report = await queryOne<{ user_id: string | null }>(
+        'SELECT user_id FROM reports WHERE id = $1',
+        [reportId]
+      );
+      if (!report) {
+        recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.NOT_FOUND, Date.now() - startTime);
+        return apiError(ErrorCode.NOT_FOUND, 'Report not found', HttpStatus.NOT_FOUND, undefined, requestId);
+      }
+      if (report.user_id !== locals.user.id) {
+        recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.FORBIDDEN, Date.now() - startTime);
+        return apiError(ErrorCode.FORBIDDEN, 'Bu rapora erişim izniniz yok', HttpStatus.FORBIDDEN, undefined, requestId);
+      }
     }
 
     const result = await executeReport(reportId, format);
@@ -66,7 +82,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       body = result.buffer;
     }
 
-    return new Response(body, {
+    return new Response(body as BodyInit, {
       status: 200,
       headers: {
         'Content-Type': result.contentType,
@@ -78,12 +94,12 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Rapor dışa aktarılamadı',
+      'Failed to export report',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Rapor dışa aktarılamadı',
+      'Failed to export report',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

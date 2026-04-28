@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserRecommendations, generateUserRecommendations, trackUserInterest } from '../../../lib/trending-recommendations';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getUserRecommendations, generateUserRecommendations, trackUserInterest } from '../../../lib/feed/trending-recommendations';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -18,8 +18,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/recommendations', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -27,21 +27,19 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
     const refresh = url.searchParams.get('refresh') === 'true';
 
     // Check cache first (unless refresh requested)
-    let recommendations;
-    if (refresh) {
-      recommendations = await generateUserRecommendations(locals.user.id, limit);
-    } else {
-      recommendations = await getUserRecommendations(locals.user.id, limit);
-
-      // If no cached recommendations, generate new ones
-      if (recommendations.length === 0) {
-        recommendations = await generateUserRecommendations(locals.user.id, limit);
-      }
-    }
+    const recommendations = refresh
+      ? await generateUserRecommendations(locals.user.id, limit)
+      : await (async () => {
+          const cached = await getUserRecommendations(locals.user.id, limit);
+          if (cached.length > 0) {
+            return cached;
+          }
+          return generateUserRecommendations(locals.user.id, limit);
+        })();
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/recommendations', HttpStatus.OK, duration);
@@ -73,7 +71,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -81,8 +79,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/recommendations', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId

@@ -1,0 +1,96 @@
+---
+/**
+ * Google Analytics 4 with Enhanced Ecommerce
+ */
+
+interface Props {
+  measurementId: string;
+  debug?: boolean;
+}
+
+const { measurementId, debug = false } = Astro.props;
+
+// Don't render if no measurement ID
+if (!measurementId) return;
+---
+
+<!-- Google tag (gtag.js) via Partytown -->
+<script type="text/partytown" is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`}></script>
+
+<script type="text/partytown" is:inline define:vars={{ measurementId, debug }}>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  window.gtag = gtag;
+  gtag('js', new Date());
+  
+  // Config with enhanced measurement
+  gtag('config', measurementId, {
+    send_page_view: true,
+    transport_type: 'beacon',
+    anonymize_ip: true,
+    allow_google_signals: true,
+    allow_ad_personalization_signals: false, // Privacy-friendly
+    cookie_flags: 'SameSite=None;Secure',
+    cookie_expires: 63072000, // 2 years
+    custom_map: {
+      'custom_parameter_1': 'user_type',
+      'custom_parameter_2': 'subscription_tier',
+    },
+    ...(debug && { debug_mode: true }),
+  });
+  
+  // Custom events helper
+  window.trackEvent = function(eventName, parameters = {}) {
+    gtag('event', eventName, parameters);
+  };
+  
+  // Track page engagement
+  window.trackEngagement = function(action, value) {
+    gtag('event', 'engagement', {
+      action,
+      value,
+    });
+  };
+  
+  // Track place interactions
+  window.trackPlaceInteraction = function(placeId, placeName, action) {
+    gtag('event', 'place_interaction', {
+      place_id: placeId,
+      place_name: placeName,
+      action: action, // view, favorite, review, share
+    });
+  };
+  
+  // Track search
+  window.trackSearch = function(query, resultsCount, category) {
+    gtag('event', 'search', {
+      search_term: query,
+      results_count: resultsCount,
+      category: category,
+    });
+  };
+  
+  // Track conversions
+  window.trackConversion = function(conversionType, value, currency = 'TRY') {
+    gtag('event', 'conversion', {
+      conversion_type: conversionType, // signup, subscription, contact
+      value: value,
+      currency: currency,
+    });
+  };
+</script>
+
+<!-- User properties for segmentation -->
+<script>
+  // Set user properties if logged in
+  const gtagFn = window.gtag;
+  if (window.__USER__?.id) {
+    gtagFn?.('set', 'user_properties', {
+      user_id: window.__USER__.id,
+      user_type: window.__USER__.type || 'guest',
+      subscription_tier: window.__USER__.subscription || 'free',
+    });
+  }
+</script>

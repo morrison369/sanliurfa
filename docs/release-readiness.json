@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-04-28T19:51:29.420Z",
+  "status": "ready",
+  "checks": [
+    {
+      "name": "OpenAPI P0 report",
+      "ok": true,
+      "artifact": "docs/openapi-p0-closure-report.json"
+    },
+    {
+      "name": "OpenAPI baseline",
+      "ok": true,
+      "artifact": "docs/openapi-route-gap-baseline.json"
+    },
+    {
+      "name": "Image manifest",
+      "ok": true,
+      "artifact": "public/images/image-manifest.json"
+    },
+    {
+      "name": "DB-first doc",
+      "ok": true,
+      "artifact": "docs/DB_FIRST_SITE_MANAGEMENT.md"
+    },
+    {
+      "name": "Detail plan doc",
+      "ok": true,
+      "artifact": "docs/DETAYLI_PROJE_ONERILERI_VE_UYGULAMA_PLANI.md"
+    }
+  ],
+  "openapi": {
+    "p0TotalMissing": 0
+  },
+  "summary": "Tüm temel artefaktlar mevcut ve OpenAPI P0 gap kapalı."
+}

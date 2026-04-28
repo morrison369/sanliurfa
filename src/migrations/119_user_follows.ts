@@ -21,6 +21,12 @@ export const migration_119_user_follows = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_follows ADD COLUMN IF NOT EXISTS follower_user_id UUID;
+      ALTER TABLE user_follows ADD COLUMN IF NOT EXISTS following_user_id UUID;
+      ALTER TABLE user_follows ADD COLUMN IF NOT EXISTS followed_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_user_follows_follower
       ON user_follows(follower_user_id, followed_at DESC)
     `);
@@ -44,6 +50,12 @@ export const migration_119_user_follows = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE follow_requests ADD COLUMN IF NOT EXISTS recipient_user_id UUID;
+      ALTER TABLE follow_requests ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending';
+      ALTER TABLE follow_requests ADD COLUMN IF NOT EXISTS requested_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_follow_requests_recipient
       ON follow_requests(recipient_user_id, status, requested_at DESC)
     `);
@@ -59,6 +71,11 @@ export const migration_119_user_follows = async (pool: Pool) => {
         engagement_score FLOAT DEFAULT 0,
         last_updated TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE user_social_stats ADD COLUMN IF NOT EXISTS follower_count INT DEFAULT 0;
+      ALTER TABLE user_social_stats ADD COLUMN IF NOT EXISTS user_id UUID;
     `);
 
     await pool.query(`

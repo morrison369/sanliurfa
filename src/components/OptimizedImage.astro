@@ -1,5 +1,6 @@
 ---
-import { getImage } from 'astro:assets';
+// Responsive, optimize edilmiş görsel bileşeni
+// WebP formatını destekler, srcset ile farklı boyutlar sunar
 
 interface Props {
   src: string;
@@ -7,67 +8,130 @@ interface Props {
   width?: number;
   height?: number;
   class?: string;
-  loading?: 'eager' | 'lazy';
-  fetchpriority?: 'high' | 'low' | 'auto';
   sizes?: string;
-  format?: 'webp' | 'avif' | 'jpeg' | 'png';
-  quality?: number;
-  placeholder?: 'blur' | 'dominantColor' | 'none';
+  loading?: 'lazy' | 'eager';
+  decoding?: 'async' | 'sync' | 'auto';
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
 }
 
 const {
   src,
   alt,
-  width = 800,
+  width,
   height,
   class: className = '',
+  sizes = '(max-width: 640px) 400px, (max-width: 1024px) 800px, 1200px',
   loading = 'lazy',
-  fetchpriority = 'auto',
-  sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw',
-  format = 'webp',
-  quality = 80,
-  placeholder = 'blur'
+  decoding = 'async',
+  objectFit = 'cover',
 } = Astro.props;
 
-// Generate srcset for responsive images
-const widths = [320, 640, 960, 1280, 1920];
-const srcset = widths
-  .filter(w => w <= width)
-  .map(w => `${src}?w=${w}&q=${quality}&fm=${format} ${w}w`)
-  .join(', ');
+// Görsel yolunu analiz et
+const isExternal = src.startsWith('http');
+const basePath = src.replace(/\.(jpg|jpeg|png|webp)$/i, '');
+const ext = src.match(/\.(jpg|jpeg|png|webp)$/i)?.[0] || '.jpg';
 
-// Calculate aspect ratio padding if height not provided
-const aspectRatio = height ? undefined : '56.25%';
+// Responsive boyutlar
+const widths = [400, 800, 1200, 1920];
+
+// Srcset oluştur
+function generateSrcset(base: string, format: string) {
+  return widths
+    .map(w => `${base}-${w}.${format} ${w}w`)
+    .join(', ');
+}
+
+// WebP ve fallback srcset
+const webpSrcset = !isExternal ? generateSrcset(basePath, 'webp') : null;
+const fallbackSrcset = !isExternal ? generateSrcset(basePath, ext.replace('.', '')) : null;
+
 ---
 
-<div 
-  class={`relative overflow-hidden ${className}`}
-  style={aspectRatio ? `padding-top: ${aspectRatio}` : undefined}
->
+{!isExternal ? (
+  <picture>
+    {/* WebP formatı - modern tarayıcılar */}
+    <source
+      type="image/webp"
+      srcset={webpSrcset}
+      sizes={sizes}
+    />
+    
+    {/* Fallback formatı */}
+    <source
+      srcset={fallbackSrcset}
+      sizes={sizes}
+    />
+    
+    {/* Ana görsel */}
+    <img
+      src={`${basePath}-800${ext}`}
+      alt={alt}
+      width={width}
+      height={height}
+      loading={loading}
+      decoding={decoding}
+      class={className}
+      style={`object-fit: ${objectFit};`}
+      onerror={`this.src='${src}'`}
+    />
+  </picture>
+) : (
+  /* Harici görsel */
   <img
-    src={`${src}?w=${width}&q=${quality}&fm=${format}`}
-    srcset={srcset}
-    sizes={sizes}
+    src={src}
     alt={alt}
     width={width}
     height={height}
     loading={loading}
-    fetchpriority={fetchpriority}
-    decoding="async"
-    class={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${placeholder === 'blur' ? 'blur-sm' : ''}`}
-    onload="this.classList.remove('blur-sm')"
+    decoding={decoding}
+    class={className}
+    style={`object-fit: ${objectFit};`}
   />
-  
-  {placeholder === 'blur' && (
-    <div class="absolute inset-0 bg-gray-200 dark:bg-gray-700 animate-pulse -z-10" />
-  )}
-</div>
+)}
 
 <style>
+  picture,
   img {
-    opacity: 0;
+    max-width: 100%;
+    height: auto;
   }
-  img[src] {
-    opacity: 1;
+  
+  /* Lazy loading placeholder efekti */
+  img[loading="lazy"] {
+    background: linear-gradient(110deg, #f3f4f6 8%, #e5e7eb 18%, #f3f4f6 33%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+  
+  img[loading="lazy"].loaded {
+    animation: none;
+    background: none;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 </style>
+
+<script>
+  // Lazy loading için Intersection Observer
+  document.addEventListener('DOMContentLoaded', () => {
+    const images = document.querySelectorAll('img[loading="lazy"]');
+    
+    const imageObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          img.classList.add('loaded');
+          imageObserver.unobserve(img);
+        }
+      });
+    }, {
+      rootMargin: '50px 0px',
+      threshold: 0.01
+    });
+    
+    images.forEach(img => imageObserver.observe(img));
+  });
+</script>

@@ -4,19 +4,19 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSubscriptionAnalytics, getWebhookStatus } from '../../../../lib/subscription-admin';
+import { getSubscriptionAnalytics, getWebhookStatus } from '../../../../lib/subscription/subscription-admin';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Check admin access
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('GET', '/api/admin/subscriptions/analytics', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
@@ -46,10 +46,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/subscriptions/analytics', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Analitikler alınamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to get analytics', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Analitikler alınamadı',
+      'Failed to get analytics',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

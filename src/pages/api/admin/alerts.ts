@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { getAlerts, acknowledgeAlert, resolveAlert, performHealthCheck } from '../../../lib/alerts';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
+import { getAlerts, acknowledgeAlert, resolveAlert, performHealthCheck, type AlertType, type AlertSeverity } from '../../../lib/alert/alerts';
 import { logger } from '../../../lib/logging';
 
 /**
@@ -13,10 +13,10 @@ import { logger } from '../../../lib/logging';
  *   - offset: Pagination
  */
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
-  if (!locals.isAdmin) {
+  if (locals.user?.role !== 'admin') {
     return apiError(ErrorCode.FORBIDDEN, 'Yetkisiz', HttpStatus.FORBIDDEN, undefined, requestId);
   }
 
@@ -26,12 +26,16 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       await performHealthCheck();
     }
 
+    const VALID_ALERT_TYPES = new Set<string>(['high_error_rate', 'slow_response', 'service_down', 'high_memory', 'db_connection_failure', 'redis_connection_failure']);
+    const VALID_ALERT_SEVERITIES = new Set<string>(['info', 'warning', 'critical']);
+    const rawType = url.searchParams.get('type') || undefined;
+    const rawSeverity = url.searchParams.get('severity') || undefined;
     const alerts = await getAlerts({
-      type: (url.searchParams.get('type') || undefined) as any,
-      severity: (url.searchParams.get('severity') || undefined) as any,
+      type: rawType && VALID_ALERT_TYPES.has(rawType) ? rawType as AlertType : undefined,
+      severity: rawSeverity && VALID_ALERT_SEVERITIES.has(rawSeverity) ? rawSeverity as AlertSeverity : undefined,
       acknowledged: url.searchParams.get('acknowledged') === 'true' ? true : url.searchParams.get('acknowledged') === 'false' ? false : undefined,
-      limit: parseInt(url.searchParams.get('limit') || '50'),
-      offset: parseInt(url.searchParams.get('offset') || '0')
+      limit: safeIntParam(url.searchParams.get('limit'), 50, 0, 1_000_000),
+      offset: safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000)
     });
 
     return apiResponse({ alerts, count: alerts.length }, HttpStatus.OK, requestId);
@@ -51,10 +55,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
  * PUT /api/admin/alerts/:id - Alert'i güncelle
  */
 export const PUT: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
-  if (!locals.isAdmin) {
+  if (locals.user?.role !== 'admin') {
     return apiError(ErrorCode.FORBIDDEN, 'Yetkisiz', HttpStatus.FORBIDDEN, undefined, requestId);
   }
 

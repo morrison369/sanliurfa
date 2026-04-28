@@ -1,26 +1,32 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import CollectionDetail from "../../components/CollectionDetail";
+import Layout from '../../layouts/Layout.astro';
+import CollectionDetail from '../../components/CollectionDetail';
 
 const { id } = Astro.params;
 const user = Astro.locals.user;
 
 // If no id, redirect to collections page
 if (!id) {
-  return Astro.redirect("/koleksiyonlar");
+  return Astro.redirect('/koleksiyonlar');
 }
 ---
 
-<Layout
-  title="Şanlıurfa Koleksiyonu - sanliurfa.com"
-  description="Şanlıurfa mekan, yemek, tarih ve gezi rotalarını içeren topluluk koleksiyonu."
->
-  <div class="container mx-auto px-4 py-8 max-w-6xl">
-    <CollectionDetail
-      client:load
-      collectionId={id}
-      currentUserId={user?.id}
-      isAdmin={user?.role === "admin"}
-    />
+<Layout seo={{ title: "Koleksiyon - Şanlıurfa", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="container mx-auto px-4 max-w-6xl">
+        <a href="/koleksiyonlar" class="text-[#9A8470] hover:text-[#C4B49A] text-sm mb-4 inline-block transition-colors">← Koleksiyonlarım</a>
+        <h1 class="text-3xl font-bold text-[#F5EDD6]">Koleksiyon</h1>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+      <CollectionDetail
+        client:visible={{ rootMargin: '140px' }}
+        collectionId={id}
+        currentUserId={user?.id}
+        isAdmin={user?.role === 'admin'}
+      />
+    </div>
   </div>
 </Layout>

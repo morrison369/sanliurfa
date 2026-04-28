@@ -21,8 +21,8 @@ export interface SeoAnalysis {
   recommendations: string[];
 }
 
-export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+export const POST: APIRoute = async ({ request }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -37,7 +37,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       headings,
       hasStructuredData,
       internalLinks,
-      externalLinks,
       imageCount,
       wordCount,
       loadTime,

@@ -1,0 +1,199 @@
+---
+
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+import { safeIntParam } from '../../lib/api';
+const { baseUrl } = await getSiteBranding();
+
+const { kategori } = Astro.params;
+
+const categoryMeta: Record<string, { name: string; icon: string; desc: string }> = {
+  'kahvalti': { name: 'Kahvaltı Mekanları', icon: '🍳', desc: 'Serpme kahvaltı ve sabah mekanları' },
+  'brunch': { name: 'Brunch', icon: '🥐', desc: 'Öğle saatlerine kadar kahvaltı' },
+  'gece-acik-mekanlar': { name: 'Gece Açık Mekanlar', icon: '🌙', desc: 'Gece geç saatlere kadar açık' },
+  'paket-servis': { name: 'Paket Servis', icon: '📦', desc: 'Eve ve ofise teslimat' },
+  'aile-mekanlari': { name: 'Aile Mekanları', icon: '👨‍👩‍👧', desc: 'Çocuk dostu aile mekanları' },
+  'uygun-fiyatli-mekanlar': { name: 'Uygun Fiyatlı Mekanlar', icon: '💰', desc: 'Bütçe dostu seçenekler' },
+};
+
+const meta = categoryMeta[kategori || ''] || { name: kategori || '', icon: '🍽️', desc: '' };
+
+const page = safeIntParam(Astro.url.searchParams.get('sayfa'), 1, 1, 1_000_000);
+const limit = 12;
+const offset = (page - 1) * limit;
+
+let places: any[] = [];
+let totalCount = 0;
+
+try {
+  const featureMap: Record<string, string> = {
+    'gece-acik-mekanlar': 'gece_acik',
+    'paket-servis': 'paket_servis',
+    'aile-mekanlari': 'cocuk_oyun_alani',
+  };
+
+  const feature = featureMap[kategori || ''];
+
+  let whereClause = `p.status = 'active'`;
+  let queryParams: any[] = [];
+
+  if (kategori === 'kahvalti' || kategori === 'brunch') {
+    whereClause += ` AND c.slug = 'kahvalti-mekanlari'`;
+  } else if (feature) {
+    whereClause += ` AND $1 = ANY(p.features)`;
+    queryParams.push(feature);
+  } else if (kategori === 'uygun-fiyatli-mekanlar') {
+    whereClause += ` AND p.price_range = '₺'`;
+  }
+
+  const [countResult, placesResult] = await Promise.all([
+    query(
+      `SELECT COUNT(*) FROM places p LEFT JOIN categories c ON p.category_id = c.id WHERE ${whereClause}`,
+      queryParams
+    ),
+    query(
+      `SELECT p.*, c.name as category_name, d.name as district_name
+       FROM places p
+       LEFT JOIN categories c ON p.category_id = c.id
+       LEFT JOIN districts d ON p.district_id = d.id
+       WHERE ${whereClause}
+       ORDER BY p.rating DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`,
+      [...queryParams, limit, offset]
+    ),
+  ]);
+  totalCount = parseInt(countResult.rows[0]?.count || '0');
+  places = placesResult.rows;
+} catch (e) {
+  logger.error('Error loading yeme-icme kategori:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const totalPages = Math.ceil(totalCount / limit);
+
+const seo = {
+  title: `Şanlıurfa ${meta.name} | Yeme İçme Rehberi`,
+  description: `Şanlıurfa'da ${meta.desc || meta.name.toLowerCase()}. En iyi mekanlar, adresler ve bilgiler.`,
+  keywords: ['şanlıurfa ' + meta.name.toLowerCase(), 'urfa ' + meta.name.toLowerCase(), meta.name + ' şanlıurfa', 'şanlıurfa yeme içme'],
+  ogImage: '/images/hero/hero-food.webp',
+  canonical: `/yeme-icme/${kategori}`,
+};
+const faqItems = [
+  { S: `Şanlıurfa'da ${meta.name.toLowerCase()} seçenekleri nelerdir?`, C: `Şanlıurfa'da ${meta.name.toLowerCase()} için güncel liste ve değerlendirmeler rehberimizde yer almaktadır.` },
+  { S: `${meta.name} için hangi ilçeler öne çıkıyor?`, C: `Eyyübiye, Haliliye ve Karaköprü ilçeleri hizmet yoğunluğu açısından öne çıkan bölgeler arasındadır.` },
+  { S: `${meta.name} bilgilerini nasıl güncelleyebilirim?`, C: `Mekan sayfasına giriş yaparak güncelleme talebinde bulunabilir veya iletişim formu üzerinden bildirimde bulunabilirsiniz.` },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#FDFAF3] border-b border-[rgba(200,160,100,0.14)]">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-[#9A8470]">
+          <a href="/" class="hover:text-urfa-600">Ana Sayfa</a>
+          <span>/</span>
+          <a href="/yeme-icme" class="hover:text-urfa-600">Yeme İçme</a>
+          <span>/</span>
+          <span class="text-[#1A1008] font-medium">{meta.name}</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="container mx-auto px-4">
+        <div class="flex items-center gap-4">
+          <span class="text-5xl">{meta.icon}</span>
+          <div>
+            <h1 class="text-3xl md:text-4xl font-bold text-[#F5EDD6]">Şanlıurfa {meta.name}</h1>
+            <p class="text-[#9A8470] mt-1">{totalCount} mekan bulundu</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      {places.length > 0 ? (
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {places.map((place) => (
+            <a href={`/isletme/${place.slug}`} class="bg-white rounded-sm overflow-hidden border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group">
+              <div class="h-44 bg-[rgba(200,160,100,0.06)] flex items-center justify-center">
+                <span class="text-5xl opacity-40">🍽️</span>
+              </div>
+              <div class="p-5">
+                <h2 class="font-bold text-lg text-[#1A1008] group-hover:text-urfa-700">{place.name}</h2>
+                {place.category_name && <span class="text-xs text-urfa-600">{place.category_name}</span>}
+                {place.short_description && <p class="text-sm text-[#9A8470] mt-2 line-clamp-2">{place.short_description}</p>}
+                <div class="flex items-center justify-between mt-3">
+                  {place.rating && (
+                    <div class="flex items-center gap-1">
+                      <span class="text-yellow-500">★</span>
+                      <span class="font-medium text-[#1A1008]">{place.rating}</span>
+                      <span class="text-[#9A8470] text-xs">({place.review_count || 0})</span>
+                    </div>
+                  )}
+                  {place.district_name && <span class="text-xs text-[#9A8470]">📍 {place.district_name}</span>}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="text-center py-16">
+          <div class="text-6xl mb-4">{meta.icon}</div>
+          <p class="text-[#9A8470] text-lg">Bu kategoride henüz mekan bulunmuyor.</p>
+          <a href="/yeme-icme" class="mt-4 inline-block text-urfa-600 hover:underline">Yeme İçme Rehberine Dön →</a>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div class="flex justify-center gap-2 mt-10">
+          {page > 1 && <a href={`/yeme-icme/${kategori}?sayfa=${page - 1}`} class="px-4 py-2 bg-white border border-[rgba(200,160,100,0.3)] rounded-sm hover:bg-[rgba(200,160,100,0.04)] text-[#6B5540]">← Önceki</a>}
+          {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((p) => (
+            <a
+              href={`/yeme-icme/${kategori}?sayfa=${p}`}
+              class={`px-4 py-2 rounded-sm ${p === page ? 'bg-urfa-600 text-white' : 'bg-white border border-[rgba(200,160,100,0.3)] hover:bg-[rgba(200,160,100,0.04)] text-[#6B5540]'}`}
+            >{p}</a>
+          ))}
+          {page < totalPages && <a href={`/yeme-icme/${kategori}?sayfa=${page + 1}`} class="px-4 py-2 bg-white border border-[rgba(200,160,100,0.3)] rounded-sm hover:bg-[rgba(200,160,100,0.04)] text-[#6B5540]">Sonraki →</a>}
+        </div>
+      )}
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `Şanlıurfa ${meta.name}`,
+    description: `Şanlıurfa'da ${meta.desc || meta.name.toLowerCase()}. En iyi mekanlar, adresler ve bilgiler.`,
+    url: `${baseUrl}/yeme-icme/${kategori}`,
+    about: { '@type': 'City', name: 'Şanlıurfa' },
+    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'FoodEstablishment',
+        name: p.name,
+        url: `${baseUrl}/isletme/${p.slug}`,
+        ...(p.address ? { address: p.address } : {}),
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Yeme İçme', item: `${baseUrl}/yeme-icme` },
+      { '@type': 'ListItem', position: 3, name: meta.name, item: `${baseUrl}/yeme-icme/${kategori}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

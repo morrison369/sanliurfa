@@ -1,17 +1,16 @@
-// @ts-nocheck
 /**
  * Photo Vote API
  * POST: Vote on a photo (helpful/unhelpful)
  */
 
 import type { APIRoute } from 'astro';
-import { voteOnPhoto, getPhotoById } from '../../../../lib/photos';
+import { voteOnPhoto, getPhotoById } from '../../../../lib/photo';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

@@ -22,12 +22,22 @@ $payload = @{
     @{
       type = "pull_request"
       parameters = @{
-        required_approving_review_count = 0
+        required_approving_review_count = 1
         dismiss_stale_reviews_on_push = $true
-        require_code_owner_review = $false
+        require_code_owner_review = $true
         require_last_push_approval = $false
         required_review_thread_resolution = $true
         allowed_merge_methods = @("squash")
+      }
+    },
+    @{
+      type = "required_status_checks"
+      parameters = @{
+        strict_required_status_checks_policy = $true
+        required_status_checks = @(
+          @{ context = "Public City Acceptance" },
+          @{ context = "Security Audit / security" }
+        )
       }
     }
   )

@@ -11,7 +11,7 @@ export const migration_117_collaborative_editing = async (pool: Pool) => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS collaboration_sessions (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        content_id UUID NOT NULL REFERENCES content(id) ON DELETE CASCADE,
+        content_id UUID NOT NULL,
         session_token VARCHAR(255) UNIQUE NOT NULL,
         initiated_by_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         max_participants INT DEFAULT 10,
@@ -21,6 +21,12 @@ export const migration_117_collaborative_editing = async (pool: Pool) => {
         ended_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE collaboration_sessions ADD COLUMN IF NOT EXISTS content_id UUID;
+      ALTER TABLE collaboration_sessions ADD COLUMN IF NOT EXISTS started_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE collaboration_sessions ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
     `);
 
     await pool.query(`

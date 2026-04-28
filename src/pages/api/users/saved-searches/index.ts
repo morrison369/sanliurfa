@@ -5,13 +5,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserSavedSearches, saveSearch } from '../../../../lib/saved-searches';
+import { getUserSavedSearches, saveSearch } from '../../../../lib/saved/saved-searches';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/users/saved-searches', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -44,7 +44,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     logger.error('Failed to get saved searches', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Kayıtlı aramalar alınamadı',
+      'Failed to get saved searches',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -53,7 +53,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -63,7 +63,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/users/saved-searches', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -78,7 +78,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/users/saved-searches', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Arama adı gereklidir',
+        'Search name is required',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -89,7 +89,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/users/saved-searches', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Arama sorgusu gereklidir',
+        'Search query is required',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -100,7 +100,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/users/saved-searches', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Arama adı en fazla 100 karakter olabilir',
+        'Arama adı 100 karakterden uzun olamaz',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
+    if (body.query.length > 500) {
+      recordRequest('POST', '/api/users/saved-searches', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Arama sorgusu 500 karakterden uzun olamaz',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -110,7 +121,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const searchId = await saveSearch(userId, body.name, body.query, body.filters || null);
 
     if (!searchId) {
-      throw new Error('Arama kaydedilemedi');
+      throw new Error('Failed to save search');
     }
 
     recordRequest('POST', '/api/users/saved-searches', HttpStatus.CREATED, Date.now() - startTime);
@@ -127,7 +138,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Failed to save search', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Arama kaydedilemedi',
+      'Failed to save search',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -109,6 +109,14 @@ export const migration_054_email_notifications = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 5;
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMP;
+      ALTER TABLE email_queue ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_email_queue_status
       ON email_queue(status, priority DESC, scheduled_at ASC)
     `);

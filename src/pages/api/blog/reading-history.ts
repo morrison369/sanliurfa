@@ -6,14 +6,14 @@
 
 import type { APIRoute } from 'astro';
 import { insert, queryMany } from '../../../lib/postgres';
-import { validateWithSchema } from '../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { validateWithSchema, ValidationSchema } from '../../../lib/validation';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam, safeErrorDetail } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 // Okuma geçmişi kaydet
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -34,13 +34,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const body = await request.json();
 
     // Validasyon
-    const schema = {
+    const schema: ValidationSchema = {
       postId: { type: 'number' as const, required: true, min: 1 },
       timeSpentSeconds: { type: 'number' as const, required: true, min: 0 },
       scrollPercentage: { type: 'number' as const, required: false, min: 0, max: 100 }
     };
 
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
     if (!validation.valid) {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/blog/reading-history', HttpStatus.UNPROCESSABLE_ENTITY, duration);
@@ -75,7 +75,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/blog/reading-history', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Okuma geçmişi işlemi başarısız')
     });
     logger.error('Okuma geçmişi kaydedilemedi', err instanceof Error ? err : new Error(String(err)));
 
@@ -91,7 +91,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
 // Okuma geçmişini getir
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -109,7 +109,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       );
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
 
     const history = await queryMany(
       `SELECT brh.*, bp.title, bp.slug, bp.featured_image
@@ -128,7 +128,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       {
         success: true,
         data: {
-          items: history.map((h: any) => ({
+          items: history.map((h) => ({
             postId: h.post_id,
             title: h.title,
             slug: h.slug,
@@ -146,7 +146,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/blog/reading-history', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Okuma geçmişi işlemi başarısız')
     });
     logger.error('Okuma geçmişi alınamadı', err instanceof Error ? err : new Error(String(err)));
 

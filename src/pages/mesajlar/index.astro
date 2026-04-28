@@ -1,43 +1,17 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
-import MessagingInbox from "../../components/MessagingInbox";
+import Layout from '../../layouts/Layout.astro';
+import MessagingInbox from '../../components/MessagingInbox';
 
 const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/mesajlar');
+}
 ---
 
-<Layout title="Mesajlar - Şanlıurfa Rehberi" noindex>
-  {
-    user ? (
-      <div class="min-h-screen bg-gray-50">
-        <MessagingInbox client:load />
-      </div>
-    ) : (
-      <AuthFeatureLanding
-        eyebrow="Şanlıurfa topluluk mesajları"
-        title="Kullanıcılarla güvenli şekilde iletişim kurun"
-        description="Mekân önerileri, gezi planları ve Şanlıurfa deneyimleri için diğer kullanıcılarla doğrudan mesajlaşabilirsiniz."
-        loginRedirect="/mesajlar"
-        features={[
-          {
-            title: "Birebir mesajlaşma",
-            description:
-              "Şanlıurfa rotaları, mekân önerileri ve yerel deneyimler için üyelerle doğrudan konuşun.",
-          },
-          {
-            title: "Keşiften konuşmaya",
-            description:
-              "Kullanıcı keşif sayfasından ilgili kişiyi bulup mesaj akışını başlatın.",
-          },
-          {
-            title: "Ücretsiz kullanım",
-            description:
-              "İlk aşamada topluluk özellikleri ücretsiz ve açık şekilde kullanılabilir.",
-          },
-        ]}
-      />
-    )
-  }
+<Layout seo={{ title: "Mesajlar - Şanlıurfa Rehberi", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <MessagingInbox client:visible={{ rootMargin: '160px' }} />
+  </div>
 </Layout>
 
 <style>

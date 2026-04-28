@@ -1,27 +1,82 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import SearchResults from "../../components/SearchResults";
 
-const query = Astro.url.searchParams.get("q") || "";
+import Layout from '../../layouts/Layout.astro';
+import { AdvancedSearchPanel } from '../../components/AdvancedSearchPanel';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
 const seo = {
-  title: "Gelişmiş Arama - sanliurfa.com",
-  description:
-    "Şanlıurfa mekân, etkinlik ve içeriklerini gelişmiş filtrelerle arayın.",
-  canonicalUrl: "https://sanliurfa.com/arama/gelismis",
-  noindex: true,
+  title: 'Gelişmiş Arama - Şanlıurfa Rehberi',
+  description: 'AI destekli gelişmiş arama ile Şanlıurfa\'da mükemmel mekanları filtreleyin.',
+  keywords: ['şanlıurfa gelişmiş arama', 'urfa mekan filtrele', 'şanlıurfa mekan arama'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/arama/gelismis',
 };
+const faqItems = [
+  { S: 'Gelişmiş arama ile ne yapabilirim?', C: "Mesafe, kategori, puan aralığı ve açık olma durumu gibi filtrelerle Şanlıurfa'daki mekanları hassas biçimde arayabilirsiniz." },
+  { S: 'Gelişmiş arama ücretsiz mi?', C: 'Evet, gelişmiş arama özelliği tüm kullanıcılara ücretsiz sunulmaktadır.' },
+  { S: 'Arama sonuçlarını haritada görebilir miyim?', C: 'Harita görünümüne geçerek sonuçları konum bazlı olarak inceleyebilirsiniz.' },
+];
+
 ---
 
 <Layout seo={seo}>
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-        Gelişmiş Arama
-      </h1>
-      <p class="text-gray-600 dark:text-gray-400">
-        Mekân, etkinlik ve içerikleri filtrelerle daha hızlı bulun.
-      </p>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#FDFAF3] border-b border-[rgba(200,160,100,0.14)]">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-[#9A8470]">
+          <a href="/" class="hover:text-urfa-600">Ana Sayfa</a>
+          <span>/</span>
+          <a href="/arama" class="hover:text-urfa-600">Arama</a>
+          <span>/</span>
+          <span class="text-[#1A1008] font-medium">Gelişmiş Arama</span>
+        </nav>
+      </div>
     </div>
-    <SearchResults client:load query={query} />
+
+    <div class="container mx-auto px-4 py-8">
+      <div class="mb-8">
+        <h1 class="text-4xl font-bold text-[#1A1008] mb-2">Gelişmiş Arama</h1>
+        <p class="text-[#9A8470]">AI-destekli arama ile Şanlıurfa'da mükemmel mekanları bulun</p>
+      </div>
+
+      <AdvancedSearchPanel client:visible={{ rootMargin: '150px' }} />
+
+      <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-[rgba(200,160,100,0.06)] rounded-sm p-6 border border-[rgba(200,160,100,0.2)]">
+          <h3 class="font-semibold mb-2 text-[#1A1008]">Yapay Zeka Destekli</h3>
+          <p class="text-sm text-[#6B5540]">Akıllı sıralama algoritması en alakalı sonuçları sunar.</p>
+        </div>
+
+        <div class="bg-[rgba(200,160,100,0.06)] rounded-sm p-6 border border-[rgba(200,160,100,0.2)]">
+          <h3 class="font-semibold mb-2 text-[#1A1008]">Kişiselleştirilmiş</h3>
+          <p class="text-sm text-[#6B5540]">Tercihlerinize göre özelleştirilmiş öneriler alın.</p>
+        </div>
+
+        <div class="bg-[rgba(200,160,100,0.06)] rounded-sm p-6 border border-[rgba(200,160,100,0.2)]">
+          <h3 class="font-semibold mb-2 text-[#1A1008]">⚡ Anlık Öneriler</h3>
+          <p class="text-sm text-[#6B5540]">Yazarken gerçek zamanlı arama önerileri alın.</p>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Arama', item: `${baseUrl}/arama` },
+      { '@type': 'ListItem', position: 3, name: 'Gelişmiş Arama', item: `${baseUrl}/arama/gelismis` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

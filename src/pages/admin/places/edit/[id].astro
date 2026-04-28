@@ -1,116 +1,38 @@
 ---
-// @ts-nocheck
-import Layout from '../../../../layouts/Layout.astro';
-import { MapPin, Phone, Globe, Mail, Save, ArrowLeft } from 'lucide-react';
-import { queryOne } from '../../../../lib/postgres';
-import ProviderImagePicker from '../../../../components/admin/ProviderImagePicker.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { query } from '../../../../lib/postgres';
+import { logger } from '../../../../lib/logging';
 
 const { id } = Astro.params;
 
-if (!Astro.locals.isAdmin) {
-  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+let place: any = null;
+let categories: any[] = [];
+
+try {
+  const [placeResult, catResult] = await Promise.all([
+    query(
+      `SELECT p.*, c.name as category_name, d.name as district_name
+       FROM places p
+       LEFT JOIN categories c ON c.id = p.category_id
+       LEFT JOIN districts d ON d.id = p.district_id
+       WHERE p.id = $1`,
+      [id]
+    ),
+    query(
+      `SELECT id, name, slug FROM categories WHERE parent_id IS NOT NULL AND is_active = true ORDER BY sort_order`,
+      []
+    ),
+  ]);
+  place = placeResult.rows[0] || null;
+  categories = catResult.rows;
+} catch (e) {
+  logger.error('Edit place load error', e instanceof Error ? e : new Error(String(e)));
 }
 
-if (!id) {
-  return Astro.redirect('/admin/places?error=missing_place_id');
+if (!place) {
+  return Astro.redirect('/admin/places?error=not_found');
 }
-
-function normalizeStringArray(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return value.map(String).filter(Boolean);
-  }
-
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return [];
-    }
-
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed)) {
-        return parsed.map(String).filter(Boolean);
-      }
-    } catch {
-      // Eski kayıtlar virgülle ayrılmış metin tutabilir.
-    }
-
-    return trimmed.split(',').map((item) => item.trim()).filter(Boolean);
-  }
-
-  return [];
-}
-
-function normalizeOpeningHours(value: unknown): Record<string, string> {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return value as Record<string, string>;
-  }
-
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return {};
-    }
-
-    try {
-      const parsed = JSON.parse(trimmed);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as Record<string, string>;
-      }
-    } catch {
-      return { general: trimmed };
-    }
-  }
-
-  return {};
-}
-
-const rawPlace = await queryOne('SELECT * FROM places WHERE id = $1', [id]);
-
-if (!rawPlace) {
-  return Astro.redirect('/admin/places?error=place_not_found');
-}
-
-const openingHours = normalizeOpeningHours(rawPlace.opening_hours);
-const place = {
-  ...rawPlace,
-  id: rawPlace.id || id,
-  name: rawPlace.name || '',
-  category: rawPlace.category || 'other',
-  description: rawPlace.description || '',
-  short_description: rawPlace.short_description || rawPlace.description?.slice(0, 150) || '',
-  address: rawPlace.address || '',
-  phone: rawPlace.phone || '',
-  email: rawPlace.email || '',
-  website: rawPlace.website || '',
-  price_range: Number(rawPlace.price_range || 2),
-  latitude: rawPlace.latitude ?? '',
-  longitude: rawPlace.longitude ?? '',
-  status: rawPlace.status || 'active',
-  is_featured: Boolean(rawPlace.is_featured),
-  is_verified: Boolean(rawPlace.is_verified || rawPlace.verification_status === 'verified'),
-  image_url: rawPlace.image_url || rawPlace.images?.[0] || '',
-  amenities: normalizeStringArray(rawPlace.amenities),
-  tags: normalizeStringArray(rawPlace.tags),
-  opening_hours: openingHours,
-};
-
-const seo = {
-  title: `Mekân Düzenle: ${place.name} - Yönetim Paneli`,
-  description: 'Mekân düzenleme',
-  noindex: true
-};
-
-const categories = [
-  { id: 'restaurant', label: 'Restoran' },
-  { id: 'cafe', label: 'Kafe' },
-  { id: 'hotel', label: 'Otel' },
-  { id: 'museum', label: 'Müze' },
-  { id: 'park', label: 'Park' },
-  { id: 'shopping', label: 'Alışveriş' },
-  { id: 'entertainment', label: 'Eğlence' },
-  { id: 'other', label: 'Diğer' },
-];
 
 const amenitiesList = [
   'Otopark', 'Wifi', 'Klima', 'Bahçe', 'Teras', 'Engelli Erişimi',
@@ -129,55 +51,46 @@ const days = [
 ];
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Admin Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <a href="/admin" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              <ArrowLeft className="w-5 h-5" />
-            </a>
-            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Mekân Düzenle</h1>
-          </div>
-          <span class="text-gray-500 dark:text-gray-400">ID: {id}</span>
-        </div>
+<AdminLayout
+  title="Mekan Düzenle"
+  subtitle={`${place.name} — ID: ${id}`}
+  seo={{ title: `Mekan Düzenle: ${place.name} - Yönetim Paneli`, noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+      <div class="mb-6">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
       </div>
-    </div>
 
-    <div class="container-custom py-8">
       <form action={`/api/places/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8" enctype="multipart/form-data">
-        <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-6">
-          <!-- Basic Info -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel bilgiler</h2>
+        <div class="lg:col-span-2 space-y-5">
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-[#1A1008] mb-4">Temel Bilgiler</h2>
             <div class="space-y-4">
               <div>
-                <label for="name" class="label dark:text-gray-300">Mekân adı *</label>
+                <label for="name" class="block text-sm font-medium text-[#6B5540] mb-1">Mekan Adı *</label>
                 <input
                   type="text"
                   id="name"
                   name="name"
                   required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
                   value={place.name}
                 />
               </div>
 
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label for="category" class="label dark:text-gray-300">Kategori *</label>
-                  <select id="category" name="category" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <label for="category_id" class="block text-sm font-medium text-[#6B5540] mb-1">Kategori *</label>
+                  <select id="category_id" name="category_id" required class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+                    <option value="">Kategori seçin</option>
                     {categories.map(cat => (
-                      <option value={cat.id} selected={cat.id === place.category}>{cat.label}</option>
+                      <option value={cat.id} selected={cat.id === place.category_id}>{cat.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label for="price_range" class="label dark:text-gray-300">Fiyat Aralığı</label>
-                  <select id="price_range" name="price_range" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                  <label for="price_range" class="block text-sm font-medium text-[#6B5540] mb-1">Fiyat Aralığı</label>
+                  <select id="price_range" name="price_range" class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
                     <option value="1" selected={place.price_range === 1}>₺ - Ucuz</option>
                     <option value="2" selected={place.price_range === 2}>₺₺ - Orta</option>
                     <option value="3" selected={place.price_range === 3}>₺₺₺ - Pahalı</option>
@@ -187,44 +100,43 @@ const days = [
               </div>
 
               <div>
-                <label for="description" class="label dark:text-gray-300">Açıklama *</label>
+                <label for="description" class="block text-sm font-medium text-[#6B5540] mb-1">Açıklama *</label>
                 <textarea
                   id="description"
                   name="description"
                   rows="4"
                   required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
+                  class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 resize-none"
                 >{place.description}</textarea>
               </div>
 
               <div>
-                <label for="short_description" class="label dark:text-gray-300">Kısa Açıklama</label>
+                <label for="short_description" class="block text-sm font-medium text-[#6B5540] mb-1">Kısa Açıklama</label>
                 <input
                   type="text"
                   id="short_description"
                   name="short_description"
                   maxlength="150"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
                   value={place.short_description}
                 />
               </div>
             </div>
           </div>
 
-          <!-- Contact Info -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">İletişim Bilgileri</h2>
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-[#1A1008] mb-4">İletişim Bilgileri</h2>
             <div class="space-y-4">
               <div>
-                <label for="address" class="label dark:text-gray-300">Adres *</label>
+                <label for="address" class="block text-sm font-medium text-[#6B5540] mb-1">Adres *</label>
                 <div class="relative">
-                  <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <Icon name="lucide:map-pin" class="absolute left-3 top-3 w-5 h-5 text-[#9A8470]" />
                   <input
                     type="text"
                     id="address"
                     name="address"
                     required
-                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
                     value={place.address}
                   />
                 </div>
@@ -232,27 +144,27 @@ const days = [
 
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label for="phone" class="label dark:text-gray-300">Telefon</label>
+                  <label for="phone" class="block text-sm font-medium text-[#6B5540] mb-1">Telefon</label>
                   <div class="relative">
-                    <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <Icon name="lucide:phone" class="absolute left-3 top-3 w-5 h-5 text-[#9A8470]" />
                     <input
                       type="tel"
                       id="phone"
                       name="phone"
-                      class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
                       value={place.phone}
                     />
                   </div>
                 </div>
                 <div>
-                  <label for="email" class="label dark:text-gray-300">E-posta</label>
+                  <label for="email" class="block text-sm font-medium text-[#6B5540] mb-1">E-posta</label>
                   <div class="relative">
-                    <Mail className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <Icon name="lucide:mail" class="absolute left-3 top-3 w-5 h-5 text-[#9A8470]" />
                     <input
                       type="email"
                       id="email"
                       name="email"
-                      class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
                       value={place.email}
                     />
                   </div>
@@ -260,14 +172,14 @@ const days = [
               </div>
 
               <div>
-                <label for="website" class="label dark:text-gray-300">Web Sitesi</label>
+                <label for="website" class="block text-sm font-medium text-[#6B5540] mb-1">Web Sitesi</label>
                 <div class="relative">
-                  <Globe className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <Icon name="lucide:globe" class="absolute left-3 top-3 w-5 h-5 text-[#9A8470]" />
                   <input
                     type="url"
                     id="website"
                     name="website"
-                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
                     value={place.website}
                   />
                 </div>
@@ -275,22 +187,16 @@ const days = [
             </div>
           </div>
 
-          <!-- Opening Hours -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Çalışma Saatleri</h2>
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-[#1A1008] mb-4">Çalışma Saatleri</h2>
             <div class="space-y-3">
-              {place.opening_hours?.general && (
-                <div class="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3 text-sm text-amber-900 dark:text-amber-100">
-                  Eski kayıt çalışma saati: {place.opening_hours.general}
-                </div>
-              )}
               {days.map(day => (
                 <div class="flex items-center gap-4">
-                  <span class="w-24 text-sm text-gray-600 dark:text-gray-400">{day.label}</span>
+                  <span class="w-24 text-sm text-[#6B5540]">{day.label}</span>
                   <input
                     type="text"
                     name={`opening_hours_${day.id}`}
-                    class="input flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    class="flex-1 rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
                     value={place.opening_hours?.[day.id] || ''}
                     placeholder="08:00 - 22:00 veya Kapalı"
                   />
@@ -298,112 +204,39 @@ const days = [
               ))}
             </div>
           </div>
-
-          <!-- Location -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Konum</h2>
-            <div class="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label for="latitude" class="label dark:text-gray-300">Enlem</label>
-                <input
-                  type="number"
-                  id="latitude"
-                  name="latitude"
-                  step="any"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  value={place.latitude}
-                />
-              </div>
-              <div>
-                <label for="longitude" class="label dark:text-gray-300">Boylam</label>
-                <input
-                  type="number"
-                  id="longitude"
-                  name="longitude"
-                  step="any"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  value={place.longitude}
-                />
-              </div>
-            </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              Koordinatlar mekân sayfası harita ve zengin sonuç verileri için kullanılır.
-            </p>
-          </div>
         </div>
 
-        <!-- Sidebar -->
-        <aside class="space-y-6">
-          <!-- Publish -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
+        <aside class="space-y-5">
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h3 class="font-semibold text-[#1A1008] mb-4">Yayınla</h3>
             <div class="space-y-3">
               <label class="flex items-center gap-2">
-                <input type="checkbox" name="is_featured" checked={place.is_featured} class="rounded border-gray-300 text-urfa-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan mekân</span>
+                <input type="checkbox" name="is_featured" checked={place.is_featured} class="rounded border-[rgba(200,160,100,0.3)] text-urfa-600" />
+                <span class="text-sm text-[#6B5540]">Öne çıkan mekan</span>
               </label>
               <label class="flex items-center gap-2">
-                <input type="checkbox" name="is_verified" checked={place.is_verified} class="rounded border-gray-300 text-urfa-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Doğrulanmış mekân</span>
+                <input type="checkbox" name="is_verified" checked={place.is_verified} class="rounded border-[rgba(200,160,100,0.3)] text-urfa-600" />
+                <span class="text-sm text-[#6B5540]">Doğrulanmış mekan</span>
               </label>
             </div>
-            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <label for="status" class="label dark:text-gray-300">Durum</label>
-              <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
+            <div class="mt-4 pt-4 border-t border-[rgba(200,160,100,0.14)]">
+              <label for="status" class="block text-sm font-medium text-[#6B5540] mb-1">Durum</label>
+              <select id="status" name="status" class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
                 <option value="active" selected={place.status === 'active'}>Aktif</option>
                 <option value="pending" selected={place.status === 'pending'}>Beklemede</option>
                 <option value="inactive" selected={place.status === 'inactive'}>Pasif</option>
               </select>
-              <p class="text-xs text-amber-700 dark:text-amber-300 mt-2">
-                Aktif yayın kalite eşiği: kısa açıklama + telefon + koordinat + minimum 3 görsel.
-              </p>
             </div>
             <div class="flex gap-2 mt-4">
-              <button type="submit" class="btn-primary flex-1 flex items-center justify-center gap-2">
-                <Save className="w-4 h-4" />
+              <button type="submit" class="rounded-sm bg-urfa-600 flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+                <Icon name="lucide:save" class="w-4 h-4" />
                 Kaydet
               </button>
             </div>
           </div>
 
-          <!-- Images -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
-            <ProviderImagePicker
-              currentImage={place.image_url}
-              currentSlug={place.slug}
-              currentName={place.name}
-              currentCategory={place.category}
-            />
-            <div class="mt-4 space-y-3">
-              <div>
-                <label for="gallery" class="label dark:text-gray-300">Galeri Fotoğrafları</label>
-                <input
-                  type="file"
-                  id="gallery"
-                  name="gallery"
-                  accept="image/*"
-                  multiple
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white py-2"
-                />
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Yeni yüklenen dosyalar mevcut galeriye eklenir.</p>
-              </div>
-              <div>
-                <label for="gallery_images_urls" class="label dark:text-gray-300">Galeri URL'leri</label>
-                <textarea
-                  id="gallery_images_urls"
-                  name="gallery_images_urls"
-                  rows="3"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-y"
-                  placeholder="Her satıra bir URL yazın veya virgülle ayırın"
-                ></textarea>
-              </div>
-            </div>
-          </div>
-
-          <!-- Amenities -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Olanaklar</h3>
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h3 class="font-semibold text-[#1A1008] mb-4">Olanaklar</h3>
             <div class="space-y-2 max-h-64 overflow-y-auto">
               {amenitiesList.map(amenity => (
                 <label class="flex items-center gap-2">
@@ -412,21 +245,20 @@ const days = [
                     name="amenities"
                     value={amenity}
                     checked={place.amenities?.includes(amenity)}
-                    class="rounded border-gray-300 text-urfa-600"
+                    class="rounded border-[rgba(200,160,100,0.3)] text-urfa-600"
                   />
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{amenity}</span>
+                  <span class="text-sm text-[#6B5540]">{amenity}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          <!-- Tags -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Etiketler</h3>
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h3 class="font-semibold text-[#1A1008] mb-4">Etiketler</h3>
             <input
               type="text"
               name="tags"
-              class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
               value={place.tags?.join(', ')}
               placeholder="Etiketleri virgülle ayırın"
             />
@@ -434,5 +266,4 @@ const days = [
         </aside>
       </form>
     </div>
-  </div>
-</Layout>
+</AdminLayout>

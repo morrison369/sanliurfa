@@ -1,0 +1,145 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+
+let featuredPlaces: any[] = [];
+
+const saglikCategories = [
+  { slug: 'devlet-hastaneleri', name: 'Devlet Hastaneleri', icon: '🏥', desc: 'Kamu hastaneleri' },
+  { slug: 'ozel-hastaneler', name: 'Özel Hastaneler', icon: '🏨', desc: 'Özel sağlık kuruluşları' },
+  { slug: 'dis-klinikleri', name: 'Diş Klinikleri', icon: '🦷', desc: 'Diş hekimleri ve klinikler' },
+  { slug: 'eczaneler', name: 'Eczaneler', icon: '💊', desc: 'Tüm eczaneler' },
+  { slug: 'nobetci-eczaneler', name: 'Nöbetçi Eczaneler', icon: '🚨', desc: 'Güncel nöbetçiler', href: '/saglik/nobetci-eczaneler' },
+  { slug: 'veterinerler', name: 'Veterinerler', icon: '🐾', desc: 'Veteriner klinikler' },
+];
+
+try {
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE c.slug IN ('devlet-hastaneleri','ozel-hastaneler','dis-klinikleri','eczaneler','veterinerler')
+     AND p.status = 'active'
+     ORDER BY p.rating DESC LIMIT 6`
+  );
+  featuredPlaces = placesResult.rows;
+} catch (e) {
+  logger.error('Error loading saglik:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: 'Şanlıurfa Sağlık Rehberi | Hastaneler, Eczaneler ve Klinikler',
+  description: 'Şanlıurfa\'da devlet ve özel hastaneler, diş klinikleri, eczaneler, nöbetçi eczaneler ve veteriner klinikler.',
+  keywords: ['şanlıurfa hastaneler', 'urfa nöbetçi eczane', 'şanlıurfa eczane', 'urfa devlet hastanesi', 'şanlıurfa özel hastane', 'urfa diş klinik', 'şanlıurfa veteriner'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/saglik',
+};
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa nöbetçi eczaneler nereden öğrenilir?',
+    C: 'Nöbetçi eczane listesine sağlık sayfasındaki hızlı erişim kutusundan veya /saglik/nobetci-eczaneler sayfasından ulaşabilirsiniz.',
+  },
+  {
+    S: 'Sağlık kategorilerinde hangi hizmetler var?',
+    C: 'Devlet hastaneleri, özel hastaneler, diş klinikleri, eczaneler ve veteriner hizmetleri ayrı kategorilerde listelenir.',
+  },
+  {
+    S: 'Sağlık kuruluşları iletişim bilgileri var mı?',
+    C: 'Öne çıkan sağlık kuruluşlarında adres ve telefon gibi temel iletişim bilgileri gösterilir.',
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-16">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-wider text-[#9A8470]">Hizmetler</p>
+        <h1 class="mt-3 text-4xl md:text-5xl font-bold text-[#F5EDD6]">Sağlık Rehberi</h1>
+        <p class="mt-4 text-lg text-[#9A8470] max-w-2xl">
+          Şanlıurfa'da hastaneler, klinikler, eczaneler ve sağlık hizmetleri
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <div class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] p-5 mb-8">
+        <h2 class="text-lg font-bold text-[#1A1008]">Hızlı Cevap</h2>
+        <p class="text-sm text-[#4A3828] mt-1">
+          Şanlıurfa sağlık rehberinde hastane, klinik ve eczane kategorilerine hızlıca erişebilir; nöbetçi eczane bilgisine anında ulaşabilirsiniz.
+        </p>
+      </div>
+
+      <!-- Hızlı Erişim: Nöbetçi Eczane -->
+      <div class="bg-isot-50 border border-isot-200 rounded-sm p-6 mb-10 flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-bold text-isot-800">🚨 Nöbetçi Eczane</h2>
+          <p class="text-isot-600 mt-1">Bugün nöbetçi olan eczaneleri görün</p>
+        </div>
+        <a href="/saglik/nobetci-eczaneler" class="bg-isot-600 text-white px-6 py-3 rounded-sm font-medium hover:bg-isot-700 transition-colors">
+          Nöbetçileri Gör →
+        </a>
+      </div>
+
+      <!-- Kategoriler -->
+      <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Sağlık Kategorileri</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-12">
+        {saglikCategories.map((cat) => (
+          <a
+            href={cat.href || `/saglik/${cat.slug}`}
+            class="bg-white rounded-sm p-6 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group"
+          >
+            <div class="text-3xl mb-3">{cat.icon}</div>
+            <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-600 transition-colors">{cat.name}</h3>
+            <p class="text-sm text-[#9A8470] mt-1">{cat.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      <!-- Öne Çıkan Sağlık Mekanları -->
+      {featuredPlaces.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Öne Çıkan Sağlık Kuruluşları</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredPlaces.map((place) => (
+              <a href={`/isletme/${place.slug}`} class="bg-white rounded-sm p-5 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group">
+                <div class="flex items-start gap-3">
+                  <span class="text-2xl">🏥</span>
+                  <div>
+                    <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-600">{place.name}</h3>
+                    <span class="text-xs text-urfa-600">{place.category_name}</span>
+                    {place.address && <p class="text-xs text-[#9A8470] mt-1">📍 {place.address}</p>}
+                    {place.phone && <p class="text-xs text-[#9A8470]">📞 {place.phone}</p>}
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Sağlık', item: `${baseUrl}/saglik` },
+    ]
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.C,
+      },
+    })),
+  })} is:inline />
+</Layout>

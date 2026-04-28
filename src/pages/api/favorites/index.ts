@@ -1,8 +1,10 @@
 // API: Favori işlemleri (PostgreSQL + Redis cache)
 import type { APIRoute } from 'astro';
-import { query, queryOne, insert, remove } from '../../../lib/postgres';
+import { query, queryOne } from '../../../lib/postgres';
 import { getCache, setCache, deleteCache } from '../../../lib/cache';
 import { logActivity } from '../../../lib/activity';
+import { logger } from '../../../lib/logging';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 /**
  * Generate cache key for user favorites
@@ -17,10 +19,13 @@ export const GET: APIRoute = async ({ locals }) => {
     const user = locals.user;
 
     if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Oturum açmanız gerekiyor' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/favorites-unauthorized',
+        instance: '/api/favorites',
+      });
     }
 
     // Try to get from cache
@@ -28,10 +33,7 @@ export const GET: APIRoute = async ({ locals }) => {
     const cached = await getCache<{ data: any[] }>(cacheKey);
 
     if (cached) {
-      return new Response(JSON.stringify(cached), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }
-      });
+      return apiResponse(cached, HttpStatus.OK);
     }
 
     const result = await query(
@@ -48,16 +50,16 @@ export const GET: APIRoute = async ({ locals }) => {
     // Cache for 5 minutes
     await setCache(cacheKey, responseData, 300);
 
-    return new Response(JSON.stringify(responseData), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }
-    });
+    return apiResponse(responseData, HttpStatus.OK);
   } catch (err) {
-    console.error('Favorites fetch error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Favoriler getirilirken bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    logger.error('Favorites fetch error:', err);
+    return problemJson({
+      status: 500,
+      title: 'Favoriler Alınamadı',
+      detail: 'Favoriler getirilirken bir hata oluştu',
+      type: '/problems/favorites-get-failed',
+      instance: '/api/favorites',
+    });
   }
 };
 
@@ -66,65 +68,74 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
     if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Oturum açmanız gerekiyor' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/favorites-unauthorized',
+        instance: '/api/favorites',
+      });
     }
 
     const body = await request.json();
     const { placeId } = body;
 
     if (!placeId) {
-      return new Response(
-        JSON.stringify({ error: 'Mekan ID gereklidir' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Mekan ID gereklidir',
+        type: '/problems/favorites-validation',
+        instance: '/api/favorites',
+      });
     }
 
-    // Check if already favorited
-    const existing = await queryOne(
-      'SELECT id FROM favorites WHERE place_id = $1 AND user_id = $2',
+    // Atomic INSERT — ON CONFLICT eliminates SELECT→INSERT race (HARD RULE #47)
+    const insertResult = await query(
+      `INSERT INTO favorites (place_id, user_id, created_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (place_id, user_id) DO NOTHING
+       RETURNING id, place_id, user_id, created_at`,
       [placeId, user.id]
     );
 
-    if (existing) {
-      return new Response(
-        JSON.stringify({ error: 'Bu mekan zaten favorilerinizde' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (insertResult.rows.length === 0) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Bu mekan zaten favorilerinizde',
+        type: '/problems/favorites-already-exists',
+        instance: '/api/favorites',
+      });
     }
 
-    const data = await insert('favorites', {
-      place_id: placeId,
-      user_id: user.id,
-      created_at: new Date().toISOString()
-    });
+    const data = insertResult.rows[0];
 
     // Add points (5 puan)
     await query('UPDATE users SET points = COALESCE(points, 0) + 5 WHERE id = $1', [user.id]);
 
     // Log activity
     const place = await queryOne('SELECT name FROM places WHERE id = $1', [placeId]);
-    await logActivity(user.id, 'favorite_added', 'place', placeId, {
-      placeName: place?.name || 'Mekan',
-      points: 5
+    await logActivity(user.id, 'favorite_add', {
+      entityType: 'place',
+      entityId: placeId,
+      metadata: { placeName: place?.name || 'Mekan', points: 5 }
     });
 
     // Invalidate user's favorites cache
     const cacheKey = generateFavoritesCacheKey(user.id);
     await deleteCache(cacheKey);
 
-    return new Response(
-      JSON.stringify({ data, message: 'Favorilere eklendi' }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
-    );
+    return apiResponse({ data, message: 'Favorilere eklendi' }, HttpStatus.CREATED);
   } catch (err) {
-    console.error('Favorite add error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Favori eklenirken bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    logger.error('Favorite add error:', err);
+    return problemJson({
+      status: 500,
+      title: 'Favori Eklenemedi',
+      detail: 'Favori eklenirken bir hata oluştu',
+      type: '/problems/favorites-create-failed',
+      instance: '/api/favorites',
+    });
   }
 };
 
@@ -133,20 +144,26 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
     if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Oturum açmanız gerekiyor' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Oturum açmanız gerekiyor',
+        type: '/problems/favorites-unauthorized',
+        instance: '/api/favorites',
+      });
     }
 
     const body = await request.json();
     const { placeId } = body;
 
     if (!placeId) {
-      return new Response(
-        JSON.stringify({ error: 'Mekan ID gereklidir' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Mekan ID gereklidir',
+        type: '/problems/favorites-validation',
+        instance: '/api/favorites',
+      });
     }
 
     await query('DELETE FROM favorites WHERE place_id = $1 AND user_id = $2', [placeId, user.id]);
@@ -155,15 +172,16 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     const cacheKey = generateFavoritesCacheKey(user.id);
     await deleteCache(cacheKey);
 
-    return new Response(
-      JSON.stringify({ message: 'Favorilerden kaldırıldı' }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    return apiResponse({ message: 'Favorilerden kaldırıldı' }, HttpStatus.OK);
   } catch (err) {
-    console.error('Favorite remove error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Favori kaldırılırken bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    logger.error('Favorite remove error:', err);
+    return problemJson({
+      status: 500,
+      title: 'Favori Kaldırılamadı',
+      detail: 'Favori kaldırılırken bir hata oluştu',
+      type: '/problems/favorites-delete-failed',
+      instance: '/api/favorites',
+    });
   }
 };
+

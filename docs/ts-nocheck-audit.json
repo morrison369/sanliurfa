@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-04-28T18:10:23.815Z",
+  "totalFiles": 1484,
+  "tsNoCheckCount": 0,
+  "coreFiles": [
+    "src\\/pages\\/giris\\.astro",
+    "src\\/pages\\/kayit\\.astro",
+    "src\\/pages\\/messages\\.astro",
+    "src\\/pages\\/profile\\.astro",
+    "src\\/pages\\/admin\\/dashboard\\.astro",
+    "src\\/pages\\/admin\\/campaigns\\.astro"
+  ],
+  "files": []
+}

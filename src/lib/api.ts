@@ -1,5 +1,6 @@
 // API utilities for standardized responses and request validation
 
+import { randomBytes } from 'node:crypto';
 import type { APIContext } from 'astro';
 
 /**
@@ -48,8 +49,7 @@ export function successResponse<T>(
   };
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Content-Language': 'tr'
+    'Content-Type': 'application/json'
   };
 
   if (requestId) {
@@ -85,8 +85,7 @@ export function paginatedResponse<T>(
   };
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Content-Language': 'tr'
+    'Content-Type': 'application/json'
   };
 
   if (requestId) {
@@ -119,8 +118,7 @@ export function errorResponse(
   };
 
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json; charset=utf-8',
-    'Content-Language': 'tr'
+    'Content-Type': 'application/json'
   };
 
   if (requestId) {
@@ -133,29 +131,27 @@ export function errorResponse(
 /**
  * Create a standardized API route response
  */
-export function apiResponse(data: any, statusCode?: number, requestId?: string, headers?: Record<string, string>): Response;
-export function apiResponse(context: APIContext, statusCode: number, data: any): Response;
 export function apiResponse(
-  dataOrContext: any | APIContext,
-  statusCode: number = 200,
-  requestIdOrData?: string | any,
+  dataOrContext: any,
+  statusCodeOrData?: number | any,
+  requestId?: string,
   extraHeaders?: Record<string, string>
 ): Response {
-  if (
-    dataOrContext &&
-    typeof dataOrContext === 'object' &&
-    'request' in dataOrContext &&
-    requestIdOrData !== undefined &&
-    typeof requestIdOrData !== 'string'
-  ) {
-    const requestId = getRequestId(dataOrContext as APIContext);
-    const [body, status, headers] = successResponse(requestIdOrData, statusCode, requestId);
-    return new Response(JSON.stringify(body), { status, headers: { ...headers, ...extraHeaders } });
+  // Handle both signatures: apiResponse(data, statusCode) and apiResponse(context, data, statusCode)
+  let data: any;
+  let statusCode: number;
+
+  if (statusCodeOrData && typeof statusCodeOrData === 'object') {
+    // Signature: apiResponse(context, data, statusCode)
+    data = statusCodeOrData;
+    statusCode = requestId ? (Number(requestId) || 200) : 200;
+  } else {
+    // Signature: apiResponse(data, statusCode)
+    data = dataOrContext;
+    statusCode = statusCodeOrData || 200;
   }
 
-  const data = dataOrContext;
-  const requestId = typeof requestIdOrData === 'string' ? requestIdOrData : undefined;
-  const [body, status, headers] = successResponse(data, statusCode, requestId);
+  const [body, status, headers] = successResponse(data, statusCode, undefined);
   return new Response(JSON.stringify(body), { status, headers: { ...headers, ...extraHeaders } });
 }
 
@@ -163,40 +159,139 @@ export function apiResponse(
  * Create a standardized error response
  */
 export function apiError(
-  code: string,
-  message: string,
-  statusCode?: number,
-  details?: Record<string, any>,
-  requestId?: string
-): Response;
-export function apiError(
-  context: APIContext,
-  statusCode: number,
-  message: string,
-  details?: Record<string, any>
-): Response;
-export function apiError(
-  codeOrContext: string | APIContext,
-  messageOrStatus: string | number,
-  statusCodeOrMessage: number | string = 400,
+  codeOrContext: string | any,
+  messageOrCode?: string | number,
+  statusCodeOrMessage?: number | string,
   details?: Record<string, any>,
   requestId?: string
 ): Response {
-  if (typeof codeOrContext !== 'string') {
-    const context = codeOrContext;
-    const statusCode = typeof messageOrStatus === 'number' ? messageOrStatus : 400;
-    const message = typeof statusCodeOrMessage === 'string' ? statusCodeOrMessage : 'API error';
-    const code = statusCode >= 500 ? ErrorCode.INTERNAL_ERROR : ErrorCode.BAD_REQUEST;
-    const resolvedRequestId = getRequestId(context);
-    const [body, status, headers] = errorResponse(code, message, statusCode, details, resolvedRequestId);
-    return new Response(JSON.stringify(body), { status, headers });
+  // Handle multiple signatures
+  let code: string;
+  let message: string;
+  let statusCode: number;
+  
+  if (typeof codeOrContext === 'object' && codeOrContext !== null) {
+    // Signature: apiError(context, statusCode, message)
+    code = 'ERROR';
+    statusCode = typeof messageOrCode === 'number' ? messageOrCode : 400;
+    message = typeof statusCodeOrMessage === 'string' ? statusCodeOrMessage : 'An error occurred';
+  } else {
+    // Signature: apiError(code, message, statusCode, details, requestId)
+    code = codeOrContext as string;
+    message = (messageOrCode as string) || 'An error occurred';
+    statusCode = (statusCodeOrMessage as number) || 400;
   }
-
-  const code = codeOrContext;
-  const message = String(messageOrStatus);
-  const statusCode = typeof statusCodeOrMessage === 'number' ? statusCodeOrMessage : 400;
+  
   const [body, status, headers] = errorResponse(code, message, statusCode, details, requestId);
   return new Response(JSON.stringify(body), { status, headers });
+}
+
+/**
+ * RFC 7807 / problem+json response
+ */
+export function problemJson(input: {
+  status: number;
+  title: string;
+  detail?: string;
+  type?: string;
+  instance?: string;
+  extensions?: Record<string, unknown>;
+}): Response {
+  const payload: Record<string, unknown> = {
+    type: input.type || 'about:blank',
+    title: input.title,
+    status: input.status,
+  };
+  if (input.detail) payload.detail = input.detail;
+  if (input.instance) payload.instance = input.instance;
+  if (input.extensions) {
+    for (const [k, v] of Object.entries(input.extensions)) payload[k] = v;
+  }
+
+  return new Response(JSON.stringify(payload), {
+    status: input.status,
+    headers: {
+      'Content-Type': 'application/problem+json; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+/**
+ * Production'da DB/internal error mesajlarını sızdırmadan, dev'de okunabilir
+ * detail döndürür. Asla doğrudan `error.message` döndürme — şema/path/stack
+ * leak edebilir (örn: `duplicate key violates constraint "users_email_key"`).
+ *
+ * Prod davranışı: sadece `fallback` döner.
+ * Dev/test davranışı: `error.message` (varsa) → fallback'a düşer.
+ *
+ * Kullanım:
+ * ```
+ * } catch (error) {
+ *   logger.error('failed', error instanceof Error ? error : new Error(String(error)));
+ *   return problemJson({
+ *     status: 500,
+ *     title: 'Sunucu Hatası',
+ *     detail: safeErrorDetail(error, 'Sunucu hatası, lütfen tekrar deneyin'),
+ *     ...
+ *   });
+ * }
+ * ```
+ */
+export function safeErrorDetail(error: unknown, fallback: string): string {
+  const isProduction = (process.env.NODE_ENV || '').toLowerCase() === 'production';
+  if (isProduction) return fallback;
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'string') return error;
+  return fallback;
+}
+
+/**
+ * Safely parse integer from query/body input with NaN guard + range bound.
+ *
+ * **Why**: `Math.max(1, parseInt('abc'))` → `NaN`. SQL'e NaN bind value
+ * undefined behavior (PostgreSQL crash, silent NULL, wrong result).
+ *
+ * Pattern: `parseInt('abc', 10) === NaN`, `Number.isFinite(NaN) === false`.
+ * Fallback'a düş + min/max clamp.
+ *
+ * Kullanım:
+ * ```
+ * const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+ * const offset = safeIntParam(body.offset, 0, 0, 10000);
+ * ```
+ *
+ * @param input - raw user input (string, number, null, undefined, anything)
+ * @param defaultVal - kullanılacak default eğer input invalid
+ * @param min - minimum allowed value (clamp)
+ * @param max - maximum allowed value (clamp)
+ */
+export function safeIntParam(
+  input: unknown,
+  defaultVal: number,
+  min: number,
+  max: number,
+): number {
+  if (input === null || input === undefined || input === '') return defaultVal;
+  const parsed = typeof input === 'number' ? input : parseInt(String(input), 10);
+  const safe = Number.isFinite(parsed) ? parsed : defaultVal;
+  return Math.min(max, Math.max(min, safe));
+}
+
+/**
+ * HARD RULE #17 — float variant: NaN-safe float parsing from URL search params.
+ * Null / undefined / '' / Infinity / NaN → defaultVal. Result clamped to [min, max].
+ */
+export function safeFloatParam(
+  input: unknown,
+  defaultVal: number,
+  min: number,
+  max: number,
+): number {
+  if (input === null || input === undefined || input === '') return defaultVal;
+  const parsed = typeof input === 'number' ? input : parseFloat(String(input));
+  const safe = Number.isFinite(parsed) ? parsed : defaultVal;
+  return Math.min(max, Math.max(min, safe));
 }
 
 /**
@@ -288,8 +383,16 @@ export function sanitizeInput(input: string): string {
 /**
  * Extract request ID or generate one
  */
-export function getRequestId(context: APIContext): string {
-  return context.request.headers.get('x-request-id') || `req-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+export function getRequestId(contextOrRequest?: APIContext | Request | { request?: Request } | null): string {
+  const request =
+    contextOrRequest instanceof Request
+      ? contextOrRequest
+      : (contextOrRequest as APIContext | { request?: Request } | null | undefined)?.request;
+
+  return (
+    request?.headers?.get('x-request-id') ||
+    `req-${Date.now()}-${randomBytes(6).toString('hex')}`
+  );
 }
 
 /**
@@ -316,15 +419,13 @@ export const HttpStatus = {
 export const ErrorCode = {
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   UNAUTHORIZED: 'UNAUTHORIZED',
-  AUTH_REQUIRED: 'AUTH_REQUIRED',
-  AUTH_ERROR: 'AUTH_ERROR',
-  BAD_REQUEST: 'BAD_REQUEST',
+  AUTH_REQUIRED: 'UNAUTHORIZED',
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
   CONFLICT: 'CONFLICT',
   RATE_LIMITED: 'RATE_LIMITED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
-  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
   INVALID_INPUT: 'INVALID_INPUT',
-  AUTHENTICATION_FAILED: 'AUTHENTICATION_FAILED'
+  AUTHENTICATION_FAILED: 'AUTHENTICATION_FAILED',
+  AUTH_FAILED: 'AUTHENTICATION_FAILED'
 } as const;

@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-04-28T15:51:19.897Z",
+  "technicalRelease": {
+    "qualityMetrics": "passed",
+    "lint": {
+      "errors": 0,
+      "warnings": 0,
+      "problems": 0
+    },
+    "typecheck": {
+      "errors": 0,
+      "warnings": 0,
+      "hints": 0
+    },
+    "openapi": {
+      "currentMissingInSpec": 0,
+      "baselineMissingInSpec": 0,
+      "newlyMissingVsBaseline": 0,
+      "resolvedVsBaseline": 0
+    },
+    "apiReleaseGate": "passed",
+    "gateDone": "passed",
+    "opsNextBulk": "passed"
+  },
+  "blockers": [
+    {
+      "id": "public-readiness-history-secrets",
+      "severity": "critical",
+      "type": "security-public-readiness",
+      "status": "blocked",
+      "gate": "npm run security:public-readiness",
+      "summary": "Repository is not safe to make public until historical deploy key and old credential literals are rotated and removed from git history.",
+      "findings": [
+        "git history contains deploy_key",
+        "git history contains old credential literals"
+      ],
+      "requiredActions": [
+        "rotate affected deploy keys and credentials",
+        "clean git history in an approved maintenance window",
+        "rerun security:scan-secrets and security:public-readiness",
+        "only then consider public visibility change"
+      ],
+      "runbook": "docs/public-readiness-runbook-2026-04-28.md",
+      "requiresExplicitApproval": true,
+      "destructiveRisk": true
+    },
+    {
+      "id": "place-sla-moderation-backlog",
+      "severity": "high",
+      "type": "operations-moderation-sla",
+      "status": "resolved",
+      "gate": "npm run jobs:places:sla-alert",
+      "summary": "Place submission moderation queue is clear. Previous growth was caused by smoke-generated test places, now cleaned up by the smoke script.",
+      "metrics": {
+        "slaHours": 48,
+        "cooldownHours": 24,
+        "pendingCount": 0,
+        "needsInfoCount": 0,
+        "pendingBreachedCount": 0,
+        "breachedCount": 0,
+        "alertedCount": 0
+      },
+      "requiredActions": [
+        "keep smoke cleanup enabled",
+        "rerun jobs:places:sla-alert after future social/place smoke changes"
+      ],
+      "runbook": "docs/place-sla-backlog-runbook-2026-04-28.md",
+      "requiresExplicitApproval": false,
+      "destructiveRisk": false
+    }
+  ]
+}

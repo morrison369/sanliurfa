@@ -1,0 +1,163 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+
+let featuredPlaces: any[] = [];
+
+const ulasimCategories = [
+  { slug: 'otogar', name: 'Otogar', icon: '🚌', desc: 'GAP Otogarı ve otobüs firmaları' },
+  { slug: 'havalimani', name: 'Havalimanı', icon: '✈️', desc: 'GAP Havalimanı bilgileri' },
+  { slug: 'ucak-saatleri', name: 'Uçak Saatleri', icon: '🛫', desc: 'Güncel uçuş saatleri', href: '/ulasim/ucak-saatleri' },
+  { slug: 'taksi-duraklari', name: 'Taksi Durakları', icon: '🚕', desc: 'Taksi durakları ve ücretler' },
+  { slug: 'arac-kiralama', name: 'Araç Kiralama', icon: '🚗', desc: 'Rent-a-car firmaları' },
+  { slug: 'otobus-hatlari', name: 'Otobüs Hatları', icon: '🚎', desc: 'Şehir içi otobüs hatları', href: '/ulasim/otobus-hatlari' },
+];
+
+try {
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE c.slug IN ('otogar','havalimani','taksi-duraklari','arac-kiralama','otobus-hatlari')
+     AND p.status = 'active'
+     ORDER BY p.rating DESC LIMIT 6`
+  );
+  featuredPlaces = placesResult.rows;
+} catch (e) {
+  logger.error('Error loading ulasim:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: 'Şanlıurfa Ulaşım Rehberi | Otogar, Havalimanı, Taksi ve Otobüs',
+  description: "Şanlıurfa\'da ulaşım bilgileri. GAP Otogarı, GAP Havalimanı, taksi durakları, araç kiralama ve şehir içi otobüs hatları.",
+  keywords: ['şanlıurfa ulaşım', 'gap otogarı', 'gap havalimanı', 'şanlıurfa taksi', 'urfa otobüs', 'şanlıurfa araç kiralama', 'urfa şehir içi ulaşım'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/ulasim',
+};
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    S: 'Şanlıurfa otobüs saatleri nereden takip edilir?',
+    C: 'Ulaşım rehberindeki otobüs saatleri bağlantısından şehir içi hat bilgilerine erişebilirsiniz.',
+  },
+  {
+    S: 'Şanlıurfa uçak saatlerini nereden görebilirim?',
+    C: 'Ulaşım sayfasındaki uçak saatleri bağlantısından /ulasim/ucak-saatleri ekranına giderek uçuş planlama bilgilerine ulaşabilirsiniz.',
+  },
+  {
+    S: 'GAP Havalimanı şehir merkezine uzak mı?',
+    C: 'GAP Havalimanı şehir merkezine yaklaşık 40 km mesafededir ve transfer alternatifleri ulaşım rehberinde yer alır.',
+  },
+  {
+    S: "Şanlıurfa'da taksi ve araç kiralama bilgileri var mı?",
+    C: 'Evet. Taksi durakları ve araç kiralama başlıkları altında ilgili ulaşım noktaları listelenir.',
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-16">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">ULAŞIM REHBERİ</p>
+        <h1 class="text-4xl md:text-5xl font-bold text-[#F5EDD6] mb-4">Ulaşım Rehberi</h1>
+        <p class="text-xl text-[#C4B49A] max-w-2xl">
+          Şanlıurfa'ya nasıl gelinir? Şehir içi ulaşım ve tüm ulaşım bilgileri
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-5 mb-8">
+        <h2 class="text-lg font-bold text-[#1A1008]">Hızlı Cevap</h2>
+        <p class="text-sm text-[#6B5540] mt-1">
+          Şanlıurfa ulaşım rehberinde havalimanı, otogar, taksi durakları, araç kiralama ve otobüs hat bilgilerini tek sayfada bulabilirsiniz.
+        </p>
+      </div>
+
+      <!-- Önemli Bilgi Kutuları -->
+      <div class="grid md:grid-cols-2 gap-6 mb-12">
+        <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6">
+          <h2 class="text-xl font-bold text-[#1A1008] mb-2">✈️ GAP Havalimanı</h2>
+          <p class="text-[#6B5540] text-sm">Şanlıurfa Merkeze ~40 km. Türk Hava Yolları, Pegasus ve SunExpress seferleri.</p>
+          <a href="/ulasim/havalimani" class="mt-3 inline-block text-urfa-600 font-medium hover:underline">Detaylar →</a>
+          <a href="/ulasim/ucak-saatleri" class="mt-2 inline-block text-urfa-700 font-semibold hover:underline">Uçak Saatleri →</a>
+        </div>
+        <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6">
+          <h2 class="text-xl font-bold text-[#1A1008] mb-2">🚌 GAP Otogarı</h2>
+          <p class="text-[#6B5540] text-sm">Türkiye'nin dört bir yanına düzenli otobüs seferleri. Şehir merkezine yakın konum.</p>
+          <a href="/ulasim/otogar" class="mt-3 inline-block text-urfa-600 font-medium hover:underline">Detaylar →</a>
+        </div>
+        <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6 md:col-span-2">
+          <h2 class="text-xl font-bold text-[#1A1008] mb-2">🕒 Otobüs Saatleri</h2>
+          <p class="text-[#6B5540] text-sm">Şehir içi hat yoğunlukları, ana aktarma noktaları ve güncel saat aralıkları.</p>
+          <a href="/ulasim/otobus-saatleri" class="mt-3 inline-block text-urfa-600 font-medium hover:underline">Otobüs Saatlerini Gör →</a>
+        </div>
+      </div>
+
+      <!-- Kategoriler -->
+      <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Ulaşım Kategorileri</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
+        {ulasimCategories.map((cat) => (
+          <a
+            href={cat.href || `/ulasim/${cat.slug}`}
+            class="bg-white rounded-sm p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-1 border border-[rgba(200,160,100,0.18)] hover:border-urfa-300 group text-center"
+          >
+            <div class="text-3xl mb-3">{cat.icon}</div>
+            <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-700 transition-colors text-sm">{cat.name}</h3>
+            <p class="text-xs text-[#9A8470] mt-1">{cat.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      {featuredPlaces.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Ulaşım Noktaları</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredPlaces.map((place) => (
+              <a href={`/isletme/${place.slug}`} class="bg-white rounded-sm p-5 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group">
+                <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-700">{place.name}</h3>
+                <span class="text-xs text-urfa-600">{place.category_name}</span>
+                {place.address && <p class="text-xs text-[#9A8470] mt-2">📍 {place.address}</p>}
+                {place.phone && <p class="text-xs text-[#9A8470]">📞 {place.phone}</p>}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.C,
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Şanlıurfa Ulaşım Kategorileri',
+    itemListElement: ulasimCategories.map((cat, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: cat.name,
+      url: `${baseUrl}${cat.href || `/ulasim/${cat.slug}`}`,
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Ulaşım', item: `${baseUrl}/ulasim` },
+    ],
+  })} is:inline />
+</Layout>

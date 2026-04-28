@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserFollowedPlaces } from '../../../../lib/place-followers';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { getUserFollowedPlaces } from '../../../../lib/place/place-followers';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       recordRequest('GET', '/api/user/following/places', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     const userId = locals.user.id;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 200);
 
     // Get followed places
     const places = await getUserFollowedPlaces(userId, limit);
@@ -43,10 +43,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/user/following/places', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Takip edilen mekanlar alınamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to get followed places', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Takip edilen mekanlar alınamadı',
+      'Failed to get followed places',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

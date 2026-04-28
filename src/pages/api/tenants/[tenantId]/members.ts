@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Tenant Members API
  * Invite, manage, remove members
@@ -6,13 +5,13 @@
 
 import type { APIRoute } from 'astro';
 import { queryOne, queryMany } from '../../../../lib/postgres';
-import { getTenantMembers, addTenantMember, removeTenantMember, logTenantAudit } from '../../../../lib/multi-tenant';
+import { addTenantMember, removeTenantMember, logTenantAudit } from '../../../../lib/multi/multi-tenant';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -22,8 +21,8 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     if (!locals.user?.id) {
       recordRequest('GET', `/api/tenants/${tenantId}/members`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -74,10 +73,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/tenants/${params.tenantId}/members`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error(
-      'Failed to get members',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    logger.error('Failed to get members', error instanceof Error ? error : new Error(String(error)), {});
     return apiError(
       ErrorCode.INTERNAL_ERROR,
       'Failed to get members',
@@ -89,7 +85,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -101,8 +97,8 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     if (!locals.user?.id) {
       recordRequest('POST', `/api/tenants/${tenantId}/members`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -167,10 +163,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', `/api/tenants/${params.tenantId}/members`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error(
-      'Failed to add member',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    logger.error('Failed to add member', error instanceof Error ? error : new Error(String(error)), {});
     return apiError(
       ErrorCode.INTERNAL_ERROR,
       'Failed to add member',
@@ -182,7 +175,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, params, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -193,8 +186,8 @@ export const DELETE: APIRoute = async ({ request, locals, params, url }) => {
     if (!locals.user?.id) {
       recordRequest('DELETE', `/api/tenants/${tenantId}/members`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -257,10 +250,7 @@ export const DELETE: APIRoute = async ({ request, locals, params, url }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', `/api/tenants/${params.tenantId}/members`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error(
-      'Failed to remove member',
-      error instanceof Error ? error : new Error(String(error))
-    );
+    logger.error('Failed to remove member', error instanceof Error ? error : new Error(String(error)), {});
     return apiError(
       ErrorCode.INTERNAL_ERROR,
       'Failed to remove member',

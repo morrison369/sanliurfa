@@ -2,20 +2,23 @@
 import Layout from '../../layouts/Layout.astro';
 import ReportManager from '../../components/ReportManager';
 
-// Auth check
-const userId = Astro.locals.user?.id;
-if (!userId) {
-  return Astro.redirect(`/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/raporlar');
 }
 ---
 
-<Layout title="Raporlar | Şanlıurfa" noindex>
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 mb-2">Raporlar</h1>
-      <p class="text-gray-600">Raporları çalıştırın, dışa aktarın ve şablonları yönetin</p>
+<Layout seo={{ title: "Raporlar | Şanlıurfa", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-10">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">HESABIM</p>
+        <h1 class="text-3xl font-bold text-[#F5EDD6]">Raporlar</h1>
+        <p class="text-[#9A8470] mt-1">Raporları çalıştırın, dışa aktarın ve şablonları yönetin</p>
+      </div>
     </div>
-
-    <ReportManager client:load />
+    <div class="container mx-auto px-4 py-8">
+      <ReportManager client:visible={{ rootMargin: '140px' }} />
+    </div>
   </div>
 </Layout>

@@ -1,382 +1,216 @@
-# Deployment Guide: CentOS Web Panel (Shared Hosting)
+# Deployment Rehberi (CWP Shared Hosting)
 
-This guide covers deploying Şanlíurfa.com on **CentOS Web Panel shared hosting** (NOT Docker).  
-All services run directly on the host under your user account.
+Bu proje production'da **CWP (CentOS Web Panel) shared hosting** ve
+**domain kullanıcısı (root olmayan)** ile çalıştırılır.
 
----
+## Model
 
-## Prerequisites
+- Panel: CWP
+- Çalıştıran kullanıcı: domain hesabı (ör. `sanliurfa`)
+- Uygulama dizini: `$HOME/public_html`
+- Process manager: PM2 (user-level)
+- App port: `4321` (localhost)
+- Public erişim: CWP webserver reverse proxy (80/443 -> 127.0.0.1:4321)
 
-- CentOS Web Panel installed and configured
-- SSH access to your hosting account
-- Your own user account (e.g., `sanliurfa`)
-- PostgreSQL and Redis access (provided by hosting)
-- Domain configured in CWP
+## 1) CWP panel hazırlığı
 
-Verify:
-```bash
-whoami
-echo $HOME
-```
+1. Domain ve hesap oluştur.
+2. Domain hesabı için shell erişimini aç (`/bin/bash` gerekiyorsa, sadece ilgili kullanıcıya).
+3. SSL'i CWP AutoSSL ile kur.
+4. Domain webserver ayarında custom port proxy hedefini `127.0.0.1:4321` yap.
 
----
+Not: CWP'de varsayılan shell birçok kurulumda kapalı olabilir; SSH/SFTP için kullanıcıya uygun shell
+atanmalıdır.
 
-## Step 1: Node.js Installation (NVM)
-
-```bash
-# Install NVM
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
-source ~/.bashrc
-
-# Install Node 18
-nvm install 18
-nvm use 18
-nvm alias default 18
-
-# Verify
-node --version
-npm --version
-```
-
----
-
-## Step 2: Clone & Setup
+## 2) Domain kullanıcısı ile sunucu adımları
 
 ```bash
-cd ~
-git clone https://github.com/your-repo/sanliurfa.git
-cd sanliurfa
-npm install --legacy-peer-deps
-
-# Create .env
-cp .env.example .env
-nano .env
+ssh <domain_user>@<server_or_domain>
+cd "$HOME/public_html"
 ```
 
-### Critical .env Variables
+Kod yükleme:
 
 ```bash
-DATABASE_URL="postgresql://user:pass@localhost:5432/sanliurfa"
-JWT_SECRET="your-long-random-min-32-chars"
-REDIS_URL="redis://:password@localhost:6379/0"
-REDIS_KEY_PREFIX="sanliurfa:"
-NODE_ENV="production"
-CORS_ORIGINS="https://sanliurfa.com,https://www.sanliurfa.com"
-HOST="127.0.0.1"
-PORT="6000"
-```
-
-Generate JWT_SECRET:
-```bash
-openssl rand -hex 32
-```
-
----
-
-## Step 3: Database Setup
-
-```bash
-# Connect to PostgreSQL
-psql -U postgres -h localhost
-
-# Create DB
-CREATE DATABASE sanliurfa;
-CREATE USER sanliurfa_user WITH PASSWORD 'your-password';
-GRANT ALL PRIVILEGES ON DATABASE sanliurfa TO sanliurfa_user;
-ALTER DATABASE sanliurfa OWNER TO sanliurfa_user;
-\q
-
-# App creates tables on first startup
-```
-
----
-
-## Step 4: Redis Verification
-
-```bash
-redis-cli -h localhost ping
-# PONG
-
-redis-cli -u "redis://:password@localhost:6379/0" ping
-```
-
----
-
-## Step 5: Build
-
-```bash
-cd ~/sanliurfa
-npm run build
-ls -la .output/server/
-```
-
----
-
-## Step 6: PM2 Service
-
-```bash
-npm install -g pm2
-pm2 startup
-```
-
-Create `ecosystem.config.js`:
-```javascript
-module.exports = {
-  apps: [{
-    name: 'sanliurfa',
-    script: './node_modules/.bin/astro',
-    args: 'preview',
-    cwd: '/home/sanliurfa/sanliurfa',
-    env: { NODE_ENV: 'production', PORT: 6000 },
-    error_file: './logs/pm2-error.log',
-    out_file: './logs/pm2-out.log',
-    autorestart: true,
-    max_restarts: 10,
-    min_uptime: '60s'
-  }]
-};
-```
-
-Start:
-```bash
-pm2 start ecosystem.config.js
-pm2 save
-pm2 startup
-pm2 logs sanliurfa
-```
-
-Commands:
-```bash
-pm2 stop sanliurfa
-pm2 restart sanliurfa
-pm2 delete sanliurfa
-pm2 logs sanliurfa
-pm2 monit
-```
-
----
-
-## Step 7: Nginx Reverse Proxy (CWP)
-
-CWP Admin Panel → Domain Manager → Edit → Nginx Configuration:
-
-```nginx
-upstream sanliurfa_backend {
-    server 127.0.0.1:6000;
-    keepalive 32;
-}
-
-server {
-    listen 80;
-    server_name sanliurfa.com www.sanliurfa.com;
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name sanliurfa.com www.sanliurfa.com;
-
-    ssl_certificate /path/to/certificate.crt;
-    ssl_certificate_key /path/to/private.key;
-
-    ssl_protocols TLSv1.2 TLSv1.3;
-    gzip on;
-    gzip_types text/plain text/css application/json application/javascript;
-
-    location / {
-        proxy_pass http://sanliurfa_backend;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-Save and reload Nginx in CWP.
-
----
-
-## Step 8: SSL (Let's Encrypt via CWP)
-
-CWP Admin → SSL Manager → Select domain → Install Free SSL
-
----
-
-## Step 9: Automated Backups
-
-Create `scripts/backup-db.sh`:
-
-```bash
-#!/bin/bash
-BACKUP_DIR="$HOME/backups/database"
-DATE=$(date +%Y%m%d_%H%M%S)
-mkdir -p "$BACKUP_DIR"
-pg_dump -U sanliurfa_user -h localhost sanliurfa | gzip > "$BACKUP_DIR/sanliurfa_${DATE}.sql.gz"
-find "$BACKUP_DIR" -type f -mtime +7 -delete
-```
-
-Schedule with crontab:
-```bash
-chmod +x scripts/backup-db.sh
-crontab -e
-# Add: 0 2 * * * $HOME/sanliurfa/scripts/backup-db.sh >> $HOME/logs/backup.log 2>&1
-```
-
----
-
-## Step 10: Monitoring
-
-### Logs
-```bash
-pm2 logs sanliurfa
-tail -f ~/sanliurfa/logs/pm2-out.log
-```
-
-### Health Check
-```bash
-curl https://sanliurfa.com/api/health
-```
-
-### Database
-```bash
-psql -U sanliurfa_user -d sanliurfa -h localhost -c "SELECT version();"
-```
-
-### Redis
-```bash
-redis-cli ping
-redis-cli info memory
-```
-
----
-
-## Step 11: Update Workflow
-
-```bash
-cd ~/sanliurfa
+# Git ile
+git clone <repo_url> .
+# veya mevcut repoda
 git pull origin main
-npm install --legacy-peer-deps
+```
+
+Ortam:
+
+```bash
+cp .env.production .env
+chmod 600 .env
+```
+
+Kurulum/build:
+
+```bash
+npm install --legacy-peer-deps --production
 npm run build
-pm2 restart sanliurfa
-curl https://sanliurfa.com/api/health
 ```
 
----
-
-## Production Checklist
-
-- [ ] .env with DATABASE_URL, JWT_SECRET, REDIS_URL
-- [ ] NODE_ENV=production
-- [ ] Database migrated
-- [ ] Redis online (redis-cli ping)
-- [ ] Service auto-starts
-- [ ] Nginx forwarding to 6000
-- [ ] SSL certificate installed
-- [ ] /api/health returns healthy
-- [ ] Backups scheduled
-
----
-
-## Troubleshooting
-
-### Port 6000 in use
-```bash
-lsof -i :6000
-kill -9 <PID>
-```
-
-### Redis connection error
-```bash
-redis-cli ping
-sudo systemctl start redis
-```
-
-### Database error
-```bash
-psql -U sanliurfa_user -d sanliurfa -h localhost -c "SELECT 1;"
-```
-
-### App won't start
-```bash
-pm2 logs sanliurfa --lines 50
-rm -rf .output/ && npm run build
-pm2 restart sanliurfa
-```
-
-### Nginx not forwarding
-```bash
-sudo nginx -t
-curl http://127.0.0.1:6000
-sudo systemctl reload nginx
-```
-
----
-
-## Performance Tuning
-
-### Multi-core (cluster mode)
-Edit `ecosystem.config.js`:
-```javascript
-exec_mode: 'cluster',
-instances: 'max'
-```
-Then: `pm2 restart sanliurfa`
-
-### Redis memory
-```bash
-sudo nano /etc/redis.conf
-# maxmemory 512mb
-# maxmemory-policy allkeys-lru
-sudo systemctl restart redis
-```
-
-### Check slow queries
-```bash
-curl -H "Cookie: auth-token=TOKEN" https://sanliurfa.com/api/performance
-```
-
----
-
-## Security
-
-### Permissions
-```bash
-chmod 600 ~/.env
-chmod 600 ~/sanliurfa/.env
-chmod 700 ~/backups/
-```
-
-### Firewall
-```bash
-sudo ufw allow 80
-sudo ufw allow 443
-sudo ufw allow 22
-sudo ufw deny 6000
-```
-
----
-
-## Health Check Script
-
-Create `scripts/health-check.sh`:
+PM2 başlatma:
 
 ```bash
-#!/bin/bash
-if ! curl -s "https://sanliurfa.com/api/health" | grep -q "healthy"; then
-    pm2 restart sanliurfa
-fi
+bash scripts/pm2-cwp-start.sh
 ```
 
-Schedule: `*/5 * * * * $HOME/sanliurfa/scripts/health-check.sh`
+## 3) Deploy (güncelleme)
 
----
+```bash
+cd "$HOME/public_html"
+bash scripts/deploy-cwp.sh
+```
 
-## Resources
+Alternatif (önerilen tek komut akışı):
 
-- CWP: https://centos-web-panel.com/documentation.html
-- PM2: https://pm2.keymetrics.io/docs/usage/quick-start/
-- Node.js Production: https://nodejs.org/en/docs/guides/nodejs-web-app-production-checklist/
+```bash
+cd "$HOME/public_html"
+npm run ops:cwp:preflight
+npm run ops:cwp:env-check
+npm run ops:cwp:safe-deploy
+```
+
+`ops:cwp:deploy`, başarısız deploy senaryosunda son predeploy snapshot'a otomatik rollback dener.
+`ops:cwp:safe-deploy`, deploy öncesi `doctor + smoke` kontrollerini zorunlu çalıştırır.
+
+Desteklenen env değişkenleri:
+
+- `APP_DIR` (default: `$HOME/public_html`)
+- `PM2_NAME` (default: `sanliurfa-app`)
+- `PORT` (default: `4321`)
+- `BRANCH` (default: `main`)
+
+## 4) Reboot sonrası otomatik kalkış
+
+`pm2 startup` shared hosting'de çoğunlukla root istediği için user-cron kullan:
+
+```bash
+crontab -e
+```
+
+Ekleyin:
+
+```cron
+@reboot cd $HOME/public_html && pm2 resurrect
+```
+
+## 5) Doğrulama
+
+```bash
+pm2 status
+pm2 logs sanliurfa-app --lines 100
+curl -I http://127.0.0.1:4321/api/health
+```
+
+`/api/health` yanıtında `integrations` alanı her servisin yapılandırılma durumunu (`configured` /
+`unconfigured`) raporlar — production'da hangi entegrasyonların kurulu olduğunu monitoring tool'larla
+izlemek için bu alan kullanılabilir. Sonuç 30 saniye in-process cache'lenir.
+
+Ops durum raporu:
+
+```bash
+npm run ops:cwp:status
+npm run ops:cwp:smoke
+```
+
+Not: `ops:cwp:report` çıktısı artık `bootstrap_audit`, `daily_ops`, `weekly_audit` ve
+`release_readiness` özetlerini de içerir.
+
+Release yönetimi:
+
+```bash
+npm run ops:cwp:releases
+npm run ops:cwp:cleanup
+npm run ops:cwp:report
+npm run ops:cwp:cron:doctor
+npm run ops:cwp:cron:freshness
+npm run ops:cwp:cron:freshness:strict
+npm run ops:cwp:unlock
+npm run ops:cwp:pipeline
+npm run ops:cwp:pipeline:strict
+npm run ops:cwp:audit
+npm run ops:cwp:incident-bundle
+npm run ops:cwp:triage
+npm run ops:cwp:incident-cleanup
+```
+
+Not: `ops:cwp:pipeline:strict` ve `ops:cwp:audit` cron freshness kontrolünü strict modda
+(`CRON_FRESHNESS_STRICT=1`) çalıştırır.
+
+Not: Managed cron planı artık `daily-ops`, `weekly-audit` ve `release-readiness` joblarını da
+otomatik kurar.
+
+Cron otomasyonu:
+
+```bash
+npm run ops:cwp:cron:install
+npm run ops:cwp:cron:install:if-needed
+npm run ops:cwp:cron:show
+npm run ops:cwp:cron:preview
+npm run ops:cwp:cron:diff
+npm run ops:cwp:cron:apply-safe
+npm run ops:cwp:bootstrap
+npm run ops:cwp:bootstrap:audit
+npm run ops:cwp:bootstrap:audit:summary
+npm run ops:cwp:daily
+npm run ops:cwp:weekly
+npm run ops:cwp:release-readiness
+```
+
+## 5b) Admin entegrasyonları (post-deploy)
+
+Sunucu çalıştıktan sonra admin **`/admin/integrations`** sayfasından 6 servisi yönetir.
+**Önemli:** Bu key'ler veritabanında saklanır (`site_settings.integrations.*` ve `oauth_providers`)
+— `.env` dosyasına yazmanıza **gerek yok**. DB değer varsa env değeri yoksayılır (DB öncelikli).
+Admin panelden değiştirme **anında etkili olur** (sunucu restart gerekmez).
+
+| Servis | Yapılandırma adımları |
+|--------|------------------------|
+| **Resend** (e-posta) | resend.com/api-keys'den API key al, sender domain için DNS doğrulaması (SPF/DKIM) yap, admin panele gir. "Test Et" ile doğrula. |
+| **SMTP** (yedek tier) | Resend yoksa veya kotaya takılırsa kullanılır. Host/port/user/pass admin panelden. "Test Et" `nodemailer.verify()` çalıştırır (mail göndermez). |
+| **Stripe** (ödeme) | dashboard.stripe.com/apikeys'den secret + publishable key. Webhooks için panelin gösterdiği `<domain>/api/billing/webhook` URL'ini Stripe Dashboard'a kaydet, signing secret'i admin panele yapıştır. |
+| **Google Analytics 4** | GA4 → Yönetici → Veri Akışları → Web Akışı'ndan Measurement ID (`G-XXXXXXXXXX`) al, admin panele gir. |
+| **Unsplash + Pexels** | Her iki sağlayıcıdan ücretsiz API key. Sadece admin medya arama panelinde kullanılır. |
+| **OAuth** (Google/Facebook/Twitter) | Her provider için console linki + redirect URI admin panelde gösterilir, kopyalayıp provider tarafında kaydet, client_id/secret'i admin panele gir. Per-provider toggle ile etkin/devre dışı. |
+
+**Test akışı:** Admin yapılandırma sonrası "Tümünü Test Et" master butonuyla 6 servisi paralel
+probe edebilir. Her satırda inline status badge sonuç gösterir.
+
+**Health monitoring:** Production'da `/api/health` yanıtının `integrations` alanı uptime
+monitor'lar tarafından izlenebilir — herhangi bir servisin `unconfigured` durumda olması
+sağlık alarmı tetiklenebilir.
+
+## 6) Sorun giderme
+
+Port dinleniyor mu:
+
+```bash
+ss -ltnp | grep 4321
+```
+
+Node/PM2 kullanıcı PATH kontrolü:
+
+```bash
+node -v
+npm -v
+pm2 -v
+```
+
+Proxy çalışmıyorsa CWP panelde domain webserver config içinden custom port mapping'i tekrar doğrula.
+
+Hızlı rollback:
+
+```bash
+npm run ops:cwp:rollback
+```
+
+## Referans dokümanlar
+
+- `SHARED-HOSTING-DEPLOY.md`
+- `CWP-DEPLOYMENT-GUIDE.md`
+- `scripts/deploy-cwp.sh`
+- `scripts/deploy-shared.sh`

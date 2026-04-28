@@ -12,6 +12,12 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.production
+.env.staging
+.env.wsl
+.env.wsl.local
+deploy_key
+deploy_key.local
 
 # IDE
 .vscode/
@@ -38,6 +44,8 @@ lighthouse-report.json
 # Cache
 .cache/
 .npm-cache/
+.project-runtime/
+.runtime/
 *.tsbuildinfo
 
 # Temporary files
