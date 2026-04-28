@@ -220,7 +220,7 @@
     "@astrojs/partytown": "^2.1.7",
     "@astrojs/react": "^5.0.4",
     "@iconify-json/heroicons": "^1.2.3",
-    "@iconify-json/lucide": "^1.2.103",
+    "@iconify-json/lucide": "^1.2.104",
     "@types/leaflet": "^1.9.21",
     "astro": "^6.1.9",
     "astro-icon": "^1.1.5",
