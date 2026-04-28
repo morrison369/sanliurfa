@@ -1,112 +1,15 @@
 {
-  "generatedAt": "2026-04-28T22:59:54.813Z",
+  "generatedAt": "2026-04-28T23:05:12.955Z",
   "status": "ok",
   "totals": {
     "P1": 65,
     "P2": 310,
-    "coveredP1": 53,
+    "coveredP1": 65,
     "coveredP2": 1,
-    "gapP1": 12,
+    "gapP1": 0,
     "gapP2": 309
   },
   "topPriority": [
-    {
-      "route": "/social/events/stream",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/feed",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/follow",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/followers",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/follows",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/match-candidates",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/matches",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/messages",
-      "tier": "P1",
-      "methods": [
-        "GET",
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/messages/receipts",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/messages/stream",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/swipe",
-      "tier": "P1",
-      "methods": [
-        "POST"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/social/trending",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
     {
       "route": "/achievements",
       "tier": "P2",
@@ -246,6 +149,104 @@
     },
     {
       "route": "/admin/deployment/status",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/exports/token",
+      "tier": "P2",
+      "methods": [
+        "DELETE",
+        "GET",
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/exports/token/clipboard",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/flags",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/import",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/loyalty/award",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/loyalty/rewards",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/messages/{id}/status",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/moderation",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/moderation/actions",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/moderation/flags",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/moderation/queue",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/admin/moderation/reports",
       "tier": "P2",
       "methods": [
         "GET"
