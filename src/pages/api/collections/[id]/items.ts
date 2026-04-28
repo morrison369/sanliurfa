@@ -12,22 +12,28 @@ import { logger } from '../../../../lib/logging';
 export const POST: APIRoute = async (context) => {
   try {
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
     }
 
     const { id } = context.params;
 
     if (!id) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Koleksiyon ID gereklidir');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Collection ID is required');
     }
 
     const body = await context.request.json();
 
     if (!body.placeId || typeof body.placeId !== 'string') {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Mekan ID gereklidir');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Place ID is required');
     }
 
-    const itemId = await addPlaceToCollection(id, body.placeId, context.locals.user.id, body.note || undefined);
+    if (body.note !== undefined && body.note !== null) {
+      if (typeof body.note !== 'string' || body.note.length > 500) {
+        return apiError(context, HttpStatus.BAD_REQUEST, 'note 500 karakterden uzun olamaz');
+      }
+    }
+
+    await addPlaceToCollection(id, body.placeId, context.locals.user.id, body.note || undefined);
 
     logger.info('Place added to collection', {
       userId: context.locals.user.id,
@@ -35,42 +41,34 @@ export const POST: APIRoute = async (context) => {
       placeId: body.placeId
     });
 
-    return apiResponse(context, HttpStatus.CREATED, {
-      success: true,
-      message: 'Yer koleksiyona eklendi',
-      itemId
-    });
+    return apiResponse({ success: true, message: 'Yer koleksiyona eklendi' }, HttpStatus.CREATED);
   } catch (error) {
     if (error instanceof Error && error.message === 'Access denied') {
-      return apiError(context, HttpStatus.FORBIDDEN, 'Erişim reddedildi');
+      return apiError(context, HttpStatus.FORBIDDEN, 'Access denied');
     }
     logger.error('Failed to add place to collection', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Mekan koleksiyona eklenemedi');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to add place to collection');
   }
 };
 
 export const DELETE: APIRoute = async (context) => {
   try {
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
+      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
     }
 
     const { id } = context.params;
     const { placeId } = Object.fromEntries(context.url.searchParams);
 
     if (!id) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Koleksiyon ID gereklidir');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Collection ID is required');
     }
 
     if (!placeId) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Mekan ID gereklidir');
+      return apiError(context, HttpStatus.BAD_REQUEST, 'Place ID is required');
     }
 
-    const removed = await removePlaceFromCollection(id, placeId, context.locals.user.id);
-
-    if (!removed) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'Mekan koleksiyonda bulunamadı');
-    }
+    await removePlaceFromCollection(id, placeId, context.locals.user.id);
 
     logger.info('Place removed from collection', {
       userId: context.locals.user.id,
@@ -78,15 +76,12 @@ export const DELETE: APIRoute = async (context) => {
       placeId
     });
 
-    return apiResponse(context, HttpStatus.OK, {
-      success: true,
-      message: 'Yer koleksiyondan kaldırıldı'
-    });
+    return apiResponse({ success: true, message: 'Yer koleksiyondan kaldırıldı' }, HttpStatus.OK);
   } catch (error) {
     if (error instanceof Error && error.message === 'Access denied') {
-      return apiError(context, HttpStatus.FORBIDDEN, 'Erişim reddedildi');
+      return apiError(context, HttpStatus.FORBIDDEN, 'Access denied');
     }
     logger.error('Failed to remove place from collection', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Mekan koleksiyondan kaldırılamadı');
+    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to remove place from collection');
   }
 };

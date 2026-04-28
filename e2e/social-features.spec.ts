@@ -93,13 +93,13 @@ test.describe('User Mentions', () => {
     });
 
     const data = await response.json();
-    authToken = data.data.token;
-    userId = data.data.userId;
+    authToken = response.headers()['set-cookie']?.split(';')[0] ?? '';
+    userId = data.data?.userId ?? data.data?.user?.id ?? data.user?.id ?? '';
   });
 
   test('GET /api/users/:id/mentions - User mentions endpoint', async ({ request }) => {
     const response = await request.get(`/api/users/${userId}/mentions`, {
-      headers: { 'Cookie': `auth-token=${authToken}` }
+      headers: { Cookie: authToken }
     });
 
     expect(response.status()).toBe(200);
@@ -110,7 +110,7 @@ test.describe('User Mentions', () => {
 
   test('GET /api/users/:id/mentions?unreadOnly=true - Unread mentions only', async ({ request }) => {
     const response = await request.get(`/api/users/${userId}/mentions?unreadOnly=true`, {
-      headers: { 'Cookie': `auth-token=${authToken}` }
+      headers: { Cookie: authToken }
     });
 
     expect(response.status()).toBe(200);
@@ -132,12 +132,12 @@ test.describe('Real-time Feed', () => {
     });
 
     const userData = await registerResp.json();
-    const authToken = userData.data.token;
+    const authToken = registerResp.headers()['set-cookie']?.split(';')[0] ?? '';
 
     // Connect to SSE stream
     const response = await request.get('/api/realtime/feed', {
       headers: { 
-        'Cookie': `auth-token=${authToken}`,
+        Cookie: authToken,
         'Accept': 'text/event-stream'
       }
     });

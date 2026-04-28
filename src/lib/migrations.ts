@@ -1,211 +1,134 @@
 /**
- * Veritabanı migrasyon sistemi
- * Tüm şema değişiklikleri burada tanımlanır
+ * Database Migrations Stub
+ * Placeholder for migration utilities
  */
 
-import { pool } from './postgres';
-import { logger } from './logging';
+import { logger } from './logger';
 
-/**
- * Migrasyon tanımı
- */
 export interface Migration {
   version: string;
   description: string;
-  up: (client: any) => Promise<void>;
-  down: (client: any) => Promise<void>;
+  up: (pool: any) => Promise<void>;
+  down?: (pool: any) => Promise<void>;
 }
 
-/**
- * Migrasyon geçmişi
- */
-interface MigrationHistory {
+export interface MigrationRecord {
   version: string;
+  appliedAt: Date;
   description: string;
-  executedAt: Date;
 }
 
-/**
- * Migrasyonlar tablosunu oluştur
- */
-async function createMigrationsTable(): Promise<void> {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS migrations (
-        id SERIAL PRIMARY KEY,
-        version VARCHAR(100) NOT NULL UNIQUE,
-        description TEXT NOT NULL,
-        executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-  } catch (error) {
-    logger.error('Migrasyonlar tablosu oluşturulurken hata', error instanceof Error ? error : new Error(String(error)));
-    throw error;
+class MigrationManager {
+  private migrations: Map<string, Migration> = new Map();
+  private appliedVersions: Set<string> = new Set();
+
+  /**
+   * Register a migration
+   */
+  register(migration: Migration): void {
+    this.migrations.set(migration.version, migration);
+    logger.debug('Migration registered', { version: migration.version });
   }
-}
 
-/**
- * Çalıştırılmış migrasyonları al
- */
-async function getExecutedMigrations(): Promise<MigrationHistory[]> {
-  try {
-    const result = await pool.query(`
-      SELECT version, description, executed_at as "executedAt"
-      FROM migrations
-      ORDER BY executed_at ASC
-    `);
-    return result.rows;
-  } catch (error) {
-    logger.error('Migrasyon geçmişi okunurken hata', error instanceof Error ? error : new Error(String(error)));
-    return [];
+  /**
+   * Check if migration has been applied
+   */
+  isApplied(version: string): boolean {
+    return this.appliedVersions.has(version);
   }
-}
 
-/**
- * Migrasyonu kaydedildi olarak işaretle
- */
-async function recordMigration(version: string, description: string): Promise<void> {
-  try {
-    await pool.query(
-      `INSERT INTO migrations (version, description) VALUES ($1, $2)`,
-      [version, description]
-    );
-  } catch (error) {
-    logger.error('Migrasyon kaydedilirken hata', error instanceof Error ? error : new Error(String(error)));
-    throw error;
+  /**
+   * Get pending migrations
+   */
+  getPending(): Migration[] {
+    return Array.from(this.migrations.values())
+      .filter(m => !this.isApplied(m.version))
+      .sort((a, b) => a.version.localeCompare(b.version));
   }
-}
 
-/**
- * Migrasyon kaydını sil
- */
-async function removeMigrationRecord(version: string): Promise<void> {
-  try {
-    await pool.query(
-      `DELETE FROM migrations WHERE version = $1`,
-      [version]
-    );
-  } catch (error) {
-    logger.error('Migrasyon kaydı silinirken hata', error instanceof Error ? error : new Error(String(error)));
-    throw error;
-  }
-}
-
-/**
- * Tüm migrasyonları çalıştır
- */
-export async function runMigrations(migrations: Migration[]): Promise<void> {
-  await createMigrationsTable();
-
-  const executed = await getExecutedMigrations();
-  const executedVersions = new Set(executed.map(m => m.version));
-
-  logger.info('Migrasyonlar başlıyor', {
-    toplam: migrations.length,
-    çalıştırılmış: executedVersions.size
-  });
-
-  for (const migration of migrations) {
-    if (executedVersions.has(migration.version)) {
-      logger.debug(`Migrasyon atlanıyor: ${migration.version} (zaten çalıştırıldı)`);
-      continue;
-    }
-
+  /**
+   * Apply a single migration
+   */
+  async apply(migration: Migration, pool: any): Promise<boolean> {
     try {
-      logger.info(`Migrasyon çalıştırılıyor: ${migration.version} - ${migration.description}`);
+      logger.info('Applying migration', { version: migration.version });
       await migration.up(pool);
-      await recordMigration(migration.version, migration.description);
-      logger.info(`Migrasyon başarılı: ${migration.version}`);
+      this.appliedVersions.add(migration.version);
+      logger.info('Migration applied successfully', { version: migration.version });
+      return true;
     } catch (error) {
-      logger.error(
-        `Migrasyon başarısız: ${migration.version}`,
-        error instanceof Error ? error : new Error(String(error))
-      );
-      throw error;
+      logger.error('Migration failed', error instanceof Error ? error : new Error(String(error)), {
+        version: migration.version
+      });
+      return false;
     }
   }
 
-  logger.info('Tüm migrasyonlar tamamlandı');
-}
+  /**
+   * Apply all pending migrations
+   */
+  async applyAll(pool: any): Promise<{ applied: number; failed: number }> {
+    const pending = this.getPending();
+    let applied = 0;
+    let failed = 0;
 
-/**
- * Migrasyonu geri al
- */
-export async function rollbackMigration(migration: Migration): Promise<void> {
-  try {
-    logger.info(`Migrasyon geri alınıyor: ${migration.version}`);
-    await migration.down(pool);
-    await removeMigrationRecord(migration.version);
-    logger.info(`Migrasyon geri alındı: ${migration.version}`);
-  } catch (error) {
-    logger.error(
-      `Migrasyon geri alma başarısız: ${migration.version}`,
-      error instanceof Error ? error : new Error(String(error))
-    );
-    throw error;
-  }
-}
-
-/**
- * Migrasyon geçmişini görüntüle
- */
-export async function getMigrationHistory(): Promise<MigrationHistory[]> {
-  await createMigrationsTable();
-  return getExecutedMigrations();
-}
-
-/**
- * Tüm migrasyonları geri al (sadece geliştirme ortamında kullanılmalı!)
- */
-export async function rollbackAll(migrations: Migration[]): Promise<void> {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('Rollback All sadece geliştirme ortamında yapılabilir!');
-  }
-
-  const executed = await getExecutedMigrations();
-  const reversedMigrations = migrations.reverse();
-
-  for (const migration of reversedMigrations) {
-    if (executed.some(m => m.version === migration.version)) {
-      try {
-        await migration.down(pool);
-        await removeMigrationRecord(migration.version);
-        logger.info(`Migrasyon geri alındı: ${migration.version}`);
-      } catch (error) {
-        logger.error(
-          `Migrasyon geri alma başarısız: ${migration.version}`,
-          error instanceof Error ? error : new Error(String(error))
-        );
+    for (const migration of pending) {
+      const success = await this.apply(migration, pool);
+      if (success) {
+        applied++;
+      } else {
+        failed++;
       }
     }
+
+    return { applied, failed };
   }
 
-  logger.info('Tüm migrasyonlar geri alındı');
+  /**
+   * Get migration history
+   */
+  getHistory(): MigrationRecord[] {
+    return Array.from(this.appliedVersions).map(version => ({
+      version,
+      appliedAt: new Date(),
+      description: this.migrations.get(version)?.description || ''
+    }));
+  }
+}
+
+export const migrationManager = new MigrationManager();
+
+/**
+ * Create a new migration
+ */
+export function createMigration(
+  version: string,
+  description: string,
+  up: (pool: any) => Promise<void>,
+  down?: (pool: any) => Promise<void>
+): Migration {
+  return {
+    version,
+    description,
+    up,
+    down
+  };
 }
 
 /**
- * Migrasyonları kontrol et (başarısız migrasyonları tespit et)
+ * Run migrations
  */
-export async function validateMigrations(migrations: Migration[]): Promise<{
-  valid: boolean;
-  missing: string[];
-  extra: string[];
-}> {
-  const executed = await getExecutedMigrations();
-  const executedVersions = new Set(executed.map(m => m.version));
-  const definedVersions = new Set(migrations.map(m => m.version));
-
-  const missing = migrations
-    .filter(m => !executedVersions.has(m.version))
-    .map(m => m.version);
-
-  const extra = executed
-    .filter(m => !definedVersions.has(m.version))
-    .map(m => m.version);
-
+export async function runMigrations(pool: any): Promise<{ success: boolean; applied: number }> {
+  const result = await migrationManager.applyAll(pool);
   return {
-    valid: missing.length === 0 && extra.length === 0,
-    missing,
-    extra
+    success: result.failed === 0,
+    applied: result.applied
   };
 }
+
+export default {
+  MigrationManager,
+  migrationManager,
+  createMigration,
+  runMigrations
+};

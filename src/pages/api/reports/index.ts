@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createReport, getReports } from '../../../lib/business-analytics';
+import { createReport, getReports } from '../../../lib/analytics/business-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -19,7 +19,7 @@ const reportSchema = {
 };
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -27,8 +27,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/reports', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -56,12 +56,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/reports', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Raporlar alınamadı',
+      'Failed to get reports',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Raporlar alınamadı',
+      'Failed to get reports',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -70,7 +70,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -78,8 +78,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/reports', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -93,11 +93,20 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/reports', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Geçersiz rapor verisi',
+        'Invalid report data',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
       );
+    }
+
+    if (body.metric_ids !== undefined && (!Array.isArray(body.metric_ids) || body.metric_ids.length > 50)) {
+      recordRequest('POST', '/api/reports', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'metric_ids dizi olmalı ve 50 öğeyi geçemez', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    if (body.recipients !== undefined && (!Array.isArray(body.recipients) || body.recipients.length > 20)) {
+      recordRequest('POST', '/api/reports', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'recipients dizi olmalı ve 20 öğeyi geçemez', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     const report = await createReport(
@@ -118,7 +127,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/reports', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Rapor oluşturulamadı',
+        'Failed to create report',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -133,7 +142,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: report,
-        message: 'Rapor oluşturuldu'
+        message: 'Report created'
       },
       HttpStatus.CREATED,
       requestId
@@ -142,12 +151,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/reports', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Rapor oluşturulamadı',
+      'Failed to create report',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Rapor oluşturulamadı',
+      'Failed to create report',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

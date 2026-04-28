@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Comment Management API
  * PUT: Update comment
@@ -6,13 +5,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { updateComment, deleteComment } from '../../../lib/comments';
+import { updateComment, deleteComment } from '../../../lib/comment/comments';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const PUT: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -20,7 +19,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     const user = locals.user;
     if (!user) {
       recordRequest('PUT', `/api/comments/${params.id}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -57,7 +56,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -65,7 +64,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     const user = locals.user;
     if (!user) {
       recordRequest('DELETE', `/api/comments/${params.id}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     await deleteComment(params.id, user.id);

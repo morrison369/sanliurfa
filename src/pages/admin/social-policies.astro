@@ -1,0 +1,183 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout
+  title="Tenant Sosyal Politikaları"
+  subtitle="Swipe/follow/mesaj abuse limitlerini tenant bazında yönetin."
+  seo={{ title: 'Sosyal Abuse Politikaları - Admin', noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-5xl space-y-5">
+      <div class="mb-2">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+        <h2 class="text-base font-semibold text-[#6B5540] mb-4">Politika Ekle / Güncelle</h2>
+        <form id="policyForm" class="grid md:grid-cols-3 gap-3">
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="tenantId" placeholder="tenantId (örn: default)" required />
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="swipeLimit" placeholder="swipe limit" value="120" />
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="swipeWindowSeconds" placeholder="swipe pencere sn" value="60" />
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="followLimit" placeholder="follow limit" value="60" />
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="followWindowSeconds" placeholder="follow pencere sn" value="60" />
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="messageWriteLimit" placeholder="mesaj limit" value="80" />
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="messageWriteWindowSeconds" placeholder="mesaj pencere sn" value="60" />
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm md:col-span-2" name="note" placeholder="not" />
+          <label class="flex items-center gap-2 border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm text-[#6B5540]">
+            <input type="checkbox" name="isActive" checked />
+            <span>Aktif</span>
+          </label>
+          <button class="rounded-sm bg-urfa-600 text-white px-4 py-2 text-sm font-semibold hover:bg-urfa-700" type="submit">
+            Kaydet
+          </button>
+        </form>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+        <h2 class="text-base font-semibold text-[#6B5540] mb-4">Policy Simulator</h2>
+        <form id="simulateForm" class="grid md:grid-cols-4 gap-3">
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="tenantId" placeholder="tenantId" value="default" required />
+          <select class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="action">
+            <option value="swipe">swipe</option>
+            <option value="follow">follow</option>
+            <option value="message_write">message_write</option>
+          </select>
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="plannedCount" placeholder="planned count" value="50" />
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="rps" placeholder="rps" value="0" />
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="burst" placeholder="burst" value="0" />
+          <input class="border border-[rgba(200,160,100,0.2)] rounded-sm px-3 py-2 text-sm" name="durationSeconds" placeholder="duration seconds" value="60" />
+          <button class="rounded-sm bg-[#0D0A08] text-white px-4 py-2 text-sm font-semibold hover:opacity-90" type="submit">
+            Simüle Et
+          </button>
+        </form>
+        <pre id="simulateResult" class="mt-3 rounded-sm bg-[#0D0A08] text-[#C4B49A] p-3 text-xs overflow-auto">Henüz çalıştırılmadı.</pre>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)] flex items-center justify-between">
+          <h2 class="font-semibold text-[#6B5540] text-sm">Mevcut Politikalar</h2>
+          <button id="refreshBtn" class="rounded-sm border border-[rgba(200,160,100,0.14)] px-3 py-1.5 text-xs text-[#6B5540] hover:bg-[rgba(200,160,100,0.04)]">Yenile</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)]">
+              <tr>
+                <th class="px-3 py-3 text-left font-medium text-[#6B5540]">Tenant</th>
+                <th class="px-3 py-3 text-left font-medium text-[#6B5540]">Swipe</th>
+                <th class="px-3 py-3 text-left font-medium text-[#6B5540]">Follow</th>
+                <th class="px-3 py-3 text-left font-medium text-[#6B5540]">Mesaj</th>
+                <th class="px-3 py-3 text-left font-medium text-[#6B5540]">Aktif</th>
+                <th class="px-3 py-3 text-left font-medium text-[#6B5540]">Güncellendi</th>
+                <th class="px-3 py-3 text-left font-medium text-[#6B5540]">Not</th>
+              </tr>
+            </thead>
+            <tbody id="policyRows">
+              <tr><td class="px-3 py-4 text-[#9A8470] text-sm" colspan="7">Yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  <script is:inline>
+    function setPolicyMsg(tbody, colSpan, text, cls) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = colSpan;
+      td.className = cls;
+      td.textContent = text;
+      tr.appendChild(td);
+      tbody.replaceChildren(tr);
+    }
+
+    function buildPolicyRow(item) {
+      const tr = document.createElement('tr');
+      tr.className = 'border-b border-[rgba(200,160,100,0.08)] last:border-0 hover:bg-[rgba(200,160,100,0.04)]';
+      const cells = [
+        ['px-3 py-3 font-mono text-xs text-[#6B5540]', String(item.tenant_id)],
+        ['px-3 py-3 text-sm text-[#6B5540]', item.swipe_limit + '/' + item.swipe_window_seconds + 's'],
+        ['px-3 py-3 text-sm text-[#6B5540]', item.follow_limit + '/' + item.follow_window_seconds + 's'],
+        ['px-3 py-3 text-sm text-[#6B5540]', item.message_write_limit + '/' + item.message_write_window_seconds + 's'],
+        ['px-3 py-3 text-sm text-[#6B5540]', item.is_active ? 'Evet' : 'Hayır'],
+        ['px-3 py-3 text-xs text-[#9A8470]', item.updated_at ? new Date(item.updated_at).toLocaleString('tr-TR') : '-'],
+        ['px-3 py-3 text-sm text-[#9A8470]', item.note || '-'],
+      ];
+      cells.forEach(([cls, text]) => {
+        const td = document.createElement('td');
+        td.className = cls;
+        td.textContent = text;
+        tr.appendChild(td);
+      });
+      return tr;
+    }
+
+    async function loadPolicies() {
+      const rows = document.getElementById('policyRows');
+      const res = await fetch('/api/admin/social/policies');
+      const json = await res.json();
+      if (!res.ok || !json?.success) {
+        setPolicyMsg(rows, 7, json?.error || 'Yüklenemedi', 'px-3 py-4 text-[#9A8470] text-sm');
+        return;
+      }
+      const items = Array.isArray(json.items) ? json.items : [];
+      if (items.length === 0) {
+        setPolicyMsg(rows, 7, 'Kayıt yok', 'px-3 py-4 text-[#9A8470] text-sm');
+        return;
+      }
+      rows.replaceChildren(...items.map(buildPolicyRow));
+    }
+
+    document.getElementById('policyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const payload = {
+        tenantId: form.tenantId.value,
+        swipeLimit: Number(form.swipeLimit.value || 120),
+        swipeWindowSeconds: Number(form.swipeWindowSeconds.value || 60),
+        followLimit: Number(form.followLimit.value || 60),
+        followWindowSeconds: Number(form.followWindowSeconds.value || 60),
+        messageWriteLimit: Number(form.messageWriteLimit.value || 80),
+        messageWriteWindowSeconds: Number(form.messageWriteWindowSeconds.value || 60),
+        isActive: !!form.isActive.checked,
+        note: form.note.value || null,
+      };
+      const res = await fetch('/api/admin/social/policies', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (res.ok && json?.success) {
+        window.toast?.success('Kaydedildi');
+        await loadPolicies();
+      } else {
+        window.toast?.error(json?.error || 'Kaydedilemedi');
+      }
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', () => void loadPolicies());
+
+    document.getElementById('simulateForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const payload = {
+        tenantId: form.tenantId.value,
+        action: form.action.value,
+        plannedCount: Number(form.plannedCount.value || 0),
+        rps: Number(form.rps.value || 0),
+        burst: Number(form.burst.value || 0),
+        durationSeconds: Number(form.durationSeconds.value || 60),
+      };
+      const out = document.getElementById('simulateResult');
+      const res = await fetch('/api/admin/social/policies/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      out.textContent = JSON.stringify(json, null, 2);
+    });
+
+    void loadPolicies();
+  </script>
+</AdminLayout>

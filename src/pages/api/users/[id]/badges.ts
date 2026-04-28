@@ -5,23 +5,12 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const userId = params.id;
-    if (!userId) {
-      recordRequest('GET', '/api/users/[id]/badges', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Kullanıcı ID gereklidir',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
-
     const badges = await getUserBadges(userId);
     const progress = await getBadgeProgress(userId);
 

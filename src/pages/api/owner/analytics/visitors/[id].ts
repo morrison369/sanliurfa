@@ -1,18 +1,17 @@
-// @ts-nocheck
 /**
  * Visitor Statistics
  * GET /api/owner/analytics/visitors/[id] - Get visitor statistics
  */
 
 import type { APIRoute } from 'astro';
-import { getVisitorStats } from '../../../../../lib/business-analytics';
+import { getVisitorStats } from '../../../../../lib/analytics/business-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
 import { logger } from '../../../../../lib/logging';
 import { recordRequest } from '../../../../../lib/metrics';
 import { queryOne } from '../../../../../lib/postgres';
 
 export const GET: APIRoute = async ({ request, params, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -22,7 +21,7 @@ export const GET: APIRoute = async ({ request, params, locals, url }) => {
       recordRequest('GET', '/api/owner/analytics/visitors/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId

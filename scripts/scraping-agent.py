@@ -212,7 +212,7 @@ class WebScrapingAgent:
         return results
         
     def save_data(self, data: List[Dict], filename: str):
-        ""Veriyi kaydet"""
+        """Veriyi kaydet"""
         filepath = self.data_dir / filename
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -224,19 +224,31 @@ class WebScrapingAgent:
         
         for category, items in all_data.items():
             for item in items:
+                safe_name = item['name'].replace("'", "''")
+                safe_description = item['description'][:300].replace("'", "''")
+                place_cover_image = item.get('image_url') or f"/images/places/{item['slug']}.jpg"
+                historical_cover_image = item.get('image_url') or f"/images/historical/{item['slug']}.jpg"
+
                 if category == 'tarihi_yerler':
                     coords = item.get('coordinates', {})
-                    wiki = item.get('wikipedia', {})
-                    sql.append(f"""INSERT INTO historical_sites (id, slug, name, title, description, latitude, longitude, cover_image, created_at) VALUES ('{str(uuid.uuid4())}', '{item['slug']}', '{item['name'].replace("'", "''")}', '{item['name'].replace("'", "''")}', '{item['description'][:300].replace("'", "''")}', {coords.get('lat', 37.1591)}, {coords.get('lon', 38.7969)}, '{item.get('image_url', f'/images/historical/{item[\"slug\"]}.jpg')}', NOW());""")
+                    sql.append(
+                        f"""INSERT INTO historical_sites (id, slug, name, title, description, latitude, longitude, cover_image, created_at) VALUES ('{str(uuid.uuid4())}', '{item['slug']}', '{safe_name}', '{safe_name}', '{safe_description}', {coords.get('lat', 37.1591)}, {coords.get('lon', 38.7969)}, '{historical_cover_image}', NOW());"""
+                    )
                     
                 elif category == 'restoranlar':
-                    sql.append(f"""INSERT INTO places (id, slug, name, description, category, address, rating, cover_image, created_at) VALUES ('{str(uuid.uuid4())}', '{item['slug']}', '{item['name'].replace("'", "''")}', '{item['description'][:300].replace("'", "''")}', 'restaurant', 'Şanlıurfa', 4.5, '{item.get('image_url', f'/images/places/{item[\"slug\"]}.jpg')}', NOW());""")
+                    sql.append(
+                        f"""INSERT INTO places (id, slug, name, description, category, address, rating, cover_image, created_at) VALUES ('{str(uuid.uuid4())}', '{item['slug']}', '{safe_name}', '{safe_description}', 'restaurant', 'Şanlıurfa', 4.5, '{place_cover_image}', NOW());"""
+                    )
                     
                 elif category == 'oteller':
-                    sql.append(f"""INSERT INTO places (id, slug, name, description, category, address, rating, cover_image, created_at) VALUES ('{str(uuid.uuid4())}', '{item['slug']}', '{item['name'].replace("'", "''")}', '{item['description'][:300].replace("'", "''")}', 'hotel', 'Şanlıurfa', 4.3, '{item.get('image_url', f'/images/places/{item[\"slug\"]}.jpg')}', NOW());""")
+                    sql.append(
+                        f"""INSERT INTO places (id, slug, name, description, category, address, rating, cover_image, created_at) VALUES ('{str(uuid.uuid4())}', '{item['slug']}', '{safe_name}', '{safe_description}', 'hotel', 'Şanlıurfa', 4.3, '{place_cover_image}', NOW());"""
+                    )
                     
                 elif category == 'kafeler':
-                    sql.append(f"""INSERT INTO places (id, slug, name, description, category, address, rating, cover_image, created_at) VALUES ('{str(uuid.uuid4())}', '{item['slug']}', '{item['name'].replace("'", "''")}', '{item['description'][:300].replace("'", "''")}', 'cafe', 'Şanlıurfa', 4.4, '{item.get('image_url', f'/images/places/{item[\"slug\"]}.jpg')}', NOW());""")
+                    sql.append(
+                        f"""INSERT INTO places (id, slug, name, description, category, address, rating, cover_image, created_at) VALUES ('{str(uuid.uuid4())}', '{item['slug']}', '{safe_name}', '{safe_description}', 'cafe', 'Şanlıurfa', 4.4, '{place_cover_image}', NOW());"""
+                    )
                     
         sql_file = self.data_dir / "supabase_inserts.sql"
         with open(sql_file, 'w', encoding='utf-8') as f:

@@ -4,16 +4,31 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  test:
+  # Build & Test
+  build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16-alpine
         env:
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: sanliurfa_test
         options: >-
@@ -23,59 +38,300 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
 
     steps:
-      - uses: actions/checkout@v6
-      
+      - uses: actions/checkout@v4
+
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
-          node-version: '22.13.0'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Repo stabilization check
-        run: npm run repo:stabilize:check
-      
-      - name: Lint code
-        run: npm run lint
-      
+      - name: Lint changed files (PR gate)
+        if: github.event_name == 'pull_request'
+        run: npm run lint:changed
+
+      - name: Lint
+        run: npm run lint 2>&1 | tee lint.log
+
+      - name: Type check
+        run: npm run type-check 2>&1 | tee type-check.log
+
+      - name: Migration duplicate check
+        run: npm run db:migrate:check-duplicates
+
+      - name: Workflow standards verify
+        run: npm run workflow:standards:verify
+
       - name: Build
         run: npm run build
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
-      
-      - name: Run unit tests
-        run: npm run test:unit
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
 
-      - name: Release gate
-        run: npm run release:gate
+      - name: Run tests
+        run: npm run test:unit -- --coverage
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
-      
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-      
-      - name: Run E2E tests
-        run: npm run test:e2e
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
 
-  deploy:
-    needs: test
-    if: github.ref == 'refs/heads/main'
+      - name: API release gate
+        shell: bash
+        run: |
+          npm run api:release:gate 2>&1 | tee api-release-gate.log
+          echo "## API Release Gate" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- workflow: CI/CD Pipeline" >> "$GITHUB_STEP_SUMMARY"
+          echo "- command: npm run api:release:gate" >> "$GITHUB_STEP_SUMMARY"
+          echo "- status: success" >> "$GITHUB_STEP_SUMMARY"
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Recommendations master gate (required)
+        run: npm run recommendations:master:gate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Quality gate (gate:done)
+        run: npm run gate:done
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload API gate report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: api-release-gate-report
+          path: api-release-gate.log
+
+      - name: Collect quality metrics
+        if: always()
+        shell: bash
+        run: |
+          npm run quality:metrics:ci | tee quality-metrics-summary.log
+          npm run warning:debt:summary
+          cat quality-metrics-summary.log >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate release readiness report
+        if: always()
+        shell: bash
+        run: |
+          npm run release:readiness:report
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Release Readiness" >> "$GITHUB_STEP_SUMMARY"
+          cat docs/release-readiness.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload quality metrics
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quality-metrics
+          path: |
+            quality-metrics.json
+            quality-metrics-summary.log
+            docs/warning-debt-summary.json
+            lint.log
+            type-check.log
+            sdk/generated/client.ts
+            sdk/generated/client.js
+            sdk/generated/openapi-summary.json
+
+      - name: Upload workflow standards report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workflow-standards-report-${{ github.job }}
+          path: |
+            docs/workflow-standards-report.json
+            docs/workflow-standards-report.md
+
+      - name: Build deploy evidence bundle
+        if: always()
+        run: npm run ops:cwp:deploy:evidence
+
+      - name: Upload deploy evidence bundle
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cwp-deploy-evidence
+          path: docs/evidence/*.tar.gz
+
+      - name: Upload release readiness report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: release-readiness
+          path: |
+            docs/release-readiness.json
+            docs/release-readiness.md
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+      - name: Ensure no orphan dev process (build job)
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
+  # Security Scan
+  security:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=moderate
+
+      - name: Scan for leaked secrets
+        run: npm run security:scan-secrets
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Ensure no orphan dev process (security job)
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
+  # E2E Tests
+  e2e:
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            npm run test:e2e:chromium:clean
+          else
+            npm run test:e2e:clean
+          fi
+
+      - name: Upload E2E results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
+  # Build & Push Docker Image
+  docker:
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 35
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Deploy to Staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    timeout-minutes: 15
     
     steps:
-      - uses: actions/checkout@v6
-      
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging..."
+          # kubectl apply -f k8s/staging/
+
+  # Deploy to Production
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    timeout-minutes: 15
+    
+    steps:
       - name: Deploy to production
         run: |
           echo "Deploying to production..."
-          # Add your deployment script here
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          # kubectl apply -f k8s/production/

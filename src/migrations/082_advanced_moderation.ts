@@ -27,6 +27,13 @@ export const migration_082_advanced_moderation = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE content_flags ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending';
+      ALTER TABLE content_flags ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE content_flags ADD COLUMN IF NOT EXISTS content_type VARCHAR(50);
+      ALTER TABLE content_flags ADD COLUMN IF NOT EXISTS content_id UUID;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_content_flags_status
       ON content_flags(status, created_at DESC)
     `);
@@ -55,6 +62,15 @@ export const migration_082_advanced_moderation = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         expires_at TIMESTAMP
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE moderation_actions ADD COLUMN IF NOT EXISTS admin_id UUID;
+      ALTER TABLE moderation_actions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE moderation_actions ADD COLUMN IF NOT EXISTS target_type VARCHAR(50);
+      ALTER TABLE moderation_actions ADD COLUMN IF NOT EXISTS target_id UUID;
+      ALTER TABLE moderation_actions ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'active';
+      ALTER TABLE moderation_actions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;
     `);
 
     await pool.query(`
@@ -88,6 +104,13 @@ export const migration_082_advanced_moderation = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE moderation_queue ADD COLUMN IF NOT EXISTS queue_type VARCHAR(50);
+      ALTER TABLE moderation_queue ADD COLUMN IF NOT EXISTS priority VARCHAR(50) DEFAULT 'normal';
+      ALTER TABLE moderation_queue ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending';
+      ALTER TABLE moderation_queue ADD COLUMN IF NOT EXISTS assigned_to_admin_id UUID;
     `);
 
     await pool.query(`

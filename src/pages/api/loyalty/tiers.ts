@@ -4,12 +4,12 @@
  */
 import type { APIRoute } from 'astro';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
-import { getUserTierInfo, getTierList, getTierStats, getUserTierHistory } from '../../../lib/loyalty-tiers';
+import { getUserTierInfo, getTierList, getTierStats, getUserTierHistory } from '../../../lib/loyalty/loyalty-tiers';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       }
     }
 
-    if (includeStats && locals.isAdmin) {
+    if (includeStats && locals.user?.role === 'admin') {
       stats = await getTierStats();
     }
 
@@ -53,7 +53,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/loyalty/tiers', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Sadakat seviyeleri alınamadı', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Failed to get tiers', err instanceof Error ? err : new Error(String(err)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

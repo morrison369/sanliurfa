@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { TrendingUp, Star } from 'lucide-react';
-import { unwrapApiPayload } from '@/lib/client-api';
-import { getCuratedPlaces } from '@/data/curated-places';
 
 interface TrendingPlace {
   id: string;
-  place_id?: string;
-  name: string;
   slug?: string;
+  name: string;
   category: string;
   rating: number;
   review_count: number;
@@ -19,21 +16,20 @@ export default function TrendingPlaces() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadTrending = async () => {
+    const fetchTrending = async () => {
       try {
-        const res = await window.fetch('/api/discovery/trending?limit=10');
+        const res = await fetch('/api/discovery/trending?limit=10');
         if (res.ok) {
-          const payload = unwrapApiPayload<{ data?: TrendingPlace[] }>(await res.json());
-          setTrending((payload.data || []).length > 0 ? payload.data || [] : buildCuratedTrending());
+          const { data } = await res.json();
+          setTrending(data);
         }
       } catch (error) {
-        console.error('Trend Mekânlar yüklenemedi', error);
-        setTrending(buildCuratedTrending());
+        console.error('Trend mekanlar yüklenemedi', error);
       } finally {
         setLoading(false);
       }
     };
-    loadTrending();
+    fetchTrending();
   }, []);
 
   if (loading) return <div className="p-4">Yükleniyor...</div>;
@@ -42,11 +38,15 @@ export default function TrendingPlaces() {
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b flex items-center gap-2">
         <TrendingUp className="w-5 h-5 text-orange-500" />
-        <h2 className="text-lg font-bold">Trend Mekânlar</h2>
+        <h2 className="text-lg font-bold">Trend Mekanlar</h2>
       </div>
       <div className="divide-y max-h-96 overflow-y-auto">
         {trending.map((place, idx) => (
-          <a key={place.id} href={`/places/${place.slug || place.place_id || place.id}`} className="p-4 hover:bg-gray-50 transition flex gap-3 items-start">
+          <a
+            key={place.id}
+            href={place.slug ? `/isletme/${place.slug}` : '/mekanlar'}
+            className="p-4 hover:bg-gray-50 transition flex gap-3 items-start"
+          >
             <div className="bg-orange-100 text-orange-600 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm flex-shrink-0">
               {idx + 1}
             </div>
@@ -64,25 +64,7 @@ export default function TrendingPlaces() {
             </div>
           </a>
         ))}
-        {trending.length === 0 && (
-          <div className="p-4 text-sm text-gray-600">
-            Şanlıurfa için trend içerikler hazırlanıyor.
-          </div>
-        )}
       </div>
     </div>
   );
-}
-
-function buildCuratedTrending(): TrendingPlace[] {
-  return getCuratedPlaces(6).map((place) => ({
-    id: place.id,
-    place_id: place.id,
-    name: place.name,
-    slug: place.slug,
-    category: place.category,
-    rating: place.rating,
-    review_count: place.review_count,
-    engagement_score: place.rating * 20 + place.review_count,
-  }));
 }

@@ -5,13 +5,13 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany, query } from '../../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { getCache, setCache } from '../../../../lib/cache';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
       recordRequest('GET', `/api/users/${params.id}/mentions`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -43,16 +43,16 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
     }
 
     // Parse query params
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 50);
     const unreadOnly = url.searchParams.get('unread_only') === 'true';
 
     // Check cache
     const cacheKey = `mentions:${userId}:${unreadOnly}`;
-    const cached = await getCache<any>(cacheKey);
+    const cached = await getCache(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/users/${userId}/mentions`, HttpStatus.OK, duration);
-      return apiResponse(cached, HttpStatus.OK, requestId);
+      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
     }
 
     // Build query
@@ -101,7 +101,7 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
     };
 
     // Cache result (2 min TTL)
-    await setCache(cacheKey, response, 120);
+    await setCache(cacheKey, JSON.stringify(response), 120);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/users/${userId}/mentions`, HttpStatus.OK, duration);

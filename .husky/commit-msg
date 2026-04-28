@@ -1,0 +1,28 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Conventional Commits validation
+commit_msg_file=$1
+commit_msg=$(cat $commit_msg_file)
+
+# Check commit message format
+# Format: type(scope): message
+# Types: feat, fix, docs, style, refactor, test, chore, ci, build, perf
+pattern="^(feat|fix|docs|style|refactor|test|chore|ci|build|perf)(\(.+\))?: .{1,100}$"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo "❌ Invalid commit message format!"
+  echo ""
+  echo "Commit message must follow Conventional Commits:"
+  echo "  <type>(<scope>): <message>"
+  echo ""
+  echo "Types: feat, fix, docs, style, refactor, test, chore, ci, build, perf"
+  echo ""
+  echo "Examples:"
+  echo "  feat(auth): add JWT token validation"
+  echo "  fix(api): resolve rate limiting issue"
+  echo "  docs(readme): update deployment instructions"
+  exit 1
+fi
+
+echo "✅ Commit message format is valid!"

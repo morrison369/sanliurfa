@@ -1,18 +1,17 @@
-// @ts-nocheck
 /**
  * Place Analytics Dashboard
  * GET /api/owner/analytics/place/[id] - Get comprehensive place analytics
  */
 
 import type { APIRoute } from 'astro';
-import { getPlaceAnalytics } from '../../../../../lib/business-analytics';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
+import { getPlaceBusinessAnalytics } from '../../../../../lib/analytics/business-analytics';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../../lib/api';
 import { logger } from '../../../../../lib/logging';
 import { recordRequest } from '../../../../../lib/metrics';
 import { queryOne } from '../../../../../lib/postgres';
 
 export const GET: APIRoute = async ({ request, params, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -22,7 +21,7 @@ export const GET: APIRoute = async ({ request, params, locals, url }) => {
       recordRequest('GET', '/api/owner/analytics/place/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -30,7 +29,7 @@ export const GET: APIRoute = async ({ request, params, locals, url }) => {
     }
 
     const { id: placeId } = params;
-    const days = Math.min(parseInt(url.searchParams.get('days') || '30'), 365);
+    const days = safeIntParam(url.searchParams.get('days'), 30, 1, 365);
 
     // Verify ownership
     const place = await queryOne(
@@ -49,7 +48,7 @@ export const GET: APIRoute = async ({ request, params, locals, url }) => {
       );
     }
 
-    const analytics = await getPlaceAnalytics(placeId, days);
+    const analytics = await getPlaceBusinessAnalytics(placeId, days);
 
     if (!analytics) {
       recordRequest('GET', '/api/owner/analytics/place/[id]', HttpStatus.NOT_FOUND, Date.now() - startTime);

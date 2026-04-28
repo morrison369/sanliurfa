@@ -1,34 +1,33 @@
-// @ts-nocheck
 /**
  * Send Welcome Email
  */
 
 import type { APIRoute } from 'astro';
 import { sendEmail, getWelcomeEmailHTML } from '../../../lib/email';
-import { validateWithSchema } from '../../../lib/validation';
+import { validateWithSchema, ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-const schema = {
+const schema: ValidationSchema = {
   name: { type: 'string' as const, required: true, minLength: 2 },
   email: { type: 'string' as const, required: true, pattern: '^[^@]+@[^@]+\\.[^@]+$' }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Only admins can send emails programmatically
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/email/send-welcome', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/email/send-welcome', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -42,7 +41,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const { name, email } = validation.data as { name: string; email: string };
-    const html = getWelcomeEmailHTML(name, email);
+    const html = getWelcomeEmailHTML(name);
 
     const sent = await sendEmail({
       to: email,
@@ -50,11 +49,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       html
     });
 
-    if (!sent) {
+    if (!sent.success) {
       recordRequest('POST', '/api/email/send-welcome', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'E-posta gönderilemedi',
+        'Failed to send email',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -70,6 +69,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/email/send-welcome', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Welcome email error', error instanceof Error ? error : new Error(String(error)), { duration });
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

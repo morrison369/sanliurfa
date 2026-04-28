@@ -1,140 +1,138 @@
 ---
-/**
- * Yorum Moderasyon Paneli
- * Blog yazılarının yorumlarını onayla/reddet
- */
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { queryMany, queryOne } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
-import Layout from '../../../layouts/Layout.astro';
-import { queryMany, queryOne, update } from '../../../lib/postgres';
+type CommentStatus = 'pending' | 'approved' | 'rejected';
 
-const user = Astro.locals.user;
-if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin/blog/comments');
+interface CommentStatsRow {
+  pending: string | number;
+  approved: string | number;
+  rejected: string | number;
 }
 
-// Moderasyon status'unu al
-const status = Astro.url.searchParams.get('status') || 'pending';
+interface BlogCommentModerationRow {
+  id: string | number;
+  author_name: string | null;
+  author_email: string | null;
+  content: string;
+  created_at: string | Date;
+  status: CommentStatus;
+  post_title: string;
+  slug: string;
+}
+
+const isCommentStatus = (value: string | null): value is CommentStatus =>
+  value === 'pending' || value === 'approved' || value === 'rejected';
+
+const requestedStatus = Astro.url.searchParams.get('status');
+const status: CommentStatus = isCommentStatus(requestedStatus) ? requestedStatus : 'pending';
 const limit = 20;
 const offset = 0;
 
-let comments: any[] = [];
+let comments: BlogCommentModerationRow[] = [];
 let stats = { pending: 0, approved: 0, rejected: 0 };
 let error = '';
 
 try {
-  // İstatistikleri getir
-  const statsResult = await queryOne(`
-    SELECT
-      COUNT(*) FILTER (WHERE status = 'pending') as pending,
-      COUNT(*) FILTER (WHERE status = 'approved') as approved,
-      COUNT(*) FILTER (WHERE status = 'rejected') as rejected
-    FROM blog_comments
-  `);
+  const [statsResult, result] = await Promise.all([
+    queryOne<CommentStatsRow>(`
+      SELECT
+        COUNT(*) FILTER (WHERE status = 'pending') as pending,
+        COUNT(*) FILTER (WHERE status = 'approved') as approved,
+        COUNT(*) FILTER (WHERE status = 'rejected') as rejected
+      FROM blog_comments
+    `),
+    queryMany<BlogCommentModerationRow>(`
+      SELECT bc.*, bp.title as post_title, bp.slug
+      FROM blog_comments bc
+      JOIN blog_posts bp ON bc.post_id = bp.id
+      WHERE bc.status = $1
+      ORDER BY bc.created_at DESC
+      LIMIT $2 OFFSET $3
+    `, [status, limit, offset]),
+  ]);
 
   if (statsResult) {
     stats = {
-      pending: parseInt(statsResult.pending || '0'),
-      approved: parseInt(statsResult.approved || '0'),
-      rejected: parseInt(statsResult.rejected || '0')
+      pending: Number(statsResult.pending || 0),
+      approved: Number(statsResult.approved || 0),
+      rejected: Number(statsResult.rejected || 0)
     };
   }
-
-  // Yorumları getir
-  const result = await queryMany(`
-    SELECT bc.*, bp.title as post_title, bp.slug
-    FROM blog_comments bc
-    JOIN blog_posts bp ON bc.post_id = bp.id
-    WHERE bc.status = $1
-    ORDER BY bc.created_at DESC
-    LIMIT $2 OFFSET $3
-  `, [status, limit, offset]);
-
   comments = result;
 } catch (err) {
   error = 'Yorumlar yüklenirken hata oluştu';
-  console.error('Comments moderation error:', err);
+  logger.error('Comments moderation error', err instanceof Error ? err : new Error(String(err)));
 }
 
-const seo = {
-  title: 'Yorum Moderasyonu - Yönetim Paneli',
-  noindex: true
-};
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <a href="/admin/blog" class="text-gray-600 dark:text-gray-400 hover:text-gray-900">
-              ← Geri
-            </a>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Yorum Moderasyonu</h1>
-          </div>
-        </div>
+<AdminLayout
+  title="Yorum Moderasyonu"
+  subtitle="Blog yazılarının yorumlarını onayla, reddet veya sil"
+  seo={{ title: 'Yorum Moderasyonu - Yönetim Paneli', noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-6xl space-y-5">
+      <div class="mb-2">
+        <a href="/admin/blog" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Blog Yönetimi</a>
       </div>
-    </div>
 
-    <div class="container-custom py-8">
       {error && (
-        <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+        <div class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] px-4 py-3 text-sm text-[#9A8470]">
           {error}
         </div>
       )}
 
-      <!-- İstatistikler -->
-      <div class="grid grid-cols-3 gap-4 mb-8">
+      <div class="grid grid-cols-3 gap-4">
         <a
           href="/admin/blog/comments?status=pending"
-          class={`p-4 rounded-lg border-2 transition-all ${
+          class={`p-4 rounded-sm border-2 transition-all ${
             status === 'pending'
-              ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20'
-              : 'border-gray-200 dark:border-gray-700 hover:border-yellow-300'
+              ? 'border-[rgba(200,160,100,0.5)] bg-[rgba(200,160,100,0.08)]'
+              : 'border-[rgba(200,160,100,0.18)] hover:border-[rgba(200,160,100,0.35)]'
           }`}
         >
-          <p class="text-sm text-gray-600 dark:text-gray-400">Onay Beklemede</p>
-          <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{stats.pending}</p>
+          <p class="text-sm text-[#9A8470]">Onay Beklemede</p>
+          <p class="text-3xl font-bold text-[#6B5540]">{stats.pending}</p>
         </a>
 
         <a
           href="/admin/blog/comments?status=approved"
-          class={`p-4 rounded-lg border-2 transition-all ${
+          class={`p-4 rounded-sm border-2 transition-all ${
             status === 'approved'
-              ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
-              : 'border-gray-200 dark:border-gray-700 hover:border-green-300'
+              ? 'border-[rgba(200,160,100,0.5)] bg-[rgba(200,160,100,0.08)]'
+              : 'border-[rgba(200,160,100,0.18)] hover:border-[rgba(200,160,100,0.35)]'
           }`}
         >
-          <p class="text-sm text-gray-600 dark:text-gray-400">Onaylı</p>
-          <p class="text-3xl font-bold text-green-600 dark:text-green-400">{stats.approved}</p>
+          <p class="text-sm text-[#9A8470]">Onaylı</p>
+          <p class="text-3xl font-bold text-[#6B5540]">{stats.approved}</p>
         </a>
 
         <a
           href="/admin/blog/comments?status=rejected"
-          class={`p-4 rounded-lg border-2 transition-all ${
+          class={`p-4 rounded-sm border-2 transition-all ${
             status === 'rejected'
-              ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
-              : 'border-gray-200 dark:border-gray-700 hover:border-red-300'
+              ? 'border-[rgba(200,160,100,0.5)] bg-[rgba(200,160,100,0.08)]'
+              : 'border-[rgba(200,160,100,0.18)] hover:border-[rgba(200,160,100,0.35)]'
           }`}
         >
-          <p class="text-sm text-gray-600 dark:text-gray-400">Reddedildi</p>
-          <p class="text-3xl font-bold text-red-600 dark:text-red-400">{stats.rejected}</p>
+          <p class="text-sm text-[#9A8470]">Reddedildi</p>
+          <p class="text-3xl font-bold text-[#6B5540]">{stats.rejected}</p>
         </a>
       </div>
 
-      <!-- Yorumlar Listesi -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm overflow-hidden">
         {comments.length > 0 ? (
-          <div class="divide-y divide-gray-200 dark:divide-gray-700">
-            {comments.map((comment: any) => (
-              <div class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+          <div class="divide-y divide-[rgba(200,160,100,0.08)]">
+            {comments.map((comment) => (
+              <div class="p-6 hover:bg-[rgba(200,160,100,0.04)] transition-colors">
                 <div class="flex items-start justify-between mb-3">
                   <div>
-                    <h4 class="font-semibold text-gray-900 dark:text-white">
+                    <h4 class="font-semibold text-[#1A1008]">
                       {comment.author_name}
                     </h4>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                    <p class="text-sm text-[#9A8470]">
                       {comment.author_email && `${comment.author_email} • `}
                       {new Date(comment.created_at).toLocaleDateString('tr-TR')}
                     </p>
@@ -144,13 +142,13 @@ const seo = {
                       <>
                         <button
                           onclick={`approveComment(${comment.id})`}
-                          class="px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
+                          class="px-3 py-1 bg-[rgba(200,160,100,0.15)] text-[#6B5540] rounded-sm text-sm hover:bg-[rgba(200,160,100,0.25)]"
                         >
                           ✓ Onayla
                         </button>
                         <button
                           onclick={`rejectComment(${comment.id})`}
-                          class="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600"
+                          class="px-3 py-1 bg-[rgba(200,160,100,0.08)] text-[#9A8470] rounded-sm text-sm hover:bg-[rgba(200,160,100,0.15)]"
                         >
                           ✗ Reddet
                         </button>
@@ -158,30 +156,30 @@ const seo = {
                     )}
                     <button
                       onclick={`deleteComment(${comment.id})`}
-                      class="px-3 py-1 bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-white rounded text-sm hover:bg-gray-400"
+                      class="px-3 py-1 bg-[rgba(200,160,100,0.06)] text-[#9A8470] rounded-sm text-sm hover:bg-[rgba(200,160,100,0.12)]"
                     >
-                      🗑️ Sil
+                      Sil
                     </button>
                   </div>
                 </div>
 
-                <p class="text-gray-600 dark:text-gray-400 mb-3 line-clamp-3">
+                <p class="text-[#6B5540] mb-3 line-clamp-3 text-sm">
                   {comment.content}
                 </p>
 
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  📝 Yazı: <a href={`/blog/${comment.slug}`} target="_blank" class="text-blue-600 hover:underline">
+                <p class="text-sm text-[#9A8470]">
+                  Yazı: <a href={`/blog/${comment.slug}`} target="_blank" rel="noopener" class="text-urfa-600 hover:text-[#6B5540]">
                     {comment.post_title}
                   </a>
                 </p>
 
-                <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                  <span class={`inline-block px-2 py-1 rounded text-xs font-medium ${
+                <div class="mt-3 pt-3 border-t border-[rgba(200,160,100,0.14)]">
+                  <span class={`inline-block px-2 py-0.5 rounded-sm text-xs font-medium ${
                     comment.status === 'approved'
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
+                      ? 'bg-[rgba(200,160,100,0.15)] text-[#6B5540]'
                       : comment.status === 'pending'
-                      ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
-                      : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
+                      ? 'bg-[rgba(200,160,100,0.1)] text-[#6B5540]'
+                      : 'bg-[rgba(200,160,100,0.06)] text-[#9A8470]'
                   }`}>
                     {comment.status === 'approved' ? '✓ Onaylı' : comment.status === 'pending' ? '⏳ Bekleme' : '✗ Reddedildi'}
                   </span>
@@ -190,14 +188,13 @@ const seo = {
             ))}
           </div>
         ) : (
-          <div class="p-12 text-center text-gray-500 dark:text-gray-400">
+          <div class="p-12 text-center text-sm text-[#9A8470]">
             {status === 'pending' ? 'Onay bekleyen yorum yok' : `${status} durumunda yorum yok`}
           </div>
         )}
       </div>
     </div>
-  </div>
-</Layout>
+</AdminLayout>
 
 <script is:inline>
   async function approveComment(id) {
@@ -207,10 +204,10 @@ const seo = {
     });
 
     if (response.ok) {
-      alert('Yorum onaylandı');
+      window.toast?.success('Yorum onaylandı');
       window.location.reload();
     } else {
-      alert('Yorum onaylanırken hata oluştu');
+      window.toast?.error('Yorum onaylanırken hata oluştu');
     }
   }
 
@@ -221,25 +218,28 @@ const seo = {
     });
 
     if (response.ok) {
-      alert('Yorum reddedildi');
+      window.toast?.success('Yorum reddedildi');
       window.location.reload();
     } else {
-      alert('Yorum reddedilirken hata oluştu');
+      window.toast?.error('Yorum reddedilirken hata oluştu');
     }
   }
 
   async function deleteComment(id) {
-    if (!confirm('Bu yorumu silmek istediğinize emin misiniz?')) return;
+    if (!await window.showConfirm('Bu yorumu silmek istediğinize emin misiniz?')) return;
 
     const response = await fetch(`/api/blog/comments/${id}`, {
       method: 'DELETE'
     });
 
     if (response.ok) {
-      alert('Yorum silindi');
+      window.toast?.success('Yorum silindi');
       window.location.reload();
     } else {
-      alert('Yorum silinirken hata oluştu');
+      window.toast?.error('Yorum silinirken hata oluştu');
     }
   }
+  window.approveComment = approveComment;
+  window.rejectComment = rejectComment;
+  window.deleteComment = deleteComment;
 </script>

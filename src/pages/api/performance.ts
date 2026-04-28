@@ -8,18 +8,21 @@ import { logger } from '../../lib/logging';
  * GET /api/performance - Get detailed performance metrics (admin only)
  */
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   // Only admin can access performance metrics
   if (!locals.isAdmin) {
-    logger.warn('Unauthorized performance metrics access attempt', { userId: locals.user?.id });
-    return apiError(ErrorCode.FORBIDDEN, 'Yetkisiz işlem', HttpStatus.FORBIDDEN, undefined, requestId);
+    // Avoid noisy logs from anonymous probes during smoke/E2E runs.
+    if (locals.user?.id) {
+      logger.warn('Unauthorized performance metrics access attempt', { userId: locals.user.id });
+    }
+    return apiError(ErrorCode.FORBIDDEN, 'Unauthorized', HttpStatus.FORBIDDEN, undefined, requestId);
   }
 
   try {
     // Update pool status before retrieving stats
-    updatePoolStatus();
+    updatePoolStatus('ok');
 
     const perfStats = metricsCollector.getPerformanceStats();
     const metrics = metricsCollector.getMetrics();

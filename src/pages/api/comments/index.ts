@@ -5,13 +5,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getComments, createComment } from '../../../lib/comments';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getComments, createComment } from '../../../lib/comment/comments';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
+import { validateWithSchema, type ValidationSchema } from '../../../lib/validation';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -19,9 +20,10 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     // Get query parameters
     const targetType = url.searchParams.get('targetType');
     const targetId = url.searchParams.get('targetId');
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
 
     // Validate parameters
+    const VALID_TARGET_TYPES = new Set(['place', 'review', 'blog', 'event', 'recipe']);
     if (!targetType || !targetId) {
       recordRequest('GET', '/api/comments', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
@@ -31,6 +33,11 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
         undefined,
         requestId
       );
+    }
+
+    if (!VALID_TARGET_TYPES.has(targetType)) {
+      recordRequest('GET', '/api/comments', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz hedef tipi', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     // Get comments
@@ -63,7 +70,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -73,7 +80,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('POST', '/api/comments', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -82,19 +89,25 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const { targetType, targetId, content, parentCommentId } = body;
 
-    // Validate parameters
-    if (!targetType || !targetId || !content) {
+    const commentSchema: ValidationSchema = {
+      targetType: { type: 'string' as const, required: true, maxLength: 50 },
+      targetId: { type: 'string' as const, required: true, maxLength: 100 },
+      content: { type: 'string' as const, required: true, minLength: 1, maxLength: 5000, sanitize: true },
+      parentCommentId: { type: 'string' as const, required: false, maxLength: 100 },
+    };
+    const validation = validateWithSchema(body, commentSchema);
+    if (!validation.valid) {
       recordRequest('POST', '/api/comments', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Tüm gerekli alanları doldurun',
+        validation.errors?.[0] || 'Geçersiz yorum verisi',
         HttpStatus.UNPROCESSABLE_ENTITY,
         undefined,
         requestId
       );
     }
+    const { targetType, targetId, content, parentCommentId } = body;
 
     // Create comment
     const comment = await createComment(user.id, targetType, targetId, content, parentCommentId);

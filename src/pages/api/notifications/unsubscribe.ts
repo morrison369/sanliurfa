@@ -4,18 +4,22 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
+interface UnsubscribeBody {
+  endpoint?: string;
+}
+
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/notifications/unsubscribe', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Kimlik doğrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Kimlik doğrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as UnsubscribeBody;
     const { endpoint } = body;
 
     if (!endpoint) {
@@ -23,14 +27,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Eksik alan: endpoint gerekli', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
-    const success = await unsubscribeUser(endpoint, locals.user.id);
+    await unsubscribeUser(locals.user.id, endpoint);
 
     const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/notifications/unsubscribe', success ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR, duration);
-
-    if (!success) {
-      return apiError(ErrorCode.INTERNAL_ERROR, 'Abonelik iptal başarısız', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
-    }
+    recordRequest('POST', '/api/notifications/unsubscribe', HttpStatus.OK, duration);
 
     logger.info('Push unsubscription recorded', { userId: locals.user.id, endpoint });
     return apiResponse({ success: true, message: 'Abonelik iptal edildi' }, HttpStatus.OK, requestId);
@@ -41,3 +41,4 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiError(ErrorCode.INTERNAL_ERROR, 'İçsel sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
+

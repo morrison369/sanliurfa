@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { addPushSubscription, removePushSubscription } from '../../../../lib/notification-channels';
+import { addPushSubscription, removePushSubscription } from '../../../../lib/notification/notification-channels';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -18,8 +18,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/notifications/push/subscribe', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -74,12 +74,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/notifications/push/subscribe', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Push bildirim aboneliği oluşturulamadı',
+      'Failed to subscribe to push',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Abonelik oluşturulamadı',
+      'Failed to subscribe',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -88,7 +88,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -96,8 +96,8 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/notifications/push/subscribe', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -138,7 +138,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Push bildirim aboneliği iptal edildi'
+        message: 'Unsubscribed from push notifications'
       },
       HttpStatus.OK,
       requestId
@@ -147,12 +147,12 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/notifications/push/subscribe', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error(
-      'Push bildirim aboneliği iptal edilemedi',
+      'Failed to unsubscribe from push',
       error instanceof Error ? error : new Error(String(error))
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Abonelik iptal edilemedi',
+      'Failed to unsubscribe',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

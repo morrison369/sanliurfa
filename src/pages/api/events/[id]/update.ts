@@ -1,20 +1,25 @@
 // API: Event update (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { update } from '../../../../lib/postgres';
+import { logger } from '../../../../lib/logging';
+import { problemJson } from '../../../../lib/api';
+import { updateAdminEvent } from '../../../../lib/admin/events-admin';
 
 export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
   try {
     const { id } = params;
-
-    if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Yetkisiz işlem' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+    
+    if (locals.user?.role !== 'admin') {
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/events-update-unauthorized',
+        instance: `/api/events/${id}/update`,
+      });
     }
 
     const formData = await request.formData();
-
+    
     const title = formData.get('title')?.toString();
     const description = formData.get('description')?.toString();
     const location = formData.get('location')?.toString();
@@ -22,30 +27,37 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
     const endDate = formData.get('end_date')?.toString();
     const category = formData.get('category')?.toString();
     const image = formData.get('image')?.toString();
-    const providerImageUrl = formData.get('provider_image_url')?.toString().trim();
-    const isFeatured = formData.get('is_featured') === 'on';
+    const isFeatured = formData.get('is_featured')?.toString();
     const status = formData.get('status')?.toString() || 'draft';
 
     if (!title || !description || !location || !startDate || !category) {
       return redirect(`/admin/events/edit/${id}?error=missing_fields`);
     }
 
-    await update('events', id, {
+    const VALID_EVENT_STATUSES = new Set(['draft', 'published', 'cancelled']);
+    if (!VALID_EVENT_STATUSES.has(status)) {
+      return redirect(`/admin/events/edit/${id}?error=invalid_status`);
+    }
+
+    if (title.length > 200) return redirect(`/admin/events/edit/${id}?error=title_too_long`);
+    if (description.length > 5000) return redirect(`/admin/events/edit/${id}?error=description_too_long`);
+    if (location.length > 500) return redirect(`/admin/events/edit/${id}?error=location_too_long`);
+
+    await updateAdminEvent(id || '', {
       title,
       description,
       location,
-      start_date: startDate,
-      end_date: endDate || null,
+      startDate,
+      endDate: endDate || null,
       category,
-      image_url: providerImageUrl || image,
-      is_featured: isFeatured,
+      image: image || null,
+      isFeatured: isFeatured || null,
       status,
-      updated_at: new Date().toISOString(),
     });
 
     return redirect('/admin/events?success=updated');
   } catch (err) {
-    console.error('Event update error:', err);
+    logger.error('Event update error:', err);
     return redirect(`/admin/events/edit/${params.id}?error=server_error`);
   }
 };

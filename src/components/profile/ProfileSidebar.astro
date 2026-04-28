@@ -1,0 +1,70 @@
+---
+/**
+ * ProfileSidebar — 5 profil sayfasında duplicate edilen sidebar nav'in tek source'u.
+ *
+ * Önceki durumda her sayfada ~30 satır manual link HTML; refactor sonrası tüm
+ * sayfalar `<ProfileSidebar activeKey="..." />` çağırır. Active link styling
+ * `activeKey` prop ile belirlenir.
+ *
+ * Optional count'lar nav etiketinde parantez içinde görünür (yorumCount,
+ * favoritesCount, unreadCount).
+ *
+ * Header slot: profil/index.astro avatar + name + points blokunu nav öncesine
+ * yerleştirmek için `<div slot="header">...</div>` desteklenir.
+ *
+ * showLogout: çıkış linkini nav'ın sonuna ekler (default false; sadece profil
+ * ana sayfasında true).
+ */
+
+import { Icon } from 'astro-icon/components';
+
+export type ProfileNavKey =
+  | 'profile' | 'reviews' | 'favorites' | 'notifications' | 'activity' | 'settings';
+
+interface Props {
+  activeKey: ProfileNavKey;
+  reviewCount?: number;
+  favoritesCount?: number;
+  unreadCount?: number;
+  showLogout?: boolean;
+}
+
+const { activeKey, reviewCount, favoritesCount, unreadCount, showLogout = false } = Astro.props;
+
+const links: Array<{ key: ProfileNavKey; href: string; icon: string; label: string }> = [
+  { key: 'profile',       href: '/profil',             icon: 'user',     label: 'Profil' },
+  { key: 'reviews',       href: '/profil/yorumlar',    icon: 'star',     label: reviewCount !== undefined ? `Yorumlarım (${reviewCount})` : 'Yorumlarım' },
+  { key: 'favorites',     href: '/profil/favoriler',   icon: 'heart',    label: favoritesCount !== undefined ? `Favorilerim (${favoritesCount})` : 'Favorilerim' },
+  { key: 'notifications', href: '/profil/bildirimler', icon: 'bell',     label: unreadCount && unreadCount > 0 ? `Bildirimler (${unreadCount})` : 'Bildirimler' },
+  { key: 'activity',      href: '/profil/aktivite',    icon: 'activity', label: 'Aktivite' },
+  { key: 'settings',      href: '/profil/ayarlar',     icon: 'settings', label: 'Ayarlar' },
+];
+
+function linkClass(key: ProfileNavKey): string {
+  const base = 'flex items-center gap-2 p-2 rounded-lg';
+  return key === activeKey
+    ? `${base} bg-urfa-50 dark:bg-urfa-900/20 text-urfa-700 dark:text-urfa-300`
+    : `${base} hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300`;
+}
+---
+
+<aside class="lg:col-span-1">
+  <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <slot name="header" />
+
+    <nav class="space-y-1">
+      {links.map((link) => (
+        <a href={link.href} class={linkClass(link.key)}>
+          <Icon name={`lucide:${link.icon}`} class="w-4 h-4" />
+          {link.label}
+        </a>
+      ))}
+      {showLogout && (
+        <a href="/cikis" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 mt-4">
+          <Icon name="lucide:log-out" class="w-4 h-4" />
+          Çıkış Yap
+        </a>
+      )}
+    </nav>
+  </div>
+</aside>

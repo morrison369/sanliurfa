@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getPendingVerifications } from '../../../../lib/place-verification';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { getPendingVerifications } from '../../../../lib/place/place-verification';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -27,7 +27,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       );
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 200);
 
     // Get pending verifications
     const verifications = await getPendingVerifications(limit);

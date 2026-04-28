@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { unwrapApiPayload } from '@/lib/client-api';
+import { useState, useEffect } from 'react';
+interface RecommendedUser {
+  id: string;
+  full_name: string;
+  avatar_url?: string;
+  level?: number;
+  review_count?: number;
+}
 
 export default function UserRecommendations() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<RecommendedUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
 
@@ -13,11 +19,11 @@ export default function UserRecommendations() {
   const loadRecommendations = async () => {
     try {
       const response = await fetch('/api/recommendations/users?limit=6');
-      if (!response.ok) throw new Error('Kullanıcı önerileri yüklenemedi');
-      const data = unwrapApiPayload<{ data?: any[] }>(await response.json());
+      if (!response.ok) throw new Error('Failed');
+      const data = await response.json();
       setUsers(data.data || []);
     } catch (err) {
-      console.error('Kullanıcı önerileri yükleme hatası', err);
+      console.error('Kullanıcı önerileri yüklenemedi', err);
     } finally {
       setIsLoading(false);
     }
@@ -25,23 +31,19 @@ export default function UserRecommendations() {
 
   const toggleFollow = async (userId: string) => {
     try {
-      const isFollowing = followingIds.has(userId);
-      const response = await fetch(isFollowing ? '/api/following/unfollow' : '/api/following', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ followed_id: userId }),
-      });
+      const method = followingIds.has(userId) ? 'DELETE' : 'POST';
+      const response = await fetch('/api/followers/' + userId, { method });
       if (!response.ok) throw new Error('Takip işlemi tamamlanamadı');
       
       const newSet = new Set(followingIds);
-      if (isFollowing) {
+      if (newSet.has(userId)) {
         newSet.delete(userId);
       } else {
         newSet.add(userId);
       }
       setFollowingIds(newSet);
     } catch (err) {
-      console.error('Takip işlemi hatası', err);
+      console.error('Takip işlemi tamamlanamadı', err);
     }
   };
 
@@ -50,7 +52,7 @@ export default function UserRecommendations() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Takip edebileceğiniz kişiler</h3>
+      <h3 className="text-lg font-bold text-gray-900 dark:text-white">Kime Takip Etmelisin?</h3>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {users.map((user) => (
           <div key={user.id} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 flex items-center justify-between">
@@ -71,7 +73,7 @@ export default function UserRecommendations() {
               onClick={() => toggleFollow(user.id)}
               className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm font-medium"
             >
-              Takip et
+              Takip Et
             </button>
           </div>
         ))}

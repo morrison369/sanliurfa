@@ -3,7 +3,6 @@
  * AI-powered search with filters and personalized recommendations
  */
 import { useEffect, useState } from 'react';
-import { unwrapApiPayload } from '@/lib/client-api';
 
 interface SearchResult {
   id: string;
@@ -13,7 +12,6 @@ interface SearchResult {
   average_rating: number;
   review_count: number;
   image_url?: string;
-  slug?: string;
   ranking_score?: number;
 }
 
@@ -38,13 +36,13 @@ export function AdvancedSearchPanel() {
 
   const fetchSuggestions = async () => {
     try {
-      const res = await fetch(`/api/search/suggestions?prefix=${encodeURIComponent(query)}&limit=8`);
+      const res = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}&limit=8`);
       if (res.ok) {
-        const data = unwrapApiPayload<{ data?: { suggestions?: string[] } }>(await res.json());
-        setSuggestions(data.data?.suggestions || []);
+        const data = await res.json();
+        setSuggestions(data.data || []);
       }
     } catch (err) {
-      console.error('Arama önerileri yüklenemedi', err);
+      console.error('Failed to fetch suggestions', err);
     }
   };
 
@@ -65,11 +63,11 @@ export function AdvancedSearchPanel() {
 
       const res = await fetch(`/api/search/advanced?${params}`);
       if (res.ok) {
-        const data = unwrapApiPayload<{ data?: SearchResult[] }>(await res.json());
+        const data = await res.json();
         setResults(data.data || []);
       }
     } catch (err) {
-      console.error('Arama başarısız oldu', err);
+      console.error('Search failed', err);
     } finally {
       setLoading(false);
     }
@@ -95,7 +93,7 @@ export function AdvancedSearchPanel() {
                 setShowSuggestions(true);
               }}
               onFocus={() => query.length > 0 && setShowSuggestions(true)}
-              placeholder="Mekân, kategori veya etkinlik arayın..."
+              placeholder="Mekan, kategori veya etkinlik arayın..."
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
 
@@ -180,9 +178,8 @@ export function AdvancedSearchPanel() {
           <p className="text-sm text-gray-600">{results.length} sonuç bulundu</p>
 
           {results.map((result) => (
-            <a
+            <div
               key={result.id}
-              href={`/places/${result.slug || result.id}`}
               className="bg-white rounded-lg shadow hover:shadow-lg transition p-4 flex gap-4 cursor-pointer"
             >
               {result.image_url && (
@@ -210,7 +207,7 @@ export function AdvancedSearchPanel() {
                   )}
                 </div>
               </div>
-            </a>
+            </div>
           ))}
         </div>
       )}

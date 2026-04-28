@@ -21,7 +21,7 @@ export type FieldValidator = (value: any) => boolean | string;
  */
 export interface ValidationSchema {
   [key: string]: {
-    type: 'string' | 'number' | 'email' | 'boolean' | 'array';
+    type: 'string' | 'number' | 'email' | 'boolean' | 'array' | 'object';
     required?: boolean;
     minLength?: number;
     maxLength?: number;
@@ -38,6 +38,7 @@ export interface ValidationSchema {
  */
 export function validateEmail(email: any): boolean {
   if (typeof email !== 'string') return false;
+  if (email.length > 254) return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
@@ -89,8 +90,10 @@ export function validateString(
 ): boolean {
   if (typeof value !== 'string') return false;
   if (value.length < minLength || value.length > maxLength) return false;
-  const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
-  if (regex && !regex.test(value)) return false;
+  if (pattern) {
+    const regex = pattern instanceof RegExp ? pattern : new RegExp(pattern);
+    if (!regex.test(value)) return false;
+  }
   return true;
 }
 

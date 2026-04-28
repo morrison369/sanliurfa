@@ -4,14 +4,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getDashboardOverview, getSystemMetrics } from '../../../../lib/admin-dashboard';
-import { getModerationStats } from '../../../../lib/admin-moderation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { getDashboardOverview, getSystemMetrics } from '../../../../lib/admin/admin-dashboard';
+import { getModerationStats } from '../../../../lib/admin/admin-moderation';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -31,7 +31,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     const url = new URL(request.url);
-    const days = Math.min(parseInt(url.searchParams.get('days') || '30'), 365);
+    const days = safeIntParam(url.searchParams.get('days'), 30, 1, 365);
 
     const [overview, metrics, modStats] = await Promise.all([
       getDashboardOverview(days),

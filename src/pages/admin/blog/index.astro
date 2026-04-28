@@ -1,212 +1,285 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
-import { FileText, Plus, Edit, Trash2, Eye, User } from 'lucide-react';
-import { queryMany, queryOne } from '../../../lib/postgres';
-
-const user = Astro.locals.user;
-if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin/blog');
-}
-
-// Tüm yazıları getir (taslak ve yayınlanan)
-let posts: any[] = [];
-let stats = { total: 0, published: 0, draft: 0, archived: 0 };
-let error = '';
-
-try {
-  const allPosts = await queryMany(`
-    SELECT bp.*, u.full_name as author_name
-    FROM blog_posts bp
-    LEFT JOIN users u ON bp.author_id = u.id
-    ORDER BY bp.created_at DESC
-  `);
-  posts = allPosts;
-
-  // İstatistikleri hesapla
-  const statsResult = await queryOne(`
-    SELECT
-      COUNT(*) as total,
-      COUNT(*) FILTER (WHERE status = 'published') as published,
-      COUNT(*) FILTER (WHERE status = 'draft') as draft,
-      COUNT(*) FILTER (WHERE status = 'archived') as archived
-    FROM blog_posts
-  `);
-
-  if (statsResult) {
-    stats = {
-      total: parseInt(statsResult.total || '0'),
-      published: parseInt(statsResult.published || '0'),
-      draft: parseInt(statsResult.draft || '0'),
-      archived: parseInt(statsResult.archived || '0')
-    };
-  }
-} catch (err) {
-  error = 'Blog yazıları yüklenirken hata oluştu';
-  console.error('Blog admin error:', err);
-}
-
-const seo = {
-  title: 'Blog Yönetimi - Yönetim Paneli',
-  noindex: true
-};
+import AdminLayout from '../../../layouts/AdminLayout.astro';
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <a href="/admin" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">← Geri</a>
-            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Blog Yönetimi</h1>
-          </div>
-          <a href="/admin/blog/add" class="btn-primary flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Yeni Yazı
-          </a>
-        </div>
-      </div>
-    </div>
-    
-    <div class="container-custom py-8">
-      {error && (
-        <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
+<AdminLayout
+  title="Blog Yönetimi"
+  subtitle="Blog yazılarını oluşturun, düzenleyin ve yayınlayın"
+  seo={{ title: 'Blog Yönetimi - Yönetim Paneli', noIndex: true }}
+>
+  <a slot="hero-action" href="/admin/blog/new" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700 inline-flex items-center gap-2">
+    <span>+</span> Yeni Yazı
+  </a>
 
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-          <p class="text-sm text-gray-600 dark:text-gray-400">Toplam Yazı</p>
-          <p class="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
-        </div>
-        <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
-          <p class="text-sm text-green-700 dark:text-green-400">Yayında</p>
-          <p class="text-2xl font-bold text-green-800 dark:text-green-300">{stats.published}</p>
-        </div>
-        <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 border border-yellow-200 dark:border-yellow-800">
-          <p class="text-sm text-yellow-700 dark:text-yellow-400">Taslak</p>
-          <p class="text-2xl font-bold text-yellow-800 dark:text-yellow-300">{stats.draft}</p>
-        </div>
-        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
-          <p class="text-sm text-gray-600 dark:text-gray-400">Arşivlenmiş</p>
-          <p class="text-2xl font-bold text-gray-900 dark:text-white">{stats.archived}</p>
+    <div class="container mx-auto px-4 py-8 max-w-6xl space-y-5">
+      <div class="mb-2">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+        <div class="flex flex-wrap gap-4">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Yazı ara..."
+            class="px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400 flex-1 min-w-[200px]"
+          />
+          <select id="statusFilter" class="px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400">
+            <option value="">Tüm Durumlar</option>
+            <option value="published">Yayında</option>
+            <option value="draft">Taslak</option>
+            <option value="scheduled">Zamanlanmış</option>
+          </select>
+          <button id="searchBtn" class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5c4839]">
+            Ara
+          </button>
         </div>
       </div>
-      
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm overflow-hidden">
         <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Yazı</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Yazar</th>
-                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">Durum</th>
-                <th class="text-right py-3 px-4 text-sm font-medium text-gray-600 dark:text-gray-400">İşlemler</th>
+          <table class="w-full text-sm">
+            <thead class="border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)]">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Yazı</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Yazar</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Durum</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">İstatistikler</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Tarih</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">İşlemler</th>
               </tr>
             </thead>
-            <tbody>
-              {posts.map(post => (
-                <tr class="border-b border-gray-200 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                  <td class="py-4 px-4">
-                    <div class="flex items-start gap-3">
-                      <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <p class="font-medium text-gray-900 dark:text-white text-sm">{post.title}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{post.excerpt || 'Özet yok'}</p>
-                        {post.is_featured && (
-                          <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs rounded mt-1">
-                            ⭐ Öne Çıkan
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td class="py-4 px-4">
-                    <div class="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span class="text-sm text-gray-700 dark:text-gray-300">{post.author_name || '-'}</span>
-                    </div>
-                  </td>
-                  <td class="py-4 px-4">
-                    <span class={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                      post.status === 'published'
-                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                        : post.status === 'draft'
-                        ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                    }`}>
-                      {post.status === 'published' ? 'Yayında' : post.status === 'draft' ? 'Taslak' : 'Arşivlendi'}
-                    </span>
-                    {post.published_at && (
-                      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {new Date(post.published_at).toLocaleDateString('tr-TR')}
-                      </p>
-                    )}
-                  </td>
-                  <td class="py-4 px-4">
-                    <div class="flex items-center justify-end gap-1">
-                      {post.status === 'published' && (
-                        <a href={`/blog/${post.slug}`} target="_blank" class="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Görüntüle">
-                          <Eye className="w-4 h-4" />
-                        </a>
-                      )}
-                      <a href={`/admin/blog/edit/${post.id}`} class="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Düzenle">
-                        <Edit className="w-4 h-4" />
-                      </a>
-                      <button
-                        onclick={`deletePost(${post.id}, '${post.title}')`}
-                        class="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                        title="Sil"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {posts.length === 0 && (
-                <tr>
-                  <td colspan="4" class="py-8 text-center text-gray-500 dark:text-gray-400">
-                    Henüz blog yazısı bulunmuyor.
-                    <a href="/admin/blog/add" class="text-blue-600 hover:underline ml-1">İlk yazıyı ekle</a>
-                  </td>
-                </tr>
-              )}
+            <tbody id="postsTableBody" class="divide-y divide-[rgba(200,160,100,0.08)]">
+              <tr>
+                <td colspan="6" class="px-6 py-12 text-center text-[#9A8470]">
+                  Yükleniyor...
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
+
+        <div class="px-6 py-4 border-t border-[rgba(200,160,100,0.14)] flex items-center justify-between">
+          <div class="text-sm text-[#9A8470]">
+            <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
+          </div>
+          <div class="flex gap-2" id="pagination"></div>
+        </div>
       </div>
     </div>
-  </div>
-<script is:inline>
-  async function deletePost(id, title) {
-    const confirmed = confirm(`"${title}" başlıklı yazıyı silmek istediğinize emin misiniz?`);
-    if (!confirmed) return;
 
-    try {
-      const response = await fetch(`/api/blog/posts/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+  <script is:inline>
+    let currentPage = 1;
 
-      const data = await response.json();
+    const statusLabels = {
+      published: { text: 'Yayında', class: 'bg-[rgba(200,160,100,0.15)] text-[#6B5540]' },
+      draft: { text: 'Taslak', class: 'bg-[rgba(200,160,100,0.08)] text-[#9A8470]' },
+      scheduled: { text: 'Zamanlanmış', class: 'bg-[rgba(200,160,100,0.1)] text-[#6B5540]' },
+    };
 
-      if (response.ok) {
-        alert('Yazı başarıyla silindi');
-        window.location.reload();
-      } else {
-        alert(data.error || 'Yazı silinirken hata oluştu');
-      }
-    } catch (err) {
-      alert('Yazı silinirken bir hata oluştu: ' + String(err));
+    function setTbodyMsg(tbody, colSpan, text, cls) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = colSpan;
+      td.className = cls;
+      td.textContent = text;
+      tr.appendChild(td);
+      tbody.replaceChildren(tr);
     }
-  }
-</script>
 
-</Layout>
+    function buildPostRow(post) {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-[rgba(200,160,100,0.04)]';
+
+      // Col 1: image + title + slug
+      const td1 = document.createElement('td');
+      td1.className = 'px-6 py-4';
+      const wrap = document.createElement('div');
+      wrap.className = 'flex items-center gap-3';
+      if (post.cover_image) {
+        const img = document.createElement('img');
+        img.src = post.cover_image;
+        img.alt = '';
+        img.className = 'w-12 h-12 rounded-sm object-cover';
+        wrap.appendChild(img);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'w-12 h-12 bg-[rgba(200,160,100,0.1)] rounded-sm flex items-center justify-center text-[#9A8470]';
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'w-6 h-6');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('stroke-linecap', 'round');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('d', 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z');
+        svg.appendChild(path);
+        ph.appendChild(svg);
+        wrap.appendChild(ph);
+      }
+      const textDiv = document.createElement('div');
+      const titleEl = document.createElement('div');
+      titleEl.className = 'font-medium text-[#1A1008] line-clamp-1';
+      titleEl.textContent = post.title;
+      const slugEl = document.createElement('div');
+      slugEl.className = 'text-sm text-[#9A8470]';
+      slugEl.textContent = '/' + post.slug;
+      textDiv.appendChild(titleEl);
+      textDiv.appendChild(slugEl);
+      wrap.appendChild(textDiv);
+      td1.appendChild(wrap);
+      tr.appendChild(td1);
+
+      // Col 2: author
+      const td2 = document.createElement('td');
+      td2.className = 'px-6 py-4 text-sm text-[#6B5540]';
+      td2.textContent = post.author_name || 'Bilinmiyor';
+      tr.appendChild(td2);
+
+      // Col 3: status badge
+      const statusLabel = statusLabels[post.status];
+      const td3 = document.createElement('td');
+      td3.className = 'px-6 py-4';
+      const badge = document.createElement('span');
+      badge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (statusLabel?.class || 'bg-[rgba(200,160,100,0.06)] text-[#9A8470]');
+      badge.textContent = statusLabel?.text || post.status;
+      td3.appendChild(badge);
+      if (post.featured) {
+        const feat = document.createElement('span');
+        feat.className = 'ml-2 px-2 py-0.5 bg-[rgba(200,160,100,0.15)] text-[#6B5540] text-xs rounded-sm';
+        feat.textContent = 'Öne Çıkan';
+        td3.appendChild(feat);
+      }
+      tr.appendChild(td3);
+
+      // Col 4: counts
+      const td4 = document.createElement('td');
+      td4.className = 'px-6 py-4 text-sm text-[#6B5540]';
+      const likeEl = document.createElement('div');
+      likeEl.textContent = (post.like_count || 0) + ' beğeni';
+      const commentEl = document.createElement('div');
+      commentEl.textContent = (post.comment_count || 0) + ' yorum';
+      td4.appendChild(likeEl);
+      td4.appendChild(commentEl);
+      tr.appendChild(td4);
+
+      // Col 5: date
+      const td5 = document.createElement('td');
+      td5.className = 'px-6 py-4 text-sm text-[#9A8470]';
+      td5.textContent = post.published_at
+        ? new Date(post.published_at).toLocaleDateString('tr-TR')
+        : new Date(post.created_at).toLocaleDateString('tr-TR');
+      tr.appendChild(td5);
+
+      // Col 6: actions
+      const td6 = document.createElement('td');
+      td6.className = 'px-6 py-4';
+      const actions = document.createElement('div');
+      actions.className = 'flex gap-2';
+      const editA = document.createElement('a');
+      editA.href = '/admin/blog/edit/' + post.id;
+      editA.className = 'text-[#9A8470] hover:text-urfa-600 text-sm';
+      editA.textContent = 'Düzenle';
+      const viewA = document.createElement('a');
+      viewA.href = '/blog/' + post.slug;
+      viewA.target = '_blank';
+      viewA.rel = 'noopener';
+      viewA.className = 'text-[#9A8470] hover:text-[#6B5540] text-sm';
+      viewA.textContent = 'Görüntüle';
+      const delBtn = document.createElement('button');
+      delBtn.addEventListener('click', () => deletePost(post.id));
+      delBtn.className = 'text-[#9A8470] hover:text-[#6B5540] text-sm';
+      delBtn.textContent = 'Sil';
+      actions.appendChild(editA);
+      actions.appendChild(viewA);
+      actions.appendChild(delBtn);
+      td6.appendChild(actions);
+      tr.appendChild(td6);
+
+      return tr;
+    }
+
+    async function loadPosts() {
+      const tbody = document.getElementById('postsTableBody');
+      setTbodyMsg(tbody, 6, 'Yükleniyor...', 'px-6 py-12 text-center text-[#9A8470]');
+
+      const params = new URLSearchParams({ page: currentPage.toString() });
+      const search = document.getElementById('searchInput').value;
+      const status = document.getElementById('statusFilter').value;
+      if (search) params.append('search', search);
+      if (status) params.append('status', status);
+
+      try {
+        const response = await fetch(`/api/blog/admin?${params}`);
+        const data = await response.json();
+        if (data.success) {
+          renderPosts(data.posts);
+          updatePagination(data.pagination);
+        }
+      } catch (err) {
+        setTbodyMsg(tbody, 6, 'Hata oluştu', 'px-6 py-12 text-center text-[#9A8470]');
+      }
+    }
+
+    function renderPosts(posts) {
+      const tbody = document.getElementById('postsTableBody');
+      if (posts.length === 0) {
+        setTbodyMsg(tbody, 6, 'Yazı bulunamadı', 'px-6 py-12 text-center text-[#9A8470]');
+        return;
+      }
+      tbody.replaceChildren(...posts.map(buildPostRow));
+    }
+
+    function updatePagination(pagination) {
+      document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
+      document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
+      document.getElementById('totalCount').textContent = pagination.total;
+
+      const pagEl = document.getElementById('pagination');
+      const nodes = [];
+      for (let i = 1; i <= pagination.totalPages; i++) {
+        if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+          const btn = document.createElement('button');
+          btn.className = 'px-3 py-1 rounded-sm text-sm ' + (i === pagination.page ? 'bg-urfa-600 text-white' : 'bg-[rgba(200,160,100,0.08)] text-[#6B5540] hover:bg-[rgba(200,160,100,0.15)]');
+          btn.textContent = String(i);
+          btn.addEventListener('click', () => goToPage(i));
+          nodes.push(btn);
+        } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+          const span = document.createElement('span'); span.className = 'px-2 text-[#9A8470]'; span.textContent = '...';
+          nodes.push(span);
+        }
+      }
+      pagEl.replaceChildren(...nodes);
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      loadPosts();
+    }
+
+    async function deletePost(id) {
+      if (!await window.showConfirm('Bu yazıyı silmek istediğinize emin misiniz?')) return;
+      try {
+        const response = await fetch(`/api/blog/${id}/admin`, { method: 'DELETE' });
+        if (response.ok) {
+          loadPosts();
+        } else {
+          window.toast?.error('Silme işlemi başarısız');
+        }
+      } catch (err) {
+        window.toast?.error('Bir hata oluştu');
+      }
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', () => {
+      currentPage = 1;
+      loadPosts();
+    });
+
+    window.goToPage = goToPage;
+    window.deletePost = deletePost;
+    loadPosts();
+  </script>
+</AdminLayout>

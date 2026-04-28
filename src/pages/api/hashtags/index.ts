@@ -4,20 +4,20 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getTrendingHashtags } from '../../../lib/social-features';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getTrendingHashtags } from '../../../lib/social/social-features';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Parse query params
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 50);
     const period = url.searchParams.get('period') || 'week';
 
     // Validate period
@@ -34,14 +34,14 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     // Check cache
     const cacheKey = `hashtags:list:${period}:${limit}`;
-    const cached = await getCache<any[]>(cacheKey);
+    const cached = await getCache(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', '/api/hashtags', HttpStatus.OK, duration);
       return apiResponse(
         {
           success: true,
-          data: cached,
+          data: JSON.parse(cached as string),
           count: limit,
           period
         },
@@ -51,10 +51,10 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
 
     // Fetch from social features library
-    const hashtags = await getTrendingHashtags(limit, period as any);
+    const hashtags = await getTrendingHashtags(limit, period);
 
     // Cache result (30 min TTL)
-    await setCache(cacheKey, hashtags, 1800);
+    await setCache(cacheKey, JSON.stringify(hashtags), 1800);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/hashtags', HttpStatus.OK, duration);

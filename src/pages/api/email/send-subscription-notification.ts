@@ -17,7 +17,7 @@ import {
   emailOnPaymentSuccess,
   emailOnPaymentFailed,
   emailOnSubscriptionRenewal
-} from '../../../lib/subscription-email-integration';
+} from '../../../lib/subscription/subscription-email-integration';
 
 const schema = {
   eventType: {
@@ -84,16 +84,16 @@ const schema = {
     required: false,
     min: 0
   }
-} as any;
+};
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Check authentication - admin only
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
@@ -111,7 +111,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Geçersiz giriş',
+        'Invalid input',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
@@ -132,7 +132,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       renewalDate,
       creditAmount,
       additionalCost
-    } = validation.data as any;
+    } = validation.data;
 
     let success = false;
 
@@ -150,7 +150,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         if (!oldTierId) {
           recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.BAD_REQUEST, Date.now() - startTime);
           return apiError(
-            ErrorCode.BAD_REQUEST,
+            ErrorCode.VALIDATION_ERROR,
             'oldTierId required for plan_upgrade',
             HttpStatus.BAD_REQUEST,
             undefined,
@@ -169,7 +169,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         if (!oldTierId) {
           recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.BAD_REQUEST, Date.now() - startTime);
           return apiError(
-            ErrorCode.BAD_REQUEST,
+            ErrorCode.VALIDATION_ERROR,
             'oldTierId required for plan_downgrade',
             HttpStatus.BAD_REQUEST,
             undefined,
@@ -188,7 +188,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         if (!accessUntilDate) {
           recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.BAD_REQUEST, Date.now() - startTime);
           return apiError(
-            ErrorCode.BAD_REQUEST,
+            ErrorCode.VALIDATION_ERROR,
             'accessUntilDate required for subscription_cancelled',
             HttpStatus.BAD_REQUEST,
             undefined,
@@ -206,7 +206,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         if (!amount || !nextBillingDate) {
           recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.BAD_REQUEST, Date.now() - startTime);
           return apiError(
-            ErrorCode.BAD_REQUEST,
+            ErrorCode.VALIDATION_ERROR,
             'amount and nextBillingDate required for payment_success',
             HttpStatus.BAD_REQUEST,
             undefined,
@@ -225,7 +225,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         if (!amount || !retryDate) {
           recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.BAD_REQUEST, Date.now() - startTime);
           return apiError(
-            ErrorCode.BAD_REQUEST,
+            ErrorCode.VALIDATION_ERROR,
             'amount and retryDate required for payment_failed',
             HttpStatus.BAD_REQUEST,
             undefined,
@@ -244,7 +244,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         if (!amount || !renewalDate) {
           recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.BAD_REQUEST, Date.now() - startTime);
           return apiError(
-            ErrorCode.BAD_REQUEST,
+            ErrorCode.VALIDATION_ERROR,
             'amount and renewalDate required for subscription_renewal',
             HttpStatus.BAD_REQUEST,
             undefined,
@@ -262,7 +262,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       default:
         recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.BAD_REQUEST, Date.now() - startTime);
         return apiError(
-          ErrorCode.BAD_REQUEST,
+          ErrorCode.VALIDATION_ERROR,
           'Invalid event type',
           HttpStatus.BAD_REQUEST,
           undefined,
@@ -274,7 +274,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'E-posta gönderilemedi',
+        'Failed to send email',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -283,7 +283,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.OK, duration);
-    logger.logMutation('send', 'email_notifications', userId, locals.user?.id);
+    logger.info('Email notification sent', { eventType, userId, adminId: locals.user?.id });
 
     return apiResponse(
       {
@@ -299,7 +299,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Failed to send subscription notification', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Sunucu hatası oluştu',
+      'Internal server error',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

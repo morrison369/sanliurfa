@@ -1,6 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
-
+import {  useState, useEffect  } from 'react';
 interface TwoFactorManagerProps {
   onStatusChange?: (enabled: boolean) => void;
 }
@@ -30,13 +28,12 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
       const response = await fetch('/api/users/2fa/status');
 
       if (!response.ok) {
-        throw new Error('İki faktörlü doğrulama durumu kontrol edilemedi');
+        throw new Error('2FA durumu kontrol edilemedi.');
       }
 
-      const data = unwrapApiPayload<{ twoFactorEnabled?: boolean }>(await response.json());
-      const twoFactorEnabled = Boolean(data.twoFactorEnabled);
-      setIsEnabled(twoFactorEnabled);
-      onStatusChange?.(twoFactorEnabled);
+      const data = await response.json();
+      setIsEnabled(data.twoFactorEnabled);
+      onStatusChange?.(data.twoFactorEnabled);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
     } finally {
@@ -57,12 +54,12 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'İki faktörlü doğrulama ayarı başlatılamadı'));
+        throw new Error(data.error || '2FA ayarı başlatılamadı');
       }
 
-      const data = unwrapApiPayload<{ qrCodeUrl?: string; secret?: string }>(await response.json());
-      setQrCodeUrl(data.qrCodeUrl || null);
-      setSecret(data.secret || null);
+      const data = await response.json();
+      setQrCodeUrl(data.qrCodeUrl);
+      setSecret(data.secret);
       setIsSetupMode(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -89,21 +86,21 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'İki faktörlü doğrulama doğrulanamadı'));
+        throw new Error(data.error || '2FA doğrulanamadı');
       }
 
-      const data = unwrapApiPayload<{ backupCodes?: string[] }>(await response.json());
-      setBackupCodes(data.backupCodes || []);
+      const data = await response.json();
+      setBackupCodes(data.backupCodes);
       setShowBackupCodes(true);
       setIsEnabled(true);
-      setSuccessMessage('İki faktörlü doğrulama başarıyla etkinleştirildi.');
+      setSuccessMessage('2FA başarıyla etkinleştirildi!');
       setVerificationCode('');
       setIsSetupMode(false);
       setQrCodeUrl(null);
       setSecret(null);
       onStatusChange?.(true);
 
-      // Auto-hide success message
+      // Başarı mesajını kısa süre sonra gizle.
       setTimeout(() => setSuccessMessage(null), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Bir hata oluştu');
@@ -130,11 +127,11 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(getApiErrorMessage(data, 'İki faktörlü doğrulama devre dışı bırakılamadı'));
+        throw new Error(data.error || '2FA devre dışı bırakılamadı');
       }
 
       setIsEnabled(false);
-      setSuccessMessage('İki faktörlü doğrulama devre dışı bırakıldı');
+      setSuccessMessage('2FA devre dışı bırakıldı');
       setDisablePassword('');
       setShowBackupCodes(false);
       onStatusChange?.(false);
@@ -198,7 +195,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
           {isEnabled && (
             <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                İki faktörlü doğrulama etkinleştirildiğinde giriş yaparken doğrulama kodu girmeniz gerekir.
+                2FA etkinleştirilmiş olarak giriş yaparken kimlik doğrulama kodu sağlamanız gerekecektir.
               </p>
             </div>
           )}
@@ -246,11 +243,12 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
           {isEnabled && (
             <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                İki faktörlü doğrulamayı kapatmak için şifrenizi girin
+                2FA'yı Devre Dışı Bırakmak İçin Şifrenizi Girin
               </label>
               <div className="flex gap-2">
                 <input
                   type="password"
+                  autoComplete="current-password"
                   value={disablePassword}
                   onChange={(e) => setDisablePassword(e.target.value)}
                   placeholder="Şifreniz"
@@ -269,7 +267,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">İki Faktörlü Doğrulama Kurulumu</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">2FA Kurulumu</h3>
 
           <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <p className="text-sm text-blue-800 dark:text-blue-200">
@@ -282,7 +280,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
               <div className="text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">QR Kod</p>
                 <div className="bg-white p-4 rounded inline-block">
-                  {/* QR code will be generated client-side with qrcode.react */}
+                  {/* QR kod istemci tarafında oluşturulur. */}
                   <div className="w-40 h-40 bg-gray-200 flex items-center justify-center rounded text-xs text-gray-500">
                     Tarama için QR kodu
                   </div>
@@ -308,7 +306,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Doğrulama kodu
+              Doğrulama Kodu
             </label>
             <div className="flex gap-2">
               <input
@@ -339,7 +337,7 @@ export default function TwoFactorManager({ onStatusChange }: TwoFactorManagerPro
             }}
             className="w-full px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
-            İptal et
+            İptal Et
           </button>
         </div>
       )}

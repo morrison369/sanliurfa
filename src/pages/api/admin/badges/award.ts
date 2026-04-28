@@ -4,92 +4,98 @@
  */
 
 import type { APIRoute } from 'astro';
-import { awardBadge } from '../../../../lib/place-verification';
+import { awardBadge } from '../../../../lib/place/place-verification';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
-import { validateWithSchema } from '../../../../lib/validation';
+import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
 import { queryOne } from '../../../../lib/postgres';
 
-const awardBadgeSchema = {
+type AwardBadgeBody = {
+  placeId: string;
+  badgeType: string;
+  reason?: string;
+};
+
+type PlaceIdRow = {
+  id: string;
+};
+
+const awardBadgeSchema: ValidationSchema = {
   placeId: {
-    type: 'string' as const,
+    type: 'string',
     required: true,
     minLength: 36,
-    maxLength: 36
+    maxLength: 36,
   },
   badgeType: {
-    type: 'string' as const,
+    type: 'string',
     required: true,
     minLength: 3,
     maxLength: 50,
-    sanitize: true
+    sanitize: true,
   },
   reason: {
-    type: 'string' as const,
+    type: 'string',
     required: false,
     maxLength: 500,
-    sanitize: true
-  }
-} as any;
+    sanitize: true,
+  },
+};
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Admin auth required
-    if (!locals.user || !locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/admin/badges/award', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
-        'Admin access required',
+        'Admin yetkisi gerekli',
         HttpStatus.FORBIDDEN,
         undefined,
         requestId
       );
     }
 
-    // Get request body
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
 
-    // Validate input
     const validation = validateWithSchema(body, awardBadgeSchema);
     if (!validation.valid) {
       recordRequest('POST', '/api/admin/badges/award', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Geçersiz giriş',
+        'Geçersiz rozet bilgisi',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
       );
     }
 
-    const { placeId, badgeType, reason } = validation.data;
+    const { placeId, badgeType, reason } = validation.data as AwardBadgeBody;
 
-    // Verify place exists
-    const place = await queryOne('SELECT id FROM places WHERE id = $1', [placeId]);
+    const place = await queryOne<PlaceIdRow>('SELECT id FROM places WHERE id = $1', [placeId]);
     if (!place) {
       recordRequest('POST', '/api/admin/badges/award', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Place not found',
+        'Mekan bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
       );
     }
 
-    // Award badge
     const badge = await awardBadge(placeId, badgeType, locals.user.id, reason);
 
     if (!badge) {
       recordRequest('POST', '/api/admin/badges/award', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Badge type not found',
+        'Rozet tipi bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -102,15 +108,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return apiResponse({
       success: true,
-      badge
+      badge,
     }, HttpStatus.CREATED, requestId);
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/badges/award', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Failed to award badge', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Rozet verme başarısız', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to award badge',
+      'Rozet verilemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

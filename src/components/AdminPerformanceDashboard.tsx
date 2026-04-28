@@ -1,19 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
+interface PerformanceStats {
+  avg_lcp?: number;
+  avg_ttfb?: number;
+  avg_fcp?: number;
+  lcp_fails?: number;
+}
+
+interface PerformancePage {
+  url: string;
+  samples: number;
+  avg_lcp: number;
+  lcp_violations: number;
+}
+
+interface ConnectionType {
+  effective_type: string;
+  count: number;
+  avg_lcp: number;
+}
+
+interface DatabaseStatus {
+  activeConnections: number;
+  cacheHitRatio: string | number;
+}
+
+interface Recommendation {
+  title: string;
+  description: string;
+  category: string;
+  estimatedImpact: string;
+}
 
 interface PerformanceData {
   performance: {
-    stats: any;
-    pages: any[];
-    connectionTypes: any[];
-    database: any;
+    stats: PerformanceStats;
+    pages: PerformancePage[];
+    connectionTypes: ConnectionType[];
+    database: DatabaseStatus;
   };
-  recommendations: any[];
+  recommendations: Recommendation[];
   lastUpdated: string;
 }
 
 export default function AdminPerformanceDashboard() {
   const [data, setData] = useState<PerformanceData | null>(null);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
 
@@ -35,7 +66,7 @@ export default function AdminPerformanceDashboard() {
           setRecommendations(recsData.data.recommendations);
         }
       } catch (error) {
-        console.error('Performans verileri alınamadı:', error);
+        console.error('Performans verisi alınamadı:', error);
       } finally {
         setLoading(false);
       }
@@ -73,27 +104,28 @@ export default function AdminPerformanceDashboard() {
 
   const lcpStatus = getLcpStatus(avgLcp);
   const ttfbStatus = getTtfbStatus(avgTtfb);
+  const tabLabels: Record<string, string> = {
+    summary: 'Özet',
+    pages: 'Sayfalar',
+    connections: 'Bağlantılar',
+    recommendations: 'Öneriler',
+  };
 
   return (
     <div className="space-y-6">
       {/* Tabs */}
       <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700">
-        {[
-          { id: 'summary', label: 'Özet' },
-          { id: 'pages', label: 'Sayfalar' },
-          { id: 'connections', label: 'Bağlantılar' },
-          { id: 'recommendations', label: 'Öneriler' },
-        ].map((tab) => (
+        {['summary', 'pages', 'connections', 'recommendations'].map((tab) => (
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            key={tab}
+            onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 border-b-2 transition-colors ${
-              activeTab === tab.id
+              activeTab === tab
                 ? 'border-blue-600 text-blue-600'
                 : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900'
             }`}
           >
-            {tab.label}
+            {tabLabels[tab] || tab}
           </button>
         ))}
       </div>
@@ -129,18 +161,18 @@ export default function AdminPerformanceDashboard() {
               <h3 className="font-semibold mb-4">Veritabanı Durumu</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Aktif Bağlantı</span>
+                  <span className="text-gray-600">Aktif Bağlantılar</span>
                   <span className="font-semibold">{data.performance.database?.activeConnections || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Cache İsabet Oranı</span>
+                  <span className="text-gray-600">Önbellek İsabet Oranı</span>
                   <span className="font-semibold">{data.performance.database?.cacheHitRatio || 'N/A'}</span>
                 </div>
               </div>
             </div>
 
             <div className="p-6 bg-gray-50 rounded-lg">
-              <h3 className="font-semibold mb-4">İhlaller (24 saat)</h3>
+              <h3 className="font-semibold mb-4">İhlaller (24s)</h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">LCP İhlalleri</span>
@@ -167,7 +199,7 @@ export default function AdminPerformanceDashboard() {
               </tr>
             </thead>
             <tbody>
-              {data.performance.pages.map((page: any, idx: number) => (
+              {data.performance.pages.map((page, idx) => (
                 <tr key={idx} className="border-t border-gray-200">
                   <td className="px-4 py-3 truncate text-gray-600">{page.url}</td>
                   <td className="px-4 py-3 font-semibold">{page.samples}</td>
@@ -184,10 +216,38 @@ export default function AdminPerformanceDashboard() {
         </div>
       )}
 
+      {activeTab === 'connections' && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left font-semibold">Bağlantı Türü</th>
+                <th className="px-4 py-3 text-left font-semibold">Oturum</th>
+                <th className="px-4 py-3 text-left font-semibold">Ortalama LCP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(data.performance.connectionTypes || []).map((connection, idx) => (
+                <tr key={idx} className="border-t border-gray-200">
+                  <td className="px-4 py-3 text-gray-700">{connection.effective_type || 'Bilinmiyor'}</td>
+                  <td className="px-4 py-3 font-semibold">{connection.count || 0}</td>
+                  <td className={`px-4 py-3 font-semibold ${connection.avg_lcp > 2500 ? 'text-red-600' : 'text-green-600'}`}>
+                    {Math.round(connection.avg_lcp || 0)}ms
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {(data.performance.connectionTypes || []).length === 0 && (
+            <p className="py-8 text-center text-gray-500">Bağlantı türü verisi yok</p>
+          )}
+        </div>
+      )}
+
       {/* Recommendations Tab */}
       {activeTab === 'recommendations' && (
         <div className="space-y-4">
-          {recommendations.map((rec: any, idx: number) => (
+          {recommendations.map((rec, idx) => (
             <div key={idx} className="p-4 border rounded-lg bg-gray-50">
               <div className="flex items-start gap-3">
                 <div className="flex-1">
@@ -201,6 +261,9 @@ export default function AdminPerformanceDashboard() {
               </div>
             </div>
           ))}
+          {recommendations.length === 0 && (
+            <p className="py-8 text-center text-gray-500">Performans önerisi yok</p>
+          )}
         </div>
       )}
 

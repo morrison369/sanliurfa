@@ -3,31 +3,73 @@ import { recordPageView, recordInteraction, recordSearch, recordPlaceView } from
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 
-export const POST: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+type AnalyticsEventType = 'pageview' | 'interaction' | 'search' | 'place_view';
+
+interface AnalyticsEventBody {
+  sessionId?: string;
+  userId?: string;
+  eventType?: AnalyticsEventType;
+  metadata?: {
+    pageUrl?: string;
+    type?: string;
+    element?: string;
+    query?: string;
+    filters?: unknown;
+    resultCount?: number;
+    placeId?: string;
+    source?: string;
+    [key: string]: unknown;
+  };
+}
+
+export const POST: APIRoute = async ({ request, locals }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
 
   try {
-    const body = await request.json();
-    const { sessionId, userId, eventType, metadata } = body;
+    const body = (await request.json()) as AnalyticsEventBody;
+    const { sessionId, eventType, metadata } = body;
+    const userId = locals.user?.id;
 
     if (!sessionId || !eventType) {
       recordRequest('POST', '/api/analytics/events', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Missing required fields', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Zorunlu alanlar eksik', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+
+    if (typeof sessionId === 'string' && sessionId.length > 200) {
+      recordRequest('POST', '/api/analytics/events', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'sessionId 200 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     switch (eventType) {
-      case 'pageview':
-        await recordPageView(sessionId, userId, metadata?.pageUrl, metadata);
+      case 'pageview': {
+        const pageUrl = typeof metadata?.pageUrl === 'string' ? metadata.pageUrl.substring(0, 2000) : '/';
+        await recordPageView({ path: pageUrl, userId });
         break;
-      case 'interaction':
-        await recordInteraction(sessionId, userId, metadata?.type, metadata);
+      }
+      case 'interaction': {
+        const type = typeof metadata?.type === 'string' ? metadata.type.substring(0, 100) : 'interaction';
+        const element = typeof metadata?.element === 'string' ? metadata.element.substring(0, 200) : 'unknown';
+        await recordInteraction({ type, element, userId, metadata });
         break;
-      case 'search':
-        await recordSearch(sessionId, userId, metadata?.query, metadata?.filters, metadata?.resultCount);
+      }
+      case 'search': {
+        const searchQuery = typeof metadata?.query === 'string' ? metadata.query.substring(0, 500) : '';
+        const resultCountRaw = Number(metadata?.resultCount);
+        const resultsCount = Number.isFinite(resultCountRaw) ? Math.max(0, Math.floor(resultCountRaw)) : 0;
+        await recordSearch({ query: searchQuery, resultsCount, userId });
         break;
+      }
       case 'place_view':
-        await recordPlaceView(metadata?.placeId, userId, metadata);
+        if (!metadata?.placeId) {
+          recordRequest('POST', '/api/analytics/events', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+          return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+        }
+        await recordPlaceView({
+          placeId: String(metadata.placeId).substring(0, 100),
+          userId,
+          source: typeof metadata.source === 'string' ? metadata.source.substring(0, 100) : undefined,
+        });
         break;
     }
 
@@ -37,6 +79,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/analytics/events', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    return apiError(ErrorCode.INTERNAL_ERROR, 'İşlem tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Analitik olayı kaydedilemedi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
+

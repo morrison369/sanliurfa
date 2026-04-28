@@ -10,7 +10,7 @@ import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -20,7 +20,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       recordRequest('DELETE', '/api/search/history/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -40,7 +40,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       recordRequest('DELETE', '/api/search/history/[id]', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Arama kaydı bulunamadı',
+        'Search not found',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -62,7 +62,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     logger.error('Failed to delete search', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Arama kaydı silinemedi',
+      'Failed to delete search',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

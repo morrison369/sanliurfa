@@ -1,5 +1,5 @@
 ---
-import { Award, Star, Trophy, Medal } from 'lucide-react';
+import { Icon } from 'astro-icon/components';
 import { query, queryOne } from '../lib/postgres';
 
 interface Props {
@@ -29,7 +29,7 @@ const userLevel = await queryOne('SELECT * FROM user_levels WHERE level = $1', [
 <div class={compact ? '' : 'bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6'}>
   {!compact && (
     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-      <Award className="w-5 h-5 text-yellow-500" />
+      <Icon name="lucide:award" class="w-5 h-5" />
       Rozetler ve Seviye
     </h3>
   )}
@@ -41,7 +41,7 @@ const userLevel = await queryOne('SELECT * FROM user_levels WHERE level = $1', [
       <div class="flex-1">
         <div class="flex items-center gap-2">
           <span class="text-sm font-medium text-urfa-700 dark:text-urfa-400">Seviye {userLevel.level}</span>
-          <Star className="w-4 h-4 text-yellow-500 fill-current" />
+          <Icon name="lucide:star" class="w-5 h-5" />
         </div>
         <h4 class="font-bold text-gray-900 dark:text-white">{userLevel.name}</h4>
         <div class="mt-2">
@@ -50,8 +50,7 @@ const userLevel = await queryOne('SELECT * FROM user_levels WHERE level = $1', [
             <span>{userLevel.max_points} XP</span>
           </div>
           <div class="h-2 bg-white dark:bg-gray-700 rounded-full overflow-hidden">
-            <div 
-              class="h-full bg-urfa-600 rounded-full transition-all"
+            <div class="h-full bg-urfa-600 rounded-full transition-all"
               style={`width: ${Math.min(100, ((userProfile?.points || 0) - userLevel.min_points) / (userLevel.max_points - userLevel.min_points) * 100)}%`}
             ></div>
           </div>
@@ -66,8 +65,7 @@ const userLevel = await queryOne('SELECT * FROM user_levels WHERE level = $1', [
       {userBadges.map((ub: any) => (
         <div class="group relative" title={ub.description}>
           <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-            <div 
-              class="w-10 h-10 rounded-full flex items-center justify-center text-xl"
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-xl"
               style={`background-color: ${ub.color}20; color: ${ub.color}`}
             >
               {ub.icon}
@@ -92,7 +90,7 @@ const userLevel = await queryOne('SELECT * FROM user_levels WHERE level = $1', [
     </div>
   ) : (
     <div class="text-center py-4 text-gray-500 dark:text-gray-400">
-      <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
+      <Icon name="lucide:trophy" class="w-5 h-5 mx-auto mb-2" />
       <p class="text-sm">Henüz rozet kazanılmadı</p>
     </div>
   )}
@@ -100,7 +98,7 @@ const userLevel = await queryOne('SELECT * FROM user_levels WHERE level = $1', [
   {!compact && (
     <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
       <a href="/profil/rozetler" class="text-sm text-urfa-600 dark:text-urfa-400 hover:underline flex items-center justify-center gap-1">
-        <Medal className="w-4 h-4" />
+        <Icon name="lucide:medal" class="w-5 h-5" />
         Tüm Rozetleri Gör
       </a>
     </div>

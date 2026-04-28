@@ -27,8 +27,8 @@ const detectors = [
     regex: /\b(?:ssh|client)\.connect\([^)]*\bpassword\s*=\s*['"]([^'"]{8,})['"]/g,
   },
   { name: 'stripe_test_secret', regex: /\bsk_test_[0-9A-Za-z]{20,}\b/g },
-  { name: 'stripe_live_secret', regex: /\bSTRIPE_SECRET_KEY_PLACEHOLDER[0-9A-Za-z]{20,}\b/g },
-  { name: 'stripe_webhook_secret', regex: /\bSTRIPE_WEBHOOK_SECRET_PLACEHOLDER[0-9A-Za-z]{20,}\b/g },
+  { name: 'stripe_live_secret', regex: /\bsk_live_[0-9A-Za-z]{20,}\b/g },
+  { name: 'stripe_webhook_secret', regex: /\bwhsec_[0-9A-Za-z]{20,}\b/g },
   { name: 'generic_private_key_block', regex: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g },
 ];
 

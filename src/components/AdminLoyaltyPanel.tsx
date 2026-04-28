@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-
+import {  useState, useEffect  } from 'react';
 interface Reward {
   id: string;
   reward_name: string;
@@ -19,11 +18,11 @@ export default function AdminLoyaltyPanel() {
   const loadRewards = async () => {
     try {
       const response = await fetch("/api/admin/loyalty/rewards");
-      if (!response.ok) throw new Error("Ödüller yüklenemedi");
+      if (!response.ok) throw new Error("Sadakat ödülleri yüklenemedi.");
       const data = await response.json();
       setRewards(data.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bilinmeyen hata");
+      setError(err instanceof Error ? err.message : "Hata oluştu.");
     }
   };
 
@@ -62,7 +61,7 @@ export default function AdminLoyaltyPanel() {
               </tbody>
             </table>
           ) : (
-            <p className="text-gray-600 text-sm">Ödül bulunamadı</p>
+            <p className="text-gray-600 text-sm">Ödül bulunamadı.</p>
           )}
         </div>
       )}

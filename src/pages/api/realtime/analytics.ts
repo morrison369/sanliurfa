@@ -6,7 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { metricsCollector } from '../../../lib/metrics';
-import { getKPIs, checkMetricAlerts } from '../../../lib/business-analytics';
+import { getKPIs, checkMetricAlerts } from '../../../lib/analytics/business-analytics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -14,17 +14,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   // Admin-only access
   if (!user?.id || user?.role !== 'admin') {
-    return new Response('Yetkisiz işlem', { status: 401 });
+    return new Response('Unauthorized', { status: 401 });
   }
 
   logger.info('Real-time analytics connection established', { userId: user.id });
 
-  // SSE headers
+  // SSE headers — no CORS wildcard; admin-only endpoint (HARD RULE #34)
   const headers = {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*'
   };
 
   let isClosed = false;
@@ -85,7 +84,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
               await checkMetricAlerts();
 
               // Count triggered alerts
-              const alertCount = kpis.filter((k: any) => k.alert_triggered).length;
+              const alertCount = kpis.filter((k) => k.alert_triggered).length;
 
               const data = {
                 type: 'kpi',

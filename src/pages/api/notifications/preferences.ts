@@ -5,20 +5,20 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getNotificationTypePreferences, updateNotificationTypePreferences } from '../../../lib/notification-delivery';
+import { getNotificationTypePreferences, updateNotificationTypePreferences } from '../../../lib/notification/notification-delivery';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/notifications/preferences', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const url = new URL(request.url);
@@ -33,6 +33,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
         undefined,
         requestId
       );
+    }
+
+    const VALID_NOTIFICATION_TYPES = new Set(['comment', 'like', 'follow', 'message', 'review', 'event', 'promotion', 'system', 'achievement', 'mention']);
+    if (!VALID_NOTIFICATION_TYPES.has(notificationType)) {
+      recordRequest('GET', '/api/notifications/preferences', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz bildirim tipi', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     const prefs = await getNotificationTypePreferences(locals.user.id, notificationType);
@@ -66,14 +72,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/notifications/preferences', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -88,6 +94,14 @@ export const PUT: APIRoute = async ({ request, locals }) => {
         undefined,
         requestId
       );
+    }
+
+    const VALID_NOTIFICATION_TYPES = new Set(['comment', 'like', 'follow', 'message', 'review', 'event', 'promotion', 'system', 'achievement', 'mention']);
+    if (!VALID_NOTIFICATION_TYPES.has(notificationType)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz bildirim tipi', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    if (JSON.stringify(preferences).length > 5000) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'preferences verisi 5000 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     await updateNotificationTypePreferences(locals.user.id, notificationType, preferences);

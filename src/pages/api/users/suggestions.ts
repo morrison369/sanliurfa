@@ -4,14 +4,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, queryOne } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { queryMany } from '../../../lib/postgres';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       recordRequest('GET', '/api/users/suggestions', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -29,14 +29,14 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     const userId = locals.user.id;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 50);
     const cacheKey = `user:suggestions:${userId}`;
 
     // Check cache (30 minutes)
-    const cached = await getCache<any>(cacheKey);
+    const cached = await getCache(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/users/suggestions', HttpStatus.OK, Date.now() - startTime);
-      return apiResponse(cached, HttpStatus.OK, requestId);
+      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
     }
 
     // Get user's interests (places they've interacted with)
@@ -49,7 +49,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       [userId]
     );
 
-    const categories = userPlaces.map((p: any) => p.category).filter(Boolean);
+    const categories = userPlaces.map((p) => p.category).filter(Boolean);
 
     // Find users with similar interests
     // Strategy: Find users who have interacted with similar categories
@@ -78,6 +78,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     // If not enough suggestions, add trending/active users
     if (suggestedUsers.length < limit) {
+      const excludedIds = suggestedUsers
+        .map((u) => u.id)
+        .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0);
+
       const additionalUsers = await queryMany(
         `SELECT u.id, u.full_name, u.username, u.avatar_url,
                 (SELECT COUNT(*) FROM followers WHERE follower_id = $1 AND following_id = u.id) as is_following,
@@ -85,16 +89,16 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
          FROM users u
          WHERE u.id != $1
            AND u.id NOT IN (SELECT following_id FROM followers WHERE follower_id = $1)
-           AND u.id NOT IN (${suggestedUsers.map(u => `'${u.id}'`).join(',') || 'NULL'})
+           AND NOT (u.id = ANY($2::uuid[]))
          ORDER BY activity_count DESC
-         LIMIT $2`,
-        [userId, limit - suggestedUsers.length]
+         LIMIT $3`,
+        [userId, excludedIds, limit - suggestedUsers.length]
       );
 
       suggestedUsers = [...suggestedUsers, ...additionalUsers];
     }
 
-    const suggestions = suggestedUsers.map((u: any) => ({
+    const suggestions = suggestedUsers.map((u) => ({
       id: u.id,
       name: u.full_name,
       username: u.username,
@@ -111,7 +115,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     };
 
     // Cache for 30 minutes
-    await setCache(cacheKey, responseData, 1800);
+    await setCache(cacheKey, JSON.stringify(responseData), 1800);
 
     recordRequest('GET', '/api/users/suggestions', HttpStatus.OK, Date.now() - startTime);
 
@@ -122,7 +126,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     logger.error('Failed to get user suggestions', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Kullanıcı önerileri alınamadı',
+      'Failed to get user suggestions',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

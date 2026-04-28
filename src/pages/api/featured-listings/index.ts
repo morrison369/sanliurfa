@@ -9,33 +9,34 @@ import {
   getActiveFeaturedListings,
   createFeaturedListing,
   getUserFeaturedListings
-} from '../../../lib/featured-listings';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+} from '../../../lib/feature/featured-listings';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
     const myListings = url.searchParams.get('my') === 'true';
 
-    let data;
+    const data = myListings
+      ? await (async () => {
+          if (!locals.user?.id) {
+            return null;
+          }
+          return getUserFeaturedListings(locals.user.id);
+        })()
+      : await getActiveFeaturedListings(limit, offset);
 
-    if (myListings) {
-      if (!locals.user?.id) {
-        recordRequest('GET', '/api/featured-listings', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-        return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
-      }
-      data = await getUserFeaturedListings(locals.user.id);
-    } else {
-      const result = await getActiveFeaturedListings(limit, offset);
-      data = result;
+    if (myListings && !locals.user?.id) {
+      recordRequest('GET', '/api/featured-listings', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const duration = Date.now() - startTime;
@@ -61,14 +62,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/featured-listings', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();

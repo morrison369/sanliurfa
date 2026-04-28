@@ -1,6 +1,10 @@
 ---
+import { Icon } from 'astro-icon/components';
+
 interface Props {
-  user?: any;
+  user?: {
+    id?: string;
+  } | null;
 }
 
 const { user } = Astro.props;
@@ -11,9 +15,7 @@ const { user } = Astro.props;
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-4">
       <div class="flex items-start gap-3">
         <div class="w-10 h-10 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center flex-shrink-0">
-          <svg class="w-5 h-5 text-urfa-600 dark:text-urfa-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
+          <Icon name="lucide:bell" class="w-5 h-5 text-urfa-600 dark:text-urfa-400" />
         </div>
         <div class="flex-1">
           <h3 class="font-semibold text-gray-900 dark:text-white">Bildirimlere İzin Ver</h3>
@@ -40,7 +42,7 @@ const { user } = Astro.props;
   </div>
 )}
 
-<script>
+<script is:inline>
   const prompt = document.getElementById('push-notification-prompt');
   const enableBtn = document.getElementById('enable-push');
   const dismissBtn = document.getElementById('dismiss-push');
@@ -70,7 +72,7 @@ const { user } = Astro.props;
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(
             import.meta.env.PUBLIC_VAPID_PUBLIC_KEY || ''
-          ) as BufferSource,
+          ),
         });
 
         // Send subscription to server
@@ -97,7 +99,7 @@ const { user } = Astro.props;
     prompt?.classList.add('hidden');
   });
 
-  function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
     const rawData = window.atob(base64);
@@ -110,3 +112,6 @@ const { user } = Astro.props;
     return outputArray;
   }
 </script>
+
+
+

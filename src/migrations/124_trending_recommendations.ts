@@ -26,6 +26,13 @@ export const migration_124_trending_recommendations = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE trending_scores ADD COLUMN IF NOT EXISTS period VARCHAR(50);
+      ALTER TABLE trending_scores ADD COLUMN IF NOT EXISTS score FLOAT DEFAULT 0;
+      ALTER TABLE trending_scores ADD COLUMN IF NOT EXISTS entity_type VARCHAR(50);
+      ALTER TABLE trending_scores ADD COLUMN IF NOT EXISTS entity_id UUID;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_trending_period
       ON trending_scores(period, score DESC)
     `);
@@ -51,6 +58,11 @@ export const migration_124_trending_recommendations = async (pool: Pool) => {
         updated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(content_type, content_id)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE content_popularity ADD COLUMN IF NOT EXISTS engagement_rate FLOAT DEFAULT 0;
+      ALTER TABLE content_popularity ADD COLUMN IF NOT EXISTS virality_score FLOAT DEFAULT 0;
     `);
 
     await pool.query(`
@@ -81,6 +93,15 @@ export const migration_124_trending_recommendations = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_recommendations ADD COLUMN IF NOT EXISTS recommendation_type VARCHAR(50);
+      ALTER TABLE user_recommendations ADD COLUMN IF NOT EXISTS relevance_score FLOAT;
+      ALTER TABLE user_recommendations ADD COLUMN IF NOT EXISTS recommended_entity_type VARCHAR(50);
+      ALTER TABLE user_recommendations ADD COLUMN IF NOT EXISTS recommended_entity_id UUID;
+      ALTER TABLE user_recommendations ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_recommendations ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_recommendations_user
       ON user_recommendations(user_id, recommendation_type, relevance_score DESC)
     `);
@@ -105,6 +126,11 @@ export const migration_124_trending_recommendations = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_interests ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_interests ADD COLUMN IF NOT EXISTS interest_score FLOAT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_interests_user
       ON user_interests(user_id, interest_score DESC)
     `);
@@ -121,6 +147,12 @@ export const migration_124_trending_recommendations = async (pool: Pool) => {
         conversion BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE recommendation_impressions ADD COLUMN IF NOT EXISTS recommendation_id UUID;
+      ALTER TABLE recommendation_impressions ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE recommendation_impressions ADD COLUMN IF NOT EXISTS conversion BOOLEAN DEFAULT false;
     `);
 
     await pool.query(`
@@ -150,6 +182,11 @@ export const migration_124_trending_recommendations = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE trending_keywords ADD COLUMN IF NOT EXISTS period VARCHAR(50);
+      ALTER TABLE trending_keywords ADD COLUMN IF NOT EXISTS trend_score FLOAT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_keywords_period
       ON trending_keywords(period, trend_score DESC)
     `);
@@ -168,6 +205,13 @@ export const migration_124_trending_recommendations = async (pool: Pool) => {
         clicked_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE discovery_feeds ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE discovery_feeds ADD COLUMN IF NOT EXISTS content_type VARCHAR(50);
+      ALTER TABLE discovery_feeds ADD COLUMN IF NOT EXISTS content_id UUID;
+      ALTER TABLE discovery_feeds ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`

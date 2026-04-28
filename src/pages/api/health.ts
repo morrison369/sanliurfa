@@ -1,115 +1,159 @@
-import type { APIRoute } from "astro";
-import {
-  apiResponse,
-  apiError,
-  HttpStatus,
-  ErrorCode,
-  getRequestId,
-} from "../../lib/api";
-import { getOptionalRedisClient } from "../../lib/cache";
+/**
+ * Healthcheck Endpoint
+ * Used by PM2, Docker, and load balancers
+ */
 
-interface HealthStatus {
-  status: "healthy" | "degraded" | "unhealthy";
-  uptime: number;
-  timestamp: string;
-  version: string;
-  checks: {
-    database: {
-      status: "up" | "down";
-      responseTime?: number;
-    };
-    redis: {
-      status: "up" | "down";
-      responseTime?: number;
-    };
-  };
+import type { APIRoute } from 'astro';
+import { apiResponse, HttpStatus, safeErrorDetail } from '../../lib/api';
+
+// In-process cache for the integrations summary. Health endpoint is hit every few
+// seconds by load balancers / uptime monitors; without this we'd run 5 DB queries
+// per health call. 30s TTL is short enough that admin-side config changes show up
+// quickly, long enough to absorb the polling noise.
+let _integrationsCache: Record<string, 'configured' | 'unconfigured'> | null = null;
+let _integrationsCacheAt = 0;
+const INTEGRATIONS_CACHE_TTL_MS = 30_000;
+
+/** Test hook — exported for vitest. Don't call from production code. */
+export function _resetIntegrationsCacheForTests(): void {
+  _integrationsCache = null;
+  _integrationsCacheAt = 0;
 }
 
 /**
- * GET /api/health - Health check with database and Redis status
+ * Quick non-network probe of admin-managed integrations. Reports whether each
+ * service has credentials configured (DB or env), without hitting the actual
+ * provider — that's what /api/admin/site/integrations/test is for.
+ *
+ * Returns 'configured' | 'unconfigured' so monitoring tools can see at a glance
+ * which integrations are wired up. No secrets are leaked.
+ *
+ * Result is cached for 30s to keep `/api/health` cheap under high-frequency polling.
  */
-export const GET: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
-
+async function getIntegrationsSummary(): Promise<Record<string, 'configured' | 'unconfigured'>> {
+  const now = Date.now();
+  if (_integrationsCache && now - _integrationsCacheAt < INTEGRATIONS_CACHE_TTL_MS) {
+    return _integrationsCache;
+  }
+  const summary: Record<string, 'configured' | 'unconfigured'> = {
+    resend: 'unconfigured',
+    smtp: 'unconfigured',
+    stripe: 'unconfigured',
+    analytics: 'unconfigured',
+    image_providers: 'unconfigured',
+  };
   try {
-    let dbStatus: "up" | "down" = "down";
-    let dbResponseTime = 0;
-    let redisStatus: "up" | "down" = "down";
-    let redisResponseTime = 0;
+    const { queryOne } = await import('../../lib/postgres');
+    const rows = await Promise.all([
+      queryOne<{ setting_value: { api_key?: string } }>(
+        `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.email'`,
+        [],
+      ),
+      queryOne<{ setting_value: { host?: string; user?: string; pass?: string } }>(
+        `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.smtp'`,
+        [],
+      ),
+      queryOne<{ setting_value: { secret_key?: string } }>(
+        `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.payment'`,
+        [],
+      ),
+      queryOne<{ setting_value: { ga_id?: string } }>(
+        `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.analytics'`,
+        [],
+      ),
+      queryOne<{ setting_value: { unsplash_access_key?: string; pexels_api_key?: string } }>(
+        `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.image_providers'`,
+        [],
+      ),
+    ]);
+    if (rows[0]?.setting_value?.api_key || process.env.RESEND_API_KEY) summary.resend = 'configured';
+    const smtp = rows[1]?.setting_value;
+    if ((smtp?.host && smtp?.user && smtp?.pass) || (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS)) summary.smtp = 'configured';
+    if (rows[2]?.setting_value?.secret_key || process.env.STRIPE_SECRET_KEY) summary.stripe = 'configured';
+    if (rows[3]?.setting_value?.ga_id) summary.analytics = 'configured';
+    const ip = rows[4]?.setting_value;
+    if (ip?.unsplash_access_key || ip?.pexels_api_key || process.env.UNSPLASH_ACCESS_KEY || process.env.PEXELS_API_KEY) summary.image_providers = 'configured';
+  } catch {
+    // If DB lookup fails the health response still includes the env-only verdict.
+    if (process.env.RESEND_API_KEY) summary.resend = 'configured';
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) summary.smtp = 'configured';
+    if (process.env.STRIPE_SECRET_KEY) summary.stripe = 'configured';
+    if (process.env.UNSPLASH_ACCESS_KEY || process.env.PEXELS_API_KEY) summary.image_providers = 'configured';
+  }
+  _integrationsCache = summary;
+  _integrationsCacheAt = now;
+  return summary;
+}
 
-    // Check database
+export const GET: APIRoute = async () => {
+  try {
+    const { pool, getPoolStatus } = await import('../../lib/postgres');
+    const { getRedisClient } = await import('../../lib/cache/cache');
+
+    let dbStatus = 'unknown';
+    let dbLatency = -1;
+
+    // Check PostgreSQL
     try {
-      if (!process.env.DATABASE_URL) {
-        dbStatus = "down";
-      } else {
-        const { pool } = await import("../../lib/postgres");
-        const dbStart = Date.now();
-        const result = await pool.query("SELECT 1");
-        dbResponseTime = Date.now() - dbStart;
-        if (result.rows.length > 0) {
-          dbStatus = "up";
-        }
-      }
-    } catch (error) {
-      console.error("Database health check failed:", error);
-      dbStatus = "down";
+      const start = Date.now();
+      await pool.query('SELECT 1');
+      dbLatency = Date.now() - start;
+      dbStatus = 'connected';
+    } catch {
+      dbStatus = 'disconnected';
     }
 
-    // Check Redis
+    let redisStatus = 'disconnected';
     try {
-      const redisStart = Date.now();
-      const redis = await getOptionalRedisClient({ silent: true });
-      if (redis) {
-        await redis.ping();
-        redisResponseTime = Date.now() - redisStart;
-        redisStatus = "up";
-      }
-    } catch (_error) {
-      redisStatus = "down";
+      const redis = await getRedisClient();
+      await redis.ping();
+      redisStatus = 'connected';
+    } catch {
+      redisStatus = 'disconnected';
     }
 
-    // Determine overall status
-    let overallStatus: "healthy" | "degraded" | "unhealthy" = "healthy";
-    if (dbStatus === "down") {
-      overallStatus = "unhealthy";
-    } else if (redisStatus === "down") {
-      overallStatus = "degraded";
-    }
+    const integrations = dbStatus === 'connected' ? await getIntegrationsSummary() : null;
+    const poolStatus = getPoolStatus();
+    const allHealthy = dbStatus === 'connected' && redisStatus === 'connected';
 
-    const uptime = Math.floor(process.uptime());
-
-    const healthData: HealthStatus = {
-      status: overallStatus,
-      uptime,
+    const health = {
+      status: allHealthy ? 'healthy' : 'degraded',
       timestamp: new Date().toISOString(),
-      version: "1.0.0",
-      checks: {
+      uptime: Math.floor(process.uptime()),
+      version: process.env.npm_package_version || '1.0.0',
+      services: {
         database: {
           status: dbStatus,
-          ...(dbResponseTime && { responseTime: dbResponseTime }),
+          latencyMs: dbLatency,
+          pool: poolStatus,
         },
         redis: {
           status: redisStatus,
-          ...(redisResponseTime && { responseTime: redisResponseTime }),
         },
+      },
+      integrations,
+      memory: {
+        rss: Math.round(process.memoryUsage().rss / 1024 / 1024),
+        heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
       },
     };
 
-    // Return appropriate status code based on health
-    const statusCode =
-      overallStatus === "unhealthy"
-        ? HttpStatus.SERVICE_UNAVAILABLE
-        : HttpStatus.OK;
+    const responseStatus = dbStatus === 'connected' ? HttpStatus.OK : 503;
 
-    return apiResponse(healthData, statusCode, requestId);
+    return apiResponse(health, responseStatus);
   } catch (error) {
-    console.error("Health check error:", error);
-    return apiError(
-      ErrorCode.INTERNAL_ERROR,
-      "Health check failed",
-      HttpStatus.INTERNAL_SERVER_ERROR,
-      undefined,
-      requestId,
-    );
+    const fallback = {
+      status: 'down',
+      timestamp: new Date().toISOString(),
+      uptime: Math.floor(process.uptime()),
+      version: process.env.npm_package_version || '1.0.0',
+      services: {
+        database: { status: 'unknown', latencyMs: -1 },
+        redis: { status: 'unknown' },
+      },
+      error: safeErrorDetail(error, 'health_init_failed'),
+    };
+
+    return apiResponse(fallback, 503);
   }
 };

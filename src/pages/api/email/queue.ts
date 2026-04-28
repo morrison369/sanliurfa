@@ -4,23 +4,23 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getQueueStats } from '../../../lib/email-service';
+import { getQueueStats } from '../../../lib/email/email-service';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/email/queue', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const stats = await getQueueStats();
+    const stats = getQueueStats();
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/email/queue', HttpStatus.OK, duration);
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           pending: stats.pending,
           sent: stats.sent,
           failed: stats.failed,
-          avgDeliveryTime: Math.round(stats.avgDeliveryTime),
+          avgDeliveryTime: 0,
         },
       },
       HttpStatus.OK,
@@ -44,10 +44,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
     logger.error('Get queue stats failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Kuyruk istatistikleri alınamadı',
+      'Failed to get queue stats',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
     );
   }
 };
+

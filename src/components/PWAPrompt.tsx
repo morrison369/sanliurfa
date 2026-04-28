@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import {  useState, useEffect  } from 'react';
 import { setupInstallPrompt, isInstalledApp, requestNotificationPermission, subscribeToPush } from '../lib/pwa';
+
+
+// BeforeInstallPromptEvent is not in TypeScript stdlib
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
 
 export default function PWAPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
@@ -11,7 +18,7 @@ export default function PWAPrompt() {
 
     setupInstallPrompt(
       (prompt) => {
-        setDeferredPrompt(prompt);
+        setDeferredPrompt(prompt as BeforeInstallPromptEvent);
         setShowPrompt(true);
       },
       () => {
@@ -29,8 +36,8 @@ export default function PWAPrompt() {
   const handleInstall = async () => {
     if (!deferredPrompt) return;
 
-    (deferredPrompt as any).prompt?.();
-    const { outcome } = await (deferredPrompt as any).userChoice;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === 'accepted') {
       setShowPrompt(false);
@@ -68,7 +75,7 @@ export default function PWAPrompt() {
       <div className="flex items-start gap-3">
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900 mb-1">
-            Şanlıurfa'yı Kullan
+            Şanlıurfa’yı Kullan
           </h3>
           <p className="text-sm text-gray-600 mb-3">
             Ana ekrana ekleyerek daha hızlı erişim sağlayın ve çevrimdışı kullanın.

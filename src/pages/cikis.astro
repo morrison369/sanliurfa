@@ -1,0 +1,20 @@
+---
+// Logout page - clears session and redirects
+import Layout from '../layouts/Layout.astro';
+
+// Clear auth cookie (middleware uses 'auth-token')
+Astro.cookies.delete('auth-token', { path: '/' });
+Astro.cookies.delete('session', { path: '/' });
+Astro.cookies.delete('token', { path: '/' });
+
+// Redirect to home
+return Astro.redirect('/?logout=success');
+---
+
+<Layout seo={{ title: 'Çıkış Yapılıyor...', description: 'Sanliurfa.com hesabınızdan çıkış yapılıyor.', noIndex: true }}>
+  <div class="min-h-screen flex items-center justify-center">
+    <p class="text-gray-600">Çıkış yapılıyor...</p>
+  </div>
+</Layout>
+
+

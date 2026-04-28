@@ -26,6 +26,11 @@ export const migration_092_community_roles = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE community_roles ADD COLUMN IF NOT EXISTS min_reputation INT DEFAULT 0;
+      ALTER TABLE community_roles ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_community_roles_reputation
       ON community_roles(min_reputation, display_order)
     `);
@@ -43,6 +48,12 @@ export const migration_092_community_roles = async (pool: Pool) => {
         assigned_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, role_id)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE user_community_roles ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_community_roles ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+      ALTER TABLE user_community_roles ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;
     `);
 
     await pool.query(`
@@ -72,6 +83,11 @@ export const migration_092_community_roles = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_titles ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_titles ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_user_titles
       ON user_titles(user_id, is_active)
     `);
@@ -93,6 +109,11 @@ export const migration_092_community_roles = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE community_statistics ADD COLUMN IF NOT EXISTS influence_score FLOAT DEFAULT 0;
+      ALTER TABLE community_statistics ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP;
     `);
 
     await pool.query(`
@@ -119,6 +140,12 @@ export const migration_092_community_roles = async (pool: Pool) => {
         updated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, category)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE user_expertise ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_expertise ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+      ALTER TABLE user_expertise ADD COLUMN IF NOT EXISTS expertise_level INT DEFAULT 1;
     `);
 
     await pool.query(`

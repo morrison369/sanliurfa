@@ -1,0 +1,140 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout
+  title="Destek Talepleri"
+  subtitle="Müşteri destek taleplerini yönetin"
+  seo={{ title: 'Destek Talepleri - Admin', noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-6xl space-y-5">
+      <div class="mb-2 flex items-center justify-between">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+        <div class="flex gap-3">
+          <div class="bg-[rgba(200,160,100,0.1)] text-[#6B5540] px-4 py-2 rounded-sm text-sm"><span class="font-bold" id="openCount">0</span> Açık</div>
+          <div class="bg-[rgba(200,160,100,0.06)] text-[#9A8470] px-4 py-2 rounded-sm text-sm"><span class="font-bold" id="inProgressCount">0</span> İşlemde</div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)]">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-[#9A8470]">Ticket</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-[#9A8470]">Gönderen</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-[#9A8470]">Konu</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-[#9A8470]">Durum</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-[#9A8470]">Tarih</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-[#9A8470]">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="ticketsTable" class="divide-y divide-[rgba(200,160,100,0.08)]">
+              <tr><td colspan="6" class="px-6 py-12 text-center text-[#9A8470]">Yükleniyor...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  <script>
+    const statusLabels: Record<string, { text: string; class: string }> = {
+      open: { text: 'Açık', class: 'bg-[rgba(200,160,100,0.15)] text-[#6B5540]' },
+      in_progress: { text: 'İşlemde', class: 'bg-[rgba(200,160,100,0.1)] text-[#6B5540]' },
+      resolved: { text: 'Çözüldü', class: 'bg-[rgba(200,160,100,0.06)] text-[#9A8470]' },
+      closed: { text: 'Kapandı', class: 'bg-[rgba(200,160,100,0.04)] text-[#9A8470]' },
+    };
+
+    function buildTicketRow(t: any) {
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-[rgba(200,160,100,0.04)]';
+
+      const td1 = document.createElement('td');
+      td1.className = 'px-4 py-3 font-mono text-sm text-[#9A8470]';
+      td1.textContent = t.ticket_number;
+
+      const td2 = document.createElement('td');
+      td2.className = 'px-4 py-3';
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'font-medium text-[#1A1008]';
+      nameDiv.textContent = t.name;
+      const emailDiv = document.createElement('div');
+      emailDiv.className = 'text-sm text-[#9A8470]';
+      emailDiv.textContent = t.email;
+      td2.appendChild(nameDiv);
+      td2.appendChild(emailDiv);
+
+      const td3 = document.createElement('td');
+      td3.className = 'px-4 py-3 text-sm text-[#6B5540]';
+      td3.textContent = t.subject;
+
+      const td4 = document.createElement('td');
+      td4.className = 'px-4 py-3';
+      const badge = document.createElement('span');
+      badge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (statusLabels[t.status]?.class || 'bg-[rgba(200,160,100,0.06)] text-[#9A8470]');
+      badge.textContent = statusLabels[t.status]?.text || t.status;
+      td4.appendChild(badge);
+
+      const td5 = document.createElement('td');
+      td5.className = 'px-4 py-3 text-sm text-[#9A8470]';
+      td5.textContent = new Date(t.created_at).toLocaleDateString('tr-TR');
+
+      const td6 = document.createElement('td');
+      td6.className = 'px-4 py-3';
+      const actionBtn = document.createElement('button');
+      actionBtn.className = 'text-[#9A8470] hover:text-urfa-600 text-sm';
+      actionBtn.textContent = 'İşleme Al';
+      actionBtn.addEventListener('click', () => updateStatus(t.id, 'in_progress'));
+      td6.appendChild(actionBtn);
+
+      tr.appendChild(td1);
+      tr.appendChild(td2);
+      tr.appendChild(td3);
+      tr.appendChild(td4);
+      tr.appendChild(td5);
+      tr.appendChild(td6);
+      return tr;
+    }
+
+    async function loadTickets() {
+      try {
+        const response = await fetch('/api/contact?status=open');
+        const data = await response.json();
+
+        if (data.success) {
+          const tbody = document.getElementById('ticketsTable') as HTMLElement;
+          if (data.tickets.length === 0) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 6;
+            td.className = 'px-6 py-12 text-center text-[#9A8470]';
+            td.textContent = 'Destek talebi bulunamadı.';
+            tr.appendChild(td);
+            tbody.replaceChildren(tr);
+          } else {
+            tbody.replaceChildren(...data.tickets.map(buildTicketRow));
+          }
+
+          const openEl = document.getElementById('openCount');
+          const inProgressEl = document.getElementById('inProgressCount');
+          if (openEl) openEl.textContent = data.tickets.filter((t: any) => t.status === 'open').length;
+          if (inProgressEl) inProgressEl.textContent = data.tickets.filter((t: any) => t.status === 'in_progress').length;
+        }
+      } catch (err) {
+        console.error('Tickets load error:', err);
+      }
+    }
+
+    async function updateStatus(id: string, status: string) {
+      await fetch(`/api/contact/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      loadTickets();
+    }
+
+    (window as any).updateStatus = updateStatus;
+    loadTickets();
+  </script>
+</AdminLayout>

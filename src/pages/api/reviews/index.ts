@@ -1,198 +1,269 @@
-// API: Yorum işlemleri (PostgreSQL + Redis cache)
-import type { APIRoute } from 'astro';
-import { query, queryOne, insert, update as updateDb } from '../../../lib/postgres';
-import { getCache, setCache, deleteCache } from '../../../lib/cache';
-import { logActivity } from '../../../lib/activity';
-
 /**
- * Generate cache key for reviews
+ * GET /api/reviews  — Get reviews for a place or user
+ * POST /api/reviews — Create / update / delete / vote on reviews
  */
-function generateReviewsCacheKey(placeId: string, limit = 10, offset = 0): string {
-  return `reviews:place:${placeId}:limit:${limit}:offset:${offset}`;
-}
 
-// Get reviews for a place
+import type { APIRoute } from 'astro';
+import { query } from '../../../lib/postgres';
+import { requireAuth } from '../../../lib/auth';
+import { logger } from '../../../lib/logging';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail, safeIntParam } from '../../../lib/api';
+import {
+  submitPlaceReview,
+  type ReviewSubmissionResult,
+} from '../../../lib/review/review-submission';
+
+// ─── GET ──────────────────────────────────────────────────────────────────────
+
 export const GET: APIRoute = async ({ url }) => {
   try {
     const placeId = url.searchParams.get('placeId');
-    const limit = parseInt(url.searchParams.get('limit') || '10');
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const userId  = url.searchParams.get('userId');
+    const stats   = url.searchParams.get('stats');
+    const VALID_SORT_OPTIONS = new Set(['newest', 'oldest', 'highest', 'lowest', 'helpful']);
+    const rawSortBy = url.searchParams.get('sortBy') || 'newest';
+    const sortBy = VALID_SORT_OPTIONS.has(rawSortBy) ? rawSortBy : 'newest';
+    const ratingFilter = url.searchParams.get('rating');
+    const page    = safeIntParam(url.searchParams.get('page'), 1, 1, 1_000_000);
+    const limit   = safeIntParam(url.searchParams.get('limit'), 20, 1, 50);
+    const offset  = (page - 1) * limit;
 
-    if (!placeId) {
-      return new Response(
-        JSON.stringify({ error: 'Mekan ID gereklidir' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+    // Rating breakdown stats for a place
+    if (stats && placeId) {
+      const result = await query(
+        `SELECT
+           rating,
+           COUNT(*) AS count
+         FROM reviews
+         WHERE place_id = $1 AND status != 'deleted'
+         GROUP BY rating
+         ORDER BY rating DESC`,
+        [placeId]
       );
+
+      const breakdown: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+      let total = 0;
+      let sum   = 0;
+      for (const row of result.rows) {
+        const r = parseInt(row.rating, 10);
+        const c = parseInt(row.count, 10);
+        if (!Number.isFinite(r) || !Number.isFinite(c)) continue;
+        breakdown[r] = c;
+        total += c;
+        sum   += r * c;
+      }
+
+      return apiResponse({
+        breakdown,
+        total,
+        average: total > 0 ? (sum / total).toFixed(1) : '0',
+      }, HttpStatus.OK);
     }
 
-    // Try to get from cache
-    const cacheKey = generateReviewsCacheKey(placeId, limit, offset);
-    const cached = await getCache<{
-      data: any[];
-      count: number;
-      avgRating: number;
-      totalReviews: number;
-      pagination: any;
-    }>(cacheKey);
+    // Build ORDER BY
+    const orderMap: Record<string, string> = {
+      newest:    'r.created_at DESC',
+      oldest:    'r.created_at ASC',
+      highest:   'r.rating DESC',
+      lowest:    'r.rating ASC',
+      helpful:   'r.helpful_count DESC',
+    };
+    const orderBy = orderMap[sortBy] || 'r.created_at DESC';
 
-    if (cached) {
-      return new Response(JSON.stringify(cached), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }
+    const params: unknown[] = [];
+    let where = `WHERE r.status != 'deleted'`;
+    let idx = 1;
+
+    if (placeId) {
+      where += ` AND r.place_id = $${idx++}`;
+      params.push(placeId);
+    } else if (userId) {
+      where += ` AND r.user_id = $${idx++}`;
+      params.push(userId);
+    }
+
+    if (ratingFilter) {
+      const ratingValue = safeIntParam(ratingFilter, 0, 1, 5);
+      if (ratingValue >= 1) {
+        where += ` AND r.rating = $${idx++}`;
+        params.push(ratingValue);
+      }
+    }
+
+    const countResult = await query(
+      `SELECT COUNT(*) FROM reviews r ${where}`,
+      params
+    );
+    const total = parseInt(countResult.rows[0].count || '0');
+
+    const dataResult = await query(
+      `SELECT
+         r.id, r.place_id, r.user_id, r.title, r.content, r.rating,
+         r.helpful_count, r.unhelpful_count, r.images, r.visit_type,
+         r.is_verified, r.status, r.created_at, r.updated_at,
+         u.full_name AS user_name, u.avatar_url AS user_avatar
+       FROM reviews r
+       JOIN users u ON u.id = r.user_id
+       ${where}
+       ORDER BY ${orderBy}
+       LIMIT $${idx} OFFSET $${idx + 1}`,
+      [...params, limit, offset]
+    );
+
+    return apiResponse({
+      reviews: dataResult.rows,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    }, HttpStatus.OK);
+  } catch (error) {
+    logger.error('Reviews GET error:', error);
+    return problemJson({
+      status: 500,
+      title: 'Yorumlar Alınamadı',
+      detail: safeErrorDetail(error, 'Yorumlar alınamadı'),
+      type: '/problems/reviews-get-failed',
+      instance: '/api/reviews',
+    });
+  }
+};
+
+// ─── POST ─────────────────────────────────────────────────────────────────────
+
+export const POST: APIRoute = async ({ request }) => {
+  try {
+    const auth = await requireAuth(request);
+    if (!auth.user) {
+      return problemJson({
+        status: 401,
+        title: 'Unauthorized',
+        detail: 'Giriş gerekli',
+        type: '/problems/auth-required',
+        instance: '/api/reviews',
       });
     }
 
-    const [dataResult, countResult, statsResult] = await Promise.all([
-      query(
-        `SELECT r.id, r.title, r.content, r.rating, r.helpful_count, r.created_at,
-                u.full_name, u.avatar_url
-         FROM reviews r
-         JOIN users u ON r.user_id = u.id
-         WHERE r.place_id = $1
-         ORDER BY r.created_at DESC
-         LIMIT $2 OFFSET $3`,
-        [placeId, limit, offset]
-      ),
-      query('SELECT COUNT(*) as count FROM reviews WHERE place_id = $1', [placeId]),
-      query(
-        `SELECT COUNT(*) as total_reviews,
-                COALESCE(AVG(rating), 0) as avg_rating
-         FROM reviews WHERE place_id = $1`,
-        [placeId]
-      )
-    ]);
-
-    const count = parseInt(countResult.rows[0]?.count || '0');
-    const avgRating = parseFloat(statsResult.rows[0]?.avg_rating || '0');
-    const totalReviews = parseInt(statsResult.rows[0]?.total_reviews || '0');
-
-    const responseData = {
-      data: dataResult.rows,
-      count,
-      avgRating: Math.round(avgRating * 10) / 10,
-      totalReviews,
-      pagination: { limit, offset, hasMore: offset + limit < count }
-    };
-
-    // Cache for 10 minutes
-    await setCache(cacheKey, responseData, 600);
-
-    return new Response(JSON.stringify(responseData), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }
-    });
-  } catch (err) {
-    console.error('Reviews fetch error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Yorumlar getirilirken bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-};
-
-/**
- * Invalidate all review caches for a place
- */
-async function invalidateReviewsCache(placeId: string): Promise<void> {
-  try {
-    // Delete all review cache keys for this place
-    await deleteCache(`reviews:place:${placeId}:*`);
-  } catch (error) {
-    console.warn('Failed to invalidate reviews cache:', error);
-    // Continue anyway - cache invalidation is not critical
-  }
-}
-
-// Create review
-export const POST: APIRoute = async ({ request, locals }) => {
-  try {
-    const user = locals.user;
-    if (!user) {
-      return new Response(
-        JSON.stringify({ error: 'Oturum açmanız gerekiyor' }),
-        { status: 401, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
     const body = await request.json();
-    const { placeId, rating, content, title } = body;
-
-    if (!placeId || !rating || !content) {
-      return new Response(
-        JSON.stringify({ error: 'Tüm zorunlu alanları doldurun' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (rating < 1 || rating > 5) {
-      return new Response(
-        JSON.stringify({ error: 'Puan 1-5 arasında olmalıdır' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check if user already reviewed this place
-    const existing = await queryOne(
-      'SELECT id FROM reviews WHERE place_id = $1 AND user_id = $2',
-      [placeId, user.id]
-    );
-
-    if (existing) {
-      return new Response(
-        JSON.stringify({ error: 'Bu mekan için zaten yorum yaptınız' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const data = await insert('reviews', {
-      place_id: placeId,
-      user_id: user.id,
+    const {
+      action = 'create',
+      reviewId,
+      placeId,
+      place_id,
       rating,
-      content,
       title,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      content,
+      images = [],
+      visitType,
+      visit_date,
+    } = body;
+    const normalizedPlaceId = placeId || place_id;
+
+    // CREATE
+    if (action === 'create') {
+      if (!Array.isArray(images) || images.length > 20) {
+        return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'images dizisi en fazla 20 öğe içerebilir', type: '/problems/review-images-invalid', instance: '/api/reviews' });
+      }
+      let result: ReviewSubmissionResult;
+      try {
+        result = await submitPlaceReview(
+          { id: auth.user.id, email: auth.user.email || null },
+          {
+            placeId: normalizedPlaceId,
+            rating,
+            title,
+            content,
+            images,
+            visitType: visitType || visit_date || null,
+            awardUserPoints: Boolean(body.awardUserPoints),
+            ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
+            userAgent: request.headers.get('user-agent') || null,
+          },
+        );
+      } catch (error) {
+        return problemJson({
+          status: 400,
+          title: 'Yorum Gönderilemedi',
+          detail: safeErrorDetail(error, 'Yorum gönderilemedi.'),
+          type: '/problems/review-create-validation',
+          instance: '/api/reviews',
+        });
+      }
+
+      return apiResponse(result, HttpStatus.CREATED);
+    }
+
+    // UPDATE
+    if (action === 'update' && reviewId) {
+      if (rating !== undefined) {
+        const ratingNum = parseFloat(String(rating));
+        if (!Number.isFinite(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+          return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Puan 1-5 arasında olmalıdır', type: '/problems/review-update-rating-invalid', instance: '/api/reviews' });
+        }
+      }
+      if (title !== undefined && title !== null && (typeof title !== 'string' || title.length > 200)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Başlık 200 karakterden uzun olamaz', type: '/problems/review-update-title-too-long', instance: '/api/reviews' });
+      if (content !== undefined && content !== null && (typeof content !== 'string' || content.length > 5000)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Yorum 5000 karakterden uzun olamaz', type: '/problems/review-update-content-too-long', instance: '/api/reviews' });
+
+      const result = await query(
+        `UPDATE reviews
+         SET rating = COALESCE($1, rating),
+             title = COALESCE($2, title),
+             content = COALESCE($3, content),
+             images = COALESCE($4, images),
+             updated_at = NOW()
+         WHERE id = $5 AND user_id = $6 AND status != 'deleted'
+         RETURNING *`,
+        [rating, title, content, images?.length ? images : null, reviewId, auth.user.id]
+      );
+      if (!result.rows[0]) {
+        return apiResponse({ error: 'Yorum bulunamadı' }, HttpStatus.NOT_FOUND);
+      }
+
+      const pid = result.rows[0].place_id;
+      await query(
+        `UPDATE places SET rating = (SELECT AVG(rating) FROM reviews WHERE place_id = $1 AND status != 'deleted'), updated_at = NOW() WHERE id = $1`,
+        [pid]
+      );
+
+      return apiResponse({ success: true, review: result.rows[0] }, HttpStatus.OK);
+    }
+
+    // DELETE (soft)
+    if (action === 'delete' && reviewId) {
+      await query(
+        `UPDATE reviews SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND user_id = $2`,
+        [reviewId, auth.user.id]
+      );
+      return apiResponse({ success: true }, HttpStatus.OK);
+    }
+
+    // HELPFUL VOTE
+    if ((action === 'helpful' || action === 'unhelpful') && reviewId) {
+      const isHelpful = action === 'helpful';
+      // Upsert vote
+      await query(
+        `INSERT INTO review_votes (review_id, user_id, helpful)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (review_id, user_id) DO UPDATE SET helpful = $3`,
+        [reviewId, auth.user.id, isHelpful]
+      );
+      // Refresh counts
+      await query(
+        `UPDATE reviews SET
+           helpful_count   = (SELECT COUNT(*) FROM review_votes WHERE review_id = $1 AND helpful = true),
+           unhelpful_count = (SELECT COUNT(*) FROM review_votes WHERE review_id = $1 AND helpful = false)
+         WHERE id = $1`,
+        [reviewId]
+      );
+      return apiResponse({ success: true }, HttpStatus.OK);
+    }
+
+    return apiResponse({ error: 'Geçersiz action' }, HttpStatus.BAD_REQUEST);
+  } catch (error) {
+    logger.error('Reviews POST error:', error);
+    return problemJson({
+      status: 500,
+      title: 'Yorum İşlemi Başarısız',
+      detail: safeErrorDetail(error, 'Yorum işlemi başarısız'),
+      type: '/problems/reviews-post-failed',
+      instance: '/api/reviews',
     });
-
-    // Update place rating
-    await updatePlaceRating(placeId);
-
-    // Add points to user (10 puan)
-    await query('UPDATE users SET points = COALESCE(points, 0) + 10 WHERE id = $1', [user.id]);
-
-    // Log activity
-    const place = await queryOne('SELECT name FROM places WHERE id = $1', [placeId]);
-    await logActivity(user.id, 'review_created', 'place', placeId, {
-      placeName: place?.name || 'Mekan',
-      rating,
-      points: 10
-    });
-
-    // Invalidate reviews cache for this place
-    await invalidateReviewsCache(placeId);
-
-    return new Response(
-      JSON.stringify({ data, message: 'Yorumunuz başarıyla eklendi' }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
-    );
-  } catch (err) {
-    console.error('Review create error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Yorum eklenirken bir hata oluştu' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
   }
 };
-
-async function updatePlaceRating(placeId: string) {
-  const result = await query('SELECT rating FROM reviews WHERE place_id = $1', [placeId]);
-  const reviews = result.rows;
-
-  if (reviews.length > 0) {
-    const avgRating = reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length;
-    await query(
-      'UPDATE places SET rating = $1, review_count = $2 WHERE id = $3',
-      [Math.round(avgRating * 10) / 10, reviews.length, placeId]
-    );
-  }
-}

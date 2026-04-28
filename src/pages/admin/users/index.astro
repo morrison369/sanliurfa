@@ -1,0 +1,359 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { query } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
+
+interface UserStats {
+  total: number;
+  active: number;
+  vendors: number;
+  pending: number;
+  newToday: number;
+}
+
+interface UserStatsRow {
+  total?: string | number;
+  active?: string | number;
+  vendors?: string | number;
+  pending?: string | number;
+  new_today?: string | number;
+}
+
+function parseStat(value: string | number | undefined): number {
+  return Number.parseInt(String(value || '0'), 10);
+}
+
+let stats: UserStats = { total: 0, active: 0, vendors: 0, pending: 0, newToday: 0 };
+try {
+  const result = await query<UserStatsRow>(`
+    SELECT
+      COUNT(*)                                                      AS total,
+      COUNT(*) FILTER (WHERE status = 'active')                    AS active,
+      COUNT(*) FILTER (WHERE role = 'vendor')                      AS vendors,
+      COUNT(*) FILTER (WHERE status = 'pending')                   AS pending,
+      COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE)      AS new_today
+    FROM users WHERE status != 'deleted'
+  `);
+  const r = result.rows[0];
+  stats = {
+    total: parseStat(r?.total),
+    active: parseStat(r?.active),
+    vendors: parseStat(r?.vendors),
+    pending: parseStat(r?.pending),
+    newToday: parseStat(r?.new_today),
+  };
+} catch (e) {
+  logger.error('Users stats error', e instanceof Error ? e : new Error(String(e)));
+}
+---
+
+<AdminLayout
+  title="Kullanıcı Yönetimi"
+  subtitle="Tüm kullanıcıları görüntüleyin ve yönetin"
+  seo={{ title: 'Kullanıcı Yönetimi - Yönetim Paneli', noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-6xl space-y-5">
+      <div class="mb-2 flex items-center justify-between">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+          <div class="text-2xl font-bold text-[#1A1008]">{stats.total}</div>
+          <div class="text-sm text-[#9A8470]">Toplam Kullanıcı</div>
+        </div>
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+          <div class="text-2xl font-bold text-[#6B5540]">{stats.active}</div>
+          <div class="text-sm text-[#9A8470]">Aktif</div>
+        </div>
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+          <div class="text-2xl font-bold text-[#6B5540]">{stats.vendors}</div>
+          <div class="text-sm text-[#9A8470]">İşletme</div>
+        </div>
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+          <div class="text-2xl font-bold text-[#9A8470]">{stats.pending}</div>
+          <div class="text-sm text-[#9A8470]">Onay Bekleyen</div>
+        </div>
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+          <div class="text-2xl font-bold text-[#6B5540]">{stats.newToday}</div>
+          <div class="text-sm text-[#9A8470]">Bugün Yeni</div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+        <div class="flex flex-wrap gap-4">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="İsim veya email ara..."
+            class="px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400"
+          />
+          <select id="roleFilter" class="px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400">
+            <option value="">Tüm Roller</option>
+            <option value="user">Kullanıcı</option>
+            <option value="vendor">İşletme</option>
+            <option value="admin">Admin</option>
+          </select>
+          <select id="statusFilter" class="px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400">
+            <option value="">Tüm Durumlar</option>
+            <option value="active">Aktif</option>
+            <option value="pending">Onay Bekleyen</option>
+            <option value="suspended">Askıya Alınmış</option>
+          </select>
+          <button id="searchBtn" class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5c4839]">
+            Ara
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)]">
+              <tr>
+                <th class="px-6 py-3 text-left">
+                  <input type="checkbox" id="selectAll" class="rounded border-[rgba(200,160,100,0.3)]" />
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Kullanıcı</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Rol</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Durum</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">Kayıt Tarihi</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">İstatistikler</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-[#9A8470] uppercase">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody" class="divide-y divide-[rgba(200,160,100,0.08)]">
+              <tr>
+                <td colspan="7" class="px-6 py-12 text-center text-[#9A8470]">
+                  Yükleniyor...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="px-6 py-4 border-t border-[rgba(200,160,100,0.14)] flex items-center justify-between">
+          <div class="text-sm text-[#9A8470]">
+            <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
+          </div>
+          <div class="flex gap-2" id="pagination">
+            <!-- Pagination buttons will be inserted here -->
+          </div>
+        </div>
+      </div>
+
+      <div id="bulkActions" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#0D0A08] text-white px-6 py-3 rounded-sm shadow-lg hidden">
+        <span id="selectedCount">0</span> kullanıcı seçildi
+        <div class="inline-flex gap-2 ml-4">
+          <button onclick="bulkAction('activate')" class="px-3 py-1 bg-[rgba(200,160,100,0.3)] rounded-sm hover:bg-[rgba(200,160,100,0.4)] text-sm text-white">Aktifleştir</button>
+          <button onclick="bulkAction('suspend')" class="px-3 py-1 bg-[rgba(200,160,100,0.15)] rounded-sm hover:bg-[rgba(200,160,100,0.25)] text-sm text-[#9A8470]">Askıya Al</button>
+          <button onclick="bulkAction('delete')" class="px-3 py-1 bg-[rgba(200,160,100,0.08)] rounded-sm hover:bg-[rgba(200,160,100,0.15)] text-sm text-[#9A8470]">Sil</button>
+        </div>
+      </div>
+    </div>
+
+  <script is:inline>
+    let currentPage = 1;
+    let selectedUsers = new Set();
+    let allUsers = [];
+
+    const roleLabels = {
+      user: { text: 'Kullanıcı', class: 'bg-[rgba(200,160,100,0.08)] text-[#9A8470]' },
+      vendor: { text: 'İşletme', class: 'bg-[rgba(200,160,100,0.15)] text-[#6B5540]' },
+      admin: { text: 'Admin', class: 'bg-[rgba(200,160,100,0.2)] text-[#6B5540]' },
+    };
+
+    const statusLabels = {
+      active: { text: 'Aktif', class: 'bg-[rgba(200,160,100,0.15)] text-[#6B5540]' },
+      pending: { text: 'Bekliyor', class: 'bg-[rgba(200,160,100,0.08)] text-[#9A8470]' },
+      suspended: { text: 'Askıya Alındı', class: 'bg-[rgba(200,160,100,0.06)] text-[#9A8470]' },
+      deleted: { text: 'Silindi', class: 'bg-[rgba(200,160,100,0.04)] text-[#9A8470]' },
+    };
+
+    async function loadUsers() {
+      const tbody = document.getElementById('usersTableBody');
+      function setTbodyMsg(colSpan, text, cls) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td'); td.colSpan = colSpan; td.className = cls; td.textContent = text;
+        tr.appendChild(td); tbody.replaceChildren(tr);
+      }
+      setTbodyMsg(7, 'Yükleniyor...', 'px-6 py-12 text-center text-[#9A8470]');
+
+      const params = new URLSearchParams({ page: currentPage.toString() });
+      const search = document.getElementById('searchInput').value;
+      const role = document.getElementById('roleFilter').value;
+      const status = document.getElementById('statusFilter').value;
+
+      if (search) params.append('search', search);
+      if (role) params.append('role', role);
+      if (status) params.append('status', status);
+
+      try {
+        const response = await fetch(`/api/admin/users?${params}`);
+        const data = await response.json();
+
+        if (data.success) {
+          allUsers = data.users;
+          renderUsers(data.users);
+          updatePagination(data.pagination);
+        }
+      } catch (err) {
+        setTbodyMsg(7, 'Hata oluştu', 'px-6 py-12 text-center text-[#9A8470]');
+      }
+    }
+
+    function renderUsers(users) {
+      const tbody = document.getElementById('usersTableBody');
+      function setTbodyMsg(colSpan, text, cls) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td'); td.colSpan = colSpan; td.className = cls; td.textContent = text;
+        tr.appendChild(td); tbody.replaceChildren(tr);
+      }
+      if (users.length === 0) {
+        setTbodyMsg(7, 'Kullanıcı bulunamadı', 'px-6 py-12 text-center text-[#9A8470]');
+        return;
+      }
+
+      function buildUserRow(user) {
+        const tr = document.createElement('tr'); tr.className = 'hover:bg-[rgba(200,160,100,0.04)]';
+        const td1 = document.createElement('td'); td1.className = 'px-6 py-4';
+        const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = user.id;
+        if (selectedUsers.has(user.id)) cb.checked = true;
+        cb.className = 'rounded border-[rgba(200,160,100,0.3)] user-checkbox';
+        cb.addEventListener('change', () => toggleSelection(user.id));
+        td1.appendChild(cb);
+        const td2 = document.createElement('td'); td2.className = 'px-6 py-4';
+        const flex = document.createElement('div'); flex.className = 'flex items-center gap-3';
+        const avatar = document.createElement('div');
+        avatar.className = 'w-10 h-10 bg-[rgba(200,160,100,0.1)] rounded-full flex items-center justify-center text-[#6B5540] font-medium';
+        avatar.textContent = user.name ? user.name.charAt(0).toUpperCase() : '?';
+        const nameDiv = document.createElement('div');
+        const nameEl = document.createElement('div'); nameEl.className = 'font-medium text-[#1A1008]'; nameEl.textContent = user.name || 'İsimsiz';
+        const emailEl = document.createElement('div'); emailEl.className = 'text-sm text-[#9A8470]'; emailEl.textContent = user.email;
+        nameDiv.appendChild(nameEl); nameDiv.appendChild(emailEl);
+        flex.appendChild(avatar); flex.appendChild(nameDiv); td2.appendChild(flex);
+        const td3 = document.createElement('td'); td3.className = 'px-6 py-4';
+        const roleBadge = document.createElement('span');
+        roleBadge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (roleLabels[user.role]?.class || 'bg-[rgba(200,160,100,0.08)] text-[#9A8470]');
+        roleBadge.textContent = roleLabels[user.role]?.text || user.role;
+        td3.appendChild(roleBadge);
+        const td4 = document.createElement('td'); td4.className = 'px-6 py-4';
+        const statusBadge = document.createElement('span');
+        statusBadge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (statusLabels[user.status]?.class || 'bg-[rgba(200,160,100,0.06)] text-[#9A8470]');
+        statusBadge.textContent = statusLabels[user.status]?.text || user.status;
+        td4.appendChild(statusBadge);
+        const td5 = document.createElement('td'); td5.className = 'px-6 py-4 text-sm text-[#9A8470]';
+        td5.textContent = new Date(user.created_at).toLocaleDateString('tr-TR');
+        const td6 = document.createElement('td'); td6.className = 'px-6 py-4 text-sm';
+        const reviewsEl = document.createElement('div'); reviewsEl.className = 'text-[#6B5540]'; reviewsEl.textContent = (user.review_count || 0) + ' yorum';
+        td6.appendChild(reviewsEl);
+        if (user.place_count > 0) {
+          const placesEl = document.createElement('div'); placesEl.className = 'text-[#9A8470]'; placesEl.textContent = user.place_count + ' işletme';
+          td6.appendChild(placesEl);
+        }
+        const td7 = document.createElement('td'); td7.className = 'px-6 py-4';
+        const actDiv = document.createElement('div'); actDiv.className = 'flex gap-2';
+        const detailA = document.createElement('a');
+        detailA.href = '/admin/users/' + user.id;
+        detailA.className = 'text-[#9A8470] hover:text-urfa-600 text-sm'; detailA.textContent = 'Detay';
+        actDiv.appendChild(detailA);
+        const actionBtn = document.createElement('button');
+        if (user.status !== 'suspended') {
+          actionBtn.className = 'text-[#9A8470] hover:text-[#6B5540] text-sm'; actionBtn.textContent = 'Askıya Al';
+          actionBtn.addEventListener('click', () => suspendUser(user.id));
+        } else {
+          actionBtn.className = 'text-[#6B5540] hover:text-urfa-600 text-sm'; actionBtn.textContent = 'Aktifleştir';
+          actionBtn.addEventListener('click', () => activateUser(user.id));
+        }
+        actDiv.appendChild(actionBtn); td7.appendChild(actDiv);
+        tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+        tr.appendChild(td4); tr.appendChild(td5); tr.appendChild(td6); tr.appendChild(td7);
+        return tr;
+      }
+      tbody.replaceChildren(...users.map(buildUserRow));
+    }
+
+    function updatePagination(pagination) {
+      document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
+      document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
+      document.getElementById('totalCount').textContent = pagination.total;
+
+      const pagEl = document.getElementById('pagination');
+      const nodes = [];
+      for (let i = 1; i <= pagination.totalPages; i++) {
+        if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+          const btn = document.createElement('button');
+          btn.className = 'px-3 py-1 rounded-sm text-sm ' + (i === pagination.page ? 'bg-urfa-600 text-white' : 'bg-[rgba(200,160,100,0.08)] text-[#6B5540] hover:bg-[rgba(200,160,100,0.15)]');
+          btn.textContent = String(i);
+          btn.addEventListener('click', () => goToPage(i));
+          nodes.push(btn);
+        } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+          const span = document.createElement('span'); span.className = 'px-2 text-[#9A8470]'; span.textContent = '...';
+          nodes.push(span);
+        }
+      }
+      pagEl.replaceChildren(...nodes);
+    }
+
+    function goToPage(page) { currentPage = page; loadUsers(); }
+
+    function toggleSelection(userId) {
+      if (selectedUsers.has(userId)) { selectedUsers.delete(userId); } else { selectedUsers.add(userId); }
+      updateBulkActions();
+    }
+
+    function updateBulkActions() {
+      const bulkActions = document.getElementById('bulkActions');
+      const selectedCount = document.getElementById('selectedCount');
+      selectedCount.textContent = selectedUsers.size;
+      bulkActions.classList.toggle('hidden', selectedUsers.size === 0);
+    }
+
+    function toggleSelectAll() {
+      const selectAll = document.getElementById('selectAll');
+      const checkboxes = document.querySelectorAll('.user-checkbox');
+      if (selectAll.checked) { allUsers.forEach(u => selectedUsers.add(u.id)); } else { selectedUsers.clear(); }
+      checkboxes.forEach(cb => cb.checked = selectAll.checked);
+      updateBulkActions();
+    }
+
+    async function bulkAction(action) {
+      if (!await window.showConfirm(`${selectedUsers.size} kullanıcı için bu işlemi yapmak istediğinize emin misiniz?`)) return;
+      try {
+        const response = await fetch('/api/admin/users', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userIds: Array.from(selectedUsers), action })
+        });
+        if (response.ok) { selectedUsers.clear(); updateBulkActions(); loadUsers(); }
+      } catch (err) { window.toast?.error('İşlem başarısız'); }
+    }
+
+    async function suspendUser(userId) {
+      if (!await window.showConfirm('Bu kullanıcıyı askıya almak istediğinize emin misiniz?')) return;
+      try {
+        const res = await fetch(`/api/admin/users/${userId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'suspend' }) });
+        if (res.ok) loadUsers(); else window.toast?.error('İşlem başarısız');
+      } catch { window.toast?.error('Bağlantı hatası'); }
+    }
+
+    async function activateUser(userId) {
+      if (!await window.showConfirm('Bu kullanıcıyı aktifleştirmek istediğinize emin misiniz?')) return;
+      try {
+        const res = await fetch(`/api/admin/users/${userId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'activate' }) });
+        if (res.ok) loadUsers(); else window.toast?.error('İşlem başarısız');
+      } catch { window.toast?.error('Bağlantı hatası'); }
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', () => { currentPage = 1; loadUsers(); });
+    document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
+
+    window['goToPage'] = goToPage;
+    window['toggleSelection'] = toggleSelection;
+    window['bulkAction'] = bulkAction;
+    window['suspendUser'] = suspendUser;
+    window['activateUser'] = activateUser;
+
+    loadUsers();
+  </script>
+</AdminLayout>

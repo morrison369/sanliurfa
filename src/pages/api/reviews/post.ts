@@ -5,11 +5,11 @@
 
 import type { APIRoute } from 'astro';
 import { insert, queryOne, update as updateDb } from '../../../lib/postgres';
-import { checkQuota, incrementUsage } from '../../../lib/usage-tracking';
+import { checkAndIncrementQuota } from '../../../lib/usage/usage-tracking';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { validateWithSchema } from '../../../lib/validation';
+import { validateWithSchema, type ValidationSchema } from '../../../lib/validation';
 import { deleteCache } from '../../../lib/cache';
 
 const createReviewSchema = {
@@ -37,27 +37,27 @@ const createReviewSchema = {
     maxLength: 5000,
     sanitize: true,
   },
-} as any;
+} as ValidationSchema;
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    // Oturum kontrolü
+    // Check authentication
     if (!locals.user) {
       recordRequest('POST', '/api/reviews/post', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
       );
     }
 
-    // İstek gövdesini doğrula
+    // Validate request body
     const body = await request.json();
     const validation = validateWithSchema(body, createReviewSchema);
 
@@ -65,23 +65,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/reviews/post', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Geçersiz giriş',
+        'Invalid input',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
-        requestId
-      );
-    }
-
-    // CHECK QUOTA - Reviews are limited for free tier users
-    const quotaStatus = await checkQuota(locals.user.id, 'UNLIMITED_REVIEWS');
-
-    if (!quotaStatus.canUse) {
-      recordRequest('POST', '/api/reviews/post', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(
-        ErrorCode.FORBIDDEN,
-        `Aylık yorum kotanız tükendi. Sıfırlanması: 30 gün sonra. (${quotaStatus.current}/${quotaStatus.limit})`,
-        HttpStatus.FORBIDDEN,
-        undefined,
         requestId
       );
     }
@@ -98,8 +84,23 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/reviews/post', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Mekan bulunamadı',
+        'Place not found',
         HttpStatus.NOT_FOUND,
+        undefined,
+        requestId
+      );
+    }
+
+    // Atomic quota check + increment (HARD RULE #47) — prevents race condition where
+    // concurrent requests both pass checkQuota and both create reviews beyond the limit.
+    const quotaResult = await checkAndIncrementQuota(locals.user.id, 'UNLIMITED_REVIEWS');
+    if (!quotaResult.allowed) {
+      recordRequest('POST', '/api/reviews/post', HttpStatus.FORBIDDEN, Date.now() - startTime);
+      const limit = quotaResult.limit ?? '?';
+      return apiError(
+        ErrorCode.FORBIDDEN,
+        `Aylık yorum kotanız tükendi. Sıfırlanması: 30 gün sonra. (${quotaResult.current}/${limit})`,
+        HttpStatus.FORBIDDEN,
         undefined,
         requestId
       );
@@ -110,14 +111,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       place_id: placeId,
       user_id: locals.user.id,
       rating,
-      title: title || `Puan: ${rating}`,
+      title: title || `Rating: ${rating}`,
       content,
       is_approved: true,
       created_at: new Date().toISOString(),
     });
 
-    // Increment quota usage
-    const newUsage = await incrementUsage(locals.user.id, 'UNLIMITED_REVIEWS', 1);
+    const newUsage = quotaResult.current;
 
     // Award points
     await insert('points_transactions', {
@@ -153,8 +153,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         pointsEarned: 50,
         quotaStatus: {
           current: newUsage,
-          limit: quotaStatus.limit,
-          remaining: quotaStatus.limit ? quotaStatus.limit - newUsage : null,
+          limit: quotaResult.limit,
+          remaining: quotaResult.limit ? quotaResult.limit - newUsage : null,
         },
       },
       HttpStatus.CREATED,
@@ -166,7 +166,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Failed to create review', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Yorum oluşturulamadı',
+      'Failed to create review',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

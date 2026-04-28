@@ -2,15 +2,19 @@
 
 `master` dalinda asgari zorunlu kontroller:
 
-1. PR uzerinden merge zorunlulugu
-2. Force-push yasagi
-3. Branch deletion yasagi
-4. Conversation resolution zorunlulugu
-5. Squash-only merge
-6. Review zorunlulugu tek kisilik org icin kapali; ikinci collaborator eklenince tekrar 1 approval + CODEOWNERS review acilacak
-7. Required status check zorunlulugu GitHub Actions billing/runner kuyrugu cozulene kadar kapali
-8. `npm run security:scan-secrets` PR icinde ve localde calistirilir
-9. `npm run security:public-readiness` public yapmadan once temiz olmasi gerekir
+1. `Public City Acceptance` workflow status check
+2. `Security Audit / security` workflow status check
+3. `Security Audit / dependency-review` workflow status check
+4. `CI/CD Pipeline` workflow status check
+5. `Workflow Standards` workflow status check
+6. `CI/CD Pipeline / Workflow standards verify` stepinin zorunlu gecmesi
+7. `CI/CD Pipeline / Quality gate (gate:done)` stepinin zorunlu gecmesi
+8. `CI/CD Pipeline / Recommendations master gate (required)` stepinin zorunlu gecmesi
+9. `npm run security:scan-secrets` zorunlu gecmesi
+10. `npm run security:public-readiness` public yapmadan once temiz olmasi
+11. Force-push yasagi
+12. En az 1 review zorunlulugu
+13. Up-to-date branch zorunlulugu
 
 ## Team Plan Notu
 

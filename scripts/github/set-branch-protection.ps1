@@ -7,9 +7,21 @@ Param(
 $ErrorActionPreference = "Stop"
 
 $payload = @{
-  required_status_checks = $null
+  required_status_checks = @{
+    strict = $true
+    contexts = @(
+      "Public City Acceptance",
+      "Security Audit / security",
+      "Security Audit / dependency-review"
+    )
+  }
   enforce_admins = $true
-  required_pull_request_reviews = $null
+  required_pull_request_reviews = @{
+    required_approving_review_count = 1
+    dismiss_stale_reviews = $true
+    require_code_owner_reviews = $true
+    require_last_push_approval = $false
+  }
   restrictions = $null
   required_linear_history = $false
   allow_force_pushes = $false

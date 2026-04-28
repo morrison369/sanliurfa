@@ -5,24 +5,41 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserUsage, resetUsage, updateUserQuotas } from '../../../../lib/usage-tracking';
+import {
+  FEATURE_QUOTAS,
+  getUserUsage,
+  resetUsage,
+  updateUserQuotas,
+  type QuotaFeature,
+} from '../../../../lib/usage/usage-tracking';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
+type QuotaAction = 'reset_all' | 'reset_feature';
+
+interface QuotaUpdateBody {
+  action?: QuotaAction;
+  features?: string[];
+}
+
+function isQuotaFeature(feature: string): feature is QuotaFeature {
+  return Object.prototype.hasOwnProperty.call(FEATURE_QUOTAS, feature);
+}
+
 // GET - Get user's quotas
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    // Check admin access
-    if (!locals.isAdmin) {
+    // Check admin access (HARD RULE #52 — quota reset is high-impact, moderator must not access)
+    if (locals.user?.role !== 'admin') {
       recordRequest('GET', '/api/admin/quotas/[userId]', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
-        'Admin access required',
+        'Admin erişimi gereklidir',
         HttpStatus.FORBIDDEN,
         undefined,
         requestId
@@ -35,7 +52,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       recordRequest('GET', '/api/admin/quotas/[userId]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid user ID',
+        'Geçersiz kullanıcı ID',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -74,7 +91,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     logger.error('Failed to get user quotas', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to get quotas',
+      'Kotalar alınamadı',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -84,17 +101,17 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 
 // POST - Reset/update user quotas
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    // Check admin access
-    if (!locals.isAdmin) {
+    // Check admin access (HARD RULE #52 — quota reset is high-impact, moderator must not access)
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/admin/quotas/[userId]', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
-        'Admin access required',
+        'Admin erişimi gereklidir',
         HttpStatus.FORBIDDEN,
         undefined,
         requestId
@@ -102,7 +119,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     }
 
     const userId = params.userId;
-    const body = await request.json() as { action?: string; features?: string[] };
+    const body = (await request.json().catch(() => ({}))) as QuotaUpdateBody;
     const action = body.action || 'reset_all';
     const features = body.features || [];
 
@@ -110,7 +127,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/admin/quotas/[userId]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Invalid user ID',
+        'Geçersiz kullanıcı ID',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -126,7 +143,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       return apiResponse(
         {
           success: true,
-          message: 'All quotas reset based on current subscription',
+          message: 'Tüm kotalar mevcut aboneliğe göre sıfırlandı',
           userId,
         },
         HttpStatus.OK,
@@ -138,30 +155,44 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
         recordRequest('POST', '/api/admin/quotas/[userId]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
         return apiError(
           ErrorCode.VALIDATION_ERROR,
-          'Features array required',
+          'Sıfırlanacak özellik listesi gereklidir',
           HttpStatus.BAD_REQUEST,
           undefined,
           requestId
         );
       }
 
-      for (const feature of features) {
+      const invalidFeatures = features.filter((feature) => !isQuotaFeature(feature));
+      if (invalidFeatures.length > 0) {
+        recordRequest('POST', '/api/admin/quotas/[userId]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+        return apiError(
+          ErrorCode.VALIDATION_ERROR,
+          'Geçersiz kota özelliği',
+          HttpStatus.BAD_REQUEST,
+          { invalidFeatures },
+          requestId
+        );
+      }
+
+      const quotaFeatures = features.filter(isQuotaFeature);
+
+      for (const feature of quotaFeatures) {
         try {
-          await resetUsage(userId, feature as any);
+          await resetUsage(userId, feature);
         } catch (err) {
-          logger.warn('Failed to reset feature', { userId, feature, error: err });
+          logger.warn('Failed to reset feature', Object.assign(new Error('Failed to reset feature'), { userId, feature, error: err }));
         }
       }
 
       recordRequest('POST', '/api/admin/quotas/[userId]', HttpStatus.OK, Date.now() - startTime);
-      logger.logMutation('reset_features', 'feature_access', userId, locals.user?.id, { features });
+      logger.logMutation('reset_features', 'feature_access', userId, locals.user?.id);
 
       return apiResponse(
         {
           success: true,
-          message: `Reset ${features.length} features for user`,
+          message: `${quotaFeatures.length} özellik için kota sıfırlandı`,
           userId,
-          features,
+          features: quotaFeatures,
         },
         HttpStatus.OK,
         requestId
@@ -182,7 +213,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     logger.error('Failed to update quotas', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Failed to update quotas',
+      'Kotalar güncellenemedi',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

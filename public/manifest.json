@@ -1,98 +1,89 @@
 {
-  "name": "sanliurfa.com - Şanlıurfa Şehir Rehberi",
+  "name": "Şanlıurfa.com - Şehir Rehberi",
   "short_name": "Şanlıurfa",
-  "description": "Şanlıurfa mekanları, tarihi yerleri, gastronomisi, etkinlikleri ve şehir servisleri için Türkçe şehir rehberi.",
+  "description": "Şanlıurfa'nın en kapsamlı dijital şehir rehberi. Göbeklitepe, Balıklıgöl, gastronomi ve daha fazlası.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#2a130b",
-  "theme_color": "#a18072",
+  "background_color": "#ffffff",
+  "theme_color": "#e63946",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "tr",
   "dir": "ltr",
+  "categories": ["travel", "food", "lifestyle"],
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "maskable any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-maskable-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "maskable any"
     }
   ],
   "shortcuts": [
     {
-      "name": "Şanlıurfa Mekanlarını Ara",
-      "short_name": "Ara",
-      "description": "Şanlıurfa'da yerler ara",
-      "url": "/arama",
-      "icons": [
-        {
-          "src": "/icon-search-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
+      "name": "Yöresel Yemekler",
+      "short_name": "Yemek",
+      "description": "Şanlıurfa'daki yöresel yemek mekanları",
+      "url": "/mekanlar/yoresel-yemekler",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     },
     {
-      "name": "Favorilerim",
-      "short_name": "Favoriler",
-      "description": "Kaydedilmiş yerlerim",
-      "url": "/profil/favoriler",
-      "icons": [
-        {
-          "src": "/icon-heart-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
+      "name": "Oteller",
+      "short_name": "Otel",
+      "description": "Konaklama seçenekleri",
+      "url": "/konaklama",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Göbeklitepe",
+      "short_name": "Göbeklitepe",
+      "description": "Dünyanın ilk tapınağı",
+      "url": "/isletme/gobeklitepe",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
     }
   ],
-  "categories": ["travel", "food", "lifestyle", "education"],
-  "screenshots": [
-    {
-      "src": "/screenshot-mobile-1.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshot-mobile-2.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "/screenshot-desktop-1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ],
-  "share_target": {
-    "action": "/api/share",
-    "method": "POST",
-    "enctype": "application/x-www-form-urlencoded",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  }
+  "related_applications": [],
+  "prefer_related_applications": false
 }

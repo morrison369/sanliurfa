@@ -1,18 +1,17 @@
-// @ts-nocheck
 /**
  * Review Analytics
  * GET /api/owner/analytics/reviews/[id] - Get review analysis
  */
 
 import type { APIRoute } from 'astro';
-import { getReviewAnalysis } from '../../../../../lib/business-analytics';
+import { getReviewAnalysis } from '../../../../../lib/analytics/business-analytics';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
 import { logger } from '../../../../../lib/logging';
 import { recordRequest } from '../../../../../lib/metrics';
 import { queryOne } from '../../../../../lib/postgres';
 
 export const GET: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -22,7 +21,7 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
       recordRequest('GET', '/api/owner/analytics/reviews/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId

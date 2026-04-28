@@ -1,37 +1,41 @@
 // API: Review approve (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { query } from '../../../../lib/postgres';
+import { logger } from '../../../../lib/logging';
+import { problemJson, safeErrorDetail } from '../../../../lib/api';
+import { moderateReview } from '../../../../lib/review/admin-review-moderation';
 
 export const POST: APIRoute = async ({ params, locals }) => {
   try {
     const { id } = params;
-
+    
     if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Yetkisiz işlem' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/review-approve-unauthorized',
+        instance: '/api/reviews/{id}/approve',
+      });
     }
 
-    await query(
-      `UPDATE reviews SET
-        is_approved = true,
-        is_moderated = true,
-        moderated_at = $1,
-        moderated_by = $2
-       WHERE id = $3`,
-      [new Date().toISOString(), locals.user?.id, id]
-    );
+    await moderateReview({
+      id: String(id || ''),
+      decision: 'approve',
+      moderatorId: locals.user?.id || null,
+    });
 
     return new Response(
       JSON.stringify({ success: true }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
-    console.error('Review approve error:', err);
-    return new Response(
-      JSON.stringify({ error: 'Server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    logger.error('Review approve error:', err);
+    return problemJson({
+      status: 500,
+      title: 'Yorum Onaylanamadı',
+      detail: safeErrorDetail(err, 'server_error'),
+      type: '/problems/review-approve-failed',
+      instance: '/api/reviews/{id}/approve',
+    });
   }
 };

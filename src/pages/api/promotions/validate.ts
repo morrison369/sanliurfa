@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { validatePromotion } from '../../../lib/promotions-management';
+import { validatePromotion } from '../../../lib/promotions/promotions-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { validateWithSchema } from '../../../lib/validation';
+import { validateWithSchema, ValidationSchema } from '../../../lib/validation';
 
-const validateSchema = {
+const validateSchema: ValidationSchema = {
   couponCode: {
     type: 'string' as const,
     required: true,
@@ -23,10 +23,10 @@ const validateSchema = {
     required: true,
     min: 0
   }
-} as any;
+};
 
 export const POST: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -38,7 +38,7 @@ export const POST: APIRoute = async ({ request }) => {
       recordRequest('POST', '/api/promotions/validate', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Geçersiz giriş',
+        'Invalid input',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId

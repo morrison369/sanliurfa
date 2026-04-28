@@ -1,0 +1,86 @@
+---
+/**
+ * RelatedPosts — Server Island
+ *
+ * "Benzer Yazılar" widget at the bottom of a blog post detail page.
+ * Used with `server:defer` so the article body streams without waiting on
+ * the related-posts category lookup.
+ *
+ *   <RelatedPosts category={post.category} excludeSlug={post.slug} server:defer>
+ *     <div slot="fallback" class="..." />
+ *   </RelatedPosts>
+ */
+import { query } from '../../lib/postgres';
+import { resolveContentImage } from '../../lib/content-images';
+import { logger } from '../../lib/logging';
+
+interface Props {
+  category: string | null | undefined;
+  excludeSlug: string;
+}
+
+const { category, excludeSlug } = Astro.props;
+
+let relatedPosts: Array<{
+  id: string | number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  featured_image: string | null;
+  category: string | null;
+  reading_time: number | null;
+  created_at: string;
+}> = [];
+
+if (category) {
+  try {
+    const result = await query(
+      "SELECT id, title, slug, excerpt, featured_image, category, reading_time, created_at FROM blog_posts WHERE status = 'published' AND category = $1 AND slug != $2 LIMIT 3",
+      [category, excludeSlug],
+    );
+    relatedPosts = result.rows;
+  } catch (e) {
+    logger.error('RelatedPosts query failed', e instanceof Error ? e : new Error(String(e)));
+  }
+}
+
+const getBlogImage = (entry: typeof relatedPosts[number]) =>
+  resolveContentImage({
+    category: 'blog',
+    slug: entry?.slug,
+    explicit: entry?.featured_image,
+    placeholder: '/images/placeholder-blog.jpg',
+    thumb: true,
+  });
+---
+
+{relatedPosts.length > 0 && (
+  <div class="bg-gray-50 py-12">
+    <div class="container mx-auto px-4">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">Benzer Yazılar</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {relatedPosts.map((related) => (
+          <a href={`/blog/${related.slug}`} class="group">
+            <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <div class="h-40 bg-gradient-to-br from-amber-100 to-orange-100">
+                <img
+                  src={getBlogImage(related)}
+                  alt={related.title}
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                  onerror="this.setAttribute('src','/images/placeholder-blog.jpg')"
+                />
+              </div>
+              <div class="p-4">
+                <h3 class="font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2">
+                  {related.title}
+                </h3>
+                <p class="text-sm text-gray-500 mt-2">{related.reading_time} dk okuma</p>
+              </div>
+            </article>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+)}

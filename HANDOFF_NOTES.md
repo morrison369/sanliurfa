@@ -4,9 +4,9 @@
 Successfully completed build fixes, integrated webhook system, and created comprehensive test coverage and documentation.
 
 ## Canonical Tracking Files
-- `memory.md`: current phase window, completed phases, checkpoints, blockers
-- `TASK_TRACKER.md`: open and closed execution items with ownership state
-- `PHASE_INDEX.md`: canonical index for phase documentation files
+- `memory.md`: current phase, completed phases, open tasks, blockers, acceptance gate
+- `TASK_TRACKER.md`: open/closed execution items and ownership status
+- `PHASE_INDEX.md`: canonical map for all phase documentation locations
 
 ## What Was Accomplished
 

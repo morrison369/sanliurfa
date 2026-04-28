@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getTrendingScores, getTrendingKeywords } from '../../../lib/trending-recommendations';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getTrendingScores, getTrendingKeywords } from '../../../lib/feed/trending-recommendations';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request }) => {
     const url = new URL(request.url);
     const entityType = url.searchParams.get('type') || 'places';
     const period = (url.searchParams.get('period') || 'daily') as 'hourly' | 'daily' | 'weekly';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
     const includeKeywords = url.searchParams.get('keywords') === 'true';
 
     // Get trending scores

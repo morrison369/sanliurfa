@@ -1,1 +1,344 @@
-# CWP (CentOS Web Panel) Apache Node.js Deployment Rehberi\n\n## 🔴 ÖNEMLİ: SSH Erişim Kontrolü\n\nÖnce sunucuna SSH ile bağlanmayı dene:\n\n```bash\nssh -p 77 sanliur@176.9.138.254\n# Şifre: CHANGE_ME_CWP_SSH_PASSWORD\n```\n\n**Bağlanamazsan:**\n1. CWP Panel üzerinden SSH erişimini kontrol et\n2. Şifreyi CWP panelden sıfırla\n3. Alternatif olarak CWP File Manager kullan\n\n---\n\n## 📋 CWP + Apache + Node.js Deployment Planı\n\n### Adım 1: Node.js Kurulumu (Root Gerekir)\n\n**Not:** CWP shared hosting'de root erişimin yoksa, hosting sağlayıcısından Node.js kurulumunu istemen gerekir.\n\nEğer root/sudo erişimin varsa:\n\n```bash\n# SSH ile root olarak bağlan\nssh -p 77 root@176.9.138.254\n\n# Development Tools kur\nyum groupinstall 'Development Tools' -y\n\n# Node.js 22 LTS kur\ncurl -sL https://rpm.nodesource.com/setup_22.x | bash -\nyum install -y nodejs\n\n# Kontrol et\nnode -v  # v22.x.x\nnpm -v   # 10.x.x\n```\n\n### Adım 2: CWP Panel'de Domain Yapılandırması\n\n1. **CWP Panel'e giriş:**\n   - URL: `https://176.9.138.254:2083` veya `https://sunucu-adiniz:2083`\n   - Kullanıcı: `sanliur`\n   - Şifre: Hosting şifren\n\n2. **Webserver Domain Conf Ayarı:**\n   - Sol menü: `Webserver Settings` → `Webserver Domain Conf`\n   - Kullanıcı seç: `sanliur`\n   - Domain seç: `sanliurfa.com` veya kullanacağın domain\n   - Yapılandırma seç: **Apache → Custom Port** ⭐\n   - Port: `3000` (veya 3001, 3002 vb.)\n   - IP: `127.0.0.1`\n   - ✅ `Rebuild webserver conf for domain on save` işaretle\n   - Kaydet\n\n3. **vHost Manuel Düzenleme (Gerekirse):**\n   \n   CWP Panel → `Webserver Settings` → `Webservers Conf Editor`\n   \n   Dosya: `/etc/apache2/conf.d/vhosts/sanliurfa.com.conf`\n   \n   Aşağıdaki satırları ekle:\n\n```apache\n<VirtualHost *:80>\n    ServerName sanliurfa.com\n    ServerAlias www.sanliurfa.com\n    DocumentRoot /home/sanliur/public_html\n    \n    # Node.js Reverse Proxy\n    ProxyRequests Off\n    <Proxy *>\n        Require all granted\n    </Proxy>\n    \n    ProxyPass / http://127.0.0.1:3000/\n    ProxyPassReverse / http://127.0.0.1:3000/\n    \n    # WebSocket desteği (gerekirse)\n    RewriteEngine On\n    RewriteCond %{HTTP:Upgrade} websocket [NC]\n    RewriteRule ^/?(.*) "ws://127.0.0.1:3000/$1" [P,L]\n</VirtualHost>\n```\n\n4. **Apache Yeniden Başlat:**\n   \n   CWP Panel → `Service Management` → `Apache` → `Restart`\n   \n   VEYA SSH ile:\n   ```bash\n   systemctl restart httpd\n   ```\n\n### Adım 3: Uygulamayı Sunucuya Yükle\n\n#### Seçenek A: CWP File Manager (Kolay)\n\n1. CWP Panel → `File Manager`\n2. `public_html` klasörüne git\n3. `Upload` butonu ile dosyaları yükle\n   - `dist/` klasörünün içeriğini yükle\n   - `package.json` ve `package-lock.json` yükle\n\n#### Seçenek B: SSH/SCP (Hızlı)\n\n```bash\n# Yerel bilgisayarında - build al\nnpm run build\n\n# SCP ile dosyaları gönder\nscp -P 77 -r dist/ sanliur@176.9.138.254:/home/sanliur/public_html/\nscp -P 77 package*.json sanliur@176.9.138.254:/home/sanliur/public_html/\n```\n\n#### Seçenek C: Git Clone (Eğer Git kuruluysa)\n\n```bash\n# SSH ile sunucuya bağlan\ncd /home/sanliur/public_html\ngit clone https://github.com/kullanici/sanliurfa.git .\n```\n\n### Adım 4: Node.js Bağımlılıkları ve Build\n\n```bash\n# SSH ile sunucuya bağlan\ncd /home/sanliur/public_html\n\n# Node modülleri kur\nnpm ci --legacy-peer-deps --production\n\n# Eğer build alman gerekirse (localde değil sunucuda):\n# npm run build\n\n# Astro Node.js standalone entry point kontrolü\nls -la dist/server/entry.mjs\n```\n\n### Adım 5: Process Manager ile Çalıştırma\n\n#### Seçenek A: PM2 (Önerilen)\n\n```bash\n# PM2 kur (global)\nnpm install -g pm2\n\n# PM2 ile başlat\npm2 start dist/server/entry.mjs --name "sanliurfa" -- --port 3000\n\n# PM2 startup ayarı (sunucu yeniden başlayınca otomatik)\npm2 startup\npm2 save\n\n# Kontrol\npm2 list\npm2 logs sanliurfa\n```\n\n#### Seçenek B: screen/tmux (Basit)\n\n```bash\n# screen kurulu değilse\nyum install screen -y\n\n# Yeni screen oluştur\nscreen -S sanliurfa\n\n# Uygulamayı başlat\ncd /home/sanliur/public_html\nnode dist/server/entry.mjs --port 3000\n\n# Detach: Ctrl+A, ardından D\n# Yeniden bağlan: screen -r sanliurfa\n```\n\n### Adım 6: SSL (HTTPS) Kurulumu\n\n1. CWP Panel → `Webserver Settings` → `SSL Certificates` → `AutoSSL`\n2. Kullanıcı: `sanliur`\n3. Domain: `sanliurfa.com`\n4. `Install SSL` butonu\n\nVEYA Let's Encrypt:\n\n```bash\n# SSH ile root olarak\ncertbot --apache -d sanliurfa.com -d www.sanliurfa.com\n```\n\n### Adım 7: Firewall Ayarları\n\n```bash\n# Node.js portunu aç (gerekirse)\nfirewall-cmd --permanent --add-port=3000/tcp\nfirewall-cmd --reload\n\n# Sadece localhost'tan erişime izin ver (daha güvenli)\n# Apache reverse proxy zaten bunu halleder\n```\n\n---\n\n## ⚠️ Shared Hosting Özel Notlar\n\n### Root Erişim Yoksa:\n\nEğer sadece kullanıcı (sanliur) erişimin varsa ve Node.js kurulu değilse:\n\n1. **Hosting sağlayıcısına ticket aç:**\n   - "Node.js 22 LTS kurulumu istiyorum"\n   - "Apache mod_proxy modüllerinin aktif olması gerekli"\n\n2. **Alternatif: NPX ile çalıştırma:**\n   ```bash\n   # npx kullanarak node çalıştır (kurulu değilse)\n   npx node dist/server/entry.mjs --port 3000\n   ```\n\n3. **Statik Export (Eğer SSR çalışmazsa):**\n   - Astro yapılandırmasını değiştir:\n   ```javascript\n   // astro.config.mjs\n   export default defineConfig({\n     output: 'static',  // SSR yerine static\n     // ...\n   });\n   ```\n   - `npm run build` → `dist/` klasöründeki tüm dosyaları FTP ile public_html'e at\n\n---\n\n## 🔧 Troubleshooting\n\n### 1. "Proxy Error" / "502 Bad Gateway"\n\n```bash\n# Node.js uygulaması çalışıyor mu kontrol et\ncurl http://127.0.0.1:3000\n\n# Apache logları\ntail -f /var/log/httpd/error_log\ntail -f /var/log/httpd/domains/sanliurfa.com.error.log\n```\n\n### 2. "Permission Denied"\n\n```bash\n# Dosya izinlerini düzelt\nchmod 755 /home/sanliur/public_html/dist/server/entry.mjs\nchown -R sanliur:sanliur /home/sanliur/public_html/\n```\n\n### 3. "Port Already in Use"\n\n```bash\n# Portu kullanan process'i bul\nnetstat -tlnp | grep 3000\n# veya\nlsof -i :3000\n\n# Process'i öldür\nkill -9 <PID>\n```\n\n### 4. PM2 Permission Hatası\n\n```bash\n# PM2 home dizini ayarla\nexport PM2_HOME=/home/sanliur/.pm2\npm2 start dist/server/entry.mjs --name "sanliurfa"\n```\n\n---\n\n## 📁 Önerilen Dizin Yapısı\n\n```\n/home/sanliur/\n├── public_html/              # Ana web dizini\n│   ├── dist/                 # Astro build çıktısı\n│   │   ├── client/           # Statik dosyalar\n│   │   └── server/           # SSR entry point\n│   │       └── entry.mjs     # Ana dosya\n│   ├── package.json          # Dependencies\n│   ├── package-lock.json     # Lock file\n│   ├── .env                  # Çevre değişkenleri\n│   └── node_modules/         # Node modülleri\n│\n└── logs/                     # Log dosyaları (manuel oluştur)\n    ├── app.log\n    └── error.log\n```\n\n---\n\n## 🚀 Hızlı Başlangıç Komutları\n\n```bash\n# 1. SSH Bağlan\nssh -p 77 sanliur@176.9.138.254\n\n# 2. Dizine git\ncd /home/sanliur/public_html\n\n# 3. Node.js kontrol et\nnode -v\n\n# 4. Bağımlılıkları kur\nnpm ci --legacy-peer-deps --production\n\n# 5. Çevre değişkenleri\nexport NODE_ENV=production\nexport PORT=3000\n\n# 6. Başlat\nnode dist/server/entry.mjs --port 3000\n\n# 7. Arka planda çalıştır (screen ile)\nCtrl+C  # Önce durdur\nscreen -S sanliurfa\nnode dist/server/entry.mjs --port 3000\nCtrl+A, D  # Detach\n```\n\n---\n\n## 📞 Destek\n\nSorun yaşarsan:\n1. Apache error log: `/var/log/httpd/error_log`\n2. Domain log: `/var/log/httpd/domains/sanliurfa.com.error.log`\n3. CWP Forum: https://forum.centos-webpanel.com/\n\n**Sunucu Bilgileri:**\n- IP: 176.9.138.254\n- SSH Port: 77\n- Kullanıcı: sanliur\n- Panel: CWP (CentOS Web Panel)\n- Web Server: Apache\n
+# CWP (CentOS Web Panel) Apache Node.js Deployment Rehberi
+
+## 🔴 ÖNEMLİ: SSH Erişim Kontrolü
+
+Önce sunucuna SSH ile bağlanmayı dene:
+
+```bash
+ssh -p 77 sanliur@176.9.138.254
+# Şifre: CHANGE_ME_CWP_SSH_PASSWORD
+```
+
+**Bağlanamazsan:**
+1. CWP Panel üzerinden SSH erişimini kontrol et
+2. Şifreyi CWP panelden sıfırla
+3. Alternatif olarak CWP File Manager kullan
+
+---
+
+## 📋 CWP + Apache + Node.js Deployment Planı
+
+### Adım 1: Node.js Kurulumu (Root Gerekir)
+
+**Not:** CWP shared hosting'de root erişimin yoksa, hosting sağlayıcısından Node.js kurulumunu istemen gerekir.
+
+Eğer root/sudo erişimin varsa:
+
+```bash
+# SSH ile root olarak bağlan
+ssh -p 77 root@176.9.138.254
+
+# Development Tools kur
+yum groupinstall 'Development Tools' -y
+
+# Node.js 22 LTS kur
+curl -sL https://rpm.nodesource.com/setup_22.x | bash -
+yum install -y nodejs
+
+# Kontrol et
+node -v  # v22.x.x
+npm -v   # 10.x.x
+```
+
+### Adım 2: CWP Panel'de Domain Yapılandırması
+
+1. **CWP Panel'e giriş:**
+   - URL: `https://176.9.138.254:2083` veya `https://sunucu-adiniz:2083`
+   - Kullanıcı: `sanliur`
+   - Şifre: Hosting şifren
+
+2. **Webserver Domain Conf Ayarı:**
+   - Sol menü: `Webserver Settings` → `Webserver Domain Conf`
+   - Kullanıcı seç: `sanliur`
+   - Domain seç: `sanliurfa.com` veya kullanacağın domain
+   - Yapılandırma seç: **Apache → Custom Port** ⭐
+   - Port: `3000` (veya 3001, 3002 vb.)
+   - IP: `127.0.0.1`
+   - ✅ `Rebuild webserver conf for domain on save` işaretle
+   - Kaydet
+
+3. **vHost Manuel Düzenleme (Gerekirse):**
+   
+   CWP Panel → `Webserver Settings` → `Webservers Conf Editor`
+   
+   Dosya: `/etc/apache2/conf.d/vhosts/sanliurfa.com.conf`
+   
+   Aşağıdaki satırları ekle:
+
+```apache
+<VirtualHost *:80>
+    ServerName sanliurfa.com
+    ServerAlias www.sanliurfa.com
+    DocumentRoot /home/sanliur/public_html
+    
+    # Node.js Reverse Proxy
+    ProxyRequests Off
+    <Proxy *>
+        Require all granted
+    </Proxy>
+    
+    ProxyPass / http://127.0.0.1:3000/
+    ProxyPassReverse / http://127.0.0.1:3000/
+    
+    # WebSocket desteği (gerekirse)
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteRule ^/?(.*) "ws://127.0.0.1:3000/$1" [P,L]
+</VirtualHost>
+```
+
+4. **Apache Yeniden Başlat:**
+   
+   CWP Panel → `Service Management` → `Apache` → `Restart`
+   
+   VEYA SSH ile:
+   ```bash
+   systemctl restart httpd
+   ```
+
+### Adım 3: Uygulamayı Sunucuya Yükle
+
+#### Seçenek A: CWP File Manager (Kolay)
+
+1. CWP Panel → `File Manager`
+2. `public_html` klasörüne git
+3. `Upload` butonu ile dosyaları yükle
+   - `dist/` klasörünün içeriğini yükle
+   - `package.json` ve `package-lock.json` yükle
+
+#### Seçenek B: SSH/SCP (Hızlı)
+
+```bash
+# Yerel bilgisayarında - build al
+npm run build
+
+# SCP ile dosyaları gönder
+scp -P 77 -r dist/ sanliur@176.9.138.254:/home/sanliur/public_html/
+scp -P 77 package*.json sanliur@176.9.138.254:/home/sanliur/public_html/
+```
+
+#### Seçenek C: Git Clone (Eğer Git kuruluysa)
+
+```bash
+# SSH ile sunucuya bağlan
+cd /home/sanliur/public_html
+git clone https://github.com/kullanici/sanliurfa.git .
+```
+
+### Adım 4: Node.js Bağımlılıkları ve Build
+
+```bash
+# SSH ile sunucuya bağlan
+cd /home/sanliur/public_html
+
+# Node modülleri kur
+npm ci --legacy-peer-deps --production
+
+# Eğer build alman gerekirse (localde değil sunucuda):
+# npm run build
+
+# Astro Node.js standalone entry point kontrolü
+ls -la dist/server/entry.mjs
+```
+
+### Adım 5: Process Manager ile Çalıştırma
+
+#### Seçenek A: PM2 (Önerilen)
+
+```bash
+# PM2 kur (global)
+npm install -g pm2
+
+# PM2 ile başlat
+pm2 start dist/server/entry.mjs --name "sanliurfa" -- --port 3000
+
+# PM2 startup ayarı (sunucu yeniden başlayınca otomatik)
+pm2 startup
+pm2 save
+
+# Kontrol
+pm2 list
+pm2 logs sanliurfa
+```
+
+#### Seçenek B: screen/tmux (Basit)
+
+```bash
+# screen kurulu değilse
+yum install screen -y
+
+# Yeni screen oluştur
+screen -S sanliurfa
+
+# Uygulamayı başlat
+cd /home/sanliur/public_html
+node dist/server/entry.mjs --port 3000
+
+# Detach: Ctrl+A, ardından D
+# Yeniden bağlan: screen -r sanliurfa
+```
+
+### Adım 6: SSL (HTTPS) Kurulumu
+
+1. CWP Panel → `Webserver Settings` → `SSL Certificates` → `AutoSSL`
+2. Kullanıcı: `sanliur`
+3. Domain: `sanliurfa.com`
+4. `Install SSL` butonu
+
+VEYA Let's Encrypt:
+
+```bash
+# SSH ile root olarak
+certbot --apache -d sanliurfa.com -d www.sanliurfa.com
+```
+
+### Adım 7: Firewall Ayarları
+
+```bash
+# Node.js portunu aç (gerekirse)
+firewall-cmd --permanent --add-port=3000/tcp
+firewall-cmd --reload
+
+# Sadece localhost'tan erişime izin ver (daha güvenli)
+# Apache reverse proxy zaten bunu halleder
+```
+
+---
+
+## ⚠️ Shared Hosting Özel Notlar
+
+### Root Erişim Yoksa:
+
+Eğer sadece kullanıcı (sanliur) erişimin varsa ve Node.js kurulu değilse:
+
+1. **Hosting sağlayıcısına ticket aç:**
+   - "Node.js 22 LTS kurulumu istiyorum"
+   - "Apache mod_proxy modüllerinin aktif olması gerekli"
+
+2. **Alternatif: NPX ile çalıştırma:**
+   ```bash
+   # npx kullanarak node çalıştır (kurulu değilse)
+   npx node dist/server/entry.mjs --port 3000
+   ```
+
+3. **Statik Export (Eğer SSR çalışmazsa):**
+   - Astro yapılandırmasını değiştir:
+   ```javascript
+   // astro.config.mjs
+   export default defineConfig({
+     output: 'static',  // SSR yerine static
+     // ...
+   });
+   ```
+   - `npm run build` → `dist/` klasöründeki tüm dosyaları FTP ile public_html'e at
+
+---
+
+## 🔧 Troubleshooting
+
+### 1. "Proxy Error" / "502 Bad Gateway"
+
+```bash
+# Node.js uygulaması çalışıyor mu kontrol et
+curl http://127.0.0.1:3000
+
+# Apache logları
+tail -f /var/log/httpd/error_log
+tail -f /var/log/httpd/domains/sanliurfa.com.error.log
+```
+
+### 2. "Permission Denied"
+
+```bash
+# Dosya izinlerini düzelt
+chmod 755 /home/sanliur/public_html/dist/server/entry.mjs
+chown -R sanliur:sanliur /home/sanliur/public_html/
+```
+
+### 3. "Port Already in Use"
+
+```bash
+# Portu kullanan process'i bul
+netstat -tlnp | grep 3000
+# veya
+lsof -i :3000
+
+# Process'i öldür
+kill -9 <PID>
+```
+
+### 4. PM2 Permission Hatası
+
+```bash
+# PM2 home dizini ayarla
+export PM2_HOME=/home/sanliur/.pm2
+pm2 start dist/server/entry.mjs --name "sanliurfa"
+```
+
+---
+
+## 📁 Önerilen Dizin Yapısı
+
+```
+/home/sanliur/
+├── public_html/              # Ana web dizini
+│   ├── dist/                 # Astro build çıktısı
+│   │   ├── client/           # Statik dosyalar
+│   │   └── server/           # SSR entry point
+│   │       └── entry.mjs     # Ana dosya
+│   ├── package.json          # Dependencies
+│   ├── package-lock.json     # Lock file
+│   ├── .env                  # Çevre değişkenleri
+│   └── node_modules/         # Node modülleri
+│
+└── logs/                     # Log dosyaları (manuel oluştur)
+    ├── app.log
+    └── error.log
+```
+
+---
+
+## 🚀 Hızlı Başlangıç Komutları
+
+```bash
+# 1. SSH Bağlan
+ssh -p 77 sanliur@176.9.138.254
+
+# 2. Dizine git
+cd /home/sanliur/public_html
+
+# 3. Node.js kontrol et
+node -v
+
+# 4. Bağımlılıkları kur
+npm ci --legacy-peer-deps --production
+
+# 5. Çevre değişkenleri
+export NODE_ENV=production
+export PORT=3000
+
+# 6. Başlat
+node dist/server/entry.mjs --port 3000
+
+# 7. Arka planda çalıştır (screen ile)
+Ctrl+C  # Önce durdur
+screen -S sanliurfa
+node dist/server/entry.mjs --port 3000
+Ctrl+A, D  # Detach
+```
+
+---
+
+## 📞 Destek
+
+Sorun yaşarsan:
+1. Apache error log: `/var/log/httpd/error_log`
+2. Domain log: `/var/log/httpd/domains/sanliurfa.com.error.log`
+3. CWP Forum: https://forum.centos-webpanel.com/
+
+**Sunucu Bilgileri:**
+- IP: 176.9.138.254
+- SSH Port: 77
+- Kullanıcı: sanliur
+- Panel: CWP (CentOS Web Panel)
+- Web Server: Apache

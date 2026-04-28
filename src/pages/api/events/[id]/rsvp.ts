@@ -1,17 +1,16 @@
-// @ts-nocheck
 /**
  * Toggle Event RSVP
  * POST /api/events/[id]/rsvp - Toggle RSVP for an event
  */
 
 import type { APIRoute } from 'astro';
-import { toggleRsvp, hasUserRsvpd } from '../../../../lib/events-management';
+import { toggleRsvp, hasUserRsvpd } from '../../../../lib/events/events-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
 export const POST: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -20,7 +19,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
       recordRequest('POST', '/api/events/[id]/rsvp', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -33,7 +32,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     const success = await toggleRsvp(id, userId);
 
     if (!success) {
-      throw new Error('Katılım durumu güncellenemedi');
+      throw new Error('Failed to toggle RSVP');
     }
 
     const nowRsvpd = await hasUserRsvpd(id, userId);
@@ -53,7 +52,7 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     logger.error('Failed to toggle RSVP', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Katılım işlemi başarısız oldu',
+      'Failed to toggle RSVP',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

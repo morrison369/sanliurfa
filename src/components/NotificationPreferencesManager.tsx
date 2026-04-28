@@ -2,7 +2,7 @@
  * Notification Preferences Manager Component
  * Manage notification settings by type
  */
-import React, { useState } from 'react';
+import {  useState  } from 'react';
 import { Settings, AlertCircle, Loader, CheckCircle } from 'lucide-react';
 
 interface NotificationType {
@@ -41,7 +41,6 @@ export default function NotificationPreferencesManager() {
       }
     }), {})
   );
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [savingType, setSavingType] = useState<string | null>(null);

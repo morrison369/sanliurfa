@@ -1,12 +1,12 @@
 // API: Change user password (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { queryOne, update } from '../../../lib/postgres';
-import { hashPassword } from '../../../lib/auth';
+import { logger } from '../../../lib/logging';
+import { changeAccountPassword } from '../../../lib/user/profile-settings';
 
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   try {
     const user = locals.user;
-
+    
     if (!user) {
       return redirect('/giris?redirect=/profil/ayarlar');
     }
@@ -28,27 +28,21 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
       return redirect('/profil/ayarlar?error=password_too_short');
     }
 
-    // Verify current password
-    const currentHash = hashPassword(currentPassword);
-    const dbUser = await queryOne(
-      'SELECT id FROM users WHERE id = $1 AND password_hash = $2',
-      [user.id, currentHash]
+    await changeAccountPassword(
+      { id: user.id },
+      {
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      },
     );
-
-    if (!dbUser) {
-      return redirect('/profil/ayarlar?error=wrong_password');
-    }
-
-    // Update password
-    const newHash = hashPassword(newPassword);
-    await update('users', user.id, {
-      password_hash: newHash,
-      updated_at: new Date().toISOString(),
-    });
 
     return redirect('/profil/ayarlar?success=password_changed');
   } catch (err) {
-    console.error('Password change error:', err);
+    logger.error('Password change error:', err);
+    if (err instanceof Error && err.message.includes('Mevcut şifre')) {
+      return redirect('/profil/ayarlar?error=wrong_password');
+    }
     return redirect('/profil/ayarlar?error=update_failed');
   }
 };

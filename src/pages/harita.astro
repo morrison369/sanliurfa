@@ -1,0 +1,184 @@
+---
+import { Icon } from 'astro-icon/components';
+import Layout from '../layouts/Layout.astro';
+import LeafletMap from '../components/map/LeafletMap.astro';
+import { getPlaces } from '../lib/places/db';
+import { query } from '../lib/postgres';
+import { getSiteBranding } from '../lib/site-branding';
+import { logger } from '../lib/logging';
+const { baseUrl } = await getSiteBranding();
+
+const url = new URL(Astro.request.url);
+const category = url.searchParams.get('kategori') || undefined;
+
+let places: any[] = [];
+let categories: any[] = [];
+
+try {
+  const [placesResult, categoriesResult] = await Promise.all([
+    getPlaces({ status: 'active', category, limit: 200 }),
+    query(`SELECT id, slug, name, icon, color, is_active FROM categories WHERE is_active = true ORDER BY sort_order, name`),
+  ]);
+  places = placesResult.places;
+  categories = categoriesResult.rows;
+} catch (e) {
+  logger.error('Harita verileri yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const validPlaces = places.filter((p: any) => p.latitude && p.longitude).map((p: any) => ({
+  id: p.id,
+  name: p.name,
+  lat: p.latitude,
+  lon: p.longitude,
+  category: p.category_slug,
+  thumbnail: p.thumbnail,
+  rating: p.rating,
+  slug: p.slug,
+}));
+
+const seo = {
+  title: 'Harita - Şanlıurfa Mekanları',
+  description: `Şanlıurfa'daki ${validPlaces.length}+ mekanı haritada keşfedin. Restoranlar, oteller, tarihi yerler ve daha fazlası.`,
+  keywords: ['şanlıurfa harita', 'urfa mekan haritası', 'şanlıurfa mekanlar nerede', 'urfa haritada gezilecek yerler', 'şanlıurfa konum'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/harita',
+};
+const faqItems = [
+  { S: 'Şanlıurfa haritasında hangi mekanlar görüntülenir?', C: 'Restoran, kafe, tarihi yer, eczane, market ve hizmet noktaları dahil tüm aktif mekanlar haritada işaretlidir.' },
+  { S: 'Harita üzerinde nasıl arama yapabilirim?', C: 'Harita sayfasında kategori filtresi ve ilçe seçeneğiyle mekanları daraltabilir, yakınlaştırarak detaylı görünüm elde edebilirsiniz.' },
+  { S: 'Mobil cihazdan haritaya nasıl ulaşabilirim?', C: 'Harita sayfası mobil cihazlara tam uyumludur; konumunuza en yakın mekanları da filtreleyebilirsiniz.' },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <!-- Header -->
+    <div class="bg-[#FDFAF3] border-b border-[rgba(200,160,100,0.14)]">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold text-[#1A1008]">Harita</h1>
+            <p class="text-[#9A8470] text-sm">{validPlaces.length} mekan haritada gösteriliyor</p>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="flex flex-wrap gap-2">
+            <a
+              href="/harita"
+              class={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
+                !category ? 'bg-urfa-600 text-white' : 'bg-[rgba(200,160,100,0.08)] text-[#6B5540] hover:bg-[rgba(200,160,100,0.15)]'
+              }`}
+            >
+              Tümü
+            </a>
+            {categories.filter(c => c.is_active).slice(0, 6).map(cat => (
+              <a
+                href={`/harita?kategori=${cat.slug}`}
+                class={`px-4 py-2 rounded-sm text-sm font-medium transition-colors ${
+                  category === cat.slug ? 'bg-urfa-600 text-white' : 'bg-[rgba(200,160,100,0.08)] text-[#6B5540] hover:bg-[rgba(200,160,100,0.15)]'
+                }`}
+              >
+                {cat.name}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div class="h-[calc(100vh-180px)]">
+      <LeafletMap
+        places={validPlaces}
+        zoom={13}
+        height="100%"
+      />
+    </div>
+
+    <!-- Mobile Place List Toggle -->
+    <div class="md:hidden fixed bottom-4 left-4 right-4 z-[400]">
+      <button
+        onclick="togglePlaceList()"
+        class="w-full py-3 bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm font-medium text-[#1A1008] flex items-center justify-center gap-2"
+      >
+        <Icon name="lucide:menu" class="w-5 h-5" />
+        Mekan Listesi ({validPlaces.length})
+      </button>
+    </div>
+
+    <!-- Mobile Place List Modal -->
+    <div id="place-list-modal" class="fixed inset-0 bg-black/50 z-[500] hidden" onclick="togglePlaceList()">
+      <div id="place-list-panel" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-sm max-h-[70vh] overflow-hidden">
+        <div class="p-4 border-b border-[rgba(200,160,100,0.14)] flex items-center justify-between">
+          <h3 class="font-bold text-[#1A1008]">Mekanlar ({validPlaces.length})</h3>
+          <button onclick="togglePlaceList()" class="p-2 hover:bg-[rgba(200,160,100,0.08)] rounded-sm">
+            <Icon name="lucide:x" class="w-5 h-5 text-[#6B5540]" />
+          </button>
+        </div>
+        <div class="overflow-y-auto max-h-[60vh]">
+          {validPlaces.map(place => (
+            <a href={`/isletme/${place.slug}`} class="flex items-center gap-3 p-4 border-b border-[rgba(200,160,100,0.1)] hover:bg-[rgba(200,160,100,0.04)]">
+              <div class="w-12 h-12 rounded-sm bg-[rgba(200,160,100,0.08)] flex-shrink-0 overflow-hidden">
+                {place.thumbnail ? (
+                  <img src={place.thumbnail} alt={place.name} class="w-full h-full object-cover" loading="lazy" />
+                ) : (
+                  <div class="w-full h-full flex items-center justify-center text-2xl">📍</div>
+                )}
+              </div>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-medium text-[#1A1008] truncate">{place.name}</h4>
+                <div class="flex items-center gap-2 text-sm text-[#9A8470]">
+                  {place.rating && (
+                    <span class="text-yellow-500">★ {place.rating.toFixed(1)}</span>
+                  )}
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    function togglePlaceList() {
+      const modal = document.getElementById('place-list-modal');
+      modal.classList.toggle('hidden');
+      document.body.style.overflow = modal.classList.contains('hidden') ? '' : 'hidden';
+    }
+    window['togglePlaceList'] = togglePlaceList;
+
+    const panel = document.getElementById('place-list-panel');
+    if (panel) {
+      panel.addEventListener('click', function (e) {
+        e.stopPropagation();
+      });
+    }
+  </script>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Map',
+    name: 'Şanlıurfa Mekan Haritası',
+    description: 'Şanlıurfa\'daki tüm mekanların interaktif haritası',
+    url: `${baseUrl}/harita`,
+    about: { '@type': 'City', name: 'Şanlıurfa', url: `${baseUrl}` },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Harita', item: `${baseUrl}/harita` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

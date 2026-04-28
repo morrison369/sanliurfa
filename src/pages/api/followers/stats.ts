@@ -4,14 +4,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getFollowerStats } from '../../../lib/followers';
+import { getFollowerStats } from '../../../lib/followers/followers';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { getCache, setCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -33,7 +33,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     // Check cache
     const cacheKey = `follower-stats:${userId}:${locals.user?.id || 'anonymous'}`;
-    const cached = await getCache<any>(cacheKey);
+    const cached = await getCache<Awaited<ReturnType<typeof getFollowerStats>>>(cacheKey);
 
     if (cached) {
       const duration = Date.now() - startTime;
@@ -44,8 +44,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
           data: cached
         },
         HttpStatus.OK,
-        requestId,
-        { 'X-Cache': 'HIT' }
+        requestId
       );
     }
 

@@ -24,6 +24,12 @@ export const migration_088_search_filters = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE search_filters ADD COLUMN IF NOT EXISTS search_type VARCHAR(50);
+      ALTER TABLE search_filters ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+      ALTER TABLE search_filters ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_search_filters_type
       ON search_filters(search_type, is_active, display_order)
     `);
@@ -45,6 +51,14 @@ export const migration_088_search_filters = async (pool: Pool) => {
         updated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(search_query, search_type)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE search_analytics ADD COLUMN IF NOT EXISTS search_query VARCHAR(255);
+      ALTER TABLE search_analytics ADD COLUMN IF NOT EXISTS search_type VARCHAR(50);
+      ALTER TABLE search_analytics ADD COLUMN IF NOT EXISTS trend_score FLOAT DEFAULT 0;
+      ALTER TABLE search_analytics ADD COLUMN IF NOT EXISTS is_trending BOOLEAN DEFAULT false;
+      ALTER TABLE search_analytics ADD COLUMN IF NOT EXISTS last_searched_at TIMESTAMP;
     `);
 
     await pool.query(`
@@ -90,6 +104,11 @@ export const migration_088_search_filters = async (pool: Pool) => {
         updated_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(search_query, search_type)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE zero_result_searches ADD COLUMN IF NOT EXISTS is_resolved BOOLEAN DEFAULT false;
+      ALTER TABLE zero_result_searches ADD COLUMN IF NOT EXISTS occurrence_count INT DEFAULT 0;
     `);
 
     await pool.query(`

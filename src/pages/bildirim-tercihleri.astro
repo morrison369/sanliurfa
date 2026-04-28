@@ -1,21 +1,24 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import NotificationPreferencesManager from "../components/NotificationPreferencesManager";
+import Layout from '../layouts/Layout.astro';
+import NotificationPreferencesManager from '../components/NotificationPreferencesManager';
 
-const { locals } = Astro;
-
-// Redirect if not authenticated
-if (!locals.user) {
-  return Astro.redirect(
-    `/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`,
-  );
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/bildirim-tercihleri');
 }
 ---
 
-<Layout title="Bildirim Tercihleri | sanliurfa.com" noindex>
-  <div class="min-h-screen bg-gray-50">
+<Layout seo={{ title: "Bildirim Tercihleri | Sanliurfa.com", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="max-w-3xl mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">Hesabım</p>
+        <h1 class="text-3xl font-bold text-[#F5EDD6] mb-2">Bildirim Tercihleri</h1>
+      </div>
+    </div>
+
     <div class="max-w-3xl mx-auto px-4 py-8">
-      <NotificationPreferencesManager client:load />
+      <NotificationPreferencesManager client:visible={{ rootMargin: '120px' }} />
     </div>
   </div>
 </Layout>

@@ -1,16 +1,23 @@
 ---
-import Layout from '../../../../../layouts/Layout.astro';
-import { MapPin, Save, ArrowLeft } from 'lucide-react';
+import { actions, isInputError } from 'astro:actions';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../../../../layouts/AdminLayout.astro';
 import { queryOne } from '../../../../../lib/postgres';
-import ProviderImagePicker from '../../../../../components/admin/ProviderImagePicker.astro';
+import { logger } from '../../../../../lib/logging';
 
-const { id } = Astro.params;
+let site: any = null;
+const routeId = Astro.params.id;
 
-const site = await queryOne('SELECT * FROM historical_sites WHERE id = $1', [id]);
-
-if (!site) {
+if (!routeId) {
   return Astro.redirect('/admin/historical-sites');
 }
+
+const siteResult = Astro.getActionResult(actions.updateAdminHistoricalSite);
+const siteInputErrors = isInputError(siteResult?.error) ? siteResult.error.fields : {};
+const siteActionError =
+  !isInputError(siteResult?.error) && siteResult?.error?.message
+    ? siteResult.error.message
+    : null;
 
 const periods = [
   { id: 'tunç-çağı', label: 'Tunç Çağı' },
@@ -25,48 +32,63 @@ const periods = [
   { id: 'cumhuriyet', label: 'Cumhuriyet Dönemi' },
 ];
 
-const seo = {
-  title: `${site.name} - Düzenle - Yönetim Paneli`,
-  noindex: true
-};
+try {
+  site = await queryOne('SELECT * FROM historical_sites WHERE id = $1', [routeId]);
+  if (!site) {
+    return Astro.redirect('/admin/historical-sites');
+  }
+} catch (e) {
+  logger.error('Error loading admin historical site', e instanceof Error ? e : new Error(String(e)));
+}
+
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <a href="/admin/historical-sites" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              <ArrowLeft className="w-5 h-5" />
-            </a>
-            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Tarihi Yer Düzenle</h1>
-          </div>
-        </div>
+<AdminLayout
+  title="Tarihi Yer Düzenle"
+  subtitle={site ? site.name : 'Tarihi yer bilgilerini güncelleyin'}
+  seo={{ title: site ? `${site.name} - Düzenle` : 'Düzenle - Yönetim Paneli', noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-6xl space-y-5">
+      <div class="mb-2">
+        <a href="/admin/historical-sites" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Tarihi Yerler</a>
       </div>
-    </div>
 
-    <div class="container-custom py-8">
-      <form action={`/api/historical-sites/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2 space-y-6">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel bilgiler</h2>
+      {siteResult?.data?.success && (
+        <div class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] px-4 py-3 text-sm text-[#6B5540]">
+          {siteResult.data.message || 'Tarihi yer güncellendi.'}
+          <a href="/admin/historical-sites" class="ml-2 font-medium underline">Tarihi yer listesine dön</a>
+        </div>
+      )}
+
+      {siteActionError && (
+        <div class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] px-4 py-3 text-sm text-[#9A8470]">
+          {siteActionError}
+        </div>
+      )}
+
+      <form action={actions.updateAdminHistoricalSite} method="POST" class="grid lg:grid-cols-3 gap-6">
+        <input type="hidden" name="id" value={routeId} />
+        <div class="lg:col-span-2 space-y-5">
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h2 class="text-base font-semibold text-[#6B5540] mb-4">Temel Bilgiler</h2>
             <div class="space-y-4">
               <div>
-                <label for="name" class="label dark:text-gray-300">Yer Adı *</label>
-                <input type="text" id="name" name="name" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={site.name} />
+                <label for="name" class="block text-sm font-medium text-[#6B5540] mb-1">Yer Adı *</label>
+                <input type="text" id="name" name="name" required class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={site.name} />
+                {siteInputErrors.name && <p class="mt-1 text-xs text-[#9A8470]">{siteInputErrors.name[0]}</p>}
               </div>
               <div>
-                <label for="short_description" class="label dark:text-gray-300">Kısa Açıklama</label>
-                <input type="text" id="short_description" name="short_description" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={site.short_description || ''} />
+                <label for="short_description" class="block text-sm font-medium text-[#6B5540] mb-1">Kısa Açıklama</label>
+                <input type="text" id="short_description" name="short_description" class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={site.short_description || ''} />
               </div>
               <div>
-                <label for="description" class="label dark:text-gray-300">Açıklama *</label>
-                <textarea id="description" name="description" rows="5" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none">{site.description}</textarea>
+                <label for="description" class="block text-sm font-medium text-[#6B5540] mb-1">Açıklama *</label>
+                <textarea id="description" name="description" rows="5" required class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 resize-none">{site.description}</textarea>
+                {siteInputErrors.description && <p class="mt-1 text-xs text-[#9A8470]">{siteInputErrors.description[0]}</p>}
               </div>
               <div>
-                <label for="period" class="label dark:text-gray-300">Tarihi Dönem</label>
-                <select id="period" name="period" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <label for="period" class="block text-sm font-medium text-[#6B5540] mb-1">Tarihi Dönem</label>
+                <select id="period" name="period" class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
                   <option value="">Dönem seçin</option>
                   {periods.map(p => (
                     <option value={p.id} selected={p.id === site.period}>{p.label}</option>
@@ -76,75 +98,101 @@ const seo = {
             </div>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Konum</h2>
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h2 class="text-base font-semibold text-[#6B5540] mb-4">Konum</h2>
             <div class="space-y-4">
               <div>
-                <label for="location" class="label dark:text-gray-300">Adres *</label>
+                <label for="location" class="block text-sm font-medium text-[#6B5540] mb-1">Adres *</label>
                 <div class="relative">
-                  <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                  <input type="text" id="location" name="location" required class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={site.location} />
+                  <Icon name="lucide:map-pin" class="absolute left-3 top-3 w-5 h-5 text-[#9A8470]" />
+                  <input type="text" id="location" name="location" required class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={site.location} />
+                  {siteInputErrors.location && <p class="mt-1 text-xs text-[#9A8470]">{siteInputErrors.location[0]}</p>}
                 </div>
               </div>
               <div class="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label for="latitude" class="label dark:text-gray-300">Enlem</label>
-                  <input type="number" id="latitude" name="latitude" step="any" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={site.latitude || ''} />
+                  <label for="latitude" class="block text-sm font-medium text-[#6B5540] mb-1">Enlem</label>
+                  <input type="number" id="latitude" name="latitude" step="any" class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={site.latitude || ''} />
                 </div>
                 <div>
-                  <label for="longitude" class="label dark:text-gray-300">Boylam</label>
-                  <input type="number" id="longitude" name="longitude" step="any" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white" value={site.longitude || ''} />
+                  <label for="longitude" class="block text-sm font-medium text-[#6B5540] mb-1">Boylam</label>
+                  <input type="number" id="longitude" name="longitude" step="any" class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={site.longitude || ''} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h2 class="text-base font-semibold text-[#6B5540] mb-4">Ziyaret Bilgileri</h2>
+            <div class="space-y-4">
+              <div>
+                <label for="opening_hours" class="block text-sm font-medium text-[#6B5540] mb-1">Çalışma Saatleri</label>
+                <div class="relative">
+                  <Icon name="lucide:clock" class="absolute left-3 top-3 w-5 h-5 text-[#9A8470]" />
+                  <input
+                    type="text"
+                    id="opening_hours"
+                    name="opening_hours"
+                    class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+                    value={site.visiting_hours || site.opening_hours || ''}
+                    placeholder="Örn: 08:00 - 18:00"
+                  />
+                </div>
+              </div>
+              <div>
+                <label for="entry_fee" class="block text-sm font-medium text-[#6B5540] mb-1">Giriş Ücreti</label>
+                <div class="relative">
+                  <Icon name="lucide:dollar-sign" class="absolute left-3 top-3 w-5 h-5 text-[#9A8470]" />
+                  <input
+                    type="text"
+                    id="entry_fee"
+                    name="entry_fee"
+                    class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+                    value={site.entrance_fee || site.entry_fee || ''}
+                    placeholder="Örn: 50 TL veya Ücretsiz"
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <aside class="space-y-6">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
+        <aside class="space-y-5">
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h3 class="font-semibold text-[#6B5540] mb-4">Yayınla</h3>
             <div class="space-y-3">
               <label class="flex items-center gap-2">
-                <input type="checkbox" name="is_unesco" checked={site.is_unesco} class="rounded border-gray-300 text-blue-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">UNESCO Mirası</span>
+                <input type="checkbox" name="is_unesco" checked={site.is_unesco} class="rounded" />
+                <span class="text-sm text-[#6B5540]">UNESCO Mirası</span>
               </label>
               <label class="flex items-center gap-2">
-                <input type="checkbox" name="is_featured" checked={site.is_featured} class="rounded border-gray-300 text-urfa-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan yer</span>
+                <input type="checkbox" name="is_featured" checked={site.is_featured} class="rounded" />
+                <span class="text-sm text-[#6B5540]">Öne çıkan yer</span>
               </label>
             </div>
-            <label for="status" class="label dark:text-gray-300 mt-4">Durum</label>
-            <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
+            <label for="status" class="block text-sm font-medium text-[#6B5540] mt-4 mb-1">Durum</label>
+            <select id="status" name="status" class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 mt-1">
               <option value="draft" selected={site.status === 'draft'}>Taslak</option>
               <option value="active" selected={site.status === 'active'}>Aktif</option>
               <option value="inactive" selected={site.status === 'inactive'}>Pasif</option>
             </select>
-            <button type="submit" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
-              <Save className="w-4 h-4" />
+            <button type="submit" class="rounded-sm bg-urfa-600 w-full mt-4 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700 flex items-center justify-center gap-2">
+              <Icon name="lucide:save" class="w-4 h-4" />
               Kaydet
             </button>
           </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
-            <div class="mb-4">
-              <ProviderImagePicker
-                currentImage={site.images?.[0] || ''}
-                currentSlug={site.slug}
-                currentName={site.name}
-                currentCategory={site.period || 'tarihi yer'}
-                folder="historical-sites"
-              />
-            </div>
-            <textarea name="images" rows="3" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm" placeholder="https://sanliurfa.com/images/gobeklitepe-1.jpg">{site.images?.join(', ') || ''}</textarea>
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h3 class="font-semibold text-[#6B5540] mb-4">Görseller</h3>
+            <textarea name="images" rows="3" class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" placeholder="https://example.com/image1.jpg">{site.images?.join(', ') || ''}</textarea>
+            <p class="text-xs text-[#9A8470] mt-2">Virgülle ayırarak birden fazla görsel ekleyebilirsiniz</p>
             {site.images && site.images.length > 0 && (
               <div class="mt-4 grid grid-cols-3 gap-2">
-                {site.images.map((img: string) => <img src={img} alt="" class="w-full h-16 object-cover rounded" />)}
+                {site.images.map((img: string) => <img src={img} alt="" class="w-full h-16 object-cover rounded-sm" />)}
               </div>
             )}
           </div>
         </aside>
       </form>
     </div>
-  </div>
-</Layout>
+</AdminLayout>

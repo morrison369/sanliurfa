@@ -4,20 +4,20 @@
  */
 
 import type { APIRoute } from 'astro';
-import { searchPromotions, getTrendingPromotions } from '../../../lib/promotions-management';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { searchPromotions, getTrendingPromotions } from '../../../lib/promotions/promotions-management';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const q = url.searchParams.get('q') || '';
     const trending = url.searchParams.get('trending') === 'true';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
 
     let promotions = [];
 
@@ -29,7 +29,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       recordRequest('GET', '/api/promotions/search', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Arama terimi en az 2 karakter olmalı veya trending=true kullanılmalıdır',
+        'Search query must be at least 2 characters or use trending=true',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
@@ -51,7 +51,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     logger.error('Failed to search promotions', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Promosyonlar aranamadı',
+      'Failed to search promotions',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

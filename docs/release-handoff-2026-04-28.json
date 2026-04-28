@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-04-28T19:01:32.776Z",
+  "releaseStatus": "technical-ready-with-operational-blockers",
+  "gates": {
+    "lint": {
+      "status": "passed",
+      "errors": 0,
+      "warnings": 0,
+      "problems": 0
+    },
+    "typecheck": {
+      "status": "passed",
+      "errors": 0,
+      "warnings": 0,
+      "hints": 0
+    },
+    "apiReleaseGate": "passed",
+    "qualityMetrics": "passed",
+    "unit": {
+      "status": "passed",
+      "testFiles": 132,
+      "tests": 707
+    },
+    "e2eClean": {
+      "status": "passed",
+      "passed": 96,
+      "skipped": 10
+    },
+    "releaseLite": "passed",
+    "gateDone": "passed",
+    "opsNextBulk": "passed"
+  },
+  "openapi": {
+    "currentMissingInSpec": 0,
+    "baselineMissingInSpec": 0,
+    "newlyMissingVsBaseline": 0,
+    "resolvedVsBaseline": 0,
+    "documentedPaths": 457,
+    "fileRoutes": 457
+  },
+  "problemJson": {
+    "offenders": 0,
+    "historicalBaseline": 93
+  },
+  "e2eRuntime": {
+    "redisNoAuthNoiseResolved": true,
+    "redisKeyPrefix": "e2e:sanliurfa:",
+    "rateLimitBypass": "E2E_RATE_LIMIT_BYPASS=1 non-production only",
+    "defaultProject": "chromium",
+    "isolationNote": "test:e2e:clean should not run in parallel with build, gate:done, release-lite, or cleanup jobs because they share dev server lifecycle and port 4321.",
+    "advisory": "latest isolated E2E run passed after site_settings read-cache/in-flight dedupe; previous non-blocking slow-query warning was not reproduced."
+  },
+  "artifacts": [
+    "docs/release-readiness.json",
+    "docs/release-readiness.md",
+    "docs/release-handoff-2026-04-28.md",
+    "docs/operational-blockers-2026-04-28.json",
+    "docs/operational-blockers-2026-04-28.md",
+    "quality-metrics.json"
+  ],
+  "remainingBlockers": [
+    {
+      "id": "public-readiness-history-secrets",
+      "severity": "critical",
+      "type": "security-public-readiness",
+      "status": "blocked",
+      "gate": "npm run security:public-readiness",
+      "summary": "Repository is not safe to make public until historical deploy key and old credential literals are rotated and removed from git history.",
+      "findings": [
+        "git history contains deploy_key",
+        "git history contains old credential literals"
+      ],
+      "requiredActions": [
+        "rotate affected deploy keys and credentials",
+        "clean git history in an approved maintenance window",
+        "rerun security:scan-secrets and security:public-readiness",
+        "only then consider public visibility change"
+      ],
+      "runbook": "docs/public-readiness-runbook-2026-04-28.md",
+      "requiresExplicitApproval": true,
+      "destructiveRisk": true
+    }
+  ]
+}

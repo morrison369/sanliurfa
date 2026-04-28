@@ -13,14 +13,15 @@ test.describe('Loyalty - Admin Rewards Management', () => {
         fullName: 'Admin User'
       }
     });
-    const { data } = await registerRes.json();
-    adminToken = data.token;
-    userId = data.id;
+    const body = await registerRes.json();
+    const data = body.data ?? body;
+    adminToken = registerRes.headers()['set-cookie']?.split(';')[0] ?? '';
+    userId = data.user?.id ?? data.id ?? '';
   });
 
   test('GET /api/admin/loyalty/rewards - list rewards', async ({ request }) => {
     const response = await request.get('/api/admin/loyalty/rewards', {
-      headers: { 'Cookie': `auth-token=${adminToken}` }
+      headers: { Cookie: adminToken }
     });
 
     if (response.status() === 403) {
@@ -44,7 +45,7 @@ test.describe('Loyalty - Admin Rewards Management', () => {
         stock_quantity: 50,
         is_active: true
       },
-      headers: { 'Cookie': `auth-token=${adminToken}` }
+      headers: { Cookie: adminToken }
     });
 
     if (response.status() === 403) {
@@ -67,10 +68,10 @@ test.describe('Loyalty - Admin Rewards Management', () => {
         fullName: 'Regular User'
       }
     });
-    const { data: user } = await userRes.json();
+    const userCookie = userRes.headers()['set-cookie']?.split(';')[0] ?? '';
 
     const response = await request.get('/api/admin/loyalty/rewards', {
-      headers: { 'Cookie': `auth-token=${user.token}` }
+      headers: { Cookie: userCookie }
     });
 
     expect(response.status()).toBe(403);
@@ -87,16 +88,17 @@ test.describe('Loyalty - Admin Rewards Management', () => {
         fullName: 'Award User'
       }
     });
-    const { data: awardUser } = await userRes.json();
+    const awardBody = await userRes.json();
+    const awardUser = awardBody.data ?? awardBody;
 
     const response = await request.post('/api/admin/loyalty/award', {
       data: {
-        userId: awardUser.id,
+        userId: awardUser.user?.id ?? awardUser.id,
         type: 'points',
         amount: 500,
         reason: 'E2E test award'
       },
-      headers: { 'Cookie': `auth-token=${adminToken}` }
+      headers: { Cookie: adminToken }
     });
 
     if (response.status() === 403) {
@@ -117,7 +119,7 @@ test.describe('Loyalty - Admin Rewards Management', () => {
         amount: 100,
         reason: 'Test'
       },
-      headers: { 'Cookie': `auth-token=${adminToken}` }
+      headers: { Cookie: adminToken }
     });
 
     if (response.status() === 403) {

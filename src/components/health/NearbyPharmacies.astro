@@ -1,0 +1,55 @@
+---
+/**
+ * NearbyPharmacies — Server Island
+ *
+ * Sidebar widget on /mahalleler/[ilce]/[mahalle] showing nearby pharmacies.
+ * Used with `server:defer` so the main neighborhood content (district + place list)
+ * streams without waiting on the pharmacies query.
+ *
+ *   <NearbyPharmacies neighborhoodId={neighborhood.id} server:defer>
+ *     <div slot="fallback" class="..." />
+ *   </NearbyPharmacies>
+ */
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+interface Props {
+  neighborhoodId: string | number;
+}
+
+const { neighborhoodId } = Astro.props;
+
+let nearbyPharmacies: Array<{
+  name: string;
+  address: string | null;
+  phone: string | null;
+}> = [];
+
+try {
+  const result = await query(
+    'SELECT name, address, phone FROM pharmacies WHERE neighborhood_id = $1 ORDER BY name LIMIT 10',
+    [neighborhoodId],
+  );
+  nearbyPharmacies = result.rows;
+} catch (e) {
+  logger.error('NearbyPharmacies query failed', e instanceof Error ? e : new Error(String(e)));
+}
+---
+
+<div class="bg-white rounded-xl p-5 shadow-sm mb-6">
+  <h3 class="font-bold text-gray-900 mb-3">💊 Yakın Eczaneler</h3>
+  {nearbyPharmacies.length > 0 ? (
+    <div class="space-y-3">
+      {nearbyPharmacies.map((ph) => (
+        <div class="text-sm">
+          <p class="font-medium text-gray-900">{ph.name}</p>
+          <p class="text-gray-500 text-xs">{ph.address}</p>
+          {ph.phone && <a href={`tel:${ph.phone}`} class="text-green-600 text-xs">{ph.phone}</a>}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p class="text-gray-500 text-sm">Yakın eczane bilgisi eklenecek.</p>
+  )}
+  <a href="/saglik/nobetci-eczaneler" class="text-sm text-green-600 hover:underline mt-3 block">Nöbetçi Eczaneler →</a>
+</div>

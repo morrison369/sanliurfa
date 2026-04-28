@@ -1,29 +1,53 @@
 ---
-// @ts-nocheck
-import Layout from "../layouts/Layout.astro";
-import LeaderboardsDisplay from "../components/LeaderboardsDisplay";
+import Layout from '../layouts/Layout.astro';
+import LeaderboardsDisplay from '../components/LeaderboardsDisplay';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Liderlik Tablosu - Sanliurfa.com',
+  description: 'Şanlıurfa topluluğunun en aktif üyeleri, rozetleri ve katkı sıralamaları',
+  keywords: ['liderlik tablosu', 'şanlıurfa topluluğu', 'rozet', 'sıralama', 'puan', 'aktif üyeler'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/liderlik-tablosu',
+};
+
+const faqItems = [
+  { S: 'Liderlik tablosu nasıl güncelleniyor?', C: "Liderlik tablosu, kullanıcıların yorum, beğeni ve katkı aktivitelerine göre gerçek zamanlı olarak güncellenir." },
+  { S: 'Liderlik tablosuna nasıl girebilirim?', C: "Mekan değerlendirmesi yaparak, toplulukta gönderi paylaşarak ve diğer kullanıcılarla etkileşime girerek puan kazanabilirsiniz." },
+  { S: 'Rozet nedir?', C: "Rozetler, belirli başarıları tamamlayan kullanıcılara verilen ödüllerdir. Liderlik tablosundaki rozet sayısı topluluk prestijinizi gösterir." },
+];
 ---
 
-<Layout
-  title="Şanlıurfa Topluluk Liderlik Tablosu - sanliurfa.com"
-  description="Şanlıurfa mekan, yorum, keşif ve katkı puanlarına göre topluluk liderlik tablosu."
->
-  <div class="container-custom py-10">
-    <div
-      class="mb-8 rounded-3xl bg-gradient-to-br from-urfa-900 via-urfa-800 to-isot-800 p-8 text-white shadow-xl"
-    >
-      <p
-        class="mb-3 text-sm font-semibold uppercase tracking-[0.28em] text-amber-200"
-      >
-        Şanlıurfa topluluğu
-      </p>
-      <h1 class="text-4xl font-bold">Liderlik tablosu</h1>
-      <p class="mt-3 max-w-3xl text-amber-50">
-        Şanlıurfa mekanlarını yorumlayan, rota oluşturan, fotoğraf ve yerel
-        bilgi ekleyen en aktif üyeleri keşfet.
-      </p>
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-16">
+      <div class="container-custom">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">Şanlıurfa Topluluğu</p>
+        <h1 class="text-4xl md:text-5xl font-bold text-[#F5EDD6] mb-4">Liderlik Tablosu</h1>
+        <p class="text-[#C4B49A] text-lg">Topluluğun en etkin üyelerini keşfet ve onlarla yarışa</p>
+      </div>
     </div>
 
-    <LeaderboardsDisplay client:visible currentUserId={Astro.locals.user?.id} />
+    <div class="container-custom py-8">
+      <LeaderboardsDisplay client:visible={{ rootMargin: '120px' }} />
+    </div>
   </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Liderlik Tablosu', item: `${baseUrl}/liderlik-tablosu` },
+    ],
+  })} is:inline />
 </Layout>

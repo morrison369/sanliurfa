@@ -6,20 +6,20 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getSavedSearches, saveSearch, deleteSavedSearch, toggleSavedSearchFavorite } from '../../../lib/search-history';
+import { getSavedSearches, saveSearch, deleteSavedSearch, toggleSavedSearchFavorite } from '../../../lib/search/search-history';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/search/saved', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const url = new URL(request.url);
@@ -56,14 +56,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/search/saved', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -82,17 +82,28 @@ export const POST: APIRoute = async ({ request, locals }) => {
       }
       await toggleSavedSearchFavorite(savedSearchId, locals.user.id);
     } else {
-      if (!searchName || !searchQuery || !searchType) {
+      if (!searchName || !searchQuery || !searchType || typeof searchName !== 'string' || typeof searchQuery !== 'string' || typeof searchType !== 'string') {
         recordRequest('POST', '/api/search/saved', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
-        return apiError(
-          ErrorCode.VALIDATION_ERROR,
-          'searchName, searchQuery, searchType gereklidir',
-          HttpStatus.UNPROCESSABLE_ENTITY,
-          undefined,
-          requestId
-        );
+        return apiError(ErrorCode.VALIDATION_ERROR, 'searchName, searchQuery, searchType gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      }
+      if (searchName.length > 200) {
+        recordRequest('POST', '/api/search/saved', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Arama adı 200 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      }
+      if (searchQuery.length > 1000) {
+        recordRequest('POST', '/api/search/saved', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Arama sorgusu 1000 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      }
+      const VALID_SEARCH_TYPES = new Set(['places', 'events', 'reviews', 'recipes', 'blog']);
+      if (!VALID_SEARCH_TYPES.has(searchType)) {
+        recordRequest('POST', '/api/search/saved', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz arama tipi', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
       }
 
+      if (filters !== undefined && JSON.stringify(filters).length > 5000) {
+        recordRequest('POST', '/api/search/saved', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Filtreler 5000 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      }
       const id = await saveSearch(locals.user.id, searchName, searchQuery, searchType, filters);
 
       const duration = Date.now() - startTime;
@@ -134,14 +145,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/search/saved', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();

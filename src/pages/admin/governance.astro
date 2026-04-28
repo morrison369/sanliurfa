@@ -1,0 +1,13 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import GovernanceDashboard from '../../components/GovernanceDashboard';
+---
+
+<AdminLayout
+  title="Yönetişim Paneli"
+  subtitle="Veri yönetimi, denetim ve uyumluluk takibi"
+>
+    <div class="container mx-auto px-4 py-8">
+      <GovernanceDashboard client:visible />
+    </div>
+</AdminLayout>

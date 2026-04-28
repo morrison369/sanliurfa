@@ -4,23 +4,23 @@
  */
 
 import type { APIRoute } from 'astro';
-import { sendCampaign, getCampaign } from '../../../../../lib/email-campaigns';
-import { validateWithSchema } from '../../../../../lib/validation';
+import { sendCampaign, getCampaign } from '../../../../../lib/email/email-campaigns';
+import { validateWithSchema, ValidationSchema } from '../../../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
 import { recordRequest } from '../../../../../lib/metrics';
 import { logger } from '../../../../../lib/logging';
 
-const sendSchema = {
+const sendSchema: ValidationSchema = {
   testMode: { type: 'boolean' as const, required: false }
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.user?.isAdmin) {
+    if (!locals.isAdmin) {
       recordRequest('POST', `/api/marketing/campaigns/${params.id}/send`, HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
@@ -35,9 +35,9 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     let testMode = false;
     try {
       const body = await request.json();
-      const validation = validateWithSchema(body, sendSchema as any);
+      const validation = validateWithSchema(body, sendSchema);
       if (validation.valid) {
-        testMode = (validation.data as any).testMode || false;
+        testMode = (validation.data).testMode || false;
       }
     } catch {
       // No body or parse error - continue with testMode = false
@@ -51,7 +51,11 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     }
 
     // Send campaign
-    const result = await sendCampaign(parseInt(id, 10), testMode);
+    const campaignId = Number.parseInt(id, 10);
+    if (!Number.isFinite(campaignId) || campaignId < 1) {
+      return apiError(ErrorCode.INVALID_INPUT, 'Invalid campaign ID', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const result = await sendCampaign(campaignId, testMode);
 
     if (!result) {
       recordRequest('POST', `/api/marketing/campaigns/${id}/send`, HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
@@ -82,7 +86,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
           failed: result.failed,
           testMode,
           message: testMode
-            ? `Test emaili admin hesabına gönderildi (${result.sent} adres)`
+            ? `Test emaili admin hesabına gönderildi (${result.sent} adress)`
             : `Kampanya gönderimi başladı (${result.sent}/${result.sent + result.failed} alıcı)`
         }
       },
@@ -93,6 +97,6 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', `/api/marketing/campaigns/${params.id}/send`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Send campaign failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

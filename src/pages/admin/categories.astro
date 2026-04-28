@@ -1,0 +1,87 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+let categories: any[] = [];
+let totalPlaces = 0;
+
+try {
+  const [catResult, placeCount] = await Promise.all([
+    query(`
+      SELECT c.id, c.name, c.slug, c.icon, c.color, c.is_active, c.sort_order,
+             COUNT(p.id)::int AS place_count
+      FROM categories c
+      LEFT JOIN places p ON p.category_id = c.id AND p.status = 'active'
+      GROUP BY c.id
+      ORDER BY c.sort_order ASC NULLS LAST, c.name
+    `),
+    query(`SELECT COUNT(*)::int AS cnt FROM places WHERE status = 'active'`),
+  ]);
+  categories = catResult.rows;
+  totalPlaces = placeCount.rows[0]?.cnt || 0;
+} catch (e) {
+  logger.error('Categories admin query failed', e instanceof Error ? e : new Error(String(e)));
+}
+---
+
+<AdminLayout
+  title="Kategori Yönetimi"
+  subtitle={`${categories.length} kategori · Toplam ${totalPlaces} aktif mekan`}
+  seo={{ title: 'Kategori Yönetimi - Yönetim Paneli', noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-5xl space-y-5">
+      <div class="mb-2 flex items-center justify-between">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+        <a href="/api/admin/site?model=categories" target="_blank" rel="noopener" class="text-xs text-urfa-600 hover:text-[#6B5540]">JSON Görüntüle</a>
+      </div>
+
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm overflow-hidden">
+        <div class="p-4 border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)] flex items-center justify-between">
+          <h2 class="font-semibold text-[#6B5540] text-sm">Kategoriler</h2>
+        </div>
+        <table class="w-full text-sm">
+          <thead class="border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)]">
+            <tr>
+              <th class="py-3 px-4 text-left font-medium text-[#9A8470]">Ad</th>
+              <th class="py-3 px-4 text-left font-medium text-[#9A8470]">Slug</th>
+              <th class="py-3 px-4 text-center font-medium text-[#9A8470]">Mekan</th>
+              <th class="py-3 px-4 text-center font-medium text-[#9A8470]">Sıra</th>
+              <th class="py-3 px-4 text-center font-medium text-[#9A8470]">Durum</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[rgba(200,160,100,0.08)]">
+            {categories.map(cat => (
+              <tr class="hover:bg-[rgba(200,160,100,0.04)]">
+                <td class="py-3 px-4">
+                  <div class="flex items-center gap-2">
+                    {cat.icon && <span class="text-lg">{cat.icon}</span>}
+                    {cat.color && <span class="w-3 h-3 rounded-full inline-block" style={`background:${cat.color}`}></span>}
+                    <span class="font-medium text-[#1A1008]">{cat.name}</span>
+                  </div>
+                </td>
+                <td class="py-3 px-4 text-[#9A8470] font-mono text-xs">{cat.slug}</td>
+                <td class="py-3 px-4 text-center">
+                  <a href={`/mekanlar/${cat.slug}`} class="text-urfa-600 hover:text-[#6B5540]">{cat.place_count}</a>
+                </td>
+                <td class="py-3 px-4 text-center text-[#9A8470]">{cat.sort_order ?? '—'}</td>
+                <td class="py-3 px-4 text-center">
+                  <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${cat.is_active ? 'bg-[rgba(200,160,100,0.15)] text-[#6B5540]' : 'bg-[rgba(200,160,100,0.06)] text-[#9A8470]'}`}>
+                    {cat.is_active ? 'Aktif' : 'Pasif'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {categories.length === 0 && (
+          <div class="p-8 text-center text-[#9A8470] text-sm">Henüz kategori yok veya veri tabanına erişilemedi.</div>
+        )}
+      </div>
+
+      <div class="p-4 bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm text-sm text-[#6B5540]">
+        <strong>Not:</strong> Kategori ekleme/düzenleme doğrudan veritabanı migration'ları veya seed scriptleri üzerinden yapılmaktadır.
+        Kategori slug'ları mekan URL'lerini etkiler, değiştirirken dikkatli olun.
+      </div>
+    </div>
+</AdminLayout>

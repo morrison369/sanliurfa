@@ -1,0 +1,146 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+
+let categories: any[] = [];
+let featuredPlaces: any[] = [];
+
+try {
+  const [catResult, featResult] = await Promise.all([
+    query(
+      "SELECT c.*, (SELECT COUNT(*) FROM places p WHERE p.category_id = c.id AND p.status = 'active') as place_count FROM categories c WHERE c.parent_id = 10 AND c.is_active = true ORDER BY c.sort_order"
+    ),
+    query(
+      "SELECT * FROM places WHERE is_featured = true AND status = 'active' ORDER BY rating DESC LIMIT 6"
+    ),
+  ]);
+  categories = catResult.rows;
+  featuredPlaces = featResult.rows;
+} catch (e) {
+  logger.error('Error loading mekanlar', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: 'Şanlıurfa Mekanlar Rehberi | En İyi Mekanlar ve Yerel Lezzetler',
+  description: "Şanlıurfa\'nın en popüler mekanları. Kebapçılar, ciğerciler, kafeler, tatlıcılar ve daha fazlası. Güncel fiyatlar ve yorumlarla.",
+  keywords: ['şanlıurfa mekanlar', 'urfa mekanlar', 'şanlıurfa restoranlar', 'urfa kebapçılar', 'şanlıurfa kafeler', 'urfa yemek yerleri', 'şanlıurfa işletmeler'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/mekanlar',
+};
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    q: "Şanlıurfa'da en iyi kebapçılar nerede?",
+    a: 'Mekanlar sayfasındaki kebapçılar kategorisinde puan, yorum ve ilçe bazlı filtreyle en iyi seçenekleri görebilirsiniz.',
+  },
+  {
+    q: 'Şanlıurfa mekanları nasıl filtrelenir?',
+    a: 'Kategori kartlarına girerek kebapçı, ciğerci, kahvaltı ve diğer alt kategorileri ayrı ayrı listeleyebilirsiniz.',
+  },
+  {
+    q: 'Mekan puanları güncel mi?',
+    a: 'Listeler aktif kayıtlar üzerinden güncellenir ve öne çıkan mekanlar puan ve görünürlük kriterlerine göre sıralanır.',
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <!-- Hero -->
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-16">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4 text-[#F5EDD6]">Şanlıurfa Mekanlar</h1>
+        <p class="text-xl text-[#9A8470] max-w-2xl">
+          Kebapçılardan ciğercilere, kafelerden tatlıcılara Şanlıurfa'nın en sevilen mekanları
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <div class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] p-5 mb-8">
+        <h2 class="text-lg font-bold text-[#1A1008]">Hızlı Cevap</h2>
+        <p class="text-sm text-[#4A3828] mt-1">
+          Şanlıurfa mekanlarını kategori bazında keşfedebilir, öne çıkan işletmeleri puan ve yorum bilgileriyle karşılaştırabilirsiniz.
+        </p>
+      </div>
+
+      <!-- Kategoriler Grid -->
+      <h2 class="text-2xl font-bold text-[#1A1008] mb-8">Kategoriler</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
+        {categories.map((cat) => (
+          <a
+            href={`/mekanlar/${cat.slug}/`}
+            class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm p-6 shadow-sm hover:shadow-md hover:border-urfa-300 transition-all hover:-translate-y-0.5 group"
+          >
+            <div class="text-3xl mb-3">{
+              cat.slug === 'kebapcilar' ? '🍖' :
+              cat.slug === 'cigerciler' ? '🥩' :
+              cat.slug === 'lahmacuncular' ? '🫓' :
+              cat.slug === 'pideciler' ? '🥙' :
+              cat.slug === 'cig-kofteciler' ? '🧆' :
+              cat.slug === 'yoresel-yemekler' ? '🥘' :
+              cat.slug === 'kahvalti-mekanlari' ? '🍳' :
+              cat.slug === 'tatlicilar' ? '🍮' :
+              cat.slug === 'kafeler' ? '☕' :
+              cat.slug === 'cay-bahceleri' ? '🍵' :
+              cat.slug === 'firinlar' ? '🍞' :
+              cat.slug === 'pastaneler' ? '🎂' :
+              cat.slug === 'balik-restoranlari' ? '🐟' : '🍽️'
+            }</div>
+            <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-700 transition-colors">{cat.name}</h3>
+            <p class="text-sm text-[#9A8470] mt-1">{cat.place_count || 0} mekan</p>
+          </a>
+        ))}
+      </div>
+
+      {/* Öne Çıkan Mekanlar */}
+      {featuredPlaces.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Öne Çıkan Mekanlar</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredPlaces.map((place) => (
+              <a href={`/isletme/${place.slug}`} class="bg-white border border-[rgba(200,160,100,0.18)] rounded-sm overflow-hidden shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group">
+                <div class="h-48 bg-[rgba(200,160,100,0.08)] flex items-center justify-center text-5xl">
+                  🍽️
+                </div>
+                <div class="p-5">
+                  <h3 class="font-bold text-lg text-[#1A1008] group-hover:text-urfa-700 transition-colors">{place.name}</h3>
+                  <p class="text-sm text-[#9A8470] mt-1 line-clamp-2">{place.short_description || place.description}</p>
+                  <div class="flex items-center gap-2 mt-3">
+                    <span class="text-urfa-400">★</span>
+                    <span class="font-medium text-[#1A1008]">{place.rating || '-'}</span>
+                    <span class="text-[#9A8470]">({place.review_count || 0} yorum)</span>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+  {/* Schema.org BreadcrumbList */}
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
+    ]
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a,
+      },
+    })),
+  })} is:inline />
+</Layout>

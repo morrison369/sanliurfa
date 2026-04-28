@@ -1,0 +1,332 @@
+---
+
+import Layout from '../../layouts/Layout.astro';
+import { query, queryOne } from '../../lib/postgres';
+import { getMediaAsset, getSeoOverride } from '../../lib/site-platform';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+import { safeIntParam } from '../../lib/api';
+const { baseUrl } = await getSiteBranding();
+
+const { kategori } = Astro.params;
+const page = safeIntParam(Astro.url.searchParams.get('sayfa'), 1, 1, 1_000_000);
+const limit = 12;
+const offset = (page - 1) * limit;
+
+let category: any = null;
+let places: any[] = [];
+let districtBreakdown: any[] = [];
+let relatedCategories: any[] = [];
+let totalCount = 0;
+let heroImage = '/images/hero/hero-home.webp';
+let seoOverridePayload: Record<string, any> | null = null;
+let seoOverrideCanonical = '';
+
+try {
+  category = await queryOne(
+    `SELECT id, name, slug, description
+     FROM categories
+     WHERE slug = $1 AND is_active = true
+     LIMIT 1`,
+    [kategori],
+  );
+
+  if (!category) {
+    return Astro.redirect('/mekanlar');
+  }
+
+  const [countResult, placesResult, districtResult, relatedResult] = await Promise.all([
+    query(
+      `SELECT COUNT(*)::int AS count
+       FROM places
+       WHERE status = 'active' AND category_id = $1`,
+      [category.id],
+    ),
+    query(
+      `SELECT
+         p.*,
+         d.name AS district_name
+       FROM places p
+       LEFT JOIN districts d ON d.id = p.district_id
+       WHERE p.status = 'active' AND p.category_id = $1
+       ORDER BY COALESCE(p.is_featured, false) DESC, COALESCE(p.rating, 0) DESC, COALESCE(p.review_count, 0) DESC, p.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [category.id, limit, offset],
+    ),
+    query(
+      `SELECT
+         d.name,
+         d.slug,
+         COUNT(*)::int AS place_count
+       FROM places p
+       JOIN districts d ON d.id = p.district_id
+       WHERE p.status = 'active' AND p.category_id = $1
+       GROUP BY d.id, d.name, d.slug
+       ORDER BY COUNT(*) DESC, d.name ASC
+       LIMIT 6`,
+      [category.id],
+    ),
+    query(
+      `SELECT c.name, c.slug
+       FROM categories c
+       WHERE c.parent_id = (SELECT parent_id FROM categories WHERE id = $1)
+         AND c.id <> $1
+         AND c.is_active = true
+       ORDER BY c.sort_order NULLS LAST, c.name ASC
+       LIMIT 6`,
+      [category.id],
+    ),
+  ]);
+
+  totalCount = Number(countResult.rows[0]?.count || 0);
+  places = placesResult.rows;
+  districtBreakdown = districtResult.rows;
+  relatedCategories = relatedResult.rows;
+} catch (error) {
+  logger.error('Error loading mekan category page:', error instanceof Error ? error : new Error(String(error)));
+}
+
+try {
+  const [heroAsset, seoOverride] = await Promise.all([
+    getMediaAsset(`category.${String(kategori || '').trim()}.hero`),
+    getSeoOverride('category', String(kategori || '').trim()),
+  ]);
+  heroImage = String(heroAsset?.url || heroImage);
+  seoOverridePayload = seoOverride?.seo_payload || null;
+  seoOverrideCanonical = String(seoOverride?.canonical_path || '').trim();
+} catch (error) {
+  logger.error('Error loading kategori platform data:', error instanceof Error ? error : new Error(String(error)));
+}
+
+const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+const categoryName = String(category?.name || kategori || 'Mekanlar');
+const description =
+  String(category?.description || '').trim() ||
+  `${categoryName} kategorisindeki aktif mekanları puan, yorum ve ilçe yoğunluğu ile keşfedin.`;
+
+const seo = {
+  title: `Şanlıurfa ${categoryName} | Sanliurfa.com`,
+  description: `Şanlıurfa ${categoryName.toLowerCase()} rehberi. ${description}`,
+  canonical: `/mekanlar/${kategori}`,
+  keywords: ['şanlıurfa ' + categoryName.toLowerCase(), 'urfa ' + categoryName.toLowerCase(), categoryName, categoryName + ' şanlıurfa', 'şanlıurfa mekanlar'],
+  ogImage: '/images/hero/hero-home.webp',
+};
+
+if (seoOverridePayload) {
+  Object.assign(seo, seoOverridePayload, {
+    canonical: seoOverrideCanonical || seoOverridePayload.canonical || seo.canonical,
+  });
+}
+
+const faqItems = [
+  {
+    S: `Şanlıurfa ${categoryName.toLowerCase()} listesi güncel mi?`,
+    C: `${categoryName} sayfası aktif mekan kayıtları üzerinden güncellenir ve öne çıkan işletmeler puan, yorum ve görünürlük sinyallerine göre sıralanır.`,
+  },
+  {
+    S: `${categoryName} mekanları ilçeye göre filtrelenebilir mi?`,
+    C: `Bu sayfadaki ilçe yoğunluğu kartları üzerinden ilgili ilçe rehberine geçebilir ve kategoriye yakın mekan kümelerini inceleyebilirsiniz.`,
+  },
+  {
+    S: `${categoryName} sayfasında hangi veriler gösterilir?`,
+    C: `Mekan adı, kısa açıklama, puan, yorum sayısı ve ilçe bilgisi aynı listede gösterilir.`,
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <section class="border-b border-[rgba(200,160,100,0.14)] bg-[#0D0A08]">
+      <div class="container mx-auto px-4 py-14">
+        <nav class="flex flex-wrap items-center gap-2 text-sm text-[#9A8470]">
+          <a href="/" class="hover:text-urfa-400 transition-colors">Ana Sayfa</a>
+          <span>/</span>
+          <a href="/mekanlar" class="hover:text-urfa-400 transition-colors">Mekanlar</a>
+          <span>/</span>
+          <span class="font-medium text-[#F5EDD6]">{categoryName}</span>
+        </nav>
+        <div class="mt-6 grid gap-8 lg:grid-cols-[1.4fr_0.6fr] lg:items-end">
+          <div>
+            <span class="inline-flex items-center rounded-sm border border-[rgba(200,160,100,0.3)] bg-[rgba(200,160,100,0.1)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-urfa-400">
+              Kategori Rehberi
+            </span>
+            <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-[#F5EDD6] md:text-5xl">
+              Şanlıurfa {categoryName}
+            </h1>
+            <p class="mt-4 max-w-3xl text-lg leading-8 text-[#9A8470]">{description}</p>
+          </div>
+          <div class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-[#1A1008] p-6">
+            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-[#9A8470]">Kategori Özeti</p>
+            <div class="mt-4 grid grid-cols-2 gap-4">
+              <div class="rounded-sm border border-[rgba(200,160,100,0.15)] bg-[rgba(200,160,100,0.06)] p-4">
+                <p class="text-xs text-[#9A8470]">Aktif Mekan</p>
+                <p class="mt-2 text-3xl font-bold text-[#F5EDD6]">{totalCount}</p>
+              </div>
+              <div class="rounded-sm border border-[rgba(200,160,100,0.15)] bg-[rgba(200,160,100,0.06)] p-4">
+                <p class="text-xs text-[#9A8470]">İlçe Yoğunluğu</p>
+                <p class="mt-2 text-3xl font-bold text-[#F5EDD6]">{districtBreakdown.length}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="container mx-auto px-4 py-10">
+      <div class="grid gap-6 xl:grid-cols-[0.72fr_0.28fr]">
+        <section class="space-y-6">
+          {places.length > 0 ? (
+            <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {places.map((place) => (
+                <a href={`/isletme/${place.slug}`} class="group overflow-hidden rounded-sm border border-[rgba(200,160,100,0.18)] bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-urfa-300 hover:shadow-md">
+                  <div class="h-40 overflow-hidden bg-[rgba(200,160,100,0.08)]">
+                    <img
+                      src={place.cover_image || place.images?.[0] || heroImage}
+                      alt={place.name}
+                      class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                      loading="lazy"
+                      onerror={`this.setAttribute('src','${heroImage}')`}
+                    />
+                  </div>
+                  <div class="p-5">
+                    <div class="flex items-start justify-between gap-3">
+                      <h2 class="text-lg font-bold text-[#1A1008] group-hover:text-urfa-700 transition-colors">{place.name}</h2>
+                      <span class="rounded-sm bg-[rgba(200,160,100,0.1)] border border-[rgba(200,160,100,0.2)] px-2.5 py-1 text-xs font-semibold text-urfa-700 shrink-0">
+                        {place.rating ? Number(place.rating).toFixed(1) : '-'}
+                      </span>
+                    </div>
+                    <p class="mt-2 line-clamp-3 text-sm leading-6 text-[#9A8470]">
+                      {place.short_description || place.description || `${categoryName} kategorisinde aktif mekan kaydı.`}
+                    </p>
+                    <div class="mt-4 flex items-center justify-between text-xs text-[#9A8470]">
+                      <span>{place.district_name || 'Şanlıurfa'}</span>
+                      <span>{Number(place.review_count || 0)} yorum</span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-10 text-center shadow-sm">
+              <h2 class="text-2xl font-bold text-[#1A1008]">Henüz aktif mekan yok</h2>
+              <p class="mt-3 text-sm text-[#9A8470]">
+                Bu kategori için veri eksikse işletme başvuruları ve kategori senkronu ile içerik derinliğini artırabilirsiniz.
+              </p>
+              <a href="/isletme-kayit" class="mt-5 inline-flex rounded-sm bg-urfa-600 px-5 py-3 text-sm font-semibold text-white hover:bg-urfa-700 transition-colors">
+                İşletme Kaydı Başlat
+              </a>
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <nav class="flex flex-wrap items-center justify-center gap-2">
+              {page > 1 && (
+                <a href={`/mekanlar/${kategori}?sayfa=${page - 1}`} class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-white px-4 py-2 text-sm font-semibold text-[#4A3828] hover:border-urfa-300 hover:text-urfa-700 transition-colors">
+                  ← Önceki
+                </a>
+              )}
+              {Array.from({ length: Math.min(totalPages, 8) }, (_, index) => index + 1).map((item) => (
+                <a
+                  href={`/mekanlar/${kategori}?sayfa=${item}`}
+                  class={`rounded-sm px-4 py-2 text-sm font-semibold transition-colors ${
+                    item === page ? 'bg-[#1A1008] text-white' : 'border border-[rgba(200,160,100,0.2)] bg-white text-[#4A3828] hover:border-urfa-300 hover:text-urfa-700'
+                  }`}
+                >
+                  {item}
+                </a>
+              ))}
+              {page < totalPages && (
+                <a href={`/mekanlar/${kategori}?sayfa=${page + 1}`} class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-white px-4 py-2 text-sm font-semibold text-[#4A3828] hover:border-urfa-300 hover:text-urfa-700 transition-colors">
+                  Sonraki →
+                </a>
+              )}
+            </nav>
+          )}
+        </section>
+
+        <aside class="space-y-5">
+          <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-bold text-[#1A1008]">İlçe yoğunluğu</h2>
+            <div class="mt-4 space-y-3">
+              {districtBreakdown.length > 0 ? (
+                districtBreakdown.map((item) => (
+                  <a href={`/ilceler/${item.slug}`} class="flex items-center justify-between rounded-sm border border-[rgba(200,160,100,0.15)] bg-[rgba(200,160,100,0.04)] px-4 py-3 text-sm font-semibold text-[#1A1008] transition hover:border-urfa-300 hover:bg-white hover:text-urfa-700">
+                    <span>{item.name}</span>
+                    <span class="text-[#9A8470]">{Number(item.place_count || 0)}</span>
+                  </a>
+                ))
+              ) : (
+                <p class="text-sm text-[#9A8470]">İlçe kırılımı henüz oluşmadı.</p>
+              )}
+            </div>
+          </div>
+
+          <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-bold text-[#1A1008]">Yakın kategoriler</h2>
+            <div class="mt-4 flex flex-wrap gap-2">
+              {relatedCategories.length > 0 ? (
+                relatedCategories.map((item) => (
+                  <a href={`/mekanlar/${item.slug}`} class="rounded-sm border border-[rgba(200,160,100,0.15)] bg-[rgba(200,160,100,0.04)] px-4 py-2 text-sm font-semibold text-[#4A3828] transition hover:border-urfa-300 hover:bg-white hover:text-urfa-700">
+                    {item.name}
+                  </a>
+                ))
+              ) : (
+                <p class="text-sm text-[#9A8470]">Yakın kategori bulunamadı.</p>
+              )}
+            </div>
+          </div>
+
+          <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 shadow-sm">
+            <h2 class="text-lg font-bold text-[#1A1008]">Hızlı cevaplar</h2>
+            <div class="mt-4 space-y-4">
+              {faqItems.map((item) => (
+                <article class="rounded-sm border border-[rgba(200,160,100,0.15)] bg-[rgba(200,160,100,0.04)] p-4">
+                  <h3 class="font-semibold text-[#1A1008]">{item.S}</h3>
+                  <p class="mt-2 text-sm leading-6 text-[#9A8470]">{item.C}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: `Şanlıurfa ${categoryName}`,
+    description,
+    url: `${baseUrl}/mekanlar/${kategori}`,
+    about: { '@type': 'City', name: 'Şanlıurfa' },
+    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: {
+        '@type': 'LocalBusiness',
+        '@id': `${baseUrl}/isletme/${p.slug}`,
+        name: p.name,
+        url: `${baseUrl}/isletme/${p.slug}`,
+        ...(p.address ? { address: p.address } : {}),
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
+      { '@type': 'ListItem', position: 3, name: categoryName, item: `${baseUrl}/mekanlar/${kategori}` },
+    ],
+  })} is:inline />
+</Layout>

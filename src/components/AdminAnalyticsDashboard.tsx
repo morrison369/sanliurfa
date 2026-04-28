@@ -1,15 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
+import { useState, useEffect } from 'react';
+
+interface DailyActiveUser {
+  date: string;
+  count: number;
+}
+
+interface PlatformStats {
+  uniqueUsers?: number;
+  uniquePlacesViewed?: number;
+  activities?: Record<string, number>;
+  dailyActiveUsers?: DailyActiveUser[];
+}
+
+interface TrendingPlace {
+  id: string | number;
+  slug?: string;
+  name: string;
+  category?: string;
+  image_url?: string;
+  view_count?: number;
+  unique_viewers?: number;
+}
+
+interface SearchTrend {
+  query: string;
+  count: number;
+  unique_users: number;
+}
 
 interface AnalyticsData {
-  platformStats: any;
-  trendingPlaces: any[];
-  searchTrends: any[];
+  platformStats: PlatformStats;
+  trendingPlaces: TrendingPlace[];
+  searchTrends: SearchTrend[];
   period: number;
 }
 
+interface AnalyticsResponse {
+  success?: boolean;
+  data?: AnalyticsData;
+  error?: string;
+}
+
 /**
- * Admin analytics dashboard showing platform-wide statistics
+ * Platform geneli yönetim analitik paneli.
  */
 export default function AdminAnalyticsDashboard() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
@@ -25,17 +58,17 @@ export default function AdminAnalyticsDashboard() {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/admin/analytics?days=${days}&limit=10`);
-      const json = await response.json();
-      const data = unwrapApiPayload<{ success?: boolean; data?: AnalyticsData }>(json);
+      const data = (await response.json()) as AnalyticsResponse;
 
-      if (!response.ok || !data.success) {
-        throw new Error(getApiErrorMessage(json, 'Analitikler yüklenemedi'));
+      if (data.success && data.data) {
+        setAnalytics(data.data);
+        setError('');
+      } else {
+        setError(data.error || 'Analitikler yüklenemedi');
       }
-
-      setAnalytics(data.data || null);
-      setError('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analitikler yüklenirken bir hata oluştu');
+      console.error('Analitikler yüklenemedi:', err);
+      setError('Analitikler yüklenirken bir hata oluştu');
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +90,7 @@ export default function AdminAnalyticsDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Period Selector */}
+      {/* Dönem seçici */}
       <div className="flex gap-2">
         {[7, 30, 90, 365].map(d => (
           <button
@@ -74,7 +107,7 @@ export default function AdminAnalyticsDashboard() {
         ))}
       </div>
 
-      {/* Key Metrics */}
+      {/* Ana metrikler */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Aktif Kullanıcı</p>
@@ -82,28 +115,28 @@ export default function AdminAnalyticsDashboard() {
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-          <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Görüntülenen Mekân</p>
+          <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Görüntülenen Mekan</p>
           <p className="text-3xl font-bold">{stats.uniquePlacesViewed || 0}</p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Toplam Aktivite</p>
-          <p className="text-3xl font-bold">{Object.values(stats.activities || {}).reduce((a: number, b: any) => a + b, 0)}</p>
+          <p className="text-3xl font-bold">{Object.values(stats.activities || {}).reduce((a: number, b: unknown) => a + Number(b), 0)}</p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <p className="text-gray-600 dark:text-gray-400 text-sm font-medium mb-2">Ort. Aktif Kullanıcı/Gün</p>
           <p className="text-3xl font-bold">
-            {Math.round((stats.dailyActiveUsers?.reduce((sum: number, day: any) => sum + day.count, 0) || 0) / (stats.dailyActiveUsers?.length || 1))}
+            {Math.round((stats.dailyActiveUsers?.reduce((sum: number, day: { count: number }) => sum + day.count, 0) || 0) / (stats.dailyActiveUsers?.length || 1))}
           </p>
         </div>
       </div>
 
-      {/* Activity Breakdown */}
+      {/* Aktivite kırılımı */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-xl font-bold mb-4">Aktivite Dağılımı</h3>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {Object.entries(stats.activities || {}).map(([type, count]: [string, any]) => (
+          {Object.entries(stats.activities || {}).map(([type, count]) => (
             <div key={type} className="text-center">
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
                 {type === 'view' && '👁️ Görüntüleme'}
@@ -118,14 +151,14 @@ export default function AdminAnalyticsDashboard() {
         </div>
       </div>
 
-      {/* Trending Places */}
+      {/* Trend mekanlar */}
       <div>
-        <h3 className="text-xl font-bold mb-4">Trend Olan Mekânlar</h3>
+        <h3 className="text-xl font-bold mb-4">Trend Olan Mekanlar</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {analytics.trendingPlaces.map(place => (
             <a
               key={place.id}
-              href={`/places/${place.slug || place.id}`}
+              href={place.slug ? `/isletme/${place.slug}` : '/mekanlar'}
               className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-lg transition"
             >
               {place.image_url && (
@@ -148,7 +181,7 @@ export default function AdminAnalyticsDashboard() {
         </div>
       </div>
 
-      {/* Search Trends */}
+      {/* Arama trendleri */}
       <div>
         <h3 className="text-xl font-bold mb-4">Popüler Aramalar</h3>
         <div className="space-y-2">

@@ -1,20 +1,13 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import AdminManager from "../../components/admin/AdminManager";
-
-if (!Astro.locals.user || !Astro.locals.isAdmin) {
-  return Astro.redirect("/giris?redirect=/admin/manage");
-}
-
-const seo = {
-  title: "Yönetim Paneli - sanliurfa.com",
-  description: "Yerler, yorumlar, kullanıcıları yönet",
-  noindex: true,
-};
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminManager from '../../components/admin/AdminManager';
 ---
 
-<Layout seo={seo}>
-  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20">
-    <AdminManager client:load />
-  </div>
-</Layout>
+<AdminLayout
+  title="Yönetim"
+  subtitle="Yerler, yorumlar ve kullanıcıları yönet"
+>
+    <div class="container mx-auto px-4 py-8">
+      <AdminManager client:visible />
+    </div>
+</AdminLayout>

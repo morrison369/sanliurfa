@@ -1,127 +1,111 @@
 ---
-// @ts-nocheck
 // Yükleme sayfası - navigasyon sırasında gösterilir
 ---
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Yükleniyor... - sanliurfa.com</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        background: linear-gradient(135deg, #f5f0ee 0%, #e8ddd8 100%);
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .loader-container {
-        text-align: center;
-      }
-      .logo {
-        width: 80px;
-        height: 80px;
-        background: #a18072;
-        border-radius: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 24px;
-        font-size: 40px;
-        font-weight: bold;
-        color: white;
-        animation: pulse 2s infinite;
-      }
-      @keyframes pulse {
-        0%,
-        100% {
-          transform: scale(1);
-          opacity: 1;
-        }
-        50% {
-          transform: scale(1.05);
-          opacity: 0.8;
-        }
-      }
-      .spinner {
-        width: 48px;
-        height: 48px;
-        border: 4px solid #e8ddd8;
-        border-top-color: #a18072;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 16px;
-      }
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-      h1 {
-        color: #45322b;
-        font-size: 24px;
-        margin-bottom: 8px;
-      }
-      p {
-        color: #735448;
-        font-size: 16px;
-      }
-      .tips {
-        margin-top: 32px;
-        padding: 16px 24px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        max-width: 300px;
-      }
-      .tips h3 {
-        font-size: 14px;
-        color: #a18072;
-        margin-bottom: 8px;
-      }
-      .tips p {
-        font-size: 13px;
-        color: #735448;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="loader-container">
-      <div class="logo">Ş</div>
-      <div class="spinner"></div>
-      <h1>Yükleniyor...</h1>
-      <p>Şanlıurfa'yı keşfetmeye hazırlanıyoruz</p>
-
-      <div class="tips">
-        <h3>💡 Biliyor muydunuz?</h3>
-        <p id="random-tip">
-          Göbeklitepe, dünyanın bilinen en eski tapınak kompleksidir.
-        </p>
-      </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Yükleniyor... - Sanliurfa.com</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,300&family=Jost:wght@400;600&display=swap" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Jost', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(160deg, #0A0806 0%, #1A1208 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #F5EDD6;
+    }
+    .loader-container { text-align: center; }
+    .logo {
+      width: 80px;
+      height: 80px;
+      background: #A85D22;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 42px;
+      font-weight: 300;
+      font-style: italic;
+      color: #F5EDD6;
+      animation: pulse 2s infinite;
+      box-shadow: 0 8px 32px rgba(168,93,34,0.4);
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.04); opacity: 0.85; }
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 2px solid rgba(200,160,100,0.2);
+      border-top-color: #CE8E38;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 {
+      font-family: 'Jost', sans-serif;
+      color: #F5EDD6;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      margin-bottom: 6px;
+    }
+    p { color: #9A8470; font-size: 14px; letter-spacing: 0.02em; }
+    .tips {
+      margin-top: 32px;
+      padding: 16px 24px;
+      background: rgba(30, 20, 10, 0.7);
+      border: 1px solid rgba(200, 160, 100, 0.14);
+      border-radius: 4px;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .tips h3 {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #CE8E38;
+      margin-bottom: 8px;
+    }
+    .tips p { font-size: 13px; color: #9A8470; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div class="loader-container">
+    <div class="logo">Ş</div>
+    <div class="spinner"></div>
+    <h1>Yükleniyor</h1>
+    <p>Şanlıurfa'yı keşfetmeye hazırlanıyoruz</p>
+    <div class="tips">
+      <h3>Biliyor muydunuz?</h3>
+      <p id="random-tip">Göbeklitepe, dünyanın bilinen en eski tapınak kompleksidir.</p>
     </div>
-
-    <script>
-      // @ts-nocheck
-      const tips = [
-        "Göbeklitepe, dünyanın bilinen en eski tapınak kompleksidir.",
-        "Balıklıgöl'deki balıklar kutsal kabul edilir.",
-        "Harran, dünyanın ilk üniversitesine ev sahipliği yapmıştır.",
-        "Urfa kebabı, odun ateşinde pişirilir.",
-        "Çiğ köfte UNESCO Somut Olmayan Kültür Mirası listesindedir.",
-        "Şanlıurfa 2029 Dünya Gastronomi Şehri adayıdır.",
-      ];
-
-      const randomTip = tips[Math.floor(Math.random() * tips.length)];
-      document.getElementById("random-tip").textContent = randomTip;
-    </script>
-  </body>
+  </div>
+  <script>
+    const tips = [
+      'Göbeklitepe, dünyanın bilinen en eski tapınak kompleksidir.',
+      'Balıklıgöl\'deki balıklar kutsal kabul edilir.',
+      'Harran, dünyanın ilk üniversitesine ev sahipliği yapmıştır.',
+      'Urfa kebabı, odun ateşinde pişirilir.',
+      'Çiğ köfte UNESCO Somut Olmayan Kültür Mirası listesindedir.',
+      'Şanlıurfa 2029 Dünya Gastronomi Şehri adayıdır.'
+    ];
+    document.getElementById('random-tip').textContent = tips[Math.floor(Math.random() * tips.length)];
+  </script>
+</body>
 </html>

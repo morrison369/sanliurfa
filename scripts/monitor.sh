@@ -4,7 +4,7 @@
 # Tracks performance metrics and alerts on anomalies
 
 MONITOR_LOG="monitoring-$(date +%Y%m%d).log"
-API_BASE="http://localhost:3000/api"
+API_BASE="http://localhost:4321/api"
 ALERT_THRESHOLD_SLOW_REQUESTS=1.0  # >1% slow requests
 ALERT_THRESHOLD_ERROR_RATE=0.5     # >0.5% error rate
 ALERT_THRESHOLD_CACHE_HIT=70       # <70% cache hit rate

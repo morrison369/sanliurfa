@@ -5,24 +5,24 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getNotifications, markNotificationAsRead, archiveNotification, getUnreadNotificationCount } from '../../../lib/notification-delivery';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getNotifications, markNotificationAsRead, archiveNotification, getUnreadNotificationCount } from '../../../lib/notification/notification-delivery';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/notifications/center', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
     const archived = url.searchParams.get('archived') === 'true';
 
     const [notifications, unreadCount] = await Promise.all([
@@ -61,14 +61,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/notifications/center', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -83,6 +83,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
         undefined,
         requestId
       );
+    }
+
+    const VALID_ACTIONS = new Set(['read', 'archive']);
+    if (!VALID_ACTIONS.has(action)) {
+      recordRequest('POST', '/api/notifications/center', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz action (read veya archive olmalıdır)', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     if (action === 'read') {

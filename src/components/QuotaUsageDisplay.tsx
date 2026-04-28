@@ -2,9 +2,7 @@
  * Quota Usage Display Component
  * Show user's feature quotas and usage
  */
-
-import React, { useState, useEffect } from "react";
-
+import {  useState, useEffect  } from 'react';
 interface QuotaItem {
   feature: string;
   current: number;
@@ -30,9 +28,7 @@ interface QuotaUsageDisplayProps {
   compact?: boolean;
 }
 
-export default function QuotaUsageDisplay({
-  compact = false,
-}: QuotaUsageDisplayProps) {
+export default function QuotaUsageDisplay({ compact = false }: QuotaUsageDisplayProps) {
   const [data, setData] = useState<QuotaResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,17 +37,17 @@ export default function QuotaUsageDisplay({
     const fetchQuotas = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/user/quotas");
+        const response = await fetch('/api/user/quotas');
 
         if (!response.ok) {
-          throw new Error("Kotalar alınamadı");
+          throw new Error('Kota bilgileri yüklenemedi.');
         }
 
-        const quotaData = (await response.json()) as QuotaResponse;
+        const quotaData = await response.json() as QuotaResponse;
         setData(quotaData);
         setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Kotalar yüklenemedi");
+        setError(err instanceof Error ? err.message : 'Kota bilgileri yüklenemedi.');
       } finally {
         setLoading(false);
       }
@@ -75,13 +71,8 @@ export default function QuotaUsageDisplay({
 
   if (error) {
     return (
-      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-        <p className="font-medium text-amber-900 dark:text-amber-200 text-sm">
-          Kota bilgisi şu anda alınamadı.
-        </p>
-        <p className="mt-1 text-amber-800 dark:text-amber-300 text-sm">
-          {error}
-        </p>
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
       </div>
     );
   }
@@ -89,26 +80,22 @@ export default function QuotaUsageDisplay({
   if (!data || data.quotas.length === 0) {
     return (
       <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 text-center">
-        <p className="text-gray-600 dark:text-gray-400 text-sm">
-          Kota bilgisi yüklenmedi
-        </p>
+        <p className="text-gray-600 dark:text-gray-400 text-sm">Kota bilgisi yüklenmedi</p>
       </div>
     );
   }
 
   const getProgressColor = (percentage: number) => {
-    if (percentage >= 100) return "bg-red-500";
-    if (percentage >= 80) return "bg-yellow-500";
-    if (percentage >= 50) return "bg-blue-500";
-    return "bg-green-500";
+    if (percentage >= 100) return 'bg-red-500';
+    if (percentage >= 80) return 'bg-yellow-500';
+    if (percentage >= 50) return 'bg-blue-500';
+    return 'bg-green-500';
   };
 
   const getWarningColor = (percentage: number) => {
-    if (percentage >= 100)
-      return "border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20";
-    if (percentage >= 80)
-      return "border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20";
-    return "";
+    if (percentage >= 100) return 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20';
+    if (percentage >= 80) return 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20';
+    return '';
   };
 
   const limitedQuotas = data.quotas.filter((q) => q.limit !== null);
@@ -120,7 +107,7 @@ export default function QuotaUsageDisplay({
   return (
     <div className="space-y-4">
       {compact ? (
-        // Compact view - only show limited features
+        // Kompakt görünümde yalnızca sınırlı özellikleri göster.
         <div className="space-y-3">
           {limitedQuotas.map((quota) => (
             <div
@@ -141,14 +128,12 @@ export default function QuotaUsageDisplay({
                   style={{ width: `${Math.min(quota.percentageUsed, 100)}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                {quota.message}
-              </p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{quota.message}</p>
             </div>
           ))}
         </div>
       ) : (
-        // Full view - show all quotas
+        // Tam görünümde tüm kotaları göster.
         <div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Kullanım Kotaları
@@ -171,7 +156,7 @@ export default function QuotaUsageDisplay({
                     )}
                     {quota.limit === null && (
                       <p className="text-sm text-green-600 dark:text-green-400">
-                        Sınırsız
+                        Sınırsız ✓
                       </p>
                     )}
                   </div>
@@ -187,21 +172,17 @@ export default function QuotaUsageDisplay({
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-2">
                       <div
                         className={`h-2.5 rounded-full transition-all ${getProgressColor(
-                          quota.percentageUsed,
+                          quota.percentageUsed
                         )}`}
-                        style={{
-                          width: `${Math.min(quota.percentageUsed, 100)}%`,
-                        }}
+                        style={{ width: `${Math.min(quota.percentageUsed, 100)}%` }}
                       />
                     </div>
                     <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
                       <span>{quota.percentageUsed}% kullanılmış</span>
                       {quota.resetDate && (
                         <span>
-                          Sıfırlanma:{" "}
-                          {new Date(quota.resetDate).toLocaleDateString(
-                            "tr-TR",
-                          )}
+                          Sıfırlanma:{' '}
+                          {new Date(quota.resetDate).toLocaleDateString('tr-TR')}
                         </span>
                       )}
                     </div>
@@ -212,17 +193,13 @@ export default function QuotaUsageDisplay({
           </div>
 
           {data.tier && (
-            <div className="mt-6 p-4 bg-urfa-50 dark:bg-urfa-900/20 border border-urfa-200 dark:border-urfa-800 rounded-lg">
-              <p className="text-sm text-urfa-900 dark:text-urfa-300">
-                <span className="font-semibold">Mevcut plan:</span>{" "}
-                {data.tier.name}
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-900 dark:text-blue-300">
+                <span className="font-semibold">Erişim modu:</span> Faz 1 açık erişim
               </p>
-              {limitedQuotas.length > 0 && (
-                <p className="text-sm text-urfa-800 dark:text-urfa-400 mt-2">
-                  Plan seçeneklerini inceleyerek kotalı özelliklerin kapsamını
-                  genişletebilirsiniz.
-                </p>
-              )}
+              <p className="text-sm text-blue-800 dark:text-blue-400 mt-2">
+                Bu aşamada özellikler ücretsiz ve sınırsız olarak kullanılabilir.
+              </p>
             </div>
           )}
         </div>

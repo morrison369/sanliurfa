@@ -8,25 +8,25 @@
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../../lib/postgres';
 import {
-  getCampaign,
-  updateCampaign,
+  getMarketingCampaign,
+  updateMarketingCampaign,
   deleteCampaign,
   launchCampaign,
   pauseCampaign,
-} from '../../../../lib/email-marketing';
+} from '../../../../lib/email/email-marketing';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/email/campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Access denied', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const data = await getCampaign(campaignId);
+    const data = await getMarketingCampaign(campaignId);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/email/campaigns/[id]', HttpStatus.OK, duration);
@@ -65,7 +65,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     logger.error('Get campaign failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Kampanya alınamadı',
+      'Failed to get campaign',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -74,14 +74,14 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/email/campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -91,19 +91,30 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     }
 
     const body = await request.json();
-    const { action, ...campaignData } = body;
+    const { action } = body;
 
     let result = null;
 
     if (action === 'launch') {
-      const scheduledFor = campaignData.scheduled_for ? new Date(campaignData.scheduled_for) : undefined;
+      const scheduledFor = body.scheduled_for ? new Date(body.scheduled_for) : undefined;
       result = await launchCampaign(campaignId, locals.user.id, scheduledFor);
       logger.info('Campaign launched', { campaignId, userId: locals.user.id });
     } else if (action === 'pause') {
       result = await pauseCampaign(campaignId, locals.user.id);
       logger.info('Campaign paused', { campaignId, userId: locals.user.id });
     } else {
-      result = await updateCampaign(campaignId, locals.user.id, campaignData);
+      // HARD RULE #51: only allowlisted fields reach updateMarketingCampaign
+      const ALLOWED_CAMPAIGN_FIELDS = new Set(['name', 'subject_line', 'preview_text', 'html_content', 'plain_text_content', 'from_name', 'from_email', 'reply_to_email', 'campaign_type', 'settings']);
+      const updates: Record<string, unknown> = {};
+      for (const key of ALLOWED_CAMPAIGN_FIELDS) {
+        if (body[key] !== undefined) updates[key] = body[key];
+      }
+      if (updates.name !== undefined && (typeof updates.name !== 'string' || (updates.name as string).length > 255)) return apiError(ErrorCode.VALIDATION_ERROR, 'name 255 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+      if (updates.subject_line !== undefined && (typeof updates.subject_line !== 'string' || (updates.subject_line as string).length > 500)) return apiError(ErrorCode.VALIDATION_ERROR, 'subject_line 500 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+      if (updates.html_content !== undefined && (typeof updates.html_content !== 'string' || (updates.html_content as string).length > 500000)) return apiError(ErrorCode.VALIDATION_ERROR, 'html_content 500000 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+      if (updates.from_name !== undefined && (typeof updates.from_name !== 'string' || (updates.from_name as string).length > 200)) return apiError(ErrorCode.VALIDATION_ERROR, 'from_name 200 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+      if (updates.from_email !== undefined && (typeof updates.from_email !== 'string' || (updates.from_email as string).length > 254)) return apiError(ErrorCode.VALIDATION_ERROR, 'from_email 254 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+      result = await updateMarketingCampaign(campaignId, locals.user.id, updates);
       logger.info('Campaign updated', { campaignId, userId: locals.user.id });
     }
 
@@ -129,7 +140,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     logger.error('Update campaign failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Kampanya güncellenemedi',
+      'Failed to update campaign',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -138,14 +149,14 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/email/campaigns/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -164,12 +175,12 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/email/campaigns/[id]', HttpStatus.OK, duration);
 
-    logger.info('Kampanya silindi', { campaignId, userId: locals.user.id });
+    logger.info('Campaign deleted', { campaignId, userId: locals.user.id });
 
     return apiResponse(
       {
         success: true,
-        message: 'Kampanya silindi',
+        message: 'Campaign deleted',
       },
       HttpStatus.OK,
       requestId
@@ -180,7 +191,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     logger.error('Delete campaign failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Kampanya silinemedi',
+      'Failed to delete campaign',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -13,20 +13,20 @@ import {
   getEngagementByDevice,
   getGeographicEngagement,
   getSubscriberSegments,
-} from '../../../../../lib/email-analytics';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
+} from '../../../../../lib/email/email-analytics';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../../lib/api';
 import { recordRequest } from '../../../../../lib/metrics';
 import { logger } from '../../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/email/campaigns/[id]/analytics', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: campaignId } = params;
@@ -56,24 +56,24 @@ export const GET: APIRoute = async ({ request, locals, params, url }) => {
       'segments',
     ];
 
-    const data: any = {};
+    const data: Record<string, unknown> = {};
 
     if (metrics.includes('overview')) {
       data.overview = await getCampaignOverview(campaignId);
     }
 
     if (metrics.includes('daily')) {
-      const days = parseInt(url.searchParams.get('days') || '30', 10);
+      const days = safeIntParam(url.searchParams.get('days'), 30, 0, 1_000_000);
       data.daily = await getDailyMetrics(campaignId, days);
     }
 
     if (metrics.includes('timeline')) {
-      const hours = parseInt(url.searchParams.get('hours') || '24', 10);
+      const hours = safeIntParam(url.searchParams.get('hours'), 24, 0, 1_000_000);
       data.timeline = await getEngagementTimeline(campaignId, hours);
     }
 
     if (metrics.includes('links')) {
-      const limit = parseInt(url.searchParams.get('linkLimit') || '10', 10);
+      const limit = safeIntParam(url.searchParams.get('linkLimit'), 10, 0, 1_000_000);
       data.topLinks = await getTopLinks(campaignId, limit);
     }
 
@@ -106,7 +106,7 @@ export const GET: APIRoute = async ({ request, locals, params, url }) => {
     logger.error('Get campaign analytics failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Kampanya analitikleri alınamadı',
+      'Failed to get campaign analytics',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

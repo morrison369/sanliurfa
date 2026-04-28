@@ -59,7 +59,7 @@ test.describe('Subscription System', () => {
       {
         name: 'auth-token',
         value: 'test-token',
-        url: 'http://localhost:3000',
+        url: 'http://localhost:4321',
       },
     ];
 

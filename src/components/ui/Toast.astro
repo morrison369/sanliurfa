@@ -46,49 +46,44 @@
 
     private createToast(options: ToastOptions): HTMLElement {
       const toast = document.createElement('div');
-      const colors = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        warning: 'bg-yellow-500',
-        info: 'bg-blue-500'
-      };
-      
-      const icons = {
-        success: '✓',
-        error: '✕',
-        warning: '⚠',
-        info: 'ℹ'
-      };
+      const colors = { success: 'bg-green-500', error: 'bg-red-500', warning: 'bg-yellow-500', info: 'bg-blue-500' };
+      const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+      const type = options.type || 'info';
 
-      toast.className = `
-        ${colors[options.type || 'info']}
-        text-white px-6 py-4 rounded-xl shadow-lg
-        transform translate-y-2 opacity-0
-        transition-all duration-300 ease-out
-        min-w-[300px] max-w-md
-        flex items-start gap-3
-      `;
+      toast.className = [
+        colors[type],
+        'text-white px-6 py-4 rounded-xl shadow-lg',
+        'transform translate-y-2 opacity-0',
+        'transition-all duration-300 ease-out',
+        'min-w-[300px] max-w-md flex items-start gap-3',
+      ].join(' ');
 
-      toast.innerHTML = `
-        <span class="text-xl flex-shrink-0">${icons[options.type || 'info']}</span>
-        <div class="flex-1">
-          <p class="font-medium">${options.message}</p>
-          ${options.action ? `
-            <button class="mt-2 text-sm underline hover:no-underline opacity-90">
-              ${options.action.label}
-            </button>
-          ` : ''}
-        </div>
-        <button class="text-white/70 hover:text-white flex-shrink-0" onclick="this.parentElement.remove()">
-          ✕
-        </button>
-      `;
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'text-xl flex-shrink-0';
+      iconSpan.textContent = icons[type];
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'flex-1';
+
+      const msgP = document.createElement('p');
+      msgP.className = 'font-medium';
+      msgP.textContent = options.message;
+      contentDiv.appendChild(msgP);
 
       if (options.action) {
-        const actionBtn = toast.querySelector('button');
-        actionBtn?.addEventListener('click', options.action.onClick);
+        const actionBtn = document.createElement('button');
+        actionBtn.className = 'mt-2 text-sm underline hover:no-underline opacity-90';
+        actionBtn.textContent = options.action.label;
+        actionBtn.addEventListener('click', options.action.onClick);
+        contentDiv.appendChild(actionBtn);
       }
 
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'text-white/70 hover:text-white flex-shrink-0';
+      closeBtn.textContent = '✕';
+      closeBtn.addEventListener('click', () => toast.remove());
+
+      toast.appendChild(iconSpan); toast.appendChild(contentDiv); toast.appendChild(closeBtn);
       return toast;
     }
 

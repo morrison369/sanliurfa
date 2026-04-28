@@ -1,0 +1,64 @@
+---
+/**
+ * Container Query Card — Tailwind 4 `@container` örneği
+ *
+ * Pattern: Parent `class="@container"` ile container context tanımlanır,
+ * children `@md:` / `@lg:` variantları parent container'ın size'ına göre
+ * tepki verir (viewport'tan BAĞIMSIZ).
+ *
+ * Use case: Aynı card komponenti hem dar sidebar (200px) hem geniş main
+ * column (800px) içinde kullanıldığında, viewport-based `md:` doğru
+ * sonuç vermez. Container query "kim parent'ım, ne kadar geniş" sorusuna
+ * yanıt verir.
+ *
+ * Tailwind 4 @container variant'ları:
+ *   - @sm:  ≥ 24rem (384px) parent
+ *   - @md:  ≥ 28rem (448px) parent
+ *   - @lg:  ≥ 32rem (512px) parent
+ *   - @xl:  ≥ 36rem (576px) parent
+ *   - @2xl: ≥ 42rem (672px) parent
+ *
+ * Demo: Bu komponent bir grid içinde kullanıldığında, parent column'un
+ * genişliğine göre layout otomatik flow edir — image+text yan yana / üst alt.
+ *
+ * @example
+ *   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+ *     <ContainerQueryCard title="A" image="/x.jpg" body="..." />
+ *     <ContainerQueryCard title="B" image="/y.jpg" body="..." />
+ *   </div>
+ */
+
+import Image from '../Image.astro';
+
+interface Props {
+  title: string;
+  image?: string;
+  body: string;
+  href?: string;
+}
+
+const { title, image, body, href } = Astro.props;
+---
+
+<article class="@container card overflow-hidden">
+  <a href={href || '#'} class="flex flex-col @md:flex-row gap-4 p-4 hover:bg-stone-50 dark:hover:bg-zinc-900/50 transition-colors">
+    {image && (
+      <Image
+        src={image}
+        alt=""
+        width={128}
+        height={128}
+        class="w-full @md:w-32 h-40 @md:h-32 rounded-lg object-cover flex-shrink-0"
+        loading="lazy"
+      />
+    )}
+    <div class="flex-1 min-w-0">
+      <h3 class="text-base @md:text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-2">
+        {title}
+      </h3>
+      <p class="text-sm text-zinc-600 dark:text-zinc-400 line-clamp-2 @lg:line-clamp-3">
+        {body}
+      </p>
+    </div>
+  </a>
+</article>

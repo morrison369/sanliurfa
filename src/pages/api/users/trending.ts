@@ -5,26 +5,26 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '15'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 15, 1, 50);
     const period = url.searchParams.get('period') || '30'; // days
     const cacheKey = `users:trending:${period}`;
 
     // Check cache (1 hour)
-    const cached = await getCache<any>(cacheKey);
+    const cached = await getCache(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/users/trending', HttpStatus.OK, Date.now() - startTime);
-      return apiResponse(cached, HttpStatus.OK, requestId);
+      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
     }
 
     // Validate period
@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       [safePeriod, limit]
     );
 
-    const users = trendingUsers.map((u: any) => ({
+    const users = trendingUsers.map((u) => ({
       id: u.id,
       name: u.full_name,
       username: u.username,
@@ -74,7 +74,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     };
 
     // Cache for 1 hour
-    await setCache(cacheKey, responseData, 3600);
+    await setCache(cacheKey, JSON.stringify(responseData), 3600);
 
     recordRequest('GET', '/api/users/trending', HttpStatus.OK, Date.now() - startTime);
 
@@ -85,7 +85,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     logger.error('Failed to get trending users', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Popüler kullanıcılar alınamadı',
+      'Failed to get trending users',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

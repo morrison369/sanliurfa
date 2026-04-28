@@ -5,18 +5,18 @@
 
 import type { APIRoute } from 'astro';
 import { searchBlogPosts } from '../../../lib/blog';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam, safeErrorDetail } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const query = url.searchParams.get('q');
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
 
     if (!query || query.trim().length === 0) {
       const duration = Date.now() - startTime;
@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       );
     }
 
-    const posts = await searchBlogPosts(query.trim(), limit);
+    const result = await searchBlogPosts(query.trim(), { limit });
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/blog/search', HttpStatus.OK, duration);
@@ -51,8 +51,8 @@ export const GET: APIRoute = async ({ request, url }) => {
       {
         success: true,
         data: {
-          posts,
-          count: posts.length,
+          posts: result.posts,
+          count: result.total,
           query: query.trim()
         }
       },
@@ -62,7 +62,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/blog/search', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog arama başarısız')
     });
     logger.error('Blog arama başarısız', err instanceof Error ? err : new Error(String(err)));
 
@@ -75,3 +75,4 @@ export const GET: APIRoute = async ({ request, url }) => {
     );
   }
 };
+

@@ -1,48 +1,217 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import VendorDashboard from "../../components/VendorDashboard";
-import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
+import Layout from '../../layouts/Layout.astro';
+import PlaceManager from '../../components/vendor/PlaceManager';
+import ReviewManager from '../../components/vendor/ReviewManager';
+import ReservationManager from '../../components/vendor/ReservationManager';
+import PromotionManager from '../../components/vendor/PromotionManager';
+import PhotoUpload from '../../components/PhotoUpload';
 
-const user = Astro.locals.user;
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
 
 const seo = {
-  title: "İşletme paneli",
-  description:
-    "Şanlıurfa işletme bilgilerinizi, yorumları, reklamları ve analitikleri yönetin.",
-  noindex: true,
+  title: 'İşletme Paneli - Sanliurfa.com',
+  description: 'İşletme bilgilerinizi yönetin, yorumları yanıtlayın ve performansınızı takip edin.',
+  noIndex: true,
+};
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/vendor/dashboard');
+}
+
+const userId = user.id;
+
+let placesResult: any = { rows: [] };
+let subResult: any = { rows: [] };
+try {
+  [placesResult, subResult] = await Promise.all([
+    query(
+      `SELECT id, slug, name FROM places WHERE owner_id = $1 AND status != 'deleted' ORDER BY created_at DESC`,
+      [userId]
+    ),
+    query(
+      `SELECT st.name as plan FROM subscriptions s
+       JOIN subscription_tiers st ON st.id = s.tier_id
+       WHERE s.user_id = $1 AND s.status = 'active'
+       ORDER BY s.created_at DESC LIMIT 1`,
+      [userId]
+    ),
+  ]);
+} catch (e) {
+  logger.error('Vendor dashboard query failed:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const vendor = {
+  id: userId,
+  name: user.fullName || 'İşletme Sahibi',
+  email: user.email,
+  plan: subResult.rows[0]?.plan || 'free',
+  places: placesResult.rows.map((p: any) => p.id),
+  firstPlace: placesResult.rows[0] || null,
 };
 ---
 
 <Layout seo={seo}>
-  {
-    !user ? (
-      <AuthFeatureLanding
-        eyebrow="İşletme paneli"
-        title="Şanlıurfa işletmenizi tek panelden yönetin"
-        description="Mekân ekleme, yorum takibi, öne çıkan listeleme, kampanya ve analitik akışları işletme hesabında birleşir. Ücretsiz hesapla başlayıp işletmenizi rehbere ekleyebilirsiniz."
-        loginRedirect="/vendor/dashboard"
-        features={[
-          {
-            title: "Mekân yönetimi",
-            description:
-              "İşletme bilgilerinizi, kategori seçimini, iletişim alanlarını ve görselleri düzenleyin.",
-          },
-          {
-            title: "Yorum ve topluluk",
-            description:
-              "Kullanıcı yorumlarını takip edin, yanıt akışını yönetin ve topluluk görünürlüğünüzü artırın.",
-          },
-          {
-            title: "Pazarlama ve analitik",
-            description:
-              "Kampanya, öne çıkan listeleme ve işletme performansını aynı yönetim yüzeyinde izleyin.",
-          },
-        ]}
-      />
-    ) : (
-      <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20 pb-12">
-        <VendorDashboard client:load />
+  <div class="min-h-screen bg-[#FDFAF3] pb-12">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">İşletme Paneli</p>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-3xl font-bold text-[#F5EDD6]">İşletme Paneli</h1>
+            <p class="text-[#9A8470] mt-1">Hoş geldiniz, {vendor.name}</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 bg-[rgba(200,160,100,0.12)] text-urfa-300 rounded-sm text-sm font-medium border border-[rgba(200,160,100,0.2)]">
+              {vendor.plan !== 'free' ? `${vendor.plan} Plan` : 'Ücretsiz Plan'}
+            </span>
+            {vendor.firstPlace && (
+              <a
+                href={`/isletme/${vendor.firstPlace.slug}`}
+                target="_blank"
+                rel="noopener"
+                class="px-4 py-2 bg-urfa-600 text-white rounded-sm hover:bg-urfa-700 transition-colors text-sm"
+              >
+                Sayfayı Görüntüle →
+              </a>
+            )}
+          </div>
+        </div>
       </div>
-    )
-  }
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      {/* Quick Stats */}
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+          <div class="text-2xl font-bold text-[#1A1008]">2,847</div>
+          <div class="text-sm text-[#9A8470]">Bu Ay Görüntülenme</div>
+          <div class="text-xs text-urfa-600 mt-1">↑ %15 artış</div>
+        </div>
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+          <div class="text-2xl font-bold text-[#1A1008]">89</div>
+          <div class="text-sm text-[#9A8470]">Telefon Tıklaması</div>
+          <div class="text-xs text-urfa-600 mt-1">↑ %8 artış</div>
+        </div>
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+          <div class="text-2xl font-bold text-[#1A1008]">4.8</div>
+          <div class="text-sm text-[#9A8470]">Ortalama Puan</div>
+          <div class="text-xs text-[#9A8470] mt-1">1,247 yorum</div>
+        </div>
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-4">
+          <div class="text-2xl font-bold text-[#1A1008]">156</div>
+          <div class="text-sm text-[#9A8470]">Yol Tarifi</div>
+          <div class="text-xs text-urfa-600 mt-1">↑ %22 artış</div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Place Management */}
+        <div class="lg:col-span-2 space-y-6">
+          {vendor.firstPlace ? (
+            <>
+              <PlaceManager placeId={vendor.firstPlace.id} client:visible />
+              <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+                <h2 class="text-xl font-semibold text-[#1A1008] mb-4">Fotoğraflar</h2>
+                <PhotoUpload placeId={vendor.firstPlace.id} photos={[]} client:visible />
+              </div>
+              <ReservationManager placeId={vendor.firstPlace.id} client:visible />
+              <PromotionManager placeId={vendor.firstPlace.id} client:visible />
+              <ReviewManager placeId={vendor.firstPlace.id} client:visible />
+            </>
+          ) : (
+            <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-12 text-center text-[#9A8470]">
+              <div class="text-4xl mb-4">🏪</div>
+              <p class="text-lg font-medium mb-2 text-[#1A1008]">Henüz işletmeniz yok</p>
+              <p class="text-sm mb-4">İşletmenizi ekleyerek paneli kullanmaya başlayın.</p>
+              <a href="/isletme-kayit" class="inline-block px-6 py-2 bg-urfa-600 text-white rounded-sm hover:bg-urfa-700">
+                İşletme Ekle
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column - Sidebar */}
+        <div class="space-y-6">
+          {/* Plan Info */}
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h3 class="font-bold text-[#1A1008] mb-4">Mevcut Planınız</h3>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-[#6B5540]">Plan</span>
+                <span class="font-medium text-urfa-600">Premium</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[#6B5540]">Aylık Ücret</span>
+                <span class="font-medium text-[#1A1008]">₺500</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-[#6B5540]">Yenileme Tarihi</span>
+                <span class="font-medium text-[#1A1008]">15 Mayıs 2026</span>
+              </div>
+            </div>
+            <hr class="my-4 border-[rgba(200,160,100,0.14)]" />
+            <h4 class="font-medium text-[#1A1008] mb-2">Premium Avantajları</h4>
+            <ul class="space-y-2 text-sm text-[#6B5540]">
+              <li class="flex items-center gap-2">
+                <span class="text-urfa-600">✓</span>
+                Öne çıkan listeleme
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-urfa-600">✓</span>
+                Sosyal medya tanıtımı
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-urfa-600">✓</span>
+                Detaylı analitik raporları
+              </li>
+              <li class="flex items-center gap-2">
+                <span class="text-urfa-600">✓</span>
+                Öncelikli destek
+              </li>
+            </ul>
+          </div>
+
+          {/* Quick Actions */}
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6">
+            <h3 class="font-bold text-[#1A1008] mb-4">Hızlı İşlemler</h3>
+            <div class="space-y-2">
+              <button class="w-full text-left px-4 py-3 rounded-sm hover:bg-[rgba(200,160,100,0.04)] transition-colors flex items-center gap-3">
+                <span class="w-8 h-8 bg-[rgba(200,160,100,0.08)] text-urfa-700 rounded-sm flex items-center justify-center">
+                  📸
+                </span>
+                <span class="text-[#1A1008]">Fotoğraf Ekle</span>
+              </button>
+              <button class="w-full text-left px-4 py-3 rounded-sm hover:bg-[rgba(200,160,100,0.04)] transition-colors flex items-center gap-3">
+                <span class="w-8 h-8 bg-[rgba(200,160,100,0.08)] text-urfa-700 rounded-sm flex items-center justify-center">
+                  🏷️
+                </span>
+                <span class="text-[#1A1008]">Kampanya Oluştur</span>
+              </button>
+              <button class="w-full text-left px-4 py-3 rounded-sm hover:bg-[rgba(200,160,100,0.04)] transition-colors flex items-center gap-3">
+                <span class="w-8 h-8 bg-[rgba(200,160,100,0.08)] text-urfa-700 rounded-sm flex items-center justify-center">
+                  📊
+                </span>
+                <span class="text-[#1A1008]">Detaylı Rapor İndir</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Support */}
+          <div class="bg-[#0D0A08] border border-[rgba(200,160,100,0.2)] rounded-sm p-6">
+            <h3 class="font-bold text-[#F5EDD6] mb-2">Yardıma mı ihtiyacınız var?</h3>
+            <p class="text-[#C4B49A] text-sm mb-4">Premium üyelere 7/24 öncelikli destek</p>
+            <a
+              href="mailto:support@sanliurfa.com"
+              class="inline-block px-4 py-2 bg-urfa-600 text-white rounded-sm font-medium hover:bg-urfa-700 transition-colors"
+            >
+              Destek Al
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </Layout>

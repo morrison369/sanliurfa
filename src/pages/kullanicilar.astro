@@ -1,45 +1,59 @@
 ---
+
 /**
  * User Discovery & Search Page
  * Browse and search for users
  */
 
-import Layout from "../layouts/Layout.astro";
-import UserSearchResults from "../components/UserSearchResults";
+import Layout from '../layouts/Layout.astro';
+import UserSearchResults from '../components/UserSearchResults';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Kullanıcıları Keşfet - Sanliurfa.com',
+  description: 'Şanlıurfa.com topluluğunu keşfet ve diğer kullanıcılarla bağlantı kur.',
+  keywords: ['şanlıurfa.com kullanıcılar', 'topluluk keşfet', 'sanliurfa.com üyeler'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/kullanicilar',
+};
+const faqItems = [
+  { S: 'Sanliurfa.com topluluğuna nasıl katılabilirim?', C: 'Ücretsiz kayıt olarak topluluğa katılabilir, mekan yorumlayabilir ve diğer kullanıcıları takip edebilirsiniz.' },
+  { S: 'Kullanıcıları nasıl arayabilirim?', C: 'Kullanıcılar sayfasındaki arama alanını kullanarak üyeleri adlarına göre bulabilirsiniz.' },
+  { S: 'Sanliurfa.com üyeliğinin avantajları nelerdir?', C: 'Üyeler yorum yazabilir, koleksiyon oluşturabilir, etkinliklere katılabilir ve premium özelliklerden yararlanabilir.' },
+];
+
 ---
 
-<Layout
-  seo={{
-    title: "Şanlıurfa Topluluğu - Kullanıcıları Keşfet",
-    description:
-      "Şanlıurfa gezi, gastronomi, tarih ve şehir rehberi topluluğundaki kullanıcıları keşfedin.",
-    canonicalUrl: "https://sanliurfa.com/kullanicilar",
-  }}
->
-  <section
-    class="bg-gradient-to-br from-urfa-950 via-urfa-900 to-isot-900 text-white"
-  >
-    <div class="container-custom py-14">
-      <p class="text-sm uppercase tracking-wide text-urfa-200">
-        Şanlıurfa topluluğu
-      </p>
-      <h1 class="mt-3 text-4xl md:text-5xl font-display font-bold">
-        Şehri bilen kullanıcıları keşfedin
-      </h1>
-      <p class="mt-4 max-w-3xl text-lg text-urfa-100">
-        Tarihi yerler, yöresel lezzetler, aile rotaları ve şehir servisleri
-        hakkında katkı sunan Şanlıurfa kullanıcılarını bulun.
-      </p>
-      <div class="mt-8 flex flex-wrap gap-3">
-        <a href="/siralamalar" class="btn-accent">Sıralamaları gör</a>
-        <a href="/kayit" class="btn bg-white/10 text-white hover:bg-white/20"
-          >Topluluğa katıl</a
-        >
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">Şanlıurfa Topluluğu</p>
+        <h1 class="text-3xl font-bold text-[#F5EDD6] mb-2">Kullanıcıları Keşfet</h1>
+        <p class="text-[#C4B49A]">Toplulumuzu keşfet ve diğer kullanıcılarla bağlantı kur</p>
       </div>
     </div>
-  </section>
 
-  <div class="container-custom py-10">
-    <UserSearchResults client:load currentUserId={Astro.locals.user?.id} />
+    <div class="container mx-auto px-4 py-8">
+      <UserSearchResults client:visible={{ rootMargin: '140px' }} currentUserId={Astro.locals.user?.id} />
+    </div>
   </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Kullanıcılar', item: `${baseUrl}/kullanıcılar` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

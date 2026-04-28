@@ -1,74 +1,42 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import { ContentManager } from "../components/ContentManager";
-import AuthFeatureLanding from "../components/AuthFeatureLanding.astro";
+import Layout from '../layouts/Layout.astro';
+import { ContentManager } from '../components/ContentManager';
 
 const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/icerik');
+}
 ---
 
-<Layout title="İçerik Yönetimi - Şanlıurfa" noindex>
-  {
-    !user ? (
-      <AuthFeatureLanding
-        eyebrow="İçerik katkısı"
-        title="Şanlıurfa içeriklerini tek panelden üretin"
-        description="Mekân, gezi, gastronomi ve tarih içerikleri üyelikle birlikte yönetim akışına bağlanır. Hesap oluşturduğunuzda içerik taslakları, yayınlama ve performans takibi açılır."
-        loginRedirect="/icerik"
-        features={[
-          {
-            title: "Şanlıurfa odaklı içerik",
-            description:
-              "Tarihi yerler, yemek tarifleri, etkinlikler ve şehir rehberi içerikleri tek panelden hazırlanır.",
-          },
-          {
-            title: "Taslak ve yayın akışı",
-            description:
-              "İçerikleri taslak olarak hazırlayıp yayınlanmaya hazır hale getirme altyapısı.",
-          },
-          {
-            title: "Performans takibi",
-            description:
-              "İçerik görüntülenmesi, etkileşim ve arama görünürlüğü ilerleyen panellerde takip edilir.",
-          },
-        ]}
-      />
-    ) : (
-      <div class="container mx-auto px-4 py-8">
-        <div class="mb-8">
-          <h1 class="text-4xl font-bold mb-2">İçerik yönetimi</h1>
-          <p class="text-gray-600">
-            Şanlıurfa hakkında makale, rehber ve topluluk içeriği oluşturup
-            yayınlayın.
-          </p>
+<Layout seo={{ title: "İçerik Yönetimi - Şanlıurfa", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-10">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">HESABIM</p>
+        <h1 class="text-3xl font-bold text-[#F5EDD6]">İçerik Yönetimi</h1>
+        <p class="text-[#9A8470] mt-1">Şanlıurfa hakkında makale ve içerik oluşturun ve yayınlayın</p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <ContentManager client:visible />
+
+      <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6">
+          <h3 class="font-semibold text-[#1A1008] mb-2">Kolay Oluşturma</h3>
+          <p class="text-sm text-[#6B5540]">Basit editör ile profesyonel içerik oluşturun.</p>
         </div>
 
-        <ContentManager client:load />
+        <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6">
+          <h3 class="font-semibold text-[#1A1008] mb-2">Hızlı Yayınlama</h3>
+          <p class="text-sm text-[#6B5540]">Bir tıkla içeriğinizi yayınlayın ve paylaşın.</p>
+        </div>
 
-        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="bg-urfa-50 rounded-lg p-6 border border-urfa-200">
-            <h3 class="font-semibold mb-2 text-urfa-900">Kolay oluşturma</h3>
-            <p class="text-sm text-gray-700">
-              Şanlıurfa rehberi için başlık, açıklama, kategori ve içerik
-              alanlarını sade editörle hazırlayın.
-            </p>
-          </div>
-
-          <div class="bg-isot-50 rounded-lg p-6 border border-isot-200">
-            <h3 class="font-semibold mb-2 text-isot-900">Yayın akışı</h3>
-            <p class="text-sm text-gray-700">
-              Taslakları yayınlanmaya hazır hale getirip yönetim onayıyla
-              canlıya alın.
-            </p>
-          </div>
-
-          <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
-            <h3 class="font-semibold mb-2 text-gray-900">Analitikler</h3>
-            <p class="text-sm text-gray-700">
-              İçeriğinizin görüntülenme ve etkileşim performansını takip edin.
-            </p>
-          </div>
+        <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6">
+          <h3 class="font-semibold text-[#1A1008] mb-2">Analitikler</h3>
+          <p class="text-sm text-[#6B5540]">İçeriğinizin performansını izleyin.</p>
         </div>
       </div>
-    )
-  }
+    </div>
+  </div>
 </Layout>

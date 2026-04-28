@@ -1,1 +1,175 @@
-# ✅ Şanlıurfa.com - Deployment Tamamlandı!\n\n## 🎉 Canlı Durum\n\n| Özellik | Durum |\n|---------|-------|\n| **Site** | ✅ https://sanliurfa.com AKTİF |\n| **HTTP Status** | ✅ 200 OK |\n| **SSL** | ✅ Cloudflare Full SSL |\n| **Proxy** | ✅ Cloudflare Proxy (Turuncu) |\n| **Uptime** | ✅ 15m+ |\n\n---\n\n## 🌐 Erişim\n\n```\n🌍 https://sanliurfa.com\n🌍 http://sanliurfa.com  → HTTPS yönlendirir\n```\n\n---\n\n## 🔧 Altyapı\n\n### Cloudflare Ayarları\n```yaml\nDNS A kaydı: sanliurfa.com → 168.119.79.238\nProxy: Turuncu bulut (Aktif)\nSSL Mode: Full\nHTTP/3: Enabled\nBrotli: Enabled\n```\n\n### Sunucu Stack\n```yaml\nOS: AlmaLinux 8.10\nIP: 168.119.79.238\nSSH Port: 77\n\nWeb Server: Apache (CWP)\n  - Port 80: HTTP\n  - Port 443: HTTPS\n  - Proxy: 127.0.0.1:6000\n\nApplication: Node.js 22.12.0\n  - Framework: Astro 6\n  - Port: 6000 (localhost only)\n  - Process Manager: PM2\n  \nDatabase: PostgreSQL 16\n  - DB: sanliurfa\n  - User: sanliurfa_user\n  - Tables: 15+\n```\n\n---\n\n## 🔗 Trafiğin Akışı\n\n```\n[Ziyaretçi]\n    ↓ HTTPS\n[Cloudflare Proxy]\n    ↓ SSL (Full)\n[Sunucu:443]\n    ↓\n[Apache SSL vhost]\n    ↓ ProxyPass\n[Node.js:6000]\n    ↓\n[Astro SSR App]\n    ↓\n[PostgreSQL:5432]\n```\n\n---\n\n## 🛡️ Güvenlik\n\n| Port | Erişim | Durum |\n|------|--------|-------|\n| 80 | Tümü | ✅ HTTP (Cloudflare) |\n| 443 | Tümü | ✅ HTTPS (Cloudflare) |\n| 6000 | Sadece 127.0.0.1 | ✅ Güvenli |\n| 5432 | Sadece localhost | ✅ Güvenli |\n| 77 | SSH | ✅ Yetkilendirilmiş |\n\n---\n\n## 📊 Performans\n\n```yaml\nRAM: 5.9GB / 62GB (9% kullanım)\nDisk: 130GB / 436GB (32% kullanım)\nCPU: Düşük yük\nApp Memory: ~97MB\n```\n\n---\n\n## 🎯 Özellikler Aktif\n\n- ✅ Astro SSR (Server-Side Rendering)\n- ✅ PostgreSQL Database\n- ✅ Cloudflare CDN\n- ✅ Cloudflare SSL\n- ✅ Cloudflare Caching\n- ✅ Mobile Responsive\n- ✅ PWA Desteği\n\n---\n\n## 📝 Yönetim Bilgileri\n\n### CWP Panel\n```\nURL: https://168.119.79.238:2083\nUser: sanliur\nPass: CHANGE_ME_CWP_SSH_PASSWORD\n```\n\n### SSH\n```bash\nssh -p 77 sanliur@168.119.79.238\n\n# PM2\nsource ~/.nvm/nvm.sh\npm2 list\npm2 logs sanliurfa\npm2 restart sanliurfa\n\n# PostgreSQL\nsudo -u postgres psql -d sanliurfa\n```\n\n---\n\n## 🔄 Otomatik İşlemler\n\n- ✅ **PM2:** Sunucu restartında otomatik başlatma\n- ✅ **Log Rotation:** Günlük log temizliği\n- ✅ **SSL:** Let's Encrypt otomatik yenileme\n- ✅ **Backup:** Günlük PostgreSQL yedekleme (manuel kurulum gerekir)\n\n---\n\n## 📈 Monitoring\n\n```bash\n# Sistem kaynakları\nhtop\nfree -h\ndf -h\n\n# Uygulama logları\npm2 logs sanliurfa\n\n# Apache logları\ntail -f /home/sanliur/public_html/logs/sanliurfa.com-error.log\n```\n\n---\n\n## 🚀 Deployment Tarihi\n\n**06 Nisan 2026**\n\n---\n\n## ✨ Tebrikler!\n\nTüm sistemler çalışır durumda. Site ziyaretçilere açık!\n\n🔗 **https://sanliurfa.com**\n
+# ✅ Şanlıurfa.com - Deployment Tamamlandı!
+
+## 🎉 Canlı Durum
+
+| Özellik | Durum |
+|---------|-------|
+| **Site** | ✅ https://sanliurfa.com AKTİF |
+| **HTTP Status** | ✅ 200 OK |
+| **SSL** | ✅ Cloudflare Full SSL |
+| **Proxy** | ✅ Cloudflare Proxy (Turuncu) |
+| **Uptime** | ✅ 15m+ |
+
+---
+
+## 🌐 Erişim
+
+```
+🌍 https://sanliurfa.com
+🌍 http://sanliurfa.com  → HTTPS yönlendirir
+```
+
+---
+
+## 🔧 Altyapı
+
+### Cloudflare Ayarları
+```yaml
+DNS A kaydı: sanliurfa.com → 168.119.79.238
+Proxy: Turuncu bulut (Aktif)
+SSL Mode: Full
+HTTP/3: Enabled
+Brotli: Enabled
+```
+
+### Sunucu Stack
+```yaml
+OS: AlmaLinux 8.10
+IP: 168.119.79.238
+SSH Port: 77
+
+Web Server: Apache (CWP)
+  - Port 80: HTTP
+  - Port 443: HTTPS
+  - Proxy: 127.0.0.1:6000
+
+Application: Node.js 22.12.0
+  - Framework: Astro 6
+  - Port: 6000 (localhost only)
+  - Process Manager: PM2
+  
+Database: PostgreSQL 16
+  - DB: sanliurfa
+  - User: sanliurfa_user
+  - Tables: 15+
+```
+
+---
+
+## 🔗 Trafiğin Akışı
+
+```
+[Ziyaretçi]
+    ↓ HTTPS
+[Cloudflare Proxy]
+    ↓ SSL (Full)
+[Sunucu:443]
+    ↓
+[Apache SSL vhost]
+    ↓ ProxyPass
+[Node.js:6000]
+    ↓
+[Astro SSR App]
+    ↓
+[PostgreSQL:5432]
+```
+
+---
+
+## 🛡️ Güvenlik
+
+| Port | Erişim | Durum |
+|------|--------|-------|
+| 80 | Tümü | ✅ HTTP (Cloudflare) |
+| 443 | Tümü | ✅ HTTPS (Cloudflare) |
+| 6000 | Sadece 127.0.0.1 | ✅ Güvenli |
+| 5432 | Sadece localhost | ✅ Güvenli |
+| 77 | SSH | ✅ Yetkilendirilmiş |
+
+---
+
+## 📊 Performans
+
+```yaml
+RAM: 5.9GB / 62GB (9% kullanım)
+Disk: 130GB / 436GB (32% kullanım)
+CPU: Düşük yük
+App Memory: ~97MB
+```
+
+---
+
+## 🎯 Özellikler Aktif
+
+- ✅ Astro SSR (Server-Side Rendering)
+- ✅ PostgreSQL Database
+- ✅ Cloudflare CDN
+- ✅ Cloudflare SSL
+- ✅ Cloudflare Caching
+- ✅ Mobile Responsive
+- ✅ PWA Desteği
+
+---
+
+## 📝 Yönetim Bilgileri
+
+### CWP Panel
+```
+URL: https://168.119.79.238:2083
+User: sanliur
+Pass: CHANGE_ME_CWP_SSH_PASSWORD
+```
+
+### SSH
+```bash
+ssh -p 77 sanliur@168.119.79.238
+
+# PM2
+source ~/.nvm/nvm.sh
+pm2 list
+pm2 logs sanliurfa
+pm2 restart sanliurfa
+
+# PostgreSQL
+sudo -u postgres psql -d sanliurfa
+```
+
+---
+
+## 🔄 Otomatik İşlemler
+
+- ✅ **PM2:** Sunucu restartında otomatik başlatma
+- ✅ **Log Rotation:** Günlük log temizliği
+- ✅ **SSL:** Let's Encrypt otomatik yenileme
+- ✅ **Backup:** Günlük PostgreSQL yedekleme (manuel kurulum gerekir)
+
+---
+
+## 📈 Monitoring
+
+```bash
+# Sistem kaynakları
+htop
+free -h
+df -h
+
+# Uygulama logları
+pm2 logs sanliurfa
+
+# Apache logları
+tail -f /home/sanliur/public_html/logs/sanliurfa.com-error.log
+```
+
+---
+
+## 🚀 Deployment Tarihi
+
+**06 Nisan 2026**
+
+---
+
+## ✨ Tebrikler!
+
+Tüm sistemler çalışır durumda. Site ziyaretçilere açık!
+
+🔗 **https://sanliurfa.com**

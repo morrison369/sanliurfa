@@ -6,59 +6,105 @@
 
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../../lib/postgres';
-import { requestAccountDeletion } from '../../../../lib/account-deletion';
-import { apiResponse, apiError, HttpStatus } from '../../../../lib/api';
+import { requestAccountDeletion } from '../../../../lib/account/account-deletion';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import bcryptjs from 'bcryptjs';
 
-export const POST: APIRoute = async (context) => {
+type DeleteAccountBody = {
+  password?: unknown;
+  reason?: unknown;
+};
+
+type UserPasswordRow = {
+  password_hash: string | null;
+};
+
+export const POST: APIRoute = async ({ request, locals }) => {
+  const requestId = getRequestId(request);
+
   try {
     // Auth required
-    if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Oturum açmanız gerekiyor');
+    if (!locals.user) {
+      return apiError(
+        ErrorCode.UNAUTHORIZED,
+        'Oturum açmanız gerekiyor',
+        HttpStatus.UNAUTHORIZED,
+        undefined,
+        requestId
+      );
     }
 
-    const userId = context.locals.user.id;
-    const body = await context.request.json();
+    const userId = locals.user.id;
+    const body = await request.json() as DeleteAccountBody;
 
     // Validate password is provided
     if (!body.password || typeof body.password !== 'string') {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Şifre gereklidir');
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Şifre gereklidir',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
     }
 
     // Get user with password hash
-    const user = await queryOne(
-      'SELECT password FROM users WHERE id = $1',
+    const user = await queryOne<UserPasswordRow>(
+      'SELECT password_hash FROM users WHERE id = $1',
       [userId]
     );
 
-    if (!user) {
-      return apiError(context, HttpStatus.NOT_FOUND, 'Kullanıcı bulunamadı');
+    if (!user?.password_hash) {
+      return apiError(
+        ErrorCode.NOT_FOUND,
+        'Kullanıcı bulunamadı veya şifreyle giriş etkin değil',
+        HttpStatus.NOT_FOUND,
+        undefined,
+        requestId
+      );
     }
 
     // Verify password
-    const isPasswordValid = await bcryptjs.compare(body.password, user.password);
+    const isPasswordValid = await bcryptjs.compare(body.password, user.password_hash);
 
     if (!isPasswordValid) {
       logger.warn('Invalid password for account deletion request', { userId });
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Şifre hatalı');
+      return apiError(
+        ErrorCode.AUTHENTICATION_FAILED,
+        'Şifre hatalı',
+        HttpStatus.UNAUTHORIZED,
+        undefined,
+        requestId
+      );
     }
 
     // Request deletion
-    const deletion = await requestAccountDeletion(userId, body.reason || undefined);
+    const rawReason = typeof body.reason === 'string' ? body.reason.trim() : '';
+    if (rawReason.length > 500) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Silme gerekçesi 500 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    const reason = rawReason.length > 0 ? rawReason : undefined;
+    const deletion = await requestAccountDeletion(userId, reason);
 
     logger.info('Account deletion requested', { userId, deletesAt: deletion.deletesAt });
 
-    return apiResponse(context, HttpStatus.OK, {
+    return apiResponse({
       success: true,
       message: `Hesabınız ${deletion.gracePeriodDays} gün içinde silinecektir.`,
       deletionRequestId: deletion.deletionRequestId,
       deletesAt: deletion.deletesAt,
       gracePeriodDays: deletion.gracePeriodDays,
       notice: 'Bu süre içinde silinme işlemini iptal edebilirsiniz.'
-    });
+    }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Failed to request account deletion', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Hesap silme isteği gönderilemedi');
+    return apiError(
+      ErrorCode.INTERNAL_ERROR,
+      'Hesap silme isteği oluşturulurken bir hata oluştu',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+      undefined,
+      requestId
+    );
   }
 };

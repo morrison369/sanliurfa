@@ -24,6 +24,12 @@ export const migration_089_search_suggestions = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE search_suggestions ADD COLUMN IF NOT EXISTS suggestion_text VARCHAR(255);
+      ALTER TABLE search_suggestions ADD COLUMN IF NOT EXISTS is_promoted BOOLEAN DEFAULT false;
+      ALTER TABLE search_suggestions ADD COLUMN IF NOT EXISTS relevance_score FLOAT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_search_suggestions_text
       ON search_suggestions(suggestion_text)
     `);
@@ -49,6 +55,11 @@ export const migration_089_search_suggestions = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_search_suggestions ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_search_suggestions ADD COLUMN IF NOT EXISTS relevance_to_user FLOAT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_user_suggestions_user
       ON user_search_suggestions(user_id, relevance_to_user DESC)
     `);
@@ -65,6 +76,12 @@ export const migration_089_search_suggestions = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(prefix, completion_text, search_type)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE autocomplete_index ADD COLUMN IF NOT EXISTS prefix VARCHAR(100);
+      ALTER TABLE autocomplete_index ADD COLUMN IF NOT EXISTS search_type VARCHAR(50);
+      ALTER TABLE autocomplete_index ADD COLUMN IF NOT EXISTS frequency INT DEFAULT 0;
     `);
 
     await pool.query(`
@@ -85,6 +102,13 @@ export const migration_089_search_suggestions = async (pool: Pool) => {
         is_relevant BOOLEAN,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE search_clicks ADD COLUMN IF NOT EXISTS search_query VARCHAR(255);
+      ALTER TABLE search_clicks ADD COLUMN IF NOT EXISTS result_type VARCHAR(50);
+      ALTER TABLE search_clicks ADD COLUMN IF NOT EXISTS result_id UUID;
+      ALTER TABLE search_clicks ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`
@@ -111,6 +135,10 @@ export const migration_089_search_suggestions = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(metric_date)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE search_metrics_summary ADD COLUMN IF NOT EXISTS metric_date DATE;
     `);
 
     await pool.query(`

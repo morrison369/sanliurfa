@@ -1,24 +1,51 @@
 #!/usr/bin/env python3
-"""Tailwind runtime guard.
+"""Astro 6 + Tailwind kurulumu"""
 
-Tailwind 4 is managed locally through package.json, astro.config.mjs,
-and src/styles/global.css. This script intentionally does not SSH to
-production or install deprecated Tailwind integration packages.
-"""
+import paramiko
 
-from pathlib import Path
-import sys
+ssh = paramiko.SSHClient()
+ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+ssh.connect('168.119.79.238', port=77, username='sanliur', password='CHANGE_ME_CWP_SSH_PASSWORD', allow_agent=False, look_for_keys=False)
 
-ROOT = Path(__file__).resolve().parents[1]
-REQUIRED = [
-    ROOT / "package.json",
-    ROOT / "astro.config.mjs",
-    ROOT / "src" / "styles" / "global.css",
-]
+print("🎨 Tailwind için Astro 6 Kurulumu")
+print("=" * 50)
 
-missing = [str(path.relative_to(ROOT)) for path in REQUIRED if not path.exists()]
-if missing:
-    print("Eksik Tailwind 4 dosyalari: " + ", ".join(missing))
-    sys.exit(1)
+# package.json güncelle
+print("\n📦 @astrojs/tailwind ekleniyor...")
+cmd = '''cd /home/sanliur/public_html && export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && npm install @astrojs/tailwind tailwindcss autoprefixer postcss --legacy-peer-deps'''
 
-print("Tailwind 4 aktif: @tailwindcss/vite + src/styles/global.css")
+stdin, stdout, stderr = ssh.exec_command(cmd, timeout=180)
+
+import time
+start = time.time()
+while not stdout.channel.exit_status_ready():
+    if time.time() - start > 15:
+        print("  ⏳ Kurulum devam ediyor...")
+        start = time.time()
+    time.sleep(1)
+
+output = stdout.read().decode()
+error = stderr.read().decode()
+
+if "added" in output:
+    lines = [l for l in output.split('\n') if 'added' in l or 'packages' in l]
+    for line in lines[-3:]:
+        print(f"  {line}")
+    print("✅ Tailwind paketleri kuruldu!")
+else:
+    print("⚠️ Durum:", output[-500:])
+    if error:
+        print("Hata:", error[:300])
+
+# astro.config.mjs kontrol
+print("\n📄 astro.config.mjs kontrol...")
+stdin, stdout, stderr = ssh.exec_command("cat /home/sanliur/public_html/astro.config.mjs")
+config = stdout.read().decode()
+
+if "@astrojs/tailwind" in config:
+    print("✅ Tailwind import edilmiş")
+else:
+    print("⚠️ Tailwind import edilmemiş - manuel kontrol gerekli")
+
+ssh.close()
+print("\nTamamlandı!")

@@ -11,23 +11,12 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     const { id: userId } = params;
-
-    if (!userId) {
-      recordRequest('GET', '/api/users/[id]/activity-stats', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(
-        ErrorCode.VALIDATION_ERROR,
-        'Kullanıcı ID gereklidir',
-        HttpStatus.BAD_REQUEST,
-        undefined,
-        requestId
-      );
-    }
 
     // Verify user exists
     const user = await queryOne('SELECT id FROM users WHERE id = $1', [userId]);
@@ -43,7 +32,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     }
 
     // Get activity stats
-    const stats = await getUserActivitySummary(userId, 30);
+    const stats = await getUserActivitySummary(userId);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/users/${userId}/activity-stats`, HttpStatus.OK, duration);
@@ -69,3 +58,4 @@ export const GET: APIRoute = async ({ request, params }) => {
     );
   }
 };
+

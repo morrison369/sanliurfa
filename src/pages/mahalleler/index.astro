@@ -1,0 +1,140 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+
+let districts: any[] = [];
+let neighborhoodCount = 0;
+
+try {
+  const [districtResult, countResult] = await Promise.all([
+    query(
+      `SELECT d.*,
+              (SELECT COUNT(*) FROM neighborhoods n WHERE n.district_id = d.id) as neighborhood_count
+       FROM districts d
+       ORDER BY d.is_central DESC, d.sort_order`
+    ),
+    query("SELECT COUNT(*) FROM neighborhoods"),
+  ]);
+  districts = districtResult.rows;
+  neighborhoodCount = parseInt(countResult.rows[0]?.count || '0');
+} catch (e) {
+  logger.error('Error loading mahalleler index:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: 'Şanlıurfa Mahalleler Rehberi | İlçe ve Mahalle Bilgileri',
+  description: "Şanlıurfa\'nın tüm mahallelerini keşfedin. İlçe ve mahallelere göre mekanlar, eczaneler, okullar ve daha fazlası.",
+  keywords: ['şanlıurfa mahalleler', 'urfa mahalle listesi', 'şanlıurfa eyyübiye mahalleleri', 'urfa haliliye mahalleler', 'şanlıurfa adres', 'urfa semt rehberi'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/mahalleler',
+};
+const { baseUrl } = await getSiteBranding();
+
+const faqItems = [
+  {
+    S: "Şanlıurfa\'nın kaç ilçesi var?",
+    C: "Şanlıurfa\'ya bağlı 13 ilçe bulunmaktadır. Merkez ilçeler Eyyübiye, Haliliye ve Karaköprü'dür.",
+  },
+  {
+    S: "Şanlıurfa\'da en kalabalık mahalleler hangileri?",
+    C: 'Dergah, Balıklıgöl, Camikebir gibi tarihi merkez mahalleleri ve Haliliye ilçesindeki yeni yapılaşma bölgeleri en kalabalık mahalleler arasında yer almaktadır.',
+  },
+  {
+    S: 'Mahalle bazında mekan ve hizmet bilgilerine nasıl ulaşılır?',
+    C: 'Mahalleler rehberinden ilgili ilçeye ve ardından mahalleye tıklayarak o mahalledeki eczane, okul ve yakın mekan bilgilerine ulaşabilirsiniz.',
+  },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-16">
+      <div class="container mx-auto px-4 max-w-5xl">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">Şanlıurfa Semt Rehberi</p>
+        <h1 class="text-4xl md:text-5xl font-bold text-[#F5EDD6] mb-4">Mahalleler Rehberi</h1>
+        <p class="text-[#C4B49A] text-lg max-w-2xl">
+          Şanlıurfa'nın tüm mahallelerini ilçelere göre keşfedin
+        </p>
+        {neighborhoodCount > 0 && (
+          <p class="text-[#9A8470] mt-2 text-sm">{neighborhoodCount} mahalle listelendi</p>
+        )}
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-5xl py-12">
+      <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6 mb-10">
+        <h2 class="text-lg font-bold text-[#1A1008] mb-2">📍 Mahalle Rehberi Hakkında</h2>
+        <p class="text-[#6B5540] text-sm">
+          Her mahalle sayfasında yakın mekanlar, eczaneler, okullar ve diğer hizmetleri bulabilirsiniz.
+          İlçenizi seçerek mahalle listesine ulaşın.
+        </p>
+      </div>
+
+      <h2 class="text-2xl font-bold text-[#1A1008] mb-6">İlçelere Göre Mahalleler</h2>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {districts.map((d) => (
+          <a
+            href={`/ilceler/${d.slug}`}
+            class="bg-white rounded-sm p-6 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all hover:-translate-y-0.5 group"
+          >
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-3xl">🏘️</span>
+              <h3 class="text-xl font-bold text-[#1A1008] group-hover:text-urfa-700 transition-colors">{d.name}</h3>
+            </div>
+            {d.neighborhood_count > 0 ? (
+              <p class="text-sm text-[#9A8470]">{d.neighborhood_count} mahalle</p>
+            ) : (
+              <p class="text-sm text-[#9A8470]">Mahalle bilgisi güncelleniyor</p>
+            )}
+            {d.description && (
+              <p class="text-sm text-[#9A8470] mt-2 line-clamp-2">{d.description}</p>
+            )}
+          </a>
+        ))}
+      </div>
+
+      <div class="mt-12">
+        <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Popüler Mahalleler</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {[
+            { name: 'Dergah Mahallesi', ilce: 'eyyubiye', slug: 'dergah-mahallesi' },
+            { name: 'Balıklıgöl Mahallesi', ilce: 'eyyubiye', slug: 'balikligol-mahallesi' },
+            { name: 'Atatürk Mahallesi', ilce: 'haliliye', slug: 'ataturk-mahallesi' },
+            { name: 'Paşabağı Mahallesi', ilce: 'haliliye', slug: 'pasabagi-mahallesi' },
+            { name: 'Camikebir Mahallesi', ilce: 'eyyubiye', slug: 'camikebir-mahallesi' },
+            { name: 'Yenişehir Mahallesi', ilce: 'karakopru', slug: 'yenisehir-mahallesi' },
+            { name: 'Bağlarbaşı Mahallesi', ilce: 'haliliye', slug: 'baglarbasi-mahallesi' },
+            { name: 'Karaköprü Merkez', ilce: 'karakopru', slug: 'karakopru-merkez' },
+          ].map((mah) => (
+            <a
+              href={`/mahalleler/${mah.ilce}/${mah.slug}`}
+              class="bg-white rounded-sm p-4 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group"
+            >
+              <span class="text-xs text-[#9A8470]">{mah.ilce}</span>
+              <p class="font-medium text-[#1A1008] group-hover:text-urfa-700 text-sm mt-1 transition-colors">{mah.name}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: `${baseUrl}/mahalleler` },
+    ]
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

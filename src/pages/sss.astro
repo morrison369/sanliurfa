@@ -1,87 +1,112 @@
 ---
-import Layout from "../layouts/Layout.astro";
+
+import Layout from '../layouts/Layout.astro';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'Sık Sorulan Sorular | Sanliurfa.com',
+  description:
+    'Sanliurfa.com şehir rehberi, mekan ekleme, yorumlar, üyelik, eşleşme ve içerik yönetimi hakkında sık sorulan sorular.',
+  keywords: ['sanliurfa.com sss', 'şanlıurfa rehber sorular', 'urfa mekan ekleme nasıl', 'sanliurfa.com yardım', 'şanlıurfa üyelik'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/sss',
+};
 
 const faqs = [
   {
-    question: "sanliurfa.com nedir?",
-    answer:
-      "sanliurfa.com, Şanlıurfa için mekânlar, tarihi yerler, gastronomi, etkinlikler ve şehir servislerini bir araya getiren Türkçe şehir rehberi ve topluluk platformudur.",
+    S: 'Sanliurfa.com nedir?',
+    C: 'Sanliurfa.com; Şanlıurfa mekanları, gezilecek yerleri, ulaşım, sağlık, yemek tarifleri ve topluluk özelliklerini tek yerde sunan yerel şehir rehberidir.',
   },
   {
-    question: "Mekân eklemek ücretli mi?",
-    answer:
-      "İlk aşamada mekân ekleme, yorum yapma, puan verme ve temel topluluk özellikleri ücretsiz olarak kullanılabilir.",
+    S: 'Mekan eklemek ücretli mi?',
+    C: 'Mekan ekleme, yorum yapma, puan verme ve temel topluluk özellikleri ücretsizdir. Öne çıkarma ve ek görünürlük için premium abonelik seçenekleri mevcuttur.',
   },
   {
-    question: "Şanlıurfa nöbetçi eczane ve ulaşım bilgileri nerede yer alır?",
-    answer:
-      "Nöbetçi eczaneler, otobüs saatleri ve uçak saatleri Şehir Servisleri bölümünde yayınlanır. Veri kaynakları bağlandıkça bilgiler güncellenir.",
+    S: 'Yorum ve puanlama nasıl çalışır?',
+    C: 'Kayıtlı kullanıcılar mekan detay sayfalarında 1–5 yıldız puan verebilir ve yorum yazabilir. Yorumlar moderasyon sürecinden geçer; uygunsuz içerikler kaldırılır.',
   },
   {
-    question: "Yorumlar ve puanlar nasıl çalışır?",
-    answer:
-      "Kullanıcılar mekânlara puan verebilir, yorum yazabilir ve deneyimlerini paylaşabilir. Şikayet edilen içerikler moderasyon sürecinden geçirilir.",
+    S: 'Nöbetçi eczane bilgisi nereden güncelleniyor?',
+    C: 'Nöbetçi eczane listesi, admin paneli üzerinden yetkili kullanıcılar tarafından günlük olarak güncellenir. Sayfaya doğrudan /saglik/nobetci-eczaneler adresinden ulaşabilirsiniz.',
   },
   {
-    question: "sanliurfa.com sadece Türkçe mi yayın yapar?",
-    answer:
-      "Evet. Platform Şanlıurfa odaklı yerel bir proje olduğu için içerik dili Türkçedir ve public URL yapısı Türkçe karakter sorunu yaşatmayan kanonik rotalarla yönetilir.",
+    S: 'Şanlıurfa otobüs saatleri güncel mi?',
+    C: 'Otobüs sefer saatleri ve hat bilgileri /ulasim/otobus-saatleri sayfasında, hat detayları ise /ulasim/otobus-hatlari sayfasında yayınlanmaktadır. Bilgiler dönemsel olarak güncellenir.',
+  },
+  {
+    S: 'İşletmemi nasıl ekleyebilirim?',
+    C: 'İşletme Ekle (/isletme-kayit) sayfasından formı doldurarak başvurabilirsiniz. Başvurular admin onayından geçtikten sonra yayınlanır.',
+  },
+  {
+    S: 'İşletme doğrulama nedir?',
+    C: 'Doğrulanmış işletmeler, mavi onay rozeti alarak daha güvenilir görünür. Doğrulama talebi, işletme sahibi hesabıyla admin portalı üzerinden iletilir.',
+  },
+  {
+    S: 'Eşleşme özelliği nedir?',
+    C: 'Eşleşme özelliği (/eslesme), kullanıcıların ilgi alanlarına göre topluluk içinde yeni kişiler keşfetmesini sağlayan sosyal bir araçtır.',
+  },
+  {
+    S: 'Göbeklitepe\'ye nasıl gidilir?',
+    C: 'Göbeklitepe, Şanlıurfa şehir merkezine yaklaşık 18 km uzaklıktadır. Şehir merkezinden taksi veya özel araçla ulaşabilirsiniz. Ziyaret saatleri ve bilet bilgileri için /isletme/gobeklitepe sayfasını inceleyebilirsiniz.',
+  },
+  {
+    S: 'Halfeti\'ye nasıl gidilir?',
+    C: 'Halfeti, Şanlıurfa\'ya 120 km uzaklıkta Fırat kıyısında yer alan bir ilçedir. Şanlıurfa Otogarı\'ndan düzenli seferler bulunmaktadır. Tekne turu ve konaklama bilgileri için /ilceler/halfeti sayfasını inceleyebilirsiniz.',
+  },
+  {
+    S: 'Urfa kebabı tarifi var mı?',
+    C: 'Evet, /yemek-tarifleri/urfa-kebabi adresinde adım adım Urfa kebabı tarifi bulabilirsiniz. Ayrıca çiğ köfte, borani ve şıllık gibi yöresel tarifler de /yemek-tarifleri sayfasında mevcuttur.',
+  },
+  {
+    S: 'Yanlış veya eksik bilgi nasıl bildirilebilir?',
+    C: 'Hatalı içerikleri /iletisim sayfasındaki formu kullanarak ya da mekan detay sayfasındaki "Raporla" butonuyla bildirebilirsiniz. Moderasyon ekibimiz en kısa sürede inceler.',
   },
 ];
-
-const seo = {
-  title: "Sıkça Sorulan Sorular - sanliurfa.com",
-  description:
-    "sanliurfa.com hakkında sıkça sorulan sorular: Şanlıurfa mekân rehberi, şehir servisleri, yorumlar, üyelik ve içerik yönetimi.",
-  canonicalUrl: "https://sanliurfa.com/sss",
-  schema: {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((faq) => ({
-      "@type": "Question",
-      name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
-    })),
-  },
-};
 ---
 
 <Layout seo={seo}>
-  <section class="relative overflow-hidden bg-urfa-900 py-20">
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.16),transparent_35%)]"></div>
-    <div class="container-custom relative">
-      <p class="mb-4 text-sm font-semibold uppercase tracking-[0.35em] text-urfa-200">
-        Yardım Merkezi
-      </p>
-      <h1 class="max-w-3xl text-4xl font-display font-bold text-white md:text-5xl">
-        Sıkça Sorulan Sorular
-      </h1>
-      <p class="mt-5 max-w-2xl text-lg leading-8 text-urfa-100">
-        Şanlıurfa şehir rehberi, mekân ekleme, yorumlar ve şehir servisleri hakkında temel bilgiler.
-      </p>
-    </div>
-  </section>
-
-  <section class="bg-gray-50 py-14 dark:bg-gray-900">
-    <div class="container-custom">
-      <div class="mx-auto max-w-4xl space-y-5">
-        {
-          faqs.map((faq, index) => (
-            <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <div class="mb-3 flex items-start gap-4">
-                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-urfa-100 text-sm font-bold text-urfa-700 dark:bg-urfa-900/40 dark:text-urfa-200">
-                  {index + 1}
-                </span>
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white">{faq.question}</h2>
-              </div>
-              <p class="text-gray-600 dark:text-gray-300 md:pl-[52px]">{faq.answer}</p>
-            </article>
-          ))
-        }
+  <main class="min-h-screen bg-[#FDFAF3] pt-24">
+    <section class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white">
+      <div class="container mx-auto px-4 py-14">
+        <p class="text-sm font-semibold uppercase tracking-wider text-[#9A8470]">Yardım Merkezi</p>
+        <h1 class="mt-3 text-4xl font-black md:text-5xl text-[#F5EDD6]">Sık Sorulan Sorular</h1>
+        <p class="mt-4 max-w-3xl text-lg text-[#9A8470]">
+          Şanlıurfa şehir rehberi, üyelik, mekan ekleme ve topluluk özellikleriyle ilgili temel cevaplar.
+        </p>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <section class="container mx-auto px-4 py-12">
+      <div class="grid gap-4 md:grid-cols-2">
+        {faqs.map((item) => (
+          <article class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-6 shadow-sm">
+            <h2 class="text-lg font-bold text-[#1A1008]">{item.S}</h2>
+            <p class="mt-3 leading-7 text-[#6B5540]">{item.C}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.C,
+      },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'SSS', item: `${baseUrl}/sss` },
+    ],
+  })} is:inline />
 </Layout>

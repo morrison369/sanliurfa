@@ -1,52 +1,25 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import { TransactionHistory } from "../../components/TransactionHistory";
-import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
+import Layout from '../../layouts/Layout.astro';
+import { TransactionHistory } from '../../components/TransactionHistory';
 
 const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/loyalty/transactions');
+}
 ---
 
-<Layout title="İşlem geçmişi - Sadakat Programı" noindex>
-  {
-    !user ? (
-      <AuthFeatureLanding
-        eyebrow="Puan geçmişi"
-        title="Şanlıurfa katkı puanlarınızı kayıt altında tutun"
-        description="Puan kazanma, harcama, ödül kullanımı ve seviye ilerlemesi hesabınızla birlikte takip edilir. Ücretsiz hesap oluşturarak sadakat geçmişinizi açabilirsiniz."
-        loginRedirect="/loyalty/transactions"
-        features={[
-          {
-            title: "Kazanım geçmişi",
-            description:
-              "Yorum, favori, etkinlik ve sosyal katkılardan gelen puanlar listelenir.",
-          },
-          {
-            title: "Harcama takibi",
-            description:
-              "Ödül kullanımı ve puan düşüşleri tarih bazlı izlenir.",
-          },
-          {
-            title: "Seviye ilerlemesi",
-            description:
-              "Toplam puan ve kullanılabilir puan ayrımı tek geçmiş ekranında görülür.",
-          },
-        ]}
-      />
-    ) : (
-      <div class="container mx-auto px-4 py-8">
-        <div class="mb-8">
-          <a
-            href="/loyalty"
-            class="text-urfa-700 hover:underline mb-4 inline-block"
-          >
-            Geri dön
-          </a>
-          <h1 class="text-4xl font-bold mb-2">İşlem geçmişi</h1>
-          <p class="text-gray-600">Tüm puan işlemlerinizi görüntüleyin.</p>
-        </div>
-
-        <TransactionHistory client:load />
+<Layout seo={{ title: "İşlem Geçmişi - Sadakat Programı", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="container mx-auto px-4 max-w-5xl">
+        <a href="/loyalty" class="text-[#9A8470] hover:text-[#C4B49A] text-sm mb-4 inline-block transition-colors">← Sadakat Programı</a>
+        <h1 class="text-4xl font-bold text-[#F5EDD6] mb-2">İşlem Geçmişi</h1>
+        <p class="text-[#C4B49A]">Tüm puan işlemlerinizi görüntüleyin</p>
       </div>
-    )
-  }
+    </div>
+
+    <div class="container mx-auto px-4 max-w-5xl py-8">
+      <TransactionHistory client:visible={{ rootMargin: '140px' }} />
+    </div>
+  </div>
 </Layout>

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Rewards Catalog API
  * GET: List rewards catalog or user redemptions
@@ -11,14 +10,14 @@ import {
   getFeaturedRewards,
   redeemReward,
   getUserRedemptions
-} from '../../../lib/rewards-catalog';
-import { getLoyaltyBalance } from '../../../lib/loyalty-system';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+} from '../../../lib/rewards/rewards-catalog';
+import { getLoyaltyBalance } from '../../../lib/loyalty/loyalty-system';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam, safeErrorDetail } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -26,29 +25,40 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const type = url.searchParams.get('type');
     const featured = url.searchParams.get('featured') === 'true';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
     const myRedemptions = url.searchParams.get('my') === 'true';
 
-    let data;
-
-    if (myRedemptions) {
-      if (!locals.user?.id) {
-        recordRequest('GET', '/api/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-        return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
-      }
-      const status = url.searchParams.get('status');
-      data = await getUserRedemptions(locals.user.id, status, limit, offset);
-    } else if (featured) {
-      data = await getFeaturedRewards(limit);
-    } else {
-      const filters: any = {};
-      if (url.searchParams.get('max_cost')) {
-        filters.max_cost = parseInt(url.searchParams.get('max_cost')!);
-      }
-      if (type) filters.reward_type = type;
-      data = await getRewardsCatalog(limit, offset, filters);
+    const VALID_REWARD_TYPES = new Set(['voucher', 'discount', 'product', 'experience', 'digital', 'physical']);
+    if (type !== undefined && type !== null && (typeof type !== 'string' || !VALID_REWARD_TYPES.has(type))) {
+      recordRequest('GET', '/api/rewards', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz ödül tipi', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
+
+    const statusParam = url.searchParams.get('status');
+    const VALID_REDEMPTION_STATUSES = new Set(['pending', 'redeemed', 'expired', 'cancelled']);
+    if (statusParam !== undefined && statusParam !== null && (typeof statusParam !== 'string' || !VALID_REDEMPTION_STATUSES.has(statusParam))) {
+      recordRequest('GET', '/api/rewards', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz durum', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+
+    if (myRedemptions && !locals.user?.id) {
+      recordRequest('GET', '/api/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
+
+    const data = myRedemptions
+      ? await getUserRedemptions(locals.user!.id, statusParam, limit, offset)
+      : featured
+        ? await getFeaturedRewards(limit)
+        : await (async () => {
+            const filters: Record<string, unknown> = {};
+            if (url.searchParams.get('max_cost')) {
+              filters.max_cost = safeIntParam(url.searchParams.get('max_cost'), 0, 0, 1_000_000);
+            }
+            if (type) filters.reward_type = type;
+            return getRewardsCatalog(limit, offset, filters);
+          })();
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/rewards', HttpStatus.OK, duration);
@@ -73,14 +83,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/rewards', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -129,7 +139,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Redeem reward failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      error instanceof Error ? error.message : 'Failed to redeem reward',
+      safeErrorDetail(error, 'Ödül kullanılamadı'),
       statusCode,
       undefined,
       requestId

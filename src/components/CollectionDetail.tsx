@@ -1,11 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { getApiErrorMessage, unwrapApiPayload } from "@/lib/client-api";
-
+import { useState, useEffect } from 'react';
 interface CollectionItem {
   id: string;
   place_id: string;
-  place_name: string;
   place_slug?: string;
+  place_name: string;
   place_image?: string;
   place_category?: string;
   place_rating?: number;
@@ -21,7 +19,6 @@ interface Collection {
   description?: string;
   icon?: string;
   is_public: boolean;
-  is_following?: boolean;
   place_count: number;
   follower_count?: number;
   created_at: string;
@@ -36,15 +33,14 @@ interface CollectionDetailProps {
 
 export default function CollectionDetail({
   collectionId,
-  currentUserId,
-  isAdmin,
+  currentUserId
 }: CollectionDetailProps) {
   const [collection, setCollection] = useState<Collection | null>(null);
   const [items, setItems] = useState<CollectionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowingLoading, setIsFollowingLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   // Load collection on mount
   useEffect(() => {
@@ -55,94 +51,86 @@ export default function CollectionDetail({
     try {
       setIsLoading(true);
       const response = await fetch(`/api/collections/${collectionId}`);
-      const json = await response.json();
-      const data = unwrapApiPayload<{
-        success?: boolean;
-        data?: { collection: Collection; items: CollectionItem[] };
-      }>(json);
+      const data = await response.json();
 
       if (data.success) {
-        setCollection(data.data?.collection || null);
-        setItems(data.data?.items || []);
-        setIsFollowing(Boolean(data.data?.collection?.is_following));
+        setCollection(data.data.collection);
+        setItems(data.data.items);
       } else if (response.status === 404) {
-        setError("Koleksiyon bulunamadı");
+        setError('Koleksiyon bulunamadı');
       } else {
-        setError(getApiErrorMessage(json, "Koleksiyon yüklenemedi"));
+        setError(data.error || 'Koleksiyon yüklenemedi');
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Koleksiyon yüklenirken bir hata oluştu",
-      );
+      console.error('Failed to load collection:', err);
+      setError('Koleksiyon yüklenirken bir hata oluştu');
     } finally {
       setIsLoading(false);
+    }
+
+    // Check follow status if authenticated
+    if (currentUserId && collection?.id) {
+      checkFollowStatus();
+    }
+  };
+
+  const checkFollowStatus = async () => {
+    try {
+      const response = await fetch(`/api/collections/${collectionId}/followers/check`);
+      const data = await response.json();
+      if (data.success) {
+        setIsFollowing(data.data.is_following);
+      }
+    } catch (err) {
+      console.error('Failed to check follow status:', err);
     }
   };
 
   const handleFollow = async () => {
     if (!currentUserId) {
-      alert("Oturum açmanız gerekiyor");
+      window.location.href = '/giris';
       return;
     }
 
     try {
       setIsFollowingLoading(true);
-      const response = await fetch(`/api/collections/${collectionId}/follow`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const method = isFollowing ? 'DELETE' : 'POST';
+      const response = await fetch(`/api/collections/${collectionId}/followers`, {
+        method,
+        headers: { 'Content-Type': 'application/json' }
       });
-      const json = await response.json();
 
-      const data = unwrapApiPayload<{ success?: boolean; following?: boolean }>(
-        json,
-      );
+      const data = await response.json();
 
-      if (!response.ok || !data.success) {
-        throw new Error(getApiErrorMessage(json, "Takip işlemi başarısız"));
+      if (data.success) {
+        setIsFollowing(!isFollowing);
       }
-
-      setIsFollowing(Boolean(data.following));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Takip işlemi başarısız");
+      console.error('Follow error:', err);
     } finally {
       setIsFollowingLoading(false);
     }
   };
 
-  const handleRemoveItem = async (item: CollectionItem) => {
+  const handleRemoveItem = async (itemId: string) => {
     if (!collection || currentUserId !== collection.user_id) {
       return;
     }
 
-    if (!confirm("Mekânı koleksiyondan kaldırmak istediğinize emin misiniz?"))
-      return;
+    if (!await (window as any).showConfirm?.('Mekanı koleksiyondan kaldırmak istediğinize emin misiniz?')) return;
 
     try {
-      const response = await fetch(
-        `/api/collections/${collectionId}/items?placeId=${encodeURIComponent(item.place_id)}`,
-        {
-          method: "DELETE",
-        },
-      );
-      const json = await response.json();
+      const response = await fetch(`/api/collections/${collectionId}/items/${itemId}`, {
+        method: 'DELETE'
+      });
 
-      const data = unwrapApiPayload<{ success?: boolean }>(json);
+      const data = await response.json();
 
-      if (!response.ok || !data.success) {
-        throw new Error(
-          getApiErrorMessage(json, "Mekân koleksiyondan kaldırılamadı"),
-        );
+      if (data.success) {
+        setItems(items.filter(item => item.id !== itemId));
       }
-
-      setItems(items.filter((existingItem) => existingItem.id !== item.id));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Mekân koleksiyondan kaldırılamadı",
-      );
+      console.error('Remove item error:', err);
     }
   };
 
@@ -152,18 +140,14 @@ export default function CollectionDetail({
 
   if (error) {
     return (
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+      <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded">
         {error}
       </div>
     );
   }
 
   if (!collection) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        Koleksiyon bulunamadı
-      </div>
-    );
+    return <div className="text-center py-12 text-gray-500">Koleksiyon bulunamadı</div>;
   }
 
   const isOwner = currentUserId === collection.user_id;
@@ -175,28 +159,24 @@ export default function CollectionDetail({
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <span className="rounded-full bg-urfa-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-urfa-800 dark:bg-urfa-900/40 dark:text-urfa-100">
-                {collection.icon || "Rota"}
-              </span>
+              <span className="text-5xl">{collection.icon}</span>
               <div>
                 <h1 className="text-3xl font-bold">{collection.name}</h1>
                 {collection.is_public && (
                   <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded inline-block">
-                    Herkese açık
+                    🌍 Herkese Açık
                   </span>
                 )}
               </div>
             </div>
 
             {collection.description && (
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {collection.description}
-              </p>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">{collection.description}</p>
             )}
 
             <div className="flex gap-6 text-sm text-gray-500">
-              <span>{collection.place_count} mekân</span>
-              <span>{collection.follower_count || 0} takipçi</span>
+              <span>📍 {collection.place_count} mekan</span>
+              <span>👥 {collection.follower_count || 0} takipçi</span>
             </div>
           </div>
 
@@ -207,15 +187,11 @@ export default function CollectionDetail({
                 disabled={isFollowingLoading}
                 className={`px-4 py-2 rounded font-medium whitespace-nowrap ${
                   isFollowing
-                    ? "bg-gray-600 text-white hover:bg-gray-700"
-                    : "bg-urfa-700 text-white hover:bg-urfa-800"
+                    ? 'bg-gray-600 text-white hover:bg-gray-700'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
                 } disabled:opacity-50`}
               >
-                {isFollowingLoading
-                  ? "İşleniyor..."
-                  : isFollowing
-                    ? "Takipten çık"
-                    : "Takip et"}
+                {isFollowingLoading ? 'İşleniyor...' : isFollowing ? 'Takipten Çık' : 'Takip Et'}
               </button>
             )}
 
@@ -233,48 +209,43 @@ export default function CollectionDetail({
 
       {/* Items Grid */}
       <div>
-        <h2 className="text-2xl font-bold mb-4">Mekânlar</h2>
+        <h2 className="text-2xl font-bold mb-4">Mekanlar</h2>
 
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-urfa-200 bg-urfa-50/60 p-8 text-center text-gray-700 dark:border-urfa-900 dark:bg-urfa-900/10 dark:text-gray-300">
-            Bu koleksiyonda henüz mekân yok. Şanlıurfa gezi, yemek veya tarih
-            rotası oluşturmak için mekânları favorilerinize ekleyebilirsiniz.
+          <div className="text-center py-12 text-gray-500">
+            Bu koleksiyonda henüz mekan eklenmemiş
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {items.map((item) => (
+            {items.map(item => (
               <div
                 key={item.id}
                 className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition"
               >
                 {/* Image */}
-                <div className="aspect-video bg-urfa-50 overflow-hidden">
-                  {item.place_image ? (
+                {item.place_image && (
+                  <div className="aspect-video bg-gray-200 overflow-hidden">
                     <img
                       src={item.place_image}
                       alt={item.place_name}
                       className="w-full h-full object-cover"
                     />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-xs font-bold uppercase tracking-[0.22em] text-urfa-800">
-                      Şanlıurfa
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Content */}
                 <div className="p-4">
                   <a
-                    href={`/places/${item.place_slug || item.place_id}`}
-                    className="text-lg font-bold text-urfa-700 hover:text-urfa-800 dark:text-urfa-300 dark:hover:text-urfa-200 block mb-2"
+                    href={item.place_slug ? `/isletme/${item.place_slug}` : '/mekanlar'}
+                    className="text-lg font-bold text-blue-600 hover:text-blue-700 block mb-2"
                   >
                     {item.place_name}
                   </a>
 
                   <div className="flex gap-3 text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    {item.place_category && <span>{item.place_category}</span>}
+                    {item.place_category && <span>📁 {item.place_category}</span>}
                     {item.place_rating && (
-                      <span>{item.place_rating.toFixed(1)} puan</span>
+                      <span>⭐ {item.place_rating.toFixed(1)}</span>
                     )}
                   </div>
 
@@ -287,14 +258,14 @@ export default function CollectionDetail({
                   {/* Actions */}
                   <div className="flex gap-2">
                     <a
-                      href={`/places/${item.place_slug || item.place_id}`}
-                      className="flex-1 text-center bg-urfa-100 text-urfa-800 px-3 py-2 rounded text-sm font-medium hover:bg-urfa-200 transition"
+                      href={item.place_slug ? `/isletme/${item.place_slug}` : '/mekanlar'}
+                      className="flex-1 text-center bg-blue-100 text-blue-700 px-3 py-2 rounded text-sm font-medium hover:bg-blue-200 transition"
                     >
-                      Mekânı gör
+                      Mekanı Gör
                     </a>
                     {isOwner && (
                       <button
-                        onClick={() => handleRemoveItem(item)}
+                        onClick={() => handleRemoveItem(item.id)}
                         className="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded text-sm font-medium hover:bg-red-200 transition"
                       >
                         Kaldır

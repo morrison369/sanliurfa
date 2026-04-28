@@ -4,7 +4,8 @@
  */
 
 import type { APIRoute } from 'astro';
-import { trackCampaignEvent } from '../../../lib/email-campaigns';
+import { trackCampaignEvent } from '../../../lib/email/email-campaigns';
+import { safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 // 1x1 transparent PNG pixel
@@ -13,7 +14,7 @@ const PIXEL = Buffer.from(
   'base64'
 );
 
-export const GET: APIRoute = async ({ url, request }) => {
+export const GET: APIRoute = async ({ url }) => {
   try {
     const campaignId = url.searchParams.get('cid');
     const userId = url.searchParams.get('uid');
@@ -22,7 +23,7 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     // Validate parameters
     if (!campaignId || !userId || !eventType) {
-      logger.warn('Track request missing parameters', {
+      logger.warn('Track request missing parameters', undefined, {
         hasCampaignId: !!campaignId,
         hasUserId: !!userId,
         hasEventType: !!eventType
@@ -38,14 +39,14 @@ export const GET: APIRoute = async ({ url, request }) => {
 
     // Track the event
     const success = await trackCampaignEvent(
-      parseInt(campaignId, 10),
+      safeIntParam(campaignId, 0, 1, 1_000_000),
       userId,
       eventType,
       linkUrl || undefined
     );
 
     if (!success) {
-      logger.warn('Failed to track campaign event', {
+      logger.warn('Failed to track campaign event', undefined, {
         campaignId,
         userId,
         eventType
@@ -74,7 +75,7 @@ export const GET: APIRoute = async ({ url, request }) => {
           });
         }
       } catch (error) {
-        logger.warn('Invalid redirect URL', { linkUrl });
+        logger.warn('Invalid redirect URL', undefined, { linkUrl });
       }
     }
 

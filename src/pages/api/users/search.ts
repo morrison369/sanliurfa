@@ -3,65 +3,45 @@
  * Search for users by name, username, or email (email only for self/admins)
  */
 
-import type { APIRoute } from "astro";
-import { queryMany } from "../../../lib/postgres";
-import {
-  apiResponse,
-  apiError,
-  HttpStatus,
-  ErrorCode,
-  getRequestId,
-} from "../../../lib/api";
-import { recordRequest } from "../../../lib/metrics";
-import { logger } from "../../../lib/logging";
-import { getCache, setCache } from "../../../lib/cache";
-import { searchCuratedUsers } from "../../../data/curated-users";
+import type { APIRoute } from 'astro';
+import { queryMany } from '../../../lib/postgres';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
+import { recordRequest } from '../../../lib/metrics';
+import { logger } from '../../../lib/logging';
+import { getCache, setCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     // Get query parameters
-    const query = (url.searchParams.get("q") || "").trim();
-    const limit = Math.min(
-      parseInt(url.searchParams.get("limit") || "20"),
-      100,
-    );
-    const offset = parseInt(url.searchParams.get("offset") || "0");
-    const sortBy = url.searchParams.get("sortBy") || "relevance"; // relevance, points, level, recent
+    const query = (url.searchParams.get('q') || '').trim();
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
+    const sortBy = url.searchParams.get('sortBy') || 'relevance'; // relevance, points, level, recent
 
     // Validate query
     if (!query || query.length < 2) {
-      recordRequest(
-        "GET",
-        "/api/users/search",
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        Date.now() - startTime,
-      );
+      recordRequest('GET', '/api/users/search', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        "Arama terimi en az 2 karakter olmalıdır",
+        'Arama terimi en az 2 karakter olmalıdır',
         HttpStatus.UNPROCESSABLE_ENTITY,
         undefined,
-        requestId,
+        requestId
       );
     }
 
     if (query.length > 100) {
-      recordRequest(
-        "GET",
-        "/api/users/search",
-        HttpStatus.UNPROCESSABLE_ENTITY,
-        Date.now() - startTime,
-      );
+      recordRequest('GET', '/api/users/search', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        "Arama terimi çok uzun",
+        'Arama terimi çok uzun',
         HttpStatus.UNPROCESSABLE_ENTITY,
         undefined,
-        requestId,
+        requestId
       );
     }
 
@@ -70,18 +50,18 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const cached = await getCache<any[]>(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
-      recordRequest("GET", "/api/users/search", HttpStatus.OK, duration);
+      recordRequest('GET', '/api/users/search', HttpStatus.OK, duration);
       return apiResponse(
         {
           success: true,
           data: cached.slice(offset, offset + limit),
           count: cached.length,
           limit,
-          offset,
+          offset
         },
         HttpStatus.OK,
         requestId,
-        { "X-Cache": "HIT" },
+        { 'X-Cache': 'HIT' }
       );
     }
 
@@ -108,27 +88,27 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       WHERE (
         full_name ILIKE $1
         OR username ILIKE $1
-        ${locals.user?.isAdmin || locals.user?.id ? "OR email ILIKE $1" : ""}
+        ${locals.isAdmin ? 'OR email ILIKE $1' : ''}
       )
       AND role != 'admin'
     `;
 
-    const params: any[] = [searchTerm];
+    const params: unknown[] = [searchTerm];
 
     // Add ordering
     switch (sortBy) {
-      case "points":
-        sql += " ORDER BY points DESC, relevance_score DESC";
+      case 'points':
+        sql += ' ORDER BY points DESC, relevance_score DESC';
         break;
-      case "level":
-        sql += " ORDER BY level DESC, points DESC, relevance_score DESC";
+      case 'level':
+        sql += ' ORDER BY level DESC, points DESC, relevance_score DESC';
         break;
-      case "recent":
-        sql += " ORDER BY created_at DESC, relevance_score DESC";
+      case 'recent':
+        sql += ' ORDER BY created_at DESC, relevance_score DESC';
         break;
-      case "relevance":
+      case 'relevance':
       default:
-        sql += " ORDER BY relevance_score DESC, points DESC";
+        sql += ' ORDER BY relevance_score DESC, points DESC';
         break;
     }
 
@@ -139,7 +119,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const result = await queryMany(sql, params);
 
     // Format response (exclude sensitive fields)
-    const users = result.rows.map((row: any) => ({
+    const users = result.map((row) => ({
       id: row.id,
       full_name: row.full_name,
       username: row.username,
@@ -147,63 +127,36 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       bio: row.bio,
       points: row.points,
       level: row.level,
-      created_at: row.created_at,
+      created_at: row.created_at
     }));
 
-    const responseUsers =
-      users.length > 0
-        ? users
-        : searchCuratedUsers(query, sortBy, limit + offset);
-
     // Cache for 5 minutes
-    await setCache(cacheKey, responseUsers, 300);
+    await setCache(cacheKey, users, 300);
 
     const duration = Date.now() - startTime;
-    recordRequest("GET", "/api/users/search", HttpStatus.OK, duration);
+    recordRequest('GET', '/api/users/search', HttpStatus.OK, duration);
 
     return apiResponse(
       {
         success: true,
-        data: responseUsers.slice(offset, offset + limit),
-        count: responseUsers.length,
+        data: users.slice(offset, offset + limit),
+        count: users.length,
         limit,
-        offset,
+        offset
       },
       HttpStatus.OK,
-      requestId,
+      requestId
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest(
-      "GET",
-      "/api/users/search",
+    recordRequest('GET', '/api/users/search', HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    logger.error('User search failed', error instanceof Error ? error : new Error(String(error)));
+    return apiError(
+      ErrorCode.INTERNAL_ERROR,
+      'Kullanıcı arama sırasında bir hata oluştu',
       HttpStatus.INTERNAL_SERVER_ERROR,
-      duration,
-    );
-    logger.error(
-      "User search failed",
-      error instanceof Error ? error : new Error(String(error)),
-    );
-    const query = (url.searchParams.get("q") || "").trim();
-    const limit = Math.min(
-      parseInt(url.searchParams.get("limit") || "20"),
-      100,
-    );
-    const offset = parseInt(url.searchParams.get("offset") || "0");
-    const sortBy = url.searchParams.get("sortBy") || "relevance";
-    const fallbackUsers = searchCuratedUsers(query, sortBy, limit + offset);
-
-    return apiResponse(
-      {
-        success: true,
-        data: fallbackUsers.slice(offset, offset + limit),
-        count: fallbackUsers.length,
-        limit,
-        offset,
-        fallback: true,
-      },
-      HttpStatus.OK,
-      requestId,
+      undefined,
+      requestId
     );
   }
 };

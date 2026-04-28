@@ -1,0 +1,17 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import PharmacyManager from '../../components/admin/PharmacyManager';
+---
+
+<AdminLayout
+  title="Nöbetçi Eczane Yönetimi"
+  subtitle="Günlük nöbetçi eczane ataması ve eczane yönetimi"
+  seo={{ title: 'Nöbetçi Eczane Yönetimi - Admin', description: 'Günlük nöbetçi eczane ataması ve eczane yönetimi', noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8">
+      <div class="mb-6">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+      </div>
+      <PharmacyManager client:idle />
+    </div>
+</AdminLayout>

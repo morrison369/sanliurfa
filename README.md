@@ -1,196 +1,442 @@
-# Şanlıurfa.com
+# Sanliurfa.com
 
-Modern, hızlı ve kullanıcı dostu Şanlıurfa rehberi web uygulaması.
+Sanliurfa'nin en kapsamli mekan rehberi platformu.
 
-## 🚀 Özellikler
+## Teknolojiler
 
-### Kullanıcı Özellikleri
-- 🔍 Gelişmiş arama ve filtreleme
-- ⭐ Mekan değerlendirme ve yorumları
-- ❤️ Favoriler ve kaydetme
-- 🗺️ Harita entegrasyonu
-- 🌙 Karanlık mod
-- 🇹🇷 Sadece Türkçe yerel şehir rehberi
+- **Frontend**: Astro 6.x + React 19 + TypeScript 6.0
+- **Styling**: Tailwind CSS 3.4 (Tailwind 4 deferred — Astro+Tailwind 4 content scanning compatibility issue)
+- **Backend**: Astro SSR (`@astrojs/node`, `output: 'server'`)
+- **Database**: PostgreSQL (`pg` direct pool, no ORM)
+- **Cache**: Redis (`sanliurfa:` namespace, sliding session)
+- **Container**: Docker + Docker Compose (dev), PM2 (prod)
+- **CI/CD**: GitHub Actions
+- **Email**: 3-tier (Resend → SMTP → dev log), admin-managed
+- **Payments**: Stripe (admin-managed credentials)
+- **Auth**: bcrypt (12 rounds) + JWT + Redis sessions; OAuth (Google/Facebook/Twitter)
+- **Architecture**: Astro Islands (9 server-deferred + 65 client-hydrated)
 
-### Kullanıcı Sistemi
-- 🔐 Email ve sosyal medya girişi (Google, Facebook)
-- 🏅 Rozet ve seviye sistemi
-- 📊 Puan kazanma mekanizması
-- 🔔 Bildirim sistemi (In-app, Email)
-- 👤 Kullanıcı profili
+## Ozellikler
 
-### Admin Panel
-- 📊 Dashboard ve istatistikler
-- ✏️ İçerik yönetimi (CRUD)
-- ✅ Moderasyon ve onay süreci
-- 📈 Veri analizi ve raporlama
-- 📤 Veri dışa aktarma (CSV/JSON)
+### Urun Politikasi (Faz 1)
+- [x] Ilk asamada tum ozellikler ucretsiz ve tam acik
+- [x] Premium/uyelik kilidi yok (erken erisim donemi)
 
-### Teknik Özellikler
-- ⚡ Astro 6.1 + React 19 + TypeScript
-- 🎨 Tailwind CSS + Lucide Icons
-- 🔥 Supabase (PostgreSQL + Auth + Realtime)
-- 📱 PWA desteği (Offline, Push notifications)
-- 🔒 Güvenlik (Rate limiting, CSP, Security headers)
-- 🧪 Test kapsamı (Unit + E2E)
-- 🚀 CI/CD (GitHub Actions)
-- 🐳 Docker desteği
+### Genel
+- [x] Ana sayfa (Hero, arama, kategoriler, one cikan mekanlar)
+- [x] Arama sistemi (Full-text search + filtreler)
+- [x] Kategoriler ve filtreleme
+- [x] Responsive tasarim
+- [x] SEO optimizasyonu
+- [x] PWA destegi
+- [x] Dark mode
+- [x] Astro core prefetch (dahili linklerde hizli gecis)
+- [x] Astro remote image authorization (Pexels/Unsplash)
 
-## 🛠️ Kurulum
+### Mekanlar
+- [x] Mekan listeleme ve detay sayfalari
+- [x] Yorum sistemi
+- [x] Puanlama sistemi
+- [x] Fotoğraf galerisi
+- [x] Calisma saatleri
+- [x] Harita entegrasyonu
 
-### Gereksinimler
-- Node.js `22.13.0` veya daha yeni bir 22.x sürümü
-- npm
-- Supabase hesabı
+### Kullanici
+- [x] Kullanici kayit/giris (bcrypt + JWT)
+- [x] Profil yonetimi
+- [x] Favori mekanlar
+- [x] Yorum yapma
+- [x] Sosyal giris (Google)
+- [x] Uyeler arasi mesajlasma
+- [x] Arkadas ekleme / takip sistemi
+- [x] Uye profiline en fazla 4 foto ekleme
+- [x] Swipe tabanli eslesme (saga/sola kaydirma)
+- [x] Eslesen uyeler ile mesajlasma baslatma
+- [x] Eslesme aninda otomatik sohbet olusturma
+- [x] Gunluk swipe limiti (konfigure edilebilir)
 
-### Adımlar
+### Isletme Paneli (Vendor)
+- [x] Dashboard
+- [x] Isletme bilgileri yonetimi
+- [x] Fotoğraf yukleme
+- [x] Rezervasyon yonetimi
+- [x] Kampanya/promosyon olusturma
+- [x] Analitik ve raporlar
+- [x] Yorumlara yanit verme
 
-1. Repoyu klonlayın:
+### Admin Paneli
+- [x] Dashboard istatistikleri (Server Islands ile lazy load)
+- [x] Entegrasyonlar saglik ozeti widget (5 servis durumu)
+- [x] Kullanici yonetimi
+- [x] Isletme onay/red
+- [x] Blog yonetimi
+- [x] Destek ticketlari
+- [x] Site icerik yonetimi (DB-first)
+- [x] Ana sayfa hero metin/gorsel yonetimi (admin + database)
+- [x] Header hizli linkleri ve footer link gruplari (admin + database)
+- [x] Ana sayfa ana CTA alani (admin + database)
+- [x] Ana sayfa hizli moduller, rehber linkleri ve SSS (admin + database)
+
+### Admin Yonetilebilir Entegrasyonlar (`/admin/integrations`)
+6 servis tek panelden yonetilir; tum keyler DB'den okunur, env fallback olur, sunucu restart gerekmez:
+- [x] **Resend** (e-posta) — API key + from email + gunluk kisi basi limit
+- [x] **SMTP** (e-posta yedek tier) — host/port/user/pass/secure
+- [x] **Google Analytics 4** — Measurement ID
+- [x] **Stripe** (odeme) — secret/publishable/webhook keys + endpoint URL hint
+- [x] **Unsplash + Pexels** (resim saglayicilari) — API keys
+- [x] **OAuth** (Google/Facebook/Twitter) — client ID/secret + redirect URI hint per provider
+- [x] **"Test Et" butonu** her servis icin gercek API probe
+- [x] **"Tumunu Test Et"** master button (paralel)
+- [x] Setup hint paneli (kopyalanabilir webhook/redirect URL'leri, console linkleri)
+
+### Iletisim
+- [x] Iletisim formu
+- [x] Isletme basvuru formu
+- [x] Otomatik ticket sistemi
+
+### Guvenlik & Performans
+- [x] Rate limiting (IP, User, Endpoint bazli)
+- [x] SQL injection korumasi (parametrized queries + table allowlist)
+- [x] XSS korumasi (file upload MIME ext mapping, set:html audit)
+- [x] CSRF korumasi (Astro `security.checkOrigin`)
+- [x] Input validasyonu + body size cap (1MB regular, 15MB upload — DoS prevention)
+- [x] Login bcrypt timing-safe defense (DUMMY_BCRYPT_HASH)
+- [x] JWT signature `crypto.timingSafeEqual` constant-time compare
+- [x] Stripe webhook idempotency + 4xx/5xx retry semantics
+- [x] IDOR vendor-only antipattern audit (3-yol switch enforced)
+- [x] Internal/cron endpoint Bearer token (`verifyInternalToken`, security-by-default)
+- [x] Production error sanitization (`safeErrorDetail`, NODE_ENV-aware)
+- [x] Webhook sistemi (Stripe inbound + outbound HMAC-SHA256)
+- [x] Health check endpoint (`/api/health` + 30s integration cache)
+- [x] Web Vitals client RUM (CLS/INP/LCP/FCP/TTFB → admin dashboard)
+- [x] Graceful shutdown (SIGTERM → DB pool drain + Redis quit)
+- [x] PWA (manifest + service worker + push notifications via VAPID)
+- [x] Partytown ile 3. parti scriptleri web worker'da calistirma
+- [x] Static regression locks (11 dosya, codebase-wide HARD RULE enforcement)
+
+## Docker ile Kurulum
+
 ```bash
-git clone https://github.com/yourusername/sanliurfa.com.git
-cd sanliurfa.com/sanliurfa
-```
-
-2. Bağımlılıkları yükleyin:
-```bash
-npm ci
-```
-
-3. Ortam değişkenlerini ayarlayın:
-```bash
+# .env dosyasini olustur
 cp .env.example .env
-# .env dosyasını düzenleyin
+
+# Container'lari baslat
+docker-compose up -d
+
+# Veritabani migrations calistir
+docker-compose exec app npm run migrate
+
+# Logs
+docker-compose logs -f app
 ```
 
-4. Geliştirme sunucusunu başlatın:
+## Manuel Kurulum
+
 ```bash
+# Bagimliliklari yukle
+npm install
+
+# .env dosyasini duzenle
+cp .env.example .env
+
+# Veritabani migrations calistir
+npm run migrate
+
+# Gelistirme sunucusu
 npm run dev
+
+# Uretim build'i
+npm run build
+
+# Uretim sunucusu
+npm run preview
 ```
 
-Yerel geliştirme portu sabittir: `http://127.0.0.1:4321`.
-Başka porta otomatik fallback yapılmaz; `npm run dev` önce bu repoya ait `4321` dinleyicisini güvenli şekilde kapatır, sonra Astro'yu aynı portta başlatır.
-Manuel kapatma için:
-```bash
-npm run dev:stop
-```
-
-## 📁 Proje Yapısı
-
-```text
-sanliurfa/
-├── src/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   ├── lib/
-│   ├── pages/
-│   └── styles/
-├── public/
-├── scripts/
-├── e2e/
-└── supabase/
-```
-
-## 🧪 Test ve Phase Ops
+## API Dokumantasyonu
 
 ```bash
+GET /api/docs - API dokumantasyonu
+GET /api/health - Saglik kontrolu
+```
+
+## Sayfa Haritasi
+
+### Public
+- `/` - Ana sayfa
+- `/places` - Mekanlar
+- `/places/[slug]` - Mekan detay
+- `/kategoriler/[slug]` - Kategori
+- `/blog` - Blog
+- `/blog/[slug]` - Blog yazisi
+- `/arama?q=` - Arama sonuclari
+- `/iletisim` - Iletisim formu
+- `/isletme-kayit` - Isletme basvurusu
+- `/hakkimizda` - Hakkinda
+- `/gizlilik` - Gizlilik politikasi
+- `/404` - 404 sayfasi
+
+### Kullanici
+- `/giris` - Giris
+- `/kayit` - Kayit
+- `/profil` - Profilim
+- `/mesajlar` - Uye mesajlasma merkezi
+- `/takipciler` - Takipciler
+- `/takip-edilenler` - Takip edilenler
+- `/eslesme` - Swipe eslesme ve profil foto yonetimi
+
+### Isletme
+- `/vendor/dashboard` - Panel
+- `/vendor/analytics` - Analitik
+
+### Admin
+- `/admin` - Dashboard
+- `/admin/site-content` - Site icerik yonetimi (DB-first)
+- `/admin/users` - Kullanicilar
+- `/admin/places` - Isletmeler
+- `/admin/blog` - Blog yonetimi
+- `/admin/tickets` - Destek talepleri
+
+## API Endpoint'leri
+
+### Auth
+- `POST /api/auth/register` - Kayit ol
+- `POST /api/auth/login` - Giris yap
+
+### Places
+- `GET /api/places` - Listele
+- `GET /api/places/[id]` - Detay
+- `POST /api/places/apply` - Basvuru yap
+- `POST /api/places/[id]/reviews` - Yorum ekle
+- `POST /api/places/submit` - Uye tarafindan mekan ekleme
+- `POST /api/places/[id]/like` - Mekan begenme/etkilesim
+- `POST /api/places/[id]/share` - Mekan paylasim kaydi
+
+### Social
+- `POST /api/social/follow` - Takip/arkadaslik iliskisi
+- `GET /api/social/followers` - Takipci/takip edilen listesi
+- `GET /api/messages` - Konusma listesi
+- `POST /api/messages` - Alici ile konusma baslat
+- `GET/POST/DELETE /api/messages/[conversationId]` - Mesajlari listele/gonder/konusmayi gizle
+- `GET /api/social/feed` - Aktivite akisi
+- `GET/POST /api/social/match-profile` - Eslesme profili (max 4 foto)
+- `GET /api/social/match-candidates` - Swipe adaylari
+- `POST /api/social/swipe` - Sola/saga kaydirma
+- `GET /api/social/matches` - Eslesen uyeler
+- `GET /api/social/capabilities` - Sosyal ozellik durumu + swipe kotasi
+
+### Search
+- `GET /api/search?q=` - Ara
+
+### Upload
+- `POST /api/upload` - Dosya yukle
+
+### Reservations
+- `GET/POST /api/reservations` - Rezervasyonlar
+
+### Promotions
+- `GET/POST /api/promotions` - Kampanyalar
+
+### Admin
+- `GET /api/admin/dashboard` - Istatistikler
+- `GET/PUT /api/admin/users` - Kullanici yonetimi
+- `GET/PUT /api/admin/places` - Isletme yonetimi
+- `GET/PUT /api/admin/site/settings?key=...` - Site ayarlari (DB-first icerik)
+
+### User
+- `GET/POST/DELETE /api/user/favorites` - Favoriler
+
+### Contact
+- `POST /api/contact` - Iletisim formu
+- `GET /api/contact/[id]` - Ticket detayi (admin)
+- `PUT /api/contact/[id]` - Ticket guncelle (admin)
+
+### Webhooks
+- `POST /api/webhooks/trigger` - Webhook tetikle
+
+## Database Migrations
+
+Migrations `src/migrations/` klasorunde tutulur. Son migration versiyonu: **132**
+
+Baslica tablolar:
+- `users` - Kullanicilar
+- `places` - Isletmeler
+- `reviews` - Yorumlar
+- `blog_posts` - Blog yazilari
+- `reservations` - Rezervasyonlar
+- `promotions` - Kampanyalar
+- `support_tickets` - Destek talepleri
+- `user_favorites` - Favoriler
+- `rate_limit_logs` - Rate limit kayitlari
+- `webhooks` - Webhook yapilandirmasi
+
+## Ortam Degiskenleri
+
+```env
+# Database
+DATABASE_URL=postgresql://user:pass@localhost:5432/sanliurfa
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key
+
+# Email (SMTP)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+
+# Redis (opsiyonel)
+REDIS_URL=redis://localhost:6379
+
+# API Keys
+GOOGLE_MAPS_API_KEY=
+PUBLIC_FACEBOOK_PIXEL_ID=
+PUBLIC_TIKTOK_PIXEL_ID=
+SOCIAL_OPEN_ACCESS=true
+SOCIAL_TINDER_ENABLED=true
+SOCIAL_AUTO_CONVERSATION=true
+SOCIAL_SWIPE_DAILY_LIMIT=100
+
+# Application
+NODE_ENV=production
+PORT=3000
+APP_URL=http://localhost:3000
+```
+
+## Rate Limiting
+
+| Endpoint | Limit | Pencere |
+|----------|-------|---------|
+| Default | 100 | 15 dakika |
+| Auth endpoints | 5 | 1 saat |
+| Kullanici | 1000 | 15 dakika |
+
+## Build
+
+Son basarili build: **~9 saniye**
+- CSS: 3.29 KB (compressed)
+- JS: 6.33 KB (compressed)
+- Toplam: 780+ dosya
+
+## CI/CD
+
+GitHub Actions ile otomatik build ve deploy:
+- Her PR'da test calisir
+- Main branch'e push'ta Docker image build edilir
+- VPS'e otomatik deploy (SSH ile)
+
+## Production Deployment
+
+### Hizli Deploy
+
+```bash
+# 1. Depoyu klonla
+git clone https://github.com/username/sanliurfa.git
+cd sanliurfa
+
+# 2. Ortam degiskenlerini ayarla
+cp .env.example .env
+nano .env  # Gerekli degisiklikleri yap
+
+# 3. Kontrol et
+node scripts/check-env.js
+
+# 4. Deploy et
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh
+```
+
+### SSL Sertifikasi (Let's Encrypt)
+
+```bash
+export DOMAIN=sanliurfa.com
+export EMAIL=admin@sanliurfa.com
+./scripts/init-ssl.sh
+```
+
+### Monitoring
+
+- Uygulama durumu: `GET /api/health`
+- Admin monitoring: `/admin/monitoring`
+- Sistem loglari: `docker-compose logs -f app`
+
+## Test
+
+```bash
+# Unit testler
 npm run test:unit
+
+# E2E testler
 npm run test:e2e
-npm run phase:sync:tsconfig
-npm run test:phase:range -- 947-952
-npm run test:phase:batch -- 947-952 953-958 959-964
-npm run test:phase:smoke
-npm run test:phase:gate:ci
-npm run phase:doctor
-npm run phase:changelog:normalize
-npm run test:unit -- src/lib/__tests__/report-engine-excel-smoke.test.ts
-npm run repo:stabilize:check
-npm run release:gate
-npm run test:e2e:smoke
-npm run test:social:smoke
-npm run test:social:smoke:auto
+
+# PR icin hizli E2E (sadece chromium)
+npm run test:e2e:chromium
+
+# Gece tam matrix E2E
+npm run test:e2e:nightly
+
+# Load test
+npm run load:test
 ```
 
-`test:social:smoke` komutu yeni port açmaz; yalnızca çalışan `http://127.0.0.1:4321` üzerinde sosyal takip + mesajlaşma + mekan takip + yorum temel akışını doğrular.
-`test:social:smoke:auto` komutu ise `4321` boşsa sunucuyu açar, smoke testi bitince sunucuyu kapatır.
-`test:social:smoke:auto` lokal `DATABASE_URL` yoksa geçici varsayılanı kullanır; mekan datası boşsa geçici smoke mekanı ekleyip tam zinciri (takip + mesaj + mekan takip + yorum) çalıştırır.
-`test:social:smoke:auto` varsayılan olarak izole çalışır ve Redis'i bu koşuda devre dışı bırakıp in-memory fallback kullanır (diğer projelerin Redis ayarlarından etkilenmez). Redis ile test etmek için:
+### API Release Gate
+
 ```bash
-powershell -ExecutionPolicy Bypass -File ./scripts/run-social-smoke-4321.ps1 -UseRedis
+# OpenAPI + endpoint contract + smoke gate (onerilen)
+npm run api:release:gate
+
+# Workflow dosyalari standart/hijyen dogrulamasi (onerilen)
+npm run workflow:standards:verify
+
+# Workflow standard otomatik duzeltme kontrolu
+npm run workflow:standards:autofix:check
+
+# API contract suite (coverage threshold dahil)
+npm run test:api-contract:coverage
+
+# OpenAPI route drift regression gate
+npm run openapi:sync:routes:gate
+
+# Baseline dosyasini guncelle (bilincli operasyon)
+npm run openapi:sync:routes:baseline
+
+# Sadece degisen dosyalarda lint (PR gate)
+npm run lint:changed
+
+# OpenAPI gap domain ozeti
+npm run openapi:gap:summary
+
+# Secret leakage taramasi
+npm run security:scan-secrets
+
+# Migration duplicate kontrolu
+npm run db:migrate:check-duplicates
 ```
 
-## Release ve Stabilizasyon
-- API geçiş politikası: `docs/API_LEGACY_POLICY.md`
-- Repo stabilizasyon runbook: `docs/REPO_STABILIZATION_RUNBOOK.md`
-- Release gate: `docs/RELEASE_GATES.md`
-- Webhook güvenlik politikası: `docs/WEBHOOK_SECURITY_POLICY.md`
-- 7 günlük uygulama planı: `docs/SEVEN_DAY_EXECUTION_PLAN.md`
+Not: `docs/openapi-route-gap-baseline.json` dosyasi mevcut dokumante edilmemis route setini sabitler.
+Yeni bir route dosyasi eklenip OpenAPI'ye eklenmezse gate fail olur.
 
-## Clean Worktree Politikası
-- Teslimat tabanı her zaman `origin/master` üstünden açılmış temiz `git worktree` olmalı.
-- Kirli local root worktree phase tracker, changelog veya operasyon durumu için source of truth değildir.
-- Local shell Node sürümü repo politikasının altındaysa `:preferred` wrapper’larını kullanın.
-- Tekil `test:phase:<range>` scriptleri compatibility yüzeyidir; yeni operasyonda `test:phase:range`, `test:phase:batch` ve `phase:prepare:batch:preferred` kullanın.
+CI notu: API degisikliklerinde hizli kontrol icin `.github/workflows/api-contract-gate.yml`
+workflow'u otomatik calisir ve PR'a OpenAPI gap ozeti yorumu yazar.
 
-## Source Of Truth
-- Aktif operasyon için authoritative set:
-  - `README.md`
-  - `AGENTS.md`
-  - `PHASE_OPERATIONS_GUIDE.md`
-  - `docs/WORKTREE_SOURCE_OF_TRUTH.md`
-  - `STALE_WORKTREE.md`
-  - `ROOT_INVENTORY_ONLY_POLICY.md`
-  - `PHASE_INDEX.md`
-  - `TASK_TRACKER.md`
-  - `memory.md`
-- Local root worktree bunlarla çelişiyorsa clean worktree + `origin/master` kazanır.
-- Dirty root yalnızca inventory/forensics yüzeyidir.
-- Aktif operasyon dosyalarının kısa listesi için `docs/ACTIVE_DOCS.md` kullanın.
-- Mimari sabitler için `ARCHITECTURE.md` kullanın.
+Guvenlik notu: key rotation adimlari icin `docs/security-key-rotation-runbook.md` dosyasini izleyin.
+PR parcalama plani icin `docs/pr-split-plan.md` dosyasini kullanin.
+Branch protection checklist icin `docs/branch-protection-checklist.md` dosyasini kullanin.
 
-## Astro Operasyon Notları
-- Repo SSR-first çalışır: `output: "server"` ve `@astrojs/node` adapter.
-- Local dev/preview tek port kullanır: `127.0.0.1:4321`.
-- `npm run dev` scripti yalnızca `4321` portunu kullanır ve başlatmadan önce repo kapsamındaki eski `4321` sürecini temizler.
-- Ham Astro çalıştırma gerekiyorsa `npm run dev:raw` kullanılabilir.
-- 1111/1112/1113 gibi alternatif port scriptleri kullanılmaz ve repo script yüzeyinden kaldırılmıştır.
-- Manual kontrol bitince dev server kapatılmalı; paralel Astro dev server açılmamalı.
-- Astro-first kuralı kilitlidir: önce Astro core, sonra resmi `@astrojs/*`, sonra repoda kurulu Astro uyumlu paket kullanılır. Detay: `docs/ASTRO_FIRST_LOCK.md`.
-- Rich snippet JSON-LD çıktısı Astro head/layout akışında `astro-seo-schema` ile server-render edilir.
-- Site kalıcı olarak Türkçe-only çalışır. Dil seçici, İngilizce sözlük, `/tr`/`/en`, hreflang ve `Accept-Language` yönlendirmesi eklenmez.
-- Türkçe karakterler UTF-8 ile korunur; API JSON cevaplarında `charset=utf-8`, HTML'de `<meta charset="UTF-8">`, PostgreSQL istemci bağlantısında `client_encoding=UTF8` kullanılır.
-- Route collision üretmeyin: `src/pages/x.ts` ile `src/pages/x/index.ts` aynı anda yaşamamalı.
-- Content collection değişikliklerinde `src/content.config.ts` ve `src/content/` birlikte ele alınmalı.
-- PWA build çıktısında service worker dosyası `sw.js` olarak üretilir; build araçlarını buna göre konfigüre edin.
-- `import.meta.env` kullanan bundled scriptleri keyfi `is:inline` yapmayın.
+## Katkida Bulunma
 
-## PR Politikası
-- `master` korumalıdır; doğrudan push yapılmaz.
-- Phase içeriği ile phase changelog iki ayrı commit olarak tutulur.
-- `PHASE_CHANGELOG.md` duplicate veya malformed satır taşıyorsa PR açmadan önce `npm run phase:changelog:normalize` çalıştırın.
-- Phase PR açarken API-first akışı tercih edin:
-```bash
-npx tsx scripts/phase-pr.ts open --repo titanai777/sanliurfa --base master --head <branch> --title "..." --body-file <file>
-```
-- Merge sonrası remote durumu doğrulayın:
-```bash
-npx tsx scripts/phase-pr.ts view --repo titanai777/sanliurfa --pr <number>
-```
+1. Fork yapin
+2. Feature branch olusturun (`git checkout -b feature/amazing-feature`)
+3. Commit edin (`git commit -m 'feat: Add amazing feature'`)
+4. Push edin (`git push origin feature/amazing-feature`)
+5. PR acin
 
-## Operasyon Hijyeni
-- PR açmadan önce `npm run phase:doctor` çalıştırın.
-- Changelog hygiene için `npm run phase:changelog:normalize` kullanın.
-- Script yüzeyi raporu için `npm run phase:scripts:report` kullanın.
-- Dependency risk özeti için `npm run deps:audit:triage` kullanın.
-- Dated cleanup ve verification raporları root yerine `docs/archive/cleanup/` altında tutulmalıdır.
+## Dokumantasyon
 
-## Önerilen Batch Akışı
-```bash
-npm run phase:generate:block:write -- scripts/phase-blocks/phase-947-952.json
-npm run phase:prepare:batch:preferred -- --phase-script test:phase:947-952 --phase-script test:phase:953-958 --phase-script test:phase:959-964
-```
+- [Deployment Rehberi](DEPLOYMENT.md) - Detayli deployment adimlari
+- [API Dokumantasyonu](src/pages/api/docs.ts) - API endpoint referansi
+- [OpenAPI Coverage Plan](docs/openapi-coverage-plan.md) - Gap azaltma sprint plani
+- [Type-Check Priority Backlog](docs/typecheck-priority-backlog.md) - Tip hatasi kapanis sirasi
 
-## Root Worktree Notu
-- `D:\sanliurfa.com\sanliurfa` dirty veya eski bir branch üzerinde olabilir.
-- Bu durumda oradan delivery yapmayın.
-- Önce `git fetch origin`, sonra temiz worktree açın.
+## Lisans
+
+MIT

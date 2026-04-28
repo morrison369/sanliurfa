@@ -6,35 +6,21 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getFollowers, getFollowing, getMutualFriends, followUser, unfollowUser } from '../../../lib/followers';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getFollowers, getFollowing, getMutualFriends, followUser, unfollowUser } from '../../../lib/followers/followers';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
-import { enforceApiRateLimit } from '../../../lib/api-rate-limit';
-import { canFollowUser } from '../../../lib/social-policy';
 
-export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId({ request } as any);
+export const GET: APIRoute = async ({ request, url }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    const isAllowed = await enforceApiRateLimit(request, 'social:followers:list', 120, 15 * 60, locals.user?.id);
-    if (!isAllowed) {
-      recordRequest('GET', '/api/followers', HttpStatus.RATE_LIMITED, Date.now() - startTime);
-      return apiError(
-        ErrorCode.RATE_LIMITED,
-        'Çok sık takip listesi sorguluyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
-        HttpStatus.RATE_LIMITED,
-        undefined,
-        requestId
-      );
-    }
-
     // Get query parameters
     const userId = url.searchParams.get('userId');
     const type = url.searchParams.get('type') || 'followers'; // followers, following, mutual
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
 
     // Validate parameters
     if (!userId) {
@@ -59,20 +45,12 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       );
     }
 
-    let data;
-
-    switch (type) {
-      case 'following':
-        data = await getFollowing(userId, limit);
-        break;
-      case 'mutual':
-        data = await getMutualFriends(userId, limit);
-        break;
-      case 'followers':
-      default:
-        data = await getFollowers(userId, limit);
-        break;
-    }
+    const data =
+      type === 'following'
+        ? await getFollowing(userId, limit)
+        : type === 'mutual'
+          ? await getMutualFriends(userId, limit)
+          : await getFollowers(userId, limit);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/followers', HttpStatus.OK, duration);
@@ -102,7 +80,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -112,21 +90,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('POST', '/api/followers', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
-        undefined,
-        requestId
-      );
-    }
-
-    const isAllowed = await enforceApiRateLimit(request, 'social:followers:follow', 80, 15 * 60, user.id);
-    if (!isAllowed) {
-      recordRequest('POST', '/api/followers', HttpStatus.RATE_LIMITED, Date.now() - startTime);
-      return apiError(
-        ErrorCode.RATE_LIMITED,
-        'Çok hızlı takip işlemi yapıyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
-        HttpStatus.RATE_LIMITED,
         undefined,
         requestId
       );
@@ -141,19 +107,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
         ErrorCode.VALIDATION_ERROR,
         'Kullanıcı ID gereklidir',
         HttpStatus.UNPROCESSABLE_ENTITY,
-        undefined,
-        requestId
-      );
-    }
-
-    const policy = await canFollowUser(user.id, userId);
-    if (!policy.allowed) {
-      const statusCode = policy.code === 'target_not_found' ? HttpStatus.NOT_FOUND : HttpStatus.FORBIDDEN;
-      recordRequest('POST', '/api/followers', statusCode, Date.now() - startTime);
-      return apiError(
-        statusCode === HttpStatus.NOT_FOUND ? ErrorCode.NOT_FOUND : ErrorCode.FORBIDDEN,
-        policy.message,
-        statusCode,
         undefined,
         requestId
       );
@@ -189,7 +142,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -199,21 +152,9 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('DELETE', '/api/followers', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
-        undefined,
-        requestId
-      );
-    }
-
-    const isAllowed = await enforceApiRateLimit(request, 'social:followers:unfollow', 80, 15 * 60, user.id);
-    if (!isAllowed) {
-      recordRequest('DELETE', '/api/followers', HttpStatus.RATE_LIMITED, Date.now() - startTime);
-      return apiError(
-        ErrorCode.RATE_LIMITED,
-        'Çok hızlı takip bırakma işlemi yapıyorsunuz. Lütfen kısa süre sonra tekrar deneyin.',
-        HttpStatus.RATE_LIMITED,
         undefined,
         requestId
       );

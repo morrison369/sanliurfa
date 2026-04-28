@@ -24,6 +24,10 @@ export const migration_093_loyalty_points = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE loyalty_points ADD COLUMN IF NOT EXISTS current_balance INT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_loyalty_balance
       ON loyalty_points(current_balance DESC)
     `);
@@ -44,6 +48,14 @@ export const migration_093_loyalty_points = async (pool: Pool) => {
         is_expired BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE loyalty_transactions ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE loyalty_transactions ADD COLUMN IF NOT EXISTS transaction_type VARCHAR(50);
+      ALTER TABLE loyalty_transactions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE loyalty_transactions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;
+      ALTER TABLE loyalty_transactions ADD COLUMN IF NOT EXISTS is_expired BOOLEAN DEFAULT false;
     `);
 
     await pool.query(`
@@ -77,6 +89,11 @@ export const migration_093_loyalty_points = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE earning_rules ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+      ALTER TABLE earning_rules ADD COLUMN IF NOT EXISTS rule_key VARCHAR(100);
     `);
 
     await pool.query(`

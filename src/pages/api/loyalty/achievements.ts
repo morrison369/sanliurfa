@@ -16,46 +16,37 @@ export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
 
   try {
-    // Oturum zorunlu
+    // Auth required
     if (!locals.user) {
       const duration = Date.now() - startTime;
       recordRequest('GET', '/api/loyalty/achievements', 401, duration);
-      return apiError('UNAUTHORIZED', 'Oturum açmanız gerekiyor', 401, undefined, requestId);
+      return apiError('UNAUTHORIZED', 'Authentication required', 401, undefined, requestId);
     }
 
     const url = new URL(request.url);
     const view = url.searchParams.get('view') || 'all';
+    const VALID_VIEWS = new Set(['all', 'unviewed', 'stats']);
+    if (!VALID_VIEWS.has(view)) {
+      recordRequest('GET', '/api/loyalty/achievements', 400, Date.now() - startTime);
+      return apiError('VALIDATION_ERROR', 'Geçersiz view parametresi', 400, undefined, requestId);
+    }
     const userId = locals.user.id;
 
-    let data;
-
-    switch (view) {
-      case 'unviewed': {
-        // Real-time unviewed achievements (no cache)
-        data = await getUnviewedAchievements(userId);
-        break;
-      }
-
-      case 'stats': {
-        // Stats with caching (300s TTL)
-        const cacheKey = `achievements:stats:${userId}`;
-        const cached = await getCache(cacheKey);
-        if (cached) {
-          data = cached;
-        } else {
-          data = await getAchievementStats(userId);
-          await setCache(cacheKey, data, 300);
-        }
-        break;
-      }
-
-      case 'all':
-      default: {
-        // All achievements (has internal caching: 1800s)
-        data = await getUserAchievements(userId);
-        break;
-      }
-    }
+    const data =
+      view === 'unviewed'
+        ? await getUnviewedAchievements(userId)
+        : view === 'stats'
+          ? await (async () => {
+              const cacheKey = `achievements:stats:${userId}`;
+              const cached = await getCache(cacheKey);
+              if (cached) {
+                return cached;
+              }
+              const stats = await getAchievementStats(userId);
+              await setCache(cacheKey, stats, 300);
+              return stats;
+            })()
+          : await getUserAchievements(userId);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/loyalty/achievements', 200, duration);
@@ -64,8 +55,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/loyalty/achievements', 500, duration);
-    logger.error('Başarımlar alınamadı', error instanceof Error ? error : new Error(String(error)));
-    return apiError('INTERNAL_ERROR', 'Başarımlar alınamadı', 500, undefined, requestId);
+    logger.error('Failed to get achievements', error instanceof Error ? error : new Error(String(error)));
+    return apiError('INTERNAL_ERROR', 'Failed to retrieve achievements', 500, undefined, requestId);
   }
 };
 
@@ -74,21 +65,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = request.headers.get('x-request-id') || crypto.randomUUID();
 
   try {
-    // Oturum zorunlu
+    // Auth required
     if (!locals.user) {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/loyalty/achievements', 401, duration);
-      return apiError('UNAUTHORIZED', 'Oturum açmanız gerekiyor', 401, undefined, requestId);
+      return apiError('UNAUTHORIZED', 'Authentication required', 401, undefined, requestId);
     }
 
     const body = await request.json();
     const { userAchievementId } = body;
 
     // Validation
-    if (!userAchievementId || typeof userAchievementId !== 'string') {
+    if (!userAchievementId || typeof userAchievementId !== 'string' || userAchievementId.length > 36) {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/loyalty/achievements', 422, duration);
-      return apiError('VALIDATION_ERROR', 'Başarım ID gereklidir', 422, undefined, requestId);
+      return apiError('VALIDATION_ERROR', 'userAchievementId is required', 422, undefined, requestId);
     }
 
     // Mark as viewed
@@ -101,7 +92,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/loyalty/achievements', 500, duration);
-    logger.error('Başarım görüntülendi olarak işaretlenemedi', error instanceof Error ? error : new Error(String(error)));
-    return apiError('INTERNAL_ERROR', 'Başarım güncellenemedi', 500, undefined, requestId);
+    logger.error('Failed to mark achievement viewed', error instanceof Error ? error : new Error(String(error)));
+    return apiError('INTERNAL_ERROR', 'Failed to update achievement', 500, undefined, requestId);
   }
 };

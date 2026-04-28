@@ -24,6 +24,12 @@ export const migration_120_activity_feed = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_activities ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_activities ADD COLUMN IF NOT EXISTS activity_type VARCHAR(100);
+      ALTER TABLE user_activities ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_activities_user
       ON user_activities(user_id, created_at DESC)
     `);
@@ -49,6 +55,12 @@ export const migration_120_activity_feed = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE activity_feeds ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE activity_feeds ADD COLUMN IF NOT EXISTS seen BOOLEAN DEFAULT false;
+      ALTER TABLE activity_feeds ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_feed_user
       ON activity_feeds(user_id, created_at DESC)
     `);
@@ -68,6 +80,13 @@ export const migration_120_activity_feed = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(activity_id, user_id, interaction_type)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE activity_interactions ADD COLUMN IF NOT EXISTS activity_id UUID;
+      ALTER TABLE activity_interactions ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE activity_interactions ADD COLUMN IF NOT EXISTS interaction_type VARCHAR(50);
+      ALTER TABLE activity_interactions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`

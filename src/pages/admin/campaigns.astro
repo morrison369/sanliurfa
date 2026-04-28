@@ -1,486 +1,386 @@
 ---
-// @ts-nocheck
 /**
  * Admin - Email Campaigns
  * Manage email marketing campaigns and sequences
  */
 
-import Layout from "../../layouts/Layout.astro";
-import { getAllCampaigns } from "../../lib/email-campaigns";
-import { getSequence, getSequenceSteps } from "../../lib/email-automation";
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAllCampaigns } from '../../lib/email/email-campaigns';
+import { logger } from '../../lib/logging';
 
-// Check auth
-if (!Astro.locals.user?.isAdmin) {
-  return Astro.redirect(
-    `/giris?redirect=${encodeURIComponent(Astro.url.pathname)}`,
-  );
+let campaigns: Awaited<ReturnType<typeof getAllCampaigns>> = [];
+try {
+  campaigns = await getAllCampaigns(100);
+} catch (e) {
+  logger.error('Admin campaigns query failed', e instanceof Error ? e : new Error(String(e)));
 }
-
-// Fetch campaigns and sequences
-const campaigns = await getAllCampaigns(100);
 ---
 
-<Layout title="Kampanyalar - Yönetim Paneli" noindex>
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold mb-2">E-posta Kampanyaları</h1>
-      <p class="text-gray-600">
-        Pazarlama kampanyalarını ve otomasyon akışlarını yönet
-      </p>
-    </div>
+<AdminLayout
+  title="Email Kampanyaları"
+  subtitle="Pazarlama kampanyalarını ve otomasyon akışlarını yönet"
+  seo={{ title: 'Kampanyalar - Admin' }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+      <div class="mb-6">
+        <a href="/admin" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Admin Paneli</a>
+      </div>
 
-    <!-- Tabs -->
-    <div class="tabs mb-8" role="tablist">
-      <button
-        class="tab-button active px-6 py-3 font-medium border-b-2 border-blue-500 text-blue-600"
-        role="tab"
-        data-tab="campaigns"
-      >
-        Kampanyalar
-      </button>
-      <button
-        class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
-        role="tab"
-        data-tab="create"
-      >
-        Yeni Kampanya
-      </button>
-      <button
-        class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
-        role="tab"
-        data-tab="analytics"
-      >
-        Analitik
-      </button>
-      <button
-        class="tab-button px-6 py-3 font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-800"
-        role="tab"
-        data-tab="sequences"
-      >
-        Otomasyon
-      </button>
-    </div>
+      <!-- Tabs -->
+      <div class="mb-8 flex border-b border-[rgba(200,160,100,0.14)]" role="tablist">
+        <button class="tab-button active px-6 py-3 font-medium text-sm border-b-2 border-urfa-600 text-urfa-600"
+          role="tab"
+          data-tab="campaigns"
+        >
+          Kampanyalar
+        </button>
+        <button class="tab-button px-6 py-3 font-medium text-sm border-b-2 border-transparent text-[#9A8470] hover:text-[#6B5540]"
+          role="tab"
+          data-tab="create"
+        >
+          Yeni Kampanya
+        </button>
+        <button class="tab-button px-6 py-3 font-medium text-sm border-b-2 border-transparent text-[#9A8470] hover:text-[#6B5540]"
+          role="tab"
+          data-tab="analytics"
+        >
+          Analitik
+        </button>
+        <button class="tab-button px-6 py-3 font-medium text-sm border-b-2 border-transparent text-[#9A8470] hover:text-[#6B5540]"
+          role="tab"
+          data-tab="sequences"
+        >
+          Otomasyon
+        </button>
+      </div>
 
-    <!-- Campaigns Tab -->
-    <div id="campaigns-tab" class="tab-content">
-      <div class="grid gap-4">
-        {
-          campaigns.length > 0 ? (
+      <!-- Campaigns Tab -->
+      <div id="campaigns-tab" class="tab-content">
+        <div class="grid gap-4">
+          {campaigns.length > 0 ? (
             campaigns.map((campaign) => (
-              <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
+              <div class="bg-white p-6 rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm">
                 <div class="flex justify-between items-start mb-4">
                   <div>
-                    <h3 class="text-lg font-bold">{campaign.name}</h3>
-                    <p class="text-sm text-gray-600">{campaign.subject}</p>
+                    <h3 class="text-lg font-bold text-[#1A1008]">{campaign.name}</h3>
+                    <p class="text-sm text-[#6B5540]">{campaign.subject}</p>
                   </div>
                   <div class="flex gap-2">
-                    <span
-                      class={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        campaign.status === "completed"
-                          ? "bg-green-100 text-green-800"
-                          : campaign.status === "sending"
-                            ? "bg-blue-100 text-blue-800"
-                            : campaign.status === "scheduled"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {campaign.status === "draft"
-                        ? "Taslak"
-                        : campaign.status === "sending"
-                          ? "Gönderiliyor"
-                          : campaign.status === "scheduled"
-                            ? "Planlandı"
-                            : campaign.status === "completed"
-                              ? "Tamamlandı"
-                              : campaign.status}
+                    <span class={`px-2 py-0.5 rounded-sm text-xs font-medium ${
+                      campaign.status === 'completed' ? 'bg-[rgba(200,160,100,0.15)] text-[#6B5540]' :
+                      campaign.status === 'active' ? 'bg-[rgba(200,160,100,0.2)] text-[#6B5540]' :
+                      campaign.status === 'scheduled' ? 'bg-[rgba(200,160,100,0.1)] text-[#6B5540]' :
+                      'bg-[rgba(200,160,100,0.06)] text-[#9A8470]'
+                    }`}>
+                      {campaign.status === 'draft' ? 'Taslak' :
+                       campaign.status === 'active' ? 'Gönderiliyor' :
+                       campaign.status === 'scheduled' ? 'Planlandı' :
+                       campaign.status === 'completed' ? 'Tamamlandı' :
+                       campaign.status}
                     </span>
                   </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
                   <div>
-                    <span class="text-gray-600">Gönderilen:</span>
-                    <span class="font-semibold ml-2">{campaign.sendCount}</span>
+                    <span class="text-[#9A8470]">Gönderilen:</span>
+                    <span class="font-semibold text-[#1A1008] ml-2">{campaign.sendCount}</span>
                   </div>
                   <div>
-                    <span class="text-gray-600">Açılan:</span>
-                    <span class="font-semibold ml-2">
-                      {campaign.openCount} (
-                      {campaign.sendCount > 0
-                        ? Math.round(
-                            (campaign.openCount / campaign.sendCount) * 100,
-                          )
-                        : 0}
-                      %)
-                    </span>
+                    <span class="text-[#9A8470]">Açılan:</span>
+                    <span class="font-semibold text-[#1A1008] ml-2">{campaign.openCount} ({campaign.sendCount > 0 ? Math.round((campaign.openCount / campaign.sendCount) * 100) : 0}%)</span>
                   </div>
                   <div>
-                    <span class="text-gray-600">Tıklanan:</span>
-                    <span class="font-semibold ml-2">
-                      {campaign.clickCount} (
-                      {campaign.sendCount > 0
-                        ? Math.round(
-                            (campaign.clickCount / campaign.sendCount) * 100,
-                          )
-                        : 0}
-                      %)
-                    </span>
+                    <span class="text-[#9A8470]">Tıklanan:</span>
+                    <span class="font-semibold text-[#1A1008] ml-2">{campaign.clickCount} ({campaign.sendCount > 0 ? Math.round((campaign.clickCount / campaign.sendCount) * 100) : 0}%)</span>
                   </div>
                   <div>
-                    <span class="text-gray-600">Abonelikten Çıkan:</span>
-                    <span class="font-semibold ml-2">
-                      {campaign.unsubscribeCount}
-                    </span>
+                    <span class="text-[#9A8470]">Abonelikten Çıkan:</span>
+                    <span class="font-semibold text-[#1A1008] ml-2">{campaign.unsubscribeCount}</span>
                   </div>
                 </div>
 
                 <div class="flex gap-2">
-                  <button
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm"
-                    onclick={`sendCampaign(${campaign.id})`}
-                  >
-                    Hemen gönder
+                  <button class="px-4 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 text-sm" onclick={`sendCampaign(${JSON.stringify(campaign.id)})`}>
+                    Hemen Gönder
                   </button>
-                  <button
-                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
-                    onclick={`testCampaign(${campaign.id})`}
-                  >
-                    Deneme e-postası gönder
+                  <button class="px-4 py-2 bg-[rgba(200,160,100,0.06)] text-[#6B5540] rounded-sm hover:bg-[rgba(200,160,100,0.12)] text-sm" onclick={`testCampaign(${JSON.stringify(campaign.id)})`}>
+                    Test Gönder
+                  </button>
+                  <button class="px-4 py-2 bg-[rgba(200,160,100,0.04)] text-[#6B5540] rounded-sm hover:bg-[rgba(200,160,100,0.08)] text-sm" onclick={`editCampaign(${JSON.stringify(campaign.id)})`}>
+                    Düzenle
                   </button>
                 </div>
               </div>
             ))
           ) : (
-            <div class="bg-gray-50 p-8 rounded-lg text-center">
-              <p class="text-gray-600">Henüz kampanya yok</p>
-              <button
-                onclick="switchTab('create')"
-                class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                İlk kampanyanızı oluşturun
+            <div class="bg-[rgba(200,160,100,0.04)] p-8 rounded-sm text-center border border-[rgba(200,160,100,0.14)]">
+              <p class="text-[#9A8470]">Henüz kampanya yok</p>
+              <button onclick="switchTab('create')" class="mt-4 px-4 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 text-sm">
+                İlk Kampanyanızı Oluşturun
               </button>
             </div>
-          )
-        }
+          )}
+        </div>
       </div>
-    </div>
 
-    <!-- Create Campaign Tab -->
-    <div id="create-tab" class="tab-content hidden">
-      <form id="campaign-form" class="bg-white p-6 rounded-lg shadow max-w-2xl">
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium mb-1">Kampanya adı</label>
-            <input
-              type="text"
-              name="name"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded"
-              placeholder="ör: Hoş geldin kampanyası"
-            />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1">Konu</label>
-            <input
-              type="text"
-              name="subject"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded"
-              placeholder="E-posta konusu"
-            />
-          </div>
-
-          <div class="grid grid-cols-2 gap-4">
+      <!-- Create Campaign Tab -->
+      <div id="create-tab" class="tab-content hidden">
+        <form id="campaign-form" class="bg-white p-6 rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm max-w-2xl">
+          <input type="hidden" name="campaignId" value="" />
+          <div class="space-y-4">
+            <div id="edit-mode-banner" class="hidden rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] px-4 py-3 text-sm text-[#6B5540]">
+              Kampanya düzenleniyor. Kaydettiğinizde mevcut taslak güncellenecek.
+            </div>
             <div>
-              <label class="block text-sm font-medium mb-1">Gönderici adı</label
-              >
+              <label class="block text-sm font-medium text-[#6B5540] mb-1">Kampanya Adı</label>
               <input
                 type="text"
-                name="fromName"
+                name="name"
                 required
-                class="w-full px-4 py-2 border border-gray-300 rounded"
-                placeholder="ör: sanliurfa.com"
+                class="w-full px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm"
+                placeholder="ör: Hoş geldin kampanyası"
               />
             </div>
+
             <div>
-              <label class="block text-sm font-medium mb-1"
-                >Gönderici e-posta</label
-              >
+              <label class="block text-sm font-medium text-[#6B5540] mb-1">Konu</label>
               <input
-                type="email"
-                name="fromEmail"
+                type="text"
+                name="subject"
                 required
-                class="w-full px-4 py-2 border border-gray-300 rounded"
-                placeholder="noreply@sanliurfa.com"
+                class="w-full px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm"
+                placeholder="Email konusu"
               />
             </div>
-          </div>
 
-          <div>
-            <label class="block text-sm font-medium mb-1">Segment</label>
-            <select
-              name="segment"
-              required
-              class="w-full px-4 py-2 border border-gray-300 rounded"
-            >
-              <option value="">Seç...</option>
-              <option value="all_users">Tüm kullanıcılar</option>
-              <option value="subscribers">Abone olanlar</option>
-              <option value="premium">Premium üyeler</option>
-              <option value="inactive">30+ gün pasif</option>
-            </select>
-          </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-[#6B5540] mb-1">Gönderici Adı</label>
+                <input
+                  type="text"
+                  name="fromName"
+                  required
+                  class="w-full px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm"
+                  placeholder="ör: Sanliurfa.com"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-[#6B5540] mb-1">Gönderici Email</label>
+                <input
+                  type="email"
+                  name="fromEmail"
+                  required
+                  class="w-full px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm"
+                  placeholder="noreply@sanliurfa.com"
+                />
+              </div>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium mb-1">HTML içerik</label>
-            <textarea
-              name="htmlContent"
-              required
-              rows="10"
-              class="w-full px-4 py-2 border border-gray-300 rounded font-mono text-sm"
-              placeholder="HTML e-posta içeriği"></textarea>
-          </div>
+            <div>
+              <label class="block text-sm font-medium text-[#6B5540] mb-1">Segment</label>
+              <select name="segment" required class="w-full px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm">
+                <option value="">Seç...</option>
+                <option value="all_users">Tüm Kullanıcılar</option>
+                <option value="subscribers">Abone Olanlar</option>
+                <option value="premium">Premium Üyeler</option>
+                <option value="inactive">30+ Gün Inaktif</option>
+              </select>
+            </div>
 
-          <div>
-            <label class="block text-sm font-medium mb-1">Zamanlama</label>
-            <select
-              name="timing"
-              class="w-full px-4 py-2 border border-gray-300 rounded"
-            >
-              <option value="now">Hemen gönder</option>
-              <option value="schedule">Zamanla...</option>
-            </select>
-          </div>
+            <div>
+              <label class="block text-sm font-medium text-[#6B5540] mb-1">HTML İçerik</label>
+              <textarea
+                name="htmlContent"
+                required
+                rows="10"
+                class="w-full px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm font-mono text-sm"
+                placeholder="HTML email içeriği"
+              ></textarea>
+            </div>
 
-          <div class="flex gap-2">
-            <button
-              type="submit"
-              class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Kampanya oluştur
-            </button>
-            <button
-              type="reset"
-              class="px-6 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-            >
-              Temizle
-            </button>
+            <div>
+              <label class="block text-sm font-medium text-[#6B5540] mb-1">Zamanlama</label>
+              <select name="timing" class="w-full px-3 py-2 border border-[rgba(200,160,100,0.2)] rounded-sm text-sm">
+                <option value="now">Hemen Gönder</option>
+                <option value="schedule">Zamanla...</option>
+              </select>
+            </div>
+
+            <div class="flex gap-2">
+              <button type="submit" class="px-6 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 text-sm">
+                <span id="campaign-submit-label">Kampanya Oluştur</span>
+              </button>
+              <button type="reset" class="px-6 py-2 bg-[rgba(200,160,100,0.06)] text-[#6B5540] rounded-sm hover:bg-[rgba(200,160,100,0.12)] text-sm">
+                Temizle
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Analytics Tab -->
+      <div id="analytics-tab" class="tab-content hidden">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-white p-6 rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm">
+            <h3 class="text-[#9A8470] text-sm font-medium mb-2">Ortalama Açılma Oranı</h3>
+            <p class="text-3xl font-bold text-[#1A1008]">
+              {campaigns.length > 0 ? (
+                campaigns.reduce((sum, c) => sum + (c.sendCount > 0 ? (c.openCount / c.sendCount) * 100 : 0), 0) / campaigns.length
+              ).toFixed(1) : 0}%
+            </p>
+          </div>
+          <div class="bg-white p-6 rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm">
+            <h3 class="text-[#9A8470] text-sm font-medium mb-2">Ortalama Tıklama Oranı</h3>
+            <p class="text-3xl font-bold text-[#1A1008]">
+              {campaigns.length > 0 ? (
+                campaigns.reduce((sum, c) => sum + (c.sendCount > 0 ? (c.clickCount / c.sendCount) * 100 : 0), 0) / campaigns.length
+              ).toFixed(1) : 0}%
+            </p>
           </div>
         </div>
-      </form>
-    </div>
+      </div>
 
-    <!-- Analytics Tab -->
-    <div id="analytics-tab" class="tab-content hidden">
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h3 class="text-gray-600 text-sm font-medium mb-2">
-            Ortalama Açılma Oranı
-          </h3>
-          <p class="text-3xl font-bold">
-            {
-              campaigns.length > 0
-                ? (
-                    campaigns.reduce(
-                      (sum, c) =>
-                        sum +
-                        (c.sendCount > 0
-                          ? (c.openCount / c.sendCount) * 100
-                          : 0),
-                      0,
-                    ) / campaigns.length
-                  ).toFixed(1)
-                : 0
-            }%
-          </p>
-        </div>
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h3 class="text-gray-600 text-sm font-medium mb-2">
-            Ortalama Tıklama Oranı
-          </h3>
-          <p class="text-3xl font-bold">
-            {
-              campaigns.length > 0
-                ? (
-                    campaigns.reduce(
-                      (sum, c) =>
-                        sum +
-                        (c.sendCount > 0
-                          ? (c.clickCount / c.sendCount) * 100
-                          : 0),
-                      0,
-                    ) / campaigns.length
-                  ).toFixed(1)
-                : 0
-            }%
-          </p>
+      <!-- Sequences Tab -->
+      <div id="sequences-tab" class="tab-content hidden">
+        <div class="bg-white p-6 rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm">
+          <h3 class="font-bold text-[#1A1008] mb-4">Otomasyon Akışları</h3>
+          <p class="text-[#6B5540] text-sm">Otomasyon akışları kullanıcıların belirli olaylara yanıt olarak tetiklenen email serileridir.</p>
+          <ul class="mt-4 space-y-2 text-sm">
+            <li class="flex items-center gap-2">
+              <span class="w-2 h-2 bg-urfa-600 rounded-full flex-shrink-0"></span>
+              <span class="text-[#6B5540]"><strong class="text-[#1A1008]">Hoş Geldin Serisi:</strong> Yeni üye kaydolduğunda başlayıp 7 gün süren selamlaşma</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="w-2 h-2 bg-urfa-600 rounded-full flex-shrink-0"></span>
+              <span class="text-[#6B5540]"><strong class="text-[#1A1008]">Premium Onboarding:</strong> Premium abonelik başladığında başlayan selamlaşma</span>
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="w-2 h-2 bg-urfa-600 rounded-full flex-shrink-0"></span>
+              <span class="text-[#6B5540]"><strong class="text-[#1A1008]">Geri Kazanım:</strong> 30+ gün inaktif kullanıcılara yeniden katılım daveti</span>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
+</AdminLayout>
 
-    <!-- Sequences Tab -->
-    <div id="sequences-tab" class="tab-content hidden">
-      <div class="bg-white p-6 rounded-lg shadow">
-        <h3 class="font-bold mb-4">Otomasyon Akışları</h3>
-        <p class="text-gray-600">
-          Otomasyon akışları kullanıcıların belirli olaylara yanıt olarak
-          tetiklenen e-posta serileridir.
-        </p>
-        <ul class="mt-4 space-y-2 text-sm">
-          <li class="flex items-center gap-2">
-            <span class="w-2 h-2 bg-blue-500 rounded-full"></span>
-            <span
-              ><strong>Hoş Geldin Serisi:</strong> Yeni üye kaydolduğunda başlayıp
-              7 gün süren selamlaşma</span
-            >
-          </li>
-          <li class="flex items-center gap-2">
-            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span
-              ><strong>Premium Karşılama:</strong> Premium abonelik başladığında
-              başlayan selamlaşma</span
-            >
-          </li>
-          <li class="flex items-center gap-2">
-            <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
-            <span
-              ><strong>Geri Kazanım:</strong> 30+ gün inaktif kullanıcılara yeniden
-              katılım daveti</span
-            >
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</Layout>
+<script is:inline define:vars={{ campaignsJson: JSON.stringify(campaigns) }}>
+  const campaigns = JSON.parse(campaignsJson);
 
-<script>
-  // @ts-nocheck
-  // Tab switching
-  function switchTab(tabName: string) {
-    // Hide all tabs
-    document
-      .querySelectorAll(".tab-content")
-      .forEach((el) => el.classList.add("hidden"));
-    document
-      .querySelectorAll(".tab-button")
-      .forEach((el) =>
-        el.classList.remove("active", "border-blue-500", "text-blue-600"),
-      );
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.tab-button').forEach(el => {
+      el.classList.remove('active', 'border-urfa-600', 'text-urfa-600');
+      el.classList.add('border-transparent', 'text-[#9A8470]');
+    });
 
-    // Show selected tab
     const tabEl = document.getElementById(`${tabName}-tab`);
-    if (tabEl) {
-      tabEl.classList.remove("hidden");
-    }
+    if (tabEl) tabEl.classList.remove('hidden');
 
-    // Update button state
     const btn = document.querySelector(`[data-tab="${tabName}"]`);
     if (btn) {
-      btn.classList.add("active", "border-blue-500", "text-blue-600");
-      btn.classList.remove("border-transparent", "text-gray-600");
+      btn.classList.add('active', 'border-urfa-600', 'text-urfa-600');
+      btn.classList.remove('border-transparent', 'text-[#9A8470]');
     }
   }
 
-  // Tab button click handlers
-  document.querySelectorAll(".tab-button").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const tabName = (btn as HTMLElement).getAttribute("data-tab");
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tabName = btn.getAttribute('data-tab');
       if (tabName) switchTab(tabName);
     });
   });
 
-  // Campaign actions
-  function sendCampaign(campaignId: number) {
-    if (confirm("Kampanyayı gönder?")) {
-      // Send to API
-      fetch(`/api/marketing/campaigns/${campaignId}/send`, { method: "POST" })
-        .then((r) => r.json())
-        .then((data) => {
+  async function sendCampaign(campaignId) {
+    if (await window.showConfirm('Kampanyayı gönder?')) {
+      fetch(`/api/marketing/campaigns/${campaignId}/send`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
           if (data.success) {
-            alert("Kampanya gönderimi başladı.");
+            window.toast?.success('Kampanya gönderilmeye başladı!');
             location.reload();
           } else {
-            alert("Hata: " + data.error);
+            window.toast?.error('Hata: ' + (data.error || 'Gönderilemedi'));
           }
         });
     }
   }
 
-  function testCampaign(campaignId: number) {
+  function testCampaign(campaignId) {
     fetch(`/api/marketing/campaigns/${campaignId}/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ testMode: true }),
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ testMode: true })
     })
-      .then((r) => r.json())
-      .then((data) => {
+      .then(r => r.json())
+      .then(data => {
         if (data.success) {
-          alert("Deneme e-postası yönetici hesabına gönderildi.");
+          window.toast?.success('Test emaili admin hesabına gönderildi!');
         } else {
-          alert("Hata: " + data.error);
+          window.toast?.error('Hata: ' + (data.error || 'Gönderilemedi'));
         }
       });
   }
 
-  // Form submission
-  document
-    .getElementById("campaign-form")
-    ?.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const form = e.target as HTMLFormElement;
-      const data = new FormData(form);
+  function editCampaign(campaignId) {
+    const campaign = campaigns.find((item) => String(item.id) === String(campaignId));
+    const form = document.getElementById('campaign-form');
+    if (!campaign || !(form instanceof HTMLFormElement)) return;
+    const field = (name) => form.elements.namedItem(name);
 
-      const payload = {
-        name: data.get("name"),
-        subject: data.get("subject"),
-        fromName: data.get("fromName"),
-        fromEmail: data.get("fromEmail"),
-        segment: data.get("segment"),
-        htmlContent: data.get("htmlContent"),
-        textContent: "",
-        status: "draft",
-      };
+    field('campaignId').value = campaign.id || '';
+    field('name').value = campaign.name || '';
+    field('subject').value = campaign.subject || '';
+    field('fromName').value = campaign.fromName || '';
+    field('fromEmail').value = campaign.fromEmail || '';
+    field('segment').value = campaign.segment || 'all_users';
+    field('htmlContent').value = campaign.htmlContent || '';
+    field('timing').value = campaign.scheduledAt ? 'schedule' : 'now';
 
-      const response = await fetch("/api/marketing/campaigns", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    document.getElementById('edit-mode-banner')?.classList.remove('hidden');
+    const label = document.getElementById('campaign-submit-label');
+    if (label) label.textContent = 'Kampanyayı Güncelle';
+    switchTab('create');
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  window.sendCampaign = sendCampaign;
+  window.testCampaign = testCampaign;
+  window.editCampaign = editCampaign;
 
-      const result = await response.json();
-      if (result.success) {
-        alert("Kampanya oluşturuldu.");
-        form.reset();
-        location.reload();
-      } else {
-        alert("Hata: " + result.error);
-      }
+  document.getElementById('campaign-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    const data = new FormData(form);
+
+    const payload = {
+      id: String(data.get('campaignId') || ''),
+      name: String(data.get('name') || ''),
+      subject: String(data.get('subject') || ''),
+      fromName: String(data.get('fromName') || ''),
+      fromEmail: String(data.get('fromEmail') || ''),
+      segment: String(data.get('segment') || ''),
+      htmlContent: String(data.get('htmlContent') || ''),
+      textContent: '',
+      status: 'draft',
+      timing: String(data.get('timing') || 'now')
+    };
+    const isEdit = Boolean(payload.id);
+
+    const response = await fetch(isEdit ? `/api/marketing/campaigns?id=${encodeURIComponent(payload.id)}` : '/api/marketing/campaigns', {
+      method: isEdit ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
+
+    const result = await response.json();
+    if (result.success) {
+      window.toast?.success(isEdit ? 'Kampanya güncellendi!' : 'Kampanya oluşturuldu!');
+      form.reset();
+      location.reload();
+    } else {
+      window.toast?.error('Hata: ' + (result.error || 'Kaydedilemedi'));
+    }
+  });
 </script>
-
-<style>
-  .tab-button {
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .tab-button:hover {
-    color: #1f2937;
-  }
-
-  .tab-content {
-    animation: fadeIn 0.2s;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-</style>

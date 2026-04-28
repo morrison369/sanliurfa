@@ -1,10 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { getApiErrorMessage, unwrapApiPayload } from '@/lib/client-api';
+import {  useState, useEffect  } from 'react';
+interface AnalyticsSummary {
+  totalUsers: number;
+  totalReviews: number;
+  totalPlaces: number;
+  avgRating: number;
+  activeToday: number;
+}
+
+interface Place {
+  id: string;
+  name: string;
+  review_count: number;
+  avg_rating: string;
+}
+
+interface User {
+  id: string;
+  full_name: string;
+  review_count: number;
+  points: number;
+}
+
+interface AnalyticsData {
+  summary: AnalyticsSummary;
+  topPlaces: Place[];
+  topUsers: User[];
+}
 
 export default function AnalyticsPanel() {
-  const [analytics, setAnalytics] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     loadAnalytics();
@@ -13,22 +38,17 @@ export default function AnalyticsPanel() {
   const loadAnalytics = async () => {
     try {
       const response = await fetch('/api/analytics');
-      const json = await response.json();
-      if (!response.ok) {
-        throw new Error(getApiErrorMessage(json, 'Analitik verileri yüklenemedi'));
-      }
-      const data = unwrapApiPayload<{ data?: any }>(json);
-      setAnalytics(data.data ?? data);
-      setError('');
+      if (!response.ok) throw new Error('Failed');
+      const data = await response.json();
+      setAnalytics(data.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analitik verileri yüklenemedi');
+      console.error('Analytics error', err);
     } finally {
       setIsLoading(false);
     }
   };
 
   if (isLoading) return <div>Yükleniyor...</div>;
-  if (error) return <div>{error}</div>;
   if (!analytics) return <div>Veri yüklenemedi</div>;
 
   const { summary, topPlaces, topUsers } = analytics;
@@ -47,7 +67,7 @@ export default function AnalyticsPanel() {
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{summary.totalReviews}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600">Toplam Mekân</p>
+          <p className="text-sm text-gray-600">Toplam Mekan</p>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{summary.totalPlaces}</p>
         </div>
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200">
@@ -62,15 +82,15 @@ export default function AnalyticsPanel() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">En Popüler Mekânlar</h3>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">En Popüler Mekanlar</h3>
           <div className="space-y-3">
-            {topPlaces.map((place: any, idx: number) => (
+            {topPlaces.map((place, idx) => (
               <div key={place.id} className="flex justify-between items-start">
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">#{idx + 1} {place.name}</p>
                   <p className="text-sm text-gray-600">{place.review_count} inceleme</p>
                 </div>
-                <p className="text-yellow-600">⭐{parseFloat(place.avg_rating || 0).toFixed(1)}</p>
+                <p className="text-yellow-600">⭐{parseFloat(place.avg_rating || '0').toFixed(1)}</p>
               </div>
             ))}
           </div>
@@ -79,7 +99,7 @@ export default function AnalyticsPanel() {
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">En Aktif Kullanıcılar</h3>
           <div className="space-y-3">
-            {topUsers.map((user: any, idx: number) => (
+            {topUsers.map((user, idx) => (
               <div key={user.id} className="flex justify-between items-start">
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">#{idx + 1} {user.full_name}</p>

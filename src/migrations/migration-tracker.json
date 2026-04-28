@@ -1,13 +1,34 @@
 {
   "migrations": [
     {
-      "id": "add-performance-indexes",
+      "id": "127_performance_indexes",
       "name": "Add Performance Optimization Indexes",
-      "timestamp": "2026-04-08T12:30:00Z",
-      "file": "add-performance-indexes.sql",
+      "timestamp": "2026-04-11T18:00:00Z",
+      "file": "127_performance_indexes.ts",
       "description": "Add 8 critical indexes for query optimization",
       "impact": "50-80% query time reduction",
-      "status": "pending"
+      "status": "ready"
+    },
+    {
+      "id": "036_collection_indexes",
+      "name": "Collection Performance Indexes",
+      "timestamp": "2026-04-11T18:00:00Z",
+      "file": "036_collection_indexes.ts",
+      "description": "Performance indexes for place collections feature",
+      "impact": "Collection queries optimization",
+      "status": "ready"
+    },
+    {
+      "id": "047_badge_indexes",
+      "name": "Badge System Indexes",
+      "timestamp": "2026-04-11T18:00:00Z",
+      "file": "047_badge_indexes.ts",
+      "description": "Performance indexes for place badges system",
+      "impact": "Badge queries optimization",
+      "status": "ready"
     }
-  ]
+  ],
+  "totalMigrations": 127,
+  "lastUpdated": "2026-04-11T18:00:00Z",
+  "note": "036 ve 047 eksik migrasyonları eklendi, SQL performans indeksleri 127'ye dönüştürüldü"
 }

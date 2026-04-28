@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { getApiErrorMessage, unwrapApiPayload } from "@/lib/client-api";
+import { useState, useEffect} from 'react';
 
 interface Collection {
   id: string;
@@ -18,19 +17,17 @@ interface CollectionsManagerProps {
   userId: string;
 }
 
-export default function CollectionsManager({
-  userId,
-}: CollectionsManagerProps) {
+export default function CollectionsManager({ userId }: CollectionsManagerProps) {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [newCollectionForm, setNewCollectionForm] = useState({
-    name: "",
-    description: "",
-    icon: "Rota",
-    is_public: false,
+    name: '',
+    description: '',
+    icon: '📍',
+    is_public: false
   });
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   // Load collections on mount
   useEffect(() => {
@@ -41,99 +38,80 @@ export default function CollectionsManager({
     try {
       setIsLoading(true);
       const response = await fetch(`/api/collections?userId=${userId}`);
-      const json = await response.json();
-      const data = unwrapApiPayload<{ success?: boolean; data?: Collection[] }>(
-        json,
-      );
+      const data = await response.json();
 
-      if (!response.ok || !data.success) {
-        throw new Error(getApiErrorMessage(json, "Koleksiyonlar yüklenemedi"));
+      if (data.success) {
+        setCollections(data.data);
       }
-
-      setCollections(data.data || []);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Koleksiyonlar yüklenemedi",
-      );
+      console.error('Failed to load collections:', err);
+      setError('Koleksiyonlar yüklenemedi');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCreateCollection = async (e: React.FormEvent) => {
+  const handleCreateCollection = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!newCollectionForm.name.trim()) {
-      setError("Koleksiyon adı gereklidir");
+      setError('Koleksiyon adı gereklidir');
       return;
     }
 
     try {
       setIsCreating(true);
-      const response = await fetch("/api/collections", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/collections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newCollectionForm.name,
           description: newCollectionForm.description || undefined,
           icon: newCollectionForm.icon,
-          is_public: newCollectionForm.is_public,
-        }),
+          isPublic: newCollectionForm.is_public
+        })
       });
 
-      const json = await response.json();
-      const data = unwrapApiPayload<{ success?: boolean; data?: Collection }>(
-        json,
-      );
+      const data = await response.json();
 
-      if (!response.ok || !data.success) {
-        throw new Error(getApiErrorMessage(json, "Koleksiyon oluşturulamadı"));
-      }
-
-      if (data.data) {
+      if (data.success) {
         setCollections([data.data, ...collections]);
+        setNewCollectionForm({
+          name: '',
+          description: '',
+          icon: '📍',
+          is_public: false
+        });
+        setError('');
+      } else {
+        setError(data.error || 'Koleksiyon oluşturulamadı');
       }
-      setNewCollectionForm({
-        name: "",
-        description: "",
-        icon: "Rota",
-        is_public: false,
-      });
-      setError("");
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Koleksiyon oluşturulurken bir hata oluştu",
-      );
+      setError('Koleksiyon oluşturulurken bir hata oluştu');
+      console.error('Create error:', err);
     } finally {
       setIsCreating(false);
     }
   };
 
   const handleDeleteCollection = async (collectionId: string, name: string) => {
-    if (!confirm(`"${name}" koleksiyonunu silmek istediğinize emin misiniz?`))
-      return;
+    if (!await (window as any).showConfirm?.(`"${name}" koleksiyonunu silmek istediğinize emin misiniz?`)) return;
 
     try {
       const response = await fetch(`/api/collections/${collectionId}`, {
-        method: "DELETE",
+        method: 'DELETE'
       });
 
-      const json = await response.json();
-      const data = unwrapApiPayload<{ success?: boolean }>(json);
+      const data = await response.json();
 
-      if (!response.ok || !data.success) {
-        throw new Error(getApiErrorMessage(json, "Koleksiyon silinemedi"));
+      if (data.success) {
+        setCollections(collections.filter(c => c.id !== collectionId));
+      } else {
+        setError(data.error || 'Koleksiyon silinemedi');
       }
-
-      setCollections(collections.filter((c) => c.id !== collectionId));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Koleksiyon silinirken bir hata oluştu",
-      );
+      setError('Koleksiyon silinirken bir hata oluştu');
+      console.error('Delete error:', err);
     }
   };
 
@@ -141,7 +119,7 @@ export default function CollectionsManager({
     <div className="space-y-8">
       {/* Create New Collection Form */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-        <h2 className="text-2xl font-bold mb-4">Yeni koleksiyon oluştur</h2>
+        <h2 className="text-2xl font-bold mb-4">Yeni Koleksiyon Oluştur</h2>
 
         <form onSubmit={handleCreateCollection} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -150,31 +128,21 @@ export default function CollectionsManager({
               <input
                 type="text"
                 value={newCollectionForm.name}
-                onChange={(e) =>
-                  setNewCollectionForm({
-                    ...newCollectionForm,
-                    name: e.target.value,
-                  })
-                }
-                placeholder="Örn: Şanlıurfa'da gezilecek yerler"
-                className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-urfa-500 dark:border-gray-600 dark:bg-gray-700"
+                onChange={e => setNewCollectionForm({ ...newCollectionForm, name: e.target.value })}
+                placeholder="Örn: Favori Restoranlar"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Etiket</label>
+              <label className="block text-sm font-medium mb-2">İkon</label>
               <input
                 type="text"
                 value={newCollectionForm.icon}
-                onChange={(e) =>
-                  setNewCollectionForm({
-                    ...newCollectionForm,
-                    icon: e.target.value,
-                  })
-                }
-                placeholder="Rota"
-                maxLength={16}
-                className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-urfa-500 dark:border-gray-600 dark:bg-gray-700"
+                onChange={e => setNewCollectionForm({ ...newCollectionForm, icon: e.target.value })}
+                placeholder="📍"
+                maxLength={2}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700"
               />
             </div>
           </div>
@@ -183,15 +151,10 @@ export default function CollectionsManager({
             <label className="block text-sm font-medium mb-2">Açıklama</label>
             <textarea
               value={newCollectionForm.description}
-              onChange={(e) =>
-                setNewCollectionForm({
-                  ...newCollectionForm,
-                  description: e.target.value,
-                })
-              }
-              placeholder="Bu koleksiyon hakkında kısa bir açıklama yazın..."
+              onChange={e => setNewCollectionForm({ ...newCollectionForm, description: e.target.value })}
+              placeholder="Bu koleksiyon hakkında..."
               rows={3}
-              className="w-full rounded border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-urfa-500 dark:border-gray-600 dark:bg-gray-700"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 dark:bg-gray-700"
             />
           </div>
 
@@ -200,34 +163,22 @@ export default function CollectionsManager({
               <input
                 type="checkbox"
                 checked={newCollectionForm.is_public}
-                onChange={(e) =>
-                  setNewCollectionForm({
-                    ...newCollectionForm,
-                    is_public: e.target.checked,
-                  })
-                }
-                className="h-4 w-4 rounded text-urfa-700 focus:ring-urfa-500"
+                onChange={e => setNewCollectionForm({ ...newCollectionForm, is_public: e.target.checked })}
+                className="w-4 h-4"
               />
               <span className="text-sm font-medium">Herkese açık yap</span>
             </label>
-            <p className="text-xs text-gray-500 mt-1">
-              Açık koleksiyonlar diğer kullanıcılar tarafından görülüp takip
-              edilebilir
-            </p>
+            <p className="text-xs text-gray-500 mt-1">Açık koleksiyonlar diğer kullanıcılar tarafından görülüp takip edilebilir</p>
           </div>
 
-          {error && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
-              {error}
-            </div>
-          )}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
             type="submit"
             disabled={isCreating}
-            className="w-full rounded bg-urfa-700 py-2 font-medium text-white transition-colors hover:bg-urfa-800 disabled:opacity-50"
+            className="w-full bg-blue-500 text-white py-2 rounded font-medium hover:bg-blue-600 disabled:opacity-50"
           >
-            {isCreating ? "Oluşturuluyor..." : "Koleksiyon oluştur"}
+            {isCreating ? 'Oluşturuluyor...' : 'Koleksiyon Oluştur'}
           </button>
         </form>
       </div>
@@ -239,29 +190,19 @@ export default function CollectionsManager({
         {isLoading ? (
           <div className="text-center py-12">Koleksiyonlar yükleniyor...</div>
         ) : collections.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-urfa-200 bg-urfa-50/60 p-8 text-center text-gray-700 dark:border-urfa-900 dark:bg-urfa-900/10 dark:text-gray-300">
-            Henüz koleksiyon oluşturmadınız. Şanlıurfa yemek, tarih veya hafta
-            sonu rotalarınızı burada düzenleyebilirsiniz.
-          </div>
+          <div className="text-center py-12 text-gray-500">Henüz bir koleksiyon oluşturmadınız</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {collections.map((collection) => (
-              <div
-                key={collection.id}
-                className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-lg transition"
-              >
+            {collections.map(collection => (
+              <div key={collection.id} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 hover:shadow-lg transition">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-urfa-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-urfa-800 dark:bg-urfa-900/40 dark:text-urfa-100">
-                      {collection.icon || "Rota"}
-                    </span>
+                    <span className="text-3xl">{collection.icon}</span>
                     <div>
                       <h3 className="font-bold text-lg">{collection.name}</h3>
                       {collection.is_public && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                          Herkese açık
-                        </span>
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">🌍 Açık</span>
                       )}
                     </div>
                   </div>
@@ -276,9 +217,9 @@ export default function CollectionsManager({
 
                 {/* Stats */}
                 <div className="flex gap-4 text-sm text-gray-500 mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-                  <span>{collection.place_count} mekân</span>
+                  <span>📍 {collection.place_count} mekan</span>
                   {collection.follower_count !== undefined && (
-                    <span>{collection.follower_count} takipçi</span>
+                    <span>👥 {collection.follower_count} takipçi</span>
                   )}
                 </div>
 
@@ -286,14 +227,12 @@ export default function CollectionsManager({
                 <div className="flex gap-2">
                   <a
                     href={`/koleksiyonlar/${collection.id}`}
-                    className="flex-1 rounded bg-urfa-100 px-3 py-2 text-center text-sm font-medium text-urfa-800 transition hover:bg-urfa-200"
+                    className="flex-1 bg-blue-100 text-blue-700 px-3 py-2 rounded text-center text-sm font-medium hover:bg-blue-200 transition"
                   >
                     Aç
                   </a>
                   <button
-                    onClick={() =>
-                      handleDeleteCollection(collection.id, collection.name)
-                    }
+                    onClick={() => handleDeleteCollection(collection.id, collection.name)}
                     className="flex-1 bg-red-100 text-red-700 px-3 py-2 rounded text-center text-sm font-medium hover:bg-red-200 transition"
                   >
                     Sil

@@ -3,18 +3,18 @@
  */
 
 import type { APIRoute } from 'astro';
-import { runSecurityAudit, generateAuditReportHTML } from '../../../../lib/security-audit';
+import { runSecurityAudit, generateAuditReportHTML } from '../../../../lib/security/security-audit';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('GET', '/api/admin/security/audit', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
@@ -30,20 +30,20 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/security/audit', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Security audit failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 // HTML report endpoint for viewing in browser
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/admin/security/audit', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return new Response('Yetkisiz işlem', { status: 403 });
+      return new Response('Unauthorized', { status: 403 });
     }
 
     const report = await runSecurityAudit();
@@ -63,6 +63,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/security/audit', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Security audit report generation failed', error instanceof Error ? error : new Error(String(error)));
-    return new Response('Sunucu hatası oluştu', { status: 500 });
+    return new Response('Internal server error', { status: 500 });
   }
 };

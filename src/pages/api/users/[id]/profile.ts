@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserProfile } from '../../../../lib/users';
+import { getUserProfile } from '../../../../lib/user';
 import { getFollowerStats, isFollowing } from '../../../../lib/followers';
 import { queryMany } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
@@ -12,7 +12,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -25,6 +25,19 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
         ErrorCode.VALIDATION_ERROR,
         'Kullanıcı ID gereklidir',
         HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(id)) {
+      recordRequest('GET', '/api/users/[id]/profile', HttpStatus.NOT_FOUND, Date.now() - startTime);
+      return apiError(
+        ErrorCode.NOT_FOUND,
+        'Kullanıcı bulunamadı',
+        HttpStatus.NOT_FOUND,
         undefined,
         requestId
       );
@@ -81,6 +94,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     recordRequest('GET', '/api/users/[id]/profile', HttpStatus.OK, duration);
 
     // Format public profile response (hide sensitive data)
+    // Dil tercihi her zaman 'tr' olarak sabitlenir
     const publicProfile = {
       id: userProfile.id,
       full_name: userProfile.full_name,
@@ -89,6 +103,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       bio: userProfile.bio,
       points: userProfile.points,
       level: userProfile.level,
+      // Site sadece Türkçe destekler - dil tercihi sabit
       language_preference: 'tr',
       email_verified: userProfile.email_verified,
       created_at: userProfile.created_at,
@@ -98,12 +113,12 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       stats: {
         followers: stats.followers_count,
         following: stats.following_count,
-        mutual: 0
+        mutual: stats.mutual_friends_count
       },
       is_following: isFollowingUser,
       is_own_profile: isOwnProfile,
       allow_messages: userProfile.privacy_settings?.allow_messages !== false,
-      recent_activity: recentActivity.rows.map((row: any) => ({
+      recent_activity: recentActivity.map((row) => ({
         type: row.type,
         id: row.id,
         content: row.content.substring(0, 100) + (row.content.length > 100 ? '...' : ''),

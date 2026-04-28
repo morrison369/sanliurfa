@@ -1,245 +1,93 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import { User, Star, Heart, Award, Settings, Users } from "lucide-react";
-import { query, queryOne } from "../../lib/postgres";
-import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
+import { Icon } from 'astro-icon/components';
+import Layout from '../../layouts/Layout.astro';
+import { queryOne } from '../../lib/postgres';
+import ProfileStats from '../../components/profile/ProfileStats.astro';
+import ProfileSidebar from '../../components/profile/ProfileSidebar.astro';
+import { logger } from '../../lib/logging';
 
 const user = Astro.locals.user;
 
-const sessionUser = user as typeof user & {
-  full_name?: string;
-  username?: string;
-  created_at?: string;
-};
-
-let profile: any = {
-  id: user?.id,
-  email: user?.email,
-  full_name: user?.fullName || sessionUser?.full_name || "Kullanıcı",
-  username: sessionUser?.username || "",
-  points: user?.points || 0,
-  created_at: sessionUser?.created_at || null,
-};
-
-if (user) {
-  try {
-    profile =
-      (await queryOne("SELECT * FROM users WHERE id = $1", [user.id])) ||
-      profile;
-  } catch (error) {
-    console.warn(
-      "Profil veritabanı sorgusu başarısız, oturum bilgisi kullanılacak.",
-      error,
-    );
-  }
+if (!user) {
+  return Astro.redirect('/giris?redirect=/profil');
 }
 
-// Kullanıcı istatistikleri
-let reviewsCount = { rows: [{ count: "0" }] };
-let favoritesCount = { rows: [{ count: "0" }] };
-
-if (user) {
-  try {
-    reviewsCount = await query(
-      "SELECT COUNT(*) FROM reviews WHERE user_id = $1",
-      [user.id],
-    );
-    favoritesCount = await query(
-      "SELECT COUNT(*) FROM favorites WHERE user_id = $1",
-      [user.id],
-    );
-  } catch (error) {
-    console.warn(
-      "Profil istatistikleri alınamadı, sıfır değerleri kullanılacak.",
-      error,
-    );
-  }
-}
-
-const stats = {
-  reviews: parseInt(reviewsCount.rows[0]?.count || "0"),
-  favorites: parseInt(favoritesCount.rows[0]?.count || "0"),
-};
-
+let profile: any = null;
 const seo = {
-  title: "Profilim - sanliurfa.com",
-  description: "Profil bilgilerinizi yönetin.",
-  noindex: true,
-};
+    title: 'Profilim - Sanliurfa.com',
+    description: 'Profil bilgilerinizi yönetin.',
+    noIndex: true,
+  };
+
+try {
+  profile = await queryOne('SELECT * FROM users WHERE id = $1', [user.id]);
+  // Stats counts moved to <ProfileStats server:defer> below.
+} catch (e) {
+  logger.error('Error loading data:', e instanceof Error ? e : new Error(String(e)));
+}
 ---
 
 <Layout seo={seo}>
-  {
-    !user ? (
-      <AuthFeatureLanding
-        eyebrow="Kullanıcı profili"
-        title="Şanlıurfa profilinizi ve katkılarınızı yönetin"
-        description="Yorumlar, favoriler, koleksiyonlar, puanlar, mesajlaşma ve sosyal etkileşimler profilinizde birleşir. Ücretsiz hesapla kişisel Şanlıurfa katkı alanınızı açabilirsiniz."
-        loginRedirect="/profil"
-        features={[
-          {
-            title: "Katkı merkezi",
-            description:
-              "Yorum, favori, koleksiyon ve etkinlik katkılarınızı tek profil ekranından takip edin.",
-          },
-          {
-            title: "Sosyal görünürlük",
-            description:
-              "Takip, mesajlaşma ve eşleşme özellikleri profil bilgilerinize bağlanır.",
-          },
-          {
-            title: "Güvenli yönetim",
-            description:
-              "Şifre, gizlilik ve isteğe bağlı iki faktörlü doğrulama ayarlarınızı yönetin.",
-          },
-        ]}
-      />
-    ) : (
-      <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-        <div class="container-custom">
-          <div class="grid lg:grid-cols-4 gap-8">
-            <aside class="lg:col-span-1">
-              <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 text-center">
-                <div class="w-24 h-24 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center text-urfa-600 dark:text-urfa-400 text-3xl font-bold mx-auto">
-                  {profile?.full_name?.charAt(0) ||
-                    user.email?.charAt(0) ||
-                    "U"}
-                </div>
-                <h1 class="font-display font-bold text-xl text-gray-900 dark:text-white mt-4">
-                  {profile?.full_name || "Kullanıcı"}
-                </h1>
-                <p class="text-gray-500 dark:text-gray-400 text-sm">
-                  {user.email}
-                </p>
-
-                <div class="flex items-center justify-center gap-2 mt-2">
-                  <Award className="w-4 h-4 text-yellow-500" />
-                  <span class="text-sm text-gray-600 dark:text-gray-400">
-                    {profile?.points || 0} puan
-                  </span>
-                </div>
-
-                <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
-                  <nav class="space-y-1">
-                    <a
-                      href="/profil"
-                      class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/30 text-urfa-700 dark:text-urfa-300"
-                    >
-                      <User className="w-4 h-4" />
-                      Profil
-                    </a>
-                    <a
-                      href="/profil/yorumlar"
-                      class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                    >
-                      <Star className="w-4 h-4" />
-                      Yorumlarım ({stats.reviews})
-                    </a>
-                    <a
-                      href="/profil/favoriler"
-                      class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                    >
-                      <Heart className="w-4 h-4" />
-                      Favorilerim ({stats.favorites})
-                    </a>
-                    <a
-                      href="/sosyal/eslesme"
-                      class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                    >
-                      <Users className="w-4 h-4" />
-                      Sosyal eşleşme
-                    </a>
-                    <a
-                      href="/profil/ayarlar"
-                      class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-                    >
-                      <Settings className="w-4 h-4" />
-                      Ayarlar
-                    </a>
-                  </nav>
-                </div>
-              </div>
-            </aside>
-
-            <main class="lg:col-span-3">
-              <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h2 class="font-display font-bold text-xl text-gray-900 dark:text-white mb-4">
-                  Profil bilgileri
-                </h2>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Ad soyad
-                    </label>
-                    <p class="text-gray-900 dark:text-white">
-                      {profile?.full_name || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      E-posta
-                    </label>
-                    <p class="text-gray-900 dark:text-white">{user.email}</p>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Kullanıcı adı
-                    </label>
-                    <p class="text-gray-900 dark:text-white">
-                      {profile?.username || "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Üyelik tarihi
-                    </label>
-                    <p class="text-gray-900 dark:text-white">
-                      {profile?.created_at
-                        ? new Date(profile.created_at).toLocaleDateString(
-                            "tr-TR",
-                          )
-                        : "-"}
-                    </p>
-                  </div>
-                </div>
-
-                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <h3 class="font-medium text-gray-900 dark:text-white mb-4">
-                    İstatistikler
-                  </h3>
-                  <div class="grid grid-cols-3 gap-4">
-                    <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-lg p-4 text-center">
-                      <div class="text-2xl font-bold text-urfa-600 dark:text-urfa-400">
-                        {stats.reviews}
-                      </div>
-                      <div class="text-sm text-gray-600 dark:text-gray-400">
-                        Yorum
-                      </div>
-                    </div>
-                    <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-lg p-4 text-center">
-                      <div class="text-2xl font-bold text-urfa-600 dark:text-urfa-400">
-                        {stats.favorites}
-                      </div>
-                      <div class="text-sm text-gray-600 dark:text-gray-400">
-                        Favori
-                      </div>
-                    </div>
-                    <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-lg p-4 text-center">
-                      <div class="text-2xl font-bold text-urfa-600 dark:text-urfa-400">
-                        {profile?.points || 0}
-                      </div>
-                      <div class="text-sm text-gray-600 dark:text-gray-400">
-                        Puan
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </main>
+  <div class="min-h-screen bg-[#FDFAF3] py-8">
+    <div class="container mx-auto px-4">
+      <div class="grid lg:grid-cols-4 gap-8">
+        <ProfileSidebar activeKey="profile" showLogout>
+          <div slot="header" class="text-center pb-4 border-b border-[rgba(200,160,100,0.2)] mb-4">
+            <div class="w-24 h-24 bg-[rgba(200,160,100,0.12)] rounded-full flex items-center justify-center text-urfa-600 text-3xl font-bold mx-auto">
+              {profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
+            </div>
+            <h1 class="font-bold text-xl text-[#1A1008] mt-4">
+              {profile?.full_name || 'Kullanıcı'}
+            </h1>
+            <p class="text-[#9A8470] text-sm">{user.email}</p>
+            <div class="flex items-center justify-center gap-2 mt-2">
+              <Icon name="lucide:award" class="w-4 h-4 text-urfa-500" />
+              <span class="text-sm text-[#6B5540]">
+                {profile?.points || 0} puan
+              </span>
+            </div>
           </div>
-        </div>
+        </ProfileSidebar>
+
+        <!-- Main Content -->
+        <main class="lg:col-span-3">
+          <div class="bg-white rounded-sm shadow-sm border border-[rgba(200,160,100,0.18)] p-6">
+            <h2 class="font-bold text-xl text-[#1A1008] mb-4">Profil Bilgileri</h2>
+
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-[#4A3828] mb-1">Ad Soyad</label>
+                <p class="text-[#1A1008] mt-1">{profile?.full_name || '-'}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-[#4A3828] mb-1">E-posta</label>
+                <p class="text-[#1A1008] mt-1">{user.email}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-[#4A3828] mb-1">Kullanıcı Adı</label>
+                <p class="text-[#1A1008] mt-1">{profile?.username || '-'}</p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-[#4A3828] mb-1">Üyelik Tarihi</label>
+                <p class="text-[#1A1008] mt-1">
+                  {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('tr-TR') : '-'}
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-[rgba(200,160,100,0.2)]">
+              <h3 class="font-medium text-[#1A1008] mb-4">İstatistikler</h3>
+              <ProfileStats userId={user.id} initialPoints={profile?.points || 0} server:defer>
+                <div slot="fallback" class="grid grid-cols-3 gap-4 animate-pulse">
+                  <div class="h-20 bg-[rgba(200,160,100,0.06)] rounded-sm"></div>
+                  <div class="h-20 bg-[rgba(200,160,100,0.06)] rounded-sm"></div>
+                  <div class="h-20 bg-[rgba(200,160,100,0.06)] rounded-sm"></div>
+                </div>
+              </ProfileStats>
+            </div>
+          </div>
+        </main>
       </div>
-    )
-  }
+    </div>
+  </div>
 </Layout>

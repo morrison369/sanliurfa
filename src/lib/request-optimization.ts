@@ -20,6 +20,9 @@ interface PendingRequest<T> {
 const pendingRequests = new Map<string, PendingRequest<any>>();
 const REQUEST_CACHE_TTL = 5000; // 5 seconds for deduplication
 
+// Global coalescing statistics (persists across requests)
+let totalCoalescedCount = 0;
+
 /**
  * Generate cache key from endpoint + parameters
  */
@@ -43,6 +46,7 @@ export async function coalesceRequest<T>(
   // Return existing promise if available and fresh
   if (existing && Date.now() - existing.timestamp < REQUEST_CACHE_TTL) {
     existing.count++;
+    totalCoalescedCount++; // Track coalesced request globally
     return existing.promise;
   }
 
@@ -78,7 +82,7 @@ export function getCoalescingStats() {
 
   return {
     totalPending: pendingRequests.size,
-    coalescedRequests: stats.reduce((sum, s) => sum + (s.coalescedCount - 1), 0),
+    coalescedRequests: totalCoalescedCount, // Use global counter for accurate stats
     details: stats
   };
 }
@@ -161,12 +165,12 @@ export function buildCursorWhereClause(
  * Example: Cursor-based pagination for API endpoints
  */
 export async function paginateWithCursor<T>(
-  query: string,
-  totalCount: number,
+  _query: string,
+  _totalCount: number,
   rows: T[],
   options: CursorPaginationOptions
 ): Promise<CursorPaginationResult<T>> {
-  const { limit, cursor, sortBy = 'created_at' } = options;
+  const { limit, sortBy = 'created_at' } = options;
 
   // If we got more rows than requested, we have a next page
   const hasMore = rows.length > limit;
@@ -207,7 +211,7 @@ export function selectCompression(acceptEncoding: string): 'gzip' | 'br' | 'defl
  * Phase 6: Calculate optimal batch size for streaming responses
  * Larger batches = more throughput, smaller = lower latency
  */
-export function getOptimalBatchSize(dataSize: number, targetLatencyMs: number = 50): number {
+export function getOptimalBatchSize(dataSize: number, _targetLatencyMs: number = 50): number {
   // For ~50ms target latency:
   // - Small data (< 1MB): batch size 100
   // - Medium data (1-10MB): batch size 500

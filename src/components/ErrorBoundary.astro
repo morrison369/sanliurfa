@@ -1,0 +1,127 @@
+---
+/**
+ * Error Boundary Component
+ * Catches errors in child components and displays fallback UI
+ */
+
+interface Props {
+  fallback?: string;
+}
+
+const { fallback = 'Bir hata oluştu. Lütfen sayfayı yenileyin.' } = Astro.props;
+---
+
+<error-boundary class="error-boundary" data-fallback={fallback}>
+  <slot />
+</error-boundary>
+
+<script>
+  // Browser-side error boundary. PUBLIC_SENTRY_DSN env varsa Sentry'ye de gönder
+  // (lazy import — Sentry yoksa veya DSN tanımsızsa sadece console.error fallback).
+
+  let sentryClient: typeof import('@sentry/browser') | null = null;
+
+  async function initBrowserSentry() {
+    const dsn = import.meta.env.PUBLIC_SENTRY_DSN;
+    if (!dsn) return;
+    try {
+      const Sentry = await import('@sentry/browser');
+      const environment = import.meta.env.PUBLIC_SENTRY_ENVIRONMENT || import.meta.env.MODE;
+      const release = import.meta.env.PUBLIC_SENTRY_RELEASE || `sanliurfa@${import.meta.env.PUBLIC_APP_VERSION || '0.0.0'}`;
+
+      Sentry.init({
+        dsn,
+        environment,
+        release,
+        tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
+        initialScope: {
+          tags: {
+            app: 'sanliurfa',
+            runtime: 'astro-browser',
+          },
+        },
+        ignoreErrors: [
+          /^Non-Error promise rejection/,
+          /^ResizeObserver loop/,
+          /^Network request failed/,
+          /^Failed to fetch/,
+        ],
+        denyUrls: [
+          /extensions\//i,
+          /^chrome:\/\//i,
+          /^moz-extension:\/\//i,
+        ],
+      });
+      sentryClient = Sentry;
+    } catch {
+      // Sentry pkg yüklenemezse silent skip
+    }
+  }
+
+  class ErrorBoundary extends HTMLElement {
+    connectedCallback() {
+      const fallback = this.dataset.fallback || 'Bir hata oluştu.';
+
+      void initBrowserSentry();
+
+      window.addEventListener('error', (event) => {
+        console.error('[ErrorBoundary] window error:', event.error);
+        sentryClient?.captureException(event.error);
+        this.showError(fallback);
+      });
+
+      window.addEventListener('unhandledrejection', (event) => {
+        console.error('[ErrorBoundary] unhandled rejection:', event.reason);
+        sentryClient?.captureException(event.reason);
+        this.showError(fallback);
+      });
+    }
+    
+      showError(message: string) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'error-fallback p-6 bg-red-50 border border-red-200 rounded-lg text-center';
+        const ns = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('class', 'w-12 h-12 mx-auto mb-4 text-red-500');
+        svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        const path = document.createElementNS(ns, 'path');
+        path.setAttribute('stroke-linecap', 'round'); path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('d', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z');
+        svg.appendChild(path);
+        const h3 = document.createElement('h3');
+        h3.className = 'text-lg font-semibold text-red-800 mb-2';
+        h3.textContent = 'Hata Oluştu';
+        const p = document.createElement('p');
+        p.className = 'text-red-600 mb-4';
+        p.textContent = message;
+        const btn = document.createElement('button');
+        btn.className = 'px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors';
+        btn.textContent = 'Sayfayı Yenile';
+        btn.addEventListener('click', () => window.location.reload());
+        wrapper.appendChild(svg); wrapper.appendChild(h3);
+        wrapper.appendChild(p); wrapper.appendChild(btn);
+        this.replaceChildren(wrapper);
+      }
+  }
+
+  if (!customElements.get('error-boundary')) {
+    customElements.define('error-boundary', ErrorBoundary);
+  }
+</script>
+
+<style>
+  .error-boundary {
+    display: contents;
+  }
+  
+  .error-fallback {
+    animation: fadeIn 0.3s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

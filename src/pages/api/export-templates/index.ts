@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getExportTemplates, createExportTemplate } from '../../../lib/report-engine';
+import { getExportTemplates, createExportTemplate } from '../../../lib/report/report-engine';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -17,7 +17,7 @@ const templateSchema = {
 };
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -25,8 +25,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/export-templates', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -65,7 +65,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -73,8 +73,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/export-templates', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
-        'Oturum açmanız gerekiyor',
+        ErrorCode.UNAUTHORIZED,
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -117,7 +117,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/export-templates', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Şablon oluşturulamadı',
+        'Failed to create template',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -132,7 +132,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: template,
-        message: 'Şablon oluşturuldu'
+        message: 'Template created'
       },
       HttpStatus.CREATED,
       requestId
@@ -146,7 +146,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     );
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Şablon oluşturulamadı',
+      'Failed to create template',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

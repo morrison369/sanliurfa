@@ -5,14 +5,14 @@
 
 import type { APIRoute } from 'astro';
 import { insert, queryOne } from '../../../lib/postgres';
-import { hasFeatureAccess } from '../../../lib/feature-gating';
+import { hasFeatureAccess } from '../../../lib/feature/feature-gating';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { validateWithSchema } from '../../../lib/validation';
+import { validateWithSchema, ValidationSchema } from '../../../lib/validation';
 import { deleteCache } from '../../../lib/cache';
 
-const createPromotionSchema = {
+const createPromotionSchema: ValidationSchema = {
   placeId: {
     type: 'string' as const,
     required: true,
@@ -51,10 +51,10 @@ const createPromotionSchema = {
     required: false,
     maxLength: 500,
   },
-} as any;
+};
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -64,7 +64,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/promotions/create', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
         ErrorCode.UNAUTHORIZED,
-        'Oturum açmanız gerekiyor',
+        'Authentication required',
         HttpStatus.UNAUTHORIZED,
         undefined,
         requestId
@@ -93,7 +93,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/promotions/create', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Geçersiz giriş',
+        'Invalid input',
         HttpStatus.UNPROCESSABLE_ENTITY,
         validation.errors,
         requestId
@@ -120,18 +120,33 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Create promotion
-    const promotion = await insert('promotions', {
-      place_id: placeId,
-      coupon_code: couponCode.toUpperCase(),
-      discount_type: discountType,
-      discount_value: discountValue,
-      max_uses: maxUses || null,
-      expires_at: expiresAt || null,
-      description,
-      is_active: true,
-      created_at: new Date().toISOString(),
-    });
+    // Create promotion — try/catch on 23505 handles concurrent same coupon_code (HARD RULE #47)
+    let promotion: any;
+    try {
+      promotion = await insert('promotions', {
+        place_id: placeId,
+        coupon_code: couponCode.toUpperCase(),
+        discount_type: discountType,
+        discount_value: discountValue,
+        max_uses: maxUses || null,
+        expires_at: expiresAt || null,
+        description,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      });
+    } catch (insertErr: any) {
+      if (insertErr?.code === '23505') {
+        recordRequest('POST', '/api/promotions/create', HttpStatus.CONFLICT, Date.now() - startTime);
+        return apiError(
+          ErrorCode.CONFLICT,
+          'Bu kupon kodu zaten kullanılmaktadır',
+          HttpStatus.CONFLICT,
+          undefined,
+          requestId
+        );
+      }
+      throw insertErr;
+    }
 
     // Invalidate cache
     await deleteCache(`places:${placeId}:promotions`);

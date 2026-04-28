@@ -1,0 +1,147 @@
+---
+
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+const { baseUrl } = await getSiteBranding();
+
+let featuredPlaces: any[] = [];
+
+const alisverisCategories = [
+  { slug: 'avmler', name: 'Alışveriş Merkezleri', icon: '🏬', desc: 'Kapalı AVM\'ler' },
+  { slug: 'hediyelik-esya', name: 'Hediyelik Eşya', icon: '🎁', desc: 'Urfa hediyelikleri' },
+  { slug: 'yoresel-urunler', name: 'Yöresel Ürünler', icon: '🫙', desc: 'İsot, fıstık ve yerel ürünler' },
+  { slug: 'kuyumcular', name: 'Kuyumcular', icon: '💍', desc: 'Altın ve takı mağazaları' },
+  { slug: 'giyim-magazalari', name: 'Giyim Mağazaları', icon: '👗', desc: 'Moda ve giyim' },
+];
+
+try {
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE c.slug IN ('avmler','hediyelik-esya','yoresel-urunler','kuyumcular','giyim-magazalari')
+     AND p.status = 'active'
+     ORDER BY p.rating DESC LIMIT 6`
+  );
+  featuredPlaces = placesResult.rows;
+} catch (e) {
+  logger.error('Error loading alisveris:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: 'Şanlıurfa Alışveriş Rehberi | Çarşılar, AVM\'ler ve Mağazalar',
+  description: 'Şanlıurfa\'da alışveriş: AVM\'ler, kapalı çarşı, hediyelik eşya, yöresel ürünler, kuyumcular ve giyim mağazaları.',
+  keywords: ['şanlıurfa alışveriş', 'urfa kapalı çarşı', 'şanlıurfa avm', 'urfa hediyelik eşya', 'şanlıurfa yöresel ürünler', 'urfa kuyumcular', 'şanlıurfa çarşı'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/alisveris',
+};
+
+const faqItems = [
+  { S: 'Şanlıurfa\'da AVM var mı?', C: 'Evet, Şanlıurfa\'da birden fazla alışveriş merkezi bulunmaktadır. Kentsel büyüme ile birlikte modern AVM\'lerin sayısı artmıştır.' },
+  { S: 'Urfa\'da nerede yöresel ürün alınır?', C: 'Şanlıurfa\'nın tarihi kapalı çarşısı ve Gümrük Hanı çevresinde isot, fıstık ezmesi, şıllık malzemeleri gibi yöresel ürünler satan dükkânlar yoğunlaşmaktadır.' },
+  { S: 'Şanlıurfa\'da hediyelik eşya nereden alınır?', C: 'Balıklıgöl çevresi ve tarihi çarşı içindeki hediyelik eşya dükkanları, el yapımı ürünler, bakır işlemeler ve yöresel bibloları bulmak için en iyi adreslerdir.' },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-16">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">ALIŞVERİŞ REHBERİ</p>
+        <h1 class="text-4xl md:text-5xl font-bold text-[#F5EDD6] mb-4">Alışveriş Rehberi</h1>
+        <p class="text-xl text-[#C4B49A] max-w-2xl">
+          Kapalı çarşıdan AVM'lere, isot pazarından kuyumculara Şanlıurfa'da alışveriş
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-12">
+      <!-- Öne Çıkan: Kapalı Çarşı -->
+      <div class="bg-[rgba(200,160,100,0.06)] border border-[rgba(200,160,100,0.2)] rounded-sm p-6 mb-10">
+        <h2 class="text-xl font-bold text-[#1A1008] mb-2">🛍️ Kapalı Çarşı & Bedesten</h2>
+        <p class="text-[#4A3828]">Şanlıurfa'nın tarihi çarşıları — Gümrük Hanı, Sipahioğlu Çarşısı ve Zincirli Bedesten. Bakır eşyalar, isot, yöresel ürünler.</p>
+        <a href="/isletme/kapali-carsi" class="mt-3 inline-block text-urfa-700 font-medium hover:underline">Çarşıları Keşfet →</a>
+      </div>
+
+      <!-- Kategoriler -->
+      <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Alışveriş Kategorileri</h2>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
+        {alisverisCategories.map((cat) => (
+          <a
+            href={`/alisveris/${cat.slug}`}
+            class="bg-white rounded-sm p-6 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 hover:-translate-y-1 transition-all group text-center"
+          >
+            <div class="text-3xl mb-3">{cat.icon}</div>
+            <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-700 transition-colors text-sm">{cat.name}</h3>
+            <p class="text-xs text-[#9A8470] mt-1">{cat.desc}</p>
+          </a>
+        ))}
+      </div>
+
+      <!-- Popüler Yöresel Ürünler -->
+      <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-8 shadow-sm mb-10">
+        <h2 class="text-2xl font-bold text-[#1A1008] mb-4">Şanlıurfa Yöresel Ürünleri</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { name: 'İsot (Kırmızı Biber)', icon: '🌶️' },
+            { name: 'Antep Fıstığı', icon: '🫘' },
+            { name: 'Bakır Eşyalar', icon: '🪔' },
+            { name: 'Urfa Boncuğu', icon: '📿' },
+          ].map(item => (
+            <div class="text-center p-4 bg-[rgba(200,160,100,0.06)] rounded-sm border border-[rgba(200,160,100,0.12)]">
+              <div class="text-3xl mb-2">{item.icon}</div>
+              <p class="text-sm font-medium text-[#4A3828]">{item.name}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {featuredPlaces.length > 0 && (
+        <div>
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Öne Çıkan Mağazalar</h2>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredPlaces.map((place) => (
+              <a href={`/isletme/${place.slug}`} class="bg-white rounded-sm p-5 border border-[rgba(200,160,100,0.18)] shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group">
+                <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-700">{place.name}</h3>
+                <span class="text-xs text-urfa-600">{place.category_name}</span>
+                {place.address && <p class="text-xs text-[#9A8470] mt-2">📍 {place.address}</p>}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Şanlıurfa Alışveriş Rehberi',
+    description: 'Şanlıurfa\'daki çarşılar, AVM\'ler, mağazalar ve alışveriş noktaları.',
+    url: `${baseUrl}/alisveris`,
+    about: { '@type': 'City', name: 'Şanlıurfa' },
+    itemListElement: featuredPlaces.slice(0, 10).map((p: any, i: number) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      item: { '@type': 'Store', name: p.name, url: `${baseUrl}/isletme/${p.slug}` },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Alışveriş', item: `${baseUrl}/alisveris` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

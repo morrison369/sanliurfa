@@ -1,27 +1,30 @@
-// @ts-nocheck
 /**
  * Approve Place Verification (Admin)
  * POST /api/admin/verifications/[id]/approve - Approve a verification request
  */
 
 import type { APIRoute } from 'astro';
-import { approveVerification } from '../../../../../lib/place-verification';
+import { approveVerification } from '../../../../../lib/place/place-verification';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
 import { logger } from '../../../../../lib/logging';
 import { recordRequest } from '../../../../../lib/metrics';
-import { validateWithSchema } from '../../../../../lib/validation';
+import { validateWithSchema, type ValidationSchema } from '../../../../../lib/validation';
 
-const approveSchema = {
+const approveSchema: ValidationSchema = {
   reason: {
     type: 'string' as const,
     required: false,
     maxLength: 1000,
     sanitize: true
   }
-} as any;
+};
+
+type ApproveBody = {
+  reason?: string;
+};
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -31,7 +34,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/admin/verifications/[id]/approve', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
-        'Admin yetkisi gerekiyor',
+        'Yönetici yetkisi gereklidir',
         HttpStatus.FORBIDDEN,
         undefined,
         requestId
@@ -40,8 +43,19 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
     const { id: verificationId } = params;
 
+    if (!verificationId) {
+      recordRequest('POST', '/api/admin/verifications/[id]/approve', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Doğrulama başvuru ID gereklidir',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
     // Get request body
-    const body = await request.json();
+    const body = (await request.json().catch(() => ({}))) as ApproveBody;
 
     // Validate input
     const validation = validateWithSchema(body, approveSchema);
@@ -56,7 +70,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    const reason = validation.data.reason;
+    const reason = (validation.data as ApproveBody | undefined)?.reason;
 
     // Approve verification
     const success = await approveVerification(verificationId, locals.user.id, reason);
@@ -65,7 +79,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       recordRequest('POST', '/api/admin/verifications/[id]/approve', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        'Doğrulama talebi bulunamadı',
+        'Doğrulama başvurusu bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -83,10 +97,10 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/verifications/[id]/approve', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Doğrulama onaylanamadı', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Doğrulama başvurusu onaylanamadı', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Doğrulama onaylanamadı',
+      'Doğrulama başvurusu onaylanırken hata oluştu',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

@@ -1,1 +1,221 @@
-# 🎉 Şanlıurfa.com - Deployment Tamamlandı!\n\n## 📅 Tarih: 6 Nisan 2026\n\n---\n\n## ✅ Tamamlanan İşlemler\n\n### 1. Temel Altyapı\n| Bileşen | Durum | Versiyon |\n|---------|-------|----------|\n| ✅ Node.js | Çalışıyor | v22.12.0 |\n| ✅ NPM | Çalışıyor | 10.9.0 |\n| ✅ PostgreSQL | Çalışıyor | 16.13 |\n| ✅ Redis | Çalışıyor | Aktif |\n| ✅ PM2 | Çalışıyor | Aktif |\n\n### 2. Web Sunucu\n| Bileşen | Durum | Açıklama |\n|---------|-------|----------|\n| ✅ Apache | Çalışıyor | 80/443 |\n| ✅ CWP Panel | Aktif | https://168.119.79.238:2083 |\n| ✅ Cloudflare | Aktif | Proxy + SSL Full |\n| ✅ SSL | Aktif | Let's Encrypt / Cloudflare |\n\n### 3. Uygulama\n| Bileşen | Durum | Detay |\n|---------|-------|-------|\n| ✅ Astro | Çalışıyor | v6.x |\n| ✅ React | Aktif | Integration mevcut |\n| ✅ Tailwind | Aktif | v3.4.17 |\n| ✅ Port | Dinleniyor | 6000 (localhost) |\n\n### 4. Otomasyon (Yeni Kurulan)\n| Bileşen | Durum | Sıklık |\n|---------|-------|--------|\n| ✅ Yedekleme | Aktif | Günlük 03:00 |\n| ✅ Log Rotation | Aktif | Günlük |\n| ✅ Monitoring | Aktif | Her 5 dakika |\n| ✅ Log Temizlik | Aktif | Haftalık Pazar 04:00 |\n\n### 5. Güvenlik\n| Bileşen | Durum |\n|---------|-------|\n| ✅ Fail2Ban | Aktif |\n| ✅ Firewall | Port 6000 sadece localhost |\n| ✅ SSL | Aktif (HTTPS) |\n| ✅ Cloudflare | DDoS koruması aktif |\n\n---\n\n## 🌐 Erişim Bilgileri\n\n### Canlı Site\n```\n🔗 https://sanliurfa.com\n🔗 http://sanliurfa.com (→ HTTPS yönlendirir)\n```\n\n### Sunucu Erişim\n```\n🖥️ SSH: ssh -p 77 sanliur@168.119.79.238\n🔧 CWP: https://168.119.79.238:2083\n   Kullanıcı: sanliur\n   Şifre: CHANGE_ME_CWP_SSH_PASSWORD\n```\n\n### Veritabanı\n```\n🐘 PostgreSQL:\n   Host: localhost\n   Port: 5432\n   Database: sanliur_sanliurfa\n   User: sanliur_sanliurfa\n   Pass: CHANGE_ME_DB_PASSWORD\n```\n\n---\n\n## 📊 Mevcut Durum (Son Kontrol)\n\n```\n🌐 HTTP Status:        200 OK ✅\n⚙️  PM2 Status:         Online ✅\n💾 Disk Kullanımı:     34% ✅\n🐏 RAM Kullanımı:      10.9% ✅\n⏱️  Uptime:             5+ gün ✅\n```\n\n---\n\n## 🛠️ Yönetim Komutları\n\n### Site Durumu\n```bash\n# Durum gör\n/home/sanliur/scripts/status.sh\n\n# Manuel health check\n/home/sanliur/scripts/health_check.sh\n\n# Logları izle\ntail -f /home/sanliur/backups/health.log\n```\n\n### PM2 Yönetimi\n```bash\nsource ~/.nvm/nvm.sh\npm2 list\npm2 logs sanliurfa\npm2 restart sanliurfa\npm2 monit\n```\n\n### PostgreSQL\n```bash\nsudo -u postgres psql -d sanliur_sanliurfa\n```\n\n### Yedekleme\n```bash\n# Manuel yedekleme\n/home/sanliur/scripts/backup.sh\n\n# Yedekleri gör\nls -la /home/sanliur/backups/\n```\n\n---\n\n## 📁 Önemli Dosya Konumları\n\n| Dosya/Dizin | Konum |\n|-------------|-------|\n| Uygulama | `/home/sanliur/public_html/` |\n| Loglar | `/home/sanliur/.pm2/logs/` |\n| Yedekler | `/home/sanliur/backups/` |\n| Scriptler | `/home/sanliur/scripts/` |\n| Apache Logs | `/home/sanliur/public_html/logs/` |\n| SSL | `/home/sanliur/public_html/ssl/` |\n\n---\n\n## 🔄 Otomatik İşlemler (Crontab)\n\n```\n🕐 03:00 - Günlük yedekleme (PostgreSQL + Dosyalar)\n🕐 04:00 - Haftalık log temizliği (Pazar)\n🔄 */5 * - Site health check (Her 5 dakika)\n```\n\n---\n\n## 🎯 Sıradaki İşlemler (İsteğe Bağlı)\n\n### Yüksek Öncelik\n- [ ] **E-posta SMTP** ayarları (şifre sıfırlama için)\n- [ ] **Google Analytics** entegrasyonu\n- [ ] **Sitemap** otomatik güncelleme\n\n### Orta Öncelik\n- [ ] **CDN** (Cloudflare Pro)\n- [ ] **Image optimization** (Cloudflare Polish)\n- [ ] **Redis caching** aktifleştirme\n\n### Düşük Öncelik\n- [ ] **Multi-server** yapılandırma\n- [ ] **Load balancer** kurulumu\n- [ ] **CI/CD pipeline** (GitHub Actions)\n\n---\n\n## 🆘 Sorun Giderme\n\n### Site Erişilemiyor\n```bash\n# 1. PM2 kontrol\nsource ~/.nvm/nvm.sh\npm2 list\n\n# 2. Manuel restart\npm2 restart sanliurfa\n\n# 3. Log kontrol\npm2 logs sanliurfa --lines 50\n```\n\n### Veritabanı Hatası\n```bash\n# PostgreSQL durum\nsudo systemctl status postgresql-16\n\n# Bağlantı testi\nPGPASSWORD='CHANGE_ME_DB_PASSWORD' psql -h localhost -U sanliur_sanliurfa -d sanliur_sanliurfa -c 'SELECT 1;'\n```\n\n### Disk Dolu\n```bash\n# Temizlik\n/home/sanliur/scripts/cleanup_logs.sh\n\n# Veya manuel\nrm -rf /home/sanliur/.pm2/logs/*.gz /home/sanliur/backups/*.gz\n```\n\n---\n\n## 📞 Destek\n\nSorun yaşarsanız:\n1. `/home/sanliur/scripts/status.sh` çalıştırın\n2. `/home/sanliur/backups/health.log` kontrol edin\n3. PM2 loglarına bakın: `pm2 logs sanliurfa`\n\n---\n\n## ✨ Tebrikler!\n\n**Şanlıurfa.com** başarıyla deploy edildi ve tüm sistemler çalışır durumda! 🚀\n\n🔗 **https://sanliurfa.com**\n
+# 🎉 Şanlıurfa.com - Deployment Tamamlandı!
+
+## 📅 Tarih: 6 Nisan 2026
+
+---
+
+## ✅ Tamamlanan İşlemler
+
+### 1. Temel Altyapı
+| Bileşen | Durum | Versiyon |
+|---------|-------|----------|
+| ✅ Node.js | Çalışıyor | v22.12.0 |
+| ✅ NPM | Çalışıyor | 10.9.0 |
+| ✅ PostgreSQL | Çalışıyor | 16.13 |
+| ✅ Redis | Çalışıyor | Aktif |
+| ✅ PM2 | Çalışıyor | Aktif |
+
+### 2. Web Sunucu
+| Bileşen | Durum | Açıklama |
+|---------|-------|----------|
+| ✅ Apache | Çalışıyor | 80/443 |
+| ✅ CWP Panel | Aktif | https://168.119.79.238:2083 |
+| ✅ Cloudflare | Aktif | Proxy + SSL Full |
+| ✅ SSL | Aktif | Let's Encrypt / Cloudflare |
+
+### 3. Uygulama
+| Bileşen | Durum | Detay |
+|---------|-------|-------|
+| ✅ Astro | Çalışıyor | v6.x |
+| ✅ React | Aktif | Integration mevcut |
+| ✅ Tailwind | Aktif | v3.4.17 |
+| ✅ Port | Dinleniyor | 6000 (localhost) |
+
+### 4. Otomasyon (Yeni Kurulan)
+| Bileşen | Durum | Sıklık |
+|---------|-------|--------|
+| ✅ Yedekleme | Aktif | Günlük 03:00 |
+| ✅ Log Rotation | Aktif | Günlük |
+| ✅ Monitoring | Aktif | Her 5 dakika |
+| ✅ Log Temizlik | Aktif | Haftalık Pazar 04:00 |
+
+### 5. Güvenlik
+| Bileşen | Durum |
+|---------|-------|
+| ✅ Fail2Ban | Aktif |
+| ✅ Firewall | Port 6000 sadece localhost |
+| ✅ SSL | Aktif (HTTPS) |
+| ✅ Cloudflare | DDoS koruması aktif |
+
+---
+
+## 🌐 Erişim Bilgileri
+
+### Canlı Site
+```
+🔗 https://sanliurfa.com
+🔗 http://sanliurfa.com (→ HTTPS yönlendirir)
+```
+
+### Sunucu Erişim
+```
+🖥️ SSH: ssh -p 77 sanliur@168.119.79.238
+🔧 CWP: https://168.119.79.238:2083
+   Kullanıcı: sanliur
+   Şifre: CHANGE_ME_CWP_SSH_PASSWORD
+```
+
+### Veritabanı
+```
+🐘 PostgreSQL:
+   Host: localhost
+   Port: 5432
+   Database: sanliur_sanliurfa
+   User: sanliur_sanliurfa
+   Pass: CHANGE_ME_DB_PASSWORD
+```
+
+---
+
+## 📊 Mevcut Durum (Son Kontrol)
+
+```
+🌐 HTTP Status:        200 OK ✅
+⚙️  PM2 Status:         Online ✅
+💾 Disk Kullanımı:     34% ✅
+🐏 RAM Kullanımı:      10.9% ✅
+⏱️  Uptime:             5+ gün ✅
+```
+
+---
+
+## 🛠️ Yönetim Komutları
+
+### Site Durumu
+```bash
+# Durum gör
+/home/sanliur/scripts/status.sh
+
+# Manuel health check
+/home/sanliur/scripts/health_check.sh
+
+# Logları izle
+tail -f /home/sanliur/backups/health.log
+```
+
+### PM2 Yönetimi
+```bash
+source ~/.nvm/nvm.sh
+pm2 list
+pm2 logs sanliurfa
+pm2 restart sanliurfa
+pm2 monit
+```
+
+### PostgreSQL
+```bash
+sudo -u postgres psql -d sanliur_sanliurfa
+```
+
+### Yedekleme
+```bash
+# Manuel yedekleme
+/home/sanliur/scripts/backup.sh
+
+# Yedekleri gör
+ls -la /home/sanliur/backups/
+```
+
+---
+
+## 📁 Önemli Dosya Konumları
+
+| Dosya/Dizin | Konum |
+|-------------|-------|
+| Uygulama | `/home/sanliur/public_html/` |
+| Loglar | `/home/sanliur/.pm2/logs/` |
+| Yedekler | `/home/sanliur/backups/` |
+| Scriptler | `/home/sanliur/scripts/` |
+| Apache Logs | `/home/sanliur/public_html/logs/` |
+| SSL | `/home/sanliur/public_html/ssl/` |
+
+---
+
+## 🔄 Otomatik İşlemler (Crontab)
+
+```
+🕐 03:00 - Günlük yedekleme (PostgreSQL + Dosyalar)
+🕐 04:00 - Haftalık log temizliği (Pazar)
+🔄 */5 * - Site health check (Her 5 dakika)
+```
+
+---
+
+## 🎯 Sıradaki İşlemler (İsteğe Bağlı)
+
+### Yüksek Öncelik
+- [ ] **E-posta SMTP** ayarları (şifre sıfırlama için)
+- [ ] **Google Analytics** entegrasyonu
+- [ ] **Sitemap** otomatik güncelleme
+
+### Orta Öncelik
+- [ ] **CDN** (Cloudflare Pro)
+- [ ] **Image optimization** (Cloudflare Polish)
+- [ ] **Redis caching** aktifleştirme
+
+### Düşük Öncelik
+- [ ] **Multi-server** yapılandırma
+- [ ] **Load balancer** kurulumu
+- [ ] **CI/CD pipeline** (GitHub Actions)
+
+---
+
+## 🆘 Sorun Giderme
+
+### Site Erişilemiyor
+```bash
+# 1. PM2 kontrol
+source ~/.nvm/nvm.sh
+pm2 list
+
+# 2. Manuel restart
+pm2 restart sanliurfa
+
+# 3. Log kontrol
+pm2 logs sanliurfa --lines 50
+```
+
+### Veritabanı Hatası
+```bash
+# PostgreSQL durum
+sudo systemctl status postgresql-16
+
+# Bağlantı testi
+PGPASSWORD='CHANGE_ME_DB_PASSWORD' psql -h localhost -U sanliur_sanliurfa -d sanliur_sanliurfa -c 'SELECT 1;'
+```
+
+### Disk Dolu
+```bash
+# Temizlik
+/home/sanliur/scripts/cleanup_logs.sh
+
+# Veya manuel
+rm -rf /home/sanliur/.pm2/logs/*.gz /home/sanliur/backups/*.gz
+```
+
+---
+
+## 📞 Destek
+
+Sorun yaşarsanız:
+1. `/home/sanliur/scripts/status.sh` çalıştırın
+2. `/home/sanliur/backups/health.log` kontrol edin
+3. PM2 loglarına bakın: `pm2 logs sanliurfa`
+
+---
+
+## ✨ Tebrikler!
+
+**Şanlıurfa.com** başarıyla deploy edildi ve tüm sistemler çalışır durumda! 🚀
+
+🔗 **https://sanliurfa.com**

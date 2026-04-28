@@ -4,24 +4,30 @@
  */
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('GET', '/api/loyalty/transactions', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
     const type = url.searchParams.get('type');
+
+    const VALID_TRANSACTION_TYPES = new Set(['earn', 'spend', 'redeem', 'expire', 'adjustment', 'bonus', 'refund']);
+    if (type !== undefined && type !== null && (typeof type !== 'string' || !VALID_TRANSACTION_TYPES.has(type))) {
+      recordRequest('GET', '/api/loyalty/transactions', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz işlem tipi', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     let query = `
       SELECT
@@ -38,7 +44,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       WHERE user_id = $1
     `;
 
-    const params: any[] = [locals.user.id];
+    const params: unknown[] = [locals.user.id];
 
     if (type) {
       query += ` AND transaction_type = $${params.length + 1}`;
@@ -83,7 +89,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/loyalty/transactions', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('İşlemler alınamadı', err instanceof Error ? err : new Error(String(err)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    logger.error('Failed to get transactions', err instanceof Error ? err : new Error(String(err)));
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

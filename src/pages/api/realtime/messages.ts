@@ -5,24 +5,23 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUnreadCount } from '../../../lib/messages';
+import { getUnreadCount } from '../../../lib/message/messages';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const user = locals.user;
 
   if (!user) {
-    return new Response('Yetkisiz işlem', { status: 401 });
+    return new Response('Unauthorized', { status: 401 });
   }
 
   logger.info('Real-time messaging connection established', { userId: user.id });
 
-  // SSE headers
+  // SSE headers — no CORS wildcard; same-origin SSE only (HARD RULE #34)
   const headers = {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*'
   };
 
   let isClosed = false;

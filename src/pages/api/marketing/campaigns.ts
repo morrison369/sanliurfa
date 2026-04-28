@@ -3,13 +3,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createCampaign, getAllCampaigns, getCampaign, updateCampaign, getCampaignMetrics } from '../../../lib/email-campaigns';
-import { validateWithSchema } from '../../../lib/validation';
+import { createCampaign, getAllCampaigns, getCampaign, updateCampaign, getCampaignMetrics, type EmailCampaign } from '../../../lib/email/email-campaigns';
+import { validateWithSchema, ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-const createSchema = {
+const createSchema: ValidationSchema = {
   name: { type: 'string' as const, required: true, minLength: 3 },
   subject: { type: 'string' as const, required: true, minLength: 5 },
   fromName: { type: 'string' as const, required: true },
@@ -20,7 +20,7 @@ const createSchema = {
 
 // GET campaigns list
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     const campaignId = url.searchParams.get('id');
 
-    let data;
+    let data: unknown;
 
     if (campaignId) {
       const campaign = await getCampaign(campaignId);
@@ -57,13 +57,13 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/marketing/campaigns', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get campaigns failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 // POST create campaign
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -74,7 +74,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, createSchema as any);
+    const validation = validateWithSchema(body, createSchema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/marketing/campaigns', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -87,7 +87,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { name, subject, fromName, fromEmail, htmlContent, segment } = validation.data as any;
+    const { name, subject, fromName, fromEmail, htmlContent, segment } = validation.data;
 
     const campaign = await createCampaign({
       name,
@@ -104,7 +104,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/marketing/campaigns', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,
-        'Kampanya oluşturulamadı',
+        'Failed to create campaign',
         HttpStatus.INTERNAL_SERVER_ERROR,
         undefined,
         requestId
@@ -120,13 +120,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/marketing/campaigns', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Create campaign failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 // PUT update campaign
 export const PUT: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -145,7 +145,7 @@ export const PUT: APIRoute = async ({ request, locals, url }) => {
 
     const body = await request.json();
 
-    const result = await updateCampaign(id, body as any);
+    const result = await updateCampaign(id, body as Partial<EmailCampaign>);
 
     if (!result) {
       recordRequest('PUT', '/api/marketing/campaigns', HttpStatus.NOT_FOUND, Date.now() - startTime);
@@ -161,6 +161,7 @@ export const PUT: APIRoute = async ({ request, locals, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/marketing/campaigns', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Update campaign failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
+

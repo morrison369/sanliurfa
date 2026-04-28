@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getAllBadges, getUserBadges } from '../../../lib/badges';
+import { getAllBadges, getUserBadges } from '../../../lib/badges/badges';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+export const GET: APIRoute = async ({ request }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

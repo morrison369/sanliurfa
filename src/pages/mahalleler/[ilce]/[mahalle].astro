@@ -1,0 +1,160 @@
+---
+
+import Layout from '../../../layouts/Layout.astro';
+import { query, queryOne } from '../../../lib/postgres';
+import { getSiteBranding } from '../../../lib/site-branding';
+import NearbyPharmacies from '../../../components/health/NearbyPharmacies.astro';
+import { logger } from '../../../lib/logging';
+const { baseUrl } = await getSiteBranding();
+
+const { ilce, mahalle } = Astro.params;
+let district: any = null;
+let neighborhood: any = null;
+let places: any[] = [];
+
+try {
+  district = await queryOne("SELECT * FROM districts WHERE slug = $1", [ilce]);
+  if (!district) return Astro.redirect('/ilceler');
+
+  neighborhood = await queryOne(
+    "SELECT * FROM neighborhoods WHERE slug = $1 AND district_id = $2",
+    [mahalle, district.id]
+  );
+  if (!neighborhood) return Astro.redirect(`/ilceler/${ilce}`);
+
+  const placesResult = await query(
+    `SELECT p.*, c.name as category_name FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE p.neighborhood_id = $1 AND p.status = 'active'
+     ORDER BY p.rating DESC LIMIT 20`,
+    [neighborhood.id]
+  );
+  places = placesResult.rows;
+  // Nearby pharmacies query moved to <NearbyPharmacies server:defer> below.
+} catch (e) {
+  logger.error('Error loading neighborhood:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: `${neighborhood?.name || mahalle} Mahallesi - ${district?.name || ilce} | Şanlıurfa`,
+  description: `${district?.name} ${neighborhood?.name} mahallesindeki mekanlar, eczaneler ve yaşam rehberi.`,
+  keywords: [(neighborhood?.name || mahalle) + ' mahallesi', (district?.name || ilce) + ' mahalle', 'şanlıurfa mahalle rehberi'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: `/mahalleler/${ilce}/${mahalle}`,
+};
+const faqItems = [
+  { S: `${neighborhood?.name || mahalle} mahallesi hangi ilçeye bağlı?`, C: `${neighborhood?.name || mahalle} mahallesi, ${district?.name || ilce} ilçesine bağlıdır.` },
+  { S: `${neighborhood?.name || mahalle} mahallesinde hangi mekanlar var?`, C: `${neighborhood?.name || mahalle} mahallesindeki aktif mekanlar sayfamızda listelenmektedir.` },
+  { S: `${district?.name || ilce} ilçesindeki diğer mahalleleri nasıl görüntüleyebilirim?`, C: `${district?.name || ilce} ilçesindeki tüm mahallelere /ilceler/${ilce} sayfasından ulaşabilirsiniz.` },
+];
+
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-white border-b border-[rgba(200,160,100,0.14)]">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-[#9A8470]">
+          <a href="/" class="hover:text-urfa-600">Ana Sayfa</a><span>/</span>
+          <a href="/ilceler" class="hover:text-urfa-600">İlçeler</a><span>/</span>
+          <a href={`/ilceler/${ilce}`} class="hover:text-urfa-600">{district?.name}</a><span>/</span>
+          <span class="text-[#1A1008] font-medium">{neighborhood?.name} Mah.</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-10">
+      <div class="container mx-auto px-4">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">Şanlıurfa Semt Rehberi</p>
+        <h1 class="text-3xl font-bold text-[#F5EDD6]">{neighborhood?.name} Mahallesi</h1>
+        <p class="text-[#9A8470]">{district?.name}, Şanlıurfa</p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+          <h2 class="text-xl font-bold text-[#1A1008] mb-4">Mekanlar</h2>
+          {places.length > 0 ? (
+            <div class="space-y-3">
+              {places.map((p) => (
+                <a href={`/isletme/${p.slug}`} class="flex items-center gap-4 bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-4 shadow-sm hover:shadow-md hover:border-urfa-300 transition-all group">
+                  <div class="w-12 h-12 bg-[rgba(200,160,100,0.08)] rounded-sm flex items-center justify-center text-xl flex-shrink-0">📍</div>
+                  <div class="flex-1">
+                    <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-700">{p.name}</h3>
+                    <span class="text-xs text-urfa-600">{p.category_name}</span>
+                  </div>
+                  {p.rating && <div class="text-urfa-500 font-bold">★ {p.rating}</div>}
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p class="text-[#9A8470] bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-8 text-center">Henüz kayıtlı mekan yok.</p>
+          )}
+        </div>
+
+        <aside>
+          {/* Eczaneler — Server Island, ana içeriği bloklamaz */}
+          <NearbyPharmacies neighborhoodId={neighborhood.id} server:defer>
+            <div slot="fallback" class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-5 shadow-sm mb-6 animate-pulse">
+              <div class="h-5 bg-[rgba(200,160,100,0.1)] rounded w-40 mb-4"></div>
+              <div class="space-y-3">
+                <div class="h-12 bg-[rgba(200,160,100,0.06)] rounded"></div>
+                <div class="h-12 bg-[rgba(200,160,100,0.06)] rounded"></div>
+                <div class="h-12 bg-[rgba(200,160,100,0.06)] rounded"></div>
+              </div>
+            </div>
+          </NearbyPharmacies>
+
+          {/* Hızlı Linkler */}
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-5">
+            <h3 class="font-bold text-[#1A1008] mb-3">Hızlı Linkler</h3>
+            <div class="space-y-2 text-sm">
+              <a href={`/ilceler/${ilce}`} class="block text-urfa-600 hover:text-urfa-700">{district?.name} Rehberi</a>
+              <a href="/saglik/nobetci-eczaneler" class="block text-urfa-600 hover:text-urfa-700">Nöbetçi Eczaneler</a>
+              <a href="/mekanlar" class="block text-urfa-600 hover:text-urfa-700">Tüm Mekanlar</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Neighborhood',
+    name: neighborhood.name,
+    description: neighborhood.description || `${neighborhood.name} mahallesi, ${district?.name || ''} ilçesi, Şanlıurfa`,
+    url: `${baseUrl}/mahalleler/${Astro.params.ilce}/${Astro.params.mahalle}`,
+    containedInPlace: {
+      '@type': 'AdministrativeArea',
+      name: district?.name || 'Şanlıurfa',
+      url: district?.slug ? `${baseUrl}/ilceler/${district.slug}` : `${baseUrl}/ilceler`,
+    },
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: district?.name || 'Şanlıurfa',
+      addressRegion: 'Şanlıurfa',
+      addressCountry: 'TR',
+    },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: `${baseUrl}/mahalleler` },
+      { '@type': 'ListItem', position: 3, name: district?.name || ilce, item: `${baseUrl}/mahalleler/${ilce}` },
+      { '@type': 'ListItem', position: 4, name: neighborhood?.name || mahalle, item: `${baseUrl}/mahalleler/${ilce}/${mahalle}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

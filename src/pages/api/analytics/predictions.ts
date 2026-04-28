@@ -1,32 +1,31 @@
-// @ts-nocheck
 /**
  * Predictive Analytics Endpoint
  * Get ML predictions, churn risk, LTV, recommendations
  */
 
 import type { APIRoute } from 'astro';
-import { predictUserChurn, calculateLifetimeValue, getHighRiskUsers, getRecommendations, getModelPerformanceMetrics } from '../../../lib/predictive-analytics';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { predictUserChurn, calculateLifetimeValue, getHighRiskUsers, getRecommendations, getModelPerformanceMetrics } from '../../../lib/predictive/predictive-analytics';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin && !locals.user) {
-      return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    if (!locals.user) {
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const type = url.searchParams.get('type') || 'churn';
     const userId = url.searchParams.get('user_id');
-    const limit = parseInt(url.searchParams.get('limit') || '50');
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 0, 1_000_000);
 
     if (type === 'churn') {
       if (!userId) {
         // Admin can get high risk users
-        if (!locals.isAdmin) {
-          return apiError(ErrorCode.FORBIDDEN, 'Admin yetkisi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
+        if (locals.user?.role !== 'admin') {
+          return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
         }
         const users = await getHighRiskUsers(limit);
         return apiResponse({
@@ -37,7 +36,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
       // User can only get their own predictions
       if (!locals.isAdmin && userId !== locals.user.id) {
-        return apiError(ErrorCode.FORBIDDEN, 'Başka kullanıcıların tahminlerine erişemezsiniz', HttpStatus.FORBIDDEN, undefined, requestId);
+        return apiError(ErrorCode.FORBIDDEN, 'Cannot access other users predictions', HttpStatus.FORBIDDEN, undefined, requestId);
       }
 
       const prediction = await predictUserChurn(userId);
@@ -49,7 +48,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     if (type === 'ltv') {
       if (!userId) {
-        return apiError(ErrorCode.VALIDATION_ERROR, 'Kullanıcı ID gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+        return apiError(ErrorCode.VALIDATION_ERROR, 'User ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
       }
 
       const ltv = await calculateLifetimeValue(userId);
@@ -61,7 +60,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     if (type === 'recommendations') {
       if (!userId) {
-        return apiError(ErrorCode.VALIDATION_ERROR, 'Kullanıcı ID gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+        return apiError(ErrorCode.VALIDATION_ERROR, 'User ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
       }
 
       const recommendations = await getRecommendations(userId);
@@ -72,8 +71,8 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     if (type === 'model_performance') {
-      if (!locals.isAdmin) {
-        return apiError(ErrorCode.FORBIDDEN, 'Admin yetkisi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);
+      if (locals.user?.role !== 'admin') {
+        return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
       }
 
       const metrics = await getModelPerformanceMetrics();
@@ -83,9 +82,9 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       }, HttpStatus.OK, requestId);
     }
 
-    return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz tahmin türü', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid prediction type', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
   } catch (error) {
     logger.error('Failed to get predictions', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Tahmin verileri alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

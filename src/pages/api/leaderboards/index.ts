@@ -4,13 +4,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getLeaderboard, getUserLeaderboardRank } from '../../../lib/leaderboards';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getLeaderboard, getUserLeaderboardRank } from '../../../lib/leaderboards/leaderboards';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+export const GET: APIRoute = async ({ request }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const leaderboardType = url.searchParams.get('type') || 'reputation';
     const period = url.searchParams.get('period') || 'all_time';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '100'), 500);
+    const limit = safeIntParam(url.searchParams.get('limit'), 100, 1, 500);
     const userId = url.searchParams.get('userId');
 
     const leaderboard = await getLeaderboard(leaderboardType, limit, period);

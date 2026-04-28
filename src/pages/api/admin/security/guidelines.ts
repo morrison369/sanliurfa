@@ -9,18 +9,18 @@ import {
   getUnimplementedGuidelines,
   calculateSecurityScore,
   getCriticalItems
-} from '../../../../lib/security-guidelines';
+} from '../../../../lib/security/security-guidelines';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('GET', '/api/admin/security/guidelines', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
@@ -28,17 +28,14 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const category = url.searchParams.get('category');
     const filter = url.searchParams.get('filter'); // 'all', 'unimplemented', 'critical'
 
-    let data;
-
-    if (filter === 'unimplemented') {
-      data = getUnimplementedGuidelines();
-    } else if (filter === 'critical') {
-      data = getCriticalItems();
-    } else if (category) {
-      data = getGuidelinesByCategory(category);
-    } else {
-      data = getAllGuidelines();
-    }
+    const data =
+      filter === 'unimplemented'
+        ? getUnimplementedGuidelines()
+        : filter === 'critical'
+          ? getCriticalItems()
+          : category
+            ? getGuidelinesByCategory(category)
+            : getAllGuidelines();
 
     const score = calculateSecurityScore();
 
@@ -62,6 +59,6 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/admin/security/guidelines', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get security guidelines failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Sunucu hatası oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

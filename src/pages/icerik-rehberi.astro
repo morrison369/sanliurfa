@@ -1,0 +1,195 @@
+---
+import { Icon } from 'astro-icon/components';
+import Layout from '../layouts/Layout.astro';
+import { getSiteBranding } from '../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
+
+const seo = {
+  title: 'İçerik Rehberi - Sanliurfa.com',
+  description: 'Şanlıurfa gezi rehberi için içerik ve resim ekleme rehberi',
+  keywords: ['şanlıurfa içerik rehberi', 'sanliurfa.com rehber', 'urfa içerik'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: '/icerik-rehberi',
+};
+
+const steps = [
+  {
+    title: '1. Wikipedia\'dan İçerik Çekme',
+    description: 'Hazır script ile otomatik içerik çekme',
+    code: 'npx tsx scripts/content-scraper/wikipedia-scraper.ts',
+    note: 'Balıklıgöl, Göbeklitepe, Harran gibi yerlerin içeriği otomatik çekilir'
+  },
+  {
+    title: '2. Slug Kuralıyla Resim İndirme',
+    description: 'Unsplash + Pexels kaynaklarından otomatik indir ve içeriklere eşleştir',
+    code: `# .env içine anahtarları ekle
+UNSPLASH_ACCESS_KEY=xxx
+PEXELS_API_KEY=xxx
+
+# Tüm içerik kategorileri için:
+# - indir
+# - slug'a göre map et
+# - external URL kontrolü
+# - doğrula
+npm run images:pipeline`,
+    note: 'Resimler /images/{kategori}/{slug}.jpg formatında üretilir'
+  },
+  {
+    title: '3. Manuel İçerik Ekleme',
+    description: 'src/content/places/ klasörüne .md dosyası oluştur',
+    code: `---
+title: "Mekan Adı"
+description: "Kısa açıklama"
+slug: "mekan-adi"
+lat: 37.1591
+lon: 38.7969
+category: "tarihi"
+image: "/images/places/mekan-adi.jpg"
+thumb: "/images/places/mekan-adi-thumb.jpg"
+---
+
+# Başlık
+
+İçerik buraya...`,
+    note: 'Frontmatter (--- arası) zorunlu alanları içermeli'
+  },
+  {
+    title: '4. Ücretsiz Resim Kaynakları',
+    description: 'API kullanmadan manuel indirme',
+    links: [
+      { name: 'Unsplash', url: 'https://unsplash.com/s/photos/sanliurfa' },
+      { name: 'Pexels', url: 'https://pexels.com/search/sanliurfa' },
+      { name: 'Pixabay', url: 'https://pixabay.com/images/search/urfa' },
+      { name: 'Wikimedia Commons', url: 'https://commons.wikimedia.org/wiki/Sanliurfa' }
+    ]
+  }
+];
+
+const imageKeywords = [
+  'Sanliurfa cityscape',
+  'Balikligol Urfa',
+  'Gobekli Tepe',
+  'Harran houses',
+  'Southeast Turkey landscape',
+  'Mesopotamia',
+  'Anatolian history',
+  'Turkish cuisine',
+  'Historical mosque',
+  'Ancient ruins'
+];
+const faqItems = [
+  { S: 'Sanliurfa.com için nasıl içerik ekleyebilirim?', C: 'Admin panelinden blog yazısı, mekan veya etkinlik ekleyebilirsiniz. Dış kaynak içerikleri için scraper scriptleri mevcuttur.' },
+  { S: 'Resimler hangi formatta ve boyutta olmalı?', C: 'WebP formatı tercih edilir; en az 1200×630 piksel boyut SEO ve sosyal medya paylaşımı için önerilir.' },
+  { S: 'İçerik ekleme sürecinde takıldım, destek alabilirim?', C: 'İletişim sayfası üzerinden teknik destek talebinde bulunabilirsiniz.' },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="container mx-auto px-4 max-w-4xl">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">GELİŞTİRİCİ REHBERİ</p>
+        <h1 class="text-3xl md:text-4xl font-bold text-[#F5EDD6] mb-3">
+          İçerik ve Resim Ekleme Rehberi
+        </h1>
+        <p class="text-lg text-[#C4B49A]">
+          Şanlıurfa gezi rehberi için içerik ve resim bulma kaynakları
+        </p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-4xl py-12">
+      <!-- Steps -->
+      <div class="space-y-8">
+        {steps.map((step) => (
+          <div class="bg-white rounded-sm p-6 border border-[rgba(200,160,100,0.18)] shadow-sm">
+            <h2 class="text-2xl font-bold text-[#1A1008] mb-3">
+              {step.title}
+            </h2>
+            <p class="text-[#6B5540] mb-4">
+              {step.description}
+            </p>
+
+            {step.code && (
+              <pre class="bg-gray-900 text-green-400 p-4 rounded-sm overflow-x-auto text-sm mb-4"><code>{step.code}</code></pre>
+            )}
+
+            {step.links && (
+              <ul class="space-y-2 mb-4">
+                {step.links.map((link) => (
+                  <li>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener"
+                      class="text-urfa-600 hover:text-urfa-700 flex items-center gap-2"
+                    >
+                      <span>{link.name}</span>
+                      <Icon name="lucide:external-link" class="w-4 h-4" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {step.note && (
+              <p class="text-sm text-urfa-700 bg-[rgba(200,160,100,0.06)] p-3 rounded-sm">
+                💡 {step.note}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <!-- Image Keywords -->
+      <div class="mt-12 bg-white rounded-sm p-6 border border-[rgba(200,160,100,0.18)] shadow-sm">
+        <h2 class="text-2xl font-bold text-[#1A1008] mb-4">
+          Arama Anahtar Kelimeleri
+        </h2>
+        <p class="text-[#6B5540] mb-4">
+          Ücretsiz resim sitelerinde kullanabileceğiniz İngilizce anahtar kelimeler:
+        </p>
+        <div class="flex flex-wrap gap-2">
+          {imageKeywords.map((keyword) => (
+            <a
+              href={`https://unsplash.com/s/photos/${encodeURIComponent(keyword)}`}
+              target="_blank"
+              rel="noopener"
+              class="px-3 py-1 bg-[rgba(200,160,100,0.08)] text-[#6B5540] rounded-sm text-sm hover:bg-[rgba(200,160,100,0.15)] hover:text-urfa-700 transition-colors"
+            >
+              {keyword}
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="mt-12 text-center">
+        <a
+          href="/mekanlar"
+          class="inline-flex items-center gap-2 px-6 py-3 bg-urfa-600 text-white rounded-sm font-medium hover:bg-urfa-700 transition-colors"
+        >
+          <span>Mekanları Görüntüle</span>
+          <Icon name="lucide:arrow-right" class="w-5 h-5" />
+        </a>
+      </div>
+    </div>
+  </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'İçerik Rehberi', item: `${baseUrl}/icerik-rehberi` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

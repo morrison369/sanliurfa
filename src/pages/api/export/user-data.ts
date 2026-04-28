@@ -1,17 +1,16 @@
-// @ts-nocheck
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
-import { convertToCSV, convertToJSON, getContentType, getFileExtension, getFormattedDate } from '../../../lib/export';
+import { convertToCSV, convertToJSON, getContentType, getFileExtension, getFormattedDate } from '../../../lib/export/export';
 import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Kimlik doğrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Kimlik doğrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const url = new URL(request.url);
@@ -19,17 +18,17 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     // Get user data
     const userResult = await pool.query(`SELECT id, email, full_name, role, created_at FROM users WHERE id = $1`, [locals.user.id]);
-    const user = userResult.rows[0];
+    const user = userResult.rows?.[0];
 
     // Get user's reviews
     const reviewsResult = await pool.query(
-      `SELECT id, place_id, rating, text, created_at FROM reviews WHERE user_id = $1 ORDER BY created_at DESC`,
+      `SELECT id, place_id, rating, content, created_at FROM reviews WHERE user_id = $1 ORDER BY created_at DESC`,
       [locals.user.id]
     );
 
     // Get user's favorites
     const favoritesResult = await pool.query(
-      `SELECT place_id, added_at FROM favorites WHERE user_id = $1 ORDER BY added_at DESC`,
+      `SELECT place_id, created_at as added_at FROM favorites WHERE user_id = $1 ORDER BY created_at DESC`,
       [locals.user.id]
     );
 
@@ -48,18 +47,18 @@ export const GET: APIRoute = async ({ request, locals }) => {
         role: user?.role,
         createdAt: user?.created_at
       },
-      reviews: reviewsResult.rows.map((r: any) => ({
+      reviews: reviewsResult.rows?.map((r) => ({
         id: r.id,
         placeId: r.place_id,
         rating: r.rating,
         text: r.text,
         createdAt: r.created_at
       })),
-      favorites: favoritesResult.rows.map((f: any) => ({
+      favorites: favoritesResult.rows?.map((f) => ({
         placeId: f.place_id,
         addedAt: f.added_at
       })),
-      activity: activityResult.rows.map((a: any) => ({
+      activity: activityResult.rows?.map((a) => ({
         action: a.action,
         resourceType: a.resource_type,
         resourceId: a.resource_id,
@@ -67,7 +66,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       }))
     };
 
-    const data = format === 'csv' ? convertToJSON(export_data) : convertToJSON(export_data);
+    const data = format === 'csv' ? convertToCSV([export_data]) : convertToJSON([export_data]);
     const extension = getFileExtension(format);
     const filename = `personal-data-${getFormattedDate()}.${extension}`;
 
@@ -83,6 +82,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
     });
   } catch (error) {
     logger.error('Export failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'İçsel sunucu hatası', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Ichsel sunucu hatasi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { realtimeManager } from '../lib/realtime-sse';
+import {  useState, useEffect  } from 'react';
+import { Zap } from 'lucide-react';
+import { realtimeManager } from '../lib/realtime/realtime-sse';
 
 interface MetricsData {
   errorRate: number;
@@ -8,7 +9,7 @@ interface MetricsData {
   cacheHitRate: number;
   slowRequests: number;
   totalRequests: number;
-  slowestEndpoints?: any[];
+  slowestEndpoints?: { endpoint: string; count: number; avgDuration: number }[];
   dbPool?: {
     active: number;
     idle: number;
@@ -18,7 +19,7 @@ interface MetricsData {
 }
 
 interface KPIData {
-  kpis: any[];
+  kpis: { id: string; name: string; description?: string; target_value?: number; unit?: string; alert_triggered?: boolean }[];
   alertCount: number;
 }
 
@@ -78,9 +79,7 @@ export default function LiveAnalyticsDashboard() {
         <div className="text-center">
           <div className="text-lg font-semibold text-gray-700 mb-2">Bağlantı kuruluyor...</div>
           <div className="animate-spin">
-            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+            <Zap className="w-8 h-8 text-blue-600" />
           </div>
         </div>
       </div>
@@ -241,7 +240,7 @@ export default function LiveAnalyticsDashboard() {
 
           {kpi.kpis && kpi.kpis.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {kpi.kpis.slice(0, 6).map((k: any) => (
+              {kpi.kpis.slice(0, 6).map((k) => (
                 <div
                   key={k.id}
                   className={`p-4 rounded border-l-4 ${

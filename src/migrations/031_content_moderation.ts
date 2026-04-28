@@ -65,7 +65,7 @@ export const migration_031_content_moderation: Migration = {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, expires_at)
       );
-      CREATE INDEX IF NOT EXISTS idx_user_bans_active ON user_bans(expires_at) WHERE expires_at > NOW();
+      CREATE INDEX IF NOT EXISTS idx_user_bans_active ON user_bans(expires_at) WHERE expires_at IS NOT NULL;
       CREATE INDEX IF NOT EXISTS idx_user_bans_user ON user_bans(user_id, expires_at DESC);
     `);
 

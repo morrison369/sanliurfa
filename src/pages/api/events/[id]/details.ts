@@ -1,17 +1,16 @@
-// @ts-nocheck
 /**
  * Get Event Details
  * GET /api/events/[id]/details - Get detailed event information
  */
 
 import type { APIRoute } from 'astro';
-import { getEventById, hasUserRsvpd, getEventAttendees } from '../../../../lib/events-management';
+import { getEventById, hasUserRsvpd, getEventAttendees } from '../../../../lib/events/events-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

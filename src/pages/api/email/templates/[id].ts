@@ -11,8 +11,8 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
-export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+export const GET: APIRoute = async ({ request, params }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     logger.error('Get template failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Şablon alınamadı',
+      'Failed to get template',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -61,14 +61,14 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('PUT', '/api/email/templates/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: templateId } = params;
@@ -86,6 +86,27 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
 
     const body = await request.json();
     const { name, subject_line, html_content, plain_text_content, preview_text, is_active } = body;
+
+    if (name !== undefined && (typeof name !== 'string' || name.length > 200)) {
+      recordRequest('PUT', '/api/email/templates/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Ad 200 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (subject_line !== undefined && (typeof subject_line !== 'string' || subject_line.length > 500)) {
+      recordRequest('PUT', '/api/email/templates/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Konu satırı 500 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (html_content !== undefined && (typeof html_content !== 'string' || html_content.length > 500000)) {
+      recordRequest('PUT', '/api/email/templates/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'HTML içerik 500000 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (plain_text_content !== undefined && plain_text_content !== null && (typeof plain_text_content !== 'string' || plain_text_content.length > 500000)) {
+      recordRequest('PUT', '/api/email/templates/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Düz metin 500000 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (preview_text !== undefined && preview_text !== null && (typeof preview_text !== 'string' || preview_text.length > 500)) {
+      recordRequest('PUT', '/api/email/templates/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Önizleme metni 500 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     const updated = await update('email_templates', { id: templateId }, {
       name,
@@ -116,7 +137,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     logger.error('Update template failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Şablon güncellenemedi',
+      'Failed to update template',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -125,14 +146,14 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('DELETE', '/api/email/templates/[id]', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: templateId } = params;
@@ -158,7 +179,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Şablon silindi',
+        message: 'Template deleted',
       },
       HttpStatus.OK,
       requestId
@@ -169,7 +190,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     logger.error('Delete template failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Şablon silinemedi',
+      'Failed to delete template',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

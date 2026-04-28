@@ -1,23 +1,22 @@
-// @ts-nocheck
 /**
  * User Settings API
  * GET: Get user settings
  * PUT: Update user settings (theme, notification/privacy preferences)
+ * 
+ * NOT: Dil tercihi (language_preference) artık desteklenmiyor.
+ * Site SADECE Türkçe olarak kullanılabilir.
+ * @see AGENTS.md - Yasaklar bölümü
  */
 
 import type { APIRoute } from 'astro';
-import { getUserProfile, updateUserSettings } from '../../../lib/users';
+import { getUserProfile, updateUserSettings } from '../../../lib/user';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { validateWithSchema } from '../../../lib/validation';
 
+// Dil tercihi SCHEMA'DAN KALDIRILDI - Sadece Türkçe desteklenir
 const updateSettingsSchema = {
-  language_preference: {
-    type: 'string' as const,
-    required: false,
-    pattern: '^tr$'
-  },
   theme_preference: {
     type: 'string' as const,
     required: false,
@@ -34,7 +33,7 @@ const updateSettingsSchema = {
 };
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -44,7 +43,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('GET', '/api/users/settings', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -72,7 +71,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: {
+          // Dil tercihi her zaman 'tr' - değiştirilemez
           language_preference: 'tr',
+          language_notice: 'Site sadece Türkçe desteklemektedir.',
           theme_preference: profile.theme_preference,
           notification_preferences: profile.notification_preferences,
           privacy_settings: profile.privacy_settings,
@@ -97,7 +98,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -107,7 +108,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     if (!user) {
       recordRequest('PUT', '/api/users/settings', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -116,18 +117,19 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    if (body.language_preference && body.language_preference !== 'tr') {
+
+    // Dil tercihi güncellemesi engelleniyor
+    if (body.language_preference !== undefined) {
       recordRequest('PUT', '/api/users/settings', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Site sadece Türkçe kullanılabilir',
+        'Dil tercihi değiştirilemez. Site sadece Türkçe desteklemektedir.',
         HttpStatus.UNPROCESSABLE_ENTITY,
-        { allowed: ['tr'] },
+        undefined,
         requestId
       );
     }
 
-    body.language_preference = 'tr';
     const validation = validateWithSchema(body, updateSettingsSchema);
 
     if (!validation.valid) {
@@ -142,7 +144,6 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
 
     const updates = {
-      language_preference: validation.data.language_preference,
       theme_preference: validation.data.theme_preference,
       notification_preferences: validation.data.notification_preferences,
       privacy_settings: validation.data.privacy_settings
@@ -172,7 +173,9 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       {
         success: true,
         data: {
+          // Dil tercihi her zaman 'tr'
           language_preference: 'tr',
+          language_notice: 'Site sadece Türkçe desteklemektedir.',
           theme_preference: updatedProfile.theme_preference,
           notification_preferences: updatedProfile.notification_preferences,
           privacy_settings: updatedProfile.privacy_settings,

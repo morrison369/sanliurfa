@@ -1,18 +1,16 @@
+import { logger } from './logging';
 // Yardımcı fonksiyonlar
 
 /**
  * Tarih formatlama
  */
-export function formatDate(
-  date: string | Date,
-  options?: Intl.DateTimeFormatOptions,
-): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  return d.toLocaleDateString("tr-TR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    ...options,
+export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOptions): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('tr-TR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    ...options
   });
 }
 
@@ -20,35 +18,53 @@ export function formatDate(
  * Kısa tarih formatı
  */
 export function formatShortDate(date: string | Date): string {
-  return formatDate(date, { month: "short", day: "numeric" });
+  return formatDate(date, { month: 'short', day: 'numeric' });
 }
 
 /**
  * Metin kısaltma
  */
-export function truncate(str: string, length: number, suffix = "..."): string {
+export function truncate(str: string, length: number, suffix = '...'): string {
   if (str.length <= length) return str;
   return str.substring(0, length).trim() + suffix;
 }
 
 /**
- * Slug oluşturma
+ * Slug oluşturma (Türkçe karakter desteği)
  */
 export function slugify(str: string): string {
   return str
-    .toLowerCase()
+    .split('')
+    .map(c => {
+      switch (c) {
+        case 'ç': return 'c';
+        case 'ğ': return 'g';
+        case 'ı': return '';
+        case 'ö': return 'o';
+        case 'ş': return 's';
+        case 'ü': return 'u';
+        case 'Ç': return 'C';
+        case 'Ğ': return 'G';
+        case 'İ': return 'I';
+        case 'Ö': return 'O';
+        case 'Ş': return 'S';
+        case 'Ü': return 'U';
+        default: return c;
+      }
+    })
+    .join('')
+    .replace(/_/g, '-')
+    .replace(/[^a-zA-Z0-9\s-]/g, '')
     .trim()
-    .replace(/[\s\W-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/\s+/g, '-')
+    .toLowerCase()
+    .replace(/^-+|-+$/g, '');
 }
 
 /**
  * SEO başlığı oluşturma
  */
-export function createSEOTitle(
-  title: string,
-  siteName = "sanliurfa.com",
-): string {
+export function createSEOTitle(title: string, siteName = 'Sanliurfa.com'): string {
   if (title.includes(siteName)) return title;
   return `${title} | ${siteName}`;
 }
@@ -57,7 +73,7 @@ export function createSEOTitle(
  * Telefon numarası formatlama
  */
 export function formatPhone(phone: string): string {
-  const cleaned = phone.replace(/\D/g, "");
+  const cleaned = phone.replace(/\D/g, '');
   if (cleaned.length === 10) {
     return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)} ${cleaned.slice(6, 8)} ${cleaned.slice(8)}`;
   }
@@ -67,10 +83,10 @@ export function formatPhone(phone: string): string {
 /**
  * Fiyat formatlama
  */
-export function formatPrice(price: number, currency = "TRY"): string {
-  return new Intl.NumberFormat("tr-TR", {
-    style: "currency",
-    currency,
+export function formatPrice(price: number, currency = 'TRY'): string {
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency
   }).format(price);
 }
 
@@ -78,9 +94,9 @@ export function formatPrice(price: number, currency = "TRY"): string {
  * Sayı formatlama (K, M, B)
  */
 export function formatNumber(num: number): string {
-  if (num >= 1000000000) return (num / 1000000000).toFixed(1) + "B";
-  if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
-  if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+  if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
   return num.toString();
 }
 
@@ -88,9 +104,9 @@ export function formatNumber(num: number): string {
  * Rastgele string oluşturma
  */
 export function generateId(length = 8): string {
-  return Math.random()
-    .toString(36)
-    .substring(2, 2 + length);
+  const bytes = new Uint8Array(Math.ceil(length / 2));
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, length);
 }
 
 /**
@@ -98,7 +114,7 @@ export function generateId(length = 8): string {
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  wait: number,
+  wait: number
 ): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout>;
   return (...args: Parameters<T>) => {
@@ -112,7 +128,7 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
-  limit: number,
+  limit: number
 ): (...args: Parameters<T>) => void {
   let inThrottle: boolean;
   return (...args: Parameters<T>) => {
@@ -129,7 +145,7 @@ export function throttle<T extends (...args: any[]) => any>(
  */
 export const storage = {
   get<T>(key: string, defaultValue: T): T {
-    if (typeof window === "undefined") return defaultValue;
+    if (typeof window === 'undefined') return defaultValue;
     try {
       const item = localStorage.getItem(key);
       return item ? JSON.parse(item) : defaultValue;
@@ -138,27 +154,27 @@ export const storage = {
     }
   },
   set(key: string, value: any): void {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {
-      console.error("Storage error:", e);
+      logger.error('Storage error:', e);
     }
   },
   remove(key: string): void {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     localStorage.removeItem(key);
-  },
+  }
 };
 
 /**
  * Meta tag oluşturma
  */
 export function setMetaTag(name: string, content: string): void {
-  if (typeof document === "undefined") return;
+  if (typeof document === 'undefined') return;
   let meta = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement;
   if (!meta) {
-    meta = document.createElement("meta");
+    meta = document.createElement('meta');
     meta.name = name;
     document.head.appendChild(meta);
   }
@@ -173,8 +189,7 @@ export function isInViewport(element: HTMLElement): boolean {
   return (
     rect.top >= 0 &&
     rect.left >= 0 &&
-    rect.bottom <=
-      (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
     rect.right <= (window.innerWidth || document.documentElement.clientWidth)
   );
 }
@@ -186,7 +201,7 @@ export function scrollToElement(elementId: string, offset = 80): void {
   const element = document.getElementById(elementId);
   if (element) {
     const top = element.getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top, behavior: "smooth" });
+    window.scrollTo({ top, behavior: 'smooth' });
   }
 }
 
@@ -197,17 +212,15 @@ export function calculateDistance(
   lat1: number,
   lon1: number,
   lat2: number,
-  lon2: number,
+  lon2: number
 ): number {
   const R = 6371; // Dünya yarıçapı (km)
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }

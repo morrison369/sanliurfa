@@ -1,0 +1,175 @@
+---
+
+// Gezilecek yerler alt kategori veya site detay
+// /gezilecek-yerler/gobeklitepe → historical_sites'dan veya categories'den
+import Layout from '../../layouts/Layout.astro';
+import Image from '../../components/Image.astro';
+import { query, queryOne } from '../../lib/postgres';
+import { resolveContentImage } from '../../lib/content-images';
+import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
+const { baseUrl } = await getSiteBranding();
+
+const { slug } = Astro.params;
+let site: any = null;
+let relatedSites: any[] = [];
+
+try {
+  // Önce historical_sites'da ara
+  site = await queryOne(
+    "SELECT * FROM historical_sites WHERE slug = $1 AND status = 'active'",
+    [slug]
+  );
+
+  if (site) {
+    const related = await query(
+      "SELECT id, name, slug, location, short_description FROM historical_sites WHERE status = 'active' AND id != $1 LIMIT 4",
+      [site.id]
+    );
+    relatedSites = related.rows;
+  } else {
+    // Kayıt henüz historical_sites tablosuna taşınmadıysa mekan detayına düş.
+    const categoryRedirects: Record<string, string> = {
+      muzeler: '/tarihi-yerler',
+      'tarihi-yerler': '/tarihi-yerler',
+    };
+    if (slug && categoryRedirects[String(slug)]) {
+      return Astro.redirect(categoryRedirects[String(slug)]);
+    }
+    return Astro.redirect(
+      ['gobeklitepe', 'balikligol', 'harran', 'halfeti', 'urfa-kalesi', 'ayna-carsi', 'kapali-carsi'].includes(String(slug))
+        ? `/isletme/${slug}`
+        : `/mekanlar/${slug}`,
+    );
+  }
+} catch (e) {
+  logger.error('Error:', e instanceof Error ? e : new Error(String(e)));
+}
+
+if (!site) return Astro.redirect('/gezilecek-yerler');
+
+const getHistoricalImage = (item: any) =>
+  resolveContentImage({
+    category: 'tarihi-yerler',
+    slug: item?.slug,
+    explicit: item?.cover_image || item?.images?.[0],
+    placeholder: '/images/placeholder-historical.jpg',
+  });
+
+const seo = {
+  title: `${site.name} - Şanlıurfa Gezilecek Yerler`,
+  description: site.short_description || site.description,
+  ogImage: getHistoricalImage(site),
+  keywords: [site.name, site.name + ' şanlıurfa', 'şanlıurfa gezilecek yerler', 'urfa ' + site.name.toLowerCase()],
+  canonical: `/gezilecek-yerler/${Astro.params.slug}`,
+};
+const faqItems = [
+  { S: `${site.name} nerede?`, C: `${site.name}, ${site.location || 'Şanlıurfa'} konumunda yer almaktadır.` },
+  { S: `${site.name} ziyaret saatleri nedir?`, C: site.visiting_hours || `${site.name} için ziyaret saatlerini sayfamızdan veya ilgili kurumdan öğrenebilirsiniz.` },
+  { S: `${site.name} giriş ücreti var mı?`, C: site.entrance_fee || `${site.name} giriş ücreti bilgisi için güncel verileri sayfamızda takip edebilirsiniz.` },
+];
+
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#FDFAF3] border-b border-[rgba(200,160,100,0.14)]">
+      <div class="container mx-auto px-4 py-3">
+        <nav class="flex items-center gap-2 text-sm text-[#9A8470]">
+          <a href="/" class="hover:text-urfa-600">Ana Sayfa</a><span>/</span>
+          <a href="/gezilecek-yerler" class="hover:text-urfa-600">Gezilecek Yerler</a><span>/</span>
+          <span class="text-[#1A1008] font-medium">{site.name}</span>
+        </nav>
+      </div>
+    </div>
+
+    <article class="container mx-auto px-4 py-8 max-w-4xl">
+      <h1 class="text-4xl font-bold text-[#1A1008] mb-4">{site.name} Şanlıurfa Gezilecek Yerler</h1>
+
+      {site.location && <p class="text-[#9A8470] mb-6">📍 {site.location}</p>}
+
+      <Image
+        src={getHistoricalImage(site)}
+        alt={site.name}
+        width={1600}
+        height={900}
+        class="w-full rounded-sm mb-8 shadow-lg"
+      />
+
+      <div class="prose prose-lg max-w-none" set:html={site.description || site.history || ''} />
+
+      {/* Ziyaret Bilgileri */}
+      <div class="grid md:grid-cols-2 gap-4 mt-8">
+        {site.visiting_hours && (
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-5">
+            <h3 class="font-bold text-[#1A1008] mb-2">🕐 Ziyaret Saatleri</h3>
+            <p class="text-[#6B5540]">{site.visiting_hours}</p>
+          </div>
+        )}
+        {site.entrance_fee && (
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-5">
+            <h3 class="font-bold text-[#1A1008] mb-2">🎫 Giriş Ücreti</h3>
+            <p class="text-[#6B5540]">{site.entrance_fee}</p>
+          </div>
+        )}
+      </div>
+
+      {/* İlgili Yerler */}
+      {relatedSites.length > 0 && (
+        <div class="mt-12">
+          <h2 class="text-2xl font-bold text-[#1A1008] mb-6">Diğer Gezilecek Yerler</h2>
+          <div class="grid md:grid-cols-2 gap-4">
+            {relatedSites.map((r) => (
+              <a href={`/gezilecek-yerler/${r.slug}`} class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-5 hover:shadow-md hover:border-urfa-300 transition-all group">
+                <h3 class="font-bold text-[#1A1008] group-hover:text-urfa-700">{r.name}</h3>
+                <p class="text-sm text-[#9A8470] mt-1">{r.short_description || r.location}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </article>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Gezilecek Yerler', item: `${baseUrl}/gezilecek-yerler` },
+      { '@type': 'ListItem', position: 3, name: site.name, item: `${baseUrl}/gezilecek-yerler/${site.slug}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'TouristAttraction',
+    name: site.name,
+    description: site.short_description || site.description,
+    url: `${baseUrl}/gezilecek-yerler/${site.slug}`,
+    image: (() => { const img = getHistoricalImage(site); return img.startsWith('http') ? img : `${baseUrl}${img}`; })(),
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: site.location || 'Şanlıurfa',
+      addressRegion: 'Şanlıurfa',
+      addressCountry: 'TR',
+    },
+    containedInPlace: {
+      '@type': 'City',
+      name: 'Şanlıurfa',
+      url: `${baseUrl}`,
+    },
+    touristType: 'Kültür Turizmi',
+    ...(site.visiting_hours ? { openingHours: site.visiting_hours } : {}),
+    ...(site.entrance_fee ? { priceRange: site.entrance_fee } : {}),
+    ...(site.latitude && site.longitude ? { geo: { '@type': 'GeoCoordinates', latitude: site.latitude, longitude: site.longitude } } : {}),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

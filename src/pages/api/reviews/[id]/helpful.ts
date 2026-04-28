@@ -5,13 +5,13 @@
  */
 
 import type { APIRoute } from 'astro';
-import { voteReviewHelpful, getReviewAnalytics } from '../../../../lib/review-management';
+import { voteReviewHelpful, getReviewAnalytics } from '../../../../lib/review/review-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
-export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+export const GET: APIRoute = async ({ request, params }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const { id: reviewId } = params;
     if (!reviewId) {
       recordRequest('GET', '/api/reviews/[id]/helpful', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Review ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const analytics = await getReviewAnalytics(reviewId);
@@ -42,25 +42,25 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/reviews/[id]/helpful', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get helpful count failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Faydalı oy sayısı alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get helpful count', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/reviews/[id]/helpful', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: reviewId } = params;
     if (!reviewId) {
       recordRequest('POST', '/api/reviews/[id]/helpful', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Review ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const body = await request.json();
@@ -68,7 +68,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
     if (typeof is_helpful !== 'boolean') {
       recordRequest('POST', '/api/reviews/[id]/helpful', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Faydalı oy bilgisi true/false olmalıdır', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'is_helpful boolean required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const counts = await voteReviewHelpful(reviewId, locals.user.id, is_helpful);
@@ -90,6 +90,6 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/reviews/[id]/helpful', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Record helpful vote failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Oy kaydedilemedi', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to record vote', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

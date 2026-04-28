@@ -38,4 +38,4 @@ echo "📧 MailHog available at: http://localhost:8025"
 echo "💾 MinIO Console: http://localhost:9001"
 echo ""
 
-npm run dev -- --host 127.0.0.1 --port 4321
+npm run dev -- --port 4321 --host

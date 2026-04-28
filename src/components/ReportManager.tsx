@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface Report {
   id: string;
   name: string;
@@ -14,6 +13,7 @@ export default function ReportManager() {
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [exportFormat, setExportFormat] = useState<'csv' | 'json' | 'excel'>('csv');
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function ReportManager() {
         setSelectedReportId(result.data[0].id);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Raporlar yüklenemedi');
+      setError(err instanceof Error ? err.message : 'Raporlar yüklenirken hata oluştu');
     } finally {
       setLoading(false);
     }
@@ -51,9 +51,9 @@ export default function ReportManager() {
       });
       if (!response.ok) throw new Error('Rapor çalıştırılamadı');
       const result = await response.json();
-      alert(`Rapor çalıştırıldı: ${result.data.row_count} satır`);
+      setSuccessMessage(`Rapor çalıştırıldı: ${result.data.row_count} satır`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
+      setError(err instanceof Error ? err.message : 'Hata');
     } finally {
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export default function ReportManager() {
     try {
       const endpoint = `/api/reports/${reportId}/export?format=${fmt}`;
       const response = await fetch(endpoint);
-      if (!response.ok) throw new Error('Rapor dışa aktarılamadı');
+      if (!response.ok) throw new Error('Dışa aktarma başarısız');
       const blob = await response.blob();
       const objUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -72,7 +72,7 @@ export default function ReportManager() {
       a.click();
       URL.revokeObjectURL(objUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
+      setError(err instanceof Error ? err.message : 'Hata');
     }
   };
 
@@ -98,6 +98,12 @@ export default function ReportManager() {
       </div>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 rounded text-red-800">{error}</div>}
+      {successMessage && (
+        <div className="p-4 bg-green-50 border border-green-200 rounded text-green-800 flex items-center justify-between">
+          <span>{successMessage}</span>
+          <button onClick={() => setSuccessMessage(null)} className="text-green-400 hover:text-green-600 ml-4 text-lg leading-none">×</button>
+        </div>
+      )}
 
       {tab === 'reports' && (
         <div className="space-y-4">
@@ -127,7 +133,7 @@ export default function ReportManager() {
               ))}
             </div>
           ) : (
-            <p className="text-gray-600">Henüz oluşturulmuş rapor yok.</p>
+            <p className="text-gray-600">Henüz rapor yok</p>
           )}
 
           {selectedReportId && (
@@ -136,7 +142,7 @@ export default function ReportManager() {
               <div className="flex space-x-2">
                 <select
                   value={exportFormat}
-                  onChange={(e) => setExportFormat(e.target.value as any)}
+                  onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json' | 'excel')}
                   className="px-3 py-2 border border-gray-300 rounded"
                 >
                   <option value="csv">CSV</option>
@@ -165,7 +171,7 @@ export default function ReportManager() {
       {tab === 'templates' && (
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">Dışa Aktarma Şablonları</h2>
-          <p className="text-gray-600">Özel dışa aktarma şablonlarını yönetin</p>
+          <p className="text-gray-600">Özel dışa aktarma şablonlarınızı yönetin</p>
         </div>
       )}
     </div>

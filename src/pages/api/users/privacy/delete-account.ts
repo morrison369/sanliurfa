@@ -14,9 +14,16 @@ import {
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
+import { queryOne } from '../../../../lib/postgres';
+import { verifyPassword } from '../../../../lib/auth';
+
+type DeleteAccountPrivacyBody = {
+  reason?: unknown;
+  password?: unknown;
+};
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -24,7 +31,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (!locals.user) {
       recordRequest('GET', '/api/users/privacy/delete-account', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -63,7 +70,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -71,7 +78,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!locals.user) {
       recordRequest('POST', '/api/users/privacy/delete-account', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -79,8 +86,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const body = await request.json();
-    const { reason } = body;
+    const body = await request.json() as DeleteAccountPrivacyBody;
+    const { reason, password } = body;
+
+    // HARD RULE #42: Re-verify password before account deletion
+    if (!password || typeof password !== 'string') {
+      recordRequest('POST', '/api/users/privacy/delete-account', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Şifre gerekli', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    const userRecord = await queryOne<{ password_hash: string }>('SELECT password_hash FROM users WHERE id = $1', [locals.user.id]);
+    if (!userRecord || !(await verifyPassword(password, userRecord.password_hash))) {
+      recordRequest('POST', '/api/users/privacy/delete-account', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(ErrorCode.AUTH_FAILED, 'Şifre hatalı', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
 
     // Validate reason (optional but recommended)
     if (reason && typeof reason !== 'string') {
@@ -94,11 +112,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const deletionRequest = await requestDataDeletion(locals.user.id, reason);
+    const normalizedReason = typeof reason === 'string' && reason.trim().length > 0
+      ? reason.trim()
+      : undefined;
+    const deletionRequest = await requestDataDeletion(locals.user.id, normalizedReason);
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/users/privacy/delete-account', HttpStatus.CREATED, duration);
-    logger.logMutation('create', 'data_deletion_requests', deletionRequest.id, locals.user.id, { reason });
+    logger.logMutation('create', 'data_deletion_requests', deletionRequest.id, locals.user.id);
 
     return apiResponse(
       {
@@ -114,7 +135,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/users/privacy/delete-account', HttpStatus.CONFLICT, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        error.message,
+        'Zaten aktif bir hesap silme isteğiniz var',
         HttpStatus.CONFLICT,
         undefined,
         requestId
@@ -135,7 +156,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -143,7 +164,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     if (!locals.user) {
       recordRequest('DELETE', '/api/users/privacy/delete-account', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(
-        ErrorCode.AUTH_REQUIRED,
+        ErrorCode.UNAUTHORIZED,
         'Oturum açmanız gerekiyor',
         HttpStatus.UNAUTHORIZED,
         undefined,
@@ -151,13 +172,11 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const cancelled = await cancelDataDeletion(locals.user.id);
+    await cancelDataDeletion(locals.user.id);
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/users/privacy/delete-account', HttpStatus.OK, duration);
-    logger.logMutation('update', 'data_deletion_requests', locals.user.id, locals.user.id, {
-      status: 'cancelled'
-    });
+    logger.logMutation('update', 'data_deletion_requests', locals.user.id, locals.user.id);
 
     return apiResponse(
       {
@@ -172,7 +191,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       recordRequest('DELETE', '/api/users/privacy/delete-account', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
-        error.message,
+        'Aktif bir silme isteği bulunamadı',
         HttpStatus.NOT_FOUND,
         undefined,
         requestId
@@ -191,3 +210,4 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     );
   }
 };
+

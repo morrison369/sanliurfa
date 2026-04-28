@@ -16,7 +16,7 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -26,11 +26,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const unviewed = url.searchParams.get('unviewed') === 'true';
     const stats = url.searchParams.get('stats') === 'true';
 
-    const data: any = {};
+    const data: Record<string, unknown> = {};
 
     if (!locals.user?.id && !all) {
       recordRequest('GET', '/api/achievements', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     if (all) {
@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     logger.error('Get achievements failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Başarımlar alınamadı',
+      'Failed to get achievements',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId
@@ -72,14 +72,14 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/achievements', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = await request.json();
@@ -92,7 +92,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/achievements', HttpStatus.OK, duration);
 
       return apiResponse(
-        { success: true, message: 'Başarım görüntülendi olarak işaretlendi' },
+        { success: true, message: 'Achievement marked as viewed' },
         HttpStatus.OK,
         requestId
       );
@@ -101,7 +101,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     recordRequest('POST', '/api/achievements', HttpStatus.BAD_REQUEST, Date.now() - startTime);
     return apiError(
       ErrorCode.VALIDATION_ERROR,
-      'Geçersiz işlem',
+      'Invalid action',
       HttpStatus.BAD_REQUEST,
       undefined,
       requestId
@@ -112,7 +112,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Achievement action failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      'Başarım işlemi tamamlanamadı',
+      'Failed to process achievement action',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId

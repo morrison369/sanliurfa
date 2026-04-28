@@ -24,6 +24,11 @@ export const migration_090_reputation_badges = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_reputation ADD COLUMN IF NOT EXISTS total_score INT DEFAULT 0;
+      ALTER TABLE user_reputation ADD COLUMN IF NOT EXISTS trust_score FLOAT DEFAULT 50;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_reputation_score
       ON user_reputation(total_score DESC)
     `);
@@ -51,6 +56,11 @@ export const migration_090_reputation_badges = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE badges ADD COLUMN IF NOT EXISTS badge_category VARCHAR(50);
+      ALTER TABLE badges ADD COLUMN IF NOT EXISTS display_order INT DEFAULT 0;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_badges_category
       ON badges(badge_category, display_order)
     `);
@@ -67,6 +77,12 @@ export const migration_090_reputation_badges = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(user_id, badge_id)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE user_badges ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_badges ADD COLUMN IF NOT EXISTS earned_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE user_badges ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
     `);
 
     await pool.query(`
@@ -90,6 +106,10 @@ export const migration_090_reputation_badges = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(badge_id, requirement_type)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE badge_requirements ADD COLUMN IF NOT EXISTS badge_id UUID;
     `);
 
     await pool.query(`

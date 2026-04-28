@@ -1,0 +1,329 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { getPostBySlug, getCategories, getTags, getPostRevisions } from '../../../../lib/blog/db';
+
+const { id } = Astro.params;
+if (!id) {
+  return Astro.redirect('/admin/blog');
+}
+
+const [post, categories, tags, revisions] = await Promise.all([
+  getPostBySlug(id),
+  getCategories(),
+  getTags(),
+  getPostRevisions(id),
+]);
+
+if (!post) {
+  return Astro.redirect('/admin/blog');
+}
+
+const postTagIds = post.tags?.map(t => t.id) || [];
+---
+
+<AdminLayout
+  title="Yazı Düzenle"
+  subtitle={post.title}
+  seo={{ title: `Düzenle: ${post.title} - Yönetim Paneli`, noIndex: true }}
+>
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+      <div class="mb-6 flex items-center justify-between">
+        <a href="/admin/blog/posts" class="text-sm text-[#9A8470] hover:text-[#6B5540]">← Listeye Dön</a>
+        <a href={`/blog/${post.slug}`} target="_blank" rel="noopener" class="text-sm text-urfa-600 hover:text-[#6B5540]">Görüntüle →</a>
+      </div>
+
+      <form id="post-form" class="space-y-5">
+        <input type="hidden" name="id" value={post.id} />
+
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-[#6B5540] mb-1">Başlık</label>
+            <input
+              type="text"
+              name="title"
+              value={post.title}
+              required
+              class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#6B5540] mb-1">URL (Slug)</label>
+            <input
+              type="text"
+              name="slug"
+              value={post.slug}
+              required
+              class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-[#6B5540] mb-1">Kategori</label>
+              <select name="category_id" class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+                <option value="">Kategori Seçin</option>
+                {categories.map(cat => (
+                  <option value={cat.id} selected={post.category_id === cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-[#6B5540] mb-1">Durum</label>
+              <select name="status" class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+                <option value="draft" selected={post.status === 'draft'}>Taslak</option>
+                <option value="published" selected={post.status === 'published'}>Yayında</option>
+                <option value="scheduled" selected={post.status === 'scheduled'}>Planlandı</option>
+                <option value="archived" selected={post.status === 'archived'}>Arşiv</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#6B5540] mb-1">Özet</label>
+            <textarea
+              name="excerpt"
+              rows="2"
+              class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+            >{post.excerpt}</textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#6B5540] mb-1">İçerik</label>
+            <div class="border border-[rgba(200,160,100,0.2)] rounded-sm">
+              <div class="flex flex-wrap gap-1 p-2 border-b border-[rgba(200,160,100,0.14)] bg-[rgba(200,160,100,0.04)]">
+                <button type="button" onclick="formatText('bold')" class="p-2 hover:bg-[rgba(200,160,100,0.08)] rounded-sm text-sm" title="Kalın"><strong>B</strong></button>
+                <button type="button" onclick="formatText('italic')" class="p-2 hover:bg-[rgba(200,160,100,0.08)] rounded-sm text-sm" title="İtalik"><em>I</em></button>
+                <button type="button" onclick="formatText('h2')" class="p-2 hover:bg-[rgba(200,160,100,0.08)] rounded-sm text-sm" title="Başlık 2">H2</button>
+                <button type="button" onclick="formatText('h3')" class="p-2 hover:bg-[rgba(200,160,100,0.08)] rounded-sm text-sm" title="Başlık 3">H3</button>
+                <button type="button" onclick="insertLink()" class="p-2 hover:bg-[rgba(200,160,100,0.08)] rounded-sm text-sm" title="Link">🔗</button>
+                <button type="button" onclick="insertImage()" class="p-2 hover:bg-[rgba(200,160,100,0.08)] rounded-sm text-sm" title="Görsel">🖼️</button>
+                <button type="button" onclick="formatText('ul')" class="p-2 hover:bg-[rgba(200,160,100,0.08)] rounded-sm text-sm" title="Liste">• Liste</button>
+                <button type="button" onclick="formatText('ol')" class="p-2 hover:bg-[rgba(200,160,100,0.08)] rounded-sm text-sm" title="Numaralı Liste">1. Liste</button>
+              </div>
+
+              <textarea
+                id="content"
+                name="content"
+                rows="20"
+                required
+                class="w-full px-3 py-2 focus:outline-none border-0 font-mono text-sm"
+              >{post.content}</textarea>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#6B5540] mb-1">Öne Çıkan Görsel</label>
+            {post.featured_image && (
+              <img src={post.featured_image} alt="" class="w-32 h-20 object-cover rounded-sm mb-2" />
+            )}
+            <input
+              type="url"
+              name="featured_image"
+              value={post.featured_image || ''}
+              class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+              placeholder="https://..."
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#6B5540] mb-1">Etiketler</label>
+            <div class="flex flex-wrap gap-2">
+              {tags.map(tag => (
+                <label class="inline-flex items-center px-3 py-1 bg-[rgba(200,160,100,0.08)] rounded-sm cursor-pointer hover:bg-[rgba(200,160,100,0.15)]">
+                  <input
+                    type="checkbox"
+                    name="tag_ids"
+                    value={tag.id}
+                    checked={postTagIds.includes(tag.id)}
+                    class="mr-2"
+                  />
+                  <span class="text-sm text-[#6B5540]">{tag.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] shadow-sm p-6 space-y-4">
+          <h3 class="font-medium text-[#1A1008]">SEO Ayarları</h3>
+
+          <div>
+            <label class="block text-sm font-medium text-[#6B5540] mb-1">Meta Başlık</label>
+            <input
+              type="text"
+              name="meta_title"
+              value={post.meta_title || ''}
+              class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-[#6B5540] mb-1">Meta Açıklama</label>
+            <textarea
+              name="meta_description"
+              rows="2"
+              class="w-full rounded-sm border border-[rgba(200,160,100,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+            >{post.meta_description || ''}</textarea>
+          </div>
+        </div>
+
+        <div class="flex gap-4">
+          <label class="inline-flex items-center">
+            <input type="checkbox" name="is_featured" checked={post.is_featured} class="mr-2" />
+            <span class="text-sm text-[#6B5540]">Öne Çıkan Yazı</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input type="checkbox" name="is_pinned" checked={post.is_pinned} class="mr-2" />
+            <span class="text-sm text-[#6B5540]">Sabitle</span>
+          </label>
+        </div>
+
+        <div class="bg-[rgba(200,160,100,0.04)] rounded-sm border border-[rgba(200,160,100,0.1)] p-4 text-sm text-[#6B5540]">
+          <div class="grid grid-cols-3 gap-4">
+            <div><span class="font-medium text-[#1A1008]">Görüntülenme:</span> {post.view_count.toLocaleString('tr-TR')}</div>
+            <div><span class="font-medium text-[#1A1008]">Beğeni:</span> {post.like_count}</div>
+            <div><span class="font-medium text-[#1A1008]">Okuma süresi:</span> {post.reading_time} dk</div>
+          </div>
+          <div class="mt-2 text-xs text-[#9A8470]">
+            Oluşturulma: {new Date(post.created_at).toLocaleString('tr-TR')} |
+            Son güncelleme: {new Date(post.updated_at).toLocaleString('tr-TR')}
+          </div>
+        </div>
+
+        <div class="flex gap-4">
+          <button type="submit" class="rounded-sm bg-urfa-600 px-6 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+            Kaydet
+          </button>
+          <button
+            type="button"
+            onclick="deletePost()"
+            class="rounded-sm border border-[rgba(200,160,100,0.2)] px-6 py-2 text-sm text-[#9A8470] hover:bg-[rgba(200,160,100,0.04)]"
+          >
+            Sil
+          </button>
+          <a
+            href="/admin/blog/posts"
+            class="rounded-sm border border-[rgba(200,160,100,0.2)] px-6 py-2 text-sm text-[#6B5540] hover:bg-[rgba(200,160,100,0.04)]"
+          >
+            İptal
+          </a>
+        </div>
+      </form>
+
+      {revisions.length > 0 && (
+        <div class="mt-8 border-t border-[rgba(200,160,100,0.14)] pt-8">
+          <h3 class="font-medium text-[#1A1008] mb-4">Revizyon Geçmişi ({revisions.length})</h3>
+          <div class="space-y-2">
+            {revisions.slice(0, 5).map(rev => (
+              <div class="flex items-center justify-between p-3 bg-[rgba(200,160,100,0.04)] rounded-sm border border-[rgba(200,160,100,0.1)] text-sm">
+                <div>
+                  <span class="font-medium text-[#6B5540]">{rev.editor_name || 'Bilinmiyor'}</span>
+                  <span class="text-[#9A8470]"> - {new Date(rev.created_at).toLocaleString('tr-TR')}</span>
+                  {rev.change_summary && <span class="text-[#9A8470]"> ({rev.change_summary})</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+
+  <script define:vars={{ postId: post.id }} is:inline>
+    function formatText(command) {
+      const textarea = document.getElementById('content');
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const selected = text.substring(start, end);
+
+      let formatted = '';
+      switch(command) {
+        case 'bold': formatted = `**${selected}**`; break;
+        case 'italic': formatted = `*${selected}*`; break;
+        case 'h2': formatted = `\n## ${selected}\n`; break;
+        case 'h3': formatted = `\n### ${selected}\n`; break;
+        case 'ul': formatted = selected.split('\n').map(l => `- ${l}`).join('\n'); break;
+        case 'ol': formatted = selected.split('\n').map((l, i) => `${i + 1}. ${l}`).join('\n'); break;
+      }
+
+      textarea.value = text.substring(0, start) + formatted + text.substring(end);
+      textarea.focus();
+    }
+
+    async function insertLink() {
+      const url = await window.promptInput('Link URL:');
+      if (url) {
+        const textarea = document.getElementById('content');
+        const start = textarea.selectionStart;
+        textarea.value = textarea.value.substring(0, start) + `[](${url})` + textarea.value.substring(start);
+      }
+    }
+
+    async function insertImage() {
+      const url = await window.promptInput('Görsel URL:');
+      if (url) {
+        const textarea = document.getElementById('content');
+        const start = textarea.selectionStart;
+        textarea.value = textarea.value.substring(0, start) + `\n![Görsel](${url})\n` + textarea.value.substring(start);
+      }
+    }
+
+    document.getElementById('post-form')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const data = {
+        title: formData.get('title'),
+        slug: formData.get('slug'),
+        excerpt: formData.get('excerpt'),
+        content: formData.get('content'),
+        category_id: formData.get('category_id') || null,
+        status: formData.get('status'),
+        featured_image: formData.get('featured_image'),
+        meta_title: formData.get('meta_title'),
+        meta_description: formData.get('meta_description'),
+        is_featured: formData.has('is_featured'),
+        is_pinned: formData.has('is_pinned'),
+        tag_ids: Array.from(formData.getAll('tag_ids')),
+      };
+
+      try {
+        const response = await fetch(`/api/admin/blog/${postId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          window.location.reload();
+        } else {
+          window.toast?.error('Hata: ' + (result.error || 'Kaydedilemedi'));
+        }
+      } catch (error) {
+        window.toast?.error('Bir hata oluştu');
+      }
+    });
+
+    async function deletePost() {
+      if (!await window.showConfirm('Bu yazıyı silmek istediğinize emin misiniz?')) return;
+
+      try {
+        const response = await fetch(`/api/admin/blog/${postId}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          window.location.href = '/admin/blog/posts';
+        } else {
+          window.toast?.error('Silme işlemi başarısız');
+        }
+      } catch (error) {
+        window.toast?.error('Bir hata oluştu');
+      }
+    }
+  </script>
+</AdminLayout>

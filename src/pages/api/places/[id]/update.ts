@@ -1,42 +1,33 @@
 // API: Place update (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { queryOne, update } from '../../../../lib/postgres';
-import { deleteCachePattern } from '../../../../lib/cache';
-import { saveFile } from '../../../../lib/file-storage';
-import { evaluatePlaceQuality, normalizePlaceImages, parseGalleryImageUrls } from '../../../../lib/place-quality';
-
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+import { update } from '../../../../lib/postgres';
+import { problemJson, safeIntParam } from '../../../../lib/api';
 
 export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
   try {
     const { id } = params;
-
-    if (!locals.isAdmin) {
-      return new Response(
-        JSON.stringify({ error: 'Yetkisiz işlem' }),
-        { status: 403, headers: { 'Content-Type': 'application/json' } }
-      );
+    
+    if (locals.user?.role !== 'admin') {
+      return problemJson({
+        status: 403,
+        title: 'Unauthorized',
+        detail: 'Admin yetkisi gerekli',
+        type: '/problems/places-update-unauthorized',
+        instance: `/api/places/${id}/update`,
+      });
     }
 
     const formData = await request.formData();
-
+    
     const name = formData.get('name')?.toString();
     const category = formData.get('category')?.toString();
     const description = formData.get('description')?.toString();
-    const shortDescription = formData.get('short_description')?.toString() || null;
     const address = formData.get('address')?.toString();
     const phone = formData.get('phone')?.toString();
     const email = formData.get('email')?.toString();
     const website = formData.get('website')?.toString();
-    const priceRange = parseInt(formData.get('price_range')?.toString() || '2');
-    const statusValue = formData.get('status')?.toString() || 'active';
-    const status = ['active', 'pending', 'inactive'].includes(statusValue) ? statusValue : 'pending';
-    const latitude = formData.get('latitude')?.toString();
-    const longitude = formData.get('longitude')?.toString();
-    const providerImageUrl = formData.get('provider_image_url')?.toString().trim();
-    const galleryFiles = formData.getAll('gallery').filter((item) => item instanceof File && item.size > 0) as File[];
-    const galleryImageUrls = parseGalleryImageUrls(formData.get('gallery_images_urls'));
+    const priceRange = safeIntParam(formData.get('price_range')?.toString(), 2, 1, 5);
+    const status = formData.get('status')?.toString();
     const isFeatured = formData.get('is_featured') === 'on';
     const isVerified = formData.get('is_verified') === 'on';
     const amenities = formData.getAll('amenities') as string[];
@@ -53,89 +44,39 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
       return redirect(`/admin/places/edit/${id}?error=missing_fields`);
     }
 
-    for (const galleryFile of galleryFiles) {
-      if (galleryFile.size > MAX_IMAGE_SIZE) {
-        return redirect(`/admin/places/edit/${id}?error=image_too_large`);
-      }
-      if (!ALLOWED_IMAGE_TYPES.has(galleryFile.type)) {
-        return redirect(`/admin/places/edit/${id}?error=invalid_image_type`);
-      }
+    const VALID_PLACE_STATUSES = new Set(['active', 'draft', 'pending', 'rejected', 'inactive']);
+    if (status !== undefined && status !== null && (typeof status !== 'string' || !VALID_PLACE_STATUSES.has(status))) {
+      return redirect(`/admin/places/edit/${id}?error=invalid_status`);
     }
 
-    const existingPlace = await queryOne<{ image_url?: string | null; images?: unknown; slug?: string }>(
-      'SELECT image_url, images, slug FROM places WHERE id = $1',
-      [id],
-    );
-    const existingImages = normalizePlaceImages(existingPlace?.images, existingPlace?.image_url || null);
-
-    const uploadedGalleryPaths: string[] = [];
-    for (let index = 0; index < galleryFiles.length; index += 1) {
-      const galleryFile = galleryFiles[index];
-      const savedImage = await saveFile(
-        galleryFile,
-        'places',
-        `${existingPlace?.slug || String(id || 'place')}-gallery-${Date.now()}-${index + 1}`,
-      );
-      uploadedGalleryPaths.push(savedImage.filePath);
-    }
-
-    const normalizedImages = normalizePlaceImages(
-      [
-        ...existingImages,
-        ...uploadedGalleryPaths,
-        ...galleryImageUrls,
-      ],
-      providerImageUrl || existingPlace?.image_url || null,
-    );
-
-    const quality = evaluatePlaceQuality({
-      name,
-      category,
-      description,
-      shortDescription,
-      address,
-      phone,
-      latitude,
-      longitude,
-      imageUrl: normalizedImages[0] || null,
-      images: normalizedImages,
-      status,
-    });
-
-    if (status === 'active' && !quality.isPublishable) {
-      return redirect(
-        `/admin/places/edit/${id}?error=quality_threshold&missing=${encodeURIComponent(
-          quality.missingFields.join(','),
-        )}`,
-      );
-    }
+    if (name.length > 200) return redirect(`/admin/places/edit/${id}?error=name_too_long`);
+    if (description.length > 5000) return redirect(`/admin/places/edit/${id}?error=description_too_long`);
+    if (address.length > 500) return redirect(`/admin/places/edit/${id}?error=address_too_long`);
+    if (email !== undefined && email !== null && (typeof email !== 'string' || email.length > 254)) return redirect(`/admin/places/edit/${id}?error=email_too_long`);
+    if (phone !== undefined && phone !== null && (typeof phone !== 'string' || phone.length > 30)) return redirect(`/admin/places/edit/${id}?error=phone_too_long`);
+    if (website !== undefined && website !== null && (typeof website !== 'string' || website.length > 500)) return redirect(`/admin/places/edit/${id}?error=website_too_long`);
+    if (amenities.length > 50) return redirect(`/admin/places/edit/${id}?error=too_many_amenities`);
+    if (tags.length > 50) return redirect(`/admin/places/edit/${id}?error=too_many_tags`);
 
     await update('places', id, {
       name,
       category,
       description,
-      short_description: shortDescription,
       address,
       phone,
       email,
       website,
-      latitude: latitude ? Number(latitude) : null,
-      longitude: longitude ? Number(longitude) : null,
       price_range: priceRange,
       status,
       is_featured: isFeatured,
       is_verified: isVerified,
-      image_url: normalizedImages[0] || null,
-      images: normalizedImages,
       amenities,
       tags,
       opening_hours: openingHours,
       updated_at: new Date().toISOString(),
     });
 
-    await deleteCachePattern('places:list*');
-
-    return redirect('/admin/places?success=place_updated');
+    return redirect('/admin?success=place_updated');
   } catch (err) {
     return redirect(`/admin/places/edit/${params.id}?error=server_error`);
   }

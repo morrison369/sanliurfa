@@ -108,6 +108,13 @@ export const migration_114_predictive_analytics = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE user_recommendations ADD COLUMN IF NOT EXISTS user_id UUID;
+      ALTER TABLE user_recommendations ADD COLUMN IF NOT EXISTS recommendation_type VARCHAR(100);
+      ALTER TABLE user_recommendations ADD COLUMN IF NOT EXISTS score FLOAT;
+      ALTER TABLE user_recommendations ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_recommendations_user
       ON user_recommendations(user_id, created_at DESC)
     `);

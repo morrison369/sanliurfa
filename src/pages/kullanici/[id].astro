@@ -1,4 +1,5 @@
 ---
+
 /**
  * Public User Profile Page
  * Display user profile with stats, follower info, and activity
@@ -6,6 +7,8 @@
 
 import Layout from '../../layouts/Layout.astro';
 import UserPublicProfile from '../../components/UserPublicProfile';
+import { getSiteBranding } from '../../lib/site-branding';
+const { baseUrl } = await getSiteBranding();
 
 // Get user ID from URL
 const { id } = Astro.params;
@@ -13,14 +16,55 @@ const { id } = Astro.params;
 if (!id) {
   return Astro.redirect('/');
 }
+
+const seo = {
+  title: 'Kullanıcı Profili - Sanliurfa.com',
+  description: 'Şanlıurfa.com kullanıcı profili. Yorumlar, koleksiyonlar ve aktivite bilgileri.',
+  keywords: ['şanlıurfa.com kullanıcı profili', 'sanliurfa.com üye', 'profil'],
+  ogImage: '/images/hero/hero-home.webp',
+  canonical: `/kullanici/${id}`,
+};
+const faqItems = [
+  { S: 'Bu kullanıcı hakkında nasıl bilgi edinebilirim?', C: 'Kullanıcının yaptığı yorumlar ve koleksiyonlar profil sayfasında listelenmektedir.' },
+  { S: 'Kullanıcıyı takip edebilir miyim?', C: 'Evet, profil sayfasındaki takip et butonunu kullanarak bu kullanıcıyı takip edebilirsiniz.' },
+  { S: 'Kullanıcıya mesaj gönderebilir miyim?', C: 'Üye iseniz profil sayfası üzerinden mesaj gönderme talebinde bulunabilirsiniz.' },
+];
+
 ---
 
-<Layout title={`Kullanıcı Profili - sanliurfa.com`}>
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <a href="/" class="text-blue-600 dark:text-blue-400 hover:underline mb-4 inline-block">
-      ← Ana sayfaya dön
-    </a>
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-8">
+      <div class="max-w-4xl mx-auto px-4">
+        <a href="/" class="text-[#9A8470] hover:text-[#C4B49A] mb-4 inline-block transition-colors">
+          ← Ana sayfaya dön
+        </a>
+      </div>
+    </div>
 
-    <UserPublicProfile client:load userId={id} currentUserId={Astro.locals.user?.id} />
+    <div class="max-w-4xl mx-auto px-4 py-8">
+      <UserPublicProfile
+        client:visible={{ rootMargin: '140px' }}
+        userId={id}
+        currentUserId={Astro.locals.user?.id}
+      />
+    </div>
   </div>
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Kullanıcı Profili', item: `${baseUrl}/kullanıcı/${id}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
 </Layout>

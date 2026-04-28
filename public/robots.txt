@@ -1,56 +1,72 @@
-# robots.txt for sanliurfa.com
-# Generated from src/lib/public-discovery.ts
+# Şanlıurfa.com Robots.txt
+# Son güncelleme: Nisan 2026
 
 User-agent: *
 Allow: /
-Disallow: /api/
-Disallow: /admin/
-Disallow: /profil/
-Disallow: /giris
-Disallow: /kayit
-Disallow: /abonelik
-Disallow: /akis
-Disallow: /aktivitelerim
-Disallow: /ayarlar
-Disallow: /bildirimler
-Disallow: /bildirim-tercihleri
-Disallow: /canli-analitik
-Disallow: /icerik
-Disallow: /isletme
-Disallow: /koleksiyonlar
-Disallow: /kullanici
-Disallow: /loyalty
-Disallow: /mesajlar
-Disallow: /notifications
-Disallow: /profil
-Disallow: /profile
-Disallow: /raporlar
-Disallow: /sosyal
-Disallow: /veri-ambari
-Disallow: /webhooks
-Disallow: /*?*sort=
-Disallow: /*?*page=
-Disallow: /*?*filter=
-Crawl-delay: 1
 
 # Sitemap
-Sitemap: https://sanliurfa.com/sitemap-index.xml
 Sitemap: https://sanliurfa.com/sitemap.xml
-Sitemap: https://sanliurfa.com/blog/sitemap.xml
 
-# Public AI discovery
-# See: https://sanliurfa.com/llms.txt
-# See: https://sanliurfa.com/ai.txt
-# See: https://sanliurfa.com/humans.txt
+# Özel sayfalar - indekslenmemeli
+Disallow: /admin/
+Disallow: /vendor/
+Disallow: /profil/
+Disallow: /ayarlar
+Disallow: /giris
+Disallow: /kayit
+Disallow: /cikis
+Disallow: /sifremi-unuttum
+Disallow: /sifre-sifirla
+Disallow: /verify-email
+Disallow: /mesajlar
+Disallow: /bildirimler
+Disallow: /abonelik
+Disallow: /akis
+Disallow: /sosyal
+Disallow: /koleksiyonlar
+Disallow: /loyalty
+Disallow: /aktivitelerim
+Disallow: /bildirim-tercihleri
+Disallow: /icerik
+Disallow: /takip-edilenler
+Disallow: /takipciler
+Disallow: /webhooks
+Disallow: /raporlar
+Disallow: /canli-analitik
+Disallow: /veri-ambar
+Disallow: /api/
+Disallow: /_astro/
 
-# AI and search crawlers
+# Arama sonuçları - indekslenmemeli (gelismis arama UI sayfası hariç)
+Disallow: /ara
+Disallow: /arama
+Allow: /arama/gelismis
+
+# Geçici ve test sayfaları
+Disallow: /test/
+Disallow: /draft/
+
+# Crawl-delay (sunucu yükünü azaltmak için)
+Crawl-delay: 1
+
+# Ana arama motorları için özel kurallar
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0.5
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: YandexBot
+Allow: /
+Crawl-delay: 2
+
+# AI botlar ve cevap motorları
 User-agent: GPTBot
 Allow: /
 
 User-agent: ChatGPT-User
-Allow: /
-
-User-agent: OAI-SearchBot
 Allow: /
 
 User-agent: PerplexityBot
@@ -59,14 +75,11 @@ Allow: /
 User-agent: ClaudeBot
 Allow: /
 
-User-agent: Claude-User
-Allow: /
-
 User-agent: Google-Extended
 Allow: /
 
-User-agent: Bingbot
+User-agent: Amazonbot
 Allow: /
 
-User-agent: DuckDuckBot
-Allow: /
+# llms.txt - AI için yapılandırılmış site haritası
+# https://sanliurfa.com/llms.txt

@@ -25,6 +25,11 @@ export const migration_096_business_metrics = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE place_daily_metrics ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE place_daily_metrics ADD COLUMN IF NOT EXISTS date DATE;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_place_daily_metrics_place_date
       ON place_daily_metrics(place_id, date DESC)
     `);
@@ -44,6 +49,11 @@ export const migration_096_business_metrics = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE place_hourly_traffic ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE place_hourly_traffic ADD COLUMN IF NOT EXISTS hour_of_day INT;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_hourly_traffic_place
       ON place_hourly_traffic(place_id, hour_of_day)
     `);
@@ -58,6 +68,12 @@ export const migration_096_business_metrics = async (pool: Pool) => {
         metadata JSONB,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE place_interactions ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE place_interactions ADD COLUMN IF NOT EXISTS interaction_type VARCHAR(50);
+      ALTER TABLE place_interactions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`
@@ -85,6 +101,11 @@ export const migration_096_business_metrics = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE review_sentiment ADD COLUMN IF NOT EXISTS sentiment_label VARCHAR(20);
+      ALTER TABLE review_sentiment ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_sentiment_place
       ON review_sentiment(sentiment_label, created_at DESC)
     `);
@@ -102,6 +123,12 @@ export const migration_096_business_metrics = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(place_id, category, comparison_metric, period)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE place_rankings ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+      ALTER TABLE place_rankings ADD COLUMN IF NOT EXISTS rank_position INT;
+      ALTER TABLE place_rankings ADD COLUMN IF NOT EXISTS period VARCHAR(20);
     `);
 
     await pool.query(`

@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-04-28T19:01:32.316Z",
+  "lint": {
+    "errors": 0,
+    "warnings": 0,
+    "problems": 0
+  },
+  "typecheck": {
+    "errors": 0,
+    "warnings": 0,
+    "hints": 0
+  },
+  "apiReleaseGate": {
+    "passed": true
+  },
+  "openapi": {
+    "documentedPaths": 457,
+    "fileRoutes": 457,
+    "missingInSpec": 0,
+    "currentMissingInSpec": 0,
+    "baselineMissingInSpec": 0,
+    "newlyMissingVsBaseline": 0,
+    "resolvedVsBaseline": 0
+  }
+}

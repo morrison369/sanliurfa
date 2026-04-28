@@ -11,7 +11,7 @@ import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -20,12 +20,12 @@ export const GET: APIRoute = async ({ request, params }) => {
     const cacheKey = `rating-dist:${placeId}`;
 
     // Try cache first
-    const cached = await getCache<any>(cacheKey);
+    const cached = await getCache(cacheKey);
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/places/${placeId}/rating-distribution`, HttpStatus.OK, duration);
       return apiResponse(
-        { success: true, data: cached },
+        { success: true, data: JSON.parse(cached as string) },
         HttpStatus.OK,
         requestId
       );
@@ -57,7 +57,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     };
 
     // Cache for 1 hour
-    await setCache(cacheKey, distribution, 3600);
+    await setCache(cacheKey, JSON.stringify(distribution), 3600);
 
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/places/${placeId}/rating-distribution`, HttpStatus.OK, duration);

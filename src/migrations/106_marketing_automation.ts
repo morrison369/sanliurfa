@@ -25,6 +25,11 @@ export const migration_106_marketing_automation = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE automation_workflows ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+      ALTER TABLE automation_workflows ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_automation_workflows_active
       ON automation_workflows(is_active, created_at DESC)
     `);
@@ -46,6 +51,11 @@ export const migration_106_marketing_automation = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE workflow_steps ADD COLUMN IF NOT EXISTS workflow_id UUID;
+      ALTER TABLE workflow_steps ADD COLUMN IF NOT EXISTS step_order INT;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_workflow_steps
       ON workflow_steps(workflow_id, step_order)
     `);
@@ -62,6 +72,11 @@ export const migration_106_marketing_automation = async (pool: Pool) => {
         execution_data JSONB,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE workflow_executions ADD COLUMN IF NOT EXISTS workflow_id UUID;
+      ALTER TABLE workflow_executions ADD COLUMN IF NOT EXISTS triggered_at TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`
@@ -86,6 +101,11 @@ export const migration_106_marketing_automation = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE drip_campaigns ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+      ALTER TABLE drip_campaigns ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_drip_campaigns_active
       ON drip_campaigns(is_active, created_at DESC)
     `);
@@ -99,10 +119,16 @@ export const migration_106_marketing_automation = async (pool: Pool) => {
         delay_hours INT DEFAULT 0,
         subject_line VARCHAR(500) NOT NULL,
         html_content TEXT NOT NULL,
-        campaign_id UUID REFERENCES email_campaigns(id) ON DELETE SET NULL,
+        campaign_id INTEGER,
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(drip_campaign_id, email_order)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE drip_emails ADD COLUMN IF NOT EXISTS drip_campaign_id UUID;
+      ALTER TABLE drip_emails ADD COLUMN IF NOT EXISTS email_order INT;
+      ALTER TABLE drip_emails ADD COLUMN IF NOT EXISTS campaign_id INTEGER;
     `);
 
     await pool.query(`

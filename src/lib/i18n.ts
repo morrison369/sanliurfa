@@ -1,204 +1,184 @@
 /**
- * Turkish-only copy helpers.
- *
- * The public product is locked to Turkish for sanliurfa.com. This module keeps
- * the legacy helper API stable without exposing a language switcher surface.
+ * i18n Module (Turkish Only)
+ * Simple localization utilities - Project is locked to Turkish
  */
 
-export type Language = "tr";
+export const LOCALE = 'tr';
 
-export interface TranslationKey {
-  [key: string]: string | TranslationKey;
-}
-
-export const DEFAULT_LANGUAGE: Language = "tr";
-
-export const TRANSLATIONS: Record<Language, TranslationKey> = {
-  tr: {
-    nav: {
-      home: "Anasayfa",
-      search: "Arama",
-      places: "Mekanlar",
-      profile: "Profil",
-      favorites: "Favorilerim",
-      dashboard: "Panelim",
-      admin: "Yönetim",
-      logout: "Çıkış",
-    },
-    common: {
-      loading: "Yükleniyor...",
-      error: "Hata oluştu",
-      success: "Başarılı",
-      save: "Kaydet",
-      cancel: "İptal",
-      delete: "Sil",
-      edit: "Düzenle",
-      view: "Görüntüle",
-      more: "Daha Fazla",
-      close: "Kapat",
-      submit: "Gönder",
-      search: "Ara",
-      filter: "Filtrele",
-      sort: "Sırala",
-    },
-    auth: {
-      welcome: "Hoş geldiniz",
-      login: "Giriş Yap",
-      register: "Kaydol",
-      forgotPassword: "Şifremi Unuttum",
-      resetPassword: "Şifremi Sıfırla",
-      email: "E-posta Adresi",
-      password: "Şifre",
-      passwordConfirm: "Şifreyi Onayla",
-      fullName: "Adı Soyadı",
-      invalidEmail: "Geçerli bir e-posta adresi giriniz",
-      passwordTooShort: "Şifre en az 8 karakter olmalıdır",
-      termsAccept: "Şartları ve koşulları kabul ediyorum",
-      signUpSuccess: "Kaydınız başarılı oldu",
-      loginSuccess: "Başarıyla giriş yaptınız",
-      logoutSuccess: "Başarıyla çıkış yaptınız",
-    },
-    places: {
-      title: "Mekanlar",
-      name: "Mekan Adı",
-      description: "Açıklama",
-      category: "Kategori",
-      address: "Adres",
-      phone: "Telefon",
-      website: "Web Sitesi",
-      rating: "Puan",
-      reviews: "Yorumlar",
-      openingHours: "Açılış Saatleri",
-      addToFavorites: "Favorilere Ekle",
-      removeFromFavorites: "Favorilerden Çıkar",
-      viewDetails: "Detayları Gör",
-      noResults: "Sonuç bulunamadı",
-    },
-    reviews: {
-      title: "Yorumlar",
-      writeReview: "Yorum Yaz",
-      rating: "Puan",
-      comment: "Yorum",
-      author: "Yazar",
-      date: "Tarih",
-      helpful: "Faydalı",
-      notHelpful: "Faydasız",
-      deleteConfirm: "Bu yorumu silmek istediğinize emin misiniz?",
-      reviewAdded: "Yorumunuz başarıyla eklendi",
-      reviewDeleted: "Yorum başarıyla silindi",
-    },
-    profile: {
-      title: "Profil",
-      myProfile: "Profilim",
-      editProfile: "Profili Düzenle",
-      settings: "Ayarlar",
-      preferences: "Tercihler",
-      security: "Güvenlik",
-      changePassword: "Şifreni Değiştir",
-      currentPassword: "Mevcut Şifre",
-      newPassword: "Yeni Şifre",
-      confirmNewPassword: "Yeni Şifreyi Onayla",
-      joined: "Katılım Tarihi",
-      followers: "Takipçiler",
-      following: "Takip Ediliyor",
-      reviews: "Yorumlar",
-      badges: "Rozetler",
-    },
-    premium: {
-      title: "Premium Üyelik",
-      premium: "Premium",
-      pro: "Pro",
-      monthlyPrice: "₺/Ay",
-      features: "Özellikler",
-      upgrade: "Yükselt",
-      downgrade: "İndir",
-      subscriptionActive: "Aktif Abonelik",
-      nextBillingDate: "Sonraki Fatura Tarihi",
-      cancel: "Aboneliği İptal Et",
-      manageSubscription: "Aboneliği Yönet",
-    },
-    notifications: {
-      title: "Bildirimler",
-      newReview: "Yeni Yorum",
-      reviewResponse: "Yorum Yanıtı",
-      newFollower: "Yeni Takipçi",
-      message: "Mesaj",
-      markAsRead: "Okundu Olarak İşaretle",
-      markAllAsRead: "Hepsini Okundu Olarak İşaretle",
-      delete: "Sil",
-      noNotifications: "Bildiriminiz yok",
-    },
-    dashboard: {
-      title: "Panelim",
-      overview: "Genel Bakış",
-      statistics: "İstatistikler",
-      views: "Görüntüleme",
-      reviews: "Yorumlar",
-      favorites: "Favoriler",
-      followers: "Takipçiler",
-      recentActivity: "Son Aktivite",
-    },
-    errors: {
-      notFound: "Sayfa bulunamadı",
-      unauthorized: "Bu sayfaya erişim yetkiniz yok",
-      serverError: "Sunucu hatası",
-      networkError: "Ağ hatası",
-      tryAgain: "Tekrar Deneyin",
-      goHome: "Anasayfaya Dön",
-    },
+export const TEXTS = {
+  nav: {
+    home: 'Anasayfa',
+    places: 'Mekanlar',
+    events: 'Etkinlikler',
+    blog: 'Blog',
+    about: 'Hakkımızda',
+    contact: 'İletişim',
+    profile: 'Profil',
+    settings: 'Ayarlar',
+    logout: 'Çıkış Yap'
   },
+  common: {
+    loading: 'Yükleniyor...',
+    save: 'Kaydet',
+    cancel: 'İptal',
+    delete: 'Sil',
+    edit: 'Düzenle',
+    create: 'Oluştur',
+    search: 'Ara',
+    filter: 'Filtrele',
+    sort: 'Sırala',
+    next: 'Sonraki',
+    previous: 'Önceki',
+    submit: 'Gönder',
+    close: 'Kapat',
+    open: 'Aç',
+    yes: 'Evet',
+    no: 'Hayır',
+    ok: 'Tamam'
+  },
+  auth: {
+    login: 'Giriş Yap',
+    register: 'Kayıt Ol',
+    forgotPassword: 'Şifremi Unuttum',
+    email: 'E-posta',
+    password: 'Şifre',
+    confirmPassword: 'Şifreyi Onayla',
+    fullName: 'Ad Soyad'
+  },
+  places: {
+    addPlace: 'Mekan Ekle',
+    editPlace: 'Mekan Düzenle',
+    reviews: 'Değerlendirmeler',
+    rating: 'Puan',
+    address: 'Adres',
+    phone: 'Telefon',
+    website: 'Web Sitesi',
+    hours: 'Çalışma Saatleri'
+  },
+  reviews: {
+    writeReview: 'Değerlendirme Yaz',
+    editReview: 'Değerlendirmeyi Düzenle',
+    rating: 'Puan',
+    comment: 'Yorum',
+    helpful: 'Faydalı',
+    report: 'Şikayet Et'
+  },
+  profile: {
+    myProfile: 'Profilim',
+    myPlaces: 'Mekanlarım',
+    myReviews: 'Değerlendirmelerim',
+    myFavorites: 'Favorilerim',
+    editProfile: 'Profili Düzenle'
+  },
+  premium: {
+    upgrade: 'Premium Yükselt',
+    features: 'Özellikler',
+    pricing: 'Fiyatlandırma',
+    subscribe: 'Abone Ol'
+  },
+  notifications: {
+    title: 'Bildirimler',
+    markAllRead: 'Tümünü Okundu İşaretle',
+    noNotifications: 'Bildirim yok'
+  },
+  dashboard: {
+    overview: 'Genel Bakış',
+    analytics: 'Analitik',
+    settings: 'Ayarlar'
+  },
+  errors: {
+    notFound: 'Sayfa bulunamadı',
+    serverError: 'Sunucu hatası oluştu',
+    unauthorized: 'Yetkisiz erişim',
+    validationError: 'Doğrulama hatası',
+    networkError: 'Ağ bağlantısı hatası'
+  }
 };
 
-export function normalizeLanguage(_language?: string | null): Language {
-  return DEFAULT_LANGUAGE;
-}
-
-export function t(
-  key: string,
-  language: Language | string = DEFAULT_LANGUAGE,
-): string {
-  const keys = key.split(".");
-  let value: string | TranslationKey | undefined =
-    TRANSLATIONS[normalizeLanguage(language)];
-
+export function t(key: string, _params?: Record<string, string>): string {
+  const keys = key.split('.');
+  let value: any = TEXTS;
+  
   for (const k of keys) {
-    if (value && typeof value === "object" && k in value) {
+    if (value && typeof value === 'object' && k in value) {
       value = value[k];
     } else {
-      return key;
+      return key; // Return key if translation not found
     }
   }
-
-  return typeof value === "string" ? value : key;
+  
+  if (typeof value !== 'string') {
+    return key;
+  }
+  
+  let result = value;
+  if (_params) {
+    Object.entries(_params).forEach(([paramKey, paramValue]) => {
+      result = result.replace(`{{${paramKey}}}`, paramValue);
+    });
+  }
+  
+  return result;
 }
 
-export function detectLanguage(): Language {
-  return DEFAULT_LANGUAGE;
-}
-
-export function formatDate(
-  date: Date | string,
-  _language: Language | string = DEFAULT_LANGUAGE,
-): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-
-  return d.toLocaleDateString("tr-TR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
+export function formatDate(date: Date | string, _locale?: string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('tr-TR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
 }
 
-export function formatCurrency(
-  amount: number,
-  _language: Language | string = DEFAULT_LANGUAGE,
-): string {
-  return amount.toLocaleString("tr-TR", {
-    style: "currency",
-    currency: "TRY",
-  });
+export function formatCurrency(amount: number, currency: string = 'TRY'): string {
+  return new Intl.NumberFormat('tr-TR', {
+    style: 'currency',
+    currency
+  }).format(amount);
 }
 
-export function getAvailableLanguages(): { code: Language; name: string }[] {
-  return [{ code: DEFAULT_LANGUAGE, name: "Türkçe" }];
+export function getLocale(): { code: string; name: string } {
+  return { code: 'tr', name: 'Türkçe' };
+}
+
+export function detectLanguage(): string {
+  return 'tr';
+}
+
+export function getPreferredLanguage(_acceptLanguage?: string): string {
+  return 'tr';
+}
+
+export function getAvailableLanguages(): { code: string; name: string }[] {
+  return [{ code: 'tr', name: 'Türkçe' }];
+}
+
+export function formatRelativeTime(date: Date | string, _locale?: string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSecs < 60) return 'az önce';
+  if (diffMins < 60) return `${diffMins} dakika önce`;
+  if (diffHours < 24) return `${diffHours} saat önce`;
+  if (diffDays === 1) return 'dün';
+  if (diffDays < 7) return `${diffDays} gün önce`;
+  
+  return formatDate(d);
+}
+
+export function pluralize(count: number, singular: string, plural: string): string {
+  return count === 1 ? `${count} ${singular}` : `${count} ${plural}`;
+}
+
+export function getTextDirection(): 'ltr' | 'rtl' {
+  return 'ltr'; // Turkish is LTR
+}
+
+export function interpolate(template: string, values: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (match, key) => values[key] || match);
 }

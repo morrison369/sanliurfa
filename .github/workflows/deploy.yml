@@ -1,48 +1,136 @@
-name: Deploy
+name: Deploy to CWP
 
 on:
   push:
     branches: [main]
-  workflow_run:
-    workflows: ["CI Pipeline"]
-    branches: [main]
-    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
-  deploy-staging:
-    if: github.ref == 'refs/heads/develop'
+  test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Deploy to Staging
-        run: |
-          echo "Deploying to staging..."
-          # Add your staging deployment commands here
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
         env:
-          DEPLOY_KEY: ${{ secrets.STAGING_DEPLOY_KEY }}
-
-  deploy-production:
-    if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sanliurfa_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
-      - name: Deploy to Production
-        run: |
-          echo "Deploying to production..."
-          # Add your production deployment commands here
-        env:
-          DEPLOY_KEY: ${{ secrets.PRODUCTION_DEPLOY_KEY }}
-
-  notify:
-    needs: [deploy-production]
-    runs-on: ubuntu-latest
-    if: success()
-    steps:
-      - name: Notify Slack
-        uses: 8398a7/action-slack@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          status: ${{ job.status }}
-          text: 'Deployment to production completed successfully'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Workflow standards verify
+        run: npm run workflow:standards:verify
+
+      - name: Run unit tests
+        run: npm run test:unit
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Type check
+        run: npx astro check || true  # Warn only, not fail
+
+      - name: API release gate (hard block)
+        run: npm run api:release:gate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sanliurfa_test
+          REDIS_URL: redis://localhost:6379
+
+      - name: Upload workflow standards report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workflow-standards-report-${{ github.job }}
+          path: |
+            docs/workflow-standards-report.json
+            docs/workflow-standards-report.md
+
+      - name: Ensure no orphan dev process
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            cd /home/sanliurfa/domains/sanliurfa.com/public_html
+            git pull origin main
+            npm install --legacy-peer-deps --production
+            npm run build
+            pm2 restart sanliurfa-app
+            sleep 3
+            curl -f http://127.0.0.1:6000/api/health || exit 1
+
+      - name: Verify deployment
+        run: |
+          echo "Deployment completed!"
+          echo "Site: https://sanliurfa.com"
+          echo "Health: https://sanliurfa.com/api/health"

@@ -1,143 +1,208 @@
 ---
-import { MapPin, Phone, Mail, Send } from "lucide-react";
-import { DEFAULT_PUBLIC_SITE_SETTINGS, type FooterSettings } from "../lib/site-settings";
+import { getSiteSetting } from '../lib/site-content';
 
-interface Props {
-  settings?: FooterSettings;
-}
-
-const { settings = DEFAULT_PUBLIC_SITE_SETTINGS.footer } = Astro.props;
 const currentYear = new Date().getFullYear();
-const brandParts = settings.brandName.split(".");
-const brandPrimary = brandParts[0] || "Şanlıurfa";
-const brandSuffix = brandParts.length > 1 ? `.${brandParts.slice(1).join(".")}` : ".com";
-const hasPhone = settings.phoneLabel.trim().length > 0 && settings.phoneHref.trim().length > 0;
+
+const footerLinksFallback = {
+  explore: [
+    { label: 'Mekanlar', href: '/mekanlar' },
+    { label: 'Kebapçılar', href: '/mekanlar/kebapcilar' },
+    { label: 'Ciğerciler', href: '/mekanlar/cigerciler' },
+    { label: 'Kafeler', href: '/mekanlar/kafeler' },
+    { label: 'Gezilecek Yerler', href: '/gezilecek-yerler' },
+    { label: 'Etkinlikler', href: '/etkinlikler' },
+  ],
+  districts: [
+    { label: 'Eyyübiye', href: '/ilceler/eyyubiye' },
+    { label: 'Haliliye', href: '/ilceler/haliliye' },
+    { label: 'Karaköprü', href: '/ilceler/karakopru' },
+    { label: 'Halfeti', href: '/ilceler/halfeti' },
+    { label: 'Harran', href: '/ilceler/harran' },
+    { label: 'Tüm İlçeler', href: '/ilceler' },
+  ],
+  popular: [
+    { label: 'En İyi Kebapçılar', href: '/en-iyi-kebapcilar' },
+    { label: 'Kahvaltı Mekanları', href: '/sanliurfa-kahvalti-mekanlari' },
+    { label: 'Ne Yenir?', href: '/sanliurfada-ne-yenir' },
+    { label: 'Yemek Tarifleri', href: '/yemek-tarifleri' },
+    { label: 'Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler' },
+    { label: 'Topluluk Özellikleri', href: '/topluluk' },
+    { label: 'Hafta Sonu Rehberi', href: '/blog/sanliurfa-hafta-sonu-rehberi' },
+    { label: 'Blog', href: '/blog' },
+  ],
+  company: [
+    { label: 'Hakkımızda', href: '/hakkinda' },
+    { label: 'İletişim', href: '/iletisim' },
+    { label: 'İşletme Ekleyin', href: '/isletme-kayit' },
+    { label: 'Gizlilik Politikası', href: '/gizlilik-politikasi' },
+    { label: 'Kullanım Koşulları', href: '/kullanim-kosullari' },
+    { label: 'KVKK', href: '/kvkk' },
+  ],
+  services: [
+    { label: 'Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler' },
+    { label: 'Otobüs Saatleri', href: '/ulasim/otobus-saatleri' },
+    { label: 'Uçak Saatleri', href: '/ulasim/ucak-saatleri' },
+    { label: 'Etkinlik Takvimi', href: '/etkinlikler' },
+    { label: 'Yemek Tarifleri', href: '/yemek-tarifleri' },
+    { label: 'Premium Üyelik', href: '/fiyatlandirma' },
+    { label: 'İlçe Rehberi', href: '/ilceler' },
+    { label: 'Mekan Rehberi', href: '/mekanlar' },
+  ],
+};
+
+const footerLinks = await getSiteSetting('footer.links', footerLinksFallback);
+const footerBrandFallback = {
+  title: 'Sanliurfa.com',
+  highlight: '.com',
+  description:
+    "Şanlıurfa’nın en kapsamlı şehir rehberi. Mekanlar, gezilecek yerler, etkinlikler ve daha fazlası.",
+  infoNote: 'Resmi sosyal medya hesabımız bulunmamaktadır.',
+};
+const footerBottomFallback = {
+  copyrightLabel: `© ${currentYear} Sanliurfa.com — Tarihin Sıfır Noktası`,
+  legalLinks: [
+    { label: 'Gizlilik', href: '/gizlilik-politikasi' },
+    { label: 'Koşullar', href: '/kullanim-kosullari' },
+    { label: 'İletişim', href: '/iletisim' },
+  ],
+};
+
+const footerBrand = await getSiteSetting('footer.brand', footerBrandFallback);
+const footerBottom = await getSiteSetting('footer.bottom', footerBottomFallback);
+const socialProfilesFallback = {
+  instagram: { enabled: false, handle: '', url: '' },
+  tiktok: { enabled: false, handle: '', url: '' },
+  youtube: { enabled: false, handle: '', url: '' },
+  x: { enabled: false, handle: '', url: '' },
+};
+const socialProfilesRaw = await getSiteSetting('social.profiles', socialProfilesFallback);
+const socialProfiles = Object.entries(socialProfilesRaw as Record<string, any>)
+  .filter(([, v]) => v?.enabled && v?.url)
+  .map(([platform, v]) => ({ platform, url: v.url, handle: v.handle || '' }));
+const bottomLinks = Array.isArray((footerBottom as any)?.legalLinks)
+  ? (footerBottom as any).legalLinks
+  : footerBottomFallback.legalLinks;
+
 ---
 
-<footer class="bg-urfa-900 dark:bg-gray-950 text-white">
-  <!-- Bülten Alanı -->
-  <div class="border-b border-urfa-800 dark:border-gray-800">
-    <div class="container-custom py-12">
-      <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
-        <div class="text-center lg:text-left">
-          <h3 class="text-2xl font-display font-bold">{settings.newsletterTitle}</h3>
-          <p class="mt-2 text-urfa-200">
-            {settings.newsletterDescription}
-          </p>
-        </div>
-        <form
-          class="flex w-full max-w-md gap-2"
-          action="/api/newsletter/subscribe"
-          method="POST"
-        >
-          <input
-            type="email"
-            name="email"
-            placeholder="E-posta adresiniz"
-            required
-            class="flex-1 px-4 py-3 bg-urfa-800 dark:bg-gray-800 border border-urfa-700 dark:border-gray-600 rounded-lg text-white placeholder-urfa-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-urfa-500"
-          />
-          <button
-            type="submit"
-            class="px-6 py-3 bg-isot-600 hover:bg-isot-700 rounded-lg font-medium transition-colors flex items-center gap-2"
-          >
-            <Send className="w-4 h-4" />
-            <span class="hidden sm:inline">Abone Ol</span>
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
+<footer style="background:#0A0806;border-top:1px solid rgba(200,160,100,0.14);">
 
-  <!-- Main Footer Content -->
-  <div class="container-custom py-12 lg:py-16">
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
-      <!-- Brand Column -->
-      <div class="col-span-2">
-        <a href="/" class="flex items-center space-x-2 mb-4">
-          <div
-            class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-urfa-900 font-bold text-xl"
-          >
-            Ş
-          </div>
-          <span class="font-display font-bold text-xl">
-            {brandPrimary}<span class="text-urfa-300">{brandSuffix}</span>
+  {/* Main footer grid */}
+  <div class="container mx-auto px-4 sm:px-6" style="padding-top:4rem;padding-bottom:3rem;">
+
+    {/* Top: wordmark + description */}
+    <div style="display:grid;grid-template-columns:1fr;gap:3rem;margin-bottom:3.5rem;" class="lg:grid-cols-[2fr_3fr]">
+      <div>
+        <a href="/" style="display:inline-flex;align-items:baseline;gap:0.0625rem;text-decoration:none;margin-bottom:1.25rem;display:flex;">
+          <span style="font-family:'Cormorant Garamond',Georgia,serif;font-size:2.25rem;font-weight:300;font-style:italic;color:#F5EDD6;letter-spacing:-0.02em;line-height:1;">
+            {(footerBrand as any).title || 'Sanliurfa'}
+          </span>
+          <span style="font-family:'Jost',system-ui,sans-serif;font-size:1.125rem;font-weight:700;color:#CE8E38;letter-spacing:0.04em;align-self:flex-end;padding-bottom:0.25rem;">
+            {(footerBrand as any).highlight || '.com'}
           </span>
         </a>
-        <p class="text-urfa-200 dark:text-gray-300 text-sm mb-6 max-w-xs">
-          {settings.brandDescription}
+        <p style="font-size:0.875rem;line-height:1.7;color:#6B5540;max-width:22rem;margin-bottom:1.25rem;font-family:'Jost',sans-serif;">
+          {(footerBrand as any).description || footerBrandFallback.description}
         </p>
-
-        <!-- Contact Info -->
-        <div class="space-y-3 text-sm">
-          <a
-            href={`mailto:${settings.email}`}
-            class="flex items-center gap-2 text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors"
-          >
-            <Mail className="w-4 h-4" />
-            {settings.email}
-          </a>
-          {
-            hasPhone && (
-              <a
-                href={`tel:${settings.phoneHref}`}
-                class="flex items-center gap-2 text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors"
-              >
-                <Phone className="w-4 h-4" />
-                {settings.phoneLabel}
-              </a>
-            )
-          }
-          <div class="flex items-start gap-2 text-urfa-200 dark:text-gray-300">
-            <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>{settings.address}</span>
-          </div>
-        </div>
-
-        <p class="mt-6 text-xs text-urfa-300 dark:text-gray-400">
-          {settings.socialNote}
+        <p style="font-size:0.6875rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#4A3828;font-family:'Jost',sans-serif;">
+          {(footerBrand as any).infoNote || footerBrandFallback.infoNote}
         </p>
       </div>
 
-      <!-- Links Columns -->
-      {
-        settings.columns.map((column) => (
-          <div>
-            <h4 class="font-semibold text-white mb-4">{column.title}</h4>
-            <ul class="space-y-2">
-              {column.links.map((link) => (
+      {/* Link columns */}
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:2rem;" class="sm:grid-cols-4">
+        <div>
+          <p style="font-size:0.5625rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#CE8E38;margin-bottom:1rem;font-family:'Jost',sans-serif;">Keşfet</p>
+          <ul style="display:flex;flex-direction:column;gap:0.5rem;list-style:none;padding:0;margin:0;">
+            {footerLinks.explore.map(link => (
+              <li>
+                <a href={link.href} style="font-size:0.8125rem;color:#6B5540;text-decoration:none;transition:color 0.15s;font-family:'Jost',sans-serif;" onmouseover="this.style.color='#C4B49A'" onmouseout="this.style.color='#6B5540'">{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p style="font-size:0.5625rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#CE8E38;margin-bottom:1rem;font-family:'Jost',sans-serif;">İlçeler</p>
+          <ul style="display:flex;flex-direction:column;gap:0.5rem;list-style:none;padding:0;margin:0;">
+            {footerLinks.districts.map(link => (
+              <li>
+                <a href={link.href} style="font-size:0.8125rem;color:#6B5540;text-decoration:none;transition:color 0.15s;font-family:'Jost',sans-serif;" onmouseover="this.style.color='#C4B49A'" onmouseout="this.style.color='#6B5540'">{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p style="font-size:0.5625rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#CE8E38;margin-bottom:1rem;font-family:'Jost',sans-serif;">Popüler</p>
+          <ul style="display:flex;flex-direction:column;gap:0.5rem;list-style:none;padding:0;margin:0;">
+            {footerLinks.popular.map(link => (
+              <li>
+                <a href={link.href} style="font-size:0.8125rem;color:#6B5540;text-decoration:none;transition:color 0.15s;font-family:'Jost',sans-serif;" onmouseover="this.style.color='#C4B49A'" onmouseout="this.style.color='#6B5540'">{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p style="font-size:0.5625rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#CE8E38;margin-bottom:1rem;font-family:'Jost',sans-serif;">Kurumsal</p>
+          <ul style="display:flex;flex-direction:column;gap:0.5rem;list-style:none;padding:0;margin:0;">
+            {footerLinks.company.map(link => (
+              <li>
+                <a href={link.href} style="font-size:0.8125rem;color:#6B5540;text-decoration:none;transition:color 0.15s;font-family:'Jost',sans-serif;" onmouseover="this.style.color='#C4B49A'" onmouseout="this.style.color='#6B5540'">{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    {/* Services strip */}
+    <div style="border-top:1px solid rgba(200,160,100,0.1);border-bottom:1px solid rgba(200,160,100,0.1);padding:1.5rem 0;margin-bottom:2.5rem;">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;" class="sm:grid-cols-4">
+        <div>
+          <p style="font-size:0.5625rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#4A3828;margin-bottom:0.5rem;font-family:'Jost',sans-serif;">Platform</p>
+          <p style="font-size:0.8125rem;color:#6B5540;line-height:1.5;font-family:'Jost',sans-serif;">Şanlıurfa odaklı yerel dijital rehber</p>
+        </div>
+        <div>
+          <p style="font-size:0.5625rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#4A3828;margin-bottom:0.5rem;font-family:'Jost',sans-serif;">Kapsam</p>
+          <p style="font-size:0.8125rem;color:#6B5540;line-height:1.5;font-family:'Jost',sans-serif;">Mekan, sağlık, ulaşım, gezi, ilçe, tarif</p>
+        </div>
+        <div>
+          <p style="font-size:0.5625rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#4A3828;margin-bottom:0.5rem;font-family:'Jost',sans-serif;">Hızlı Servisler</p>
+          <ul style="display:flex;flex-direction:column;gap:0.25rem;list-style:none;padding:0;margin:0;">
+            {footerLinks.services.slice(0, 3).map((link) => (
+              <li>
+                <a href={link.href} style="font-size:0.8125rem;color:#6B5540;text-decoration:none;transition:color 0.15s;font-family:'Jost',sans-serif;" onmouseover="this.style.color='#C4B49A'" onmouseout="this.style.color='#6B5540'">{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <p style="font-size:0.5625rem;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#4A3828;margin-bottom:0.5rem;font-family:'Jost',sans-serif;">Bilgilendirme</p>
+          {socialProfiles.length > 0 ? (
+            <ul style="display:flex;flex-direction:column;gap:0.25rem;list-style:none;padding:0;margin:0;">
+              {socialProfiles.map((profile) => (
                 <li>
-                  <a
-                    href={link.href}
-                    class="text-sm text-urfa-200 dark:text-gray-300 hover:text-white dark:hover:text-white transition-colors"
-                  >
-                    {link.label}
+                  <a href={profile.url} rel="noopener noreferrer nofollow" target="_blank" style="font-size:0.8125rem;color:#6B5540;text-decoration:none;transition:color 0.15s;font-family:'Jost',sans-serif;" onmouseover="this.style.color='#C4B49A'" onmouseout="this.style.color='#6B5540'">
+                    {profile.platform.toUpperCase()} {profile.handle}
                   </a>
                 </li>
               ))}
             </ul>
-          </div>
-        ))
-      }
-    </div>
-  </div>
-
-  <!-- Bottom Bar -->
-  <div class="border-t border-urfa-800 dark:border-gray-800">
-    <div class="container-custom py-6">
-      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-        <p class="text-sm text-urfa-300 dark:text-gray-400">
-          &copy; {currentYear} sanliurfa.com. Tüm hakları saklıdır.
-        </p>
-
-        <div class="flex flex-wrap items-center justify-center gap-2">
-          <span class="rounded-full border border-urfa-700 px-3 py-1 text-xs text-urfa-300 dark:border-gray-700 dark:text-gray-400">
-            HTTPS korumalı
-          </span>
-          <span class="rounded-full border border-urfa-700 px-3 py-1 text-xs text-urfa-300 dark:border-gray-700 dark:text-gray-400">
-            Türkçe şehir rehberi
-          </span>
+          ) : (
+            <p style="font-size:0.8125rem;color:#6B5540;line-height:1.5;font-family:'Jost',sans-serif;">{(footerBrand as any).infoNote || footerBrandFallback.infoNote}</p>
+          )}
         </div>
+      </div>
+    </div>
+
+    {/* Bottom bar */}
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:1rem;" class="sm:flex-row">
+      <p style="font-size:0.6875rem;font-weight:500;letter-spacing:0.08em;color:#4A3828;font-family:'Jost',sans-serif;">
+        {(footerBottom as any).copyrightLabel || footerBottomFallback.copyrightLabel}
+      </p>
+      <div style="display:flex;align-items:center;gap:1.5rem;">
+        {bottomLinks.map((link: { label: string; href: string }) => (
+          <a href={link.href} style="font-size:0.6875rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#4A3828;text-decoration:none;transition:color 0.15s;font-family:'Jost',sans-serif;" onmouseover="this.style.color='#C4B49A'" onmouseout="this.style.color='#4A3828'">{link.label}</a>
+        ))}
       </div>
     </div>
   </div>

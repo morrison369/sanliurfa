@@ -1,96 +1,65 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import LoyaltyDashboard from "../../components/LoyaltyDashboard";
-import AuthFeatureLanding from "../../components/AuthFeatureLanding.astro";
+import Layout from '../../layouts/Layout.astro';
+import LoyaltyDashboard from '../../components/LoyaltyDashboard';
 
 const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/loyalty');
+}
 ---
 
-<Layout title="Sadakat Programı - Şanlıurfa" noindex>
-  {
-    !user ? (
-      <AuthFeatureLanding
-        eyebrow="Sadakat programı"
-        title="Şanlıurfa katkılarınız puana dönüşsün"
-        description="Mekân yorumları, favoriler, takipler ve topluluk katkılarıyla puan kazanacağınız sadakat alanı üyelikle birlikte açılır. İlk aşamada temel özellikler ücretsizdir."
-        loginRedirect="/loyalty"
-        features={[
-          {
-            title: "Katkı puanları",
-            description:
-              "Mekân yorumu, fotoğraf, favori ve sosyal etkileşimler sadakat puanı akışına bağlanır.",
-          },
-          {
-            title: "Seviye sistemi",
-            description:
-              "Bronzdan platin seviyeye kadar ilerleme, profil görünürlüğü ve topluluk avantajlarıyla desteklenir.",
-          },
-          {
-            title: "Ödül kataloğu",
-            description:
-              "Etkinlik erişimi, yerel kampanyalar ve özel ayrıcalıklar için hazır ödül altyapısı kullanılır.",
-          },
-        ]}
-      />
-    ) : (
-      <div class="container mx-auto px-4 py-8">
-        <div class="mb-8">
-          <h1 class="text-4xl font-bold mb-2">Sadakat programı</h1>
-          <p class="text-gray-600">
-            Şanlıurfa katkılarınızla puan kazanın ve ödülleri takip edin.
-          </p>
+<Layout seo={{ title: "Sadakat Programı - Şanlıurfa", noIndex: true }}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <div class="bg-[#0D0A08] border-b border-[rgba(200,160,100,0.14)] text-white py-12">
+      <div class="container mx-auto px-4 max-w-5xl">
+        <p class="text-sm font-semibold uppercase tracking-widest text-[#9A8470] mb-2">Ödül Sistemi</p>
+        <h1 class="text-4xl font-bold text-[#F5EDD6] mb-2">Sadakat Programı</h1>
+        <p class="text-[#C4B49A]">Puanlarınızı kazanın ve harika ödüllerle değerlendirin</p>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-5xl py-8">
+      <LoyaltyDashboard client:visible={{ rootMargin: '140px' }} />
+
+      <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-[rgba(200,160,100,0.06)] rounded-sm p-6 border border-[rgba(200,160,100,0.2)]">
+          <h3 class="font-semibold mb-2 text-[#1A1008]">Nasıl Kazanılır?</h3>
+          <ul class="text-sm text-[#6B5540] space-y-2">
+            <li>• Tesisler hakkında inceleme yazın</li>
+            <li>• Favori ekleyin ve paylaşın</li>
+            <li>• Diğer kullanıcıların incelemelerini beğenin</li>
+            <li>• İnsanları takip edin</li>
+          </ul>
         </div>
 
-        <LoyaltyDashboard client:load />
-
-        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="bg-urfa-50 rounded-lg p-6 border border-urfa-200">
-            <h3 class="font-semibold mb-2 text-urfa-900">
-              Nasıl puan kazanılır?
-            </h3>
-            <ul class="text-sm text-gray-700 space-y-2">
-              <li>• Mekânlar hakkında yorum yazın</li>
-              <li>• Favori ekleyin ve koleksiyon oluşturun</li>
-              <li>• Diğer kullanıcıların yorumlarını beğenin</li>
-              <li>• Şanlıurfa topluluğundaki kullanıcıları takip edin</li>
-            </ul>
-          </div>
-
-          <div class="bg-isot-50 rounded-lg p-6 border border-isot-200">
-            <h3 class="font-semibold mb-2 text-isot-900">Seviye avantajları</h3>
-            <ul class="text-sm text-gray-700 space-y-2">
-              <li>• Bronz: temel katkı rozeti</li>
-              <li>• Gümüş: daha yüksek görünürlük</li>
-              <li>• Altın: öne çıkan profil avantajları</li>
-              <li>• Platin: topluluk lideri görünürlüğü</li>
-            </ul>
-          </div>
-
-          <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
-            <h3 class="font-semibold mb-2 text-gray-900">Ödüller</h3>
-            <ul class="text-sm text-gray-700 space-y-2">
-              <li>• Özel topluluk ayrıcalıkları</li>
-              <li>• Erken etkinlik erişimi</li>
-              <li>• Yerel kampanya fırsatları</li>
-              <li>• Öne çıkan profil ayrıcalıkları</li>
-            </ul>
-          </div>
+        <div class="bg-[rgba(200,160,100,0.06)] rounded-sm p-6 border border-[rgba(200,160,100,0.2)]">
+          <h3 class="font-semibold mb-2 text-[#1A1008]">Seviye Avantajları</h3>
+          <ul class="text-sm text-[#6B5540] space-y-2">
+            <li>• Bronz: %10 puan bonusu</li>
+            <li>• Gümüş: %20 puan bonusu</li>
+            <li>• Altın: %30 puan bonusu</li>
+            <li>• Platin: %50 puan bonusu</li>
+          </ul>
         </div>
 
-        <div class="mt-12 bg-gradient-to-r from-urfa-800 to-isot-700 text-white rounded-lg p-8">
-          <h2 class="text-2xl font-bold mb-4">Daha fazla puan kazanın</h2>
-          <p class="mb-6">
-            Şanlıurfa'da yeni mekânlar keşfedin ve katkılarınızı artırın. Her
-            etkinlik, yorum ve koleksiyon sizi ödüllere daha yakın getirir.
-          </p>
-          <a
-            href="/places"
-            class="inline-block px-6 py-3 bg-white text-urfa-800 rounded-lg font-semibold hover:bg-gray-100 transition"
-          >
-            Mekânları keşfet
-          </a>
+        <div class="bg-[rgba(200,160,100,0.06)] rounded-sm p-6 border border-[rgba(200,160,100,0.2)]">
+          <h3 class="font-semibold mb-2 text-[#1A1008]">Ödüller</h3>
+          <ul class="text-sm text-[#6B5540] space-y-2">
+            <li>• Özel ayrıcalıklar</li>
+            <li>• Erken etkinlik erişimi</li>
+            <li>• Özel indirimler</li>
+            <li>• VIP öznitelikler</li>
+          </ul>
         </div>
       </div>
-    )
-  }
+
+      <div class="mt-12 bg-[#0D0A08] border border-[rgba(200,160,100,0.2)] rounded-sm p-8">
+        <h2 class="text-2xl font-bold text-[#F5EDD6] mb-4">Daha Fazla Puan Kazanın</h2>
+        <p class="text-[#C4B49A] mb-6">Şanlıurfa'da yeni mekanlar keşfedin ve puanlarınızı artırın. Her etkinlik ve inceleme sizi ödüllere daha yakın getiriyor.</p>
+        <a href="/mekanlar" class="inline-block px-6 py-3 bg-urfa-600 text-white rounded-sm font-semibold hover:bg-urfa-700 transition-colors">
+          Mekanları Keşfedin
+        </a>
+      </div>
+    </div>
+  </div>
 </Layout>

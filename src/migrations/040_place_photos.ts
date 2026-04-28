@@ -29,6 +29,14 @@ export const migration_040_place_photos: Migration = {
       )
     `);
 
+    await pool.query(`
+      ALTER TABLE place_photos ADD COLUMN IF NOT EXISTS uploaded_by UUID;
+      ALTER TABLE place_photos ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT false;
+      ALTER TABLE place_photos ADD COLUMN IF NOT EXISTS helpful_count INTEGER DEFAULT 0;
+      ALTER TABLE place_photos ADD COLUMN IF NOT EXISTS unhelpful_count INTEGER DEFAULT 0;
+      ALTER TABLE place_photos ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+    `);
+
     // Create photo votes table for tracking helpful/unhelpful votes
     await pool.query(`
       CREATE TABLE IF NOT EXISTS photo_votes (

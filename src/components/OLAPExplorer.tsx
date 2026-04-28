@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-
+import {  useState, useEffect  } from 'react';
 interface Dimension {
   name: string;
   label: string;
@@ -29,18 +28,18 @@ export default function OLAPExplorer() {
   const loadDimensions = async () => {
     try {
       const response = await fetch('/api/warehouse/dimensions');
-      if (!response.ok) throw new Error('Boyutlar yüklenemedi');
+      if (!response.ok) throw new Error('Failed to load dimensions');
       const result = await response.json();
       setDimensions(result.data.dimensions);
       setMeasures(result.data.measures);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
+      setError(err instanceof Error ? err.message : 'Error');
     }
   };
 
   const executeQuery = async () => {
     if (selectedDimensions.length === 0 || selectedMeasures.length === 0) {
-      setError('En az bir boyut ve bir ölçüm seçin');
+      setError('Select at least one dimension and one measure');
       return;
     }
 
@@ -58,12 +57,12 @@ export default function OLAPExplorer() {
         })
       });
 
-      if (!response.ok) throw new Error('Sorgu çalıştırılamadı');
+      if (!response.ok) throw new Error('Query failed');
       const result = await response.json();
       setResults(result.data.rows || []);
       setCached(result.data.cached);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Bilinmeyen hata');
+      setError(err instanceof Error ? err.message : 'Error');
     } finally {
       setLoading(false);
     }
@@ -83,13 +82,13 @@ export default function OLAPExplorer() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">OLAP Analiz Paneli</h1>
+      <h1 className="text-3xl font-bold">OLAP Explorer</h1>
 
       {error && <div className="p-4 bg-red-50 border border-red-200 rounded text-red-800">{error}</div>}
 
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-3">
-          <h3 className="font-semibold text-lg">Boyutlar</h3>
+          <h3 className="font-semibold text-lg">Dimensions</h3>
           <div className="space-y-2 p-4 border rounded bg-gray-50">
             {dimensions.map(dim => (
               <label key={dim.name} className="flex items-center">
@@ -106,7 +105,7 @@ export default function OLAPExplorer() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="font-semibold text-lg">Ölçümler</h3>
+          <h3 className="font-semibold text-lg">Measures</h3>
           <div className="space-y-2 p-4 border rounded bg-gray-50">
             {measures.map(mes => (
               <label key={mes.name} className="flex items-center">
@@ -129,15 +128,15 @@ export default function OLAPExplorer() {
           disabled={loading}
           className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? 'Sorgulanıyor...' : 'Sorguyu Çalıştır'}
+          {loading ? 'Querying...' : 'Execute Query'}
         </button>
       </div>
 
-      {cached && <div className="text-xs text-gray-600">✓ Sonuç cache üzerinden geldi</div>}
+      {cached && <div className="text-xs text-gray-600">✓ Result from cache</div>}
 
       {results.length > 0 && (
         <div className="space-y-3">
-          <h3 className="font-semibold">Sonuçlar ({results.length} satır)</h3>
+          <h3 className="font-semibold">Results ({results.length} rows)</h3>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-sm">
               <thead>

@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Lightbulb, Star } from 'lucide-react';
-import { unwrapApiPayload } from '@/lib/client-api';
 
 interface Recommendation {
   id: string;
   recommended_place_id: string;
-  name: string;
   slug?: string;
+  name: string;
   category: string;
   rating: number;
   recommendation_score: number;
@@ -17,24 +16,24 @@ export default function PersonalizedRecommendations() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadRecommendations = async () => {
+    const fetchRecs = async () => {
       try {
-        const res = await window.fetch('/api/discovery/recommendations?limit=8');
+        const res = await fetch('/api/discovery/recommendations?limit=8');
         if (res.ok) {
-          const payload = unwrapApiPayload<{ data?: Recommendation[] }>(await res.json());
-          setRecs(payload.data || []);
+          const { data } = await res.json();
+          setRecs(data);
         }
       } catch (error) {
-        console.error('Kişisel öneriler yüklenemedi', error);
+        console.error('Failed to fetch recommendations', error);
       } finally {
         setLoading(false);
       }
     };
-    loadRecommendations();
+    fetchRecs();
   }, []);
 
   const handleClick = async (recId: string) => {
-    await window.fetch('/api/discovery/recommendations', {
+    await fetch('/api/discovery/recommendations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'click', recommendation_id: recId }),
@@ -42,17 +41,22 @@ export default function PersonalizedRecommendations() {
   };
 
   if (loading) return <div className="p-4">Yükleniyor...</div>;
-  if (recs.length === 0) return <div className="p-4 text-gray-500">Henüz öneri yok.</div>;
+  if (recs.length === 0) return <div className="p-4 text-gray-500">Henüz tavsiye yok</div>;
 
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b flex items-center gap-2">
         <Lightbulb className="w-5 h-5 text-blue-500" />
-        <h2 className="text-lg font-bold">Size Özel Öneriler</h2>
+        <h2 className="text-lg font-bold">Sizin İçin Önerilir</h2>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
         {recs.map(rec => (
-          <a key={rec.id} onClick={() => handleClick(rec.id)} href={`/places/${rec.slug || rec.recommended_place_id}`} className="p-3 border rounded-lg hover:bg-blue-50 transition cursor-pointer">
+          <a
+            key={rec.id}
+            onClick={() => handleClick(rec.id)}
+            href={rec.slug ? `/isletme/${rec.slug}` : '/mekanlar'}
+            className="p-3 border rounded-lg hover:bg-blue-50 transition cursor-pointer"
+          >
             <h3 className="font-semibold truncate">{rec.name}</h3>
             <p className="text-sm text-gray-600">{rec.category}</p>
             <div className="flex items-center gap-2 mt-2">

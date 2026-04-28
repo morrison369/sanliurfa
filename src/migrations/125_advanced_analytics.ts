@@ -27,6 +27,12 @@ export const migration_125_advanced_analytics = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE kpi_definitions ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
+      ALTER TABLE kpi_definitions ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+      ALTER TABLE kpi_definitions ADD COLUMN IF NOT EXISTS owner_id UUID;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_kpi_active
       ON kpi_definitions(is_active, category)
     `);
@@ -45,6 +51,11 @@ export const migration_125_advanced_analytics = async (pool: Pool) => {
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(kpi_id, period_date, period_type)
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE kpi_values ADD COLUMN IF NOT EXISTS kpi_id UUID;
+      ALTER TABLE kpi_values ADD COLUMN IF NOT EXISTS period_date DATE;
     `);
 
     await pool.query(`
@@ -75,6 +86,10 @@ export const migration_125_advanced_analytics = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE business_metrics ADD COLUMN IF NOT EXISTS metric_date DATE;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_metrics_date
       ON business_metrics(metric_date DESC)
     `);
@@ -96,6 +111,10 @@ export const migration_125_advanced_analytics = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE dashboards ADD COLUMN IF NOT EXISTS owner_id UUID;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_dashboards_owner
       ON dashboards(owner_id)
     `);
@@ -114,6 +133,10 @@ export const migration_125_advanced_analytics = async (pool: Pool) => {
         config JSONB,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE dashboard_widgets ADD COLUMN IF NOT EXISTS dashboard_id UUID;
     `);
 
     await pool.query(`
@@ -142,6 +165,10 @@ export const migration_125_advanced_analytics = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE reports ADD COLUMN IF NOT EXISTS owner_id UUID;
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_reports_owner
       ON reports(owner_id)
     `);
@@ -159,6 +186,11 @@ export const migration_125_advanced_analytics = async (pool: Pool) => {
         sent_to VARCHAR(255)[],
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE report_executions ADD COLUMN IF NOT EXISTS report_id UUID;
+      ALTER TABLE report_executions ADD COLUMN IF NOT EXISTS execution_time TIMESTAMP DEFAULT NOW();
     `);
 
     await pool.query(`
@@ -181,6 +213,10 @@ export const migration_125_advanced_analytics = async (pool: Pool) => {
     `);
 
     await pool.query(`
+      ALTER TABLE data_segments ADD COLUMN IF NOT EXISTS segment_type VARCHAR(50);
+    `);
+
+    await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_segments_type
       ON data_segments(segment_type)
     `);
@@ -199,6 +235,11 @@ export const migration_125_advanced_analytics = async (pool: Pool) => {
         resolved_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    await pool.query(`
+      ALTER TABLE metric_alerts ADD COLUMN IF NOT EXISTS kpi_id UUID;
+      ALTER TABLE metric_alerts ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true;
     `);
 
     await pool.query(`

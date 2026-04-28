@@ -1,0 +1,251 @@
+---
+
+import Layout from '../../layouts/Layout.astro';
+import { queryOne, query } from '../../lib/postgres';
+import { getSiteBranding } from '../../lib/site-branding';
+import RelatedRecipes from '../../components/recipes/RelatedRecipes.astro';
+import { logger } from '../../lib/logging';
+const { baseUrl } = await getSiteBranding();
+
+const { slug } = Astro.params;
+
+let recipe: any = null;
+
+try {
+  recipe = await queryOne(
+    `SELECT * FROM recipes WHERE slug = $1 AND status = 'published'`,
+    [slug]
+  );
+
+  if (recipe) {
+    // Fire-and-forget view count bump — must not block HTML render.
+    query(
+      `UPDATE recipes SET view_count = COALESCE(view_count, 0) + 1 WHERE slug = $1`,
+      [slug]
+    ).catch(() => null);
+    // Related recipes moved to <RelatedRecipes server:defer> below.
+  }
+} catch (e) {
+  logger.error('Recipe fetch error', e instanceof Error ? e : new Error(String(e)));
+}
+
+if (!recipe) return Astro.redirect('/yemek-tarifleri');
+
+const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
+
+const seo = {
+  title: `${recipe.name} Tarifi | Şanlıurfa Yöresel Mutfak`,
+  description: recipe.meta_description || recipe.description || `${recipe.name} tarifi. Şanlıurfa mutfağından geleneksel yöresel lezzet.`,
+  canonical: `/yemek-tarifleri/${recipe.slug}`,
+  ogImage: recipe.cover_image || '/images/hero/hero-food.webp',
+  keywords: [recipe.name + ' tarifi', 'şanlıurfa ' + recipe.name.toLowerCase(), 'urfa yemek tarifi', 'yöresel tarif', recipe.name],
+};
+const faqItems = [
+  { S: `${recipe.name} nasıl yapılır?`, C: `${recipe.name} tarifi ve malzemeleri için sayfamızdaki adım adım tarif rehberini inceleyebilirsiniz.` },
+  { S: `${recipe.name} kaç kişilik?`, C: recipe.servings ? `Bu tarif ${recipe.servings} kişiliktir.` : `${recipe.name} için porsiyon bilgisi tarif sayfasında belirtilmiştir.` },
+  { S: `${recipe.name} Şanlıurfa mutfağına özgü müdür?`, C: `${recipe.name}, ${recipe.category || 'Şanlıurfa'} mutfağının geleneksel lezzetlerinden biridir.` },
+];
+---
+
+<Layout seo={seo}>
+  <div class="min-h-screen bg-[#FDFAF3]">
+    <!-- Hero görsel -->
+    <div class="relative h-64 md:h-80 overflow-hidden">
+      <img
+        src={recipe.cover_image || '/images/hero/hero-food.webp'}
+        alt={recipe.name}
+        class="w-full h-full object-cover"
+        loading="eager"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+      <div class="absolute bottom-0 left-0 right-0 p-6">
+        <div class="container mx-auto">
+          <a href="/yemek-tarifleri" class="text-sm text-[#C4B49A] hover:text-white transition-colors mb-2 inline-block">← Tarif Rehberi</a>
+          <h1 class="text-3xl md:text-4xl font-bold text-white">{recipe.name}</h1>
+        </div>
+      </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+      <div class="grid lg:grid-cols-3 gap-8">
+
+        <!-- Ana içerik -->
+        <div class="lg:col-span-2 space-y-6">
+
+          <!-- Özet bilgiler -->
+          <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-5 shadow-sm">
+            <div class="flex flex-wrap gap-4">
+              {recipe.prep_time > 0 && (
+                <div class="text-center">
+                  <p class="text-xs text-[#9A8470] uppercase tracking-wide">Hazırlık</p>
+                  <p class="font-bold text-[#1A1008]">{recipe.prep_time} dk</p>
+                </div>
+              )}
+              {recipe.cook_time > 0 && (
+                <div class="text-center">
+                  <p class="text-xs text-[#9A8470] uppercase tracking-wide">Pişirme</p>
+                  <p class="font-bold text-[#1A1008]">{recipe.cook_time} dk</p>
+                </div>
+              )}
+              {totalTime > 0 && (
+                <div class="text-center">
+                  <p class="text-xs text-[#9A8470] uppercase tracking-wide">Toplam</p>
+                  <p class="font-bold text-[#1A1008]">{totalTime} dk</p>
+                </div>
+              )}
+              {recipe.servings && (
+                <div class="text-center">
+                  <p class="text-xs text-[#9A8470] uppercase tracking-wide">Porsiyon</p>
+                  <p class="font-bold text-[#1A1008]">{recipe.servings} kişi</p>
+                </div>
+              )}
+              <div class="text-center">
+                <p class="text-xs text-[#9A8470] uppercase tracking-wide">Zorluk</p>
+                <p class="font-bold text-[#1A1008]">{recipe.difficulty || 'Orta'}</p>
+              </div>
+              {recipe.rating && (
+                <div class="text-center">
+                  <p class="text-xs text-[#9A8470] uppercase tracking-wide">Puan</p>
+                  <p class="font-bold text-urfa-600">★ {Number(recipe.rating).toFixed(1)}</p>
+                </div>
+              )}
+            </div>
+
+            {(recipe.is_spicy || recipe.is_vegetarian) && (
+              <div class="flex gap-2 mt-4">
+                {recipe.is_spicy && <span class="text-xs bg-isot-50 text-isot-700 border border-isot-200 px-2 py-1 rounded-sm">🌶️ Acılı</span>}
+                {recipe.is_vegetarian && <span class="text-xs bg-[rgba(200,160,100,0.1)] text-[#6B5540] border border-[rgba(200,160,100,0.2)] px-2 py-1 rounded-sm">🥗 Vejetaryen</span>}
+              </div>
+            )}
+          </div>
+
+          <!-- Açıklama -->
+          {recipe.description && (
+            <div class="bg-[rgba(200,160,100,0.06)] rounded-sm border border-[rgba(200,160,100,0.2)] p-5">
+              <p class="text-[#4A3828] leading-relaxed">{recipe.description}</p>
+            </div>
+          )}
+
+          <!-- Malzemeler -->
+          {recipe.ingredients?.length > 0 && (
+            <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-5 shadow-sm">
+              <h2 class="text-xl font-bold text-[#1A1008] mb-4">Malzemeler</h2>
+              <ul class="space-y-2">
+                {recipe.ingredients.map((ing: string) => (
+                  <li class="flex items-start gap-2 text-[#4A3828]">
+                    <span class="mt-1 text-urfa-500 shrink-0">•</span>
+                    {ing}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <!-- Yapılışı -->
+          {recipe.instructions?.length > 0 && (
+            <div class="bg-white rounded-sm border border-[rgba(200,160,100,0.18)] p-5 shadow-sm">
+              <h2 class="text-xl font-bold text-[#1A1008] mb-4">Yapılışı</h2>
+              <ol class="space-y-4">
+                {recipe.instructions.map((step: string, i: number) => (
+                  <li class="flex gap-4">
+                    <span class="shrink-0 w-7 h-7 rounded-sm bg-[rgba(200,160,100,0.12)] text-urfa-700 font-bold text-sm flex items-center justify-center">{i + 1}</span>
+                    <p class="text-[#4A3828] leading-relaxed pt-0.5">{step}</p>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+        </div>
+
+        <!-- Kenar çubuğu -->
+        <div class="space-y-6">
+
+          <!-- Hızlı Cevap -->
+          <div class="rounded-sm border border-[rgba(200,160,100,0.2)] bg-[rgba(200,160,100,0.06)] p-5">
+            <p class="text-xs font-semibold uppercase tracking-wide text-[#9A8470]">Şanlıurfa Mutfağı</p>
+            <h3 class="mt-1 font-bold text-[#1A1008]">{recipe.name}</h3>
+            <p class="mt-2 text-sm text-[#4A3828] leading-relaxed">
+              Şanlıurfa'nın geleneksel mutfağından bu tarif, nesiller boyunca aktarılmış yöresel lezzetler arasındadır.
+            </p>
+            <a href="/yemek-tarifleri" class="mt-3 inline-block text-sm font-semibold text-urfa-700 hover:text-urfa-900 underline underline-offset-4">
+              Tüm tarifler →
+            </a>
+          </div>
+
+          <!-- Diğer Tarifler — Server Island -->
+          <RelatedRecipes excludeSlug={recipe.slug} server:defer>
+            <div slot="fallback" class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 shadow-sm animate-pulse">
+              <div class="h-5 bg-[rgba(200,160,100,0.15)] rounded-sm w-32 mb-4"></div>
+              <div class="space-y-3">
+                <div class="h-14 bg-[rgba(200,160,100,0.08)] rounded-sm"></div>
+                <div class="h-14 bg-[rgba(200,160,100,0.08)] rounded-sm"></div>
+                <div class="h-14 bg-[rgba(200,160,100,0.08)] rounded-sm"></div>
+              </div>
+            </div>
+          </RelatedRecipes>
+
+          <!-- Restoranlar -->
+          <div class="rounded-sm border border-[rgba(200,160,100,0.18)] bg-white p-5 shadow-sm">
+            <h3 class="font-bold text-[#1A1008] mb-3">Restoranda Tatmak İster misiniz?</h3>
+            <p class="text-sm text-[#6B5540] mb-3">Şanlıurfa'nın en iyi restoranlarında bu lezzeti bulabilirsiniz.</p>
+            <a href="/mekanlar" class="block w-full text-center rounded-sm bg-urfa-600 text-white text-sm font-semibold px-4 py-2.5 hover:bg-urfa-700 transition-colors">
+              Mekan Rehberi
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Yemek Tarifleri', item: `${baseUrl}/yemek-tarifleri` },
+      { '@type': 'ListItem', position: 3, name: recipe.name, item: `${baseUrl}/yemek-tarifleri/${recipe.slug}` },
+    ],
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Recipe',
+    name: recipe.name,
+    description: recipe.description,
+    image: recipe.cover_image ? `${baseUrl}${recipe.cover_image}` : `${baseUrl}/images/hero/hero-food.webp`,
+    recipeIngredient: recipe.ingredients || [],
+    recipeInstructions: (recipe.instructions || []).map((step: string, i: number) => ({
+      '@type': 'HowToStep',
+      position: i + 1,
+      text: step,
+    })),
+    prepTime: recipe.prep_time ? `PT${recipe.prep_time}M` : undefined,
+    cookTime: recipe.cook_time ? `PT${recipe.cook_time}M` : undefined,
+    totalTime: totalTime > 0 ? `PT${totalTime}M` : undefined,
+    recipeYield: recipe.servings ? `${recipe.servings} kişilik` : undefined,
+    recipeCategory: recipe.category || 'Yöresel Yemek',
+    recipeCuisine: 'Türk Mutfağı',
+    aggregateRating: recipe.rating ? {
+      '@type': 'AggregateRating',
+      ratingValue: Number(recipe.rating).toFixed(1),
+      ratingCount: recipe.review_count || 1,
+      bestRating: '5',
+      worstRating: '1',
+    } : undefined,
+    author: { '@type': 'Organization', name: 'Sanliurfa.com', url: baseUrl },
+    publisher: { '@type': 'Organization', name: 'Sanliurfa.com', url: baseUrl, logo: { '@type': 'ImageObject', url: `${baseUrl}/favicon.svg` } },
+    datePublished: recipe.created_at,
+    dateModified: recipe.updated_at || recipe.created_at,
+    inLanguage: 'tr',
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.S,
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
+    })),
+  })} is:inline />
+</Layout>

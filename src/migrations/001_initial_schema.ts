@@ -45,6 +45,11 @@ export const migration_001_initial_schema: Migration = {
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE places ADD COLUMN IF NOT EXISTS slug VARCHAR(255);
+      ALTER TABLE places ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+      ALTER TABLE places ADD COLUMN IF NOT EXISTS rating DECIMAL(3, 2) DEFAULT 0;
+      ALTER TABLE places ADD COLUMN IF NOT EXISTS latitude DECIMAL(10, 8);
+      ALTER TABLE places ADD COLUMN IF NOT EXISTS longitude DECIMAL(11, 8);
       CREATE INDEX IF NOT EXISTS idx_places_slug ON places(slug);
       CREATE INDEX IF NOT EXISTS idx_places_category ON places(category);
       CREATE INDEX IF NOT EXISTS idx_places_rating ON places(rating DESC);
@@ -96,6 +101,9 @@ export const migration_001_initial_schema: Migration = {
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS slug VARCHAR(500);
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS author_id UUID;
+      ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS published BOOLEAN DEFAULT false;
       CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts(slug);
       CREATE INDEX IF NOT EXISTS idx_blog_posts_author_id ON blog_posts(author_id);
       CREATE INDEX IF NOT EXISTS idx_blog_posts_published ON blog_posts(published);
@@ -116,6 +124,9 @@ export const migration_001_initial_schema: Migration = {
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
       );
+      ALTER TABLE events ADD COLUMN IF NOT EXISTS slug VARCHAR(500);
+      ALTER TABLE events ADD COLUMN IF NOT EXISTS place_id UUID;
+      ALTER TABLE events ADD COLUMN IF NOT EXISTS start_date TIMESTAMP;
       CREATE INDEX IF NOT EXISTS idx_events_slug ON events(slug);
       CREATE INDEX IF NOT EXISTS idx_events_place_id ON events(place_id);
       CREATE INDEX IF NOT EXISTS idx_events_start_date ON events(start_date);

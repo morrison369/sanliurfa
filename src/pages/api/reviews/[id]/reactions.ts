@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
-import { addReaction, removeReaction, getReactionCounts } from '../../../../lib/social-interactions';
+import { addReaction, removeReaction, getReactionCounts } from '../../../../lib/social/social-interactions';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
-export const GET: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+export const GET: APIRoute = async ({ request, params }) => {
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const { id: reviewId } = params;
     if (!reviewId) {
       recordRequest('GET', '/api/reviews/[id]/reactions', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Review ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const counts = await getReactionCounts(reviewId);
@@ -25,25 +25,25 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/reviews/[id]/reactions', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get reactions failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Tepkiler alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
-  const requestId = getRequestId({ request } as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
     if (!locals.user?.id) {
       recordRequest('POST', '/api/reviews/[id]/reactions', HttpStatus.UNAUTHORIZED, Date.now() - startTime);
-      return apiError(ErrorCode.AUTH_REQUIRED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+      return apiError(ErrorCode.AUTH_REQUIRED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const { id: reviewId } = params;
     if (!reviewId) {
       recordRequest('POST', '/api/reviews/[id]/reactions', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Review ID required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const body = await request.json();
@@ -51,7 +51,17 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
     if (!reaction_type) {
       recordRequest('POST', '/api/reviews/[id]/reactions', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Tepki türü gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'reaction_type zorunludur', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const VALID_REACTION_TYPES = new Set(['like', 'helpful', 'unhelpful', 'love', 'funny']);
+    if (!VALID_REACTION_TYPES.has(reaction_type)) {
+      recordRequest('POST', '/api/reviews/[id]/reactions', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz tepki tipi', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const VALID_ACTIONS = new Set(['add', 'remove']);
+    if (action !== undefined && action !== null && (typeof action !== 'string' || !VALID_ACTIONS.has(action))) {
+      recordRequest('POST', '/api/reviews/[id]/reactions', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz action değeri', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     let success = false;
@@ -72,6 +82,6 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/reviews/[id]/reactions', HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Add reaction failed', error instanceof Error ? error : new Error(String(error)));
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Tepki işlemi tamamlanamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

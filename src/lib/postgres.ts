@@ -1,318 +1,172 @@
-// @ts-nocheck
-import pg from 'pg';
-const { Pool } = pg;
-import { metricsCollector, performanceThresholds } from './metrics';
-import { logger } from './logging';
-
-// Get DATABASE_URL and READ_REPLICA_URL from environment
-const DATABASE_URL = readNodeEnv('DATABASE_URL');
-const READ_REPLICA_URL = readNodeEnv('READ_REPLICA_URL');
-const NODE_ENV = readNodeEnv('NODE_ENV') || 'development';
-
-function parsePositiveInt(name: string, fallback: number): number {
-  const raw = readNodeEnv(name);
-  if (!raw) {
-    return fallback;
-  }
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0) {
-    throw new Error(`${name} must be a positive integer`);
-  }
-  return parsed;
-}
-
-function readNodeEnv(key: string): string | undefined {
-  const globalProcess = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
-  return globalProcess?.env?.[key];
-}
-
-if (!DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is required but not set');
-}
-
-const QUERY_TIMEOUT_MS = parsePositiveInt('DB_QUERY_TIMEOUT_MS', 30000);
-const POOL_MAX_DEV = parsePositiveInt('DB_POOL_MAX_DEV', 5);
-const POOL_MAX_PROD = parsePositiveInt('DB_POOL_MAX_PROD', 20);
-const POOL_MIN_DEV = parsePositiveInt('DB_POOL_MIN_DEV', 2);
-const POOL_MIN_PROD = parsePositiveInt('DB_POOL_MIN_PROD', 5);
-
-// ==================== CONNECTION POOL CONFIGURATION ====================
-
 /**
- * Adaptive pool configuration based on environment
- * - Development: smaller pool (2-5 connections)
- * - Production: larger pool (5-20 connections) with dynamic scaling
+ * PostgreSQL Database Client
+ * Real connection pool with parameterized queries, slow query detection,
+ * and automatic reconnection.
  */
-const getPoolConfig = (isDev: boolean) => ({
-  ssl: NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-  max: isDev ? POOL_MAX_DEV : POOL_MAX_PROD,
-  min: isDev ? POOL_MIN_DEV : POOL_MIN_PROD,
+
+import pg from 'pg';
+import { logger } from './logging';
+const { Pool: PgPool } = pg;
+
+// Environment-based configuration
+const isProduction = process.env.NODE_ENV === 'production';
+
+const DATABASE_URL = process.env.DATABASE_URL
+  || `postgresql://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'postgres'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5432'}/${process.env.DB_NAME || 'sanliurfa'}`;
+
+// CWP shared hosting: max 5-10 connections. VPS/dedicated: up to 20.
+const pool = new PgPool({
+  connectionString: DATABASE_URL,
+  max: isProduction ? 8 : 5,
+  min: isProduction ? 2 : 1,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
-  statement_timeout: QUERY_TIMEOUT_MS,
-  query_timeout: QUERY_TIMEOUT_MS,
-  options: '-c client_encoding=UTF8',
-  // Phase 5: Connection reuse optimization
-  application_name: 'sanliurfa-api',
-  reapIntervalMillis: 5000, // Reap idle connections every 5s for efficiency
+  allowExitOnIdle: !isProduction,
 });
 
-const isDev = NODE_ENV !== 'production';
-
-// PostgreSQL write pool (primary)
-export const pool = new Pool({
-  connectionString: DATABASE_URL,
-  ...getPoolConfig(isDev)
-});
-
-// Phase 5: Read replica pool for SELECT queries (optional)
-export const readReplicaPool = READ_REPLICA_URL ? new Pool({
-  connectionString: READ_REPLICA_URL,
-  ...getPoolConfig(isDev)
-}) : null;
-
+// Connection error handling — log but don't crash
 pool.on('error', (err) => {
-  logger.error('PostgreSQL pool error', err);
+  logger.error('[postgres] Unexpected pool error:', err.message);
 });
 
-if (readReplicaPool) {
-  readReplicaPool.on('error', (err) => {
-    logger.warn('Read replica pool error, falling back to primary', err);
+// Graceful shutdown: PM2 SIGTERM gönderdiğinde in-flight query'ler bitince pool drain et.
+// Test ortamında lifecycle import'u skip — test runner kendi cleanup'ını yapar.
+if (process.env.NODE_ENV !== 'test') {
+  // Async import to avoid circular dep risk; lifecycle imports logger which imports nothing else.
+  void import('./lifecycle').then(({ registerShutdownHandler }) => {
+    registerShutdownHandler(async () => {
+      logger.info('[postgres] Draining pool...');
+      await pool.end();
+      logger.info('[postgres] Pool closed');
+    });
   });
 }
 
-// ==================== POOL STATISTICS & MONITORING ====================
+// Slow query threshold (ms)
+const SLOW_QUERY_THRESHOLD = 1000;
+
+export interface QueryResult<T = any> {
+  rows: T[];
+  rowCount: number;
+  command: string;
+}
 
 /**
- * Phase 5: Enhanced pool status tracking with per-pool metrics
+ * Execute a SQL query with parameterized values
  */
-export function updatePoolStatus(): void {
-  const getPoolStats = (p: any, name: string) => {
-    const poolState = p._clients || [];
-    const idleCount = p._idle ? p._idle.length : 0;
-    const totalConnections = poolState.length;
-    const activeConnections = totalConnections - idleCount;
-    const waitingRequests = p._waitingCount || 0;
+export async function query<T = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+  const start = Date.now();
+  try {
+    const result = await pool.query(text, params);
+    const duration = Date.now() - start;
+
+    if (duration > SLOW_QUERY_THRESHOLD) {
+      logger.warn(`[postgres] Slow query (${duration}ms):`, text.substring(0, 120));
+    }
 
     return {
-      name,
-      totalConnections,
-      activeConnections,
-      idleConnections: idleCount,
-      waitingRequests,
-      utilization: totalConnections > 0 ? ((activeConnections / totalConnections) * 100).toFixed(1) : '0'
+      rows: result.rows,
+      rowCount: result.rowCount ?? 0,
+      command: result.command,
     };
-  };
-
-  const primaryStats = getPoolStats(pool, 'primary');
-  const replicaStats = readReplicaPool ? getPoolStats(readReplicaPool, 'replica') : null;
-
-  metricsCollector.setPoolStatus(primaryStats);
-
-  // Phase 5: Log replica pool status if available
-  if (replicaStats) {
-    metricsCollector.recordSlowOperation(
-      'cache',
-      `Replica pool utilization: ${replicaStats.utilization}%`,
-      0,
-      replicaStats
-    );
-  }
-}
-
-// Update pool status periodically (every 30 seconds)
-setInterval(updatePoolStatus, 30000);
-
-/**
- * Enhanced pool health monitoring with alerting
- */
-function monitorPoolHealth(): void {
-  setInterval(() => {
-    const poolState = (pool as any)._clients || [];
-    const idleCount = (pool as any)._idle ? (pool as any)._idle.length : 0;
-    const totalConnections = poolState.length;
-    const activeConnections = totalConnections - idleCount;
-    const waitingRequests = (pool as any)._waitingCount || 0;
-
-    const utilization = (activeConnections / totalConnections) * 100;
-
-    if (utilization > 80) {
-      logger.warn('Connection pool high utilization', {
-        utilization: Math.round(utilization),
-        active: activeConnections,
-        idle: idleCount,
-        waiting: waitingRequests
-      });
-    }
-
-    if (waitingRequests > 5) {
-      logger.error('Connection pool saturation detected', {
-        waiting: waitingRequests,
-        utilization: Math.round(utilization)
-      });
-    }
-  }, 30000); // Check every 30 seconds
-}
-
-// Start pool health monitoring
-monitorPoolHealth();
-
-// ==================== QUERY HELPERS ====================
-
-/**
- * Phase 5: Query execution with automatic read replica routing
- * - SELECT queries are routed to read replica if available
- * - All other operations go to primary pool
- */
-export async function query(text: string, params?: any[], options?: { useReplica?: boolean }) {
-  const start = Date.now();
-  const isSelect = text.trim().toUpperCase().startsWith('SELECT');
-
-  // Phase 5: Route SELECTs to replica if available and explicitly allowed
-  const targetPool = isSelect && options?.useReplica && readReplicaPool ? readReplicaPool : pool;
-  const poolName = targetPool === readReplicaPool ? 'replica' : 'primary';
-
-  try {
-    const result = await targetPool.query(text, params);
-    const duration = Date.now() - start;
-
-    // Record query metrics with pool routing info
-    metricsCollector.recordQuery(text, duration, result.rowCount || undefined, undefined, poolName);
-
-    // Log slow queries
-    if (duration > performanceThresholds.slowQueryMs) {
-      const isVerySlow = duration > 1000;
-
-      if (isVerySlow) {
-        metricsCollector.recordSlowOperation(
-          'query',
-          `Very slow query [${poolName}]: ${text.substring(0, 100)}`,
-          duration,
-          { rows: result.rowCount, sql: text.substring(0, 200), pool: poolName },
-          new Error().stack
-        );
-        logger.warn('Very slow query detected', {
-          duration,
-          rows: result.rowCount,
-          query: text.substring(0, 100),
-          pool: poolName
-        });
-      } else {
-        metricsCollector.recordSlowOperation(
-          'query',
-          `Slow query [${poolName}]: ${text.substring(0, 100)}`,
-          duration,
-          { rows: result.rowCount, pool: poolName }
-        );
-        logger.debug('Slow query detected', {
-          duration,
-          rows: result.rowCount,
-          query: text.substring(0, 100),
-          pool: poolName
-        });
-      }
-    }
-
-    return result;
   } catch (error) {
     const duration = Date.now() - start;
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    metricsCollector.recordQuery(text, duration, undefined, errorMsg, poolName);
-
-    logger.error('Query error', error instanceof Error ? error : new Error(String(error)), {
-      query: text.substring(0, 100),
-      duration,
-      pool: poolName
-    });
+    logger.error(`[postgres] Query failed (${duration}ms):`, text.substring(0, 120), error instanceof Error ? error.message : error);
     throw error;
   }
 }
 
 /**
- * Phase 5: Stream large result sets efficiently without loading into memory
- * Use for queries that return many rows (> 1000 rows)
- */
-export async function queryStream(text: string, params?: any[], onRow?: (row: any) => Promise<void>) {
-  const client = await pool.connect();
-  let rowCount = 0;
-
-  try {
-    const query = client.query(new (pg as any).Query({
-      text,
-      values: params,
-      rowMode: 'object'
-    }));
-
-    return new Promise<number>((resolve, reject) => {
-      query.on('row', async (row: any) => {
-        rowCount++;
-        if (onRow) {
-          try {
-            await onRow(row);
-          } catch (err) {
-            logger.error('Row processing error in stream', err);
-          }
-        }
-      });
-
-      query.on('error', (err: unknown) => {
-        logger.error('Stream query error', err);
-        reject(err);
-      });
-
-      query.on('end', () => {
-        metricsCollector.recordQuery(text, 0, rowCount);
-        resolve(rowCount);
-      });
-    });
-  } finally {
-    client.release();
-  }
-}
-
-/**
- * Execute a query and return the first row or null
+ * Execute a query and return single result or null
  */
 export async function queryOne<T = any>(text: string, params?: any[]): Promise<T | null> {
-  const result = await query(text, params);
-  return (result.rows[0] as T | undefined) || null;
+  const result = await query<T>(text, params);
+  return result.rows[0] || null;
 }
 
 /**
- * Execute a query and return all rows
- * Phase 5: Optional streaming for large result sets
+ * Execute a query and return all results
  */
-export async function queryMany<T = any>(
-  text: string,
-  params?: any[],
-  options?: { stream?: false; onRow?: never }
-): Promise<T[] & { rows: T[] }>;
-export async function queryMany<T = any>(
-  text: string,
-  params: any[] | undefined,
-  options: { stream: true; onRow: (row: T) => Promise<void> }
-): Promise<{ rowCount: number; streamed: true }>;
-export async function queryMany<T = any>(
-  text: string,
-  params?: any[],
-  options?: { stream?: boolean; onRow?: (row: T) => Promise<void> }
-): Promise<(T[] & { rows: T[] }) | { rowCount: number; streamed: true }> {
-  if (options?.stream && options?.onRow) {
-    // Use streaming for large datasets
-    const rowCount = await queryStream(text, params, options.onRow as (row: any) => Promise<void>);
-    return { rowCount, streamed: true };
+export async function queryMany<T = any>(text: string, params?: any[]): Promise<T[]> {
+  const result = await query<T>(text, params);
+  return result.rows;
+}
+
+/**
+ * Execute insert query and return inserted row
+ */
+export async function insert<T = any>(
+  table: string,
+  data: Record<string, any>,
+  upsert?: boolean
+): Promise<T | null> {
+  validateTable(table);
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+  const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
+
+  let text = `INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders})`;
+
+  if (upsert) {
+    const updateClause = keys.map((k) => `${k} = EXCLUDED.${k}`).join(', ');
+    text += ` ON CONFLICT (id) DO UPDATE SET ${updateClause}`;
   }
 
-  const result = await query(text, params);
-  const rows = result.rows as T[] & { rows: T[] };
-  rows.rows = rows;
-  return rows;
+  text += ' RETURNING *';
+  return queryOne<T>(text, values);
 }
 
 /**
- * Execute a transaction with automatic rollback on error
+ * Execute update query and return updated row
  */
-export async function transaction<T>(callback: (client: pg.PoolClient) => Promise<T>): Promise<T> {
+export async function update<T = any>(
+  table: string,
+  where: Record<string, any> | string | number,
+  data: Record<string, any>
+): Promise<T | null> {
+  validateTable(table);
+  const keys = Object.keys(data);
+  const values = Object.values(data);
+  const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
+
+  if (typeof where === 'object' && where !== null) {
+    const whereKeys = Object.keys(where);
+    const whereClause = whereKeys.map((k, i) => `${k} = $${values.length + i + 1}`).join(' AND ');
+    const text = `UPDATE ${table} SET ${setClause}, updated_at = NOW() WHERE ${whereClause} RETURNING *`;
+    return queryOne<T>(text, [...values, ...Object.values(where)]);
+  }
+
+  const text = `UPDATE ${table} SET ${setClause}, updated_at = NOW() WHERE id = $${values.length + 1} RETURNING *`;
+  return queryOne<T>(text, [...values, where]);
+}
+
+/**
+ * Execute delete query
+ */
+export async function deleteQuery<T = any>(
+  table: string,
+  where: Record<string, any> | string | number
+): Promise<T | null> {
+  validateTable(table);
+  if (typeof where === 'object' && where !== null) {
+    const whereKeys = Object.keys(where);
+    const whereClause = whereKeys.map((k, i) => `${k} = $${i + 1}`).join(' AND ');
+    const text = `DELETE FROM ${table} WHERE ${whereClause} RETURNING *`;
+    return queryOne<T>(text, Object.values(where));
+  }
+
+  const text = `DELETE FROM ${table} WHERE id = $1 RETURNING *`;
+  return queryOne<T>(text, [where]);
+}
+
+export {deleteQuery as delete};
+export {deleteQuery as remove};
+/**
+ * Execute queries within a transaction
+ */
+export async function transaction<T>(
+  callback: (client: pg.PoolClient) => Promise<T>
+): Promise<T> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -327,218 +181,253 @@ export async function transaction<T>(callback: (client: pg.PoolClient) => Promis
   }
 }
 
-// ==================== TABLE SECURITY ====================
+/**
+ * Get the raw pool instance (for sitemap-dynamic.xml.ts and similar)
+ */
+export function getPool() {
+  return pool;
+}
 
 /**
- * Allowed table names to prevent SQL injection via table parameter
- * Phase 5: Added loyalty, social, and analytics tables
+ * Pool status for monitoring
  */
+export function getPoolStatus() {
+  return {
+    totalCount: pool.totalCount,
+    idleCount: pool.idleCount,
+    waitingCount: pool.waitingCount,
+  };
+}
+
+/**
+ * Update pool status (compat with existing code)
+ */
+export function updatePoolStatus(_status: string): void {
+  // No-op — pool status is read from getPoolStatus()
+}
+
+// Table allowlist to prevent SQL injection on table names
 const ALLOWED_TABLES = new Set([
-  'users',
-  'places',
-  'blog_posts',
-  'reviews',
-  'comments',
-  'favorites',
-  'events',
-  'historical_sites',
-  'reservations',
+  'users', 'places', 'reviews', 'comments', 'favorites',
+  'blog_posts', 'blog_comments', 'blog_subscribers',
+  'events', 'event_rsvps',
+  'historical_sites', 'foods',
+  'categories', 'place_daily_analytics',
+  'districts', 'neighborhoods', 'pharmacies', 'seo_pages',
   'notifications',
-  'coupons',
-  'categories',
-  'tags',
-  'messages',
-  'points_history',
-  'badges',
-  'user_badges',
-  'place_photos',
-  'photo_votes',
-  // Phase 16: Loyalty & Rewards
-  'loyalty_points',
-  'loyalty_tiers',
-  'user_achievements',
-  'user_badges',
-  'rewards',
-  'reward_inventory',
-  'user_tier_history',
-  // Phase 25: Social Features
-  'user_activity',
-  'followers',
-  'mentions',
-  'hashtag_index',
-  'hashtags',
-  'hashtag_usage',
-  'user_follows',
-  'user_social_stats',
-  'user_activities',
-  'activity_feeds',
-  'user_mentions',
-  'content_shares',
-  'share_analytics',
-  'trending_places',
-  'place_followers',
-  // Messaging
-  'conversations',
-  'direct_messages',
-  'conversation_deletions',
-  // Admin dashboard
-  'admin_dashboard_widgets',
+  'loyalty_points', 'loyalty_tiers', 'loyalty_transactions', 'user_badges', 'user_achievements',
+  'rewards', 'reward_inventory', 'user_tier_history',
+  'user_activity', 'followers', 'mentions',
+  'user_subscriptions', 'subscription_usage',
+  'webhooks', 'webhook_logs',
+  'reservations', 'promotions',
+  'support_tickets', 'support_messages',
+  'collections', 'collection_items',
+  'user_blocks', 'content_reports',
+  'system_logs', 'migration_tracking',
+  'photos', 'photo_albums',
+  'messages', 'conversations', 'direct_messages', 'conversation_deletions',
+  'coupons', 'coupon_usage',
+  'featured_listings',
+  'search_history',
+  'email_subscriptions',
+  'contact_submissions',
+  'notification_broadcasts', 'notification_drafts',
+  'client_errors', 'client_performance_metrics',
+  's3_files', 'push_subscriptions',
+  'two_factor_audit', 'trusted_devices',
+  'place_hours', 'place_analytics_events',
+  'sms_logs', 'phone_verifications', 'feature_flags',
+  // 2FA
+  'user_2fa_methods', 'user_2fa_sessions',
+  'two_fa_verification_attempts', 'two_fa_recovery_codes',
+  // Notifications
+  'notification_history', 'notification_delivery_log',
+  'notification_type_preferences', 'notification_preferences',
+  // File management
+  'file_access_logs', 'file_variants', 'cdn_cache_settings',
+  // Security
+  'security_events', 'login_history', 'ddos_attempts',
+  // Auth / sessions
+  'user_sessions', 'admin_sessions', 'oauth_states', 'user_oauth_accounts',
+  // Email system
+  'email_campaigns', 'email_queue', 'email_preferences',
+  'email_sequence_enrollments', 'email_verifications', 'marketing_campaigns',
+  // Search & analytics
+  'search_analytics', 'search_suggestions', 'autocomplete_index',
+  'zero_result_searches', 'share_analytics', 'funnel_entries',
+  // User profiles & activity
+  'user_sessions', 'user_loyalty', 'user_reputation',
+  'user_recommendations', 'user_predictions', 'user_cohorts',
+  'user_activity_summary', 'user_journey_sessions', 'saved_searches',
+  // Social & content
+  'hashtags', 'leaderboards', 'moderation_queue',
+  'content_flags', 'account_flags', 'content_items',
+  'collaboration_sessions', 'collaboration_participants', 'collaboration_comments',
+  'edit_conflicts', 'journey_paths',
+  // Marketplace / vendor
+  'vendor_profiles', 'tenant_api_keys', 'tenant_branding',
+  // Admin & infrastructure
+  'admin_dashboard_widgets', 'push_subscription_stats',
+  'transcoding_jobs',
+  // Monitoring & alerts
+  'alert_rules', 'active_alerts', 'alert_notifications',
+  'push_notification_logs',
+  // Backup
+  'backup_configs', 'backups',
+  // AI / recommendations
+  'recommendation_feedback', 'recommendation_weights',
+  // Analytics execution
+  'report_executions',
+  // Error tracking
+  'error_fingerprints',
+  // Multi-tenant
+  'tenant_users',
+  // Social matchmaking
+  'user_match_profiles',
+  // Webhook queue
+  'webhook_delivery_queue', 'webhook_dlq_alerts',
+  // Monitoring & logging
+  'performance_metrics', 'notification_logs', 'notification_drafts',
+  // Blog extensions
+  'blog_post_tags', 'blog_tags', 'blog_reading_history',
+  // Place extensions
+  'place_visits', 'place_visitors', 'place_verification',
+  // Review extensions
+  'review_flags', 'review_moderation_actions', 'review_reactions', 'review_responses',
+  // User extensions
+  'blocked_users', 'user_follows', 'user_mentions', 'user_activities',
+  'user_interests', 'user_interactions', 'user_preferences', 'user_audit_log',
+  'user_loyalty_balance', 'user_points_transactions', 'user_tier_membership',
+  'user_reward_achievements',
+  // Subscriptions & billing
+  'subscriptions', 'subscription_tiers', 'subscription_events', 'billing_history',
+  'admin_subscription_logs',
+  // Rewards & points
+  'reward_redemptions', 'points_transactions',
+  // Content & social
+  'comment_votes', 'content_shares', 'content_tags', 'content_versions',
+  'content_analytics', 'content_audit_trail', 'content_filter_rules', 'content_popularity',
+  'discovery_feeds', 'shares',
+  // Analytics & conversion
+  'analytics_snapshots', 'conversion_funnels', 'conversion_goals', 'conversions',
+  'retention_cohorts', 'cohort_members', 'trending_scores', 'request_metrics', 'search_clicks',
+  // Admin
   'admin_dashboard_settings',
-  'dashboard_refresh_events',
-  // Phase 28D: Real-time Analytics
-  'request_metrics',
-  'query_metrics',
-  'performance_metrics'
+  // Tenant / multi-tenant
+  'tenants', 'tenant_members', 'tenant_settings', 'tenant_features',
+  'tenant_audit_logs',
+  // Promotions
+  'promotion_redemptions', 'discount_codes',
+  // Tier system
+  'tier_history', 'tier_reset_schedule',
+  // Privacy
+  'privacy_settings', 'data_deletion_requests',
+  // Edit operations (collaboration)
+  'edit_operations', 'edit_snapshots',
+  // Video
+  'video_captions', 'video_metadata', 'video_streaming_settings', 'video_thumbnails',
+  // Webhooks
+  'webhook_events',
+  // Bus / transit
+  'bus_routes', 'bus_schedules',
+  // Email templates & newsletters
+  'email_templates', 'newsletter_subscribers',
+  // Site & admin settings
+  'site_settings',
+  // Place lifecycle
+  'place_sla_alert_state', 'place_lifecycle_events',
+  // Recipes
+  'recipes',
+  // Chat (migration 166)
+  'chat_rooms', 'chat_messages', 'chat_participants', 'chat_message_status',
+  // Social messaging (migration 167)
+  'conversation_participants', 'messages',
+  // Search logs (migration 166)
+  'search_logs',
+  // Reports
+  'scheduled_reports',
+  // Multi-tenant social
+  'tenant_social_policies',
+  // Support tickets
+  'ticket_responses',
+  // Search & user favorites
+  'user_searches', 'user_favorites',
+  // Email campaigns & sequences
+  'campaign_subscribers', 'campaign_targeting', 'campaign_targeting_rules',
+  'email_sent_logs', 'email_sequence_steps', 'email_sequences',
+  // Events
+  'event_attendees',
+  // Security / IP filtering
+  'encryption_keys', 'ip_blacklist', 'ip_whitelist',
+  // Analytics & engagement
+  'engagement_events', 'featured_listing_clicks', 'funnel_step_completions',
+  'page_views', 'leaderboard_snapshots',
+  // Social / community
+  'hashtag_usage', 'moderation_actions', 'muted_users',
+  'place_badges', 'place_followers', 'place_likes',
+  // Notifications
+  'notification_channels', 'notification_deliveries',
+  // Journeys
+  'journey_steps',
+  // Analytics & tracking
+  'activity_summaries', 'analytics_events_realtime', 'analytics_reports',
+  'api_request_logs', 'error_logs', 'heatmap_events', 'tracked_events',
+  // Blog & content interactions
+  'blog_likes', 'comment_likes', 'review_helpful', 'review_photos',
+  'social_shares', 'share_counts',
+  // Events
+  'event_tickets',
+  // Payments & billing
+  'invoices', 'payments',
+  // Operations & jobs
+  'bulk_operations', 'job_executions', 'job_logs',
+  'scheduled_jobs', 'scheduled_notifications',
+  // Presence & interactions
+  'interactions', 'user_presence',
+  // Newsletters
+  'newsletter_campaigns',
+  // Blog extensions
+  'blog_categories', 'blog_subscriptions',
+  // Admin & audit
+  'audit_logs', 'request_logs', 'site_change_audit', 'site_setting_versions', 'user_actions',
+  // Business intelligence
+  'business_insights', 'business_trends', 'satisfaction_scores',
+  // Collections
+  'collection_followers', 'place_collections',
+  // Content & media
+  'content_generation_jobs', 'place_photos',
+  // Reviews
+  'review_votes',
+  // Social
+  'social_event_store',
+  // Webhooks
+  'webhook_deliveries',
+  // Memberships
+  'memberships',
 ]);
 
-/**
- * Validate that a table name is in the allowed list
- * Throws if table is not allowed
- */
-function assertTable(table: string): void {
+function validateTable(table: string): void {
   if (!ALLOWED_TABLES.has(table)) {
-    throw new Error(`Invalid table name: ${table}. Allowed: ${Array.from(ALLOWED_TABLES).join(', ')}`);
+    throw new Error(`Table "${table}" is not in the allowed tables list. Add it to ALLOWED_TABLES in postgres.ts if this is a new table.`);
   }
 }
 
-// ==================== GENERIC ORM HELPERS ====================
+// Read replica pool — same pool for now, can be split for read-heavy workloads
+export const readReplicaPool = pool;
 
-/**
- * Get all rows from a table with pagination
- */
-export async function getAll(table: string, options?: { limit?: number; offset?: number }) {
-  assertTable(table);
-  const limit = options?.limit || 100;
-  const offset = options?.offset || 0;
-  const result = await query(`SELECT * FROM ${table} LIMIT $1 OFFSET $2`, [limit, offset]);
-  return result.rows;
-}
-
-/**
- * Get a single row by ID
- */
-function buildWhereClause(criteria: unknown, startIndex = 1): { clause: string; values: any[] } {
-  if (criteria && typeof criteria === 'object' && !Array.isArray(criteria)) {
-    const entries = Object.entries(criteria as Record<string, any>);
-    if (entries.length === 0) {
-      throw new Error('No criteria provided');
-    }
-    return {
-      clause: entries.map(([key], index) => `${key} = $${startIndex + index}`).join(' AND '),
-      values: entries.map(([, value]) => value),
-    };
-  }
-
-  return { clause: `id = $${startIndex}`, values: [criteria] };
-}
-
-export async function getById(table: string, id: unknown) {
-  assertTable(table);
-  const where = buildWhereClause(id);
-  return await queryOne(`SELECT * FROM ${table} WHERE ${where.clause}`, where.values);
-}
-
-/**
- * Get a single row by slug
- */
-export async function getBySlug(table: string, slug: string) {
-  assertTable(table);
-  return await queryOne(`SELECT * FROM ${table} WHERE slug = $1`, [slug]);
-}
-
-/**
- * Insert a new row
- * WARNING: Column names are interpolated. Only use with trusted/validated column names.
- */
-export async function insert(table: string, data: Record<string, any>) {
-  assertTable(table);
-  const keys = Object.keys(data);
-  const values = Object.values(data);
-
-  if (keys.length === 0) {
-    throw new Error('No data to insert');
-  }
-
-  const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-  const result = await queryOne(`INSERT INTO ${table} (${keys.join(', ')}) VALUES (${placeholders}) RETURNING *`, values);
-  return result;
-}
-
-/**
- * Update a row by ID
- * WARNING: Column names are interpolated. Only use with trusted/validated column names.
- */
-export async function update(table: string, id: unknown, data: Record<string, any>) {
-  assertTable(table);
-  const keys = Object.keys(data);
-  const values = Object.values(data);
-  const where = buildWhereClause(id, values.length + 1);
-
-  if (keys.length === 0) {
-    throw new Error('No data to update');
-  }
-
-  const setClause = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
-  const result = await queryOne(`UPDATE ${table} SET ${setClause} WHERE ${where.clause} RETURNING *`, [...values, ...where.values]);
-  return result;
-}
-
-/**
- * Delete a row by ID
- */
-export async function remove(table: string, id: unknown) {
-  assertTable(table);
-  const where = buildWhereClause(id);
-  await query(`DELETE FROM ${table} WHERE ${where.clause}`, where.values);
-  return { success: true };
-}
-
-// Compatibility alias for modules importing `delete` from this module.
-export { remove as delete };
-
-// ==================== BACKWARD COMPATIBILITY ====================
-
-/**
- * Supabase API shim for backward compatibility
- */
-export const db = {
-  from: (table: string) => ({
-    select: async (columns = '*') => {
-      assertTable(table);
-      const result = await query(`SELECT ${columns} FROM ${table}`);
-      return { data: result.rows, error: null };
-    },
-    selectOne: async (columns = '*') => {
-      assertTable(table);
-      const result = await queryOne(`SELECT ${columns} FROM ${table}`);
-      return { data: result, error: null };
-    },
-    eq: async (column: string, value: any) => {
-      assertTable(table);
-      const result = await query(`SELECT * FROM ${table} WHERE ${column} = $1`, [value]);
-      return { data: result.rows, error: null };
-    },
-    eqOne: async (column: string, value: any) => {
-      assertTable(table);
-      const result = await queryOne(`SELECT * FROM ${table} WHERE ${column} = $1`, [value]);
-      return { data: result, error: null };
-    },
-    insert: async (data: any) => {
-      const result = await insert(table, data);
-      return { data: result, error: null };
-    },
-    update: async (data: any) => {
-      if (data.id) {
-        const { id, ...rest } = data;
-        const result = await update(table, id, rest);
-        return { data: result, error: null };
-      }
-      return { data: null, error: { message: 'ID required' } };
-    },
-    delete: async () => {
-      return { data: null, error: { message: 'Use remove() instead' } };
-    }
-  })
+export {pool, ALLOWED_TABLES};
+export default {
+  pool,
+  query,
+  queryOne,
+  queryMany,
+  insert,
+  update,
+  delete: deleteQuery,
+  remove: deleteQuery,
+  transaction,
+  getPool,
+  getPoolStatus,
+  updatePoolStatus,
 };
-
-export default pool;
