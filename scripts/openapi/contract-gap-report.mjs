@@ -28,6 +28,8 @@ const rows = Array.isArray(tiers?.rows) ? tiers.rows : [];
 
 const coverageRules = [
   [/^\/collections(\/|$)/, 'openapi-p1-collections-contract.test.ts'],
+  [/^\/events(\/|$)/, 'openapi-p1-events-favorites-contract.test.ts'],
+  [/^\/favorites(\/|$)/, 'openapi-p1-events-favorites-contract.test.ts'],
   [/^\/places(\/|$)/, 'places-* api contract tests'],
   [/^\/social\/capabilities$/, 'social-capabilities-api.test.ts'],
   [/^\/social\/match-profile$/, 'social-match-profile-api.test.ts'],
