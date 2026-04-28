@@ -1,6 +1,6 @@
 # Content Cluster Quality Report
 
-- Generated At: 2026-04-28T21:56:17.034Z
+- Generated At: 2026-04-28T22:08:15.060Z
 - Issue Count: 0
 - Required Routes: /saglik/nobetci-eczaneler, /ulasim/otobus-saatleri, /ulasim/ucak-saatleri, /mekanlar
 
