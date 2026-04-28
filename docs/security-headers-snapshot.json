@@ -1,0 +1,55 @@
+{
+  "generatedAt": "2026-04-28T22:41:14.028Z",
+  "status": "ok",
+  "checks": [
+    {
+      "header": "Content-Security-Policy",
+      "expected": "response.headers.set",
+      "status": "ok"
+    },
+    {
+      "header": "X-Content-Type-Options",
+      "expected": "nosniff",
+      "status": "ok"
+    },
+    {
+      "header": "X-Frame-Options",
+      "expected": "DENY",
+      "status": "ok"
+    },
+    {
+      "header": "Referrer-Policy",
+      "expected": "strict-origin-when-cross-origin",
+      "status": "ok"
+    },
+    {
+      "header": "Permissions-Policy",
+      "expected": "camera=(), microphone=(), geolocation=()",
+      "status": "ok"
+    },
+    {
+      "header": "Strict-Transport-Security",
+      "expected": "max-age=31536000",
+      "status": "ok"
+    },
+    {
+      "header": "Cross-Origin-Opener-Policy",
+      "expected": "same-origin",
+      "status": "ok"
+    },
+    {
+      "header": "Cross-Origin-Resource-Policy",
+      "expected": "same-origin",
+      "status": "ok"
+    },
+    {
+      "header": "Cache-Control",
+      "expected": "no-store, no-cache, must-revalidate",
+      "status": "ok"
+    }
+  ],
+  "totals": {
+    "ok": 9,
+    "blocked": 0
+  }
+}

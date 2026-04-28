@@ -1,0 +1,255 @@
+{
+  "generatedAt": "2026-04-28T22:39:33.712Z",
+  "status": "ok",
+  "totals": {
+    "P1": 65,
+    "P2": 310,
+    "coveredP1": 2,
+    "coveredP2": 1,
+    "gapP1": 63,
+    "gapP2": 309
+  },
+  "topPriority": [
+    {
+      "route": "/collections",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/collections/{id}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/collections/{id}/follow",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/collections/{id}/followers/check",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/collections/{id}/items",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/events/{id}/delete",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/events/{id}/details",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/events/{id}/rsvp",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/events/{id}/update",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/events/create",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/events/list",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/events/search",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/favorites",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/favorites/{id}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/favorites/bulk",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/feed",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/feed/activity",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/feed/users/{userId}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/followers",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/followers/{id}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/followers/stats",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/following",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/following/check",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/following/unfollow",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/leaderboard",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/leaderboards",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/leaderboards/badges",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/leaderboards/users",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/messages",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/messages/{conversationId}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    }
+  ],
+  "note": "Bu rapor P1/P2 contract test borcunu onceliklendirir; gate blocker degildir."
+}
