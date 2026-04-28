@@ -1,7 +1,11 @@
 {
-  "generatedAt": "2026-04-28T20:45:16.542Z",
-  "totalFiles": 175,
-  "parsedFiles": 175,
+  "generatedAt": "2026-04-28T20:47:03.361Z",
+  "status": "advisory",
+  "source": "docs/migration-duplicate-report.json",
+  "totals": {
+    "duplicateNumberGroups": 3,
+    "duplicateSlugGroups": 14
+  },
   "duplicateNumbers": {
     "120": [
       "120_activity_feed.ts",
@@ -73,5 +77,6 @@
       "109_rate_limiting.ts",
       "132_rate_limiting.ts"
     ]
-  }
+  },
+  "recommendation": "Bu borc release blocker degil; mevcut gate yeni regresyon olmadigini dogruluyor. Duzeltme DB gecmisiyle iliskili oldugu icin ayri planli migration-normalization isi olarak ele alinmali."
 }
