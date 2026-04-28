@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-04-28T23:23:50.350Z",
+  "generatedAt": "2026-04-28T23:28:00.993Z",
   "status": "ok",
   "totals": {
     "P1": 65,
     "P2": 310,
     "coveredP1": 65,
-    "coveredP2": 106,
+    "coveredP2": 141,
     "gapP1": 0,
-    "gapP2": 204
+    "gapP2": 169
   },
   "topPriority": [
     {
-      "route": "/business/trends",
+      "route": "/emails/process",
       "tier": "P2",
       "methods": [
         "GET"
@@ -19,7 +19,7 @@
       "contract": null
     },
     {
-      "route": "/cache/stats",
+      "route": "/errors/client",
       "tier": "P2",
       "methods": [
         "GET"
@@ -27,7 +27,7 @@
       "contract": null
     },
     {
-      "route": "/collab/sessions",
+      "route": "/export-templates",
       "tier": "P2",
       "methods": [
         "GET"
@@ -35,7 +35,7 @@
       "contract": null
     },
     {
-      "route": "/comments",
+      "route": "/export/analytics",
       "tier": "P2",
       "methods": [
         "GET"
@@ -43,7 +43,7 @@
       "contract": null
     },
     {
-      "route": "/comments/{id}",
+      "route": "/export/audit-logs",
       "tier": "P2",
       "methods": [
         "GET"
@@ -51,7 +51,7 @@
       "contract": null
     },
     {
-      "route": "/comments/{id}/vote",
+      "route": "/export/user-data",
       "tier": "P2",
       "methods": [
         "GET"
@@ -59,7 +59,7 @@
       "contract": null
     },
     {
-      "route": "/contact",
+      "route": "/featured-listings",
       "tier": "P2",
       "methods": [
         "GET",
@@ -68,7 +68,7 @@
       "contract": null
     },
     {
-      "route": "/contact/{id}",
+      "route": "/featured-listings/{id}",
       "tier": "P2",
       "methods": [
         "GET"
@@ -76,7 +76,7 @@
       "contract": null
     },
     {
-      "route": "/content",
+      "route": "/featured-listings/{id}/analytics",
       "tier": "P2",
       "methods": [
         "GET"
@@ -84,7 +84,7 @@
       "contract": null
     },
     {
-      "route": "/content/{contentId}",
+      "route": "/files/access",
       "tier": "P2",
       "methods": [
         "GET"
@@ -92,7 +92,7 @@
       "contract": null
     },
     {
-      "route": "/content/{contentId}/publish",
+      "route": "/files/upload",
       "tier": "P2",
       "methods": [
         "GET"
@@ -100,7 +100,16 @@
       "contract": null
     },
     {
-      "route": "/coupons/validate",
+      "route": "/flags",
+      "tier": "P2",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/governance/dashboard",
       "tier": "P2",
       "methods": [
         "GET"
@@ -108,7 +117,16 @@
       "contract": null
     },
     {
-      "route": "/dashboards",
+      "route": "/graphql",
+      "tier": "P2",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/hashtags",
       "tier": "P2",
       "methods": [
         "GET"
@@ -116,7 +134,7 @@
       "contract": null
     },
     {
-      "route": "/dashboards/{dashboardId}/widgets",
+      "route": "/hashtags/{slug}",
       "tier": "P2",
       "methods": [
         "GET"
@@ -124,7 +142,7 @@
       "contract": null
     },
     {
-      "route": "/discovery/recommendations",
+      "route": "/historical-sites/{id}/delete",
       "tier": "P2",
       "methods": [
         "GET"
@@ -132,7 +150,7 @@
       "contract": null
     },
     {
-      "route": "/discovery/similar",
+      "route": "/historical-sites/{id}/update",
       "tier": "P2",
       "methods": [
         "GET"
@@ -140,7 +158,7 @@
       "contract": null
     },
     {
-      "route": "/discovery/trending",
+      "route": "/historical-sites/create",
       "tier": "P2",
       "methods": [
         "GET"
@@ -148,7 +166,7 @@
       "contract": null
     },
     {
-      "route": "/docs",
+      "route": "/image/{path}",
       "tier": "P2",
       "methods": [
         "GET"
@@ -156,7 +174,7 @@
       "contract": null
     },
     {
-      "route": "/email/campaigns",
+      "route": "/kpi",
       "tier": "P2",
       "methods": [
         "GET"
@@ -164,7 +182,7 @@
       "contract": null
     },
     {
-      "route": "/email/campaigns/{id}",
+      "route": "/kpi/{kpiId}/values",
       "tier": "P2",
       "methods": [
         "GET"
@@ -172,7 +190,7 @@
       "contract": null
     },
     {
-      "route": "/email/campaigns/{id}/analytics",
+      "route": "/legacy/search",
       "tier": "P2",
       "methods": [
         "GET"
@@ -180,7 +198,7 @@
       "contract": null
     },
     {
-      "route": "/email/campaigns/{id}/subscribers",
+      "route": "/legacy/trending",
       "tier": "P2",
       "methods": [
         "GET"
@@ -188,7 +206,7 @@
       "contract": null
     },
     {
-      "route": "/email/preferences",
+      "route": "/loyalty/achievements",
       "tier": "P2",
       "methods": [
         "GET"
@@ -196,7 +214,7 @@
       "contract": null
     },
     {
-      "route": "/email/queue",
+      "route": "/loyalty/points",
       "tier": "P2",
       "methods": [
         "GET"
@@ -204,7 +222,7 @@
       "contract": null
     },
     {
-      "route": "/email/send-reset",
+      "route": "/loyalty/rewards",
       "tier": "P2",
       "methods": [
         "GET"
@@ -212,7 +230,7 @@
       "contract": null
     },
     {
-      "route": "/email/send-review-response",
+      "route": "/loyalty/tiers",
       "tier": "P2",
       "methods": [
         "GET"
@@ -220,7 +238,7 @@
       "contract": null
     },
     {
-      "route": "/email/send-subscription",
+      "route": "/loyalty/transactions",
       "tier": "P2",
       "methods": [
         "GET"
@@ -228,23 +246,7 @@
       "contract": null
     },
     {
-      "route": "/email/send-subscription-notification",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/email/send-test",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/email/send-verification",
+      "route": "/marketing-campaigns",
       "tier": "P2",
       "methods": [
         "GET"
