@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-28T22:13:50.940Z",
+  "generatedAt": "2026-04-28T22:22:53.446Z",
   "status": "ready",
   "advisory": 0,
   "blocked": 0,
@@ -14,5 +14,6 @@
     "P1": 65,
     "P2": 310
   },
-  "authLogStandard": "ok"
+  "authLogStandard": "ok",
+  "releaseEvidence": "ready"
 }

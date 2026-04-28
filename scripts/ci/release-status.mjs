@@ -22,6 +22,7 @@ const envDoctor = readJson('docs/env-doctor-report.json');
 const opsLastRun = readJson('docs/ops-last-run.json');
 const openapiTiers = readJson('docs/openapi-route-tiers.json');
 const authLogStandard = readJson('docs/auth-log-standard-report.json');
+const releaseEvidence = readJson('docs/release-evidence.json');
 
 const report = {
   generatedAt: new Date().toISOString(),
@@ -36,6 +37,7 @@ const report = {
   openapiTiers: openapiTiers?.status || 'missing',
   openapiTierTotals: openapiTiers?.totals || null,
   authLogStandard: authLogStandard?.status || 'missing',
+  releaseEvidence: releaseEvidence?.status || 'missing',
 };
 
 writeFileSync(outJson, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
@@ -54,6 +56,7 @@ const lines = [
   `- Ops Last Run: ${report.opsLastRun}`,
   `- OpenAPI Tiers: ${report.openapiTiers}`,
   `- Auth Log Standard: ${report.authLogStandard}`,
+  `- Release Evidence: ${report.releaseEvidence}`,
   `- GitHub Actions: not used`,
   '',
   'Summary: Yerel release kanitlari tek dosyada toplandi.',
