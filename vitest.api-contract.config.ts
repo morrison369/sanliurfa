@@ -20,6 +20,7 @@ export default defineConfig({
       'src/lib/__tests__/openapi-p2-admin-ops-contract.test.ts',
       'src/lib/__tests__/openapi-p2-admin-social-analytics-contract.test.ts',
       'src/lib/__tests__/openapi-p2-analytics-blog-business-contract.test.ts',
+      'src/lib/__tests__/openapi-p2-business-content-email-contract.test.ts',
       'src/lib/__tests__/admin-release-status-api.test.ts',
       'src/lib/__tests__/admin-provider-health-api.test.ts',
       'src/lib/__tests__/places-detail-api.test.ts',

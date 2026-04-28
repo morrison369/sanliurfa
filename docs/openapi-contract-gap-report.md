@@ -1,45 +1,45 @@
 # OpenAPI Contract Gap Report
 
-- Generated At: 2026-04-28T23:23:50.350Z
+- Generated At: 2026-04-28T23:28:00.993Z
 - Status: ok
 - P1 Routes: 65
 - P1 Covered: 65
 - P1 Gap: 0
 - P2 Routes: 310
-- P2 Covered: 106
-- P2 Gap: 204
+- P2 Covered: 141
+- P2 Gap: 169
 
 | Tier | Route | Methods |
 |---|---|---|
-| P2 | `/business/trends` | GET |
-| P2 | `/cache/stats` | GET |
-| P2 | `/collab/sessions` | GET |
-| P2 | `/comments` | GET |
-| P2 | `/comments/{id}` | GET |
-| P2 | `/comments/{id}/vote` | GET |
-| P2 | `/contact` | GET, POST |
-| P2 | `/contact/{id}` | GET |
-| P2 | `/content` | GET |
-| P2 | `/content/{contentId}` | GET |
-| P2 | `/content/{contentId}/publish` | GET |
-| P2 | `/coupons/validate` | GET |
-| P2 | `/dashboards` | GET |
-| P2 | `/dashboards/{dashboardId}/widgets` | GET |
-| P2 | `/discovery/recommendations` | GET |
-| P2 | `/discovery/similar` | GET |
-| P2 | `/discovery/trending` | GET |
-| P2 | `/docs` | GET |
-| P2 | `/email/campaigns` | GET |
-| P2 | `/email/campaigns/{id}` | GET |
-| P2 | `/email/campaigns/{id}/analytics` | GET |
-| P2 | `/email/campaigns/{id}/subscribers` | GET |
-| P2 | `/email/preferences` | GET |
-| P2 | `/email/queue` | GET |
-| P2 | `/email/send-reset` | GET |
-| P2 | `/email/send-review-response` | GET |
-| P2 | `/email/send-subscription` | GET |
-| P2 | `/email/send-subscription-notification` | GET |
-| P2 | `/email/send-test` | GET |
-| P2 | `/email/send-verification` | GET |
+| P2 | `/emails/process` | GET |
+| P2 | `/errors/client` | GET |
+| P2 | `/export-templates` | GET |
+| P2 | `/export/analytics` | GET |
+| P2 | `/export/audit-logs` | GET |
+| P2 | `/export/user-data` | GET |
+| P2 | `/featured-listings` | GET, POST |
+| P2 | `/featured-listings/{id}` | GET |
+| P2 | `/featured-listings/{id}/analytics` | GET |
+| P2 | `/files/access` | GET |
+| P2 | `/files/upload` | GET |
+| P2 | `/flags` | GET, POST |
+| P2 | `/governance/dashboard` | GET |
+| P2 | `/graphql` | GET, POST |
+| P2 | `/hashtags` | GET |
+| P2 | `/hashtags/{slug}` | GET |
+| P2 | `/historical-sites/{id}/delete` | GET |
+| P2 | `/historical-sites/{id}/update` | GET |
+| P2 | `/historical-sites/create` | GET |
+| P2 | `/image/{path}` | GET |
+| P2 | `/kpi` | GET |
+| P2 | `/kpi/{kpiId}/values` | GET |
+| P2 | `/legacy/search` | GET |
+| P2 | `/legacy/trending` | GET |
+| P2 | `/loyalty/achievements` | GET |
+| P2 | `/loyalty/points` | GET |
+| P2 | `/loyalty/rewards` | GET |
+| P2 | `/loyalty/tiers` | GET |
+| P2 | `/loyalty/transactions` | GET |
+| P2 | `/marketing-campaigns` | GET |
 
 Not: P0 kapalıdır; bu rapor P1/P2 contract test planlaması içindir.
