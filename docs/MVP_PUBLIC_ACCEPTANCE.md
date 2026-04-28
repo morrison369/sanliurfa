@@ -37,8 +37,8 @@ Bu dosya, Şanlıurfa.com public site bitiş kriterlerini kilitler. Yeni işler 
 - Toplu public bitiş gate'i: `npm run public:city:gate`.
 - Build dahil public kapanış gate'i: `npm run public:city:gate:build`.
 - Tam toplu akış `npm run ops:next:bulk` önce `npm run public:city:gate` çalıştırır; public yüzey kırıkken ağır ajans/gate akışına geçilmez.
-- GitHub Actions workflow: `.github/workflows/public-city-gate.yml`.
-- GitHub üzerinde public city gate, `master`, `main` ve `develop` push/PR değişikliklerinde `npm run public:city:gate:build` komutunu çalıştırır.
+- GitHub Actions kullanılmaz; public city gate yerelde çalıştırılır.
+- Public/site dosyaları değiştiğinde `npm run public:city:gate:build` manuel gate olarak çalıştırılır.
 - Kabul smoke: `npm run smoke:city-content:acceptance`.
 - Ajan yüzey smoke: `npm run smoke:city-content-agents`.
 - SEO/GEO gate: `npm run seo:geo:gate`.

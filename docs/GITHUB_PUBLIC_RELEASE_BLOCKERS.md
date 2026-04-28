@@ -15,9 +15,9 @@ Bu repo public yapilmadan once asagidaki kapilar kapanmadan GitHub gorunurlugu d
    - Gecmiste `deploy_key` ve eski production credential izleri bulundugu icin sadece mevcut dosyalari temizlemek yeterli degildir.
    - Public yapmadan once DB sifresi, SSH sifresi, Stripe webhook/secret, SMTP sifresi ve varsa image API secretlari yenilenmelidir.
 
-3. GitHub Actions calisir durumda olacak.
-   - `public-city-gate.yml` repo public olduktan sonra branch protection icin kullanilacak.
-   - Mevcut GitHub billing/spending limit problemi cozulmeden CI sonucu guvenilir sekilde alinamaz.
+3. GitHub Actions kullanılmayacak.
+   - `.github/workflows` altinda workflow dosyasi tutulmaz.
+   - Branch protection status check yerine yerel gate sonucuna gore karar verilir.
 
 4. Public readiness gate basarili olacak.
    - `npm run security:public-readiness` public yapmadan once calistirilir.

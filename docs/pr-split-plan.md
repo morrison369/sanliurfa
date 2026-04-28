@@ -7,7 +7,7 @@
 - `scripts/openapi/**`
 - `scripts/smoke/**`
 - `vitest.api-contract.config.ts`
-- `.github/workflows/api-contract-gate.yml`
+- Yerel API contract gate komutları
 
 ## PR-2: Image/Content Pipeline
 - `scripts/content-scraper/**`
@@ -16,8 +16,8 @@
 - `src/lib/content-images.ts`
 - `src/lib/__tests__/content-images.test.ts`
 
-## PR-3: Infra/Workflow
-- `.github/workflows/ci*.yml`
+## PR-3: Infra/Ops
+- Yerel gate ve operasyon scriptleri
 - `scripts/ci/**`
 - `scripts/security/**`
 - `playwright.config.ts`
