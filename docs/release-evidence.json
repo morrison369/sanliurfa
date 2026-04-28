@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-28T23:19:24.332Z",
+  "generatedAt": "2026-04-28T23:23:50.852Z",
   "status": "ready",
   "maxAgeHours": 72,
   "checks": [
@@ -7,7 +7,7 @@
       "id": "release-status",
       "artifact": "docs/release-status.json",
       "reportedStatus": "ready",
-      "generatedAt": "2026-04-28T23:19:18.197Z",
+      "generatedAt": "2026-04-28T23:23:42.506Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready"
@@ -16,7 +16,7 @@
       "id": "local-gate-summary",
       "artifact": "docs/local-gate-summary.json",
       "reportedStatus": "ready",
-      "generatedAt": "2026-04-28T23:19:17.402Z",
+      "generatedAt": "2026-04-28T23:23:41.597Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready"
@@ -25,7 +25,7 @@
       "id": "release-readiness",
       "artifact": "docs/release-readiness.json",
       "reportedStatus": "ready",
-      "generatedAt": "2026-04-28T23:19:16.580Z",
+      "generatedAt": "2026-04-28T23:23:40.679Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready"
@@ -34,7 +34,7 @@
       "id": "site-doctor",
       "artifact": "docs/site-doctor-report.json",
       "reportedStatus": "ready",
-      "generatedAt": "2026-04-28T23:17:50.722Z",
+      "generatedAt": "2026-04-28T23:22:19.434Z",
       "ageHours": 0.03,
       "status": "ok",
       "expectation": "status=ready"
@@ -43,7 +43,7 @@
       "id": "openapi-p0",
       "artifact": "docs/openapi-p0-closure-report.json",
       "reportedStatus": "metric-only",
-      "generatedAt": "2026-04-28T23:17:27.217Z",
+      "generatedAt": "2026-04-28T23:21:58.377Z",
       "ageHours": 0.03,
       "status": "ok",
       "expectation": "totalMissing=0"
@@ -52,7 +52,7 @@
       "id": "openapi-tiers",
       "artifact": "docs/openapi-route-tiers.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T23:17:29.309Z",
+      "generatedAt": "2026-04-28T23:22:00.298Z",
       "ageHours": 0.03,
       "status": "ok",
       "expectation": "status=ok"
@@ -61,7 +61,7 @@
       "id": "problem-json",
       "artifact": "docs/problem-json-report.json",
       "reportedStatus": "metric-only",
-      "generatedAt": "2026-04-28T23:19:14.713Z",
+      "generatedAt": "2026-04-28T23:23:38.643Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "offenders=0"
@@ -70,7 +70,7 @@
       "id": "auth-log-standard",
       "artifact": "docs/auth-log-standard-report.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T23:16:11.048Z",
+      "generatedAt": "2026-04-28T23:20:39.753Z",
       "ageHours": 0.05,
       "status": "ok",
       "expectation": "status=ok"
@@ -79,7 +79,7 @@
       "id": "env-doctor",
       "artifact": "docs/env-doctor-report.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T23:16:07.580Z",
+      "generatedAt": "2026-04-28T23:20:37.060Z",
       "ageHours": 0.05,
       "status": "ok",
       "expectation": "status=ok"
@@ -88,7 +88,7 @@
       "id": "migration-debt",
       "artifact": "docs/migration-debt-report.json",
       "reportedStatus": "clear",
-      "generatedAt": "2026-04-28T23:19:16.981Z",
+      "generatedAt": "2026-04-28T23:23:41.144Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=clear"
@@ -97,7 +97,7 @@
       "id": "critical-pages-quality",
       "artifact": "docs/critical-pages-quality-report.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T23:17:50.243Z",
+      "generatedAt": "2026-04-28T23:22:18.963Z",
       "ageHours": 0.03,
       "status": "ok",
       "expectation": "status=ok"
@@ -106,7 +106,7 @@
       "id": "image-moderation",
       "artifact": "docs/image-moderation-report.json",
       "reportedStatus": "metric-only",
-      "generatedAt": "2026-04-28T23:17:48.823Z",
+      "generatedAt": "2026-04-28T23:22:17.654Z",
       "ageHours": 0.03,
       "status": "ok",
       "expectation": "issueCount=0"
@@ -115,7 +115,7 @@
       "id": "prod-evidence",
       "artifact": "docs/prod-evidence.json",
       "reportedStatus": "ready_without_live_probe",
-      "generatedAt": "2026-04-28T23:19:23.474Z",
+      "generatedAt": "2026-04-28T23:23:49.772Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready|ready_without_live_probe"
@@ -124,7 +124,7 @@
       "id": "backup-restore-evidence",
       "artifact": "docs/backup-restore-evidence.json",
       "reportedStatus": "ready",
-      "generatedAt": "2026-04-28T23:19:23.049Z",
+      "generatedAt": "2026-04-28T23:23:49.117Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready|advisory"
@@ -133,7 +133,7 @@
       "id": "runtime-prod-doctor",
       "artifact": "docs/runtime-prod-doctor.json",
       "reportedStatus": "ready_with_advisories",
-      "generatedAt": "2026-04-28T23:19:22.644Z",
+      "generatedAt": "2026-04-28T23:23:48.082Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ready|ready_with_advisories"
@@ -142,7 +142,7 @@
       "id": "security-headers",
       "artifact": "docs/security-headers-snapshot.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T23:19:15.768Z",
+      "generatedAt": "2026-04-28T23:23:39.764Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ok"
@@ -151,7 +151,7 @@
       "id": "admin-turkish-ui",
       "artifact": "docs/admin-turkish-ui-report.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T23:16:10.572Z",
+      "generatedAt": "2026-04-28T23:20:39.344Z",
       "ageHours": 0.05,
       "status": "ok",
       "expectation": "status=ok"
@@ -160,7 +160,7 @@
       "id": "openapi-contract-gaps",
       "artifact": "docs/openapi-contract-gap-report.json",
       "reportedStatus": "ok",
-      "generatedAt": "2026-04-28T23:19:23.894Z",
+      "generatedAt": "2026-04-28T23:23:50.350Z",
       "ageHours": 0,
       "status": "ok",
       "expectation": "status=ok"

@@ -1,45 +1,45 @@
 # OpenAPI Contract Gap Report
 
-- Generated At: 2026-04-28T23:19:23.894Z
+- Generated At: 2026-04-28T23:23:50.350Z
 - Status: ok
 - P1 Routes: 65
 - P1 Covered: 65
 - P1 Gap: 0
 - P2 Routes: 310
-- P2 Covered: 76
-- P2 Gap: 234
+- P2 Covered: 106
+- P2 Gap: 204
 
 | Tier | Route | Methods |
 |---|---|---|
-| P2 | `/analytics/events` | GET |
-| P2 | `/analytics/funnels` | GET |
-| P2 | `/analytics/journeys` | GET |
-| P2 | `/analytics/performance` | GET |
-| P2 | `/analytics/predictions` | GET |
-| P2 | `/audit/log` | GET |
-| P2 | `/badges` | GET |
-| P2 | `/badges/definitions` | GET |
-| P2 | `/billing/checkout` | POST |
-| P2 | `/billing/webhook` | GET |
-| P2 | `/blocking` | GET |
-| P2 | `/blocking/check` | GET |
-| P2 | `/blog/{id}/admin` | GET |
-| P2 | `/blog/admin` | GET |
-| P2 | `/blog/analytics` | GET |
-| P2 | `/blog/categories` | GET |
-| P2 | `/blog/comments` | GET |
-| P2 | `/blog/comments/{id}` | GET |
-| P2 | `/blog/comments/{id}/approve` | GET |
-| P2 | `/blog/comments/{id}/reject` | GET |
-| P2 | `/blog/posts` | GET |
-| P2 | `/blog/posts/{id}/revisions` | GET |
-| P2 | `/blog/posts/{slug}` | GET |
-| P2 | `/blog/reading-history` | GET |
-| P2 | `/blog/scheduled-posts` | GET |
-| P2 | `/blog/search` | GET |
-| P2 | `/blog/subscribe` | GET |
-| P2 | `/business-metrics` | GET |
-| P2 | `/business/analytics` | GET |
-| P2 | `/business/insights` | GET |
+| P2 | `/business/trends` | GET |
+| P2 | `/cache/stats` | GET |
+| P2 | `/collab/sessions` | GET |
+| P2 | `/comments` | GET |
+| P2 | `/comments/{id}` | GET |
+| P2 | `/comments/{id}/vote` | GET |
+| P2 | `/contact` | GET, POST |
+| P2 | `/contact/{id}` | GET |
+| P2 | `/content` | GET |
+| P2 | `/content/{contentId}` | GET |
+| P2 | `/content/{contentId}/publish` | GET |
+| P2 | `/coupons/validate` | GET |
+| P2 | `/dashboards` | GET |
+| P2 | `/dashboards/{dashboardId}/widgets` | GET |
+| P2 | `/discovery/recommendations` | GET |
+| P2 | `/discovery/similar` | GET |
+| P2 | `/discovery/trending` | GET |
+| P2 | `/docs` | GET |
+| P2 | `/email/campaigns` | GET |
+| P2 | `/email/campaigns/{id}` | GET |
+| P2 | `/email/campaigns/{id}/analytics` | GET |
+| P2 | `/email/campaigns/{id}/subscribers` | GET |
+| P2 | `/email/preferences` | GET |
+| P2 | `/email/queue` | GET |
+| P2 | `/email/send-reset` | GET |
+| P2 | `/email/send-review-response` | GET |
+| P2 | `/email/send-subscription` | GET |
+| P2 | `/email/send-subscription-notification` | GET |
+| P2 | `/email/send-test` | GET |
+| P2 | `/email/send-verification` | GET |
 
 Not: P0 kapalıdır; bu rapor P1/P2 contract test planlaması içindir.
