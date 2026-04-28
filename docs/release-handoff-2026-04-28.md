@@ -3,46 +3,50 @@
 Bu handoff son toplu gate ve operasyon calismalarindan sonra projenin devredilebilir durumunu ozetler.
 
 ## Release Gate Durumu
-- `quality:metrics`: passed
-- `api:release:gate`: passed
-- `ops:targeted:release-lite`: passed
 - `gate:done`: passed
-- `ops:next:bulk`: passed
-- `test:unit`: passed (132 files / 707 tests)
-- `test:e2e:clean`: passed (96 passed / 10 skipped)
+- `release:local-gate:summary`: ready_with_advisories
+- `security:public-readiness`: passed
+- `npm audit --audit-level=moderate`: 0 vulnerabilities
 - `lint`: passed
-- E2E Redis env: `.env` `REDIS_URL` / `REDIS_PASSWORD` okunuyor, `REDIS_KEY_PREFIX=e2e:sanliurfa:`, `E2E_RATE_LIMIT_BYPASS=1`
-- E2E izolasyon notu: test:e2e:clean should not run in parallel with build, gate:done, release-lite, or cleanup jobs because they share dev server lifecycle and port 4321.
-- E2E advisory: latest isolated E2E run passed after site_settings read-cache/in-flight dedupe; previous non-blocking slow-query warning was not reproduced.
+- `type-check`: passed
+- `build`: passed
+- `api:release:gate`: passed
+- `social:core:gate:strict`: passed
+- `public:city:gate`: passed
+- GitHub Actions: kullanilmiyor, workflow dosyasi yok
+- Sentry: projeden tamamen kaldirildi
 
 ## Kalite Durumu
-- Lint: `0 errors / 0 warnings / 0 problems`
 - Type-check: `0 errors / 0 warnings / 0 hints`
-- `@ts-nocheck`: `0 / 1484`
-- OpenAPI route current/baseline: `0 / 0`
+- OpenAPI documented/file routes: `456 / 456`
+- OpenAPI P0 missing: `0`
 - problem+json offender: `0`
+- Secret scan: high-risk secret yok
+- Public readiness: current tree public visibility icin hazir
 
 ## Yenilenen Artefaktlar
+- `docs/local-gate-summary.json`
+- `docs/local-gate-summary.md`
+- `docs/migration-debt-report.json`
+- `docs/migration-debt-report.md`
 - `docs/release-readiness.json`
 - `docs/release-readiness.md`
-- `docs/release-handoff-2026-04-28.md`
 - `docs/operational-blockers-2026-04-28.json`
 - `docs/operational-blockers-2026-04-28.md`
-- `quality-metrics.json`
 
-## Kalan Release Disi Blockerlar
-1. public-readiness-history-secrets: blocked (critical)
+## Kalan Release Blocker
+Yok.
 
-## Onay Gerektiren Isler
-- Credential/key rotation
-- Git history cleanup / force-push / repo public visibility degisikligi
-- Admin moderasyon backlog kararlarinin toplu uygulanmasi
+## Advisory
+1. `migration-duplicate-debt`: advisory
+   - Duplicate number groups: 3
+   - Duplicate slug groups: 14
+   - Release blocker degil; ayri migration-normalization planinda ele alinmali.
 
 ## Guvenli Tekrar Kontrol Komutlari
 ```bash
-npm run quality:metrics
-npm run release:readiness:report
-npm run security:scan-secrets
-npm run jobs:places:sla-alert
-npm run release:handoff
+npm run gate:done
+npm audit --audit-level=moderate
+npm run security:public-readiness
+npm run release:local-gate:summary
 ```
