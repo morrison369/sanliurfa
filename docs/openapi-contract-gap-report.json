@@ -1,119 +1,15 @@
 {
-  "generatedAt": "2026-04-28T22:51:10.834Z",
+  "generatedAt": "2026-04-28T22:55:24.289Z",
   "status": "ok",
   "totals": {
     "P1": 65,
     "P2": 310,
-    "coveredP1": 17,
+    "coveredP1": 30,
     "coveredP2": 1,
-    "gapP1": 48,
+    "gapP1": 35,
     "gapP2": 309
   },
   "topPriority": [
-    {
-      "route": "/feed",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/feed/activity",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/feed/users/{userId}",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/followers",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/followers/{id}",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/followers/stats",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/following",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/following/check",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/following/unfollow",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/leaderboard",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/leaderboards",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/leaderboards/badges",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/leaderboards/users",
-      "tier": "P1",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
     {
       "route": "/messages",
       "tier": "P1",
@@ -247,6 +143,110 @@
       "tier": "P1",
       "methods": [
         "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/send",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/sse",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/stats",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/subscribe",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/unsubscribe",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/notifications/vapid-key",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/events/stream",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/feed",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/follow",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/followers",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/follows",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/match-candidates",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/social/matches",
+      "tier": "P1",
+      "methods": [
+        "GET"
       ],
       "contract": null
     }
