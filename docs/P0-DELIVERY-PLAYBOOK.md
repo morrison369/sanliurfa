@@ -33,6 +33,7 @@ Bu playbook, tekrar eden tam batch akışları yerine hedefe yönelik ilerleme i
 4. Yayın öncesi hızlı set: `npm run ops:targeted:release-lite`
 5. Tam hedefli kapsam: `npm run ops:targeted`
 6. Üretim deploy öncesi resmi yerel gate: `npm run release:local`
+7. Release kanıt tazeliği kontrolü: `npm run release:evidence`
 
 ## Runtime Güvencesi
 
