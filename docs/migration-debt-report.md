@@ -1,17 +1,29 @@
 # Migration Duplicate Debt Report
 
-- Generated At: 2026-04-28T21:04:46.750Z
-- Status: advisory
+- Generated At: 2026-04-28T21:11:52.175Z
+- Status: clear
 - Duplicate Number Groups: 3
 - Duplicate Slug Groups: 14
+- Known Duplicate Number Groups: 3
+- Known Duplicate Slug Groups: 14
+- New Duplicate Number Groups: 0
+- New Duplicate Slug Groups: 0
 
-## Duplicate Numbers
+## New Duplicate Numbers
+
+- Yok
+
+## New Duplicate Slugs
+
+- Yok
+
+## Known Baseline Duplicate Numbers
 
 - 120: 120_activity_feed.ts, 120_blog_system.ts
 - 121: 121_mentions_shares.ts, 121_notifications_v2.ts
 - 122: 122_analytics_v2.ts, 122_multi_tenant.ts
 
-## Duplicate Slugs
+## Known Baseline Duplicate Slugs
 
 - push_subscriptions: 008_push_subscriptions.ts, 084_push_subscriptions.ts
 - email_campaigns: 018_email_campaigns.ts, 073_email_campaigns.ts
@@ -30,4 +42,4 @@
 
 ## Recommendation
 
-Bu borc release blocker degil; mevcut gate yeni regresyon olmadigini dogruluyor. Duzeltme DB gecmisiyle iliskili oldugu icin ayri planli migration-normalization isi olarak ele alinmali.
+Tarihi migration duplicate kayitlari baseline ile sinirli. DB gecmisini bozmamak icin dosya rename yapilmadi; yeni duplicate regresyonlari gate tarafindan yakalanir.

@@ -1,10 +1,15 @@
 {
-  "generatedAt": "2026-04-28T21:04:46.750Z",
-  "status": "advisory",
+  "generatedAt": "2026-04-28T21:11:52.175Z",
+  "status": "clear",
   "source": "docs/migration-duplicate-report.json",
+  "baseline": "docs/migration-duplicate-baseline.json",
   "totals": {
     "duplicateNumberGroups": 3,
-    "duplicateSlugGroups": 14
+    "duplicateSlugGroups": 14,
+    "knownDuplicateNumberGroups": 3,
+    "knownDuplicateSlugGroups": 14,
+    "newDuplicateNumberGroups": 0,
+    "newDuplicateSlugGroups": 0
   },
   "duplicateNumbers": {
     "120": [
@@ -78,5 +83,7 @@
       "132_rate_limiting.ts"
     ]
   },
-  "recommendation": "Bu borc release blocker degil; mevcut gate yeni regresyon olmadigini dogruluyor. Duzeltme DB gecmisiyle iliskili oldugu icin ayri planli migration-normalization isi olarak ele alinmali."
+  "newDuplicateNumbers": {},
+  "newDuplicateSlugs": {},
+  "recommendation": "Tarihi migration duplicate kayitlari baseline ile sinirli. DB gecmisini bozmamak icin dosya rename yapilmadi; yeni duplicate regresyonlari gate tarafindan yakalanir."
 }
