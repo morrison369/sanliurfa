@@ -34,6 +34,9 @@ Bu playbook, tekrar eden tam batch akışları yerine hedefe yönelik ilerleme i
 5. Tam hedefli kapsam: `npm run ops:targeted`
 6. Üretim deploy öncesi resmi yerel gate: `npm run release:local`
 7. Release kanıt tazeliği kontrolü: `npm run release:evidence`
+8. Hızlı release sinyali: `npm run release:quick`
+9. Tam release sinyali: `npm run release:full`
+10. Canlı probe dahil üretim preflight: `npm run release:prod-preflight`
 
 ## Runtime Güvencesi
 

@@ -1,0 +1,34 @@
+{
+  "generatedAt": "2026-04-28T22:36:02.867Z",
+  "status": "ready_without_live_probe",
+  "baseUrl": null,
+  "localReleaseEvidence": "ready",
+  "localReleaseStatus": "ready",
+  "checks": [
+    {
+      "url": "/",
+      "status": "skipped",
+      "reason": "PROD_BASE_URL veya SITE_URL tanımlı değil"
+    },
+    {
+      "url": "/mekanlar",
+      "status": "skipped",
+      "reason": "PROD_BASE_URL veya SITE_URL tanımlı değil"
+    },
+    {
+      "url": "/admin/system-health",
+      "status": "skipped",
+      "reason": "PROD_BASE_URL veya SITE_URL tanımlı değil"
+    },
+    {
+      "url": "/api/health",
+      "status": "skipped",
+      "reason": "PROD_BASE_URL veya SITE_URL tanımlı değil"
+    }
+  ],
+  "totals": {
+    "ok": 0,
+    "skipped": 4,
+    "blocked": 0
+  }
+}

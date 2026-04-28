@@ -221,6 +221,9 @@
     "images:pipeline:offline": "node scripts/content-scraper/image-pipeline-mode.mjs offline && npm run images:critical:ensure",
     "images:pipeline:auto": "node scripts/content-scraper/image-pipeline-mode.mjs auto && npm run images:critical:ensure",
     "release:status": "node scripts/ci/release-status.mjs",
+    "release:quick": "npm run env:doctor && npm run security:no-github-actions:gate && npm run security:no-sentry:gate && npm run content:turkish:gate && npm run auth:log-standard:gate && npm run release:evidence && npm run release:status",
+    "release:full": "npm run release:local",
+    "release:prod-preflight": "npm run release:full && npm run prod:evidence",
     "release:local": "npm run env:doctor && npm run security:no-github-actions:gate && npm run security:no-sentry:gate && npm run content:turkish:gate && npm run auth:log-standard:gate && npm run openapi:tiers && npm run images:critical:ensure && npm run critical-pages:quality && npm run site:doctor && npm run gate:done && npm run release:evidence && npm run release:status",
     "images:critical:ensure": "node scripts/content-scraper/ensure-critical-image-manifest.mjs",
     "site:doctor": "node scripts/ci/site-doctor.mjs",
@@ -228,7 +231,8 @@
     "ops:last-run:md": "node scripts/ci/ops-last-run-md.mjs",
     "openapi:tiers": "npx tsx scripts/openapi/route-tiers.mjs",
     "auth:log-standard:gate": "node scripts/ci/auth-log-standard-gate.mjs",
-    "release:evidence": "node scripts/ci/release-evidence-gate.mjs"
+    "release:evidence": "node scripts/ci/release-evidence-gate.mjs",
+    "prod:evidence": "node scripts/ci/prod-evidence.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^5.0.3",
