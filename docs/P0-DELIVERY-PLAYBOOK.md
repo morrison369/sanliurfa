@@ -32,6 +32,7 @@ Bu playbook, tekrar eden tam batch akışları yerine hedefe yönelik ilerleme i
 3. Landing/SEO değişikliği sonrası: `npm run ops:targeted:landing`
 4. Yayın öncesi hızlı set: `npm run ops:targeted:release-lite`
 5. Tam hedefli kapsam: `npm run ops:targeted`
+6. Üretim deploy öncesi resmi yerel gate: `npm run release:local`
 
 ## Runtime Güvencesi
 

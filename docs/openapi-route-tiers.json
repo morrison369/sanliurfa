@@ -1,0 +1,3240 @@
+{
+  "generatedAt": "2026-04-28T22:12:19.198Z",
+  "status": "ok",
+  "totalRoutes": 458,
+  "totals": {
+    "P0": 83,
+    "P1": 65,
+    "P2": 310
+  },
+  "rows": [
+    {
+      "route": "/achievements",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/activity",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/alerts",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/audit-logs",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/badges/award",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/blog",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/blog/categories",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/blog/stats",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/blog/tags",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/blog/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/bulk-action",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/bus-routes",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/city-content-agents",
+      "tier": "P2",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/content-bot/generate",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/dashboard",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/dashboard/overview",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/deployment/status",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/exports/token",
+      "tier": "P2",
+      "methods": [
+        "DELETE",
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/exports/token/clipboard",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/flags",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/import",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/loyalty/award",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/loyalty/rewards",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/messages/{id}/status",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/moderation",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/moderation/actions",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/moderation/flags",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/moderation/queue",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/moderation/reports",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/moderation/stats",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/monitoring",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/monitoring/ack",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/monitoring/dashboard",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/performance/recommendations",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/performance/summary",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/pharmacies",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/places",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/places/create",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/places/lifecycle",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/places/lifecycle/export",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/places/lifecycle/sla",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/quotas/{userId}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/recipes",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/reports/generate",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/reports/schedule",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/reports/social-lifecycle",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/revenue",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/reviews/antispam-events",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/security/audit",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/security/guidelines",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/audit",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/audit/anomaly",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/audit/export",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/homepage-sections",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/integrations",
+      "tier": "P0",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/site/integrations/test",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/site/media",
+      "tier": "P0",
+      "methods": [
+        "DELETE",
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/media-usage",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/media/import",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/site/media/provider-health",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/media/search",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/platform",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/seo-overrides",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/services",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/settings",
+      "tier": "P0",
+      "methods": [
+        "GET",
+        "PUT"
+      ]
+    },
+    {
+      "route": "/admin/site/settings/diff",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/settings/presets",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/settings/presets/preview",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/settings/rollback",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/site/settings/rollback-preview",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/site/settings/schema",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/social/events",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/social/events/export",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/social/events/stream",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/social/policies",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/social/policies/simulate",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/social/risk",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/social/risk/webhook-log",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/social/risk/webhook-metrics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/social/risk/webhook-test",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/subscriptions/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/subscriptions/users",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/system/metrics",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/system/release-status",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/users",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/users/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/vendor/pending",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/vendor/{id}/approve",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/vendor/{id}/reject",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/verifications",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/admin/verifications/{id}/approve",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/admin/verifications/{id}/reject",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/ai/recommendations",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/ai/similar",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/analytics/cohorts",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/analytics/dashboard",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/analytics/events",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/analytics/funnels",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/analytics/journeys",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/analytics/performance",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/analytics/predictions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/audit/log",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/auth/2fa/disable",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/auth/2fa/setup",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/auth/2fa/verify",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/auth/callback",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/auth/forgot-password",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/auth/login",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/auth/login/verify-2fa",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/auth/logout",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/auth/me",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/auth/oauth/authorize",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/auth/oauth/callback",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/auth/oauth/unlink",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/auth/register",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/auth/reset-password",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/auth/social/facebook",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/badges",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/badges/definitions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/billing/checkout",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/billing/webhook",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blocking",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blocking/check",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/admin",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/categories",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/comments",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/comments/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/comments/{id}/approve",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/comments/{id}/reject",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/posts",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/posts/{id}/revisions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/posts/{slug}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/reading-history",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/scheduled-posts",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/search",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/subscribe",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/blog/{id}/admin",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/business-metrics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/business/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/business/insights",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/business/trends",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/cache/stats",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/collab/sessions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/collections",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/collections/{id}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/collections/{id}/follow",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/collections/{id}/followers/check",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/collections/{id}/items",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/comments",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/comments/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/comments/{id}/vote",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/contact",
+      "tier": "P2",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/contact/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/content",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/content/{contentId}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/content/{contentId}/publish",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/coupons/validate",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/dashboards",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/dashboards/{dashboardId}/widgets",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/discovery/recommendations",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/discovery/similar",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/discovery/trending",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/docs",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/campaigns",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/campaigns/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/campaigns/{id}/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/campaigns/{id}/subscribers",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/preferences",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/queue",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/send-reset",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/send-review-response",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/send-subscription",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/send-subscription-notification",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/send-test",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/send-verification",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/send-welcome",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/templates",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/templates/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/track",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/email/unsubscribe",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/emails/process",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/errors/client",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/events/create",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/events/list",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/events/search",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/events/{id}/delete",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/events/{id}/details",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/events/{id}/rsvp",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/events/{id}/update",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/export-templates",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/export/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/export/audit-logs",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/export/user-data",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/favorites",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/favorites/bulk",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/favorites/{id}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/featured-listings",
+      "tier": "P2",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/featured-listings/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/featured-listings/{id}/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/feed",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/feed/activity",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/feed/users/{userId}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/files/access",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/files/upload",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/flags",
+      "tier": "P2",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/followers",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/followers/stats",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/followers/{id}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/following",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/following/check",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/following/unfollow",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/governance/dashboard",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/graphql",
+      "tier": "P2",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/hashtags",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/hashtags/{slug}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/health",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/health/detailed",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/health/schema-ready",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/historical-sites/create",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/historical-sites/{id}/delete",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/historical-sites/{id}/update",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/image/{path}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/kpi",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/kpi/{kpiId}/values",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/leaderboard",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/leaderboards",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/leaderboards/badges",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/leaderboards/users",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/legacy/search",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/legacy/trending",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/loyalty/achievements",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/loyalty/points",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/loyalty/rewards",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/loyalty/tiers",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/loyalty/transactions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/marketing-campaigns",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/marketing-campaigns/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/marketing-campaigns/{id}/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/marketing-campaigns/{id}/targeting",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/marketing/campaigns",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/marketing/campaigns/{id}/send",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/messages",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/messages/unread-count",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/messages/{conversationId}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/messages/{conversationId}/read",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/metrics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/metrics/performance",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/mobile/auth",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/mobile/places",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/monitoring/health",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/newsletter/subscribe",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/nlp/analyze",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications/center",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications/clear",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/notifications/draft",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/notifications/drafts",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications/drafts/{id}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications/history",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications/mark-all-read",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/notifications/preferences",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications/push/subscribe",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/notifications/read-all",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/notifications/send",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/notifications/sse",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications/stats",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications/subscribe",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/notifications/unsubscribe",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/notifications/vapid-key",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications/{id}",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/notifications/{id}/read",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/onboarding/complete-profile",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/onboarding/status",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/onboarding/verify-email",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/owner/analytics/place/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/owner/analytics/report/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/owner/analytics/reviews/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/owner/analytics/visitors/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/performance",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/photos/upload",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/photos/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/photos/{id}/featured",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/photos/{id}/vote",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places",
+      "tier": "P0",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/places/apply",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/submissions",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/submit",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/trending-followers",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/analytics",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/availability",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/badges",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/delete",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/follow",
+      "tier": "P0",
+      "methods": [
+        "DELETE",
+        "POST"
+      ]
+    },
+    {
+      "route": "/places/{id}/followers",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/like",
+      "tier": "P0",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/places/{id}/photos",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/promotions",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/rating-distribution",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/request-verification",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/places/{id}/review-analytics",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/share",
+      "tier": "P0",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/places/{id}/update",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/verification",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/places/{id}/visit",
+      "tier": "P0",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/points",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/points/add",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/points/history",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/predictions/trends",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/profile/change-password",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/profile/delete",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/profile/update",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/promotions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/promotions/create",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/promotions/search",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/promotions/validate",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/promotions/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/realtime/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/realtime/feed",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/realtime/messages",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/realtime/notifications",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/realtime/presence",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/recommendations",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/recommendations/hybrid",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/recommendations/users",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reports",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reports/submit",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reports/{reportId}/execute",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reports/{reportId}/export",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reservations",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reservations/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews/add",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews/post",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews/{id}/approve",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews/{id}/delete",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews/{id}/flag",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews/{id}/helpful",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews/{id}/reactions",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews/{id}/reject",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews/{id}/responses",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/reviews/{id}/vote",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/rewards",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/saglik/nobetci",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/search",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/search/advanced",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/search/history",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/search/history/{id}",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/search/recommendations",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/search/saved",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/search/suggestions",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/search/trending",
+      "tier": "P0",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/security/events",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/security/sessions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/seo/analyze",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/seo/metrics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/sitemap/dynamic",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/social/capabilities",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/social/events/stream",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/social/feed",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/social/follow",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/social/followers",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/social/follows",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/social/match-candidates",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/social/match-profile",
+      "tier": "P1",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/social/matches",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/social/messages",
+      "tier": "P1",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/social/messages/receipts",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/social/messages/stream",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/social/swipe",
+      "tier": "P1",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/social/trending",
+      "tier": "P1",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/sse/notifications",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/subscriptions/cancel",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/subscriptions/checkout",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/subscriptions/tiers",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/tenants",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/tenants/{tenantId}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/tenants/{tenantId}/features",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/tenants/{tenantId}/members",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/transport/status",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/trending",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/upload",
+      "tier": "P2",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/upload/{id}",
+      "tier": "P2",
+      "methods": [
+        "DELETE",
+        "PUT"
+      ]
+    },
+    {
+      "route": "/user/favorites",
+      "tier": "P2",
+      "methods": [
+        "DELETE",
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/user/features",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/user/following/places",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/user/loyalty",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/user/profile",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/user/quotas",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/user/subscription",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/user/subscription/billing",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/user/visits",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/2fa/disable",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/2fa/setup",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/2fa/status",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/2fa/verify",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/deletion/cancel",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/deletion/request",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/deletion/status",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/email-preferences",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/password",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/points-history",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/preferences",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/privacy",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/privacy/block",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/privacy/delete-account",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/privacy/mute",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/profile",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/resend-verification",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/saved-searches",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/saved-searches/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/search",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/settings",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/stats",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/stats/badges",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/suggestions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/trending",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/verify-email",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/{id}/activity-stats",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/{id}/badges",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/{id}/ban",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/{id}/delete",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/users/{id}/mentions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/{id}/profile",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/{id}/reputation",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/users/{id}/update-role",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/v1/places",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/v2/favorites",
+      "tier": "P2",
+      "methods": [
+        "DELETE",
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "route": "/v2/places",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/v2/users/me",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/vendor/onboarding/progress",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/vendor/onboarding/start",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/vendor/onboarding/step",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/version",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/voice/parse",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/warehouse/dimensions",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/warehouse/etl",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/warehouse/query",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/weather/current",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/weather/status",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/webhooks",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/webhooks/analytics",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/webhooks/audit",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/webhooks/filters",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/webhooks/logs",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/webhooks/replay",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/webhooks/retry",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/webhooks/settings",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/webhooks/stripe",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/webhooks/templates",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "route": "/webhooks/test",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/webhooks/trigger",
+      "tier": "P2",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "route": "/webhooks/{id}",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ]
+    }
+  ]
+}

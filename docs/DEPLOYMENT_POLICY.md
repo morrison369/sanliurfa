@@ -1,0 +1,8 @@
+# Deployment Policy
+
+- GitHub Actions kullanılmaz.
+- Deploy öncesi resmi yerel komut `npm run release:local` olur.
+- `release:local` başarısızsa deploy yapılmaz.
+- Secret değerleri repoya commit edilmez; `.env.local` local ve ignore kalır.
+- Release kanıtları `docs/RELEASE_STATUS.md`, `docs/local-gate-summary.md` ve `docs/ops-last-run.md` dosyalarından okunur.
+- Üretim öncesi en az şu sinyaller `ok/ready` olmalıdır: release status, OpenAPI route coverage, problem+json strict, critical pages quality, site doctor, security gates.

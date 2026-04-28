@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-28T22:07:28.542Z",
+  "generatedAt": "2026-04-28T22:12:37.136Z",
   "status": "ready",
   "checks": [
     {
@@ -15,6 +15,21 @@
     {
       "id": "critical-pages-policy",
       "artifact": "docs/CRITICAL_PAGES.md",
+      "status": "ok"
+    },
+    {
+      "id": "deployment-policy",
+      "artifact": "docs/DEPLOYMENT_POLICY.md",
+      "status": "ok"
+    },
+    {
+      "id": "openapi-route-tiers",
+      "artifact": "docs/openapi-route-tiers.json",
+      "status": "ok"
+    },
+    {
+      "id": "auth-log-standard",
+      "artifact": "docs/auth-log-standard-report.json",
       "status": "ok"
     },
     {
@@ -40,7 +55,7 @@
     }
   ],
   "totals": {
-    "ok": 7,
+    "ok": 10,
     "advisory": 0,
     "blocked": 0
   }

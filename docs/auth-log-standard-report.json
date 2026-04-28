@@ -1,0 +1,34 @@
+{
+  "generatedAt": "2026-04-28T22:11:01.668Z",
+  "status": "ok",
+  "checks": [
+    {
+      "id": "login-invalid-credentials-warn",
+      "file": "src/pages/api/auth/login.ts",
+      "status": "ok",
+      "detail": "Beklenen kullanıcı hatası olan yanlış e-posta/şifre warn seviyesinde loglanmalı."
+    },
+    {
+      "id": "login-unexpected-error",
+      "file": "src/pages/api/auth/login.ts",
+      "status": "ok",
+      "detail": "Beklenmeyen login hataları error seviyesinde kalmalı."
+    },
+    {
+      "id": "auth-flow-enumeration-safe-message",
+      "file": "src/lib/auth/auth-flows.ts",
+      "status": "ok",
+      "detail": "Kullanıcı yok, askıda/silinmiş kullanıcı ve yanlış şifre aynı mesajı döndürmeli."
+    },
+    {
+      "id": "auth-flow-redis-warning-once",
+      "file": "src/lib/auth/auth-flows.ts",
+      "status": "ok",
+      "detail": "Redis session cache sorunu spam üretmeden warn seviyesinde olmalı."
+    }
+  ],
+  "totals": {
+    "ok": 4,
+    "blocked": 0
+  }
+}

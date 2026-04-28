@@ -20,6 +20,8 @@ const problemJson = readJson('docs/problem-json-report.json');
 const imageManifest = readJson('public/images/image-manifest.json');
 const envDoctor = readJson('docs/env-doctor-report.json');
 const opsLastRun = readJson('docs/ops-last-run.json');
+const openapiTiers = readJson('docs/openapi-route-tiers.json');
+const authLogStandard = readJson('docs/auth-log-standard-report.json');
 
 const report = {
   generatedAt: new Date().toISOString(),
@@ -31,6 +33,9 @@ const report = {
   imageRecords: Array.isArray(imageManifest) ? imageManifest.length : 0,
   envDoctor: envDoctor?.status || 'missing',
   opsLastRun: opsLastRun?.status || 'not_run',
+  openapiTiers: openapiTiers?.status || 'missing',
+  openapiTierTotals: openapiTiers?.totals || null,
+  authLogStandard: authLogStandard?.status || 'missing',
 };
 
 writeFileSync(outJson, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
@@ -47,6 +52,8 @@ const lines = [
   `- Image Manifest Records: ${report.imageRecords}`,
   `- Env Doctor: ${report.envDoctor}`,
   `- Ops Last Run: ${report.opsLastRun}`,
+  `- OpenAPI Tiers: ${report.openapiTiers}`,
+  `- Auth Log Standard: ${report.authLogStandard}`,
   `- GitHub Actions: not used`,
   '',
   'Summary: Yerel release kanitlari tek dosyada toplandi.',
