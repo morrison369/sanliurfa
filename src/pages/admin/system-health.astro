@@ -57,6 +57,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       grid.innerHTML = '';
       grid.append(
         card('Release', release.releaseStatus?.status, `blocked=${release.releaseStatus?.blocked ?? '-'}, advisory=${release.releaseStatus?.advisory ?? '-'}`),
+        card('Release Evidence', release.releaseEvidence?.status, `ok=${release.releaseEvidence?.totals?.ok ?? '-'}, blocked=${release.releaseEvidence?.totals?.blocked ?? '-'}`),
         card('Env Doctor', release.envDoctor?.status, 'Yerel yapılandırma raporu'),
         card('Ops Last Run', release.opsLastRun?.status, release.opsLastRun?.finishedAt || ''),
         card('Site Doctor', release.siteDoctor?.status, 'DB-first artefact kontrolü'),
