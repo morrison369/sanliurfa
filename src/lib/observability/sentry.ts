@@ -18,7 +18,7 @@
 import { createHash } from 'node:crypto';
 import { logger } from '../logging';
 
-let sentryClient: typeof import('@sentry/node') | null = null;
+let sentryClient: typeof import('@sentry/astro') | null = null;
 let initialized = false;
 
 /**
@@ -36,57 +36,61 @@ export async function initSentry(): Promise<void> {
   }
 
   try {
-    const Sentry = await import('@sentry/node');
+    const Sentry = await import('@sentry/astro');
     const release = getSentryRelease();
     const environment = getSentryEnvironment();
 
-    Sentry.init({
-      dsn,
-      environment,
-      release,
-      tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-      initialScope: {
-        tags: {
-          app: 'sanliurfa',
-          runtime: 'astro-node',
+    if (!Sentry.isInitialized()) {
+      Sentry.init({
+        dsn,
+        environment,
+        release,
+        tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
+        initialScope: {
+          tags: {
+            app: 'sanliurfa',
+            runtime: 'astro-node',
+          },
         },
-      },
 
-      // PII / sensitive header strip
-      beforeSend(event) {
-        if (event.request?.headers) {
-          const h = event.request.headers as Record<string, string>;
-          delete h['authorization'];
-          delete h['cookie'];
-          delete h['x-csrf-token'];
-        }
-        if (event.user) {
-          const u = event.user as Record<string, unknown>;
-          if (typeof u.email === 'string') {
-            u.email = hashEmail(u.email);
+        // PII / sensitive header strip
+        beforeSend(event) {
+          if (event.request?.headers) {
+            const h = event.request.headers as Record<string, string>;
+            delete h.authorization;
+            delete h.Authorization;
+            delete h.cookie;
+            delete h.Cookie;
+            delete h['x-csrf-token'];
           }
-          delete u.ip_address;
-        }
-        return event;
-      },
+          if (event.user) {
+            const u = event.user as Record<string, unknown>;
+            if (typeof u.email === 'string') {
+              u.email = hashEmail(u.email);
+            }
+            delete u.ip_address;
+          }
+          return event;
+        },
 
-      // Browser/proxy noise
-      ignoreErrors: [
-        /^Non-Error promise rejection/,
-        /^ResizeObserver loop/,
-        /^Network request failed/,
-        /^Failed to fetch/,
-      ],
-      denyUrls: [
-        /extensions\//i,
-        /^chrome:\/\//i,
-        /^chrome-extension:\/\//i,
-        /^moz-extension:\/\//i,
-        /googletagmanager\.com/i,
-        /google-analytics\.com/i,
-        /facebook\.net/i,
-      ],
-    });
+        // Browser/proxy noise
+        ignoreErrors: [
+          /^Non-Error promise rejection/,
+          /^ResizeObserver loop/,
+          /^Network request failed/,
+          /^Failed to fetch/,
+        ],
+        denyUrls: [
+          /extensions\//i,
+          /^chrome:\/\//i,
+          /^chrome-extension:\/\//i,
+          /^moz-extension:\/\//i,
+          /googletagmanager\.com/i,
+          /google-analytics\.com/i,
+          /facebook\.net/i,
+        ],
+      });
+    }
 
     sentryClient = Sentry;
     logger.info('[sentry] Initialized', { environment, release });
