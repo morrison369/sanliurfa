@@ -1,6 +1,6 @@
 # OpenAPI Route Tiers
 
-- Generated At: 2026-04-28T23:03:37.197Z
+- Generated At: 2026-04-28T23:09:05.316Z
 - Status: ok
 - Total Routes: 458
 - P0: 83
