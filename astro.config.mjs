@@ -5,15 +5,10 @@ import react from '@astrojs/react';
 import partytown from '@astrojs/partytown';
 import icon from 'astro-icon';
 import compress from 'astro-compress';
-import sentry from '@sentry/astro';
 import tailwindcss from '@tailwindcss/vite';
 
 const site = process.env.SITE_URL || 'https://sanliurfa.com';
 const port = parseInt(process.env.PORT || '4321', 10);
-const sentryDsn = process.env.PUBLIC_SENTRY_DSN || process.env.SENTRY_DSN;
-const sentrySourceMapsEnabled = Boolean(
-  process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT,
-);
 
 // astro-compress: HTML/CSS/JS/SVG production sıkıştırma. SW dosyaları exclude
 // (workbox runtime hash compare bozulur).
@@ -119,19 +114,6 @@ export default defineConfig({
       REDIS_DB: envField.number({ context: 'server', access: 'public', optional: true }),
       REDIS_KEY_PREFIX: envField.string({ context: 'server', access: 'public', optional: true, default: 'sanliurfa:' }),
 
-
-      // Sentry observability (optional, SaaS or self-hosted; SENTRY_DSN yoksa silent skip)
-      SENTRY_DSN: envField.string({ context: 'server', access: 'secret', optional: true }),
-      SENTRY_RELEASE: envField.string({ context: 'server', access: 'public', optional: true }),
-      SENTRY_ENVIRONMENT: envField.string({ context: 'server', access: 'public', optional: true }),
-      SENTRY_AUTH_TOKEN: envField.string({ context: 'server', access: 'secret', optional: true }),
-      SENTRY_ORG: envField.string({ context: 'server', access: 'public', optional: true }),
-      SENTRY_PROJECT: envField.string({ context: 'server', access: 'public', optional: true }),
-      PUBLIC_SENTRY_DSN: envField.string({ context: 'client', access: 'public', optional: true }),
-      PUBLIC_SENTRY_RELEASE: envField.string({ context: 'client', access: 'public', optional: true }),
-      PUBLIC_SENTRY_ENVIRONMENT: envField.string({ context: 'client', access: 'public', optional: true }),
-      SENTRY_TEST_ERROR_ENABLED: envField.string({ context: 'server', access: 'public', optional: true }),
-
       // SMTP connection
       SMTP_HOST: envField.string({ context: 'server', access: 'public', optional: true }),
       SMTP_PORT: envField.number({ context: 'server', access: 'public', optional: true, default: 587 }),
@@ -175,28 +157,6 @@ export default defineConfig({
     port,
   }),
   integrations: [
-    ...(sentryDsn
-      ? [
-          sentry({
-            enabled: {
-              client: Boolean(process.env.PUBLIC_SENTRY_DSN),
-              server: Boolean(process.env.SENTRY_DSN || process.env.PUBLIC_SENTRY_DSN),
-            },
-            clientInitPath: './sentry.client.config.ts',
-            serverInitPath: './sentry.server.config.ts',
-            autoInstrumentation: {
-              requestHandler: true,
-            },
-            org: process.env.SENTRY_ORG,
-            project: process.env.SENTRY_PROJECT,
-            authToken: process.env.SENTRY_AUTH_TOKEN,
-            telemetry: false,
-            sourcemaps: {
-              disable: !sentrySourceMapsEnabled,
-            },
-          }),
-        ]
-      : []),
     react(),
     mdx(),
     {

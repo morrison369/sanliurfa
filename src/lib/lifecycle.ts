@@ -98,13 +98,3 @@ function registerSignalHandlers(): void {
 if (process.env.NODE_ENV !== 'test') {
   registerSignalHandlers();
 }
-
-/**
- * Boot-time observability bootstrap (Sentry).
- */
-if (process.env.NODE_ENV !== 'test') {
-  // Sentry init — SENTRY_DSN env varsa aktif, yoksa silent skip.
-  void import('./observability/sentry')
-    .then(({ initSentry }) => initSentry())
-    .catch((err) => logger.warn('[lifecycle] Sentry init skipped', { error: String(err) }));
-}

@@ -16,63 +16,17 @@ const { fallback = 'Bir hata oluştu. Lütfen sayfayı yenileyin.' } = Astro.pro
 </error-boundary>
 
 <script>
-  // Browser-side error boundary. PUBLIC_SENTRY_DSN env varsa Sentry'ye de gönder
-  // (lazy import — Sentry yoksa veya DSN tanımsızsa sadece console.error fallback).
-
-  let sentryClient: typeof import('@sentry/browser') | null = null;
-
-  async function initBrowserSentry() {
-    const dsn = import.meta.env.PUBLIC_SENTRY_DSN;
-    if (!dsn) return;
-    try {
-      const Sentry = await import('@sentry/browser');
-      const environment = import.meta.env.PUBLIC_SENTRY_ENVIRONMENT || import.meta.env.MODE;
-      const release = import.meta.env.PUBLIC_SENTRY_RELEASE || `sanliurfa@${import.meta.env.PUBLIC_APP_VERSION || '0.0.0'}`;
-
-      Sentry.init({
-        dsn,
-        environment,
-        release,
-        tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
-        initialScope: {
-          tags: {
-            app: 'sanliurfa',
-            runtime: 'astro-browser',
-          },
-        },
-        ignoreErrors: [
-          /^Non-Error promise rejection/,
-          /^ResizeObserver loop/,
-          /^Network request failed/,
-          /^Failed to fetch/,
-        ],
-        denyUrls: [
-          /extensions\//i,
-          /^chrome:\/\//i,
-          /^moz-extension:\/\//i,
-        ],
-      });
-      sentryClient = Sentry;
-    } catch {
-      // Sentry pkg yüklenemezse silent skip
-    }
-  }
-
   class ErrorBoundary extends HTMLElement {
     connectedCallback() {
       const fallback = this.dataset.fallback || 'Bir hata oluştu.';
 
-      void initBrowserSentry();
-
       window.addEventListener('error', (event) => {
         console.error('[ErrorBoundary] window error:', event.error);
-        sentryClient?.captureException(event.error);
         this.showError(fallback);
       });
 
       window.addEventListener('unhandledrejection', (event) => {
         console.error('[ErrorBoundary] unhandled rejection:', event.reason);
-        sentryClient?.captureException(event.reason);
         this.showError(fallback);
       });
     }

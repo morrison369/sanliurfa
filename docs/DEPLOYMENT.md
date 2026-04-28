@@ -101,7 +101,6 @@ SMTP_PORT=587
 ELASTICSEARCH_URL=http://elasticsearch:9200
 
 # Monitoring
-SENTRY_DSN=https://xxx@sentry.io/xxx
 DATADOG_API_KEY=xxx
 ```
 

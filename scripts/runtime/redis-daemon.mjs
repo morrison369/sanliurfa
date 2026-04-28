@@ -12,6 +12,7 @@ const dataDir = path.join(runtimeDir, 'data');
 const pidFile = path.join(runtimeDir, 'redis.pid');
 const confFile = path.join(runtimeDir, 'redis.conf');
 const logFile = path.join(runtimeDir, 'redis.log');
+const defaultRedisPort = process.env.REDIS_PORT || (path.basename(root) === 'public-worktree-sync' ? '6382' : '6381');
 
 function loadDotEnv() {
   const envFile = path.join(root, '.env');
@@ -31,9 +32,9 @@ function loadDotEnv() {
 function getRedisUrl() {
   if (process.env.REDIS_URL) return process.env.REDIS_URL;
   if (process.env.REDIS_PASSWORD) {
-    return `redis://:${encodeURIComponent(process.env.REDIS_PASSWORD)}@127.0.0.1:6381`;
+    return `redis://:${encodeURIComponent(process.env.REDIS_PASSWORD)}@127.0.0.1:${defaultRedisPort}`;
   }
-  return 'redis://127.0.0.1:6381';
+  return `redis://127.0.0.1:${defaultRedisPort}`;
 }
 
 function getRedisTarget() {
@@ -41,7 +42,7 @@ function getRedisTarget() {
   return {
     url: url.toString(),
     host: url.hostname || '127.0.0.1',
-    port: Number(url.port || process.env.REDIS_PORT || 6381),
+    port: Number(url.port || defaultRedisPort),
     password: decodeURIComponent(url.password || process.env.REDIS_PASSWORD || ''),
   };
 }

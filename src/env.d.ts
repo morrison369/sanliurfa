@@ -14,9 +14,6 @@ interface ImportMetaEnv {
   readonly GOOGLE_ANALYTICS_ID?: string;
   readonly PUBLIC_VAPID_PUBLIC_KEY?: string;
   readonly PUBLIC_APP_URL?: string;
-  readonly PUBLIC_SENTRY_DSN?: string;
-  readonly PUBLIC_SENTRY_RELEASE?: string;
-  readonly PUBLIC_SENTRY_ENVIRONMENT?: string;
   readonly PUBLIC_APP_VERSION?: string;
   readonly PORT?: string;
   readonly NODE_ENV?: string;
@@ -57,9 +54,6 @@ declare namespace NodeJS {
     readonly REDIS_KEY_PREFIX?: string;
     readonly SITE_URL?: string;
     readonly PUBLIC_SITE_URL?: string;
-    readonly SENTRY_DSN?: string;
-    readonly SENTRY_RELEASE?: string;
-    readonly SENTRY_ENVIRONMENT?: string;
     readonly NODE_ENV?: string;
     readonly PORT?: string;
     readonly SMTP_HOST?: string;
