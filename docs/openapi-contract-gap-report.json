@@ -1,17 +1,17 @@
 {
-  "generatedAt": "2026-04-28T23:19:23.894Z",
+  "generatedAt": "2026-04-28T23:23:50.350Z",
   "status": "ok",
   "totals": {
     "P1": 65,
     "P2": 310,
     "coveredP1": 65,
-    "coveredP2": 76,
+    "coveredP2": 106,
     "gapP1": 0,
-    "gapP2": 234
+    "gapP2": 204
   },
   "topPriority": [
     {
-      "route": "/analytics/events",
+      "route": "/business/trends",
       "tier": "P2",
       "methods": [
         "GET"
@@ -19,7 +19,7 @@
       "contract": null
     },
     {
-      "route": "/analytics/funnels",
+      "route": "/cache/stats",
       "tier": "P2",
       "methods": [
         "GET"
@@ -27,7 +27,7 @@
       "contract": null
     },
     {
-      "route": "/analytics/journeys",
+      "route": "/collab/sessions",
       "tier": "P2",
       "methods": [
         "GET"
@@ -35,7 +35,7 @@
       "contract": null
     },
     {
-      "route": "/analytics/performance",
+      "route": "/comments",
       "tier": "P2",
       "methods": [
         "GET"
@@ -43,7 +43,7 @@
       "contract": null
     },
     {
-      "route": "/analytics/predictions",
+      "route": "/comments/{id}",
       "tier": "P2",
       "methods": [
         "GET"
@@ -51,7 +51,7 @@
       "contract": null
     },
     {
-      "route": "/audit/log",
+      "route": "/comments/{id}/vote",
       "tier": "P2",
       "methods": [
         "GET"
@@ -59,31 +59,16 @@
       "contract": null
     },
     {
-      "route": "/badges",
+      "route": "/contact",
       "tier": "P2",
       "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/badges/definitions",
-      "tier": "P2",
-      "methods": [
-        "GET"
-      ],
-      "contract": null
-    },
-    {
-      "route": "/billing/checkout",
-      "tier": "P2",
-      "methods": [
+        "GET",
         "POST"
       ],
       "contract": null
     },
     {
-      "route": "/billing/webhook",
+      "route": "/contact/{id}",
       "tier": "P2",
       "methods": [
         "GET"
@@ -91,7 +76,7 @@
       "contract": null
     },
     {
-      "route": "/blocking",
+      "route": "/content",
       "tier": "P2",
       "methods": [
         "GET"
@@ -99,7 +84,7 @@
       "contract": null
     },
     {
-      "route": "/blocking/check",
+      "route": "/content/{contentId}",
       "tier": "P2",
       "methods": [
         "GET"
@@ -107,7 +92,7 @@
       "contract": null
     },
     {
-      "route": "/blog/{id}/admin",
+      "route": "/content/{contentId}/publish",
       "tier": "P2",
       "methods": [
         "GET"
@@ -115,7 +100,7 @@
       "contract": null
     },
     {
-      "route": "/blog/admin",
+      "route": "/coupons/validate",
       "tier": "P2",
       "methods": [
         "GET"
@@ -123,7 +108,7 @@
       "contract": null
     },
     {
-      "route": "/blog/analytics",
+      "route": "/dashboards",
       "tier": "P2",
       "methods": [
         "GET"
@@ -131,7 +116,7 @@
       "contract": null
     },
     {
-      "route": "/blog/categories",
+      "route": "/dashboards/{dashboardId}/widgets",
       "tier": "P2",
       "methods": [
         "GET"
@@ -139,7 +124,7 @@
       "contract": null
     },
     {
-      "route": "/blog/comments",
+      "route": "/discovery/recommendations",
       "tier": "P2",
       "methods": [
         "GET"
@@ -147,7 +132,7 @@
       "contract": null
     },
     {
-      "route": "/blog/comments/{id}",
+      "route": "/discovery/similar",
       "tier": "P2",
       "methods": [
         "GET"
@@ -155,7 +140,7 @@
       "contract": null
     },
     {
-      "route": "/blog/comments/{id}/approve",
+      "route": "/discovery/trending",
       "tier": "P2",
       "methods": [
         "GET"
@@ -163,7 +148,7 @@
       "contract": null
     },
     {
-      "route": "/blog/comments/{id}/reject",
+      "route": "/docs",
       "tier": "P2",
       "methods": [
         "GET"
@@ -171,7 +156,7 @@
       "contract": null
     },
     {
-      "route": "/blog/posts",
+      "route": "/email/campaigns",
       "tier": "P2",
       "methods": [
         "GET"
@@ -179,7 +164,7 @@
       "contract": null
     },
     {
-      "route": "/blog/posts/{id}/revisions",
+      "route": "/email/campaigns/{id}",
       "tier": "P2",
       "methods": [
         "GET"
@@ -187,7 +172,7 @@
       "contract": null
     },
     {
-      "route": "/blog/posts/{slug}",
+      "route": "/email/campaigns/{id}/analytics",
       "tier": "P2",
       "methods": [
         "GET"
@@ -195,7 +180,7 @@
       "contract": null
     },
     {
-      "route": "/blog/reading-history",
+      "route": "/email/campaigns/{id}/subscribers",
       "tier": "P2",
       "methods": [
         "GET"
@@ -203,7 +188,7 @@
       "contract": null
     },
     {
-      "route": "/blog/scheduled-posts",
+      "route": "/email/preferences",
       "tier": "P2",
       "methods": [
         "GET"
@@ -211,7 +196,7 @@
       "contract": null
     },
     {
-      "route": "/blog/search",
+      "route": "/email/queue",
       "tier": "P2",
       "methods": [
         "GET"
@@ -219,7 +204,7 @@
       "contract": null
     },
     {
-      "route": "/blog/subscribe",
+      "route": "/email/send-reset",
       "tier": "P2",
       "methods": [
         "GET"
@@ -227,7 +212,7 @@
       "contract": null
     },
     {
-      "route": "/business-metrics",
+      "route": "/email/send-review-response",
       "tier": "P2",
       "methods": [
         "GET"
@@ -235,7 +220,7 @@
       "contract": null
     },
     {
-      "route": "/business/analytics",
+      "route": "/email/send-subscription",
       "tier": "P2",
       "methods": [
         "GET"
@@ -243,7 +228,23 @@
       "contract": null
     },
     {
-      "route": "/business/insights",
+      "route": "/email/send-subscription-notification",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/email/send-test",
+      "tier": "P2",
+      "methods": [
+        "GET"
+      ],
+      "contract": null
+    },
+    {
+      "route": "/email/send-verification",
       "tier": "P2",
       "methods": [
         "GET"
