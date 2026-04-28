@@ -15,6 +15,17 @@ function run(cmd, env = process.env) {
   }
 }
 
+function cleanup(cmd) {
+  const result = spawnSync(cmd, {
+    shell: true,
+    stdio: 'inherit',
+    env: process.env,
+  });
+  if (result.status !== 0 && process.exitCode !== 1) {
+    process.exitCode = 1;
+  }
+}
+
 try {
   run('npm run -s dev:isolated:ensure');
   run('node scripts/smoke/social-place-phase1.mjs', {
@@ -23,5 +34,8 @@ try {
   });
 } catch (error) {
   console.error(`[social-core-gate] ${error instanceof Error ? error.message : 'unknown error'}`);
-  process.exit(1);
+  process.exitCode = 1;
+} finally {
+  cleanup('npm run -s dev:isolated:stop');
+  cleanup('npm run -s redis:isolated:stop');
 }
