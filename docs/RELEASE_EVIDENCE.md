@@ -1,6 +1,6 @@
 # Release Evidence
 
-- Generated At: 2026-04-28T22:27:20.903Z
+- Generated At: 2026-04-28T22:31:24.031Z
 - Status: ready
 - Max Age Hours: 72
 - OK: 12
@@ -9,12 +9,12 @@
 
 | Check | Status | Reported Status | Age Hours | Artifact |
 |---|---|---|---:|---|
-| release-status | ok | ready | 0.05 | `docs/release-status.json` |
+| release-status | ok | ready | 0.07 | `docs/release-status.json` |
 | local-gate-summary | ok | ready | 0 | `docs/local-gate-summary.json` |
 | release-readiness | ok | ready | 0 | `docs/release-readiness.json` |
 | site-doctor | ok | ready | 0.02 | `docs/site-doctor-report.json` |
 | openapi-p0 | ok | metric-only | 0.03 | `docs/openapi-p0-closure-report.json` |
-| openapi-tiers | ok | ok | 0.03 | `docs/openapi-route-tiers.json` |
+| openapi-tiers | ok | ok | 0.02 | `docs/openapi-route-tiers.json` |
 | problem-json | ok | metric-only | 0 | `docs/problem-json-report.json` |
 | auth-log-standard | ok | ok | 0.05 | `docs/auth-log-standard-report.json` |
 | env-doctor | ok | ok | 0.05 | `docs/env-doctor-report.json` |
