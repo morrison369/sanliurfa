@@ -15,7 +15,7 @@ const items = [
  { href: '/', label: 'Ana', icon: 'lucide:home', match: (p: string) => p === '/' },
  { href: '/mekanlar', label: 'Mekanlar', icon: 'lucide:map-pin', match: (p: string) => p.startsWith('/mekanlar') || p.startsWith('/isletme') },
  { href: '/eslesme', label: 'Eşleşme', icon: 'lucide:heart', match: (p: string) => p.startsWith('/eslesme') },
- { href: isAuthenticated ? '/profil/bildirimler' : '/giris?redirect=/profil/bildirimler', label: 'Bildirim', icon: 'lucide:bell', match: (p: string) => p.startsWith('/profil/bildirimler') },
+ { href: isAuthenticated ? '/akis' : '/giris?redirect=/akis', label: 'Akış', icon: 'lucide:activity', match: (p: string) => p.startsWith('/akis') },
  { href: isAuthenticated ? '/profil' : '/giris', label: isAuthenticated ? 'Profil' : 'Giriş', icon: isAuthenticated ? 'lucide:user' : 'lucide:log-in', match: (p: string) => p.startsWith('/profil') || p.startsWith('/giris') },
 ];
 ---

@@ -88,24 +88,26 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     }
 
     // Build query - get activity from followed users
+    // Tables: user_activities (canonical, logActivity yazıyor) + user_follows (53 row)
     let sql = `
       SELECT
         ua.id,
         ua.user_id,
-        ua.action_type,
-        ua.reference_type,
-        ua.reference_id,
+        COALESCE(ua.type, ua.activity_type) AS action_type,
+        COALESCE(ua.entity_type, ua.object_type) AS reference_type,
+        COALESCE(ua.entity_id::text, ua.object_id::text) AS reference_id,
         ua.metadata,
         ua.created_at,
         u.full_name,
         u.username,
         u.avatar_url,
-        u.level
-      FROM user_activity ua
+        COALESCE(u.level, 0) AS level
+      FROM user_activities ua
       INNER JOIN users u ON ua.user_id = u.id
-      INNER JOIN followers f ON ua.user_id = f.following_id
+      INNER JOIN user_follows f ON ua.user_id = f.following_id
       WHERE f.follower_id = $1
         AND ua.created_at > NOW() - INTERVAL '30 days'
+        AND COALESCE(ua.visibility, 'public') = 'public'
     `;
 
     const params: Array<string | number> = [user.id];
@@ -118,7 +120,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       badges: 'badge_earned',
     };
     if (filter !== 'all' && filterActionMap[filter]) {
-      sql += ` AND ua.action_type = $${params.length + 1}`;
+      sql += ` AND COALESCE(ua.type, ua.activity_type) = $${params.length + 1}`;
       params.push(filterActionMap[filter]);
     }
 
