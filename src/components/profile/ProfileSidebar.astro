@@ -19,7 +19,7 @@
 import { Icon } from 'astro-icon/components';
 
 export type ProfileNavKey =
- | 'profile' | 'reviews' | 'favorites' | 'notifications' | 'activity' | 'settings' | 'fotolar';
+ | 'profile' | 'reviews' | 'favorites' | 'notifications' | 'activity' | 'settings' | 'fotolar' | 'vendor-panel' | 'vendor-reviews';
 
 interface Props {
  activeKey: ProfileNavKey;
@@ -30,8 +30,10 @@ interface Props {
 }
 
 const { activeKey, reviewCount, favoritesCount, unreadCount, showLogout = false } = Astro.props;
+const _user = Astro.locals.user;
+const isVendor = _user?.role === 'vendor' || _user?.role === 'admin';
 
-const links: Array<{ key: ProfileNavKey; href: string; icon: string; label: string }> = [
+const baseLinks: Array<{ key: ProfileNavKey; href: string; icon: string; label: string }> = [
  { key: 'profile', href: '/profil', icon: 'user', label: 'Profil' },
  { key: 'reviews', href: '/profil/yorumlar', icon: 'star', label: reviewCount !== undefined ? `Yorumlarım (${reviewCount})` : 'Yorumlarım' },
  { key: 'favorites', href: '/profil/favoriler', icon: 'heart', label: favoritesCount !== undefined ? `Favorilerim (${favoritesCount})` : 'Favorilerim' },
@@ -40,6 +42,13 @@ const links: Array<{ key: ProfileNavKey; href: string; icon: string; label: stri
  { key: 'activity', href: '/profil/aktivite', icon: 'activity', label: 'Aktivite' },
  { key: 'settings', href: '/profil/ayarlar', icon: 'settings', label: 'Ayarlar' },
 ];
+
+const vendorLinks: Array<{ key: ProfileNavKey; href: string; icon: string; label: string }> = isVendor ? [
+ { key: 'vendor-panel', href: '/isletme/panel', icon: 'store', label: 'İşletme Paneli' },
+ { key: 'vendor-reviews', href: '/vendor/yorumlar', icon: 'message-square', label: 'İşletme Yorumları' },
+] : [];
+
+const links = [...baseLinks, ...vendorLinks];
 
 function linkClass(key: ProfileNavKey): string {
  const base = 'flex items-center gap-2 p-2 rounded-sm transition-colors';

@@ -73,19 +73,19 @@ export async function getUserStats(userId: string): Promise<UserStats | null> {
 
     // Get favorites count
     const favorites = await queryOne(
-      'SELECT COUNT(*) as count FROM favorites WHERE user_id = $1',
+      'SELECT COUNT(*) as count FROM user_favorites WHERE user_id = $1',
       [userId]
     );
 
-    // Get followers count
+    // Get followers count (user_follows canonical, 53 row)
     const followers = await queryOne(
-      'SELECT COUNT(*) as count FROM followers WHERE following_id = $1',
+      'SELECT COUNT(*) as count FROM user_follows WHERE following_id = $1',
       [userId]
     );
 
     // Get following count
     const following = await queryOne(
-      'SELECT COUNT(*) as count FROM followers WHERE follower_id = $1',
+      'SELECT COUNT(*) as count FROM user_follows WHERE follower_id = $1',
       [userId]
     );
 

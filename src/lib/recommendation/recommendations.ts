@@ -32,7 +32,7 @@ class RecommendationEngine {
         pool.query(
           `SELECT DISTINCT place_id::text FROM reviews WHERE user_id = $1
            UNION
-           SELECT DISTINCT place_id::text FROM favorites WHERE user_id = $1`,
+           SELECT DISTINCT place_id::text FROM user_favorites WHERE user_id = $1`,
           [userId]
         ),
         pool.query(
@@ -140,8 +140,9 @@ class RecommendationEngine {
     metadata?: Record<string, any>
   ): Promise<void> {
     try {
+      // user_activities canonical (logActivity ile uyumlu); kolon: type (action değil)
       await pool.query(
-        `INSERT INTO user_activity (user_id, entity_type, entity_id, action, metadata, created_at)
+        `INSERT INTO user_activities (user_id, entity_type, entity_id, type, metadata, created_at)
          VALUES ($1, 'place', $2, $3, $4, NOW())
          ON CONFLICT DO NOTHING`,
         [userId, placeId, action, metadata ? JSON.stringify(metadata) : null]
