@@ -4,6 +4,7 @@ import { Icon } from 'astro-icon/components';
 import PublicDetailBody from '../../components/public/PublicDetailBody.astro';
 import PublicDetailHero from '../../components/public/PublicDetailHero.astro';
 import FavoriteButton from '../../components/places/FavoriteButton.astro';
+import ReservationWidget from '../../components/places/ReservationWidget.astro';
 import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
 import PublicInfoRows from '../../components/public/PublicInfoRows.astro';
@@ -370,6 +371,15 @@ const contactRows = [
     </div>
 
     <Fragment slot="sidebar">
+     {place.accepts_reservations && (
+      <ReservationWidget
+        placeId={place.id}
+        placeSlug={slug}
+        acceptsReservations={place.accepts_reservations}
+        isAuthenticated={isAuthenticated}
+      />
+     )}
+
      <PublicSidebarCard title="İletişim & Konum">
       <PublicInfoRows rows={contactRows} />
      </PublicSidebarCard>

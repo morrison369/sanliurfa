@@ -1,0 +1,152 @@
+---
+/**
+ * Reservation Widget — sade rezervasyon formu place detail için.
+ *
+ * Audit Priority #18: place_reservation_settings + reservations tablosu var
+ * ama UI yoktu. Bu widget temel rezervasyon akışı sağlar.
+ *
+ * Backend: POST /api/reservations { placeId, reservation_date, reservation_time, party_size, customer_phone, special_requests }
+ *
+ * Auth: Login user için inline form, anonymous için login redirect.
+ */
+interface Props {
+  placeId: string;
+  placeSlug: string | undefined;
+  acceptsReservations?: boolean | null;
+  isAuthenticated: boolean;
+  userPhone?: string | null;
+}
+
+const { placeId, placeSlug, acceptsReservations, isAuthenticated, userPhone } = Astro.props;
+
+if (!acceptsReservations) return null;
+
+const minDate = new Date();
+minDate.setDate(minDate.getDate() + 1);
+const maxDate = new Date();
+maxDate.setDate(maxDate.getDate() + 60);
+const minDateStr = minDate.toISOString().slice(0, 10);
+const maxDateStr = maxDate.toISOString().slice(0, 10);
+---
+
+<div class="rsv">
+  <header class="rsv-head">
+    <span class="rsv-icon" aria-hidden="true">🍽️</span>
+    <div>
+      <h3 class="rsv-title">Rezervasyon Yap</h3>
+      <p class="rsv-desc">Online masa ayırtın, onay e-postası alın.</p>
+    </div>
+  </header>
+
+  {!isAuthenticated ? (
+    <a href={`/giris?redirect=/isletme/${placeSlug}`} class="rsv-cta">
+      Rezervasyon için giriş yap
+    </a>
+  ) : (
+    <form class="rsv-form" data-place-id={placeId} onsubmit="return window.__sfReserve(event, this)">
+      <div class="rsv-msg" data-rsv-msg hidden></div>
+      <div class="rsv-fields">
+        <div class="rsv-row">
+          <label class="rsv-field">
+            <span class="rsv-lbl">Tarih</span>
+            <input type="date" name="reservation_date" required min={minDateStr} max={maxDateStr} class="rsv-input" />
+          </label>
+          <label class="rsv-field">
+            <span class="rsv-lbl">Saat</span>
+            <input type="time" name="reservation_time" required value="19:00" class="rsv-input" />
+          </label>
+        </div>
+        <div class="rsv-row">
+          <label class="rsv-field">
+            <span class="rsv-lbl">Kişi</span>
+            <select name="party_size" required class="rsv-input">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 10, 12].map((n) => <option value={n} selected={n === 2}>{n}</option>)}
+            </select>
+          </label>
+          <label class="rsv-field">
+            <span class="rsv-lbl">Telefon</span>
+            <input type="tel" name="customer_phone" required value={userPhone || ''} placeholder="5XX XXX XX XX" class="rsv-input" />
+          </label>
+        </div>
+        <label class="rsv-field">
+          <span class="rsv-lbl">Özel istekler (opsiyonel)</span>
+          <textarea name="special_requests" rows="2" maxlength="300" placeholder="Doğum günü, alerji, masa tercihi..." class="rsv-input"></textarea>
+        </label>
+        <button type="submit" class="rsv-submit">Rezervasyon Talebi Gönder</button>
+        <p class="rsv-note">İşletme onayı sonrası e-posta gelir.</p>
+      </div>
+    </form>
+  )}
+</div>
+
+<style>
+  .rsv { background: linear-gradient(135deg, #fff 0%, #fdf5e8 100%); border: 1px solid rgba(192, 87, 31, 0.2); border-radius: 10px; padding: 1.2rem 1.3rem; }
+  .rsv-head { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1rem; padding-bottom: 0.85rem; border-bottom: 1px solid rgba(192, 87, 31, 0.12); }
+  .rsv-icon { font-size: 1.6rem; }
+  .rsv-title { margin: 0; font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 700; color: #1F1410; }
+  .rsv-desc { margin: 0; font-size: 0.78rem; color: #7A6B58; }
+  .rsv-cta { display: inline-block; padding: 0.7rem 1.25rem; background: linear-gradient(135deg, #C0571F 0%, #9F4717 100%); color: #fff; text-decoration: none; border-radius: 5px; font-size: 0.85rem; font-weight: 700; text-align: center; width: 100%; box-sizing: border-box; }
+  .rsv-form { display: flex; flex-direction: column; gap: 0.5rem; }
+  .rsv-fields { display: flex; flex-direction: column; gap: 0.7rem; }
+  .rsv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; }
+  .rsv-field { display: flex; flex-direction: column; gap: 0.2rem; }
+  .rsv-lbl { font-size: 0.72rem; font-weight: 700; color: #4A3C2E; }
+  .rsv-input { padding: 0.5rem 0.65rem; border: 1px solid rgba(192, 87, 31, 0.25); border-radius: 4px; background: #fff; font-size: 0.85rem; color: #1F1410; font-family: inherit; }
+  .rsv-input:focus { outline: none; border-color: #C0571F; }
+  .rsv-submit { margin-top: 0.4rem; padding: 0.7rem 1rem; background: linear-gradient(135deg, #C0571F 0%, #9F4717 100%); color: #fff; border: none; border-radius: 5px; font-size: 0.86rem; font-weight: 700; cursor: pointer; }
+  .rsv-submit:hover { opacity: 0.92; }
+  .rsv-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+  .rsv-note { margin: 0; font-size: 0.7rem; color: #7A6B58; text-align: center; }
+  .rsv-msg { background: #dcf5e2; border: 1px solid #2C7A52; border-radius: 6px; padding: 1rem; text-align: center; color: #1d5e3c; font-size: 0.85rem; line-height: 1.55; }
+</style>
+
+<script is:inline>
+  window.__sfReserve = async (e, form) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    const data = Object.fromEntries(new FormData(form));
+    data.placeId = form.dataset.placeId;
+    data.party_size = parseInt(data.party_size, 10);
+    btn.disabled = true;
+    btn.textContent = 'Gönderiliyor...';
+    try {
+      const res = await fetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (res.ok) {
+        const result = await res.json();
+        // Safe DOM: textContent only (XSS-safe)
+        const fields = form.querySelector('.rsv-fields');
+        const msg = form.querySelector('[data-rsv-msg]');
+        if (fields) fields.style.display = 'none';
+        if (msg) {
+          msg.hidden = false;
+          const strong = document.createElement('strong');
+          strong.textContent = '✓ Rezervasyon talebi alındı';
+          const br = document.createElement('br');
+          const span = document.createElement('span');
+          span.style.fontSize = '.82rem';
+          let text = 'İşletme size en kısa sürede onay e-postası gönderecek.';
+          if (result && result.data && result.data.confirmation_code) {
+            text += ' Onay kodu: ' + String(result.data.confirmation_code);
+          }
+          span.textContent = text;
+          msg.innerHTML = ''; // clear once
+          msg.appendChild(strong);
+          msg.appendChild(br);
+          msg.appendChild(span);
+        }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error || err?.detail || 'Rezervasyon gönderilemedi');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Rezervasyon Talebi Gönder';
+      alert('Hata: ' + (err.message || err));
+    }
+    return false;
+  };
+</script>
