@@ -59,7 +59,7 @@ const PUBLIC_PATHS = [
   '/api/contact', '/api/reviews', '/api/hashtags', '/api/leaderboards',
   '/api/saglik/nobetci', '/api/places/apply',
   '/api/security/csp-report',
-  '/isletme-kayit', '/ara',
+  '/isletme-kayit', '/etkinlik-ekle', '/ara',
   '/kullanicilar', '/trend', '/siralamalar', '/liderlik-tablosu', '/oneriler',
   '/sitemap.xml', '/sitemap-pages.xml', '/sitemap-categories.xml', '/sitemap-ilceler.xml',
   '/sitemap-places.xml', '/sitemap-historical.xml', '/sitemap-blog.xml',

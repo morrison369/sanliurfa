@@ -26,6 +26,7 @@ import {
 } from '../lib/auth/password-reset';
 import { getPublicAppUrl } from '../lib/public-app-url';
 import { submitPlaceApplication } from '../lib/places/place-application';
+import { submitEventApplication } from '../lib/events/event-application';
 import { moderateReview } from '../lib/review/admin-review-moderation';
 import { submitPlaceReview } from '../lib/review/review-submission';
 import {
@@ -305,6 +306,48 @@ export const server = {
         throw new ActionError({
           code: 'BAD_REQUEST',
           message: safeErrorDetail(error, 'Başvuru gönderilemedi.'),
+        });
+      }
+    },
+  }),
+
+  submitEventApplication: defineAction({
+    accept: 'form',
+    input: z.object({
+      title: z.string().trim().min(4, 'Etkinlik başlığı en az 4 karakter olmalı.'),
+      description: z.string().trim().min(50, 'Açıklama en az 50 karakter olmalı.'),
+      category: z.string().trim().max(100).optional(),
+      location: z.string().trim().max(500).optional(),
+      start_date: z.string().trim().min(1, 'Başlangıç tarihi seçin.'),
+      end_date: z.string().trim().optional(),
+      organizer_name: z.string().trim().min(2, 'Ad soyad en az 2 karakter olmalı.'),
+      organizer_email: emailSchema,
+      organizer_phone: z.string().trim().optional(),
+      contact_url: z.string().trim().optional(),
+      ticket_url: z.string().trim().optional(),
+      is_free: z.string().trim().optional(),
+    }),
+    handler: async (input, context) => {
+      try {
+        return await submitEventApplication({
+          title: input.title,
+          description: input.description,
+          category: input.category || null,
+          location: input.location || null,
+          startDate: input.start_date,
+          endDate: input.end_date || null,
+          organizerName: input.organizer_name,
+          organizerEmail: input.organizer_email,
+          organizerPhone: input.organizer_phone || null,
+          contactUrl: input.contact_url || null,
+          ticketUrl: input.ticket_url || null,
+          isFree: input.is_free === 'on' || input.is_free === 'true' || input.is_free === undefined,
+          authenticatedUserId: context.locals.user?.id || null,
+        });
+      } catch (error) {
+        throw new ActionError({
+          code: 'BAD_REQUEST',
+          message: safeErrorDetail(error, 'Etkinlik önerisi gönderilemedi.'),
         });
       }
     },

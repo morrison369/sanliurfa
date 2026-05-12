@@ -1,0 +1,214 @@
+---
+import { Icon } from 'astro-icon/components';
+import Layout from '../layouts/Layout.astro';
+import { actions, isInputError } from 'astro:actions';
+import { getPublicAppUrl } from '../lib/public-app-url';
+
+const baseUrl = getPublicAppUrl();
+const user = Astro.locals.user;
+const isAuthenticated = !!user;
+
+const seo = {
+  title: 'Şanlıurfa Etkinlik Öner | Sanliurfa.com',
+  description: 'Şanlıurfa\'da düzenlenecek konser, festival, sergi veya kültürel etkinliği takvime ekleyin. Üyeler için ücretsiz.',
+  keywords: ['şanlıurfa etkinlik ekle', 'urfa etkinlik öner', 'konser ekle', 'festival ekle', 'sanliurfa kültür sanat'],
+  ogImage: '/images/places/balikligol.jpg',
+  canonical: '/etkinlik-ekle',
+};
+
+const result = Astro.getActionResult(actions.submitEventApplication);
+const inputErrors = isInputError(result?.error) ? result.error.fields : {};
+const submitError = !isInputError(result?.error) && result?.error?.message;
+const successData = result?.data;
+---
+
+<Layout seo={seo}>
+  <style is:inline>
+    .ee-hero{background:linear-gradient(135deg,#0F0A06 0%,#1F1410 100%);padding:3.5rem 0 2.5rem;color:#FBF6EC}
+    .ee-hero h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:700;margin:0 0 .6rem;color:#fff}
+    .ee-hero p{font-size:1rem;line-height:1.6;color:rgba(255,255,255,.7);max-width:42rem}
+    .ee-body{background:var(--bg);padding:2.5rem 0 5rem}
+    .ee-grid{display:grid;grid-template-columns:2fr 1fr;gap:2rem;align-items:start}
+    @media (max-width:900px){.ee-grid{grid-template-columns:1fr}}
+    .ee-form{background:#fff;border:1px solid rgba(192,87,31,.14);border-radius:8px;padding:1.5rem}
+    .ee-form-row{margin-bottom:1.1rem}
+    .ee-lbl{display:block;font-size:.82rem;font-weight:700;color:#1F1410;margin-bottom:.35rem}
+    .ee-lbl-req::after{content:" *";color:#C0571F}
+    .ee-input,.ee-textarea,.ee-select{width:100%;padding:.65rem .85rem;border:1px solid rgba(192,87,31,.28);border-radius:5px;background:#fdfcfa;font-size:.92rem;color:#1F1410;font-family:inherit;line-height:1.5}
+    .ee-input:focus,.ee-textarea:focus,.ee-select:focus{outline:none;border-color:#C0571F;background:#fff}
+    .ee-textarea{resize:vertical;min-height:5rem}
+    .ee-row2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    @media (max-width:600px){.ee-row2{grid-template-columns:1fr}}
+    .ee-help{font-size:.74rem;color:#7A6B58;margin-top:.25rem;line-height:1.4}
+    .ee-err{color:#a3290a;font-size:.78rem;margin-top:.25rem}
+    .ee-submit{padding:.78rem 1.4rem;background:linear-gradient(135deg,#C0571F 0%,#9F4717 100%);color:#fff;border:none;border-radius:6px;font-size:.92rem;font-weight:700;cursor:pointer;width:100%;margin-top:.6rem}
+    .ee-submit:hover{opacity:.92}
+    .ee-success{background:#dcf5e2;border:1px solid #2C7A52;border-radius:6px;padding:1rem 1.2rem;margin-bottom:1.2rem;color:#1d5e3c}
+    .ee-success strong{display:block;margin-bottom:.3rem}
+    .ee-error{background:#fde0d8;border:1px solid #C0571F;border-radius:6px;padding:.85rem 1.1rem;margin-bottom:1.2rem;color:#7d2410}
+    .ee-side{background:#fff;border:1px solid rgba(192,87,31,.14);border-radius:8px;padding:1.4rem}
+    .ee-side h3{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:700;margin:0 0 .6rem;color:#1F1410}
+    .ee-side ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.45rem}
+    .ee-side li{font-size:.84rem;line-height:1.55;color:#4A3C2E;padding-left:1.4rem;position:relative}
+    .ee-side li::before{content:"✓";position:absolute;left:0;color:#2C7A52;font-weight:700}
+    .ee-auth-warn{background:#fff7e6;border:1px solid #D49718;border-radius:6px;padding:.85rem 1.1rem;margin-bottom:1.4rem;color:#7d5410;font-size:.88rem;line-height:1.55}
+    .ee-auth-warn a{color:#C0571F;font-weight:700;text-decoration:underline}
+    .ee-required-note{font-size:.74rem;color:#7A6B58;margin-bottom:1rem}
+    .ee-required-note span{color:#C0571F;font-weight:700}
+  </style>
+
+  <section class="ee-hero">
+    <div class="sf-container">
+      <h1>Şanlıurfa Etkinlik Öner</h1>
+      <p>Düzenleyeceğiniz konser, festival, sergi, atölye veya kültürel etkinliği takvimimize ekleyin. Onaylanan etkinlikler /etkinlikler sayfasında ve şehir takviminde gösterilir.</p>
+    </div>
+  </section>
+
+  <section class="ee-body">
+    <div class="sf-container">
+      <div class="ee-grid">
+        <div>
+          {successData && (
+            <div class="ee-success">
+              <strong>✓ Etkinlik öneriniz alındı</strong>
+              {successData.message}
+            </div>
+          )}
+
+          {submitError && (
+            <div class="ee-error">
+              <strong>Gönderme başarısız:</strong> {submitError}
+            </div>
+          )}
+
+          {!isAuthenticated && (
+            <div class="ee-auth-warn">
+              Giriş yapmadan da etkinlik önerebilirsiniz, ancak <a href="/giris?redirect=/etkinlik-ekle">giriş yaparsanız</a> tüm önerilerinizi profilde görebilirsiniz.
+            </div>
+          )}
+
+          <form method="POST" action="?_action=submitEventApplication" class="ee-form">
+            <p class="ee-required-note"><span>*</span> ile işaretli alanlar zorunludur.</p>
+
+            <div class="ee-form-row">
+              <label for="ev-title" class="ee-lbl ee-lbl-req">Etkinlik başlığı</label>
+              <input id="ev-title" name="title" type="text" required minlength="4" maxlength="200" placeholder="Örn: Şanlıurfa Bahar Konseri 2026" class="ee-input" />
+              {inputErrors.title && <p class="ee-err">{inputErrors.title.join(' ')}</p>}
+            </div>
+
+            <div class="ee-form-row">
+              <label for="ev-description" class="ee-lbl ee-lbl-req">Açıklama</label>
+              <textarea id="ev-description" name="description" required minlength="50" maxlength="2000" rows="5" placeholder="Etkinlik detayları, program akışı, hedef kitle, kapasite vb. (en az 50 karakter)" class="ee-textarea"></textarea>
+              <p class="ee-help">50-2000 karakter. Detaylı açıklama onay şansını artırır.</p>
+              {inputErrors.description && <p class="ee-err">{inputErrors.description.join(' ')}</p>}
+            </div>
+
+            <div class="ee-row2">
+              <div class="ee-form-row">
+                <label for="ev-category" class="ee-lbl">Kategori</label>
+                <select id="ev-category" name="category" class="ee-select">
+                  <option value="">Seçiniz</option>
+                  <option value="Konser">Konser</option>
+                  <option value="Festival">Festival</option>
+                  <option value="Sergi">Sergi</option>
+                  <option value="Tiyatro">Tiyatro</option>
+                  <option value="Atölye">Atölye / Workshop</option>
+                  <option value="Spor">Spor</option>
+                  <option value="Gastronomi">Gastronomi</option>
+                  <option value="Kültür">Kültür / Sanat</option>
+                  <option value="Akademi">Akademi / Konferans</option>
+                  <option value="Festival">Tarih / Anma</option>
+                  <option value="Çocuk">Çocuk / Aile</option>
+                  <option value="Diğer">Diğer</option>
+                </select>
+              </div>
+
+              <div class="ee-form-row">
+                <label for="ev-location" class="ee-lbl">Mekan / Yer</label>
+                <input id="ev-location" name="location" type="text" maxlength="300" placeholder="Örn: Şanlıurfa Kongre Merkezi" class="ee-input" />
+              </div>
+            </div>
+
+            <div class="ee-row2">
+              <div class="ee-form-row">
+                <label for="ev-start" class="ee-lbl ee-lbl-req">Başlangıç tarihi</label>
+                <input id="ev-start" name="start_date" type="datetime-local" required class="ee-input" />
+                {inputErrors.start_date && <p class="ee-err">{inputErrors.start_date.join(' ')}</p>}
+              </div>
+
+              <div class="ee-form-row">
+                <label for="ev-end" class="ee-lbl">Bitiş tarihi</label>
+                <input id="ev-end" name="end_date" type="datetime-local" class="ee-input" />
+                <p class="ee-help">İsteğe bağlı; tek günlük etkinlikler için boş bırakın.</p>
+              </div>
+            </div>
+
+            <div class="ee-form-row">
+              <label class="ee-lbl">
+                <input type="checkbox" name="is_free" value="on" checked />
+                Bu etkinlik ücretsiz
+              </label>
+            </div>
+
+            <div class="ee-row2">
+              <div class="ee-form-row">
+                <label for="ev-contact" class="ee-lbl">İletişim URL'i</label>
+                <input id="ev-contact" name="contact_url" type="url" placeholder="https://..." class="ee-input" />
+                <p class="ee-help">Sosyal medya, web sitesi vb.</p>
+              </div>
+
+              <div class="ee-form-row">
+                <label for="ev-ticket" class="ee-lbl">Bilet URL'i</label>
+                <input id="ev-ticket" name="ticket_url" type="url" placeholder="https://..." class="ee-input" />
+                <p class="ee-help">Biletli etkinlikse satın alma linki.</p>
+              </div>
+            </div>
+
+            <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;margin:1.5rem 0 .6rem;color:#1F1410">Organizatör Bilgileri</h3>
+
+            <div class="ee-row2">
+              <div class="ee-form-row">
+                <label for="ev-org-name" class="ee-lbl ee-lbl-req">Ad soyad</label>
+                <input id="ev-org-name" name="organizer_name" type="text" required minlength="2" maxlength="120" value={user?.fullName || ''} class="ee-input" />
+                {inputErrors.organizer_name && <p class="ee-err">{inputErrors.organizer_name.join(' ')}</p>}
+              </div>
+
+              <div class="ee-form-row">
+                <label for="ev-org-email" class="ee-lbl ee-lbl-req">E-posta</label>
+                <input id="ev-org-email" name="organizer_email" type="email" required value={user?.email || ''} class="ee-input" />
+                {inputErrors.organizer_email && <p class="ee-err">{inputErrors.organizer_email.join(' ')}</p>}
+              </div>
+            </div>
+
+            <div class="ee-form-row">
+              <label for="ev-org-phone" class="ee-lbl">Telefon</label>
+              <input id="ev-org-phone" name="organizer_phone" type="tel" maxlength="20" placeholder="5XX XXX XX XX" class="ee-input" />
+            </div>
+
+            <button type="submit" class="ee-submit">Etkinlik Önerisini Gönder</button>
+          </form>
+        </div>
+
+        <aside class="ee-side">
+          <h3>Onay süreci</h3>
+          <ul>
+            <li>Öneriniz admin tarafından incelenir (1-3 iş günü)</li>
+            <li>Onaylanan etkinlik /etkinlikler sayfasında listelenir</li>
+            <li>Şehir takviminde + Google'da görünür</li>
+            <li>Onay sonrası e-posta bildirimi (yakında)</li>
+            <li>İçerik kapsamlı + tarih net olmalı</li>
+          </ul>
+
+          <h3 style="margin-top:1.4rem">Hangi etkinlikler onaylanır?</h3>
+          <ul>
+            <li>Şanlıurfa'da düzenlenen etkinlikler</li>
+            <li>Kamu yararına / açık katılımlı</li>
+            <li>Konser / festival / sergi / atölye</li>
+            <li>Kültür / sanat / gastronomi</li>
+            <li>Kurumsal & ticari etkinlikler</li>
+          </ul>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Layout>
