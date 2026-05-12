@@ -1,0 +1,102 @@
+---
+/**
+ * Shared sticky bottom CTA bar — detail page'lerde reusable.
+ *
+ * Showcase: place detail'da Telefon/Konum/Yorum/❤️ vardı (custom).
+ * Bu component blog/recipe/historical/event detail'a aynı UX getirir.
+ *
+ * Pattern: 3-4 action button (share + favorite + comment + custom).
+ * Mobile-only sticky (md+ ekranda hidden, sidebar gösterilir).
+ *
+ * Props:
+ *   shareUrl: tam URL (paylaşım için)
+ *   shareTitle: paylaşım başlığı (Web Share API)
+ *   commentAnchor: yorum bölümüne anchor (örn. "#yorumlar")
+ *   customAction?: opsiyonel ek action (örn. recipe için "Yazdır")
+ */
+interface Props {
+  shareUrl: string;
+  shareTitle: string;
+  commentAnchor?: string | undefined;
+  customLabel?: string | undefined;
+  customHref?: string | undefined;
+  customIcon?: string | undefined;
+}
+
+const { shareUrl, shareTitle, commentAnchor, customLabel, customHref, customIcon } = Astro.props;
+---
+
+<div class="psc">
+  <button type="button" class="psc-btn" onclick={`window.__sfShare && window.__sfShare(${JSON.stringify(shareTitle)}, ${JSON.stringify(shareUrl)})`} aria-label="Paylaş">
+    <span aria-hidden="true">📤</span> <span class="psc-lbl">Paylaş</span>
+  </button>
+
+  {commentAnchor && (
+    <a href={commentAnchor} class="psc-btn">
+      <span aria-hidden="true">💬</span> <span class="psc-lbl">Yorum</span>
+    </a>
+  )}
+
+  {customLabel && customHref && (
+    <a href={customHref} class="psc-btn">
+      <span aria-hidden="true">{customIcon || '✨'}</span> <span class="psc-lbl">{customLabel}</span>
+    </a>
+  )}
+</div>
+
+<style>
+  .psc {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 0.4rem;
+    padding: 0.6rem 0.85rem;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid rgba(192, 87, 31, 0.18);
+    box-shadow: 0 -2px 8px rgba(31, 20, 16, 0.06);
+    z-index: 30;
+  }
+  @media (min-width: 1024px) { .psc { display: none; } }
+  .psc-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.8rem;
+    border: 1px solid rgba(192, 87, 31, 0.2);
+    border-radius: 999px;
+    background: #fff;
+    color: #1F1410;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    min-height: 40px;
+  }
+  .psc-btn:hover { background: #fdf5e8; border-color: #C0571F; color: #C0571F; }
+  .psc-lbl { font-size: 0.78rem; }
+</style>
+
+<script is:inline>
+  // Web Share API + clipboard fallback
+  if (!window.__sfShare) {
+    window.__sfShare = async (title, url) => {
+      try {
+        if (navigator.share) {
+          await navigator.share({ title, url });
+        } else if (navigator.clipboard) {
+          await navigator.clipboard.writeText(url);
+          alert('Bağlantı kopyalandı: ' + url);
+        } else {
+          window.prompt('Bu bağlantıyı kopyalayın:', url);
+        }
+      } catch (e) {
+        // user cancelled — no-op
+      }
+    };
+  }
+</script>

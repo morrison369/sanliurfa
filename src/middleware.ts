@@ -65,7 +65,7 @@ const PUBLIC_PATHS = [
   '/sitemap.xml', '/sitemap-pages.xml', '/sitemap-categories.xml', '/sitemap-ilceler.xml',
   '/sitemap-places.xml', '/sitemap-historical.xml', '/sitemap-blog.xml',
   '/sitemap-events.xml', '/sitemap-recipes.xml', '/sitemap-guides.xml',
-  '/rss.xml', '/robots.txt', '/llms.txt',
+  '/rss.xml', '/robots.txt', '/llms.txt', '/llms-full.txt',
  '/uploads', '/images', '/icons', '/_astro', '/_server-islands', '/favicon.svg', '/favicon.ico',
  '/manifest.json', '/sw.js', '/og-image.png', '/apple-touch-icon.png',
 ];

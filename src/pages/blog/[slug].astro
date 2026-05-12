@@ -3,6 +3,8 @@ import EditorialTemplate from '../../components/templates/EditorialTemplate.astr
 import Image from '../../components/Image.astro';
 import PublicDetailHero from '../../components/public/PublicDetailHero.astro';
 import PublicDetailBody from '../../components/public/PublicDetailBody.astro';
+import PublicStickyCTA from '../../components/public/PublicStickyCTA.astro';
+import { linkifyContent } from '../../lib/seo/internal-linker';
 import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
 import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import PublicContentSection from '../../components/public/PublicContentSection.astro';
@@ -253,7 +255,7 @@ const seo = buildPageSeo({
  <PublicContentSection title="Yazının Tamamı">
  <PublicRichProse>
  {post.content_html ? (
- <Fragment set:html={post.content_html} />
+ <Fragment set:html={linkifyContent(post.content_html, `/blog/${post.slug}`)} />
  ) : (
  <div>
  {post.content.split('\n').map((line: string) => {
@@ -332,6 +334,12 @@ const seo = buildPageSeo({
   </PublicSidebarCard>
  </Fragment>
  </PublicDetailBody>
+
+ <PublicStickyCTA
+   shareUrl={`${baseUrl}/blog/${post.slug}`}
+   shareTitle={post.title}
+   commentAnchor="#yorumlar"
+ />
 
  <BlogComments
   postId={post.id || post.slug}

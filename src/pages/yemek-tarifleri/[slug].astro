@@ -2,6 +2,7 @@
 import DetailTemplate from '../../components/templates/DetailTemplate.astro';
 import PublicDetailHero from '../../components/public/PublicDetailHero.astro';
 import PublicDetailBody from '../../components/public/PublicDetailBody.astro';
+import PublicStickyCTA from '../../components/public/PublicStickyCTA.astro';
 import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
 import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import PublicMetricGrid from '../../components/public/PublicMetricGrid.astro';
@@ -227,6 +228,12 @@ const faqItems = [
  </PublicSidebarCard>
  </Fragment>
  </PublicDetailBody>
+
+ <PublicStickyCTA
+   shareUrl={`${baseUrl}/yemek-tarifleri/${recipe.slug}`}
+   shareTitle={recipe.name}
+   commentAnchor="#yorumlar"
+ />
 
  <script type="application/ld+json" set:html={JSON.stringify({
  '@context': 'https://schema.org',

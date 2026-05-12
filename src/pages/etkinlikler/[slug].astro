@@ -8,6 +8,7 @@ import PublicDetailBody from '../../components/public/PublicDetailBody.astro';
 import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
 import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import PublicInfoGrid from '../../components/public/PublicInfoGrid.astro';
+import PublicStickyCTA from '../../components/public/PublicStickyCTA.astro';
 import { query, queryOne } from '../../lib/postgres';
 import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import { getPublicAppUrl } from '../../lib/public-app-url';
@@ -325,6 +326,10 @@ const eventHeroBadges = event ? [
  </PublicSidebarCard>
  </Fragment>
  </PublicDetailBody>
+ <PublicStickyCTA
+   shareUrl={`${baseUrl}/etkinlikler/${event.slug}`}
+   shareTitle={event.title}
+ />
  </div>
  )}
  </div>

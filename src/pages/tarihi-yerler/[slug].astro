@@ -3,6 +3,7 @@ import { Icon } from 'astro-icon/components';
 import DetailTemplate from '../../components/templates/DetailTemplate.astro';
 import PublicDetailBody from '../../components/public/PublicDetailBody.astro';
 import PublicDetailHero from '../../components/public/PublicDetailHero.astro';
+import PublicStickyCTA from '../../components/public/PublicStickyCTA.astro';
 import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
 import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import PublicInfoRows from '../../components/public/PublicInfoRows.astro';
@@ -235,6 +236,11 @@ const historicalInfoRows = [
  )}
  </Fragment>
  </PublicDetailBody>
+
+ <PublicStickyCTA
+   shareUrl={`${baseUrl}/tarihi-yerler/${site.slug}`}
+   shareTitle={site.name}
+ />
 
  <script type="application/ld+json" set:html={JSON.stringify({
  '@context': 'https://schema.org',
