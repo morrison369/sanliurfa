@@ -2,36 +2,53 @@
 import Layout from '../../layouts/Layout.astro';
 import { BusinessAnalyticsDashboard } from '../../components/BusinessAnalyticsDashboard';
 
-// Redirect if not authenticated
-if (!Astro.locals.user) {
-  return Astro.redirect('/giris');
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect('/giris?redirect=/isletme/analytics');
 }
 ---
 
-<Layout title="İşletme Analitikleri - Şanlıurfa">
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold mb-2">İşletme Analitikleri</h1>
-      <p class="text-gray-600">Mekanınız hakkında detaylı istatistikler ve AI-destekli öneriler</p>
-    </div>
+<Layout seo={{ title: "İşletme Analitikleri - Şanlıurfa", noIndex: true }}>
+ <style is:inline>
+ .ba-page{background:var(--bg);min-height:100vh}
+ .ba-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:3rem 0}
+ .ba-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-text-soft)}
+ .ba-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2.5rem);font-weight:700;color:var(--public-text);margin:.5rem 0 .25rem}
+ .ba-desc{color:var(--public-accent);font-size:.95rem}
+ .ba-body{padding:2rem 0 4rem}
+ .ba-info-grid{display:grid;gap:1.5rem;margin-top:3rem}
+ @media(min-width:48rem){.ba-info-grid{grid-template-columns:repeat(3,1fr)}}
+ .ba-info-card{background:rgba(184,115,51,.06);border:1px solid rgba(184,115,51,.2);padding:1.5rem}
+ .ba-info-title{font-weight:700;color:var(--public-text);margin-bottom:.5rem;font-size:.95rem}
+ .ba-info-desc{font-size:.82rem;color:var(--public-muted);line-height:1.6}
+ </style>
 
-    <BusinessAnalyticsDashboard client:visible />
-
-    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
-        <h3 class="font-semibold mb-2 text-blue-900">Gerçek Zamanlı Veriler</h3>
-        <p class="text-sm text-gray-700">Ziyaretçi sayısı, inceleme ve etkileşimler hakkında anında bilgi alın.</p>
-      </div>
-
-      <div class="bg-green-50 rounded-lg p-6 border border-green-200">
-        <h3 class="font-semibold mb-2 text-green-900">AI Önerileri</h3>
-        <p class="text-sm text-gray-700">Yapay zeka destekli önerileri takip ederek işletmenizi geliştirin.</p>
-      </div>
-
-      <div class="bg-purple-50 rounded-lg p-6 border border-purple-200">
-        <h3 class="font-semibold mb-2 text-purple-900">Eğilim Analizi</h3>
-        <p class="text-sm text-gray-700">Gelecek 30 ve 90 güne yönelik tahminler ve trend analizi.</p>
-      </div>
-    </div>
-  </div>
+ <div class="ba-page">
+ <div class="ba-hero">
+ <div class="sf-container">
+ <p class="ba-label">İşletme Paneli</p>
+ <h1 class="ba-h1">İşletme Analitikleri</h1>
+ <p class="ba-desc">Mekanınız hakkında detaylı istatistikler ve AI-destekli öneriler</p>
+ </div>
+ </div>
+ <div class="ba-body">
+ <div class="sf-container">
+ <BusinessAnalyticsDashboard client:visible />
+ <div class="ba-info-grid">
+ <div class="ba-info-card">
+ <h3 class="ba-info-title">Gerçek Zamanlı Veriler</h3>
+ <p class="ba-info-desc">Ziyaretçi sayısı, inceleme ve etkileşimler hakkında anında bilgi alın.</p>
+ </div>
+ <div class="ba-info-card">
+ <h3 class="ba-info-title">AI Önerileri</h3>
+ <p class="ba-info-desc">Yapay zeka destekli önerileri takip ederek işletmenizi geliştirin.</p>
+ </div>
+ <div class="ba-info-card">
+ <h3 class="ba-info-title">Eğilim Analizi</h3>
+ <p class="ba-info-desc">Gelecek 30 ve 90 güne yönelik tahminler ve trend analizi.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 </Layout>

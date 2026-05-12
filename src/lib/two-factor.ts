@@ -213,9 +213,13 @@ export async function verify2FACode(
       return { valid: true };
     }
 
-    // Try backup codes
+    // Try backup codes — constant-time to prevent timing side-channel across the list
     const backupCodes = user.two_factor_backup_codes || [];
-    const codeIndex = backupCodes.indexOf(code);
+    const codeIndex = backupCodes.findIndex((c: string) => {
+      const a = Buffer.from(c);
+      const b = Buffer.from(code);
+      return a.length === b.length && timingSafeEqual(a, b);
+    });
 
     if (codeIndex !== -1) {
       // Remove used backup code

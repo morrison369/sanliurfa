@@ -2,6 +2,7 @@
 import { spawnSync } from 'node:child_process';
 
 const steps = [
+  'npm run -s jobs:pharmacy:refresh',
   'npm run -s jobs:transit:refresh',
   'npm run -s jobs:weather:refresh',
   'npm run -s jobs:social:retention',

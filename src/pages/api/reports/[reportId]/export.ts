@@ -6,6 +6,7 @@
 import type { APIRoute } from 'astro';
 import { executeReport } from '../../../../lib/report/report-engine';
 import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { queryOne } from '../../../../lib/postgres';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
@@ -52,6 +53,22 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
+    // IDOR guard — verify report belongs to requesting user (or user is admin)
+    if (locals.user.role !== 'admin') {
+      const report = await queryOne<{ user_id: string | null }>(
+        'SELECT user_id FROM reports WHERE id = $1',
+        [reportId]
+      );
+      if (!report) {
+        recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.NOT_FOUND, Date.now() - startTime);
+        return apiError(ErrorCode.NOT_FOUND, 'Report not found', HttpStatus.NOT_FOUND, undefined, requestId);
+      }
+      if (report.user_id !== locals.user.id) {
+        recordRequest('GET', '/api/reports/:reportId/export', HttpStatus.FORBIDDEN, Date.now() - startTime);
+        return apiError(ErrorCode.FORBIDDEN, 'Bu rapora erişim izniniz yok', HttpStatus.FORBIDDEN, undefined, requestId);
+      }
+    }
+
     const result = await executeReport(reportId, format);
 
     const duration = Date.now() - startTime;
@@ -65,7 +82,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       body = result.buffer;
     }
 
-    return new Response(body as any, {
+    return new Response(body as BodyInit, {
       status: 200,
       headers: {
         'Content-Type': result.contentType,

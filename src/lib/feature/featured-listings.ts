@@ -47,8 +47,8 @@ function normalizeFeaturedImage(
 ): string {
   return resolveContentImage({
     category: 'places',
-    slug: placeSlug,
-    explicit,
+    ...(placeSlug !== undefined ? { slug: placeSlug } : {}),
+    ...(explicit !== undefined ? { explicit } : {}),
     placeholder: '/images/placeholder-place.jpg',
   });
 }
@@ -93,9 +93,11 @@ export async function createFeaturedListing(
       settings: data.settings || {}
     });
 
-    // Clear place cache
-    await deleteCachePattern(`place:${placeId}:*`);
-    await deleteCachePattern(`featured:*`);
+    // Clear place cache (paralel)
+    await Promise.all([
+      deleteCachePattern(`place:${placeId}:*`),
+      deleteCachePattern(`featured:*`),
+    ]);
 
     logger.info('Featured listing created', { id: featured.id, placeId, userId });
     return featured;
@@ -146,28 +148,29 @@ export async function getActiveFeaturedListings(limit: number = 10, offset: numb
     if (cached) return cached;
 
     const now = new Date().toISOString();
-    const result = await queryMany(
-      `SELECT
-        fl.*,
-        p.name as place_name,
-        p.slug as place_slug
-       FROM featured_listings fl
-       JOIN places p ON p.id = fl.place_id
-       WHERE fl.status = 'active'
-         AND fl.start_date <= $1
-         AND fl.end_date >= $1
-       ORDER BY fl.position_tier DESC, fl.created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [now, limit, offset]
-    );
-
-    const countResult = await queryOne(
-      `SELECT COUNT(*) as total FROM featured_listings
-       WHERE status = 'active'
-         AND start_date <= $1
-         AND end_date >= $1`,
-      [now]
-    );
+    const [result, countResult] = await Promise.all([
+      queryMany(
+        `SELECT
+          fl.*,
+          p.name as place_name,
+          p.slug as place_slug
+         FROM featured_listings fl
+         JOIN places p ON p.id = fl.place_id
+         WHERE fl.status = 'active'
+           AND fl.start_date <= $1
+           AND fl.end_date >= $1
+         ORDER BY fl.position_tier DESC, fl.created_at DESC
+         LIMIT $2 OFFSET $3`,
+        [now, limit, offset]
+      ),
+      queryOne(
+        `SELECT COUNT(*) as total FROM featured_listings
+         WHERE status = 'active'
+           AND start_date <= $1
+           AND end_date >= $1`,
+        [now]
+      ),
+    ]);
 
     const listings = result.map((row: any) => ({
       ...row,
@@ -176,7 +179,7 @@ export async function getActiveFeaturedListings(limit: number = 10, offset: numb
 
     const data = {
       listings,
-      total: parseInt(countResult?.total || '0')
+      total: parseInt(countResult?.total || '0', 10)
     };
 
     await setCache(cacheKey, data, 300);
@@ -236,10 +239,12 @@ export async function updateFeaturedListing(
 
     const updated = await update('featured_listings', { id }, { ...updates, updated_at: new Date() });
 
-    // Clear caches
-    await deleteCache(`featured:${id}`);
-    await deleteCachePattern(`featured:user:${userId}`);
-    await deleteCachePattern(`featured:active:*`);
+    // Clear caches (paralel)
+    await Promise.all([
+      deleteCache(`featured:${id}`),
+      deleteCachePattern(`featured:user:${userId}`),
+      deleteCachePattern(`featured:active:*`),
+    ]);
 
     logger.info('Featured listing updated', { id, userId });
     return updated;
@@ -407,10 +412,12 @@ export async function deleteFeaturedListing(id: string, userId: string): Promise
 
     const result = await query('DELETE FROM featured_listings WHERE id = $1', [id]);
 
-    // Clear caches
-    await deleteCache(`featured:${id}`);
-    await deleteCachePattern(`featured:user:${userId}`);
-    await deleteCachePattern(`featured:active:*`);
+    // Clear caches (paralel)
+    await Promise.all([
+      deleteCache(`featured:${id}`),
+      deleteCachePattern(`featured:user:${userId}`),
+      deleteCachePattern(`featured:active:*`),
+    ]);
 
     logger.info('Featured listing deleted', { id, userId });
     return result.rowCount > 0;
@@ -419,4 +426,3 @@ export async function deleteFeaturedListing(id: string, userId: string): Promise
     throw error;
   }
 }
-

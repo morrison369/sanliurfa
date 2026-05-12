@@ -79,7 +79,7 @@ export async function unsubscribeUser(
       await deleteCache(`push:subscriptions:${userId}`);
     }
 
-    logger.info('Push subscription removed', { endpoint, userId });
+    logger.info('Push subscription removed', { endpoint, ...(userId ? { userId } : {}) });
     return true;
   } catch (error) {
     logger.error('Push unsubscription failed', error instanceof Error ? error : new Error(String(error)) as any);
@@ -96,7 +96,7 @@ export async function getUserSubscriptions(userId: string): Promise<PushSubscrip
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const result = await pool.query(
@@ -161,62 +161,76 @@ export async function sendPushToUser(
     );
 
     const notificationId = notifResult.rows[0]?.id;
-    let sentCount = 0;
-    let failedCount = 0;
+    const payloadJson = JSON.stringify({
+      title: notification.title,
+      body: notification.body,
+      icon: notification.icon,
+      badge: notification.badge,
+      tag: notification.tag,
+      data: notification.data,
+      requireInteraction: notification.requireInteraction || false,
+      actions: notification.actions || [],
+    });
 
-    // Send to all subscriptions
-    for (const sub of subscriptions) {
-      try {
-        await webpush.sendNotification(sub, JSON.stringify({
-          title: notification.title,
-          body: notification.body,
-          icon: notification.icon,
-          badge: notification.badge,
-          tag: notification.tag,
-          data: notification.data,
-          requireInteraction: notification.requireInteraction || false,
-          actions: notification.actions || []
-        }));
-
-        // Log successful delivery
-        await pool.query(
-          `INSERT INTO push_deliveries (notification_id, subscription_id, status)
-           SELECT $1, id, 'sent'
-           FROM push_subscriptions WHERE endpoint = $2`,
-          [notificationId, sub.endpoint]
-        );
-
-        sentCount++;
-      } catch (error) {
-        failedCount++;
-        const errorMsg = error instanceof Error ? error.message : String(error);
-
-        logger.warn('Push notification failed for subscription', Object.assign(new Error('Push notification failed for subscription'), {
-          userId,
+    // Send all subscriptions in parallel
+    const sendResults = await Promise.all(
+      subscriptions.map(sub =>
+        webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          payloadJson
+        )
+        .then(() => ({ endpoint: sub.endpoint, ok: true as const }))
+        .catch((err: unknown) => ({
           endpoint: sub.endpoint,
-          error: errorMsg
-        }));
+          ok: false as const,
+          error: err instanceof Error ? err.message : String(err),
+        }))
+      )
+    );
 
-        // Log failed delivery
-        await pool.query(
-          `INSERT INTO push_deliveries (notification_id, subscription_id, status, error_message)
-           SELECT $1, id, 'failed', $3
-           FROM push_subscriptions WHERE endpoint = $2`,
-          [notificationId, sub.endpoint, errorMsg]
-        );
+    const sentEndpoints: string[] = [];
+    const failedEntries: Array<{ endpoint: string; error: string }> = [];
+    const expiredEndpoints: string[] = [];
 
-        // Remove invalid subscriptions (410 Gone)
-        if (errorMsg.includes('410')) {
-          await unsubscribeUser(sub.endpoint, userId);
-        }
+    for (const r of sendResults) {
+      if (r.ok) {
+        sentEndpoints.push(r.endpoint);
+      } else {
+        failedEntries.push({ endpoint: r.endpoint, error: r.error });
+        logger.warn('Push notification failed for subscription', { userId, endpoint: r.endpoint, error: r.error });
+        if (r.error.includes('410')) expiredEndpoints.push(r.endpoint);
       }
     }
 
-    // Update notification counts
-    await pool.query(
-      `UPDATE push_notifications SET sent_count = $1, failed_count = $2 WHERE id = $3`,
-      [sentCount, failedCount, notificationId]
-    );
+    const sentCount = sentEndpoints.length;
+    const failedCount = failedEntries.length;
+
+    // Batch log deliveries + update counts + unsubscribe expired — all in parallel
+    await Promise.all([
+      sentEndpoints.length > 0
+        ? pool.query(
+            `INSERT INTO push_deliveries (notification_id, subscription_id, status)
+             SELECT $1, id, 'sent' FROM push_subscriptions WHERE endpoint = ANY($2)`,
+            [notificationId, sentEndpoints]
+          ).catch(() => null)
+        : Promise.resolve(),
+      failedEntries.length > 0
+        ? pool.query(
+            `INSERT INTO push_deliveries (notification_id, subscription_id, status, error_message)
+             SELECT $1, ps.id, 'failed', f.error_message
+             FROM UNNEST($2::text[], $3::text[]) AS f(endpoint, error_message)
+             JOIN push_subscriptions ps ON ps.endpoint = f.endpoint`,
+            [notificationId, failedEntries.map(e => e.endpoint), failedEntries.map(e => e.error)]
+          ).catch(() => null)
+        : Promise.resolve(),
+      pool.query(
+        `UPDATE push_notifications SET sent_count = $1, failed_count = $2 WHERE id = $3`,
+        [sentCount, failedCount, notificationId]
+      ).catch(() => null),
+      expiredEndpoints.length > 0
+        ? Promise.all(expiredEndpoints.map(ep => unsubscribeUser(ep, userId))).catch(() => null)
+        : Promise.resolve(),
+    ]);
 
     logger.info('Push notifications sent', { userId, sentCount, failedCount });
     return { sent: sentCount, failed: failedCount };
@@ -245,11 +259,17 @@ export async function broadcastPushNotification(
     let totalSent = 0;
     let totalFailed = 0;
 
-    for (const row of result.rows) {
-      const { sent, failed } = await sendPushToUser(row.user_id, notification);
-      totalSent += sent;
-      totalFailed += failed;
-    }
+    const settled = await Promise.allSettled(
+      result.rows.map((row: any) => sendPushToUser(row.user_id, notification))
+    );
+    settled.forEach((r) => {
+      if (r.status === 'fulfilled') {
+        totalSent += r.value.sent;
+        totalFailed += r.value.failed;
+      } else {
+        totalFailed++;
+      }
+    });
 
     logger.info('Broadcast push completed', { totalSent, totalFailed });
     return { sent: totalSent, failed: totalFailed };

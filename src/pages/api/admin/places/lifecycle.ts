@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { authenticateUser } from '../../../../lib/auth/middleware';
 import { query } from '../../../../lib/postgres';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeErrorDetail, safeIntParam } from '../../../../lib/api';
 
 export const GET: APIRoute = async (context) => {
   try {
@@ -19,8 +19,8 @@ export const GET: APIRoute = async (context) => {
     const url = new URL(context.request.url);
     const placeId = url.searchParams.get('placeId');
     const toStatus = url.searchParams.get('toStatus');
-    const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || 50), 1), 200);
-    const offset = Math.max(Number(url.searchParams.get('offset') || 0), 0);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 200);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     const where: string[] = [];
     const params: unknown[] = [];
@@ -38,7 +38,7 @@ export const GET: APIRoute = async (context) => {
       `SELECT COUNT(*)::int AS total
        FROM place_lifecycle_events e
        ${whereSql}`,
-      params as any[],
+      params,
     );
     const listParams = [...params, limit, offset];
     const result = await query(
@@ -59,7 +59,7 @@ export const GET: APIRoute = async (context) => {
        ${whereSql}
        ORDER BY e.created_at DESC
        LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
-      listParams as any[],
+      listParams,
     );
 
     return new Response(
@@ -75,7 +75,7 @@ export const GET: APIRoute = async (context) => {
     return problemJson({
       status: 500,
       title: 'Mekan Lifecycle Timeline Alınamadı',
-      detail: error instanceof Error ? error.message : 'admin_places_lifecycle_fetch_failed',
+      detail: safeErrorDetail(error, 'admin_places_lifecycle_fetch_failed'),
       type: '/problems/admin-places-lifecycle-fetch-failed',
       instance: '/api/admin/places/lifecycle',
     });

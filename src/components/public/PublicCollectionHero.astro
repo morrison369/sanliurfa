@@ -1,0 +1,266 @@
+---
+import Image from '../Image.astro';
+
+type Stat = {
+  label: string;
+  value: string | number;
+};
+
+interface Props {
+  title: string;
+  description?: string;
+  imageSrc?: string;
+  imageAlt?: string;
+  eyebrow?: string;
+  breadcrumbItems?: Array<{ href?: string; label: string }>;
+  stats?: Stat[];
+}
+
+const {
+  title,
+  description,
+  imageSrc,
+  imageAlt = title,
+  eyebrow,
+  breadcrumbItems = [],
+  stats = [],
+} = Astro.props;
+---
+
+<section class="pch">
+  {imageSrc && (
+    <div class="pch-media" aria-hidden="true">
+      <Image src={imageSrc} alt={imageAlt} width={1600} height={720} class="pch-image" loading="eager" fetchpriority="high" />
+    </div>
+  )}
+  <div class="pch-overlay" aria-hidden="true"></div>
+
+  <div class="sf-container pch-inner">
+    {breadcrumbItems.length > 0 && (
+      <nav class="pch-breadcrumb" aria-label="Breadcrumb">
+        {breadcrumbItems.map((item, index) => (
+          <>
+            {item.href ? <a href={item.href}>{item.label}</a> : <span class="pch-breadcrumb-current">{item.label}</span>}
+            {index < breadcrumbItems.length - 1 && <span class="pch-breadcrumb-sep">›</span>}
+          </>
+        ))}
+      </nav>
+    )}
+
+    <div class="pch-grid">
+      <div class="pch-copy">
+        {eyebrow && <p class="pch-eyebrow">{eyebrow}</p>}
+        <h1 class="pch-title">{title}</h1>
+        {description && <p class="pch-desc">{description}</p>}
+      </div>
+
+      {stats.length > 0 && (
+        <aside class="pch-stats">
+          <p class="pch-stats-label">Özet</p>
+          <div class="pch-stats-grid">
+            {stats.map((stat) => (
+              <div class="pch-stat-card">
+                <p class="pch-stat-name">{stat.label}</p>
+                <p class="pch-stat-value">{stat.value}</p>
+              </div>
+            ))}
+          </div>
+        </aside>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .pch {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(192, 87, 31, 0.12);
+    background: linear-gradient(135deg, #fbf6ec 0%, #f4ecd8 52%, #fbf6ec 100%);
+  }
+
+  .pch::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(212, 151, 24, 0.1) 0%, transparent 45%),
+      radial-gradient(circle at 85% 100%, rgba(44, 122, 82, 0.08) 0%, transparent 45%);
+    pointer-events: none;
+  }
+
+  .pch-media,
+  .pch-overlay {
+    position: absolute;
+    inset: 0;
+  }
+
+  .pch-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.16;
+    mix-blend-mode: multiply;
+  }
+
+  .pch-overlay {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+  }
+
+  .pch-inner {
+    position: relative;
+    z-index: 1;
+    padding: clamp(2.5rem, 5vw, 3.5rem) 0 clamp(2rem, 4vw, 3rem);
+  }
+
+  .pch-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1.1rem;
+    color: #5a4030;
+    font-size: 0.78rem;
+    font-weight: 500;
+  }
+
+  .pch-breadcrumb a {
+    color: #5a4030;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .pch-breadcrumb a:hover {
+    color: #c0571f;
+  }
+
+  .pch-breadcrumb-sep {
+    color: #c0571f;
+    opacity: 0.5;
+  }
+
+  .pch-breadcrumb-current {
+    color: #c0571f;
+    font-weight: 700;
+  }
+
+  .pch-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .pch-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.85rem;
+    padding: 0.4rem 1rem;
+    border: 1px solid rgba(44, 122, 82, 0.24);
+    border-radius: 999px;
+    background: rgba(44, 122, 82, 0.1);
+    color: #1f5f40;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .pch-eyebrow::before {
+    content: '';
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: #d49718;
+  }
+
+  .pch-title {
+    margin: 0 0 0.85rem;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    font-weight: 700;
+    line-height: 1.05;
+    background: linear-gradient(135deg, #c0571f 0%, #d49718 60%, #c0571f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: #c0571f;
+  }
+
+  .pch-desc {
+    max-width: 42rem;
+    margin: 0;
+    color: #3d2a1e;
+    font-size: 0.95rem;
+    line-height: 1.75;
+  }
+
+  .pch-stats {
+    border: 1px solid rgba(192, 87, 31, 0.18);
+    border-radius: 0.9rem;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1.25rem;
+    box-shadow: 0 4px 12px -2px rgba(31, 20, 16, 0.08);
+  }
+
+  .pch-stats-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.85rem;
+    color: #c0571f;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .pch-stats-label::before {
+    content: '';
+    width: 0.25rem;
+    height: 0.95rem;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #c0571f, #d49718);
+  }
+
+  .pch-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .pch-stat-card {
+    border: 1px solid rgba(192, 87, 31, 0.1);
+    border-radius: 0.7rem;
+    background: rgba(192, 87, 31, 0.04);
+    padding: 0.85rem;
+  }
+
+  .pch-stat-name {
+    margin: 0 0 0.35rem;
+    color: #7a6448;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  .pch-stat-value {
+    margin: 0;
+    color: #c0571f;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.85rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  @media (min-width: 1024px) {
+    .pch-grid {
+      grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+      align-items: end;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .pch-stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

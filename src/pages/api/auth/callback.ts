@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ url, redirect }) => {
   const provider = url.searchParams.get('provider');
 
   if (error) {
-    logger.error('OAuth error:', error, errorDescription);
+    logger.error('OAuth error:', error, errorDescription || undefined);
     return redirect(`/giris?error=${encodeURIComponent(errorDescription || error)}`);
   }
 
@@ -36,9 +36,9 @@ export const GET: APIRoute = async ({ url, redirect }) => {
     }
 
     return redirect(`${forwardUrl.pathname}${forwardUrl.search}`);
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Auth callback error:', error);
-    return redirect(`/giris?error=${encodeURIComponent(error.message)}`);
+    return redirect('/giris?error=oauth_callback_failed');
   }
 };
 

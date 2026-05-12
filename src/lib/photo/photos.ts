@@ -48,7 +48,7 @@ export async function getPlacePhotos(placeId: string, limit = 20): Promise<any[]
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const photos = await queryMany(
@@ -111,26 +111,26 @@ export async function voteOnPhoto(
       return true;
     }
 
-    // If user voted differently, update their vote
+    // If user voted differently, update their vote (decrement old + change vote — farklı tablolar, paralel)
     if (existingVote) {
-      // Decrease old vote count
       const oldVoteColumn = existingVote.vote_type === 'helpful' ? 'helpful_count' : 'unhelpful_count';
-      await pool.query(
-        `UPDATE place_photos SET ${oldVoteColumn} = GREATEST(0, ${oldVoteColumn} - 1) WHERE id = $1`,
-        [photoId]
-      );
-
-      // Update vote
-      await pool.query(
-        `UPDATE photo_votes SET vote_type = $1 WHERE photo_id = $2 AND user_id = $3`,
-        [voteType, photoId, userId]
-      );
+      await Promise.all([
+        pool.query(
+          `UPDATE place_photos SET ${oldVoteColumn} = GREATEST(0, ${oldVoteColumn} - 1) WHERE id = $1`,
+          [photoId]
+        ),
+        pool.query(
+          `UPDATE photo_votes SET vote_type = $1 WHERE photo_id = $2 AND user_id = $3`,
+          [voteType, photoId, userId]
+        ),
+      ]);
     } else {
-      // Create new vote
-      await pool.query(
-        `INSERT INTO photo_votes (photo_id, user_id, vote_type) VALUES ($1, $2, $3)`,
+      const inserted = await pool.query(
+        `INSERT INTO photo_votes (photo_id, user_id, vote_type) VALUES ($1, $2, $3)
+         ON CONFLICT (photo_id, user_id) DO NOTHING RETURNING id`,
         [photoId, userId, voteType]
       );
+      if ((inserted.rowCount ?? 0) === 0) return true;
     }
 
     // Increase new vote count
@@ -158,23 +158,28 @@ export async function voteOnPhoto(
  */
 export async function setFeaturedPhoto(photoId: string, placeId: string, isFeatured: boolean): Promise<boolean> {
   try {
-    // If setting as featured, unfeature other photos for this place
+    // Unfeature siblings + feature target — disjoint row sets, safe to run in parallel
+    const ops: Promise<unknown>[] = [
+      pool.query(
+        `UPDATE place_photos SET is_featured = $1 WHERE id = $2`,
+        [isFeatured, photoId]
+      ),
+    ];
     if (isFeatured) {
-      await pool.query(
-        `UPDATE place_photos SET is_featured = false WHERE place_id = $1 AND id != $2`,
-        [placeId, photoId]
+      ops.push(
+        pool.query(
+          `UPDATE place_photos SET is_featured = false WHERE place_id = $1 AND id != $2`,
+          [placeId, photoId]
+        )
       );
     }
+    await Promise.all(ops);
 
-    // Update this photo
-    await pool.query(
-      `UPDATE place_photos SET is_featured = $1 WHERE id = $2`,
-      [isFeatured, photoId]
-    );
-
-    // Invalidate cache
-    await deleteCachePattern(`photos:place:${placeId}*`);
-    await deleteCache(`places:${placeId}`);
+    // Invalidate cache (parallel)
+    await Promise.all([
+      deleteCachePattern(`photos:place:${placeId}*`),
+      deleteCache(`places:${placeId}`),
+    ]);
 
     return true;
   } catch (error) {

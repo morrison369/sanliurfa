@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 // Favori ID ile silme
 export const DELETE: APIRoute = async ({ params, locals }) => {
@@ -43,11 +43,8 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error: any) {
+    return apiResponse({ success: true }, HttpStatus.OK);
+  } catch (error) {
     logger.error('Delete favorite error:', error);
     return problemJson({
       status: 500,

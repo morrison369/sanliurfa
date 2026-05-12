@@ -1,122 +1,99 @@
 ---
-
 import Layout from '../layouts/Layout.astro';
 import PricingPlans from '../components/PricingPlans';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../lib/public-app-url';
+
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'Fiyatlandırma - Şanlıurfa.com',
-  description: 'Şanlıurfa.com üyelik planları ve fiyatlandırma. Tüm özellikler faz 1 döneminde ücretsizdir.',
-  keywords: ['şanlıurfa.com fiyatlandırma', 'premium üyelik', 'abonelik planı', 'ücretsiz üyelik'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/fiyatlandirma',
+ title: 'Fiyatlandırma — Şanlıurfa.com',
+ description: 'Şanlıurfa.com üyelik planları ve fiyatlandırma. Tüm özellikler faz 1 döneminde ücretsizdir.',
+ keywords: ['şanlıurfa.com fiyatlandırma', 'premium üyelik', 'abonelik planı', 'ücretsiz üyelik'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/fiyatlandirma',
 };
 
 const faqItems = [
-  {
-    S: 'Planı ne zaman değiştirebilirim?',
-    C: 'Faz 1 döneminde plan değişikliği gerekmiyor; tüm özellikler açık ve ücretsizdir.',
-  },
-  {
-    S: 'Ödeme yöntemi nedir?',
-    C: 'Faz 1 açık erişimde ücretlendirme aktif değildir.',
-  },
-  {
-    S: 'Aboneliği iptal edebilir miyim?',
-    C: 'Bu aşamada faturalama olmadığı için iptal süreci uygulanmaz.',
-  },
-  {
-    S: 'Ücretsiz plan limitlemesi var mı?',
-    C: 'Hayır. Faz 1 kapsamında tüm özellikler sınırsız ve ücretsizdir.',
-  },
+ {
+ S: 'Planı ne zaman değiştirebilirim?',
+ C: 'Faz 1 döneminde plan değişikliği gerekmiyor; tüm özellikler açık ve ücretsizdir.',
+ },
+ {
+ S: 'Ödeme yöntemi nedir?',
+ C: 'Faz 1 açık erişimde ücretlendirme aktif değildir.',
+ },
+ {
+ S: 'Aboneliği iptal edebilir miyim?',
+ C: 'Bu aşamada faturalama olmadığı için iptal süreci uygulanmaz.',
+ },
+ {
+ S: 'Ücretsiz plan limitlemesi var mı?',
+ C: 'Hayır. Faz 1 kapsamında tüm özellikler sınırsız ve ücretsizdir.',
+ },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-          Şanlıurfa’nın Gücünü Keşfet
-        </h1>
-        <p class="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-          Faz 1 açık erişim aktif. Tüm özellikler şu anda ücretsiz ve tam erişimle kullanılabilir.
-        </p>
-      </div>
+ <style is:inline>
+ .fi-hero{padding:4rem 0 3.5rem;border-bottom:1px solid rgba(184,115,51,.1);text-align:center}
+ .fi-eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#B87333;margin-bottom:.75rem}
+ .fi-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,4vw,2.9rem);font-weight:600;color:#1F1410;line-height:1.15;margin-bottom:.75rem}
+ .fi-sub{font-size:.9rem;color:#7A6B58;line-height:1.7;max-width:520px;margin:0 auto}
+ .fi-body{padding:2.5rem 0 5rem}
+ .fi-plans{margin-bottom:4rem}
+ .fi-faq-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:#1F1410;text-align:center;margin-bottom:1.75rem}
+ .fi-faq-grid{display:grid;gap:1rem;max-width:680px;margin:0 auto}
+ @media(min-width:640px){.fi-faq-grid{grid-template-columns:1fr 1fr}}
+ .fi-faq-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.25rem}
+ .fi-faq-q{font-size:.85rem;font-weight:700;color:#1F1410;margin-bottom:.4rem}
+ .fi-faq-a{font-size:.78rem;color:#7A6B58;line-height:1.65}
+ </style>
 
-      <!-- Pricing Plans Component -->
-      <PricingPlans client:visible={{ rootMargin: '160px' }} />
+ <!-- Hero -->
+ <div class="fi-hero">
+ <div class="sf-container">
+ <p class="fi-eyebrow">Planlar</p>
+ <h1 class="fi-h1">Şanlıurfa'nın Gücünü Keşfet</h1>
+ <p class="fi-sub">
+ Faz 1 açık erişim aktif. Tüm özellikler şu anda ücretsiz ve tam erişimle kullanılabilir.
+ </p>
+ </div>
+ </div>
 
-      <!-- FAQ Section -->
-      <div class="mt-20">
-        <h2 class="text-3xl font-bold text-gray-900 dark:text-white text-center mb-12">
-          Sık Sorulan Sorular
-        </h2>
+ <!-- Body -->
+ <div class="sf-container fi-body">
+ <!-- Pricing Plans Component -->
+ <div class="fi-plans">
+ <PricingPlans client:visible={{ rootMargin: '160px' }} />
+ </div>
 
-        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Planı ne zaman değiştirebilirim?
-            </h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              Faz 1 döneminde plan yükseltme gerekmez, tüm özellikler açıktır.
-            </p>
-          </div>
+ <!-- FAQ -->
+ <h2 class="fi-faq-title">Sık Sorulan Sorular</h2>
+ <div class="fi-faq-grid">
+ {faqItems.map(item => (
+ <div class="fi-faq-card">
+ <p class="fi-faq-q">{item.S}</p>
+ <p class="fi-faq-a">{item.C}</p>
+ </div>
+ ))}
+ </div>
+ </div>
 
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Ödeme yöntemi nedir?
-            </h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              Faz 1 döneminde ödeme adımı bulunmaz.
-            </p>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Aboneliği iptal edebilir miyim?
-            </h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              Faturalama aktif olmadığından iptal işlemi gerekmez.
-            </p>
-          </div>
-
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Ücretsiz plan limitlemesi var mı?
-            </h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              Hayır. Faz 1 kapsamında tüm özellikler sınırsızdır.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <script
-    type="application/ld+json"
-    set:html={JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: faqItems.map((item) => ({
-        '@type': 'Question',
-        name: item.S,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: item.C,
-        },
-      })),
-    })}
-    is:inline
-  />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Fiyatlandırma', item: `${baseUrl}/fiyatlandirma` },
-    ],
-  })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Fiyatlandırma', item: `${baseUrl}/fiyatlandirma` },
+ ],
+ })} is:inline />
 </Layout>

@@ -12,8 +12,9 @@ test.describe('Social Pages Smoke', () => {
     });
     expect(registerResponse.ok()).toBeTruthy();
 
+    const cookie = registerResponse.headers()['set-cookie']?.split(';')[0];
     const payload = await registerResponse.json();
-    const token = payload?.data?.token;
+    const token = cookie?.split('=')[1] || payload?.data?.token;
     expect(typeof token).toBe('string');
 
     const host = new URL(baseURL || 'http://127.0.0.1:4321').hostname;

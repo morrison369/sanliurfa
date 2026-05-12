@@ -22,7 +22,7 @@ export async function publishMessageEvent(event: MessageEvent) {
     actorUserId: event.actorUserId,
     conversationId: event.conversationId,
     createdAt: event.createdAt,
-    metadata: event.isTyping === undefined ? undefined : { isTyping: event.isTyping },
+    ...(event.isTyping === undefined ? {} : { metadata: { isTyping: event.isTyping } }),
   });
 }
 
@@ -42,7 +42,9 @@ export async function subscribeMessageEvents(listener: (event: MessageEvent) => 
       conversationId: event.conversationId,
       actorUserId: event.actorUserId,
       createdAt: event.createdAt,
-      isTyping: typeof event.metadata?.isTyping === 'boolean' ? Boolean(event.metadata.isTyping) : undefined,
+      ...(typeof event.metadata?.isTyping === 'boolean'
+        ? { isTyping: Boolean(event.metadata.isTyping) }
+        : {}),
     });
   });
   return () => {

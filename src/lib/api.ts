@@ -1,5 +1,6 @@
 // API utilities for standardized responses and request validation
 
+import { randomBytes } from 'node:crypto';
 import type { APIContext } from 'astro';
 
 /**
@@ -10,7 +11,7 @@ export interface ApiResponse<T = any> {
   error?: {
     code: string;
     message: string;
-    details?: Record<string, any>;
+    details?: Record<string, unknown>;
   };
   meta?: {
     timestamp: string;
@@ -43,7 +44,7 @@ export function successResponse<T>(
     data,
     meta: {
       timestamp: new Date().toISOString(),
-      requestId
+      ...(requestId ? { requestId } : {})
     }
   };
 
@@ -101,18 +102,18 @@ export function errorResponse(
   code: string,
   message: string,
   statusCode: number = 400,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
   requestId?: string
 ): [ApiResponse, number, Record<string, string>] {
   const response: ApiResponse = {
     error: {
       code,
       message,
-      details
+      ...(details ? { details } : {})
     },
     meta: {
       timestamp: new Date().toISOString(),
-      requestId
+      ...(requestId ? { requestId } : {})
     }
   };
 
@@ -143,7 +144,7 @@ export function apiResponse(
   if (statusCodeOrData && typeof statusCodeOrData === 'object') {
     // Signature: apiResponse(context, data, statusCode)
     data = statusCodeOrData;
-    statusCode = requestId ? parseInt(requestId) : 200;
+    statusCode = requestId ? (Number(requestId) || 200) : 200;
   } else {
     // Signature: apiResponse(data, statusCode)
     data = dataOrContext;
@@ -161,7 +162,7 @@ export function apiError(
   codeOrContext: string | any,
   messageOrCode?: string | number,
   statusCodeOrMessage?: number | string,
-  details?: Record<string, any>,
+  details?: Record<string, unknown>,
   requestId?: string
 ): Response {
   // Handle multiple signatures
@@ -217,6 +218,104 @@ export function problemJson(input: {
 }
 
 /**
+ * Production'da DB/internal error mesajlarını sızdırmadan, dev'de okunabilir
+ * detail döndürür. Asla doğrudan `error.message` döndürme — şema/path/stack
+ * leak edebilir (örn: `duplicate key violates constraint "users_email_key"`).
+ *
+ * Prod davranışı: sadece `fallback` döner.
+ * Dev/test davranışı: `error.message` (varsa) → fallback'a düşer.
+ *
+ * Kullanım:
+ * ```
+ * } catch (error) {
+ *   logger.error('failed', error instanceof Error ? error : new Error(String(error)));
+ *   return problemJson({
+ *     status: 500,
+ *     title: 'Sunucu Hatası',
+ *     detail: safeErrorDetail(error, 'Sunucu hatası, lütfen tekrar deneyin'),
+ *     ...
+ *   });
+ * }
+ * ```
+ */
+export function safeErrorDetail(error: unknown, fallback: string): string {
+  const isProduction = (process.env.NODE_ENV || '').toLowerCase() === 'production';
+  if (isProduction) return fallback;
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'string') return error;
+  return fallback;
+}
+
+/**
+ * Safely parse integer from query/body input with NaN guard + range bound.
+ *
+ * **Why**: `Math.max(1, parseInt('abc'))` → `NaN`. SQL'e NaN bind value
+ * undefined behavior (PostgreSQL crash, silent NULL, wrong result).
+ *
+ * Pattern: `parseInt('abc', 10) === NaN`, `Number.isFinite(NaN) === false`.
+ * Fallback'a düş + min/max clamp.
+ *
+ * Kullanım:
+ * ```
+ * const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+ * const offset = safeIntParam(body.offset, 0, 0, 10000);
+ * ```
+ *
+ * @param input - raw user input (string, number, null, undefined, anything)
+ * @param defaultVal - kullanılacak default eğer input invalid
+ * @param min - minimum allowed value (clamp)
+ * @param max - maximum allowed value (clamp)
+ */
+export function safeIntParam(
+  input: unknown,
+  defaultVal: number,
+  min: number,
+  max: number,
+): number {
+  if (input === null || input === undefined || input === '') return defaultVal;
+  const parsed = typeof input === 'number' ? input : parseInt(String(input), 10);
+  const safe = Number.isFinite(parsed) ? parsed : defaultVal;
+  return Math.min(max, Math.max(min, safe));
+}
+
+/**
+ * HARD RULE #17 — float variant: NaN-safe float parsing from URL search params.
+ * Null / undefined / '' / Infinity / NaN → defaultVal. Result clamped to [min, max].
+ */
+export function safeFloatParam(
+  input: unknown,
+  defaultVal: number,
+  min: number,
+  max: number,
+): number {
+  if (input === null || input === undefined || input === '') return defaultVal;
+  const parsed = typeof input === 'number' ? input : parseFloat(String(input));
+  const safe = Number.isFinite(parsed) ? parsed : defaultVal;
+  return Math.min(max, Math.max(min, safe));
+}
+
+/**
+ * Safe JSON.parse — never throws. Returns the fallback (default `null`) on
+ * malformed input or non-string values. Useful for parsing DB-stored JSON
+ * columns when migration consistency cannot be guaranteed, or when caller
+ * wants to gracefully handle corrupted data without try/catch boilerplate.
+ *
+ * pg driver auto-parses `jsonb` columns, but text columns containing JSON
+ * still need manual parsing — wrap those with this helper.
+ */
+export function safeJsonParse<T = unknown>(input: unknown, fallback: T | null = null): T | null {
+  if (input === null || input === undefined) return fallback;
+  // Already-parsed object/array (e.g. pg jsonb) — return as-is
+  if (typeof input === 'object') return input as T;
+  if (typeof input !== 'string') return fallback;
+  try {
+    return JSON.parse(input) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+/**
  * Extract and validate request body
  */
 export async function getValidatedBody<T>(
@@ -262,10 +361,10 @@ export const validators = {
   },
 
   /**
-   * Validate number range
+   * Validate number range. Rejects NaN/Infinity (not finite).
    */
   number: (value: any, min?: number, max?: number): boolean => {
-    if (typeof value !== 'number') return false;
+    if (typeof value !== 'number' || !Number.isFinite(value)) return false;
     if (min !== undefined && value < min) return false;
     if (max !== undefined && value > max) return false;
     return true;
@@ -313,7 +412,7 @@ export function getRequestId(contextOrRequest?: APIContext | Request | { request
 
   return (
     request?.headers?.get('x-request-id') ||
-    `req-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`
+    `req-${Date.now()}-${randomBytes(6).toString('hex')}`
   );
 }
 

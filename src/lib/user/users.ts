@@ -121,17 +121,6 @@ export async function updateUserProfile(
   }
 ): Promise<UserProfile> {
   try {
-    // Validate username uniqueness if updating
-    if (updates.username) {
-      const existing = await queryOne(
-        'SELECT id FROM users WHERE username = $1 AND id != $2',
-        [updates.username, userId]
-      );
-      if (existing) {
-        throw new Error('Username already taken');
-      }
-    }
-
     // Build update query
     const fields: string[] = [];
     const values: any[] = [];
@@ -191,6 +180,10 @@ export async function updateUserProfile(
       updated_at: result.updated_at
     };
   } catch (error) {
+    if ((error as any)?.code === '23505') {
+      throw new Error('Bu kullanıcı adı zaten alınmış.', { cause: error });
+    }
+
     logger.error('Failed to update user profile', error instanceof Error ? error : new Error(String(error)), {
       userId
     });
@@ -222,25 +215,6 @@ export async function updateUserSettings(
   }
 ): Promise<UserProfile> {
   try {
-    // Get current settings
-    const currentUser = await queryOne('SELECT notification_preferences, privacy_settings FROM users WHERE id = $1', [userId]);
-
-    if (!currentUser) {
-      throw new Error('User not found');
-    }
-
-    // Merge notification preferences
-    const newNotifPrefs = {
-      ...currentUser.notification_preferences,
-      ...updates.notification_preferences
-    };
-
-    // Merge privacy settings
-    const newPrivacySettings = {
-      ...currentUser.privacy_settings,
-      ...updates.privacy_settings
-    };
-
     // Build update query
     const fields: string[] = [];
     const values: any[] = [];
@@ -255,13 +229,13 @@ export async function updateUserSettings(
     }
 
     if (updates.notification_preferences !== undefined) {
-      fields.push(`notification_preferences = $${paramIndex++}`);
-      values.push(JSON.stringify(newNotifPrefs));
+      fields.push(`notification_preferences = COALESCE(notification_preferences, '{}'::jsonb) || $${paramIndex++}::jsonb`);
+      values.push(JSON.stringify(updates.notification_preferences));
     }
 
     if (updates.privacy_settings !== undefined) {
-      fields.push(`privacy_settings = $${paramIndex++}`);
-      values.push(JSON.stringify(newPrivacySettings));
+      fields.push(`privacy_settings = COALESCE(privacy_settings, '{}'::jsonb) || $${paramIndex++}::jsonb`);
+      values.push(JSON.stringify(updates.privacy_settings));
     }
 
     if (fields.length === 0) {
@@ -353,20 +327,12 @@ export async function updateNotificationPreferences(
   }
 ): Promise<boolean> {
   try {
-    const currentUser = await queryOne('SELECT notification_preferences FROM users WHERE id = $1', [userId]);
-
-    if (!currentUser) {
-      throw new Error('User not found');
-    }
-
-    const merged = {
-      ...currentUser.notification_preferences,
-      ...preferences
-    };
-
     const result = await query(
-      'UPDATE users SET notification_preferences = $1, updated_at = NOW() WHERE id = $2',
-      [JSON.stringify(merged), userId]
+      `UPDATE users
+       SET notification_preferences = COALESCE(notification_preferences, '{}'::jsonb) || $1::jsonb,
+           updated_at = NOW()
+       WHERE id = $2`,
+      [JSON.stringify(preferences), userId]
     );
 
     if ((result.rowCount || 0) > 0) {
@@ -396,20 +362,12 @@ export async function updatePrivacySettings(
   }
 ): Promise<boolean> {
   try {
-    const currentUser = await queryOne('SELECT privacy_settings FROM users WHERE id = $1', [userId]);
-
-    if (!currentUser) {
-      throw new Error('User not found');
-    }
-
-    const merged = {
-      ...currentUser.privacy_settings,
-      ...settings
-    };
-
     const result = await query(
-      'UPDATE users SET privacy_settings = $1, updated_at = NOW() WHERE id = $2',
-      [JSON.stringify(merged), userId]
+      `UPDATE users
+       SET privacy_settings = COALESCE(privacy_settings, '{}'::jsonb) || $1::jsonb,
+           updated_at = NOW()
+       WHERE id = $2`,
+      [JSON.stringify(settings), userId]
     );
 
     if ((result.rowCount || 0) > 0) {
@@ -441,4 +399,3 @@ export async function recordLastLogin(userId: string): Promise<void> {
     // Don't throw - this is non-critical
   }
 }
-

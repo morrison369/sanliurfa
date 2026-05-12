@@ -42,11 +42,7 @@ export async function recordPlaceVisit(
       duration_minutes: durationMinutes
     });
 
-    // Update visit count on places table
-    await query(
-      `UPDATE places SET visit_count = (SELECT COUNT(*) FROM place_visits WHERE place_id = $1) WHERE id = $1`,
-      [placeId]
-    );
+    await query('UPDATE places SET visit_count = visit_count + 1 WHERE id = $1', [placeId]);
 
     // Invalidate cache
     await deleteCache(`user:visits:${userId}`);
@@ -58,9 +54,9 @@ export async function recordPlaceVisit(
       userId,
       placeId,
       visitedAt: visitedAt.toISOString(),
-      notes,
-      rating,
-      durationMinutes,
+      ...(notes ? { notes } : {}),
+      ...(rating !== undefined ? { rating } : {}),
+      ...(durationMinutes !== undefined ? { durationMinutes } : {}),
       createdAt: result.created_at,
       updatedAt: result.updated_at
     };
@@ -79,7 +75,7 @@ export async function getUserVisits(userId: string, limit: number = 50): Promise
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(
@@ -96,9 +92,9 @@ export async function getUserVisits(userId: string, limit: number = 50): Promise
       userId: r.user_id,
       placeId: r.place_id,
       visitedAt: r.visited_at,
-      notes: r.notes,
-      rating: r.rating ? parseFloat(r.rating) : undefined,
-      durationMinutes: r.duration_minutes,
+      ...(r.notes ? { notes: r.notes } : {}),
+      ...(r.rating ? { rating: parseFloat(r.rating) } : {}),
+      ...(r.duration_minutes !== undefined && r.duration_minutes !== null ? { durationMinutes: r.duration_minutes } : {}),
       createdAt: r.created_at,
       updatedAt: r.updated_at
     }));
@@ -122,7 +118,7 @@ export async function getUserVisitStats(userId: string): Promise<any> {
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const result = await queryOne(
@@ -200,9 +196,9 @@ export async function updatePlaceVisit(
       userId: updated.user_id,
       placeId: updated.place_id,
       visitedAt: updated.visited_at,
-      notes: updated.notes,
-      rating: updated.rating ? parseFloat(updated.rating) : undefined,
-      durationMinutes: updated.duration_minutes,
+      ...(updated.notes ? { notes: updated.notes } : {}),
+      ...(updated.rating ? { rating: parseFloat(updated.rating) } : {}),
+      ...(updated.duration_minutes !== undefined && updated.duration_minutes !== null ? { durationMinutes: updated.duration_minutes } : {}),
       createdAt: updated.created_at,
       updatedAt: updated.updated_at
     };
@@ -226,11 +222,7 @@ export async function deletePlaceVisit(visitId: string, userId: string): Promise
     // Delete visit
     await query('DELETE FROM place_visits WHERE id = $1', [visitId]);
 
-    // Update visit count
-    await query(
-      `UPDATE places SET visit_count = (SELECT COUNT(*) FROM place_visits WHERE place_id = $1) WHERE id = $1`,
-      [visit.place_id]
-    );
+    await query('UPDATE places SET visit_count = GREATEST(0, visit_count - 1) WHERE id = $1', [visit.place_id]);
 
     // Invalidate cache
     await deleteCache(`user:visits:${userId}`);

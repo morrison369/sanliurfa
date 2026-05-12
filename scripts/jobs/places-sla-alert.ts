@@ -23,7 +23,7 @@ async function main() {
   const cooldownHours = Number.isFinite(cooldownHoursRaw)
     ? Math.max(1, Math.min(168, Math.trunc(cooldownHoursRaw)))
     : 24;
-  const adminEmail = (process.env.ADMIN_EMAIL || process.env.FROM_EMAIL || '').trim();
+  const adminEmail = (process.env.ADMIN_EMAIL || process.env.EMAIL_FROM || '').trim();
 
   const summaryResult = await query(
     `SELECT

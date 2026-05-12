@@ -57,7 +57,7 @@ export async function getPlaceBusinessAnalytics(placeId: string, days: number = 
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const place = await queryOne(
@@ -102,15 +102,15 @@ export async function getPlaceBusinessAnalytics(placeId: string, days: number = 
       placeName: place.title,
       totalVisitors: place.visit_count || 0,
       avgRating: parseFloat(place.rating || '0'),
-      reviewCount: parseInt(reviewStats?.review_count || '0'),
+      reviewCount: parseInt(reviewStats?.review_count || '0', 10),
       followerCount: place.follower_count || 0,
-      eventCount: parseInt(events?.count || '0'),
-      promotionCount: parseInt(promotions?.count || '0'),
+      eventCount: parseInt(events?.count || '0', 10),
+      promotionCount: parseInt(promotions?.count || '0', 10),
       visitTrend: visitTrend ? ((visitTrend.recent_visits - visitTrend.month_visits / 4) / (visitTrend.month_visits / 4) * 100) : 0,
       reviewTrend: 0,
       ratingDistribution: ratingDist.map((r: any) => ({
         rating: r.rating,
-        count: parseInt(r.count)
+        count: parseInt(r.count, 10)
       }))
     };
 
@@ -142,8 +142,8 @@ export async function getVisitorStats(placeId: string, startDate: string, endDat
 
     return results.map((r: any) => ({
       date: r.date,
-      visitorCount: parseInt(r.visitor_count),
-      uniqueVisitors: parseInt(r.unique_visitors)
+      visitorCount: parseInt(r.visitor_count, 10),
+      uniqueVisitors: parseInt(r.unique_visitors, 10)
     }));
   } catch (error) {
     logger.error('Failed to get visitor stats', error instanceof Error ? error : new Error(String(error)));
@@ -174,11 +174,11 @@ export async function getReviewAnalysis(placeId: string): Promise<ReviewAnalysis
     );
 
     return {
-      totalReviews: parseInt(stats?.total_reviews || '0'),
+      totalReviews: parseInt(stats?.total_reviews || '0', 10),
       averageRating: parseFloat(stats?.average_rating || '0'),
-      positiveCount: parseInt(stats?.positive_count || '0'),
-      neutralCount: parseInt(stats?.neutral_count || '0'),
-      negativeCount: parseInt(stats?.negative_count || '0'),
+      positiveCount: parseInt(stats?.positive_count || '0', 10),
+      neutralCount: parseInt(stats?.neutral_count || '0', 10),
+      negativeCount: parseInt(stats?.negative_count || '0', 10),
       topKeywords: [],
       recentReviews: recentReviews
     };
@@ -220,7 +220,7 @@ export async function getPromotionPerformance(promotionId: string): Promise<Prom
       promotionId,
       title: promotion.title,
       discountValue: promotion.discount_value,
-      totalRedemptions: parseInt(redemptions?.count || '0'),
+      totalRedemptions: parseInt(redemptions?.count || '0', 10),
       totalSavings: parseFloat(redemptions?.total_savings || '0'),
       conversionRate: 0,
       averageOrderValue: 0
@@ -340,7 +340,7 @@ export async function getPlaceDailyMetrics(placeId: string, days: number = 30): 
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const metrics = await queryMany(`
@@ -379,7 +379,7 @@ export async function getDashboardOverview(placeId: string): Promise<any | null>
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const overview = await queryOne(`
@@ -432,10 +432,10 @@ export async function getTopPerformingPlaces(limit: number = 10): Promise<any[]>
       id: r.id,
       title: r.title,
       rating: r.rating,
-      visitorCount: parseInt(r.visitor_count || '0'),
-      reviewCount: parseInt(r.review_count || '0'),
-      eventCount: parseInt(r.event_count || '0'),
-      promotionCount: parseInt(r.promotion_count || '0')
+      visitorCount: parseInt(r.visitor_count || '0', 10),
+      reviewCount: parseInt(r.review_count || '0', 10),
+      eventCount: parseInt(r.event_count || '0', 10),
+      promotionCount: parseInt(r.promotion_count || '0', 10)
     }));
   } catch (error) {
     logger.error('Failed to get top performing places', error instanceof Error ? error : new Error(String(error)));
@@ -454,6 +454,7 @@ export interface KPIDefinition {
   unit?: string;
   target_value?: number;
   alert_threshold?: number;
+  alert_triggered?: boolean;
   category?: string;
   owner_id?: string;
   is_active: boolean;

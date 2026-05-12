@@ -1,16 +1,14 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
 import AuditLogViewer from '../../components/admin/AuditLogViewer';
-
-const seo = {
-  title: 'Denetim Kayıtları - Sanliurfa.com Yönetim',
-  description: 'Sistem aktivitesi ve değişiklikleri izle',
-  noIndex: true
-};
 ---
 
-<Layout seo={seo}>
-  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20">
-    <AuditLogViewer client:visible />
-  </div>
-</Layout>
+<AdminLayout
+ title="Denetim Kayıtları"
+ subtitle="Sistem aktivitesi ve değişiklikleri izle"
+ seo={{ title: 'Denetim Kayıtları - Sanliurfa.com Yönetim', description: 'Sistem aktivitesi ve değişiklikleri izle' }}
+>
+ <div class="sf-container py-8">
+ <AuditLogViewer client:visible />
+ </div>
+</AdminLayout>

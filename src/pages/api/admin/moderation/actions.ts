@@ -10,6 +10,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
+import { invalidateUser } from '../../../../lib/cache/invalidation';
 
 type ModerationActionType = 'warning' | 'content_removed' | 'suspend' | 'ban' | 'appeal_granted';
 
@@ -84,6 +85,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const data = validation.data as ModerationActionBody;
 
+    // Ban/suspend are system-wide high-impact — admin-only, moderators cannot ban users
+    const HIGH_IMPACT_ACTIONS = new Set<ModerationActionType>(['suspend', 'ban']);
+    if (HIGH_IMPACT_ACTIONS.has(data.action_type) && user.role !== 'admin') {
+      recordRequest('POST', '/api/admin/moderation/actions', HttpStatus.FORBIDDEN, Date.now() - startTime);
+      return apiError(
+        ErrorCode.FORBIDDEN,
+        'Ban/askıya alma işlemi yönetici yetkisi gerektiriyor',
+        HttpStatus.FORBIDDEN,
+        undefined,
+        requestId
+      );
+    }
+
     // Ban action requires duration
     if (data.action_type === 'ban' && !data.duration_days) {
       recordRequest('POST', '/api/admin/moderation/actions', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -104,6 +118,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
       user.id,
       data.duration_days
     );
+
+    // Cache invalidation: ban/suspend/warning target user'in profile cache'ini etkiler (session revoke için ayrı kanal)
+    await invalidateUser(data.target_user_id);
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/moderation/actions', HttpStatus.CREATED, duration);

@@ -7,7 +7,7 @@
 import type { APIRoute } from 'astro';
 import { queryMany, queryOne } from '../../../../lib/postgres';
 import { getUserSubscriptionDetails, changeUserTier } from '../../../../lib/subscription/subscription-admin';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('GET', '/api/admin/subscriptions/users', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
@@ -52,7 +52,12 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const search = url.searchParams.get('search');
     const tier = url.searchParams.get('tier');
     const status = url.searchParams.get('status') || 'active';
-    const requestedLimit = Number.parseInt(url.searchParams.get('limit') || '50', 10);
+    const requestedLimit = safeIntParam(url.searchParams.get('limit'), 50, 0, 1_000_000);
+
+    if (search !== undefined && search !== null && (typeof search !== 'string' || search.length > 200)) return apiError(ErrorCode.VALIDATION_ERROR, 'search 200 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    if (tier !== undefined && tier !== null && (typeof tier !== 'string' || tier.length > 100)) return apiError(ErrorCode.VALIDATION_ERROR, 'tier 100 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    const VALID_SUB_STATUSES = new Set(['active', 'cancelled', 'expired', 'trialing', 'past_due']);
+    if (!VALID_SUB_STATUSES.has(status)) return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz abonelik durumu', HttpStatus.BAD_REQUEST, undefined, requestId);
     const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 50;
 
     let sql = `SELECT u.id, u.email, u.full_name, s.id as subscription_id, st.display_name as tier, s.status, s.created_at
@@ -65,9 +70,9 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     let paramCount = 2;
 
     if (search) {
-      sql += ` AND (u.email ILIKE $${paramCount} OR u.full_name ILIKE $${paramCount})`;
-      params.push(`%${search}%`);
-      paramCount++;
+      sql += ` AND (to_tsvector('turkish', coalesce(u.full_name,'')) @@ plainto_tsquery('turkish', $${paramCount}) OR u.email ILIKE $${paramCount + 1})`;
+      params.push(search, `%${search}%`);
+      paramCount += 2;
     }
 
     if (tier) {
@@ -113,7 +118,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/admin/subscriptions/users', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,

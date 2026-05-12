@@ -227,32 +227,37 @@ export async function queryOLAP(olapQuery: OLAPQuery): Promise<OLAPResult> {
 
     // Build query based on cube type
     if (olapQuery.cube === 'place_activity') {
-      const selectDims = olapQuery.dimensions
-        .map(d => {
-          if (d === 'category') return 'dp.category';
-          if (d === 'district') return 'dp.district';
-          if (d === 'year') return 'dd.year';
-          if (d === 'month') return 'dd.month';
-          return 'dp.' + d;
-        })
-        .join(', ');
+      // Strict allowlist — SQL injection defense. Asla `'dp.' + d` gibi user input
+      // concat YAPMA — dynamic identifier injection vector.
+      const DIMENSION_MAP: Record<string, string> = {
+        category: 'dp.category',
+        district: 'dp.district',
+        year:     'dd.year',
+        month:    'dd.month',
+      };
+      const MEASURE_MAP: Record<string, string> = {
+        visit_sum:       'SUM(f.visit_count) as visit_sum',
+        review_avg:      'AVG(f.avg_rating) as review_avg',
+        interaction_sum: 'SUM(f.interaction_count) as interaction_sum',
+      };
+      const ORDER_BY_ALLOWLIST = new Set([
+        ...Object.values(DIMENSION_MAP),
+        'visit_sum', 'review_avg', 'interaction_sum',
+      ]);
 
-      const groupDims = olapQuery.dimensions
-        .map(d => {
-          if (d === 'category') return 'dp.category';
-          if (d === 'district') return 'dp.district';
-          if (d === 'year') return 'dd.year';
-          if (d === 'month') return 'dd.month';
-          return 'dp.' + d;
-        })
-        .join(', ');
+      const mappedDims = olapQuery.dimensions.map(d => {
+        const mapped = DIMENSION_MAP[d];
+        if (!mapped) throw new Error(`Invalid dimension: ${d}`);
+        return mapped;
+      });
+      const selectDims = mappedDims.join(', ');
+      const groupDims = mappedDims.join(', ');
 
       const measures = olapQuery.measures
         .map(m => {
-          if (m === 'visit_sum') return 'SUM(f.visit_count) as visit_sum';
-          if (m === 'review_avg') return 'AVG(f.avg_rating) as review_avg';
-          if (m === 'interaction_sum') return 'SUM(f.interaction_count) as interaction_sum';
-          return 'SUM(f.' + m + ') as ' + m;
+          const mapped = MEASURE_MAP[m];
+          if (!mapped) throw new Error(`Invalid measure: ${m}`);
+          return mapped;
         })
         .join(', ');
 
@@ -283,6 +288,10 @@ export async function queryOLAP(olapQuery: OLAPQuery): Promise<OLAPResult> {
       sql += ` GROUP BY ${groupDims}`;
 
       if (olapQuery.orderBy) {
+        // Strict allowlist — orderBy SQL injection defense
+        if (!ORDER_BY_ALLOWLIST.has(olapQuery.orderBy)) {
+          throw new Error(`Invalid orderBy: ${olapQuery.orderBy}`);
+        }
         sql += ` ORDER BY ${olapQuery.orderBy} DESC`;
       }
 
@@ -327,7 +336,7 @@ export async function drillDown(
       cube: cube as any,
       dimensions: [...currentDimensions, nextDimension],
       measures: ['visit_sum', 'review_avg'],
-      filters,
+      ...(filters ? { filters } : {}),
       limit: 100
     };
 
@@ -353,7 +362,7 @@ export async function getTopN(
       cube: 'place_activity',
       dimensions: [dimension],
       measures: [measure],
-      filters,
+      ...(filters ? { filters } : {}),
       orderBy: measure,
       limit: n
     };

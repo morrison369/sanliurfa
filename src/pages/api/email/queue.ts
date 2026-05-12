@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const stats = await getQueueStats();
+    const stats = getQueueStats();
 
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/email/queue', HttpStatus.OK, duration);
@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
           pending: stats.pending,
           sent: stats.sent,
           failed: stats.failed,
-          avgDeliveryTime: Math.round((stats as any).avgDeliveryTime || 0),
+          avgDeliveryTime: 0,
         },
       },
       HttpStatus.OK,

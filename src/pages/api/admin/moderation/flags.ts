@@ -6,7 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { getContentFlags, reviewContentFlag } from '../../../../lib/admin/admin-moderation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
@@ -25,8 +25,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const url = new URL(request.url);
     const status = url.searchParams.get('status') || 'pending';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     const flags = await getContentFlags(status, limit, offset);
 
@@ -77,6 +77,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const body = await request.json();
     const { flagId, decision, notes } = body;
 
+    if (notes !== undefined && (typeof notes !== 'string' || notes.length > 1000)) {
+      recordRequest('POST', '/api/admin/moderation/flags', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'notes alanı 1000 karakteri aşamaz',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        undefined,
+        requestId
+      );
+    }
+
     if (!flagId || !decision) {
       recordRequest('POST', '/api/admin/moderation/flags', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
@@ -99,7 +110,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    await reviewContentFlag(flagId, user.id, decision as any, notes || '');
+    await reviewContentFlag(flagId, user.id, decision as 'approved' | 'rejected' | 'escalated', notes || '');
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/admin/moderation/flags', HttpStatus.OK, duration);

@@ -111,7 +111,7 @@ export function createMigration(
     version,
     description,
     up,
-    down
+    ...(down ? { down } : {})
   };
 }
 

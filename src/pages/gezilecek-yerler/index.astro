@@ -1,159 +1,213 @@
 ---
-
-import Layout from '../../layouts/Layout.astro';
+import ListingTemplate from '../../components/templates/ListingTemplate.astro';
+import { Icon } from 'astro-icon/components';
 import Image from '../../components/Image.astro';
 import { query } from '../../lib/postgres';
-import { resolveContentImage } from '../../lib/content-images';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { buildPageSeo } from '../../lib/seo/pageSeo';
+import { resolveHistoricalImage } from '../../lib/public-image-resolvers';
+const baseUrl = getPublicAppUrl();
 
 let subcategories: any[] = [];
 let featuredSites: any[] = [];
 
 try {
-  const catResult = await query(
-    "SELECT * FROM categories WHERE parent_id = 12 AND is_active = true ORDER BY sort_order"
-  );
-  subcategories = catResult.rows;
-
-  const sitesResult = await query(
-    "SELECT * FROM historical_sites WHERE status = 'active' ORDER BY is_featured DESC, created_at DESC LIMIT 8"
-  );
-  featuredSites = sitesResult.rows;
+ const data = await getCachedPublicRouteData('page:gezilecek-yerler:index', async () => {
+  const [catResult, sitesResult] = await Promise.all([
+   query("SELECT * FROM categories WHERE parent_id = 12 AND is_active = true ORDER BY sort_order"),
+   query("SELECT * FROM historical_sites WHERE status = 'published' ORDER BY is_featured DESC, created_at DESC LIMIT 8"),
+  ]);
+  return {
+   subcategories: catResult.rows,
+   featuredSites: sitesResult.rows,
+  };
+ });
+ subcategories = data.subcategories;
+ featuredSites = data.featuredSites;
 } catch (e) {
-  console.error('Error loading gezilecek yerler:', e);
+ logger.error('Error loading gezilecek yerler:', e instanceof Error ? e : new Error(String(e)));
 }
 
-const seo = {
-  title: 'Şanlıurfa Gezilecek Yerler | Tarihi ve Turistik Noktalar',
-  description: "Göbeklitepe, Balıklıgöl, Harran, Halfeti ve diğer turistik yerler. Şanlıurfa\'da görülmesi gereken yerler rehberi.",
-  keywords: ['şanlıurfa gezilecek yerler', 'göbeklitepe', 'balıklıgöl', 'harran kümbet evleri', 'halfeti', 'şanlıurfa tarihi yerler', 'urfa turizm', 'şanlıurfa tourist attractions'],
-  ogImage: '/images/tarihi-yerler/harran-kumbet-evleri.jpg',
-  canonical: '/gezilecek-yerler',
-};
+const seo = buildPageSeo({
+ title: 'Şanlıurfa Gezilecek Yerler | Tarihi ve Turistik Noktalar',
+ description: "Göbeklitepe, Balıklıgöl, Harran, Halfeti ve diğer turistik yerler. Şanlıurfa'da görülmesi gereken yerler rehberi.",
+ keywords: ['şanlıurfa gezilecek yerler', 'göbeklitepe', 'balıklıgöl', 'harran kümbet evleri', 'halfeti', 'şanlıurfa tarihi yerler', 'urfa turizm', 'şanlıurfa tourist attractions'],
+ ogImage: '/images/tarihi-yerler/harran-kumbet-evleri.jpg',
+ canonical: '/gezilecek-yerler',
+});
 
 const faqItems = [
-  {
-    S: "Şanlıurfa'da ilk görülmesi gereken yer neresi?",
-    C: 'Göbeklitepe ve Balıklıgöl, Şanlıurfa gezi planlarında genellikle ilk duraklar arasında yer alır.',
-  },
-  {
-    S: 'Gezilecek yerler listesi güncel mi?',
-    C: 'Tarihi yerler listesi aktif içerikler üzerinden düzenli olarak güncellenir.',
-  },
-  {
-    S: 'Gezi noktalarını kategoriye göre görebilir miyim?',
-    C: 'Evet. Alt kategori kartlarından müzeler, çarşılar ve tarihi alanlar gibi başlıklara geçebilirsiniz.',
-  },
+ {
+  S: "Şanlıurfa'da ilk görülmesi gereken yer neresi?",
+  C: "Göbeklitepe ve Balıklıgöl, Şanlıurfa gezi planlarında genellikle ilk duraklar arasında yer alır. İnsanlığın bilinen en eski tapınak kompleksi olan Göbeklitepe için en az 2-3 saat, Balıklıgöl ve Dergah çevresi için yarım gün ayırmanız önerilir.",
+ },
+ {
+  S: 'Gezilecek yerler listesi güncel mi?',
+  C: "Tarihi yerler listesi aktif içerikler üzerinden düzenli olarak güncellenir. Yeni eklenen veya sezon dışı kapanan noktalar sistem üzerinden güncellenmekte; her mekanın ziyaret saati, giriş ücreti ve konum bilgisi mümkün olduğunca güncel tutulmaktadır.",
+ },
+ {
+  S: 'Gezi noktalarını kategoriye göre görebilir miyim?',
+  C: "Evet. Alt kategori kartlarından müzeler, çarşılar ve tarihi alanlar gibi başlıklara geçebilirsiniz. Her kategoride yer alan gezi noktaları ayrıca fotoğraflar, kısa açıklamalar ve pratik ziyaret bilgileriyle birlikte detay sayfalarında sunulmaktadır.",
+ },
+ {
+  S: "Şanlıurfa gezisi için en uygun mevsim ne zaman?",
+  C: "Şanlıurfa'yı gezmek için ilkbahar (Mart–Mayıs) ve sonbahar (Eylül–Kasım) ayları en uygun dönemdir. Yaz aylarında sıcaklıklar 40°C'yi aşabilir; bu dönemde sabah erken veya akşam geç saatlerde gezi planlamak çok daha konforlu bir deneyim sunar.",
+ },
 ];
 
 const getHistoricalImage = (site: any) =>
-  resolveContentImage({
-    category: 'tarihi-yerler',
-    slug: site?.slug,
-    explicit: site?.cover_image || site?.images?.[0],
-    placeholder: '/images/placeholder-historical.jpg',
-  });
+ resolveHistoricalImage({
+  slug: site?.slug,
+  image_url: site?.image_url ?? null,
+  cover_image: site?.cover_image ?? null,
+  image: site?.images?.[0] ?? null,
+ });
+
+const featuredImagePool = [
+ '/images/tarihi-yerler/harran-kumbet-evleri.jpg',
+ '/images/blog/gobeklitepe.jpg',
+ '/images/blog/balikligol.jpg',
+ '/images/blog/halfeti.jpg',
+ '/images/blog/urfa-kalesi.jpg',
+ '/images/blog/harran.jpg',
+];
+
+const getTravelIcon = (slug: string) => {
+ const map: Record<string, string> = {
+ balikligol: 'lucide:waves',
+ gobeklitepe: 'lucide:landmark',
+ harran: 'lucide:home',
+ halfeti: 'lucide:ship',
+ 'urfa-kalesi': 'lucide:castle',
+ carsiler: 'lucide:shopping-bag',
+ muzeler: 'lucide:building-2',
+ 'mesire-alanlari': 'lucide:trees',
+ };
+ return map[slug] || 'lucide:map-pin';
+};
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-gradient-to-br from-amber-700 to-amber-900 text-white py-16">
-      <div class="container mx-auto px-4">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Gezilecek Yerler</h1>
-        <p class="text-xl text-amber-100 max-w-2xl">
-          Tarihin sıfır noktası Şanlıurfa’nın eşsiz mekanlarını keşfedin
-        </p>
-      </div>
-    </div>
+<ListingTemplate
+ seo={seo}
+ eyebrow="Şanlıurfa Gezi Rehberi"
+ title="Gezilecek Yerler"
+ description="Tarih, kültür ve doğa odaklı Şanlıurfa rotalarını kategori bazında keşfedin; öne çıkan durakları detay sayfalarıyla inceleyin."
+ breadcrumbItems={[
+  { href: '/', label: 'Ana Sayfa' },
+  { label: 'Gezilecek Yerler' },
+ ]}
+ actions={[
+  { href: '/tarihi-yerler', label: 'Tarihi Yerler', variant: 'primary' },
+  { href: '/ilceler', label: 'İlçeleri Aç', variant: 'ghost' },
+ ]}
+ stats={[
+  { label: 'Alt Kategori', value: subcategories.length },
+  { label: 'Öne Çıkan', value: featuredSites.length },
+ ]}
+ quickAnswerTitle="Hızlı cevap"
+ quickAnswerText="Şanlıurfa'da ilk gezi rotasında Göbeklitepe, Balıklıgöl, Harran ve Halfeti birlikte planlanmalıdır."
+>
+ <style is:inline>
+ .gz-body{background:var(--bg);padding:2.5rem 0 4rem}
+ .gz-qa{background:rgba(184,115,51,.05);border:1px solid rgba(184,115,51,.18);padding:1.25rem;margin-bottom:2rem}
+ .gz-qa-h2{font-size:1.05rem;font-weight:700;color:var(--public-text);margin-bottom:.25rem}
+ .gz-qa-p{font-size:.8rem;color:var(--public-muted);line-height:1.65}
+ .gz-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1rem;margin-bottom:3.5rem}
+ .gz-cat-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.25rem;text-align:center;transition:border-color .15s,transform .15s}
+ .gz-cat-card:hover{border-color:var(--public-accent);transform:translateY(-2px)}
+ .gz-cat-icon{display:inline-flex;width:2.75rem;height:2.75rem;align-items:center;justify-content:center;background:rgba(184,115,51,.1);color:var(--public-accent);margin-bottom:.5rem}
+ .gz-cat-name{font-size:.85rem;font-weight:700;color:var(--public-text);transition:color .15s}
+ .gz-cat-card:hover .gz-cat-name{color:var(--public-accent)}
+ .gz-section-title{font-size:1.3rem;font-weight:700;color:var(--public-text);margin-bottom:1.25rem}
+ .gz-site-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+ .gz-site-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);display:flex;overflow:hidden;transition:border-color .15s}
+ .gz-site-card:hover{border-color:var(--public-accent)}
+ .gz-site-thumb{width:9rem;flex-shrink:0;overflow:hidden;background:rgba(184,115,51,.06)}
+ .gz-site-info{padding:1.25rem;flex:1}
+ .gz-site-name{font-size:.95rem;font-weight:700;color:var(--public-text);margin-bottom:.35rem;transition:color .15s;line-height:1.3}
+ .gz-site-card:hover .gz-site-name{color:var(--public-accent)}
+ .gz-site-desc{font-size:.78rem;color:var(--public-muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .gz-site-loc{font-size:.72rem;color:var(--public-text-soft);margin-top:.5rem}
+ </style>
 
-    <div class="container mx-auto px-4 py-12">
-      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 mb-8">
-        <h2 class="text-lg font-bold text-amber-900">Hızlı Cevap</h2>
-        <p class="text-sm text-amber-800 mt-1">
-          Şanlıurfa’da gezilecek yerleri tematik başlıklarla inceleyebilir, her noktanın detay sayfasına doğrudan erişebilirsiniz.
-        </p>
-      </div>
+ <div class="gz-body">
+ <div class="sf-container">
+ <div class="gz-qa">
+ <h2 class="gz-qa-h2">Hızlı Cevap</h2>
+ <p class="gz-qa-p">
+ Şanlıurfa'da gezilecek yerleri tematik başlıklarla inceleyebilir, her noktanın detay sayfasına doğrudan erişebilirsiniz.
+ </p>
+ </div>
 
-      {/* Alt Kategoriler */}
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
-        {subcategories.map((cat) => (
-          <a href={`/gezilecek-yerler/${cat.slug}`} class="bg-white rounded-xl p-5 text-center shadow-sm hover:shadow-lg transition-all group">
-            <div class="text-3xl mb-2">{
-              cat.slug === 'balikligol' ? '🐟' :
-              cat.slug === 'gobeklitepe' ? '🏛️' :
-              cat.slug === 'harran' ? '🏠' :
-              cat.slug === 'halfeti' ? '🌹' :
-              cat.slug === 'urfa-kalesi' ? '🏰' :
-              cat.slug === 'carsiler' ? '🛍️' :
-              cat.slug === 'muzeler' ? '🏛️' :
-              cat.slug === 'mesire-alanlari' ? '🌳' : '📍'
-            }</div>
-            <h3 class="font-bold text-gray-900 group-hover:text-amber-600 text-sm">{cat.name}</h3>
-          </a>
-        ))}
-      </div>
+ <div class="gz-cat-grid">
+ {subcategories.map((cat) => (
+ <a href={`/gezilecek-yerler/${cat.slug}`} class="gz-cat-card">
+ <div class="gz-cat-icon">
+ <Icon name={getTravelIcon(cat.slug)} class="w-5 h-5" />
+ </div>
+ <h3 class="gz-cat-name">{cat.name}</h3>
+ </a>
+ ))}
+ </div>
 
-      {/* Öne Çıkan Yerler */}
-      {featuredSites.length > 0 && (
-        <div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Öne Çıkan Yerler</h2>
-          <div class="grid md:grid-cols-2 gap-6">
-            {featuredSites.map((site) => (
-              <a href={`/tarihi-yerler/${site.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group flex">
-                <div class="w-40 bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  <Image
-                    src={getHistoricalImage(site)}
-                    alt={site.name}
-                    class="w-full h-full object-cover"
-                    width={320}
-                    height={240}
-                    loading="lazy"
-                  />
-                </div>
-                <div class="p-5 flex-1">
-                  <h3 class="font-bold text-lg text-gray-900 group-hover:text-amber-600">{site.name}</h3>
-                  <p class="text-sm text-gray-500 mt-1 line-clamp-2">{site.short_description || site.description}</p>
-                  {site.location && <p class="text-xs text-gray-400 mt-2">📍 {site.location}</p>}
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
-  {/* Schema.org */}
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'TouristDestination',
-    name: 'Şanlıurfa Gezilecek Yerler',
-    description: 'Göbeklitepe, Balıklıgöl, Harran ve diğer turistik yerler',
-    touristType: ['Tarih', 'Kültür', 'Gastronomi', 'Doğa'],
-    containedInPlace: {
-      '@type': 'City',
-      name: 'Şanlıurfa',
-      containedInPlace: { '@type': 'Country', name: 'Türkiye' }
-    }
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.C,
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Gezilecek Yerler', item: `${baseUrl}/gezilecek-yerler` },
-    ],
-  })} is:inline />
-</Layout>
+ {featuredSites.length > 0 && (
+ <div>
+ <h2 class="gz-section-title">Öne Çıkan Yerler</h2>
+ <div class="gz-site-grid">
+ {featuredSites.map((site, idx) => (
+ <a href={`/tarihi-yerler/${site.slug}`} class="gz-site-card">
+ <div class="gz-site-thumb">
+ <Image
+ src={getHistoricalImage(site) || featuredImagePool[idx % featuredImagePool.length]}
+ alt={site.name}
+ class="w-full h-full object-cover"
+ width={320}
+ height={240}
+ loading="lazy"
+ />
+ </div>
+ <div class="gz-site-info">
+ <h3 class="gz-site-name">{site.name}</h3>
+ <p class="gz-site-desc">{site.short_description || site.description}</p>
+ {site.location && <p class="gz-site-loc">📍 {site.location}</p>}
+ </div>
+ </a>
+ ))}
+ </div>
+ </div>
+ )}
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'TouristDestination',
+ name: 'Şanlıurfa Gezilecek Yerler',
+ description: 'Göbeklitepe, Balıklıgöl, Harran ve diğer turistik yerler',
+ touristType: ['Tarih', 'Kültür', 'Gastronomi', 'Doğa'],
+ containedInPlace: {
+ '@type': 'City',
+ name: 'Şanlıurfa',
+ containedInPlace: { '@type': 'Country', name: 'Türkiye' }
+ }
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Gezilecek Yerler', item: `${baseUrl}/gezilecek-yerler` },
+ ],
+ })} is:inline />
+</ListingTemplate>

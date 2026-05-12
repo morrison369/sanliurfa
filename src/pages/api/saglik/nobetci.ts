@@ -2,22 +2,31 @@
 // GET  /api/saglik/nobetci?ilce=eyyubiye&tarih=2026-04-14
 // POST /api/saglik/nobetci/rotate — Admin: nöbetçi rotasyonunu güncelle
 import type { APIRoute } from 'astro';
-import { query } from '../../../lib/postgres';
+import { query, queryOne } from '../../../lib/postgres';
 import { getCache, setCache } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ url }) => {
   try {
     const district = url.searchParams.get('ilce');
-    const date = url.searchParams.get('tarih') || new Date().toISOString().split('T')[0];
+    const requestedDate = url.searchParams.get('tarih') || new Date().toISOString().split('T')[0];
+    const explicitDate = url.searchParams.has('tarih');
+    const latestRow = explicitDate
+      ? null
+      : await queryOne<{ duty_date: string | null }>(
+          `SELECT duty_date::text
+           FROM pharmacies
+           WHERE is_on_duty = true
+           ORDER BY duty_date DESC NULLS LAST
+           LIMIT 1`,
+        );
+    const effectiveDate = latestRow?.duty_date || requestedDate;
 
-    const cacheKey = `saglik:nobetci:${date}:${district || 'all'}`;
+    const cacheKey = `saglik:nobetci:${explicitDate ? requestedDate : `latest:${effectiveDate}`}:${district || 'all'}`;
     const cached = await getCache(cacheKey);
     if (cached) {
-      return new Response(JSON.stringify(cached), {
-        headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }
-      });
+      return apiResponse(cached, HttpStatus.OK);
     }
 
     let sql = `
@@ -27,7 +36,7 @@ export const GET: APIRoute = async ({ url }) => {
       WHERE p.is_on_duty = true
         AND (p.duty_date = $1 OR p.duty_date IS NULL)
     `;
-    const params: any[] = [date];
+    const params: unknown[] = [effectiveDate];
 
     if (district) {
       sql += ` AND d.slug = $2`;
@@ -38,18 +47,23 @@ export const GET: APIRoute = async ({ url }) => {
 
     const result = await query(sql, params);
 
+    const freshnessRow = await queryOne<{ setting_value: Record<string, unknown> }>(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'pharmacy.lastUpdated' LIMIT 1`,
+    );
+    const freshnessMeta = freshnessRow?.setting_value || {};
+
     const data = {
-      date,
+      requestedDate,
+      effectiveDate,
+      stale: Boolean(freshnessMeta.sourceStale) || effectiveDate !== requestedDate,
       count: result.rows.length,
       pharmacies: result.rows,
     };
 
     await setCache(cacheKey, data, 3600); // 1 saat cache
 
-    return new Response(JSON.stringify(data), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (e: any) {
+    return apiResponse(data, HttpStatus.OK);
+  } catch (e) {
     logger.error('Nobetci API error:', e);
     return problemJson({
       status: 500,

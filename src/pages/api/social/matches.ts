@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { requireAuth } from '../../../lib/auth';
 import { getUserMatches } from '../../../lib/social/matchmaking-db';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail, safeIntParam } from '../../../lib/api';
 import { enforceSocialRateLimit } from '../../../lib/social/abuse-policy';
 
 export const GET: APIRoute = async ({ request, url }) => {
@@ -27,18 +27,15 @@ export const GET: APIRoute = async ({ request, url }) => {
       });
     }
 
-    const limit = Number(url.searchParams.get('limit') || '30');
+    const limit = safeIntParam(url.searchParams.get('limit'), 30, 1, 100);
     const matches = await getUserMatches(auth.user.id, limit);
 
-    return new Response(JSON.stringify({ success: true, data: matches }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, data: matches }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Eşleşmeler Alınamadı',
-      detail: error instanceof Error ? error.message : 'failed_to_get_matches',
+      detail: safeErrorDetail(error, 'failed_to_get_matches'),
       type: '/problems/social-matches-fetch-failed',
       instance: '/api/social/matches',
     });

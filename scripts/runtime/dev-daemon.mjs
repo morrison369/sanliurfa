@@ -225,6 +225,7 @@ async function start() {
       env: {
         ...process.env,
         ISOLATED_LOCK_NAME: 'dev',
+        E2E_RATE_LIMIT_BYPASS: '1',
       },
     }
   );

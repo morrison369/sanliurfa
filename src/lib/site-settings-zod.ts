@@ -32,7 +32,7 @@ const HeroSchema = z.object({
 const HomepageSchemaSchema = z.object({
   siteName: z.string().min(1),
   alternateName: z.string().min(1),
-  baseUrl: z.string().url().startsWith('https://'),
+  baseUrl: z.url().startsWith('https://'),
   searchPathTemplate: z.string().min(1).startsWith('/'),
   organizationId: z.string().min(1).startsWith('/#'),
   webpageId: z.string().min(1).startsWith('/#'),
@@ -97,6 +97,39 @@ const MainCtaSchema = z.object({
   primaryHref: InternalHref,
   secondaryLabel: z.string().min(1),
   secondaryHref: InternalHref,
+});
+
+const HomepageCtaSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  primary: z.object({
+    href: InternalHref,
+    label: z.string().min(1),
+    ariaLabel: z.string().min(1),
+  }),
+  secondary: z.object({
+    href: InternalHref,
+    label: z.string().min(1),
+    ariaLabel: z.string().min(1),
+  }),
+});
+
+const HomepageSectionOrderSchema = z.object({
+  items: z.array(z.string().min(1)).min(1),
+});
+
+const HomepageThemeSchema = z.object({
+  landingSand: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
+  landingCream: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
+  landingGreen: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
+  landingCopper: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
+  landingCopperStrong: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
+  landingGold: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
+  landingInk: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
+  landingMuted: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
+  landingSurface: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
+  landingSurfaceHover: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
+  landingStone: z.string().regex(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i).optional(),
 });
 
 const HeaderBrandSchema = z.object({
@@ -182,7 +215,7 @@ const MegaMenuItem = z
     const hasGroups = Array.isArray(item.groups) && item.groups.length > 0;
     if (!hasSub && !hasGroups) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         message: 'section en az bir sub veya groups içermeli',
       });
     }
@@ -415,15 +448,15 @@ const SocialProfileChannelSchema = z
     const url = profile.url?.trim() || '';
     if (!profile.enabled) return;
     if (!handle) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['handle'], message: 'handle zorunlu' });
+      ctx.addIssue({ code: 'custom', path: ['handle'], message: 'handle zorunlu' });
     }
     if (!url) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['url'], message: 'url zorunlu' });
+      ctx.addIssue({ code: 'custom', path: ['url'], message: 'url zorunlu' });
       return;
     }
     if (!/^https?:\/\//i.test(url)) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: 'custom',
         path: ['url'],
         message: 'url http/https olmalı',
       });
@@ -443,6 +476,9 @@ const SettingSchemaMap: Record<string, z.ZodTypeAny> = {
   'homepage.hero': HeroSchema,
   'homepage.heroMeta': HeroMetaSchema,
   'homepage.mainCta': MainCtaSchema,
+  'homepage.cta': HomepageCtaSchema,
+  'homepage.sectionOrder': HomepageSectionOrderSchema,
+  'homepage.theme': HomepageThemeSchema,
   'header.utilityLinks': z.object({ items: z.array(LinkItem) }),
   'header.brand': HeaderBrandSchema,
   'header.labels': HeaderLabelsSchema,

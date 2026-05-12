@@ -144,7 +144,9 @@ export class NotificationSystem {
     let body = template.body;
 
     for (const [key, value] of Object.entries(variables)) {
-      body = body.replace(new RegExp(`\{${key}\}`, 'g'), String(value));
+      // Escape regex special chars in key to prevent ReDoS via crafted variable names
+      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      body = body.replace(new RegExp(`\\{${escapedKey}\\}`, 'g'), String(value));
     }
 
     return body;

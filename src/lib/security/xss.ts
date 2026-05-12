@@ -130,12 +130,30 @@ export function sanitizeEmail(email: string): string {
 }
 
 /**
- * Sanitize slug
+ * Türkçe karakter → ASCII karşılığı (slug normalization için).
+ * 'Şanlıurfa Göbeklitepe' → 'sanliurfa gobeklitepe' → 'sanliurfa-gobeklitepe'.
+ */
+const TR_TO_ASCII_MAP: Record<string, string> = {
+  ş: 's', Ş: 'S',
+  ğ: 'g', Ğ: 'G',
+  ü: 'u', Ü: 'U',
+  ç: 'c', Ç: 'C',
+  ö: 'o', Ö: 'O',
+  ı: 'i', İ: 'I',
+};
+
+export function turkishToAscii(input: string): string {
+  return input.replace(/[şŞğĞüÜçÇöÖıİ]/g, (ch) => TR_TO_ASCII_MAP[ch] || ch);
+}
+
+/**
+ * Sanitize slug — Türkçe karakterler ASCII karşılığına dönüştürülür.
+ * 'Şanlıurfa Göbeklitepe' → 'sanliurfa-gobeklitepe'.
  */
 export function sanitizeSlug(slug: string): string {
   if (!slug) return '';
-  
-  return slug
+
+  return turkishToAscii(slug)
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, '-')
     .replace(/-+/g, '-')
@@ -154,6 +172,7 @@ export const CSP_HEADER = [
   "connect-src 'self' https://api.openstreetmap.org",
   "frame-src 'self'",
   "media-src 'self'",
+  "report-uri /api/security/csp-report",
 ].join('; ');
 
 /**

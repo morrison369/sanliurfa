@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request, params }) => {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/places/${placeId}/rating-distribution`, HttpStatus.OK, duration);
       return apiResponse(
-        { success: true, data: JSON.parse(cached as string) },
+        { success: true, data: cached as any },
         HttpStatus.OK,
         requestId
       );
@@ -47,12 +47,12 @@ export const GET: APIRoute = async ({ request, params }) => {
     );
 
     const distribution = {
-      five_stars: parseInt(result?.five_stars || '0'),
-      four_stars: parseInt(result?.four_stars || '0'),
-      three_stars: parseInt(result?.three_stars || '0'),
-      two_stars: parseInt(result?.two_stars || '0'),
-      one_stars: parseInt(result?.one_stars || '0'),
-      total_reviews: parseInt(result?.total_reviews || '0'),
+      five_stars: parseInt(result?.five_stars || '0', 10),
+      four_stars: parseInt(result?.four_stars || '0', 10),
+      three_stars: parseInt(result?.three_stars || '0', 10),
+      two_stars: parseInt(result?.two_stars || '0', 10),
+      one_stars: parseInt(result?.one_stars || '0', 10),
+      total_reviews: parseInt(result?.total_reviews || '0', 10),
       average_rating: parseFloat(result?.average_rating || '0')
     };
 

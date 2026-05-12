@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../lib/postgres';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../lib/api';
 
 export const GET: APIRoute = async () => {
   try {
@@ -30,7 +30,7 @@ export const GET: APIRoute = async () => {
     return problemJson({
       status: 500,
       title: 'Weather Status Alınamadı',
-      detail: error instanceof Error ? error.message : 'weather_status_failed',
+      detail: safeErrorDetail(error, 'weather_status_failed'),
       type: '/problems/weather-status-failed',
       instance: '/api/weather/status',
     });

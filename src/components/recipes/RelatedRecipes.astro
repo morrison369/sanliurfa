@@ -1,0 +1,67 @@
+---
+/**
+ * RelatedRecipes — Server Island
+ *
+ * Renders the "Diğer Tarifler" sidebar panel on a recipe detail page. Used with
+ * `server:defer` so the main recipe content streams before this secondary query.
+ *
+ * <RelatedRecipes excludeSlug={recipe.slug} server:defer>
+ * <div slot="fallback" class="..." />
+ * </RelatedRecipes>
+ *
+ * Returns an empty fragment when there are no related recipes (parent layout collapses).
+ */
+import { query } from '../../lib/postgres';
+import PublicRelatedList from '../public/PublicRelatedList.astro';
+import { logger } from '../../lib/logging';
+import { resolveRecipeImage } from '../../lib/public-image-resolvers';
+
+interface Props {
+ excludeSlug: string;
+}
+
+const { excludeSlug } = Astro.props;
+
+let relatedRecipes: Array<{
+ slug: string;
+ name: string;
+ cover_image: string | null;
+ difficulty: string | null;
+ prep_time: number | null;
+ cook_time: number | null;
+}> = [];
+
+try {
+ const result = await query(
+ `SELECT slug, name, cover_image, difficulty, prep_time, cook_time
+ FROM recipes
+ WHERE status = 'published' AND slug != $1
+ ORDER BY is_featured DESC, rating DESC NULLS LAST
+ LIMIT 3`,
+ [excludeSlug],
+ );
+ relatedRecipes = result.rows;
+} catch (e) {
+ logger.error('RelatedRecipes query failed', e instanceof Error ? e : new Error(String(e)));
+}
+
+const getRecipeImage = (recipe: typeof relatedRecipes[number]) =>
+ resolveRecipeImage(
+  {
+   slug: recipe?.slug,
+   cover_image: recipe?.cover_image,
+  },
+  { thumb: true },
+ );
+---
+
+<PublicRelatedList
+ title="Diğer Tarifler"
+ items={relatedRecipes.map((recipe) => ({
+  href: `/yemek-tarifleri/${recipe.slug}`,
+  title: recipe.name,
+  meta: recipe.difficulty ? `${recipe.difficulty} · ${(recipe.prep_time || 0) + (recipe.cook_time || 0)} dk` : undefined,
+  imageSrc: getRecipeImage(recipe),
+  imageAlt: recipe.name,
+ }))}
+/>

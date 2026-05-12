@@ -1,0 +1,222 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { query } from '../lib/postgres';
+import { getCachedPublicRouteData } from '../lib/public-route-cache';
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
+const baseUrl = getPublicAppUrl();
+
+let places: any[] = [];
+let blogPosts: any[] = [];
+try {
+  const data = await getCachedPublicRouteData('page:guide:balikligol-gezi', async () => {
+    const [placesResult, blogResult] = await Promise.all([
+      query(`
+        SELECT p.slug, p.name, p.address, p.rating, p.review_count, p.short_description
+        FROM places p
+        WHERE p.status = 'active' AND p.district_id IN (1, 2)
+          AND (p.name ILIKE '%balık%' OR p.name ILIKE '%cami%' OR p.name ILIKE '%tarihi%'
+            OR p.name ILIKE '%kale%' OR p.name ILIKE '%müze%' OR p.name ILIKE '%çarşı%'
+            OR p.category_id IN (
+              SELECT id FROM categories
+              WHERE slug ILIKE '%dini%' OR slug ILIKE '%tarihi%' OR slug ILIKE '%turizm%' OR slug ILIKE '%oren%'
+            ))
+        ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+        LIMIT 10
+      `),
+      query(`
+        SELECT slug, title FROM blog_posts
+        WHERE status = 'published' AND published_at <= CURRENT_DATE
+          AND (tags && ARRAY['balıklıgöl']::text[]
+            OR title ILIKE '%balıklıgöl%'
+            OR title ILIKE '%şanlıurfa gezi%'
+            OR title ILIKE '%2 gün%')
+        ORDER BY published_at DESC LIMIT 5
+      `).catch(() => ({ rows: [] })),
+    ]);
+    return { places: placesResult.rows, blogPosts: blogResult.rows };
+  });
+  places = data.places;
+  blogPosts = data.blogPosts;
+} catch (e) {
+  logger.error('Balıklıgöl rehberi yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: "Balıklıgöl Ziyaret Rehberi 2026 | Hz. İbrahim'in Kutsal Gölü, Çevre Gezisi",
+  description: "Balıklıgöl'e nasıl gidilir, ziyaret saatleri, çevre gezisi rotası ve pratik bilgiler. Şanlıurfa'nın simgesi Hz. İbrahim'in kutsal gölü için eksiksiz rehber.",
+  keywords: ['balıklıgöl', 'balıklıgöl gezi rehberi', 'şanlıurfa balıklıgöl', 'halilürrahman camii', 'hz ibrahim gölü', 'balıklıgöl ziyaret'],
+  ogImage: '/uploads/blogs/balikligol-ziyaret-rehberi-2026.jpg',
+  canonical: '/balikligol-gezi-rehberi',
+};
+
+const faqItems = [
+  { q: "Balıklıgöl nerede ve nasıl gidilir?", a: "Balıklıgöl, Şanlıurfa şehir merkezinde Gölbaşı Semti'nde yer alır. Şanlıurfa otobüs terminalinden merkeze gelen her araçla ulaşılabilir; Divan Caddesi yönünde yürüyerek veya kısa taksi yolculuğuyla kolayca bulunur. Tabelalar her noktada mevcuttur." },
+  { q: "Balıklıgöl'de giriş ücretli mi, ziyaret saatleri nedir?", a: "Balıklıgöl çevresi günün her saati ücretsiz ziyaret edilebilir. Halilürrahman Camii sabah namazından akşam namazına kadar ziyaretçilere açıktır. En güzel atmosfer; sabah erken saatler ve gün batımıdır." },
+  { q: "Balıklıgöl'deki balıklara dokunulabilir mi?", a: "Hayır, Balıklıgöl'deki sazan balıklarına dokunmak inanç gereği yasak kabul edilir. Yerel halk bu balıkların kutsal olduğuna inanır; balıklara dokunmak veya yakalamak kötü uğur sayılır. Yüzlerce yıldır bu nedenle korunan balıklar son derece evcildir." },
+  { q: "Balıklıgöl çevresinde neler var?", a: "Balıklıgöl çevresinde Halilürrahman Camii, Aynzeliha Gölü, Rızvaniye Camii ve Vakfı, tarihi çay bahçeleri ve seyyar tatlı satıcıları bulunur. Kısa yürüyüşle Hz. İbrahim Doğduğu Mağara, Şanlıurfa Kalesi ve Kapalı Çarşı'ya ulaşılabilir." },
+  { q: "Balıklıgöl ziyareti ne kadar sürer?", a: "Balıklıgöl ve Halilürrahman Camii ziyareti 30–45 dakikada tamamlanır. Aynzeliha Gölü ile çay bahçelerini de eklerseniz 1–1,5 saat ayırın. Tarihi Çarşı ve Şanlıurfa Kalesi ile birleştirilirse yarım güne yayılabilir." },
+];
+---
+
+<Layout seo={seo}>
+  <style is:inline>
+    .hr-hero{background:linear-gradient(135deg,#05111a 0%,#0d2535 50%,#05111a 100%);border-bottom:1px solid rgba(44,122,82,.2);padding:4rem 0 3rem}
+    .hr-eyebrow{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#2C7A52;margin-bottom:.75rem}
+    .hr-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.25rem);font-weight:700;color:#e8caa9;margin:0 0 1rem;line-height:1.15}
+    .hr-desc{font-size:1rem;color:rgba(232,202,169,.75);max-width:600px;line-height:1.65;margin-bottom:2rem}
+    .hr-badges{display:flex;flex-wrap:wrap;gap:.5rem}
+    .hr-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .85rem;background:rgba(44,122,82,.15);border:1px solid rgba(44,122,82,.3);color:#2C7A52;font-size:.78rem;font-weight:600;border-radius:999px}
+    .hr-body{background:#FBF6EC;padding:3rem 0 5rem}
+    .hr-grid{display:grid;gap:2.5rem}
+    @media(min-width:64rem){.hr-grid{grid-template-columns:2fr 1fr}}
+    .hr-section-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:#1F1410;margin:0 0 1.25rem;padding-bottom:.65rem;border-bottom:2px solid rgba(44,122,82,.15)}
+    .hr-places{display:flex;flex-direction:column;gap:.75rem}
+    .hr-place{display:flex;align-items:flex-start;gap:1rem;background:#fff;border:1px solid rgba(44,122,82,.12);padding:1rem 1.25rem;border-radius:8px;text-decoration:none;transition:border-color .15s,box-shadow .15s}
+    .hr-place:hover{border-color:#2C7A52;box-shadow:0 2px 8px rgba(44,122,82,.1)}
+    .hr-place-icon{width:2.5rem;height:2.5rem;background:rgba(44,122,82,.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;margin-top:.1rem}
+    .hr-place-name{font-weight:700;color:#1F1410;font-size:.95rem;margin-bottom:.2rem}
+    .hr-place-desc{font-size:.8rem;color:#7A6448;line-height:1.4}
+    .hr-place-rating{font-size:.82rem;color:#C0571F;font-weight:700;white-space:nowrap;margin-left:auto;padding-left:.5rem}
+    .hr-tips{background:#fff;border:1px solid rgba(44,122,82,.15);border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .hr-tips-title{font-weight:700;color:#1F1410;margin-bottom:.85rem;font-size:.95rem}
+    .hr-tip{display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem;color:#2C1810;line-height:1.5;margin-bottom:.6rem}
+    .hr-tip-dot{width:.4rem;height:.4rem;background:#2C7A52;border-radius:50%;flex-shrink:0;margin-top:.55rem}
+    .hr-faq{margin-top:2rem}
+    .hr-faq-item{border:1px solid rgba(44,122,82,.12);border-radius:8px;margin-bottom:.65rem;overflow:hidden;background:#fff}
+    .hr-faq-q{padding:1rem 1.25rem;font-weight:700;font-size:.9rem;color:#1F1410;cursor:default}
+    .hr-faq-a{padding:0 1.25rem 1rem;font-size:.85rem;color:#2C1810;line-height:1.6}
+    .hr-blog-links{display:flex;flex-direction:column;gap:.4rem;margin-top:.75rem}
+    .hr-blog-link{font-size:.85rem;color:#C0571F;text-decoration:none;padding:.4rem .6rem;border-radius:4px;transition:background .12s}
+    .hr-blog-link:hover{background:rgba(192,87,31,.08)}
+    .hr-route{background:linear-gradient(135deg,rgba(44,122,82,.06),rgba(44,122,82,.02));border:1px solid rgba(44,122,82,.18);border-radius:8px;padding:1.25rem 1.5rem;margin-bottom:1.5rem}
+    .hr-route-title{font-weight:700;color:#1F1410;font-size:.9rem;margin-bottom:.65rem}
+    .hr-route-step{display:flex;gap:.75rem;font-size:.83rem;color:#2C1810;line-height:1.5;margin-bottom:.5rem}
+    .hr-route-num{width:1.4rem;height:1.4rem;background:#2C7A52;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0;margin-top:.1rem}
+  </style>
+
+  <div class="hr-hero">
+    <div class="sf-container">
+      <p class="hr-eyebrow">Şanlıurfa Gezi Rehberi</p>
+      <h1 class="hr-h1">Balıklıgöl Ziyaret Rehberi 2026</h1>
+      <p class="hr-desc">
+        Hz. İbrahim'in kutsal gölü olarak bilinen Balıklıgöl, Şanlıurfa'nın en ikonik
+        durağıdır. Ücretsiz ziyaret, tarihi camiler ve yüzyıllarca korunan kutsal balıklar.
+      </p>
+      <div class="hr-badges">
+        <span class="hr-badge">🐟 Kutsal Balıklar</span>
+        <span class="hr-badge">🕌 Halilürrahman Camii</span>
+        <span class="hr-badge">🆓 Ücretsiz Giriş</span>
+        <span class="hr-badge">🏙️ Şehir Merkezi</span>
+        <span class="hr-badge">30–45 dk ziyaret</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hr-body">
+    <div class="sf-container">
+      <div class="hr-grid">
+        <div>
+          <div class="hr-route">
+            <div class="hr-route-title">🗺️ Önerilen Yürüyüş Rotası</div>
+            <div class="hr-route-step"><span class="hr-route-num">1</span><span><strong>Balıklıgöl:</strong> Kutsal balıkları izleyin, gölün etrafını dolaşın (~15 dk)</span></div>
+            <div class="hr-route-step"><span class="hr-route-num">2</span><span><strong>Halilürrahman Camii:</strong> Gölün kenarındaki tarihi cami (~10 dk)</span></div>
+            <div class="hr-route-step"><span class="hr-route-num">3</span><span><strong>Aynzeliha Gölü:</strong> Hemen yanındaki ikinci küçük göl (~10 dk)</span></div>
+            <div class="hr-route-step"><span class="hr-route-num">4</span><span><strong>Hz. İbrahim Mağarası:</strong> Kısa yürüyüşle ulaşılır (~10 dk)</span></div>
+            <div class="hr-route-step"><span class="hr-route-num">5</span><span><strong>Şanlıurfa Kalesi:</strong> Panoramik manzara için kaleye çıkın (~20 dk)</span></div>
+          </div>
+
+          <h2 class="hr-section-title">Çevredeki Popüler Mekanlar</h2>
+          {places.length > 0 ? (
+            <div class="hr-places">
+              {places.map((p: any) => (
+                <a href={`/isletme/${p.slug}`} class="hr-place">
+                  <div class="hr-place-icon">📍</div>
+                  <div style="flex:1">
+                    <div class="hr-place-name">{p.name}</div>
+                    {p.short_description && <div class="hr-place-desc">{p.short_description}</div>}
+                  </div>
+                  {p.rating && <div class="hr-place-rating">★ {p.rating}</div>}
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p style="color:#7A6448;font-size:.9rem">Mekanlar yükleniyor…</p>
+          )}
+
+          <div class="hr-faq" style="margin-top:2.5rem">
+            <h2 class="hr-section-title">Sık Sorulan Sorular</h2>
+            {faqItems.map((item) => (
+              <div class="hr-faq-item">
+                <div class="hr-faq-q">{item.q}</div>
+                <div class="hr-faq-a">{item.a}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <aside>
+          <div class="hr-tips">
+            <div class="hr-tips-title">💡 Pratik Bilgiler</div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Konum:</strong> Şanlıurfa şehir merkezi, Gölbaşı Semti</span></div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Giriş:</strong> Ücretsiz, günün her saati açık</span></div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>En iyi zaman:</strong> Sabah erken veya gün batımı</span></div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Balıklara dokunmayın:</strong> İnanç gereği kesinlikle yasak</span></div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Yakın mesafe:</strong> Tarihi Çarşı, Hz. İbrahim Mağarası, Şanlıurfa Kalesi yürüme mesafesinde</span></div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Yemek:</strong> Çevre kafelerde çay ve tatlı; kebap için Gölbaşı restoranları</span></div>
+          </div>
+
+          {blogPosts.length > 0 && (
+            <div class="hr-tips">
+              <div class="hr-tips-title">📖 İlgili Rehber Yazılar</div>
+              <div class="hr-blog-links">
+                {blogPosts.map((p: any) => (
+                  <a href={`/blog/${p.slug}`} class="hr-blog-link">{p.title}</a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div class="hr-tips">
+            <div class="hr-tips-title">🗺️ Diğer Gezi Rehberleri</div>
+            <div class="hr-blog-links">
+              <a href="/gobeklitepe-gezi-rehberi" class="hr-blog-link">Göbeklitepe — Bilet ve Ulaşım</a>
+              <a href="/halfeti-gezi-rehberi" class="hr-blog-link">Halfeti — Tekne Turu</a>
+              <a href="/harran-gezi-rehberi" class="hr-blog-link">Harran — Kümbet Evler</a>
+              <a href="/gezilecek-yerler" class="hr-blog-link">Tüm Gezilecek Yerler</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'TouristAttraction',
+    name: 'Balıklıgöl',
+    description: "Hz. İbrahim'in kutsal gölü olarak bilinen Balıklıgöl, Şanlıurfa şehir merkezinde Gölbaşı Semti'nde yer alır.",
+    url: `${baseUrl}/balikligol-gezi-rehberi`,
+    touristType: ['Dini', 'Tarih', 'Kültür'],
+    isAccessibleForFree: true,
+    containedInPlace: { '@type': 'City', name: 'Şanlıurfa' },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Gezi Rehberleri', item: `${baseUrl}/blog` },
+      { '@type': 'ListItem', position: 3, name: 'Balıklıgöl Gezi Rehberi', item: `${baseUrl}/balikligol-gezi-rehberi` },
+    ],
+  })} is:inline />
+</Layout>

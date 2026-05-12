@@ -199,7 +199,7 @@ export function addReply(
     reviewId,
     userId,
     userName,
-    userAvatar,
+    ...(userAvatar ? { userAvatar } : {}),
     content,
     isOwner,
     createdAt: new Date().toISOString(),

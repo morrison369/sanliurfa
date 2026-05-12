@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { requireAuth } from '../../../../lib/auth';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../../lib/api';
 import {
   getConversationTypingUsers,
   getTotalUnreadCount,
@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request }) => {
           controller.enqueue(
             new TextEncoder().encode(
               sseEncode('error', {
-                message: error instanceof Error ? error.message : 'stream_sync_failed',
+                message: safeErrorDetail(error, 'stream_sync_failed'),
               }),
             ),
           );

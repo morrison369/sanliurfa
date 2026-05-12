@@ -55,35 +55,26 @@ export async function bookTickets(
   type: string,
   quantity: number
 ): Promise<{ success: boolean; ticketId?: string; error?: string }> {
-  // Check availability
-  const event = await query(
-    `SELECT capacity, attendee_count, price FROM events WHERE id = $1`,
-    [eventId]
-  );
-
-  if (event.rows.length === 0) {
-    return { success: false, error: 'Event not found' };
-  }
-
-  const { capacity, attendee_count, price } = event.rows[0];
-
-  if (parseInt(attendee_count) + quantity > capacity) {
-    return { success: false, error: 'Not enough tickets available' };
-  }
-
-  // Create ticket
+  // Atomic CTE (HARD RULE #47): SELECT capacity → check → INSERT race-prone (over-booking).
+  // UPDATE WHERE attendee_count + $1 <= capacity guarantees atomic capacity check.
   const result = await query(
-    `INSERT INTO event_tickets (event_id, user_id, type, price, quantity, status, booked_at)
-     VALUES ($1, $2, $3, $4, $5, 'reserved', NOW())
+    `WITH updated AS (
+       UPDATE events
+       SET attendee_count = attendee_count + $1
+       WHERE id = $2 AND attendee_count + $1 <= capacity
+       RETURNING id, price
+     )
+     INSERT INTO event_tickets (event_id, user_id, type, price, quantity, status, booked_at)
+     SELECT id, $3, $4, price * $1, $1, 'reserved', NOW() FROM updated
      RETURNING id`,
-    [eventId, userId, type, price * quantity, quantity]
+    [quantity, eventId, userId, type]
   );
 
-  // Update attendee count
-  await query(
-    `UPDATE events SET attendee_count = attendee_count + $1 WHERE id = $2`,
-    [quantity, eventId]
-  );
+  if (result.rows.length === 0) {
+    // Either event missing or no capacity — distinguish via secondary lookup
+    const exists = await query(`SELECT 1 FROM events WHERE id = $1`, [eventId]);
+    return { success: false, error: exists.rows.length === 0 ? 'Event not found' : 'Not enough tickets available' };
+  }
 
   return { success: true, ticketId: result.rows[0].id };
 }

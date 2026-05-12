@@ -5,7 +5,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { queryMany, update } from '../../../lib/postgres';
+import { queryMany, update, query } from '../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     // Yetki kontrolü
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       const duration = Date.now() - startTime;
       recordRequest('GET', '/api/blog/scheduled-posts', HttpStatus.FORBIDDEN, duration);
       return apiError(
@@ -64,8 +64,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
     // Otomatik yayınla
     const ready = scheduled.filter((p) => p.schedule_status === 'ready_to_publish');
     if (ready.length > 0) {
+      const readyIds = ready.map((p) => p.id);
+      await query(
+        `UPDATE blog_posts SET status = 'published', updated_at = NOW() WHERE id = ANY($1::uuid[])`,
+        [readyIds]
+      );
       for (const post of ready) {
-        await update('blog_posts', { id: post.id }, { status: 'published' });
         logger.info('Planlanmış yazı yayınlandı', { postId: post.id, title: post.title });
       }
       await deleteCachePattern('blog:*');
@@ -108,7 +112,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/blog/scheduled-posts', HttpStatus.FORBIDDEN, duration);
       return apiError(ErrorCode.UNAUTHORIZED, 'Yönetici yetkisi gereklidir', HttpStatus.FORBIDDEN, undefined, requestId);

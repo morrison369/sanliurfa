@@ -1,28 +1,28 @@
 ---
-
+import { Icon } from 'astro-icon/components';
 import Layout from '../layouts/Layout.astro';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../lib/public-app-url';
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'İçerik Rehberi - Sanliurfa.com',
-  description: 'Şanlıurfa gezi rehberi için içerik ve resim ekleme rehberi',
-  keywords: ['şanlıurfa içerik rehberi', 'sanliurfa.com rehber', 'urfa içerik'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/icerik-rehberi',
+ title: 'İçerik Rehberi - Sanliurfa.com',
+ description: 'Şanlıurfa gezi rehberi için içerik ve resim ekleme rehberi',
+ keywords: ['şanlıurfa içerik rehberi', 'sanliurfa.com rehber', 'urfa içerik'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/icerik-rehberi',
 };
 
 const steps = [
-  {
-    title: '1. Wikipedia\'dan İçerik Çekme',
-    description: 'Hazır script ile otomatik içerik çekme',
-    code: 'npx tsx scripts/content-scraper/wikipedia-scraper.ts',
-    note: 'Balıklıgöl, Göbeklitepe, Harran gibi yerlerin içeriği otomatik çekilir'
-  },
-  {
-    title: '2. Slug Kuralıyla Resim İndirme',
-    description: 'Unsplash + Pexels kaynaklarından otomatik indir ve içeriklere eşleştir',
-    code: `# .env içine anahtarları ekle
+ {
+ title: "1. Wikipedia'dan İçerik Çekme",
+ description: 'Hazır script ile otomatik içerik çekme',
+ code: 'npx tsx scripts/content-scraper/wikipedia-scraper.ts',
+ note: 'Balıklıgöl, Göbeklitepe, Harran gibi yerlerin içeriği otomatik çekilir'
+ },
+ {
+ title: '2. Slug Kuralıyla Resim İndirme',
+ description: 'Unsplash + Pexels kaynaklarından otomatik indir ve içeriklere eşleştir',
+ code: `# .env içine anahtarları ekle
 UNSPLASH_ACCESS_KEY=xxx
 PEXELS_API_KEY=xxx
 
@@ -32,12 +32,12 @@ PEXELS_API_KEY=xxx
 # - external URL kontrolü
 # - doğrula
 npm run images:pipeline`,
-    note: 'Resimler /images/{kategori}/{slug}.jpg formatında üretilir'
-  },
-  {
-    title: '3. Manuel İçerik Ekleme',
-    description: 'src/content/places/ klasörüne .md dosyası oluştur',
-    code: `---
+ note: 'Resimler /images/{kategori}/{slug}.jpg formatında üretilir'
+ },
+ {
+ title: '3. Manuel İçerik Ekleme',
+ description: 'src/content/places/ klasörüne .md dosyası oluştur',
+ code: `---
 title: "Mekan Adı"
 description: "Kısa açıklama"
 slug: "mekan-adi"
@@ -51,142 +51,128 @@ thumb: "/images/places/mekan-adi-thumb.jpg"
 # Başlık
 
 İçerik buraya...`,
-    note: 'Frontmatter (--- arası) zorunlu alanları içermeli'
-  },
-  {
-    title: '4. Ücretsiz Resim Kaynakları',
-    description: 'API kullanmadan manuel indirme',
-    links: [
-      { name: 'Unsplash', url: 'https://unsplash.com/s/photos/sanliurfa' },
-      { name: 'Pexels', url: 'https://pexels.com/search/sanliurfa' },
-      { name: 'Pixabay', url: 'https://pixabay.com/images/search/urfa' },
-      { name: 'Wikimedia Commons', url: 'https://commons.wikimedia.org/wiki/Sanliurfa' }
-    ]
-  }
+ note: 'Frontmatter (--- arası) zorunlu alanları içermeli'
+ },
+ {
+ title: '4. Ücretsiz Resim Kaynakları',
+ description: 'API kullanmadan manuel indirme',
+ links: [
+ { name: 'Unsplash', url: 'https://unsplash.com/s/photos/sanliurfa' },
+ { name: 'Pexels', url: 'https://pexels.com/search/sanliurfa' },
+ { name: 'Pixabay', url: 'https://pixabay.com/images/search/urfa' },
+ { name: 'Wikimedia Commons', url: 'https://commons.wikimedia.org/wiki/Sanliurfa' }
+ ]
+ }
 ];
 
 const imageKeywords = [
-  'Sanliurfa cityscape',
-  'Balikligol Urfa',
-  'Gobekli Tepe',
-  'Harran houses',
-  'Southeast Turkey landscape',
-  'Mesopotamia',
-  'Anatolian history',
-  'Turkish cuisine',
-  'Historical mosque',
-  'Ancient ruins'
+ 'Sanliurfa cityscape', 'Balikligol Urfa', 'Gobekli Tepe', 'Harran houses',
+ 'Southeast Turkey landscape', 'Mesopotamia', 'Anatolian history', 'Turkish cuisine',
+ 'Historical mosque', 'Ancient ruins'
 ];
+
 const faqItems = [
-  { S: 'Sanliurfa.com için nasıl içerik ekleyebilirim?', C: 'Admin panelinden blog yazısı, mekan veya etkinlik ekleyebilirsiniz. Dış kaynak içerikleri için scraper scriptleri mevcuttur.' },
-  { S: 'Resimler hangi formatta ve boyutta olmalı?', C: 'WebP formatı tercih edilir; en az 1200×630 piksel boyut SEO ve sosyal medya paylaşımı için önerilir.' },
-  { S: 'İçerik ekleme sürecinde takıldım, destek alabilirim?', C: 'İletişim sayfası üzerinden teknik destek talebinde bulunabilirsiniz.' },
+ { S: 'Sanliurfa.com için nasıl içerik ekleyebilirim?', C: 'Admin panelinden blog yazısı, mekan veya etkinlik ekleyebilirsiniz. Dış kaynak içerikleri için scraper scriptleri mevcuttur.' },
+ { S: 'Resimler hangi formatta ve boyutta olmalı?', C: 'WebP formatı tercih edilir; en az 1200×630 piksel boyut SEO ve sosyal medya paylaşımı için önerilir.' },
+ { S: 'İçerik ekleme sürecinde takıldım, destek alabilirim?', C: 'İletişim sayfası üzerinden teknik destek talebinde bulunabilirsiniz.' },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
-    <div class="container-custom max-w-4xl">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-        İçerik ve Resim Ekleme Rehberi
-      </h1>
-      <p class="text-xl text-gray-600 dark:text-gray-300 mb-12">
-        Şanlıurfa gezi rehberi için içerik ve resim bulma kaynakları
-      </p>
+ <style is:inline>
+ .ir-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+ .ir-hero-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-text-soft)}
+ .ir-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:700;color:var(--public-text);margin:.75rem 0 .25rem}
+ .ir-hero-desc{color:var(--public-muted);font-size:.9rem}
+ .ir-body{background:var(--bg);padding:2rem 0 4rem}
+ .ir-inner{max-width:56rem;margin:0 auto}
+ .ir-steps{display:flex;flex-direction:column;gap:1.25rem}
+ .ir-step{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem}
+ .ir-step-title{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:700;color:var(--public-text);margin-bottom:.5rem}
+ .ir-step-desc{font-size:.85rem;color:var(--public-muted);margin-bottom:1rem}
+ .ir-code{background:#0a0a0a;border:1px solid rgba(0,255,0,.12);color:#4ade80;padding:1rem;font-size:.78rem;font-family:monospace;line-height:1.65;overflow-x:auto;margin-bottom:1rem}
+ .ir-links{margin-bottom:1rem}
+ .ir-link{display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:var(--public-accent);padding:.25rem 0;transition:color .15s}
+ .ir-link:hover{color:var(--public-accent-strong)}
+ .ir-note{font-size:.8rem;color:var(--public-accent);background:rgba(184,115,51,.07);border-left:2px solid var(--public-accent);padding:.65rem .85rem}
+ .ir-keywords{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem;margin-top:1.25rem}
+ .ir-keywords-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:700;color:var(--public-text);margin-bottom:.5rem}
+ .ir-keywords-desc{font-size:.82rem;color:var(--public-muted);margin-bottom:.85rem}
+ .ir-keyword-chips{display:flex;flex-wrap:wrap;gap:.5rem}
+ .ir-chip{display:inline-block;padding:.3rem .75rem;background:rgba(184,115,51,.08);border:1px solid rgba(184,115,51,.18);font-size:.78rem;color:var(--public-accent);transition:background .15s,color .15s}
+ .ir-chip:hover{background:rgba(184,115,51,.15);color:var(--public-text)}
+ .ir-cta{text-align:center;margin-top:2rem}
+ .ir-btn{display:inline-flex;align-items:center;gap:.5rem;background:var(--public-accent);color:var(--public-text);font-size:.85rem;font-weight:600;padding:.65rem 1.5rem;transition:background .15s}
+ .ir-btn:hover{background:var(--public-accent-strong)}
+ </style>
 
-      <!-- Steps -->
-      <div class="space-y-8">
-        {steps.map((step) => (
-          <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-              {step.title}
-            </h2>
-            <p class="text-gray-600 dark:text-gray-300 mb-4">
-              {step.description}
-            </p>
-            
-            {step.code && (
-              <pre class="bg-gray-900 text-green-400 p-4 rounded-lg overflow-x-auto text-sm mb-4"><code>{step.code}</code></pre>
-            )}
-            
-            {step.links && (
-              <ul class="space-y-2 mb-4">
-                {step.links.map((link) => (
-                  <li>
-                    <a 
-                      href={link.url} 
-                      target="_blank"
-                      class="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 flex items-center gap-2"
-                    >
-                      <span>{link.name}</span>
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                      </svg>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
-            
-            {step.note && (
-              <p class="text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
-                💡 {step.note}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
+ <div class="ir-hero">
+ <div class="sf-container">
+ <p class="ir-hero-label">Geliştirici Rehberi</p>
+ <h1 class="ir-h1">İçerik ve Resim Ekleme Rehberi</h1>
+ <p class="ir-hero-desc">Şanlıurfa gezi rehberi için içerik ve resim bulma kaynakları.</p>
+ </div>
+ </div>
 
-      <!-- Image Keywords -->
-      <div class="mt-12 bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg">
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-          Arama Anahtar Kelimeleri
-        </h2>
-        <p class="text-gray-600 dark:text-gray-300 mb-4">
-          Ücretsiz resim sitelerinde kullanabileceğiniz İngilizce anahtar kelimeler:
-        </p>
-        <div class="flex flex-wrap gap-2">
-          {imageKeywords.map((keyword) => (
-            <a 
-              href={`https://unsplash.com/s/photos/${encodeURIComponent(keyword)}`}
-              target="_blank"
-              class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
-            >
-              {keyword}
-            </a>
-          ))}
-        </div>
-      </div>
+ <div class="ir-body">
+ <div class="sf-container">
+ <div class="ir-inner">
+ <div class="ir-steps">
+ {steps.map((step) => (
+ <div class="ir-step">
+ <h2 class="ir-step-title">{step.title}</h2>
+ <p class="ir-step-desc">{step.description}</p>
+ {step.code && <pre class="ir-code"><code>{step.code}</code></pre>}
+ {step.links && (
+ <div class="ir-links">
+ {step.links.map((link) => (
+ <a href={link.url} target="_blank" rel="noopener" class="ir-link">
+ <span>{link.name}</span>
+ <Icon name="lucide:external-link" class="w-4 h-4" />
+ </a>
+ ))}
+ </div>
+ )}
+ {step.note && <p class="ir-note">💡 {step.note}</p>}
+ </div>
+ ))}
+ </div>
 
-      <!-- CTA -->
-      <div class="mt-12 text-center">
-        <a 
-          href="/mekanlar" 
-          class="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition-colors"
-        >
-          <span>Mekanları Görüntüle</span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-          </svg>
-        </a>
-      </div>
-    </div>
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'İçerik Rehberi', item: `${baseUrl}/icerik-rehberi` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <div class="ir-keywords">
+ <h2 class="ir-keywords-title">Arama Anahtar Kelimeleri</h2>
+ <p class="ir-keywords-desc">Ücretsiz resim sitelerinde kullanabileceğiniz İngilizce anahtar kelimeler:</p>
+ <div class="ir-keyword-chips">
+ {imageKeywords.map((kw) => (
+ <a href={`https://unsplash.com/s/photos/${encodeURIComponent(kw)}`} target="_blank" rel="noopener" class="ir-chip">{kw}</a>
+ ))}
+ </div>
+ </div>
+
+ <div class="ir-cta">
+ <a href="/mekanlar" class="ir-btn">
+ <span>Mekanları Görüntüle</span>
+ <Icon name="lucide:arrow-right" class="w-4 h-4" />
+ </a>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'İçerik Rehberi', item: `${baseUrl}/icerik-rehberi` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

@@ -2,7 +2,7 @@
  * Leaderboards Library
  * Leaderboard calculations and management
  */
-import { queryOne, queryMany, insert, update } from '../postgres';
+import { query, queryOne, queryMany, insert } from '../postgres';
 import { logger } from '../logger';
 
 export async function getLeaderboard(leaderboardType: string, limit: number = 100, period: string = 'all_time'): Promise<any[]> {
@@ -53,17 +53,17 @@ export async function getUserLeaderboardRank(userId: string, leaderboardType: st
 export async function updateLeaderboard(leaderboardType: string, period: string = 'all_time'): Promise<void> {
   try {
     // Get all users with their scores based on leaderboard type
-    let query = '';
+    let sql = '';
     
     if (leaderboardType === 'reputation') {
-      query = `
+      sql = `
         SELECT u.id, r.total_score as score
         FROM users u
         LEFT JOIN user_reputation r ON u.id = r.user_id
         ORDER BY r.total_score DESC NULLS LAST
       `;
     } else if (leaderboardType === 'reviews') {
-      query = `
+      sql = `
         SELECT u.id, COUNT(r.id) as score
         FROM users u
         LEFT JOIN reviews r ON u.id = r.user_id
@@ -71,7 +71,7 @@ export async function updateLeaderboard(leaderboardType: string, period: string 
         ORDER BY score DESC
       `;
     } else if (leaderboardType === 'helpful') {
-      query = `
+      sql = `
         SELECT u.id, r.helpful_score as score
         FROM users u
         LEFT JOIN user_reputation r ON u.id = r.user_id
@@ -79,32 +79,20 @@ export async function updateLeaderboard(leaderboardType: string, period: string 
       `;
     }
 
-    if (!query) return;
+    if (!sql) return;
 
-    const rankings = await queryMany(query) as any[];
+    const rankings = await queryMany(sql) as any[];
 
     for (let i = 0; i < rankings.length; i++) {
       const user = rankings[i];
-      const existing = await queryOne(
-        'SELECT id FROM leaderboards WHERE user_id = $1 AND leaderboard_type = $2 AND period = $3',
-        [user.id, leaderboardType, period]
+      // HARD RULE #47: atomic upsert — ON CONFLICT eliminates SELECT+INSERT/UPDATE race window
+      await query(
+        `INSERT INTO leaderboards (user_id, leaderboard_type, rank, score, period)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (user_id, leaderboard_type, period)
+         DO UPDATE SET rank = EXCLUDED.rank, score = EXCLUDED.score, updated_at = NOW()`,
+        [user.id, leaderboardType, i + 1, user.score, period]
       );
-
-      if (existing) {
-        await update('leaderboards', { user_id: user.id, leaderboard_type: leaderboardType, period }, {
-          rank: i + 1,
-          score: user.score,
-          updated_at: new Date()
-        });
-      } else {
-        await insert('leaderboards', {
-          leaderboard_type: leaderboardType,
-          user_id: user.id,
-          rank: i + 1,
-          score: user.score,
-          period
-        });
-      }
     }
 
     logger.info('Leaderboard updated', { leaderboardType, period, count: rankings.length });

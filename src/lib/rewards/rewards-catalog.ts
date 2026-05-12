@@ -3,7 +3,8 @@
  * Browse, redeem, and track rewards
  */
 
-import { queryOne, queryMany, insert, update } from '../postgres';
+import { randomBytes } from 'node:crypto';
+import { queryOne, queryMany, insert } from '../postgres';
 import { getCache, setCache, deleteCache, deleteCachePattern } from '../cache';
 import { redeemPoints } from '../loyalty/loyalty-system';
 import { createNotification } from '../notification/notifications-queue';
@@ -78,8 +79,6 @@ export async function getRewardsCatalog(
     sql += ` ORDER BY featured DESC, created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
-    const rewards = await queryMany(sql, params) as any[];
-
     let countSql = 'SELECT COUNT(*) as total FROM rewards_catalog WHERE status = $1';
     const countParams: any[] = ['active'];
     let countIndex = 2;
@@ -99,11 +98,14 @@ export async function getRewardsCatalog(
       countParams.push(filters.max_cost);
     }
 
-    const countResult = await queryOne(countSql, countParams);
+    const [rewards, countResult] = await Promise.all([
+      queryMany(sql, params) as Promise<any[]>,
+      queryOne(countSql, countParams),
+    ]);
 
     const data = {
       rewards: rewards,
-      total: parseInt(countResult?.total || '0')
+      total: parseInt(countResult?.total || '0', 10)
     };
 
     await setCache(cacheKey, data, 600);
@@ -161,7 +163,7 @@ export async function redeemReward(
     await redeemPoints(userId, reward.points_cost, `Reward redeemed: ${reward.reward_name}`, rewardId);
 
     // Generate redemption code
-    const redemptionCode = `RWD-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    const redemptionCode = `RWD-${Date.now()}-${randomBytes(8).toString('hex').toUpperCase()}`;
 
     // Create redemption record
     const redemption = await insert('reward_redemptions', {
@@ -172,12 +174,11 @@ export async function redeemReward(
       redemption_code: redemptionCode
     });
 
-    // Update reward quantity
+    // Update reward quantity atomically
     if (reward.quantity_available) {
-      await update(
-        'rewards_catalog',
-        { id: rewardId },
-        { quantity_redeemed: reward.quantity_redeemed + 1 }
+      await queryOne(
+        'UPDATE rewards_catalog SET quantity_redeemed = quantity_redeemed + 1 WHERE id = $1',
+        [rewardId]
       );
     }
 
@@ -229,19 +230,21 @@ export async function getUserRedemptions(
       params.push(status);
     }
 
-    sql += ` ORDER BY r.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
-
-    const redemptions = await queryMany(sql, params) as any[];
-
     const countSql = `SELECT COUNT(*) as total FROM reward_redemptions WHERE user_id = $1${status ? ` AND status = $2` : ''}`;
     const countParams = [userId];
     if (status) countParams.push(status);
-    const countResult = await queryOne(countSql, countParams);
+
+    sql += ` ORDER BY r.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+
+    const [redemptions, countResult] = await Promise.all([
+      queryMany(sql, params) as Promise<any[]>,
+      queryOne(countSql, countParams),
+    ]);
 
     return {
       redemptions: redemptions,
-      total: parseInt(countResult?.total || '0')
+      total: parseInt(countResult?.total || '0', 10)
     };
   } catch (error) {
     logger.error('Failed to get user redemptions', error instanceof Error ? error : new Error(String(error)));
@@ -315,7 +318,7 @@ export async function generateDiscountCode(
   validDays: number = 30
 ): Promise<{ code: string }> {
   try {
-    const code = `DSCNT-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
+    const code = `DSCNT-${Date.now()}-${randomBytes(8).toString('hex').toUpperCase()}`;
     const validUntil = new Date();
     validUntil.setDate(validUntil.getDate() + validDays);
 
@@ -343,29 +346,25 @@ export async function generateDiscountCode(
  */
 export async function useDiscountCode(code: string): Promise<{ discount_percentage?: number; discount_amount?: number }> {
   try {
-    const discountCode = await queryOne(
-      `SELECT * FROM discount_codes
+    // Atomic: increment usage only if code is still valid and within limit (prevents race)
+    const result = await queryOne<{ discount_percentage: number; discount_amount: number }>(
+      `UPDATE discount_codes
+       SET current_uses = current_uses + 1
        WHERE code = $1
          AND valid_from <= NOW()
          AND valid_until >= NOW()
-         AND current_uses < max_uses`,
+         AND current_uses < max_uses
+       RETURNING discount_percentage, discount_amount`,
       [code]
     );
 
-    if (!discountCode) {
+    if (!result) {
       throw new Error('Invalid or expired discount code');
     }
 
-    // Increment usage
-    await update(
-      'discount_codes',
-      { code },
-      { current_uses: discountCode.current_uses + 1 }
-    );
-
     return {
-      discount_percentage: discountCode.discount_percentage,
-      discount_amount: discountCode.discount_amount
+      discount_percentage: result.discount_percentage,
+      discount_amount: result.discount_amount
     };
   } catch (error) {
     logger.error('Failed to use discount code', error instanceof Error ? error : new Error(String(error)));

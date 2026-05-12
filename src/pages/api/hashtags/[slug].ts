@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryOne, queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
 
   try {
     const slug = params.slug as string;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 50);
 
     // Check cache
     const cacheKey = `hashtag:slug:${slug}`;
@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/hashtags/${slug}`, HttpStatus.OK, duration);
-      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
+      return apiResponse(cached as any, HttpStatus.OK, requestId);
     }
 
     // Fetch hashtag metadata

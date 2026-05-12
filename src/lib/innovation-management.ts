@@ -228,4 +228,4 @@ export const innovationScorer = new InnovationScorer();
 export const experimentTracker = new ExperimentTracker();
 export const innovationPortfolioManager = new InnovationPortfolioManager();
 
-export {InnovationIdea, InnovationScore, InnovationExperiment, InnovationPortfolioItem};
+export type {InnovationIdea, InnovationScore, InnovationExperiment, InnovationPortfolioItem};

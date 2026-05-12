@@ -1,180 +1,280 @@
 ---
 
 import Layout from '../../layouts/Layout.astro';
+import StatusStrip from '../../components/ui/StatusStrip.astro';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { buildFreshnessLabel, buildFreshnessUiState, isFreshnessStale } from '../../lib/city-service-freshness';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+const baseUrl = getPublicAppUrl();
 
-const today = new Date().toISOString().split('T')[0];
-let onDutyPharmacies: any[] = [];
-let districts: any[] = [];
+const requestedDate = new Date().toISOString().split('T')[0];
+type OnDutyPharmacy = {
+ id: string;
+ name: string;
+ district_id?: string | null;
+ district_name?: string | null;
+ address?: string | null;
+ phone?: string | null;
+ duty_date?: string | null;
+};
+
+type PharmacyDistrict = {
+ id: string;
+ name: string;
+ slug: string;
+};
+
+let onDutyPharmacies: OnDutyPharmacy[] = [];
+let districts: PharmacyDistrict[] = [];
+let contentFreshnessMap: Record<string, string> = {};
+let pharmacyFreshnessMeta: Record<string, unknown> = {};
 
 try {
-  const result = await query(
-    `SELECT p.*, d.name as district_name
-     FROM pharmacies p
-     LEFT JOIN districts d ON p.district_id = d.id
-     WHERE p.is_on_duty = true AND (p.duty_date = $1 OR p.duty_date IS NULL)
-     ORDER BY d.name, p.name`,
-    [today]
-  );
-  onDutyPharmacies = result.rows;
-
-  const distResult = await query(
-    "SELECT DISTINCT d.id, d.name, d.slug FROM districts d JOIN pharmacies p ON p.district_id = d.id WHERE p.is_on_duty = true ORDER BY d.name"
-  );
-  districts = distResult.rows;
+ const data = await getCachedPublicRouteData('page:saglik:nobetci-eczaneler', async () => {
+  const [result, distResult, freshnessResult] = await Promise.all([
+  query(
+  `SELECT p.*, d.name as district_name
+  FROM pharmacies p
+  LEFT JOIN districts d ON p.district_id = d.id
+  WHERE p.is_on_duty = true
+  ORDER BY d.name, p.name`,
+  ),
+  query("SELECT DISTINCT d.id, d.name, d.slug FROM districts d JOIN pharmacies p ON p.district_id = d.id WHERE p.is_on_duty = true ORDER BY d.name"),
+  query(
+  `SELECT setting_key, setting_value
+  FROM site_settings
+  WHERE setting_key IN ('pharmacy.lastUpdated','jobs.contentQuality.lastRun')`,
+  ),
+  ]);
+  return {
+   onDutyPharmacies: result.rows,
+   districts: distResult.rows,
+   contentFreshnessMap: Object.fromEntries(
+   (freshnessResult.rows || []).map((row) => {
+   const settingValue =
+   row?.setting_value && typeof row.setting_value === 'object' ? row.setting_value : {};
+   return [
+   String(row.setting_key || ''),
+   String(settingValue.at || settingValue.updatedAt || settingValue.lastUpdated || ''),
+   ];
+   }),
+   ),
+   pharmacyFreshnessMeta:
+    freshnessResult.rows.find((row) => row.setting_key === 'pharmacy.lastUpdated')?.setting_value || {},
+  };
+ }, 30_000);
+ onDutyPharmacies = data.onDutyPharmacies;
+ districts = data.districts;
+ contentFreshnessMap = data.contentFreshnessMap;
+ pharmacyFreshnessMeta = data.pharmacyFreshnessMeta;
 } catch (e) {
-  console.error('Error loading pharmacies:', e);
+ logger.error('Error loading pharmacies:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const formatDate = (date: string) => new Date(date).toLocaleDateString('tr-TR', {
-  day: 'numeric', month: 'long', year: 'numeric', weekday: 'long'
+ day: 'numeric', month: 'long', year: 'numeric', weekday: 'long'
 });
 
+const effectiveDutyDate =
+ typeof pharmacyFreshnessMeta.latestDutyDate === 'string'
+  ? pharmacyFreshnessMeta.latestDutyDate
+  : onDutyPharmacies[0]?.duty_date || requestedDate;
+const sourceStale = Boolean(pharmacyFreshnessMeta.sourceStale);
+const staleDays = Number(pharmacyFreshnessMeta.staleDays || 0);
+
 const seo = {
-  title: `Şanlıurfa Nöbetçi Eczaneler - ${formatDate(today)}`,
-  description: `Şanlıurfa'da bugün nöbetçi olan eczaneler. ${formatDate(today)} tarihli güncel nöbetçi eczane listesi. Adres ve telefon bilgileri.`,
-  keywords: ['şanlıurfa nöbetçi eczane', 'urfa nöbetçi eczane bugün', 'şanlıurfa eczane açık', 'urfa gece eczane', 'şanlıurfa eczane listesi'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/saglik/nobetci-eczaneler',
+ title: `Şanlıurfa Nöbetçi Eczaneler - ${formatDate(effectiveDutyDate)}`,
+ description: `Şanlıurfa'da nöbetçi olan eczaneler. ${formatDate(effectiveDutyDate)} tarihli resmi kaynak listesi, adres ve telefon bilgileriyle sunulur.`,
+ keywords: ['şanlıurfa nöbetçi eczane', 'urfa nöbetçi eczane bugün', 'şanlıurfa eczane açık', 'urfa gece eczane', 'şanlıurfa eczane listesi'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/saglik/nobetci-eczaneler',
+ noIndex: sourceStale || staleDays > 0,
 };
 
 const faqItems = [
-  {
-    S: 'Şanlıurfa nöbetçi eczane listesi ne kadar güncel?',
-    C: 'Nöbetçi eczane listesi gün içinde düzenli kontrol edilerek yenilenir.',
-  },
-  {
-    S: 'Nöbetçi eczanelere nasıl hızlı ulaşırım?',
-    C: 'Listeden doğrudan telefon bağlantısını kullanabilir veya ilçe filtresi ile arama daraltabilirsiniz.',
-  },
-  {
-    S: 'Nöbetçi eczaneler hangi saatlerde hizmet verir?',
-    C: 'Nöbetçi eczaneler gece ve resmi tatil dönemlerinde kesintisiz hizmet için nöbet planına göre açık kalır.',
-  },
+ {
+ q: 'Şanlıurfa nöbetçi eczane listesi ne kadar güncel?',
+ a: 'Nöbetçi eczane listesi gün içinde düzenli kontrol edilerek yenilenir.',
+ },
+ {
+ q: 'Nöbetçi eczanelere nasıl hızlı ulaşırım?',
+ a: 'Listeden doğrudan telefon bağlantısını kullanabilir veya ilçe filtresi ile arama daraltabilirsiniz.',
+ },
+ {
+ q: 'Nöbetçi eczaneler hangi saatlerde hizmet verir?',
+ a: 'Nöbetçi eczaneler gece ve resmi tatil dönemlerinde kesintisiz hizmet için nöbet planına göre açık kalır.',
+ },
 ];
+const pharmacyFreshnessText = buildFreshnessLabel('pharmacy.lastUpdated', contentFreshnessMap);
+const pharmacyFreshnessStale =
+ sourceStale || isFreshnessStale('pharmacy.lastUpdated', contentFreshnessMap);
+const pharmacyFreshnessUi = buildFreshnessUiState(
+ contentFreshnessMap['pharmacy.lastUpdated'] || contentFreshnessMap['jobs.contentQuality.lastRun'],
+ pharmacyFreshnessStale,
+);
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-gradient-to-br from-green-600 to-emerald-700 text-white py-12">
-      <div class="container mx-auto px-4">
-        <h1 class="text-3xl md:text-4xl font-bold mb-2">Şanlıurfa Nöbetçi Eczaneler</h1>
-        <p class="text-green-100 text-lg">{formatDate(today)}</p>
-        <p class="text-green-200 mt-2">{onDutyPharmacies.length} nöbetçi eczane</p>
-      </div>
-    </div>
+ <style is:inline>
+ .ne-hero{background:linear-gradient(135deg,#fff8ec 0%,#f4e2c8 58%,#fbf6ec 100%);border-bottom:1px solid #eadcc4;padding:4rem 0 3rem}
+ .ne-hero-label{display:inline-flex;align-items:center;border-radius:999px;border:1px solid #e1c59d;background:#fff;padding:.45rem 1rem;font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#155344}
+ .ne-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.1rem,5vw,3.7rem);font-weight:700;line-height:1.05;color:#201711;margin:1rem 0 .4rem}
+ .ne-hero-date{color:#5e4a38;font-size:1rem;font-weight:700}
+ .ne-hero-count{color:#6d5945;font-size:.9rem;margin-top:.25rem}
+ .ne-body{background:var(--bg);padding:2rem 0 4rem}
+ .ne-qa{background:#fff;border:1px solid #eadcc4;border-radius:1.5rem;padding:1.5rem;margin-bottom:2rem;box-shadow:0 12px 32px rgba(120,51,29,.06)}
+ .ne-qa-label{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#8a3d22}
+ .ne-qa-h2{font-size:1.2rem;font-weight:800;color:#201711;margin:.35rem 0}
+ .ne-qa-p{font-size:.9rem;line-height:1.7;color:#66513d}
+ .ne-qa-links{margin-top:.75rem;display:flex;flex-wrap:wrap;gap:.75rem}
+ .ne-qa-link{font-size:.8rem;font-weight:600;color:var(--public-accent);text-decoration:underline;text-underline-offset:3px;transition:color .15s}
+ .ne-qa-link:hover{color:var(--public-accent-strong)}
+ .ne-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:2rem}
+ .ne-filter-btn{background:#fff;border:1px solid #e2c79d;border-radius:999px;color:#6d5945;padding:.55rem 1rem;font-size:.8rem;font-weight:800;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+ .ne-filter-btn:hover{border-color:#d39b62;color:#78331d}
+ .ne-filter-btn--active{background:#78331d;color:#fff;border-color:#78331d}
+ .ne-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+ .ne-card{background:#fff;border:1px solid #eadcc4;border-radius:1.25rem;padding:1.25rem;transition:border-color .15s,box-shadow .15s,transform .15s}
+ .ne-card:hover{border-color:#d39b62;box-shadow:0 14px 34px rgba(120,51,29,.10);transform:translateY(-2px)}
+ .ne-card-inner{display:flex;align-items:flex-start;gap:.75rem}
+ .ne-icon{width:2.5rem;height:2.5rem;border-radius:.9rem;background:#f3e4cc;color:#78331d;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.9rem;font-weight:900}
+ .ne-card-content{flex:1}
+ .ne-card-name{font-size:.9rem;font-weight:700;color:var(--public-text)}
+ .ne-district{font-size:.72rem;color:var(--public-accent);font-weight:600;margin-top:.15rem}
+ .ne-address{font-size:.78rem;color:var(--public-muted);margin-top:.5rem;line-height:1.5}
+ .ne-phone{display:inline-flex;align-items:center;gap:.3rem;margin-top:.5rem;font-size:.8rem;font-weight:600;color:var(--public-accent);transition:color .15s}
+ .ne-phone:hover{color:var(--public-accent-strong)}
+ .ne-empty{text-align:center;padding:4rem 1rem;background:#fff;border:1px solid #eadcc4;border-radius:1.5rem}
+ .ne-empty-icon{display:none}
+ .ne-empty-title{font-size:1.1rem;font-weight:700;color:var(--public-text);margin-bottom:.25rem}
+ .ne-empty-desc{font-size:.85rem;color:var(--public-muted)}
+ .ne-empty-tel{color:var(--public-accent);font-weight:700}
+ .ne-emergency{background:rgba(184,115,51,.05);border:1px solid rgba(184,115,51,.18);padding:1.25rem;margin-top:2rem}
+ .ne-emergency-title{font-size:.9rem;font-weight:700;color:var(--public-text);margin-bottom:.5rem}
+ .ne-emergency-item{font-size:.8rem;color:var(--public-muted);padding:.2rem 0;line-height:1.6}
+ </style>
 
-    <div class="container mx-auto px-4 py-8">
-      <section class="mb-8 rounded-2xl border border-green-200 bg-green-50 p-5">
-        <p class="text-sm font-semibold uppercase tracking-wide text-green-700">Hızlı Cevap</p>
-        <h2 class="mt-1 text-xl font-bold text-green-950">Şanlıurfa nöbetçi eczane bilgisi nasıl kullanılır?</h2>
-        <p class="mt-2 text-sm leading-6 text-green-800">
-          Şanlıurfa nöbetçi eczaneler sayfası, bugün açık olan eczaneleri ilçe, adres ve telefon bilgisiyle
-          hızlıca bulmanız için hazırlanır. Veri admin onaylı kayıtlar ve tazelik kontrolüyle yönetilir.
-        </p>
-        <div class="mt-3 flex flex-wrap gap-3 text-sm">
-          <a href="/saglik/nobetci-eczaneler" class="font-semibold text-green-800 underline underline-offset-4">Nöbetçi eczane listesi</a>
-          <a href="/saglik" class="font-semibold text-green-800 underline underline-offset-4">Sağlık rehberi</a>
-          <a href="/ulasim/otobus-saatleri" class="font-semibold text-green-800 underline underline-offset-4">Otobüs saatleri</a>
-        </div>
-      </section>
+ <div class="ne-hero">
+ <div class="sf-container">
+ <p class="ne-hero-label">Sağlık</p>
+ <h1 class="ne-h1">Şanlıurfa Nöbetçi Eczaneler</h1>
+ <p class="ne-hero-date">{formatDate(effectiveDutyDate)}</p>
+ <p class="ne-hero-count">{onDutyPharmacies.length} nöbetçi eczane</p>
+ {sourceStale && (
+ <p class="ne-hero-count">Kaynak bugün güncellenmedi. Son resmi liste gösteriliyor{staleDays > 0 ? ` (${staleDays} gün önce)` : ''}.</p>
+ )}
+ <div style="margin-top:.5rem">
+ <StatusStrip
+ label="Veri"
+ value={`${pharmacyFreshnessUi.text.replace('Veri durumu: ', '')} • ${pharmacyFreshnessText}`}
+ statusLabel={pharmacyFreshnessUi.statusLabel}
+ toneClass={pharmacyFreshnessUi.toneClass}
+ />
+ </div>
+ </div>
+ </div>
 
-      {/* İlçe Filtreleri */}
-      {districts.length > 0 && (
-        <div class="flex flex-wrap gap-2 mb-8">
-          <button class="px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium" data-filter="all">Tümü</button>
-          {districts.map((d) => (
-            <button class="px-4 py-2 bg-white border rounded-full text-sm font-medium hover:border-green-500 hover:text-green-600 transition-colors" data-filter={d.id}>
-              {d.name}
-            </button>
-          ))}
-        </div>
-      )}
+ <div class="ne-body">
+ <div class="sf-container">
+ <div class="ne-qa">
+ <p class="ne-qa-label">Hızlı Cevap</p>
+ <h2 class="ne-qa-h2">Şanlıurfa nöbetçi eczane bilgisi nasıl kullanılır?</h2>
+ <p class="ne-qa-p">
+ Şanlıurfa nöbetçi eczaneler sayfası, resmi kaynakta görünen son nöbet listesini ilçe, adres ve
+ telefon bilgisiyle hızlıca bulmanız için hazırlanır. Veri tazeliği ayrıca izlenir.
+ </p>
+ <div class="ne-qa-links">
+ <a href="/saglik/nobetci-eczaneler" class="ne-qa-link">Nöbetçi eczane listesi</a>
+ <a href="/saglik" class="ne-qa-link">Sağlık rehberi</a>
+ <a href="/ulasim/otobus-saatleri" class="ne-qa-link">Otobüs saatleri</a>
+ </div>
+ </div>
 
-      {onDutyPharmacies.length > 0 ? (
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {onDutyPharmacies.map((pharm) => (
-            <div class="bg-white rounded-xl p-5 border border-green-100 shadow-sm" data-district={pharm.district_id}>
-              <div class="flex items-start gap-3">
-                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-600 flex-shrink-0">
-                  💊
-                </div>
-                <div class="flex-1">
-                  <h3 class="font-bold text-gray-900">{pharm.name}</h3>
-                  {pharm.district_name && <span class="text-xs text-green-600 font-medium">{pharm.district_name}</span>}
-                  <p class="text-sm text-gray-500 mt-2">{pharm.address}</p>
-                  {pharm.phone && (
-                    <a href={`tel:${pharm.phone}`} class="inline-flex items-center gap-1 mt-3 text-green-600 font-medium text-sm hover:underline">
-                      📞 {pharm.phone}
-                    </a>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div class="text-center py-16 bg-white rounded-xl">
-          <div class="text-6xl mb-4">💊</div>
-          <h2 class="text-xl font-bold text-gray-900 mb-2">Nöbetçi Eczane Verisi Bekleniyor</h2>
-          <p class="text-gray-500">Bugün için veritabanında aktif nöbetçi eczane kaydı bulunamadı.</p>
-          <p class="text-sm text-gray-400 mt-4">Acil durumlar için: <a href="tel:182" class="text-green-600 font-bold">182</a> (ALO Eczane)</p>
-        </div>
-      )}
+ {districts.length > 0 && (
+ <div class="ne-filters" id="ne-filters">
+ <button class="ne-filter-btn ne-filter-btn--active" data-filter="all">Tümü</button>
+ {districts.map((d) => (
+ <button class="ne-filter-btn" data-filter={d.id}>{d.name}</button>
+ ))}
+ </div>
+ )}
 
-      {/* Acil Bilgi */}
-      <div class="mt-8 bg-green-50 border border-green-200 rounded-xl p-6">
-        <h3 class="font-bold text-green-800 mb-2">Acil Durumda</h3>
-        <ul class="text-green-700 space-y-1 text-sm">
-          <li>📞 <strong>182</strong> — ALO Eczane (7/24)</li>
-          <li>📞 <strong>112</strong> — Acil Sağlık</li>
-          <li>📞 <strong>155</strong> — Polis İmdat</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+ {onDutyPharmacies.length > 0 ? (
+ <div class="ne-grid" id="ne-grid">
+ {onDutyPharmacies.map((pharm) => (
+ <div class="ne-card" data-district={pharm.district_id}>
+ <div class="ne-card-inner">
+ <div class="ne-icon">EC</div>
+ <div class="ne-card-content">
+ <h3 class="ne-card-name">{pharm.name}</h3>
+ {pharm.district_name && <p class="ne-district">{pharm.district_name}</p>}
+ {pharm.address && <p class="ne-address">{pharm.address}</p>}
+ {pharm.phone && (
+ <a href={`tel:${pharm.phone}`} class="ne-phone">
+ 📞 {pharm.phone}
+ </a>
+ )}
+ </div>
+ </div>
+ </div>
+ ))}
+ </div>
+ ) : (
+ <div class="ne-empty">
+ <div class="ne-empty-icon">💊</div>
+ <h2 class="ne-empty-title">Nöbetçi Eczane Verisi Bekleniyor</h2>
+ <p class="ne-empty-desc">Resmi kaynakta işlenebilir nöbetçi eczane kaydı bulunamadı.</p>
+ <p class="ne-empty-desc" style="margin-top:1rem">
+ Acil durumlar için: <a href="tel:182" class="ne-empty-tel">182</a> (ALO Eczane)
+ </p>
+ </div>
+ )}
 
-  <script>
-    document.querySelectorAll('[data-filter]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const filter = btn.getAttribute('data-filter');
-        document.querySelectorAll('[data-district]').forEach((card) => {
-          const el = card as HTMLElement;
-          if (filter === 'all' || card.getAttribute('data-district') === filter) {
-            el.style.display = '';
-          } else {
-            el.style.display = 'none';
-          }
-        });
-        document.querySelectorAll('[data-filter]').forEach((b) => {
-          b.className = b === btn
-            ? 'px-4 py-2 bg-green-600 text-white rounded-full text-sm font-medium'
-            : 'px-4 py-2 bg-white border rounded-full text-sm font-medium hover:border-green-500 hover:text-green-600 transition-colors';
-        });
-      });
-    });
-  </script>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.C,
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Sağlık', item: `${baseUrl}/saglik` },
-      { '@type': 'ListItem', position: 3, name: 'Nöbetçi Eczaneler', item: `${baseUrl}/saglik/nobetci-eczaneler` },
-    ],
-  })} is:inline />
+ <div class="ne-emergency">
+ <h3 class="ne-emergency-title">Acil Durumda</h3>
+ <p class="ne-emergency-item">📞 <strong>182</strong> — ALO Eczane (7/24)</p>
+ <p class="ne-emergency-item">📞 <strong>112</strong> — Acil Sağlık</p>
+ <p class="ne-emergency-item">📞 <strong>155</strong> — Polis İmdat</p>
+ </div>
+ </div>
+ </div>
+
+ <script>
+ document.querySelectorAll('[data-filter]').forEach((btn) => {
+ btn.addEventListener('click', () => {
+ const filter = btn.getAttribute('data-filter');
+ document.querySelectorAll('[data-district]').forEach((card) => {
+ const el = card as HTMLElement;
+ el.style.display = (filter === 'all' || card.getAttribute('data-district') === filter) ? '' : 'none';
+ });
+ document.querySelectorAll('[data-filter]').forEach((b) => {
+ if (b === btn) {
+ b.classList.add('ne-filter-btn--active');
+ } else {
+ b.classList.remove('ne-filter-btn--active');
+ }
+ });
+ });
+ });
+ </script>
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.q,
+ acceptedAnswer: { '@type': 'Answer', text: item.a },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Sağlık', item: `${baseUrl}/saglik` },
+ { '@type': 'ListItem', position: 3, name: 'Nöbetçi Eczaneler', item: `${baseUrl}/saglik/nobetci-eczaneler` },
+ ],
+ })} is:inline />
 </Layout>

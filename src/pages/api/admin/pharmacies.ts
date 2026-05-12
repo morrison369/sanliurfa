@@ -1,15 +1,14 @@
 import type { APIRoute } from 'astro';
+import { apiResponse, safeErrorDetail } from '../../../lib/api';
 import { query, queryMany, insert } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  return locals?.user?.role === 'admin';
 }
 
 // GET: nöbetçi eczaneleri listele veya tümünü getir
@@ -40,8 +39,9 @@ export const GET: APIRoute = async ({ url, locals }) => {
       [date],
     );
     return json({ success: true, date, pharmacies: rows });
-  } catch (err: any) {
-    return json({ error: err.message }, 500);
+  } catch (err) {
+    logger.error('pharmacies GET failed', err instanceof Error ? err : new Error(String(err)));
+    return json({ error: safeErrorDetail(err, 'Eczaneler listelenemedi') }, 500);
   }
 };
 
@@ -49,7 +49,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!isAdmin(locals)) return json({ error: 'Unauthorized' }, 401);
 
-  let body: any;
+  let body: Record<string, unknown>;
   try { body = await request.json(); } catch { return json({ error: 'Geçersiz JSON' }, 400); }
 
   const { action } = body;
@@ -75,12 +75,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (action === 'add') {
       const { name, address, phone, district_id } = body;
       if (!name || !address) return json({ error: 'name ve address zorunlu' }, 400);
+      if (typeof name === 'string' && name.length > 200) return json({ error: 'Eczane adı 200 karakterden uzun olamaz' }, 400);
+      if (typeof address === 'string' && address.length > 500) return json({ error: 'Adres 500 karakterden uzun olamaz' }, 400);
+      if (typeof phone === 'string' && phone.length > 30) return json({ error: 'Telefon numarası 30 karakterden uzun olamaz' }, 400);
       const row = await insert('pharmacies', { name, address, phone: phone || null, district_id: district_id || null });
       return json({ success: true, pharmacy: row });
     }
 
     return json({ error: `Bilinmeyen action: ${action}` }, 400);
-  } catch (err: any) {
-    return json({ error: err.message }, 500);
+  } catch (err) {
+    logger.error('pharmacies POST failed', err instanceof Error ? err : new Error(String(err)));
+    return json({ error: safeErrorDetail(err, 'İşlem başarısız oldu') }, 500);
   }
 };

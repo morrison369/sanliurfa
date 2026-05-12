@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { getCache, setCache } from '../../../lib/cache';
@@ -37,11 +37,6 @@ interface BadgeLeaderboardItem {
   last_badge_earned: string | Date | null;
 }
 
-function toInteger(value: string | number | null | undefined): number {
-  if (typeof value === 'number') return Math.trunc(value);
-  if (typeof value === 'string') return parseInt(value, 10) || 0;
-  return 0;
-}
 
 export const GET: APIRoute = async ({ request, url }) => {
   const requestId = getRequestId(request);
@@ -50,7 +45,7 @@ export const GET: APIRoute = async ({ request, url }) => {
 
   try {
     // Get query parameters
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
 
     // Check cache
     const cacheKey = `leaderboard:badges:${limit}`;
@@ -102,8 +97,8 @@ export const GET: APIRoute = async ({ request, url }) => {
       avatar_url: row.avatar_url,
       points: row.points,
       level: row.level,
-      badge_count: toInteger(row.badge_count),
-      total_badges_earned: toInteger(row.total_badges_earned),
+      badge_count: Number(row.badge_count) || 0,
+      total_badges_earned: Number(row.total_badges_earned) || 0,
       badges: row.badges ? row.badges.filter((badge): badge is string => Boolean(badge)) : [],
       last_badge_earned: row.last_badge_earned
     }));

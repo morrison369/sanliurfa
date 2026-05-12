@@ -17,6 +17,10 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   try {
     const user = locals.user;
     const { id: photoId } = params;
+    if (!photoId) {
+      recordRequest('POST', '/api/photos/{id}/vote', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Fotoğraf kimliği gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     // Check authentication
     if (!user) {
@@ -90,7 +94,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('POST', `/api/photos/${params.id}/vote`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    recordRequest('POST', `/api/photos/${params.id ?? '{id}'}/vote`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Vote on photo failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,

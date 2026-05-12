@@ -23,7 +23,7 @@ export const securityHeaders: MiddlewareHandler = async (context, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https: blob:",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://api.sanliurfa.com https://analytics.sanliurfa.com",
+    "connect-src 'self' https://api.sanliurfa.com https://analytics.sanliurfa.com https://fonts.googleapis.com https://fonts.gstatic.com",
     "media-src 'self' https: blob:",
     "frame-src 'self' https://www.youtube.com https://www.google.com",
     "object-src 'none'",

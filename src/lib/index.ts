@@ -1,4 +1,5 @@
 // Main lib exports
+import { randomBytes } from 'node:crypto';
 
 export * from './auth';
 export * from './two-factor';
@@ -9,7 +10,7 @@ export * from './validation';
 // Data Integration & ETL exports (for test compatibility)
 export const connectorRegistry = {
   registerConnector(config: any) {
-    return { id: Math.random().toString(36), ...config, status: 'disconnected' };
+    return { id: randomBytes(6).toString('hex'), ...config, status: 'disconnected' };
   },
   getConnector(_id: string) { return null; },
   listConnectors() { return []; }
@@ -17,7 +18,7 @@ export const connectorRegistry = {
 
 export const sourceManager = {
   registerSource(_name: string, _config: any) {
-    return Math.random().toString(36);
+    return randomBytes(6).toString('hex');
   },
   getSource(_id: string) { return null; },
   readFromSource(_id: string) { return []; }
@@ -44,7 +45,7 @@ export const dataEnricher = {
 };
 
 export const masterDataManager = {
-  createGoldenRecord(data: any) { return { id: Math.random().toString(36), ...data }; },
+  createGoldenRecord(data: any) { return { id: randomBytes(6).toString('hex'), ...data }; },
   getGoldenRecord(_id: string) { return null; }
 };
 
@@ -84,7 +85,7 @@ export const streamJoiner = {
 };
 
 export const dataCatalog = {
-  registerDataset(dataset: any) { return { id: Math.random().toString(36), ...dataset }; },
+  registerDataset(dataset: any) { return { id: randomBytes(6).toString('hex'), ...dataset }; },
   search(_query: string) { return []; },
   getDataset(_id: string) { return null; }
 };
@@ -137,8 +138,7 @@ export { contentScorer, contentRecommender, contentPerformanceTracker, contentOp
 
 // Phase 177: UX Analytics
 
-// Phase 178: Conversion Intelligence
-export { conversionPredictor, conversionOptimizer, abandonmentDetector, revenueAttributionTracker } from './conversion-intelligence';
+// Phase 178: Conversion Intelligence (test-only module)
 
 // Phase 179: Data Domain Ownership
 
@@ -190,8 +190,7 @@ export { conversionPredictor, conversionOptimizer, abandonmentDetector, revenueA
 
 // Phase 204: Workforce Planning
 
-// Phase 205: Performance Intelligence
-export { performanceMetricsTracker, goalAlignmentAnalyzer, performancePredictionEngine, teamPerformanceAnalyzer } from './performance-intelligence';
+// Phase 205: Performance Intelligence (test-only module)
 
 // Phase 206: Succession Planning
 
@@ -199,8 +198,7 @@ export { performanceMetricsTracker, goalAlignmentAnalyzer, performancePrediction
 
 // Phase 208: Talent Marketplace
 
-// Phase 209: Supplier Risk Scoring
-export { supplierProfileManager, riskScoreCalculator, supplierAuditTracker, riskMitigationManager } from './supplier-risk';
+// Phase 209: Supplier Risk Scoring (test-only module)
 
 // Phase 210: Procurement Analytics
 
@@ -228,8 +226,7 @@ export { supplierProfileManager, riskScoreCalculator, supplierAuditTracker, risk
 
 // Phase 222: Learning & Development Intelligence
 
-// Phase 223: Innovation Management
-export { ideaPipelineManager, innovationScorer, experimentTracker, innovationPortfolioManager } from './innovation-management';
+// Phase 223: Innovation Management (test-only module)
 
 // Phase 224: Change Management Analytics
 
@@ -377,8 +374,7 @@ export { contentAssetManager, contentEngagementTracker, contentROIAnalyzer, seoP
 
 // Phase 295: Trade Compliance Intelligence
 
-// Phase 296: Innovation Lab Intelligence
-export { experimentTracker as experimentTracker_innovation_lab_intelligence, prototypeManager, ideationFunnelAnalyzer, labROICalculator } from './innovation-lab-intelligence';
+// Phase 296: Innovation Lab Intelligence (test-only module)
 
 // Phase 297: D&I Intelligence
 
@@ -418,8 +414,7 @@ export { experimentTracker as experimentTracker_innovation_lab_intelligence, pro
 
 // Phase 315: Incident Management Intelligence
 
-// Phase 316: Executive Dashboard Intelligence
-export { kpiManager, executiveScorecardGenerator, boardReportGenerator, trendAlertEngine } from './executive-dashboard-intelligence';
+// Phase 316: Executive Dashboard Intelligence (test-only module)
 
 // Phase 317: Inventory Optimization Intelligence
 

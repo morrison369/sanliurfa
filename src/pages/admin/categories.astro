@@ -1,94 +1,87 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
 import { query } from '../../lib/postgres';
-
-if (!Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin/categories');
-}
+import { logger } from '../../lib/logging';
 
 let categories: any[] = [];
 let totalPlaces = 0;
 
 try {
-  const [catResult, placeCount] = await Promise.all([
-    query(`
-      SELECT c.id, c.name, c.slug, c.icon, c.color, c.is_active, c.sort_order,
-             COUNT(p.id)::int AS place_count
-      FROM categories c
-      LEFT JOIN places p ON p.category_id = c.id AND p.status = 'active'
-      GROUP BY c.id
-      ORDER BY c.sort_order ASC NULLS LAST, c.name
-    `),
-    query(`SELECT COUNT(*)::int AS cnt FROM places WHERE status = 'active'`),
-  ]);
-  categories = catResult.rows;
-  totalPlaces = placeCount.rows[0]?.cnt || 0;
+ const [catResult, placeCount] = await Promise.all([
+ query(`
+ SELECT c.id, c.name, c.slug, c.icon, c.color, c.is_active, c.sort_order,
+ COUNT(p.id)::int AS place_count
+ FROM categories c
+ LEFT JOIN places p ON p.category_id = c.id AND p.status = 'active'
+ GROUP BY c.id
+ ORDER BY c.sort_order ASC NULLS LAST, c.name
+ `),
+ query(`SELECT COUNT(*)::int AS cnt FROM places WHERE status = 'active'`),
+ ]);
+ categories = catResult.rows;
+ totalPlaces = placeCount.rows[0]?.cnt || 0;
 } catch (e) {
-  console.error('Categories admin query failed:', e);
+ logger.error('Categories admin query failed', e instanceof Error ? e : new Error(String(e)));
 }
-
-const seo = { title: 'Kategori Yönetimi - Admin', noIndex: true };
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
-    <div class="container mx-auto px-4 max-w-5xl">
-      <div class="mb-6 flex items-center justify-between">
-        <div>
-          <a href="/admin" class="text-sm text-gray-500 hover:text-gray-700">← Admin Paneli</a>
-          <h1 class="text-2xl font-bold mt-1">Kategori Yönetimi</h1>
-          <p class="text-sm text-gray-500 mt-1">{categories.length} kategori · Toplam {totalPlaces} aktif mekan</p>
-        </div>
-      </div>
+<AdminLayout
+ title="Kategori Yönetimi"
+ subtitle={`${categories.length} kategori · Toplam ${totalPlaces} aktif mekan`}
+ seo={{ title: 'Kategori Yönetimi - Yönetim Paneli', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-5xl space-y-5">
+ <div class="mb-2 flex items-center justify-between">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ <a href="/api/admin/site?model=categories" target="_blank" rel="noopener" class="text-xs text-urfa-600 hover:text-[#7A6B58]">JSON Görüntüle</a>
+ </div>
 
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div class="p-4 border-b bg-gray-50 flex items-center justify-between">
-          <h2 class="font-semibold text-gray-700 text-sm">Kategoriler</h2>
-          <a href="/api/admin/site?model=categories" target="_blank" class="text-xs text-blue-600 hover:underline">JSON Görüntüle</a>
-        </div>
-        <table class="w-full text-sm">
-          <thead class="border-b bg-gray-50">
-            <tr>
-              <th class="py-3 px-4 text-left font-medium text-gray-600">Ad</th>
-              <th class="py-3 px-4 text-left font-medium text-gray-600">Slug</th>
-              <th class="py-3 px-4 text-center font-medium text-gray-600">Mekan</th>
-              <th class="py-3 px-4 text-center font-medium text-gray-600">Sıra</th>
-              <th class="py-3 px-4 text-center font-medium text-gray-600">Durum</th>
-            </tr>
-          </thead>
-          <tbody>
-            {categories.map(cat => (
-              <tr class="border-b last:border-0 hover:bg-gray-50">
-                <td class="py-3 px-4">
-                  <div class="flex items-center gap-2">
-                    {cat.icon && <span class="text-lg">{cat.icon}</span>}
-                    {cat.color && <span class="w-3 h-3 rounded-full inline-block" style={`background:${cat.color}`}></span>}
-                    <span class="font-medium">{cat.name}</span>
-                  </div>
-                </td>
-                <td class="py-3 px-4 text-gray-500 font-mono text-xs">{cat.slug}</td>
-                <td class="py-3 px-4 text-center">
-                  <a href={`/mekanlar/${cat.slug}`} class="text-blue-600 hover:underline">{cat.place_count}</a>
-                </td>
-                <td class="py-3 px-4 text-center text-gray-500">{cat.sort_order ?? '—'}</td>
-                <td class="py-3 px-4 text-center">
-                  <span class={`text-xs px-2 py-0.5 rounded-full font-medium ${cat.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {cat.is_active ? 'Aktif' : 'Pasif'}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {categories.length === 0 && (
-          <div class="p-8 text-center text-gray-400 text-sm">Henüz kategori yok veya veri tabanına erişilemedi.</div>
-        )}
-      </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <div class="p-4 border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] flex items-center justify-between">
+ <h2 class="font-semibold text-[#7A6B58] text-sm">Kategoriler</h2>
+ </div>
+ <table class="w-full text-sm">
+ <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <tr>
+ <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Ad</th>
+ <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Slug</th>
+ <th class="py-3 px-4 text-center font-medium text-[#7A6B58]">Mekan</th>
+ <th class="py-3 px-4 text-center font-medium text-[#7A6B58]">Sıra</th>
+ <th class="py-3 px-4 text-center font-medium text-[#7A6B58]">Durum</th>
+ </tr>
+ </thead>
+ <tbody class="divide-y divide-[rgba(184,115,51,0.08)]">
+ {categories.map(cat => (
+ <tr class="hover:bg-[rgba(184,115,51,0.04)]">
+ <td class="py-3 px-4">
+ <div class="flex items-center gap-2">
+ {cat.icon && <span class="text-lg">{cat.icon}</span>}
+ {cat.color && <span class="w-3 h-3 rounded-full inline-block" style={`background:${cat.color}`}></span>}
+ <span class="font-medium text-[#1F1410]">{cat.name}</span>
+ </div>
+ </td>
+ <td class="py-3 px-4 text-[#7A6B58] font-mono text-xs">{cat.slug}</td>
+ <td class="py-3 px-4 text-center">
+ <a href={`/mekanlar/${cat.slug}`} class="text-urfa-600 hover:text-[#7A6B58]">{cat.place_count}</a>
+ </td>
+ <td class="py-3 px-4 text-center text-[#7A6B58]">{cat.sort_order ?? '—'}</td>
+ <td class="py-3 px-4 text-center">
+ <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${cat.is_active ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'}`}>
+ {cat.is_active ? 'Aktif' : 'Pasif'}
+ </span>
+ </td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ {categories.length === 0 && (
+ <div class="p-8 text-center text-[#7A6B58] text-sm">Henüz kategori yok veya veri tabanına erişilemedi.</div>
+ )}
+ </div>
 
-      <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-        <strong>Not:</strong> Kategori ekleme/düzenleme doğrudan veritabanı migration'ları veya seed scriptleri üzerinden yapılmaktadır.
-        Kategori slug'ları mekan URL'lerini etkiler, değiştirirken dikkatli olun.
-      </div>
-    </div>
-  </div>
-</Layout>
+ <div class="p-4 bg-[rgba(184,115,51,0.06)] border border-[rgba(184,115,51,0.2)] rounded-sm text-sm text-[#7A6B58]">
+ <strong>Not:</strong> Kategori ekleme/düzenleme doğrudan veritabanı migration'ları veya seed scriptleri üzerinden yapılmaktadır.
+ Kategori slug'ları mekan URL'lerini etkiler, değiştirirken dikkatli olun.
+ </div>
+ </div>
+</AdminLayout>

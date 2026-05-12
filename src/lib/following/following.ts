@@ -3,7 +3,7 @@
  * User-to-user following relationships with caching
  */
 
-import { query, queryOne, queryMany, insert } from '../postgres';
+import { query, queryOne, queryMany } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
 
@@ -29,23 +29,31 @@ export async function followUser(followerId: string, followedId: string): Promis
       throw new Error('Cannot follow yourself');
     }
 
-    // Try to create follow relationship
-    await insert('followers', {
-      follower_id: followerId,
-      following_id: followedId,
-      created_at: new Date().toISOString()
-    });
+    // Atomic INSERT (HARD RULE #47): no SELECT-then-INSERT, no error.message parsing
+    const inserted = await queryOne(
+      `INSERT INTO followers (follower_id, following_id, created_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (follower_id, following_id) DO NOTHING
+       RETURNING follower_id`,
+      [followerId, followedId]
+    );
 
-    // Clear caches
-    await deleteCache(`followers:${followedId}`);
-    await deleteCache(`following:${followerId}`);
-    await deleteCache(`follower_count:${followedId}`);
-    await deleteCache(`following_count:${followerId}`);
-  } catch (error) {
-    // If unique constraint violation, user already follows (not an error)
-    if (error instanceof Error && error.message.includes('duplicate')) {
-      return;
+    if (!inserted) {
+      return; // Already following
     }
+
+    // Clear caches (paralel)
+    // NOT: paralel `lib/followers/followers.ts` modülü `mutual-friends:${userId}` key'ini
+    // okur — burada da invalidate ediyoruz ki iki modül arası coherency korunsun.
+    await Promise.all([
+      deleteCache(`followers:${followedId}`),
+      deleteCache(`following:${followerId}`),
+      deleteCache(`follower_count:${followedId}`),
+      deleteCache(`following_count:${followerId}`),
+      deleteCache(`mutual-friends:${followerId}`),
+      deleteCache(`mutual-friends:${followedId}`),
+    ]);
+  } catch (error) {
     logger.error('Failed to follow user', error instanceof Error ? error : new Error(String(error)), {
       followerId,
       followedId
@@ -65,11 +73,16 @@ export async function unfollowUser(followerId: string, followedId: string): Prom
     );
 
     if ((result.rowCount || 0) > 0) {
-      // Clear caches
-      await deleteCache(`followers:${followedId}`);
-      await deleteCache(`following:${followerId}`);
-      await deleteCache(`follower_count:${followedId}`);
-      await deleteCache(`following_count:${followerId}`);
+      // Clear caches (paralel)
+      // NOT: mutual-friends:${id} key'ini de invalidate ediyoruz (cross-module coherency)
+      await Promise.all([
+        deleteCache(`followers:${followedId}`),
+        deleteCache(`following:${followerId}`),
+        deleteCache(`follower_count:${followedId}`),
+        deleteCache(`following_count:${followerId}`),
+        deleteCache(`mutual-friends:${followerId}`),
+        deleteCache(`mutual-friends:${followedId}`),
+      ]);
       return true;
     }
     return false;
@@ -139,8 +152,8 @@ export async function getFollowers(userId: string, limit: number = 50, offset: n
       avatar: row.avatar,
       points: row.points || 0,
       level: row.level || 0,
-      followers_count: parseInt(row.followers_count || '0'),
-      following_count: parseInt(row.following_count || '0')
+      followers_count: parseInt(row.followers_count || '0', 10),
+      following_count: parseInt(row.following_count || '0', 10)
     }));
 
     // Cache for 5 minutes
@@ -191,8 +204,8 @@ export async function getFollowing(userId: string, limit: number = 50, offset: n
       avatar: row.avatar,
       points: row.points || 0,
       level: row.level || 0,
-      followers_count: parseInt(row.followers_count || '0'),
-      following_count: parseInt(row.following_count || '0')
+      followers_count: parseInt(row.followers_count || '0', 10),
+      following_count: parseInt(row.following_count || '0', 10)
     }));
 
     // Cache for 5 minutes
@@ -223,7 +236,7 @@ export async function getFollowerCount(userId: string): Promise<number> {
       [userId]
     );
 
-    const count = parseInt(result?.count || '0');
+    const count = parseInt(result?.count || '0', 10);
 
     // Cache for 10 minutes
     await setCache(cacheKey, count, 600);
@@ -253,7 +266,7 @@ export async function getFollowingCount(userId: string): Promise<number> {
       [userId]
     );
 
-    const count = parseInt(result?.count || '0');
+    const count = parseInt(result?.count || '0', 10);
 
     // Cache for 10 minutes
     await setCache(cacheKey, count, 600);

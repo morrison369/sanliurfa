@@ -100,6 +100,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    if (body.metric_ids !== undefined && (!Array.isArray(body.metric_ids) || body.metric_ids.length > 50)) {
+      recordRequest('POST', '/api/reports', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'metric_ids dizi olmalı ve 50 öğeyi geçemez', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    if (body.recipients !== undefined && (!Array.isArray(body.recipients) || body.recipients.length > 20)) {
+      recordRequest('POST', '/api/reports', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'recipients dizi olmalı ve 20 öğeyi geçemez', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+
     const report = await createReport(
       validation.data.name,
       locals.user.id,

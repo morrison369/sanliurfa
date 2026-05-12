@@ -1,233 +1,285 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
-
-const seo = {
-  title: 'Blog Yönetimi - Yönetim Paneli',
-  description: 'Blog yazılarını yönetin',
-  noIndex: true,
-};
+import AdminLayout from '../../../layouts/AdminLayout.astro';
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
-    <div class="container mx-auto px-4">
-      {/* Header */}
-      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900">Blog Yönetimi</h1>
-            <p class="text-gray-500 mt-1">Blog yazılarını oluşturun, düzenleyin ve yayınlayın</p>
-          </div>
-          <a
-            href="/admin/blog/new"
-            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors inline-flex items-center gap-2"
-          >
-            <span>+</span> Yeni Yazı
-          </a>
-        </div>
-      </div>
+<AdminLayout
+ title="Blog Yönetimi"
+ subtitle="Blog yazılarını oluşturun, düzenleyin ve yayınlayın"
+ seo={{ title: 'Blog Yönetimi - Yönetim Paneli', noIndex: true }}
+>
+ <a slot="hero-action" href="/admin/blog/new" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700 inline-flex items-center gap-2">
+ <span>+</span> Yeni Yazı
+ </a>
 
-      {/* Filters */}
-      <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-        <div class="flex flex-wrap gap-4">
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Yazı ara..."
-            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 flex-1 min-w-[200px]"
-          />
-          <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-            <option value="">Tüm Durumlar</option>
-            <option value="published">Yayında</option>
-            <option value="draft">Taslak</option>
-            <option value="scheduled">Zamanlanmış</option>
-          </select>
-          <button id="searchBtn" class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900">
-            Ara
-          </button>
-        </div>
-      </div>
+ <div class="sf-container py-8 max-w-6xl space-y-5">
+ <div class="mb-2">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ </div>
 
-      {/* Posts Table */}
-      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Yazı</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Yazar</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İstatistikler</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tarih</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
-              </tr>
-            </thead>
-            <tbody id="postsTableBody" class="divide-y divide-gray-100">
-              <tr>
-                <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                  Yükleniyor...
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Pagination */}
-        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <div class="text-sm text-gray-500">
-            <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
-          </div>
-          <div class="flex gap-2" id="pagination"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="flex flex-wrap gap-4">
+ <input
+ type="text"
+ id="searchInput"
+ placeholder="Yazı ara..."
+ class="px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400 flex-1 min-w-[200px]"
+ />
+ <select id="statusFilter" class="px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400">
+ <option value="">Tüm Durumlar</option>
+ <option value="published">Yayında</option>
+ <option value="draft">Taslak</option>
+ <option value="scheduled">Zamanlanmış</option>
+ </select>
+ <button id="searchBtn" class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5c4839]">
+ Ara
+ </button>
+ </div>
+ </div>
 
-  <script is:inline>
-    let currentPage = 1;
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <div class="overflow-x-auto">
+ <table class="w-full text-sm">
+ <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <tr>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Yazı</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Yazar</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Durum</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İstatistikler</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Tarih</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İşlemler</th>
+ </tr>
+ </thead>
+ <tbody id="postsTableBody" class="divide-y divide-[rgba(184,115,51,0.08)]">
+ <tr>
+ <td colspan="6" class="px-6 py-12 text-center text-[#7A6B58]">
+ Yükleniyor...
+ </td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
 
-    const statusLabels = {
-      published: { text: 'Yayında', class: 'bg-green-100 text-green-700' },
-      draft: { text: 'Taslak', class: 'bg-gray-100 text-gray-700' },
-      scheduled: { text: 'Zamanlanmış', class: 'bg-blue-100 text-blue-700' },
-    };
+ <div class="px-6 py-4 border-t border-[rgba(184,115,51,0.14)] flex items-center justify-between">
+ <div class="text-sm text-[#7A6B58]">
+ <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
+ </div>
+ <div class="flex gap-2" id="pagination"></div>
+ </div>
+ </div>
+ </div>
 
-    async function loadPosts() {
-      const tbody = document.getElementById('postsTableBody');
-      tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yükleniyor...</td></tr>';
+ <script is:inline>
+ let currentPage = 1;
 
-      const params = new URLSearchParams({ page: currentPage.toString() });
-      
-      const search = document.getElementById('searchInput').value;
-      const status = document.getElementById('statusFilter').value;
+ const statusLabels = {
+ published: { text: 'Yayında', class: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
+ draft: { text: 'Taslak', class: 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' },
+ scheduled: { text: 'Zamanlanmış', class: 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]' },
+ };
 
-      if (search) params.append('search', search);
-      if (status) params.append('status', status);
+ function setTbodyMsg(tbody, colSpan, text, cls) {
+ const tr = document.createElement('tr');
+ const td = document.createElement('td');
+ td.colSpan = colSpan;
+ td.className = cls;
+ td.textContent = text;
+ tr.appendChild(td);
+ tbody.replaceChildren(tr);
+ }
 
-      try {
-        const response = await fetch(`/api/blog/admin?${params}`);
-        const data = await response.json();
+ function buildPostRow(post) {
+ const tr = document.createElement('tr');
+ tr.className = 'hover:bg-[rgba(184,115,51,0.04)]';
 
-        if (data.success) {
-          renderPosts(data.posts);
-          updatePagination(data.pagination);
-        }
-      } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-red-500">Hata oluştu</td></tr>';
-      }
-    }
+ // Col 1: image + title + slug
+ const td1 = document.createElement('td');
+ td1.className = 'px-6 py-4';
+ const wrap = document.createElement('div');
+ wrap.className = 'flex items-center gap-3';
+ if (post.cover_image) {
+ const img = document.createElement('img');
+ img.src = post.cover_image;
+ img.alt = '';
+ img.className = 'w-12 h-12 rounded-sm object-cover';
+ wrap.appendChild(img);
+ } else {
+ const ph = document.createElement('div');
+ ph.className = 'w-12 h-12 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center text-[#7A6B58]';
+ const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+ svg.setAttribute('class', 'w-6 h-6');
+ svg.setAttribute('fill', 'none');
+ svg.setAttribute('stroke', 'currentColor');
+ svg.setAttribute('viewBox', '0 0 24 24');
+ const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+ path.setAttribute('stroke-linecap', 'round');
+ path.setAttribute('stroke-linejoin', 'round');
+ path.setAttribute('stroke-width', '2');
+ path.setAttribute('d', 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z');
+ svg.appendChild(path);
+ ph.appendChild(svg);
+ wrap.appendChild(ph);
+ }
+ const textDiv = document.createElement('div');
+ const titleEl = document.createElement('div');
+ titleEl.className = 'font-medium text-[#1F1410] line-clamp-1';
+ titleEl.textContent = post.title;
+ const slugEl = document.createElement('div');
+ slugEl.className = 'text-sm text-[#7A6B58]';
+ slugEl.textContent = '/' + post.slug;
+ textDiv.appendChild(titleEl);
+ textDiv.appendChild(slugEl);
+ wrap.appendChild(textDiv);
+ td1.appendChild(wrap);
+ tr.appendChild(td1);
 
-    function renderPosts(posts) {
-      const tbody = document.getElementById('postsTableBody');
-      
-      if (posts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yazi bulunamadi</td></tr>';
-        return;
-      }
+ // Col 2: author
+ const td2 = document.createElement('td');
+ td2.className = 'px-6 py-4 text-sm text-[#7A6B58]';
+ td2.textContent = post.author_name || 'Bilinmiyor';
+ tr.appendChild(td2);
 
-      tbody.innerHTML = posts.map(post => `
-        <tr class="hover:bg-gray-50">
-          <td class="px-6 py-4">
-            <div class="flex items-center gap-3">
-              ${post.cover_image ? `
-                <img src="${post.cover_image}" alt="" class="w-12 h-12 rounded-lg object-cover" />
-              ` : `
-                <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
-                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              `}
-              <div>
-                <div class="font-medium text-gray-900 line-clamp-1">${post.title}</div>
-                <div class="text-sm text-gray-500">/${post.slug}</div>
-              </div>
-            </div>
-          </td>
-          <td class="px-6 py-4 text-sm text-gray-600">
-            ${post.author_name || 'Bilinmiyor'}
-          </td>
-          <td class="px-6 py-4">
-            <span class="px-2 py-1 rounded-full text-xs font-medium ${statusLabels[post.status]?.class || 'bg-gray-100'}">
-              ${statusLabels[post.status]?.text || post.status}
-            </span>
-            ${post.featured ? `<span class="ml-2 px-2 py-0.5 bg-amber-100 text-amber-700 text-xs rounded">Öne Çıkan</span>` : ''}
-          </td>
-          <td class="px-6 py-4 text-sm text-gray-600">
-            <div>${post.like_count || 0} beğeni</div>
-            <div>${post.comment_count || 0} yorum</div>
-          </td>
-          <td class="px-6 py-4 text-sm text-gray-500">
-            ${post.published_at 
-              ? new Date(post.published_at).toLocaleDateString('tr-TR')
-              : new Date(post.created_at).toLocaleDateString('tr-TR')
-            }
-          </td>
-          <td class="px-6 py-4">
-            <div class="flex gap-2">
-              <a href="/admin/blog/edit/${post.id}" class="text-blue-600 hover:text-blue-800 text-sm">Düzenle</a>
-              <a href="/blog/${post.slug}" target="_blank" class="text-gray-600 hover:text-gray-800 text-sm">Görüntüle</a>
-              <button onclick="deletePost('${post.id}')" class="text-red-600 hover:text-red-800 text-sm">Sil</button>
-            </div>
-          </td>
-        </tr>
-      `).join('');
-    }
+ // Col 3: status badge
+ const statusLabel = statusLabels[post.status];
+ const td3 = document.createElement('td');
+ td3.className = 'px-6 py-4';
+ const badge = document.createElement('span');
+ badge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (statusLabel?.class || 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]');
+ badge.textContent = statusLabel?.text || post.status;
+ td3.appendChild(badge);
+ if (post.featured) {
+ const feat = document.createElement('span');
+ feat.className = 'ml-2 px-2 py-0.5 bg-[rgba(184,115,51,0.15)] text-[#7A6B58] text-xs rounded-sm';
+ feat.textContent = 'Öne Çıkan';
+ td3.appendChild(feat);
+ }
+ tr.appendChild(td3);
 
-    function updatePagination(pagination) {
-      document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
-      document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
-      document.getElementById('totalCount').textContent = pagination.total;
+ // Col 4: counts
+ const td4 = document.createElement('td');
+ td4.className = 'px-6 py-4 text-sm text-[#7A6B58]';
+ const likeEl = document.createElement('div');
+ likeEl.textContent = (post.like_count || 0) + ' beğeni';
+ const commentEl = document.createElement('div');
+ commentEl.textContent = (post.comment_count || 0) + ' yorum';
+ td4.appendChild(likeEl);
+ td4.appendChild(commentEl);
+ tr.appendChild(td4);
 
-      const pages = [];
-      for (let i = 1; i <= pagination.totalPages; i++) {
-        if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
-          pages.push(`
-            <button onclick="goToPage(${i})" 
-              class="px-3 py-1 rounded ${i === pagination.page ? 'bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}">
-              ${i}
-            </button>
-          `);
-        } else if (i === pagination.page - 3 || i === pagination.page + 3) {
-          pages.push('<span class="px-2">...</span>');
-        }
-      }
-      document.getElementById('pagination').innerHTML = pages.join('');
-    }
+ // Col 5: date
+ const td5 = document.createElement('td');
+ td5.className = 'px-6 py-4 text-sm text-[#7A6B58]';
+ td5.textContent = post.published_at
+ ? new Date(post.published_at).toLocaleDateString('tr-TR')
+ : new Date(post.created_at).toLocaleDateString('tr-TR');
+ tr.appendChild(td5);
 
-    function goToPage(page) {
-      currentPage = page;
-      loadPosts();
-    }
+ // Col 6: actions
+ const td6 = document.createElement('td');
+ td6.className = 'px-6 py-4';
+ const actions = document.createElement('div');
+ actions.className = 'flex gap-2';
+ const editA = document.createElement('a');
+ editA.href = '/admin/blog/edit/' + post.id;
+ editA.className = 'text-[#7A6B58] hover:text-urfa-600 text-sm';
+ editA.textContent = 'Düzenle';
+ const viewA = document.createElement('a');
+ viewA.href = '/blog/' + post.slug;
+ viewA.target = '_blank';
+ viewA.rel = 'noopener';
+ viewA.className = 'text-[#7A6B58] hover:text-[#7A6B58] text-sm';
+ viewA.textContent = 'Görüntüle';
+ const delBtn = document.createElement('button');
+ delBtn.addEventListener('click', () => deletePost(post.id));
+ delBtn.className = 'text-[#7A6B58] hover:text-[#7A6B58] text-sm';
+ delBtn.textContent = 'Sil';
+ actions.appendChild(editA);
+ actions.appendChild(viewA);
+ actions.appendChild(delBtn);
+ td6.appendChild(actions);
+ tr.appendChild(td6);
 
-    async function deletePost(id) {
-      if (!confirm('Bu yazıyı silmek istediğinize emin misiniz?')) return;
+ return tr;
+ }
 
-      try {
-        const response = await fetch(`/api/blog/${id}/admin`, {
-          method: 'DELETE'
-        });
+ async function loadPosts() {
+ const tbody = document.getElementById('postsTableBody');
+ setTbodyMsg(tbody, 6, 'Yükleniyor...', 'px-6 py-12 text-center text-[#7A6B58]');
 
-        if (response.ok) {
-          loadPosts();
-        } else {
-          alert('Silme işlemi başarısız');
-        }
-      } catch (err) {
-        alert('Bir hata oluştu');
-      }
-    }
+ const params = new URLSearchParams({ page: currentPage.toString() });
+ const search = document.getElementById('searchInput').value;
+ const status = document.getElementById('statusFilter').value;
+ if (search) params.append('search', search);
+ if (status) params.append('status', status);
 
-    document.getElementById('searchBtn').addEventListener('click', () => {
-      currentPage = 1;
-      loadPosts();
-    });
+ try {
+ const response = await fetch(`/api/blog/admin?${params}`);
+ const data = await response.json();
+ if (data.success) {
+ renderPosts(data.posts);
+ updatePagination(data.pagination);
+ }
+ } catch (err) {
+ setTbodyMsg(tbody, 6, 'Hata oluştu', 'px-6 py-12 text-center text-[#7A6B58]');
+ }
+ }
 
-    window.goToPage = goToPage;
-    window.deletePost = deletePost;
-    loadPosts();
-  </script>
-</Layout>
+ function renderPosts(posts) {
+ const tbody = document.getElementById('postsTableBody');
+ if (posts.length === 0) {
+ setTbodyMsg(tbody, 6, 'Yazı bulunamadı', 'px-6 py-12 text-center text-[#7A6B58]');
+ return;
+ }
+ tbody.replaceChildren(...posts.map(buildPostRow));
+ }
 
+ function updatePagination(pagination) {
+ document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
+ document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
+ document.getElementById('totalCount').textContent = pagination.total;
 
+ const pagEl = document.getElementById('pagination');
+ const nodes = [];
+ for (let i = 1; i <= pagination.totalPages; i++) {
+ if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+ const btn = document.createElement('button');
+ btn.className = 'px-3 py-1 rounded-sm text-sm ' + (i === pagination.page ? 'bg-urfa-600 text-white' : 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.15)]');
+ btn.textContent = String(i);
+ btn.addEventListener('click', () => goToPage(i));
+ nodes.push(btn);
+ } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+ const span = document.createElement('span'); span.className = 'px-2 text-[#7A6B58]'; span.textContent = '...';
+ nodes.push(span);
+ }
+ }
+ pagEl.replaceChildren(...nodes);
+ }
 
+ function goToPage(page) {
+ currentPage = page;
+ loadPosts();
+ }
+
+ async function deletePost(id) {
+ if (!await window.showConfirm('Bu yazıyı silmek istediğinize emin misiniz?')) return;
+ try {
+ const response = await fetch(`/api/blog/${id}/admin`, { method: 'DELETE' });
+ if (response.ok) {
+ loadPosts();
+ } else {
+ window.toast?.error('Silme işlemi başarısız');
+ }
+ } catch (err) {
+ window.toast?.error('Bir hata oluştu');
+ }
+ }
+
+ document.getElementById('searchBtn').addEventListener('click', () => {
+ currentPage = 1;
+ loadPosts();
+ });
+
+ window.goToPage = goToPage;
+ window.deletePost = deletePost;
+ loadPosts();
+ </script>
+</AdminLayout>

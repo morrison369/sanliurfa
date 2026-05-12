@@ -3,9 +3,27 @@
  * Saves uploaded files to local filesystem under public/uploads/
  */
 
+import { randomBytes } from 'node:crypto';
 import { writeFileSync, mkdirSync, existsSync, unlinkSync } from 'fs';
 import { join, extname } from 'path';
 import { logger } from '../logger';
+import { getPublicAppUrl } from '../public-app-url';
+import { sanitizeSlug } from '../security/xss';
+
+/**
+ * Dosya adını slug formatına çevirir.
+ * 'Şanlıurfa Kalesi.JPG' → 'sanliurfa-kalesi.jpg'
+ * - Türkçe karakterler ASCII karşılığına dönüştürülür
+ * - Lowercase
+ * - Boşluk ve özel karakterler hyphen
+ * - Extension korunur (lowercase)
+ */
+export function slugifyFileName(name: string): string {
+  const ext = extname(name).toLowerCase();
+  const base = name.slice(0, name.length - ext.length);
+  const slug = sanitizeSlug(base);
+  return slug ? `${slug}${ext}` : `file${ext}`;
+}
 
 const BLOCKED_EXTENSIONS = new Set(['.exe', '.bat', '.sh', '.php', '.js', '.mjs', '.py', '.rb', '.pl', '.html', '.htm', '.svg', '.xml']);
 
@@ -32,7 +50,7 @@ export function validateFileExtension(fileName: string): boolean {
 }
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR || 'public/uploads/photos';
-const PUBLIC_URL_PREFIX = process.env.PUBLIC_APP_URL || '';
+const PUBLIC_URL_PREFIX = getPublicAppUrl();
 
 /**
  * Save a File to the local filesystem and return its public path/URL
@@ -43,8 +61,12 @@ export async function saveFile(
   fileName?: string,
   preReadBuffer?: Buffer,
 ): Promise<{ filePath: string; publicUrl: string }> {
+  // Slug formatına çevir: Türkçe → ASCII, lowercase, hyphen.
+  // 'Şanlıurfa Kalesi.JPG' → 'sanliurfa-kalesi.jpg'
+  // Final: '<timestamp>-<hex>-sanliurfa-kalesi.jpg'
+  const slugified = slugifyFileName(file.name);
   const finalFileName =
-    fileName || `${Date.now()}-${Math.random().toString(36).substring(7)}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    fileName || `${Date.now()}-${randomBytes(6).toString('hex')}-${slugified}`;
 
   const dirPath = join(process.cwd(), UPLOAD_DIR, folder);
   const fullPath = join(dirPath, finalFileName);

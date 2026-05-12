@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { authenticateUser } from '../../../../lib/auth/middleware';
 import { query } from '../../../../lib/postgres';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeErrorDetail, safeIntParam } from '../../../../lib/api';
 
 function encodeCursor(createdAt: string, id: string): string {
   return Buffer.from(`${createdAt}|${id}`).toString('base64url');
@@ -33,13 +33,14 @@ export const GET: APIRoute = async (context) => {
     }
 
     const url = new URL(context.request.url);
-    const eventType = url.searchParams.get('eventType');
+    const rawEventType = url.searchParams.get('eventType');
+    const eventType = rawEventType ? rawEventType.substring(0, 100) : null;
     const actorUserId = url.searchParams.get('actorUserId');
     const targetUserId = url.searchParams.get('targetUserId');
     const tenantId = url.searchParams.get('tenantId');
     const cursor = decodeCursor(url.searchParams.get('cursor'));
-    const limit = Math.min(Math.max(Number(url.searchParams.get('limit') || 50), 1), 200);
-    const offset = Math.max(Number(url.searchParams.get('offset') || 0), 0);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 200);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     const where: string[] = [];
     const params: unknown[] = [];
@@ -66,20 +67,22 @@ export const GET: APIRoute = async (context) => {
     }
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-    const countResult = await query(
-      `SELECT COUNT(*)::int AS total FROM social_event_store ${whereSql}`,
-      params as any[],
-    );
     const listParams = cursor ? [...params, limit] : [...params, limit, offset];
-    const result = await query(
-      `SELECT id, event_type, actor_user_id, target_user_id, conversation_id, metadata, created_at
-       FROM social_event_store
-       ${whereSql}
-       ORDER BY created_at DESC
-       LIMIT $${cursor ? listParams.length : listParams.length - 1}
-       ${cursor ? '' : `OFFSET $${listParams.length}`}`,
-      listParams as any[],
-    );
+    const [countResult, result] = await Promise.all([
+      query(
+        `SELECT COUNT(*)::int AS total FROM social_event_store ${whereSql}`,
+        params,
+      ),
+      query(
+        `SELECT id, event_type, actor_user_id, target_user_id, conversation_id, metadata, created_at
+         FROM social_event_store
+         ${whereSql}
+         ORDER BY created_at DESC
+         LIMIT $${cursor ? listParams.length : listParams.length - 1}
+         ${cursor ? '' : `OFFSET $${listParams.length}`}`,
+        listParams,
+      ),
+    ]);
     const lastRow = result.rows[result.rows.length - 1];
     const nextCursor =
       lastRow?.created_at && lastRow?.id
@@ -100,7 +103,7 @@ export const GET: APIRoute = async (context) => {
     return problemJson({
       status: 500,
       title: 'Sosyal Event Timeline Alınamadı',
-      detail: error instanceof Error ? error.message : 'admin_social_events_fetch_failed',
+      detail: safeErrorDetail(error, 'admin_social_events_fetch_failed'),
       type: '/problems/admin-social-events-fetch-failed',
       instance: '/api/admin/social/events',
     });

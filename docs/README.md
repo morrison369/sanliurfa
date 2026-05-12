@@ -1,33 +1,34 @@
 # Şanlıurfa.com Dokümantasyon
 
-Bu klasör, Şanlıurfa.com projesinin teknik operasyon, API, içerik ve yayın süreç dokümantasyonunu içerir.
+Bu klasör karar üretmek için az sayıda kanonik belge kullanır. Eski batch notları,
+tek kullanımlık raporlar ve tarihsel planlar yeni tasarım veya mimari kararı sayılmaz.
 
-## Önemli Dokümanlar
+## Önce Bunları Oku
 
-- [DB-First Site Yönetimi](./DB_FIRST_SITE_MANAGEMENT.md)
-- [Detaylı Öneriler ve Uygulama Planı](./DETAYLI_PROJE_ONERILERI_VE_UYGULAMA_PLANI.md)
-- [Ücretsiz API Rehberi](./FREE_APIS_GUIDE.md)
-- [API Rehberi](./API_GUIDE.md)
-- [Güvenlik](./SECURITY.md)
+1. [Source Of Truth](./SOURCE_OF_TRUTH.md)
+2. [MVP Public Acceptance](./MVP_PUBLIC_ACCEPTANCE.md)
+3. [Astro SSR Frontend Stack](./ASTRO_SSR_FRONTEND_STACK.md)
+4. [City Taxonomy and Social Surface](./CITY_TAXONOMY_AND_SOCIAL_SURFACE.md)
+5. [UI Contracts](./UI_CONTRACTS.md)
+
+## Operasyon Belgeleri
+
 - [Deployment](./DEPLOYMENT.md)
-- [Isolated Runtime](./isolated-runtime.md)
-- [Content Cluster Quality Report](./content-cluster-quality-report.md)
-- [Content Programmatic Quality Report](./content-programmatic-quality-report.md)
-- [Image Moderation Report](./image-moderation-report.md)
-- [Problem JSON Report](./problem-json-report.json)
-- [Runtime Health Report](./runtime-health-report.md)
+- [DB-First Site Yönetimi](./DB_FIRST_SITE_MANAGEMENT.md)
+- [Security](./SECURITY.md)
+- [Route Ownership](./ROUTE_OWNERSHIP.md)
+- [Migration Duplicate Remediation](./MIGRATION_DUPLICATE_REMEDIATION.md)
 
-## Proje Prensipleri
+## Otomatik Raporlar
 
-- Site tek dil Türkçe çalışır.
-- Yönetilebilir içerikler DB-first modelinde admin panelden yönetilir.
-- Ücretli servis bağımlılığı yerine ücretsiz/açık alternatifler tercih edilir.
-- Geliştirme sürecinde port ve runtime izolasyonu korunur.
+JSON ve `*-report.md` dosyaları karar kaynağı değildir; script çıktısıdır.
+Bir rapor kanonik belgeyle çelişirse kanonik belge esas alınır, rapor yeniden üretilir.
 
-## Temel Yığın
+## Değişmeyen Kurallar
 
-- Frontend: Astro 6.x, React 19, Tailwind CSS
-- Backend: Astro SSR (Node adapter)
-- Veritabanı: PostgreSQL (standart port 5432)
-- Cache: Redis (standart port 6379)
-- Medya: Unsplash + Pexels API (slug bazlı yerel dosya + DB metadata)
+- Site yalnızca Türkçedir.
+- Ana public tema sıcak light Şanlıurfa şehir rehberi temasıdır.
+- Eski koyu tema, hazır liste sitesi ve sıradan blog kalıbı tasarım dili yasaktır.
+- Demo ticaret terimleri, geçici içerik ve alakasız görsel fallback public yüzeyde kullanılmaz.
+- Astro SSR `@astrojs/node` standalone runtime kanoniktir.
+- Tasarım, SEO, şehir taksonomisi ve sosyal/eşleşme yüzeyi gate ile korunur.

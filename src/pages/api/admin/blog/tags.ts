@@ -5,7 +5,7 @@
 import type { APIRoute } from 'astro';
 import { requireRole } from '../../../../lib/auth';
 import { getTags, createTag } from '../../../../lib/blog/db';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, HttpStatus, problemJson, safeErrorDetail } from '../../../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -22,15 +22,12 @@ export const GET: APIRoute = async ({ request }) => {
 
     const tags = await getTags();
     
-    return new Response(JSON.stringify({ tags }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse({ tags }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Etiketler Alınamadı',
-      detail: error instanceof Error ? error.message : 'Etiketler alınamadı',
+      detail: safeErrorDetail(error, 'Etiketler alınamadı'),
       type: '/problems/admin-blog-tags-get-failed',
       instance: '/api/admin/blog/tags',
     });
@@ -62,6 +59,22 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    if (typeof body.name !== 'string' || body.name.length > 200) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'İsim 200 karakterden uzun olamaz', type: '/problems/admin-blog-tags-validation', instance: '/api/admin/blog/tags' });
+    if (typeof body.slug !== 'string' || body.slug.length > 100) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'Slug 100 karakterden uzun olamaz', type: '/problems/admin-blog-tags-validation', instance: '/api/admin/blog/tags' });
+    if (body.description !== undefined && body.description !== null && (typeof body.description !== 'string' || body.description.length > 500)) {
+      return problemJson({
+        status: 422,
+        title: 'Çok Uzun',
+        detail: 'Açıklama 500 karakteri aşamaz',
+        type: '/problems/admin-blog-tags-validation',
+        instance: '/api/admin/blog/tags',
+      });
+    }
+
+    if (body.color !== undefined && body.color !== null && (typeof body.color !== 'string' || body.color.length > 50)) {
+      return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'Renk 50 karakterden uzun olamaz', type: '/problems/admin-blog-tags-validation', instance: '/api/admin/blog/tags' });
+    }
+
     const tag = await createTag({
       slug: body.slug,
       name: body.name,
@@ -69,15 +82,12 @@ export const POST: APIRoute = async ({ request }) => {
       color: body.color,
     });
 
-    return new Response(JSON.stringify({ success: true, tag }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse({ success: true, tag }, HttpStatus.CREATED);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Etiket Oluşturulamadı',
-      detail: error instanceof Error ? error.message : 'Etiket oluşturulamadı',
+      detail: safeErrorDetail(error, 'Etiket oluşturulamadı'),
       type: '/problems/admin-blog-tags-create-failed',
       instance: '/api/admin/blog/tags',
     });

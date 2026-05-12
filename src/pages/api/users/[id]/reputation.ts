@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request, params }) => {
           rank,
           tier,
           badgeCount,
-          featuredBadges: badges.filter((b: any) => b.is_featured).slice(0, 5)
+          featuredBadges: badges.filter((b) => b.is_featured).slice(0, 5)
         }
       },
       HttpStatus.OK,

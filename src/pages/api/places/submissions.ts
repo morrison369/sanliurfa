@@ -7,7 +7,8 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { requireAuth } from '../../../lib/auth';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
+import { deleteCachePattern } from '../../../lib/cache';
 import { assertPlaceStatusTransition } from '../../../lib/place/lifecycle';
 import { recordPlaceLifecycleEvent } from '../../../lib/place/lifecycle-events';
 
@@ -56,9 +57,7 @@ export const GET: APIRoute = async ({ request, url }) => {
           instance: '/api/places/submissions',
         });
       }
-      return new Response(JSON.stringify({ submission }), {
-        status: 200, headers: { 'Content-Type': 'application/json' },
-      });
+      return apiResponse({ submission }, HttpStatus.OK);
     }
 
     // Admin: all pending submissions
@@ -71,9 +70,7 @@ export const GET: APIRoute = async ({ request, url }) => {
          WHERE p.status IN ('pending', 'needs_info')
          ORDER BY p.created_at ASC`
       );
-      return new Response(JSON.stringify({ submissions: result.rows }), {
-        status: 200, headers: { 'Content-Type': 'application/json' },
-      });
+      return apiResponse({ submissions: result.rows }, HttpStatus.OK);
     }
 
     // User's own submissions
@@ -84,9 +81,7 @@ export const GET: APIRoute = async ({ request, url }) => {
        ORDER BY created_at DESC`,
       [auth.user.id]
     );
-    return new Response(JSON.stringify({ submissions: result.rows }), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ submissions: result.rows }, HttpStatus.OK);
   } catch (error) {
     logger.error('Submissions GET error:', error);
     return problemJson({
@@ -123,8 +118,21 @@ export const POST: APIRoute = async ({ request }) => {
       openingHours, features = [], priceRange, photos = [],
     } = body;
 
+    if (!Array.isArray(features) || features.length > 50) {
+      return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'features dizisi geçersiz veya 50 öğe sınırını aşıyor', type: '/problems/places-submissions-features-invalid', instance: '/api/places/submissions' });
+    }
+    if (!Array.isArray(photos) || photos.length > 20) {
+      return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'photos dizisi geçersiz veya 20 öğe sınırını aşıyor', type: '/problems/places-submissions-photos-invalid', instance: '/api/places/submissions' });
+    }
+
     // UPDATE existing submission
     if (action === 'update' && submissionId) {
+      if (name !== undefined && name !== null && (typeof name !== 'string' || name.length > 200)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Mekan adı 200 karakterden uzun olamaz', type: '/problems/places-submissions-name-too-long', instance: '/api/places/submissions' });
+      if (description !== undefined && description !== null && (typeof description !== 'string' || description.length > 5000)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Açıklama 5000 karakterden uzun olamaz', type: '/problems/places-submissions-description-too-long', instance: '/api/places/submissions' });
+      if (shortDescription !== undefined && shortDescription !== null && (typeof shortDescription !== 'string' || shortDescription.length > 5000)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Kısa açıklama 5000 karakterden uzun olamaz', type: '/problems/places-submissions-short-description-too-long', instance: '/api/places/submissions' });
+      if (address !== undefined && address !== null && (typeof address !== 'string' || address.length > 500)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Adres 500 karakterden uzun olamaz', type: '/problems/places-submissions-address-too-long', instance: '/api/places/submissions' });
+      const VALID_PRICE_RANGES = new Set(['free', 'cheap', 'moderate', 'expensive', 'luxury']);
+      if (priceRange !== undefined && priceRange !== null && (typeof priceRange !== 'string' || !VALID_PRICE_RANGES.has(priceRange))) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Geçersiz fiyat aralığı', type: '/problems/places-submissions-pricerange-invalid', instance: '/api/places/submissions' });
       await query(
         `UPDATE places SET
            name = COALESCE($1, name),
@@ -149,10 +157,9 @@ export const POST: APIRoute = async ({ request }) => {
          priceRange, photos.length ? photos : null,
          submissionId, auth.user.id]
       );
+      await deleteCachePattern('places:*').catch(() => null);
       const result = await query(`SELECT * FROM places WHERE id = $1`, [submissionId]);
-      return new Response(JSON.stringify({ success: true, submission: result.rows[0] }), {
-        status: 200, headers: { 'Content-Type': 'application/json' },
-      });
+      return apiResponse({ success: true, submission: result.rows[0] }, HttpStatus.OK);
     }
 
     // SUBMIT FOR REVIEW (draft → pending)
@@ -181,10 +188,9 @@ export const POST: APIRoute = async ({ request }) => {
         actorUserId: auth.user.id,
         reason: 'submitForReview',
       }).catch(() => null);
+      await deleteCachePattern('places:*').catch(() => null);
       const result = await query(`SELECT * FROM places WHERE id = $1`, [submissionId]);
-      return new Response(JSON.stringify({ success: true, submission: result.rows[0] }), {
-        status: 200, headers: { 'Content-Type': 'application/json' },
-      });
+      return apiResponse({ success: true, submission: result.rows[0] }, HttpStatus.OK);
     }
 
     // Validate for new submission
@@ -198,6 +204,13 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    if (typeof name !== 'string' || name.length > 200) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Mekan adı 200 karakterden uzun olamaz', type: '/problems/places-submissions-name-too-long', instance: '/api/places/submissions' });
+    if (typeof description !== 'string' || description.length > 5000) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Açıklama 5000 karakterden uzun olamaz', type: '/problems/places-submissions-description-too-long', instance: '/api/places/submissions' });
+    if (shortDescription !== undefined && shortDescription !== null && (typeof shortDescription !== 'string' || shortDescription.length > 5000)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Kısa açıklama 5000 karakterden uzun olamaz', type: '/problems/places-submissions-short-description-too-long', instance: '/api/places/submissions' });
+    if (typeof address !== 'string' || address.length > 500) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Adres 500 karakterden uzun olamaz', type: '/problems/places-submissions-address-too-long', instance: '/api/places/submissions' });
+    const VALID_PRICE_RANGES_NEW = new Set(['free', 'cheap', 'moderate', 'expensive', 'luxury']);
+    if (priceRange !== undefined && priceRange !== null && (typeof priceRange !== 'string' || !VALID_PRICE_RANGES_NEW.has(priceRange))) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Geçersiz fiyat aralığı', type: '/problems/places-submissions-pricerange-invalid', instance: '/api/places/submissions' });
+
     // Duplicate check
     const dupeResult = await query(
       `SELECT id, name, address FROM places
@@ -206,10 +219,7 @@ export const POST: APIRoute = async ({ request }) => {
       [name]
     );
     if (dupeResult.rows.length > 0) {
-      return new Response(
-        JSON.stringify({ warning: 'Benzer mekan mevcut', duplicates: dupeResult.rows, proceed: true }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return apiResponse({ warning: 'Benzer mekan mevcut', duplicates: dupeResult.rows, proceed: true }, HttpStatus.OK);
     }
 
     const newStatus = action === 'draft' ? 'draft' : 'pending';
@@ -243,14 +253,11 @@ export const POST: APIRoute = async ({ request }) => {
       }).catch(() => null);
     }
 
-    return new Response(
-      JSON.stringify({
+    return apiResponse({
         success: true,
         submission: created,
         message: action === 'draft' ? 'Taslak kaydedildi' : 'Başvuru incelemeye gönderildi',
-      }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
-    );
+      }, HttpStatus.CREATED);
   } catch (error) {
     logger.error('Submissions POST error:', error);
     return problemJson({

@@ -10,7 +10,7 @@ import { getActiveSubscription, upgradeSubscription, cancelSubscription, getTier
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { validateWithSchema } from '../../../lib/validation';
+import { validateWithSchema, type ValidationSchema } from '../../../lib/validation';
 import { PHASE1_FREE_MODE } from '../../../lib/runtime/phase-policy';
 
 const upgradeSchema = {
@@ -25,7 +25,7 @@ const upgradeSchema = {
     required: false,
     pattern: '^(monthly|annual)$'
   }
-} as any;
+} as ValidationSchema;
 
 // GET - Get active subscription
 export const GET: APIRoute = async ({ request, locals }) => {

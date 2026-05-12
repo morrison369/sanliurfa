@@ -1,0 +1,179 @@
+---
+type ReviewItem = {
+  rating: number;
+  title?: string | null;
+  content: string;
+  created_at: string;
+  helpful_count?: number | null;
+  user_name?: string | null;
+  user_avatar?: string | null;
+};
+
+interface Props {
+  title?: string;
+  items: ReviewItem[];
+  emptyText?: string;
+}
+
+const { title = 'Yorumlar', items = [], emptyText = 'Henüz yorum yok.' } = Astro.props;
+---
+
+<section class="prv">
+  <h2 class="prv-title">
+    {title} <span class="prv-count">({items.length})</span>
+  </h2>
+
+  {items.length === 0 ? (
+    <p class="prv-empty">{emptyText}</p>
+  ) : (
+    <div class="prv-list">
+      {items.map((item) => (
+        <article class="prv-item">
+          <header class="prv-head">
+            {item.user_avatar ? (
+              <img src={item.user_avatar} alt={item.user_name || 'Üye'} loading="lazy" class="prv-avatar" />
+            ) : (
+              <div class="prv-avatar prv-avatar--fallback">{(item.user_name || 'U').charAt(0)}</div>
+            )}
+            <div class="prv-author">
+              <p class="prv-name">{item.user_name || 'Üye'}</p>
+              <p class="prv-date">
+                {new Date(item.created_at).toLocaleDateString('tr-TR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </p>
+            </div>
+            <div class="prv-stars" aria-label={`${item.rating} yıldız`}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <span class:list={['prv-star', i <= item.rating && 'prv-star--filled']}>★</span>
+              ))}
+            </div>
+          </header>
+
+          {item.title && <h3 class="prv-item-title">{item.title}</h3>}
+          <p class="prv-content">{item.content}</p>
+
+          {Boolean(item.helpful_count) && (
+            <p class="prv-helpful">{item.helpful_count} kişi faydalı buldu</p>
+          )}
+        </article>
+      ))}
+    </div>
+  )}
+</section>
+
+<style>
+  .prv-title {
+    margin: 0 0 1rem;
+    color: var(--public-text);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+  }
+
+  .prv-count {
+    color: var(--public-accent);
+    font-size: 0.85em;
+  }
+
+  .prv-empty {
+    margin: 0;
+    color: var(--public-muted);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .prv-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .prv-item {
+    border-top: 1px solid var(--public-border-soft);
+    padding-top: 1rem;
+  }
+
+  .prv-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .prv-avatar {
+    width: 2.2rem;
+    height: 2.2rem;
+    flex-shrink: 0;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 1px solid var(--public-border);
+  }
+
+  .prv-avatar--fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--public-accent), var(--public-warning));
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .prv-author {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .prv-name {
+    margin: 0;
+    color: var(--public-text);
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .prv-date {
+    margin: 0;
+    color: var(--public-muted);
+    font-size: 0.72rem;
+  }
+
+  .prv-stars {
+    display: inline-flex;
+    gap: 0.12rem;
+    flex-shrink: 0;
+  }
+
+  .prv-star {
+    color: var(--public-border);
+    font-size: 0.95rem;
+  }
+
+  .prv-star--filled {
+    color: var(--public-warning);
+  }
+
+  .prv-item-title {
+    margin: 0 0 0.35rem;
+    color: var(--public-text);
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .prv-content {
+    margin: 0;
+    color: var(--public-text-soft);
+    font-size: 0.88rem;
+    line-height: 1.68;
+    white-space: pre-wrap;
+  }
+
+  .prv-helpful {
+    margin: 0.5rem 0 0;
+    color: var(--public-muted);
+    font-size: 0.72rem;
+  }
+</style>

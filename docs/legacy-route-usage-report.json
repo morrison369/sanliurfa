@@ -1,0 +1,313 @@
+{
+  "generatedAt": "2026-05-06T16:01:07.283Z",
+  "sampledRemoteLogs": {
+    "enabled": true,
+    "tailLines": 25000,
+    "fileNames": [
+      "combined.log",
+      "out.log",
+      "err.log"
+    ],
+    "logType": "application",
+    "accessLogAvailable": false,
+    "blocker": "Prod shell tarafinda okunabilir access log bulunamadi; remote sinyal application log fallback ile sinirli."
+  },
+  "blockers": [
+    "Prod shell tarafinda okunabilir access log bulunamadi; remote sinyal application log fallback ile sinirli."
+  ],
+  "items": [
+    {
+      "key": "places-root",
+      "label": "/places",
+      "kind": "exact",
+      "canonical": "/mekanlar",
+      "sunsetClass": "remove-when-zero",
+      "runtimeHits": 0,
+      "docsHits": 11,
+      "remoteHits": 0,
+      "status": "access log teyidi bekleniyor",
+      "sunsetPolicy": {
+        "reviewCadence": "monthly",
+        "requiredZeroWindows": 3,
+        "requiredLogType": "access",
+        "note": "application log tek basina kaldirma karari icin yeterli degil"
+      },
+      "runtimeTopFiles": [],
+      "docsTopFiles": [
+        {
+          "file": "docs/openapi-coverage-plan.md",
+          "hits": 4
+        },
+        {
+          "file": "docs/LEGACY_ROUTE_INVENTORY.md",
+          "hits": 3
+        },
+        {
+          "file": "docs/ROUTE_LEGACY_POLICY.md",
+          "hits": 2
+        },
+        {
+          "file": "docs/API_GUIDE.md",
+          "hits": 1
+        },
+        {
+          "file": "docs/ROUTE_OWNERSHIP.md",
+          "hits": 1
+        }
+      ],
+      "remoteTopFiles": []
+    },
+    {
+      "key": "places-prefix",
+      "label": "/places/*",
+      "kind": "prefix",
+      "canonical": "/isletme/*",
+      "sunsetClass": "remove-when-zero",
+      "runtimeHits": 0,
+      "docsHits": 7,
+      "remoteHits": 0,
+      "status": "access log teyidi bekleniyor",
+      "sunsetPolicy": {
+        "reviewCadence": "monthly",
+        "requiredZeroWindows": 3,
+        "requiredLogType": "access",
+        "note": "application log tek basina kaldirma karari icin yeterli degil"
+      },
+      "runtimeTopFiles": [],
+      "docsTopFiles": [
+        {
+          "file": "docs/openapi-coverage-plan.md",
+          "hits": 3
+        },
+        {
+          "file": "docs/LEGACY_ROUTE_INVENTORY.md",
+          "hits": 2
+        },
+        {
+          "file": "docs/ROUTE_LEGACY_POLICY.md",
+          "hits": 1
+        },
+        {
+          "file": "docs/ROUTE_OWNERSHIP.md",
+          "hits": 1
+        }
+      ],
+      "remoteTopFiles": []
+    },
+    {
+      "key": "vendor-dashboard",
+      "label": "/vendor/dashboard",
+      "kind": "exact",
+      "canonical": "/isletme/panel",
+      "sunsetClass": "compatibility-registry",
+      "runtimeHits": 0,
+      "docsHits": 4,
+      "remoteHits": 0,
+      "status": "uyumluluk katmanı korunmalı",
+      "sunsetPolicy": {
+        "reviewCadence": "monthly",
+        "requiredZeroWindows": 3,
+        "requiredLogType": "access",
+        "note": "application log tek basina kaldirma karari icin yeterli degil"
+      },
+      "runtimeTopFiles": [],
+      "docsTopFiles": [
+        {
+          "file": "docs/LEGACY_ROUTE_INVENTORY.md",
+          "hits": 2
+        },
+        {
+          "file": "docs/ROUTE_LEGACY_POLICY.md",
+          "hits": 2
+        }
+      ],
+      "remoteTopFiles": []
+    },
+    {
+      "key": "vendor-analytics",
+      "label": "/vendor/analytics",
+      "kind": "exact",
+      "canonical": "/isletme/analytics",
+      "sunsetClass": "compatibility-registry",
+      "runtimeHits": 0,
+      "docsHits": 4,
+      "remoteHits": 0,
+      "status": "uyumluluk katmanı korunmalı",
+      "sunsetPolicy": {
+        "reviewCadence": "monthly",
+        "requiredZeroWindows": 3,
+        "requiredLogType": "access",
+        "note": "application log tek basina kaldirma karari icin yeterli degil"
+      },
+      "runtimeTopFiles": [],
+      "docsTopFiles": [
+        {
+          "file": "docs/LEGACY_ROUTE_INVENTORY.md",
+          "hits": 2
+        },
+        {
+          "file": "docs/ROUTE_LEGACY_POLICY.md",
+          "hits": 2
+        }
+      ],
+      "remoteTopFiles": []
+    },
+    {
+      "key": "messages",
+      "label": "/messages",
+      "kind": "exact",
+      "canonical": "/mesajlar",
+      "sunsetClass": "remove-when-zero",
+      "runtimeHits": 0,
+      "docsHits": 2,
+      "remoteHits": 0,
+      "status": "access log teyidi bekleniyor",
+      "sunsetPolicy": {
+        "reviewCadence": "monthly",
+        "requiredZeroWindows": 3,
+        "requiredLogType": "access",
+        "note": "application log tek basina kaldirma karari icin yeterli degil"
+      },
+      "runtimeTopFiles": [],
+      "docsTopFiles": [
+        {
+          "file": "docs/LEGACY_ROUTE_INVENTORY.md",
+          "hits": 1
+        },
+        {
+          "file": "docs/ROUTE_LEGACY_POLICY.md",
+          "hits": 1
+        }
+      ],
+      "remoteTopFiles": []
+    },
+    {
+      "key": "notifications",
+      "label": "/notifications",
+      "kind": "exact",
+      "canonical": "/bildirimler",
+      "sunsetClass": "remove-when-zero",
+      "runtimeHits": 0,
+      "docsHits": 4,
+      "remoteHits": 0,
+      "status": "access log teyidi bekleniyor",
+      "sunsetPolicy": {
+        "reviewCadence": "monthly",
+        "requiredZeroWindows": 3,
+        "requiredLogType": "access",
+        "note": "application log tek basina kaldirma karari icin yeterli degil"
+      },
+      "runtimeTopFiles": [],
+      "docsTopFiles": [
+        {
+          "file": "docs/openapi-coverage-plan.md",
+          "hits": 2
+        },
+        {
+          "file": "docs/LEGACY_ROUTE_INVENTORY.md",
+          "hits": 1
+        },
+        {
+          "file": "docs/ROUTE_LEGACY_POLICY.md",
+          "hits": 1
+        }
+      ],
+      "remoteTopFiles": []
+    },
+    {
+      "key": "profile",
+      "label": "/profile",
+      "kind": "exact",
+      "canonical": "/profil",
+      "sunsetClass": "remove-when-zero",
+      "runtimeHits": 0,
+      "docsHits": 3,
+      "remoteHits": 0,
+      "status": "access log teyidi bekleniyor",
+      "sunsetPolicy": {
+        "reviewCadence": "monthly",
+        "requiredZeroWindows": 3,
+        "requiredLogType": "access",
+        "note": "application log tek basina kaldirma karari icin yeterli degil"
+      },
+      "runtimeTopFiles": [],
+      "docsTopFiles": [
+        {
+          "file": "docs/LEGACY_ROUTE_INVENTORY.md",
+          "hits": 1
+        },
+        {
+          "file": "docs/openapi-coverage-plan.md",
+          "hits": 1
+        },
+        {
+          "file": "docs/ROUTE_LEGACY_POLICY.md",
+          "hits": 1
+        }
+      ],
+      "remoteTopFiles": []
+    },
+    {
+      "key": "isletme-unicode",
+      "label": "/işletme/*",
+      "kind": "prefix",
+      "canonical": "/isletme/*",
+      "sunsetClass": "remove-when-zero",
+      "runtimeHits": 0,
+      "docsHits": 3,
+      "remoteHits": 0,
+      "status": "access log teyidi bekleniyor",
+      "sunsetPolicy": {
+        "reviewCadence": "monthly",
+        "requiredZeroWindows": 3,
+        "requiredLogType": "access",
+        "note": "application log tek basina kaldirma karari icin yeterli degil"
+      },
+      "runtimeTopFiles": [],
+      "docsTopFiles": [
+        {
+          "file": "docs/LEGACY_ROUTE_INVENTORY.md",
+          "hits": 2
+        },
+        {
+          "file": "docs/ROUTE_LEGACY_POLICY.md",
+          "hits": 1
+        }
+      ],
+      "remoteTopFiles": []
+    },
+    {
+      "key": "kullanici-unicode",
+      "label": "/kullanıcı/*",
+      "kind": "prefix",
+      "canonical": "/kullanici/*",
+      "sunsetClass": "remove-when-zero",
+      "runtimeHits": 0,
+      "docsHits": 3,
+      "remoteHits": 0,
+      "status": "access log teyidi bekleniyor",
+      "sunsetPolicy": {
+        "reviewCadence": "monthly",
+        "requiredZeroWindows": 3,
+        "requiredLogType": "access",
+        "note": "application log tek basina kaldirma karari icin yeterli degil"
+      },
+      "runtimeTopFiles": [],
+      "docsTopFiles": [
+        {
+          "file": "docs/LEGACY_ROUTE_INVENTORY.md",
+          "hits": 1
+        },
+        {
+          "file": "docs/ROUTE_LEGACY_POLICY.md",
+          "hits": 1
+        },
+        {
+          "file": "docs/ROUTE_OWNERSHIP.md",
+          "hits": 1
+        }
+      ],
+      "remoteTopFiles": []
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs';
+/* global console, process */
+import { existsSync, readFileSync } from 'node:fs';
 
 const checks = [
   {
@@ -9,6 +10,11 @@ const checks = [
   {
     file: 'src/lib/config/env-validator.ts',
     forbidden: ["'default-secret'"],
+    optional: true,
+  },
+  {
+    file: 'astro.config.mjs',
+    forbidden: ["'default-secret'", '"default-secret"'],
   },
   {
     file: 'src/lib/two-factor-auth.ts',
@@ -23,6 +29,11 @@ const checks = [
 const violations = [];
 
 for (const item of checks) {
+  if (!existsSync(item.file)) {
+    if (item.optional) continue;
+    violations.push(`${item.file} -> missing required scan target`);
+    continue;
+  }
   const content = readFileSync(item.file, 'utf8');
   for (const token of item.forbidden) {
     if (content.includes(token)) {

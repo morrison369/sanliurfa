@@ -4,6 +4,9 @@ import { vi } from 'vitest';
 process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
 process.env.JWT_SECRET = 'test-secret';
 process.env.REDIS_URL = 'redis://localhost:6379';
+process.env.SITE_URL = 'https://sanliurfa.com';
+process.env.PUBLIC_SITE_URL = 'https://sanliurfa.com';
+process.env.PUBLIC_APP_URL = 'https://sanliurfa.com';
 
 // Global test utilities
 declare global {

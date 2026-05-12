@@ -2,6 +2,7 @@
  * Rewards Library
  * Rewards catalog, redemption, and inventory management
  */
+import { randomBytes } from 'node:crypto';
 import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { deleteCache, getCache, setCache } from '../cache';
@@ -71,25 +72,29 @@ export async function processRewardRedemption(userId: string, rewardId: string):
       return { success: false, error: 'Reward not found' };
     }
 
-    const inventory = await queryOne(
+    const hasInventory = await queryOne<{ available_stock: number }>(
       'SELECT available_stock FROM reward_inventory WHERE reward_id = $1',
       [rewardId]
     );
-
-    if (inventory && inventory.available_stock <= 0) {
+    if (hasInventory && hasInventory.available_stock <= 0) {
       return { success: false, error: 'Reward out of stock' };
     }
 
-    const userPoints = await queryOne(
-      'SELECT current_balance FROM loyalty_points WHERE user_id = $1',
-      [userId]
+    // Atomic: deduct points only if balance sufficient (prevents double-spend race)
+    const deducted = await queryOne<{ current_balance: number }>(
+      `UPDATE loyalty_points
+       SET current_balance = current_balance - $1,
+           lifetime_spent = COALESCE(lifetime_spent, 0) + $1,
+           last_spent_at = NOW()
+       WHERE user_id = $2 AND current_balance >= $1
+       RETURNING current_balance`,
+      [reward.points_cost, userId]
     );
-
-    if (!userPoints || userPoints.current_balance < reward.points_cost) {
+    if (!deducted) {
       return { success: false, error: 'Insufficient points' };
     }
 
-    const redemptionCode = `RWD-${Date.now()}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`;
+    const redemptionCode = `RWD-${Date.now()}-${randomBytes(6).toString('hex').toUpperCase()}`;
 
     await insert('reward_redemptions', {
       user_id: userId,
@@ -99,25 +104,28 @@ export async function processRewardRedemption(userId: string, rewardId: string):
       status: 'pending'
     });
 
-    await update(
-      'loyalty_points',
-      { user_id: userId },
-      {
-        current_balance: userPoints.current_balance - reward.points_cost,
-        lifetime_spent: (userPoints.lifetime_spent || 0) + reward.points_cost,
-        last_spent_at: new Date()
-      }
-    );
-
-    if (inventory) {
-      await update(
-        'reward_inventory',
-        { reward_id: rewardId },
-        {
-          claimed_stock: (inventory.claimed_stock || 0) + 1,
-          available_stock: inventory.available_stock - 1
-        }
+    if (hasInventory) {
+      // Atomic: decrement inventory only if still available (prevents oversell race)
+      const decremented = await queryOne<{ available_stock: number }>(
+        `UPDATE reward_inventory
+         SET available_stock = available_stock - 1,
+             claimed_stock = COALESCE(claimed_stock, 0) + 1
+         WHERE reward_id = $1 AND available_stock > 0
+         RETURNING available_stock`,
+        [rewardId]
       );
+      if (!decremented) {
+        // Concurrent request exhausted inventory; revert points
+        await queryOne(
+          `UPDATE loyalty_points
+           SET current_balance = current_balance + $1,
+               lifetime_spent = GREATEST(0, COALESCE(lifetime_spent, 0) - $1),
+               last_spent_at = NOW()
+           WHERE user_id = $2`,
+          [reward.points_cost, userId]
+        );
+        return { success: false, error: 'Reward out of stock' };
+      }
     }
 
     await deleteCache(`loyalty:points:${userId}`);
@@ -192,32 +200,22 @@ export async function getPromotionalOffers(): Promise<any[]> {
 
 export async function updateRewardInventory(rewardId: string, newStock: number): Promise<boolean> {
   try {
-    const existing = await queryOne(
-      'SELECT total_stock, claimed_stock FROM reward_inventory WHERE reward_id = $1',
-      [rewardId]
+    // Atomic upsert (HARD RULE #47): SELECT-then-UPDATE/INSERT race-prone for inventory
+    // EXCLUDED.total_stock = new value; reward_inventory.claimed_stock = existing claimed
+    await queryOne(
+      `INSERT INTO reward_inventory (reward_id, total_stock, claimed_stock, available_stock, last_updated_at)
+       VALUES ($1, $2, 0, $2, NOW())
+       ON CONFLICT (reward_id) DO UPDATE SET
+         total_stock = EXCLUDED.total_stock,
+         available_stock = EXCLUDED.total_stock - reward_inventory.claimed_stock,
+         last_updated_at = NOW()`,
+      [rewardId, newStock]
     );
 
-    if (existing) {
-      await update(
-        'reward_inventory',
-        { reward_id: rewardId },
-        {
-          total_stock: newStock,
-          available_stock: newStock - (existing.claimed_stock || 0),
-          last_updated_at: new Date()
-        }
-      );
-    } else {
-      await insert('reward_inventory', {
-        reward_id: rewardId,
-        total_stock: newStock,
-        claimed_stock: 0,
-        available_stock: newStock
-      });
-    }
-
-    await deleteCache('reward:' + rewardId);
-    await deleteCache('rewards:catalog');
+    await Promise.all([
+      deleteCache('reward:' + rewardId),
+      deleteCache('rewards:catalog'),
+    ]);
 
     logger.info('Reward inventory updated', { rewardId, newStock });
     return true;

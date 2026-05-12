@@ -67,16 +67,58 @@ class Logger {
     return context;
   }
 
-  debug(message: string, context?: LogContext | string, metadata?: Record<string, any>): void {
-    this.log({ level: 'debug', message, context: this.normalizeContext(context), metadata });
+  private buildLogEntry(
+    level: LogLevel,
+    message: string,
+    options?: {
+      context?: LogContext;
+      error?: Error;
+      metadata?: Record<string, any>;
+    }
+  ): LogEntry {
+    return {
+      level,
+      message,
+      ...(options?.context ? { context: options.context } : {}),
+      ...(options?.error ? { error: options.error } : {}),
+      ...(options?.metadata ? { metadata: options.metadata } : {}),
+    };
   }
 
-  info(message: string, context?: LogContext | string, metadata?: Record<string, any>): void {
-    this.log({ level: 'info', message, context: this.normalizeContext(context), metadata });
+  debug(message: string, context?: LogContext | string | Error, metadata?: Record<string, any>): void {
+    if (context instanceof Error) {
+      this.log(this.buildLogEntry('debug', message, { error: context, ...(metadata ? { metadata } : {}) }));
+      return;
+    }
+    const normalizedContext = this.normalizeContext(context);
+    this.log(this.buildLogEntry('debug', message, {
+      ...(normalizedContext ? { context: normalizedContext } : {}),
+      ...(metadata ? { metadata } : {}),
+    }));
   }
 
-  warn(message: string, context?: LogContext | string, metadata?: Record<string, any>): void {
-    this.log({ level: 'warn', message, context: this.normalizeContext(context), metadata });
+  info(message: string, context?: LogContext | string | Error, metadata?: Record<string, any>): void {
+    if (context instanceof Error) {
+      this.log(this.buildLogEntry('info', message, { error: context, ...(metadata ? { metadata } : {}) }));
+      return;
+    }
+    const normalizedContext = this.normalizeContext(context);
+    this.log(this.buildLogEntry('info', message, {
+      ...(normalizedContext ? { context: normalizedContext } : {}),
+      ...(metadata ? { metadata } : {}),
+    }));
+  }
+
+  warn(message: string, context?: LogContext | string | Error, metadata?: Record<string, any>): void {
+    if (context instanceof Error) {
+      this.log(this.buildLogEntry('warn', message, { error: context, ...(metadata ? { metadata } : {}) }));
+      return;
+    }
+    const normalizedContext = this.normalizeContext(context);
+    this.log(this.buildLogEntry('warn', message, {
+      ...(normalizedContext ? { context: normalizedContext } : {}),
+      ...(metadata ? { metadata } : {}),
+    }));
   }
 
   error(
@@ -110,13 +152,11 @@ class Logger {
       }
     }
 
-    this.log({
-      level: 'error',
-      message,
-      error: normalizedError,
-      context: normalizedContext,
-      metadata: normalizedMetadata
-    });
+    this.log(this.buildLogEntry('error', message, {
+      ...(normalizedError ? { error: normalizedError } : {}),
+      ...(normalizedContext ? { context: normalizedContext } : {}),
+      ...(normalizedMetadata ? { metadata: normalizedMetadata } : {}),
+    }));
   }
 
   fatal(
@@ -150,41 +190,40 @@ class Logger {
       }
     }
 
-    this.log({
-      level: 'fatal',
-      message,
-      error: normalizedError,
-      context: normalizedContext,
-      metadata: normalizedMetadata
-    });
+    this.log(this.buildLogEntry('fatal', message, {
+      ...(normalizedError ? { error: normalizedError } : {}),
+      ...(normalizedContext ? { context: normalizedContext } : {}),
+      ...(normalizedMetadata ? { metadata: normalizedMetadata } : {}),
+    }));
   }
 
   // Request logging
   request(method: string, path: string, statusCode: number, duration: number, context?: LogContext): void {
     const level = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info';
     
-    this.log({
-      level,
-      message: `${method} ${path} ${statusCode} - ${duration}ms`,
-      context,
+    this.log(this.buildLogEntry(level, `${method} ${path} ${statusCode} - ${duration}ms`, {
+      ...(context ? { context } : {}),
       metadata: { statusCode, duration, method, path }
-    });
+    }));
   }
 
   // Performance logging
   performance(operation: string, duration: number, context?: LogContext | string): void {
-    this.log({
-      level: duration > 1000 ? 'warn' : 'info',
-      message: `Performance: ${operation} took ${duration}ms`,
-      context: this.normalizeContext(context),
+    const normalizedContext = this.normalizeContext(context);
+    this.log(this.buildLogEntry(duration > 1000 ? 'warn' : 'info', `Performance: ${operation} took ${duration}ms`, {
+      ...(normalizedContext ? { context: normalizedContext } : {}),
       metadata: { operation, duration }
-    });
+    }));
   }
 
   // Compat methods used across API endpoints (no-op implementations)
   setRequestId(_requestId: string): void { /* request-scoped logging not needed at module level */ }
   logMutation(action: string, table: string, id: string, userId?: string, meta?: Record<string, any>): void {
-    this.info(`Mutation: ${action} ${table} ${id}`, { userId, ...meta });
+    const context: LogContext = {
+      ...(userId ? { userId } : {}),
+      ...(meta || {}),
+    };
+    this.info(`Mutation: ${action} ${table} ${id}`, Object.keys(context).length > 0 ? context : undefined);
   }
   logQuery(sql: string, duration: number): void {
     if (duration > 500) this.warn(`Slow query (${duration}ms): ${sql.slice(0, 200)}`);

@@ -5,12 +5,12 @@
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../lib/postgres';
 import { getPlaceBusinessAnalytics, getPlaceDailyMetrics, getDashboardOverview } from '../../../lib/analytics/business-analytics';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -33,7 +33,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Access denied', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const days = parseInt(url.searchParams.get('days') || '30', 10);
+    const days = safeIntParam(url.searchParams.get('days'), 30, 0, 1_000_000);
     const analytics = await getPlaceBusinessAnalytics(placeId, days);
     const metrics = await getPlaceDailyMetrics(placeId, days);
     const overview = await getDashboardOverview(placeId);

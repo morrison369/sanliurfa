@@ -14,6 +14,9 @@ CRON_FRESHNESS_STRICT="${CRON_FRESHNESS_STRICT:-0}"
 # job:max_age_seconds
 checks=(
   "doctor-hourly:7200"
+  "weather-refresh-halfhour:5400"
+  "transit-refresh-hourly:7200"
+  "pharmacy-refresh-daily:93600"
   "smoke-6hour:28800"
   "report-daily:93600"
   "rotate-events-daily:93600"

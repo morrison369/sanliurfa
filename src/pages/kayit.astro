@@ -3,148 +3,153 @@ import Layout from '../layouts/Layout.astro';
 import { actions, isInputError } from 'astro:actions';
 
 const seo = {
-  title: 'Kayıt Ol - Sanliurfa.com',
-  description: 'Yeni hesap oluşturun',
-  noIndex: true,
+ title: 'Kayıt Ol — Sanliurfa.com',
+ description: 'Sanliurfa.com\'a ücretsiz kayıt olun.',
+ noIndex: true,
 };
 
-// Check if already logged in
 const user = Astro.locals.user;
-if (user) {
-  return Astro.redirect('/');
-}
+if (user) return Astro.redirect('/');
 
 const registerResult = Astro.getActionResult(actions.register);
 const registerInputErrors = isInputError(registerResult?.error) ? registerResult.error.fields : {};
 const registerSubmitError =
-  !isInputError(registerResult?.error) && registerResult?.error?.message
-    ? registerResult.error.message
-    : null;
+ !isInputError(registerResult?.error) && registerResult?.error?.message
+ ? registerResult.error.message
+ : null;
 
 if (registerResult?.data?.success) {
-  return Astro.redirect('/');
+ return Astro.redirect('/');
 }
 ---
 <Layout seo={seo} hideFooter>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-    <div class="w-full max-w-md">
-      <div class="text-center mb-8">
-        <a href="/" class="text-3xl font-bold text-gray-900">
-          Şanlıurfa<span class="text-red-600">.com</span>
-        </a>
-        <p class="text-gray-500 mt-2">Yeni hesap oluşturun</p>
-      </div>
+ <style is:inline>
+ .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:1.5rem}
+ .auth-box{width:100%;max-width:420px}
+ .auth-logo{text-align:center;margin-bottom:2rem}
+ .auth-logo-name{font-family:'Cormorant Garamond',Georgia,serif;font-size:2rem;font-weight:300;font-style:italic;color:var(--public-text);letter-spacing:-.02em}
+ .auth-logo-tld{font-family:'Jost',sans-serif;font-size:1rem;font-weight:700;color:var(--public-accent);letter-spacing:.06em}
+ .auth-logo-sub{font-size:.8rem;color:var(--public-muted);margin-top:.4rem;letter-spacing:.04em}
+ .auth-card{background:var(--bg-card);border:1px solid var(--border);padding:2rem}
+ .auth-lbl{display:block;font-size:.75rem;font-weight:600;color:var(--public-accent);margin-bottom:.4rem;letter-spacing:.03em}
+ .auth-input{width:100%;padding:.7rem 1rem;background:rgba(255,255,255,.03);border:1px solid rgba(184,115,51,.2);color:var(--public-text);border-radius:.125rem;font-size:.875rem;font-family:inherit;transition:border-color .15s}
+ .auth-input:focus{outline:none;border-color:var(--public-accent)}
+ .auth-input::placeholder{color:var(--public-text-soft)}
+ .auth-field{margin-bottom:1rem}
+ .auth-err{background:rgba(199,58,71,.1);border:1px solid rgba(199,58,71,.25);color:#E08090;padding:.65rem 1rem;border-radius:.125rem;font-size:.82rem;margin-bottom:1rem}
+ .auth-field-err{font-size:.72rem;color:#E08090;margin-top:.3rem}
+ .auth-submit{width:100%;padding:.75rem;margin-top:.5rem;font-size:.875rem}
+ .auth-terms{display:flex;align-items:flex-start;gap:.5rem;margin-bottom:1rem}
+ .auth-terms input{margin-top:.2rem;accent-color:var(--public-accent);flex-shrink:0}
+ .auth-terms-lbl{font-size:.78rem;color:var(--public-muted);line-height:1.5}
+ .auth-terms-lbl a{color:var(--public-accent)}.auth-terms-lbl a:hover{color:var(--public-text)}
+ .auth-footer{text-align:center;font-size:.8rem;color:var(--public-muted);margin-top:1.25rem}
+ .auth-footer a{color:var(--public-accent)}.auth-footer a:hover{color:var(--public-text)}
+ .auth-back{text-align:center;font-size:.78rem;color:var(--public-text-soft);margin-top:1.25rem}
+ .auth-back a{color:var(--public-muted);transition:color .15s}.auth-back a:hover{color:var(--public-accent)}
+ </style>
 
-      <div class="bg-white rounded-2xl shadow-lg p-8">
-        {registerSubmitError && (
-          <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            {registerSubmitError}
-          </div>
-        )}
+ <div class="auth-wrap">
+ <div class="auth-box">
+ <!-- Logo -->
+ <div class="auth-logo">
+ <a href="/" style="display:inline-flex;align-items:baseline;gap:.0625rem;text-decoration:none;">
+ <span class="auth-logo-name">Sanliurfa</span>
+ <span class="auth-logo-tld">.com</span>
+ </a>
+ <p class="auth-logo-sub">Yeni hesap oluşturun</p>
+ </div>
 
-        <form action={actions.register} method="POST" class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Ad Soyad</label>
-            <input 
-              type="text" 
-              name="name" 
-              required
-              transition:persist
-              aria-invalid={registerInputErrors.name ? 'true' : 'false'}
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              placeholder="Adınız Soyadınız"
-            />
-            {registerInputErrors.name && (
-              <p class="mt-2 text-sm text-red-600">{registerInputErrors.name.join(', ')}</p>
-            )}
-          </div>
+ <div class="auth-card">
+ {registerSubmitError && <div class="auth-err">{registerSubmitError}</div>}
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
-            <input 
-              type="email" 
-              name="email" 
-              required
-              transition:persist
-              aria-invalid={registerInputErrors.email ? 'true' : 'false'}
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              placeholder="ornek@email.com"
-            />
-            {registerInputErrors.email && (
-              <p class="mt-2 text-sm text-red-600">{registerInputErrors.email.join(', ')}</p>
-            )}
-          </div>
+ <form action={actions.register} method="POST">
+ <div class="auth-field">
+ <label class="auth-lbl" for="name-input">Ad Soyad</label>
+ <input
+ id="name-input"
+ type="text"
+ name="name"
+ required
+ transition:persist
+ autocomplete="name"
+ aria-invalid={registerInputErrors.name ? 'true' : 'false'}
+ class="auth-input"
+ placeholder="Adınız Soyadınız"
+ />
+ {registerInputErrors.name && <p class="auth-field-err">{registerInputErrors.name.join(', ')}</p>}
+ </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
-            <input 
-              type="password" 
-              name="password" 
-              required 
-              minlength="6"
-              aria-invalid={registerInputErrors.password ? 'true' : 'false'}
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              placeholder="En az 6 karakter"
-            />
-            {registerInputErrors.password && (
-              <p class="mt-2 text-sm text-red-600">{registerInputErrors.password.join(', ')}</p>
-            )}
-          </div>
+ <div class="auth-field">
+ <label class="auth-lbl" for="email-input">E-posta</label>
+ <input
+ id="email-input"
+ type="email"
+ name="email"
+ required
+ transition:persist
+ autocomplete="email"
+ aria-invalid={registerInputErrors.email ? 'true' : 'false'}
+ class="auth-input"
+ placeholder="ornek@email.com"
+ />
+ {registerInputErrors.email && <p class="auth-field-err">{registerInputErrors.email.join(', ')}</p>}
+ </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Şifre Tekrar</label>
-            <input 
-              type="password" 
-              name="passwordConfirm" 
-              required 
-              aria-invalid={registerInputErrors.passwordConfirm ? 'true' : 'false'}
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-              placeholder="Şifrenizi tekrar girin"
-            />
-            {registerInputErrors.passwordConfirm && (
-              <p class="mt-2 text-sm text-red-600">{registerInputErrors.passwordConfirm.join(', ')}</p>
-            )}
-          </div>
+ <div class="auth-field">
+ <label class="auth-lbl" for="pw-input">Şifre</label>
+ <input
+ id="pw-input"
+ type="password"
+ name="password"
+ autocomplete="new-password"
+ required
+ minlength="6"
+ aria-invalid={registerInputErrors.password ? 'true' : 'false'}
+ class="auth-input"
+ placeholder="En az 6 karakter"
+ />
+ {registerInputErrors.password && <p class="auth-field-err">{registerInputErrors.password.join(', ')}</p>}
+ </div>
 
-          <div class="flex items-start">
-            <input 
-              type="checkbox" 
-              name="terms" 
-              required
-              aria-invalid={registerInputErrors.terms ? 'true' : 'false'}
-              class="w-4 h-4 mt-1 text-red-600 rounded border-gray-300"
-            />
-            <label class="ml-2 text-sm text-gray-600">
-              <a href="/kullanim-kosullari" class="text-red-600 hover:underline">Kullanım koşullarını</a> ve
-              <a href="/gizlilik-politikasi" class="text-red-600 hover:underline">gizlilik politikasını</a> kabul ediyorum
-            </label>
-          </div>
-          {registerInputErrors.terms && (
-            <p class="mt-2 text-sm text-red-600">{registerInputErrors.terms.join(', ')}</p>
-          )}
+ <div class="auth-field">
+ <label class="auth-lbl" for="pw2-input">Şifre Tekrar</label>
+ <input
+ id="pw2-input"
+ type="password"
+ name="passwordConfirm"
+ autocomplete="new-password"
+ required
+ aria-invalid={registerInputErrors.passwordConfirm ? 'true' : 'false'}
+ class="auth-input"
+ placeholder="Şifrenizi tekrar girin"
+ />
+ {registerInputErrors.passwordConfirm && <p class="auth-field-err">{registerInputErrors.passwordConfirm.join(', ')}</p>}
+ </div>
 
-          <button 
-            type="submit" 
-            class="w-full py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-          >
-            Kayıt Ol
-          </button>
-        </form>
+ <div class="auth-terms">
+ <input
+ type="checkbox"
+ name="terms"
+ id="terms-check"
+ required
+ aria-invalid={registerInputErrors.terms ? 'true' : 'false'}
+ />
+ <label class="auth-terms-lbl" for="terms-check">
+ <a href="/kullanim-kosullari">Kullanım koşullarını</a> ve{' '}
+ <a href="/gizlilik-politikasi">gizlilik politikasını</a> kabul ediyorum
+ </label>
+ </div>
+ {registerInputErrors.terms && <p class="auth-field-err" style="margin-top:-.5rem;margin-bottom:.75rem">{registerInputErrors.terms.join(', ')}</p>}
 
-        <div class="mt-6 text-center">
-          <p class="text-gray-500">
-            Zaten hesabınız var mı? 
-            <a href="/giris" class="text-red-600 font-medium hover:underline">Giriş Yap</a>
-          </p>
-        </div>
-      </div>
+ <button type="submit" class="sf-btn-primary auth-submit">Kayıt Ol</button>
+ </form>
+ </div>
 
-      <p class="text-center text-sm text-gray-500 mt-8">
-        <a href="/" class="hover:text-gray-700">← Ana Sayfaya Dön</a>
-      </p>
-    </div>
-  </div>
+ <p class="auth-footer">
+ Zaten hesabınız var mı? <a href="/giris">Giriş Yap</a>
+ </p>
+ <p class="auth-back"><a href="/">← Ana Sayfaya Dön</a></p>
+ </div>
+ </div>
 </Layout>
-
-
-

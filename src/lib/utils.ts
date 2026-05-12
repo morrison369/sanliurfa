@@ -104,7 +104,9 @@ export function formatNumber(num: number): string {
  * Rastgele string oluşturma
  */
 export function generateId(length = 8): string {
-  return Math.random().toString(36).substring(2, 2 + length);
+  const bytes = new Uint8Array(Math.ceil(length / 2));
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, length);
 }
 
 /**

@@ -1,18 +1,19 @@
 ---
-
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+const baseUrl = getPublicAppUrl();
 
 const { kategori } = Astro.params;
 
 const categoryMeta: Record<string, { name: string; icon: string }> = {
-  'anaokullari': { name: 'Anaokulları', icon: '🎨' },
-  'okullar': { name: 'Okullar', icon: '🏫' },
-  'universiteler': { name: 'Üniversiteler', icon: '🎓' },
-  'dershaneler': { name: 'Dershaneler', icon: '📚' },
-  'kurslar': { name: 'Kurslar', icon: '🎯' },
+ 'anaokullari': { name: 'Anaokulları', icon: '🎨' },
+ 'okullar': { name: 'Okullar', icon: '🏫' },
+ 'universiteler': { name: 'Üniversiteler', icon: '🎓' },
+ 'dershaneler': { name: 'Dershaneler', icon: '📚' },
+ 'kurslar': { name: 'Kurslar', icon: '🎯' },
 };
 
 const meta = categoryMeta[kategori || ''] || { name: kategori || '', icon: '🏫' };
@@ -20,121 +21,148 @@ const meta = categoryMeta[kategori || ''] || { name: kategori || '', icon: '🏫
 let places: any[] = [];
 
 try {
+ places = await getCachedPublicRouteData(`page:egitim:${kategori || 'unknown'}`, async () => {
   const result = await query(
-    `SELECT p.*, d.name as district_name FROM places p
-     LEFT JOIN categories c ON p.category_id = c.id
-     LEFT JOIN districts d ON p.district_id = d.id
-     WHERE c.slug = $1 AND p.status = 'active'
-     ORDER BY p.is_featured DESC, p.rating DESC`,
-    [kategori]
+   `SELECT p.*, d.name as district_name FROM places p
+ LEFT JOIN categories c ON p.category_id = c.id
+ LEFT JOIN districts d ON p.district_id = d.id
+ WHERE c.slug = $1 AND p.status = 'active'
+ ORDER BY p.is_featured DESC, p.rating DESC`,
+   [kategori]
   );
-  places = result.rows;
+  return result.rows;
+ });
 } catch (e) {
-  console.error('Error loading egitim kategori:', e);
+ logger.error('Error loading egitim kategori:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const seo = {
-  title: `Şanlıurfa ${meta.name} | Eğitim Rehberi`,
-  description: `Şanlıurfa'da ${meta.name.toLowerCase()}. Adres, telefon ve iletişim bilgileri.`,
-  keywords: ['şanlıurfa ' + meta.name.toLowerCase(), 'urfa ' + meta.name.toLowerCase(), meta.name + ' şanlıurfa', 'şanlıurfa eğitim'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: `/egitim/${kategori}`,
+ title: `Şanlıurfa ${meta.name} | Eğitim Rehberi`,
+ description: `Şanlıurfa'da ${meta.name.toLowerCase()}. Adres, telefon ve iletişim bilgileri.`,
+ keywords: ['şanlıurfa ' + meta.name.toLowerCase(), 'urfa ' + meta.name.toLowerCase(), meta.name + ' şanlıurfa', 'şanlıurfa eğitim'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: `/egitim/${kategori}`,
 };
 const faqItems = [
-  { S: `Şanlıurfa'da ${meta.name.toLowerCase()} seçenekleri nelerdir?`, C: `Şanlıurfa'da ${meta.name.toLowerCase()} için güncel liste ve değerlendirmeler rehberimizde yer almaktadır.` },
-  { S: `${meta.name} için hangi ilçeler öne çıkıyor?`, C: `Eyyübiye, Haliliye ve Karaköprü ilçeleri hizmet yoğunluğu açısından öne çıkan bölgeler arasındadır.` },
-  { S: `${meta.name} bilgilerini nasıl güncelleyebilirim?`, C: `Mekan sayfasına giriş yaparak güncelleme talebinde bulunabilir veya iletişim formu üzerinden bildirimde bulunabilirsiniz.` },
+ { S: `Şanlıurfa'da ${meta.name.toLowerCase()} seçenekleri nelerdir?`, C: `Şanlıurfa'da ${meta.name.toLowerCase()} için güncel liste ve değerlendirmeler rehberimizde yer almaktadır.` },
+ { S: `${meta.name} için hangi ilçeler öne çıkıyor?`, C: `Eyyübiye, Haliliye ve Karaköprü ilçeleri hizmet yoğunluğu açısından öne çıkan bölgeler arasındadır.` },
+ { S: `${meta.name} bilgilerini nasıl güncelleyebilirim?`, C: `Mekan sayfasına giriş yaparak güncelleme talebinde bulunabilir veya iletişim formu üzerinden bildirimde bulunabilirsiniz.` },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-white border-b">
-      <div class="container mx-auto px-4 py-3">
-        <nav class="flex items-center gap-2 text-sm text-gray-500">
-          <a href="/" class="hover:text-blue-600">Ana Sayfa</a>
-          <span>/</span>
-          <a href="/egitim" class="hover:text-blue-600">Eğitim</a>
-          <span>/</span>
-          <span class="text-gray-900 font-medium">{meta.name}</span>
-        </nav>
-      </div>
-    </div>
+ <style>
+ .ek-breadcrumb{background:var(--public-bg);border-bottom:1px solid var(--public-border);padding:.75rem 0}
+ .ek-breadcrumb nav{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--public-muted)}
+ .ek-breadcrumb a{color:var(--public-muted);transition:color .15s}.ek-breadcrumb a:hover{color:var(--public-accent)}
+ .ek-breadcrumb span:last-child{color:var(--public-accent);font-weight:500}
+ .ek-hero{background:var(--public-bg);border-bottom:1px solid var(--public-border);padding:3rem 0}
+ .ek-hero-inner{display:flex;align-items:center;gap:1rem}
+ .ek-hero-icon{font-size:3rem;line-height:1}
+ .ek-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,4vw,2.5rem);font-weight:600;color:var(--public-text)}
+ .ek-count{font-size:.85rem;color:var(--public-muted);margin-top:.25rem}
+ .ek-body{background:var(--public-bg);padding:2rem 0 4rem}
+ .ek-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+ .ek-card{background:var(--public-surface);border:1px solid var(--public-border);padding:1.25rem;display:flex;align-items:flex-start;gap:.85rem;transition:border-color .15s}
+ .ek-card:hover{border-color:var(--public-accent)}
+ .ek-card-icon{font-size:2rem;flex-shrink:0;line-height:1}
+ .ek-card-content{flex:1;min-width:0}
+ .ek-card-name{font-size:.92rem;font-weight:700;color:var(--public-text);margin-bottom:.2rem;transition:color .15s}
+ .ek-card:hover .ek-card-name{color:var(--public-accent)}
+ .ek-district{font-size:.72rem;color:var(--public-text-soft)}
+ .ek-addr{font-size:.75rem;color:var(--public-muted);margin-top:.25rem}
+ .ek-phone{font-size:.75rem;color:var(--public-muted)}
+ .ek-empty{text-align:center;padding:4rem 1rem;color:var(--public-muted)}
+ .ek-empty-icon{font-size:3.5rem;margin-bottom:.75rem}
+ .ek-empty-link{display:inline-block;margin-top:.75rem;color:var(--public-accent);font-size:.85rem;transition:color .15s}
+ .ek-empty-link:hover{color:var(--public-accent-strong)}
+ </style>
 
-    <div class="bg-gradient-to-br from-blue-700 to-indigo-800 text-white py-12">
-      <div class="container mx-auto px-4">
-        <div class="flex items-center gap-4">
-          <span class="text-5xl">{meta.icon}</span>
-          <div>
-            <h1 class="text-3xl md:text-4xl font-bold">Şanlıurfa {meta.name}</h1>
-            <p class="text-blue-100 mt-1">{places.length} kurum bulundu</p>
-          </div>
-        </div>
-      </div>
-    </div>
+ <div class="ek-breadcrumb">
+ <div class="sf-container">
+ <nav>
+ <a href="/">Ana Sayfa</a>
+ <span>/</span>
+ <a href="/egitim">Eğitim</a>
+ <span>/</span>
+ <span>{meta.name}</span>
+ </nav>
+ </div>
+ </div>
 
-    <div class="container mx-auto px-4 py-8">
-      {places.length > 0 ? (
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {places.map((place) => (
-            <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
-              <div class="flex items-start gap-3">
-                <span class="text-3xl">{meta.icon}</span>
-                <div>
-                  <h2 class="font-bold text-lg text-gray-900 group-hover:text-blue-600">{place.name}</h2>
-                  {place.district_name && <p class="text-xs text-gray-500">{place.district_name}</p>}
-                  {place.address && <p class="text-sm text-gray-500 mt-2">📍 {place.address}</p>}
-                  {place.phone && <p class="text-sm text-gray-500">📞 {place.phone}</p>}
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
-      ) : (
-        <div class="text-center py-16">
-          <div class="text-6xl mb-4">{meta.icon}</div>
-          <p class="text-gray-500 text-lg">Bu kategoride henüz kayıt bulunmuyor.</p>
-          <a href="/egitim" class="mt-4 inline-block text-blue-600 hover:underline">Eğitim Rehberine Dön →</a>
-        </div>
-      )}
-    </div>
-  </div>
+ <div class="ek-hero">
+ <div class="sf-container">
+ <div class="ek-hero-inner">
+ <span class="ek-hero-icon">{meta.icon}</span>
+ <div>
+ <h1 class="ek-h1">Şanlıurfa {meta.name}</h1>
+ <p class="ek-count">{places.length} kurum bulundu</p>
+ </div>
+ </div>
+ </div>
+ </div>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: `Şanlıurfa ${meta.name}`,
-    description: `Şanlıurfa’da ${meta.name.toLowerCase()}. Adres, telefon ve iletişim bilgileri.`,
-    url: `${baseUrl}/egitim/${kategori}`,
-    about: { '@type': 'City', name: 'Şanlıurfa' },
-    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'EducationalOrganization',
-        name: p.name,
-        url: `${baseUrl}/isletme/${p.slug}`,
-        ...(p.address ? { address: p.address } : {}),
-        ...(p.phone ? { telephone: p.phone } : {}),
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Eğitim', item: `${baseUrl}/egitim` },
-      { '@type': 'ListItem', position: 3, name: meta.name, item: `${baseUrl}/egitim/${kategori}` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <div class="ek-body">
+ <div class="sf-container">
+ {places.length > 0 ? (
+ <div class="ek-grid">
+ {places.map((place) => (
+ <a href={`/isletme/${place.slug}`} class="ek-card">
+ <span class="ek-card-icon">{meta.icon}</span>
+ <div class="ek-card-content">
+ <p class="ek-card-name">{place.name}</p>
+ {place.district_name && <p class="ek-district">{place.district_name}</p>}
+ {place.address && <p class="ek-addr">📍 {place.address}</p>}
+ {place.phone && <p class="ek-phone">📞 {place.phone}</p>}
+ </div>
+ </a>
+ ))}
+ </div>
+ ) : (
+ <div class="ek-empty">
+ <div class="ek-empty-icon">{meta.icon}</div>
+ <p>Bu kategoride henüz kayıt bulunmuyor.</p>
+ <a href="/egitim" class="ek-empty-link">Eğitim Rehberine Dön →</a>
+ </div>
+ )}
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'CollectionPage',
+ name: `Şanlıurfa ${meta.name}`,
+ description: `Şanlıurfa'da ${meta.name.toLowerCase()}. Adres, telefon ve iletişim bilgileri.`,
+ url: `${baseUrl}/egitim/${kategori}`,
+ about: { '@type': 'City', name: 'Şanlıurfa' },
+ itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+ '@type': 'ListItem',
+ position: i + 1,
+ item: {
+ '@type': 'EducationalOrganization',
+ name: p.name,
+ url: `${baseUrl}/isletme/${p.slug}`,
+ ...(p.address ? { address: p.address } : {}),
+ ...(p.phone ? { telephone: p.phone } : {}),
+ },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Eğitim', item: `${baseUrl}/egitim` },
+ { '@type': 'ListItem', position: 3, name: meta.name, item: `${baseUrl}/egitim/${kategori}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

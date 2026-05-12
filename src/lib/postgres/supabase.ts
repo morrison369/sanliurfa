@@ -5,6 +5,7 @@
 import { pool, query, queryOne, insert } from './postgres';
 import * as auth from '../auth';
 import { logger } from '../logging';
+import { safeErrorDetail } from '../api';
 
 // ==================== AUTH DELEGATION ====================
 
@@ -26,7 +27,7 @@ export async function signIn(email: string, password: string) {
     }
     return { data: { user: (result as any).data?.user, session: { access_token: (result as any).data?.token } }, error: null };
   } catch (error: any) {
-    return { data: null, error: { message: error.message } };
+    return { data: null, error: { message: safeErrorDetail(error, 'Oturum açma hatası') } };
   }
 }
 
@@ -145,9 +146,9 @@ export const supabase = {
 /**
  * Realtime subscription stub (not implemented)
  */
-export function subscribeToTable(table: string, callback: (payload: any) => void) {
+export function subscribeToTable(table: string, _callback: (payload: any) => void) {
   logger.info(`Realtime subscription to ${table} - not implemented in PostgreSQL mode`);
   return { unsubscribe: () => {} };
 }
 
-export { pool };
+export type { pool };

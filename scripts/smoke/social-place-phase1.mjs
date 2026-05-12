@@ -1,5 +1,9 @@
 #!/usr/bin/env node
 
+import fs from 'node:fs';
+import path from 'node:path';
+import pg from 'pg';
+
 /**
  * Phase-1 smoke: social + place core flows.
  * Usage:
@@ -13,6 +17,29 @@ const strictPlaceSubmit = process.env.STRICT_PLACE_SUBMIT === '1';
 let authCookieHeader = token ? { Cookie: `auth-token=${token}` } : {};
 let activeUserId = process.env.SMOKE_USER_ID || '';
 let targetUserId = socialTargetUserId;
+let createdSmokePlaceId = '';
+
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  for (const rawLine of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const separator = line.indexOf('=');
+    if (separator === -1) continue;
+    const key = line.slice(0, separator).trim();
+    const value = line.slice(separator + 1).trim().replace(/^['"]|['"]$/g, '');
+    if (key && !process.env[key]) process.env[key] = value;
+  }
+}
+
+for (const file of ['.env', '.env.local', '.env.production']) {
+  loadEnvFile(path.join(process.cwd(), file));
+}
+
+const { Pool } = pg;
+const databaseUrl =
+  process.env.DATABASE_URL ||
+  `postgresql://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'postgres'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || '5432'}/${process.env.DB_NAME || 'sanliurfa'}`;
 
 function logStep(name, ok, detail = '') {
   const status = ok ? 'OK' : 'FAIL';
@@ -35,6 +62,65 @@ async function callJson(path, init = {}) {
     body = null;
   }
   return { response, body };
+}
+
+async function cleanupSmokePlaceApplications(placeId = '') {
+  const pool = new Pool({
+    connectionString: databaseUrl,
+    max: 1,
+    idleTimeoutMillis: 5000,
+    connectionTimeoutMillis: 5000,
+    allowExitOnIdle: true,
+  });
+
+  try {
+    const candidateResult = placeId
+      ? await pool.query(
+          `SELECT p.id
+           FROM places p
+           JOIN users u ON u.id = p.owner_id
+           WHERE p.id = $1
+             AND p.name = 'Smoke Test Mekan'
+             AND u.email = 'smoke@sanliurfa.com'`,
+          [placeId],
+        )
+      : await pool.query(
+          `SELECT p.id
+           FROM places p
+           JOIN users u ON u.id = p.owner_id
+           WHERE p.name = 'Smoke Test Mekan'
+             AND p.status = 'pending'
+             AND u.email = 'smoke@sanliurfa.com'`,
+        );
+
+    const ids = candidateResult.rows.map((row) => String(row.id));
+    if (!ids.length) return 0;
+
+    await pool.query('BEGIN');
+    await pool.query(
+      `DELETE FROM support_tickets
+       WHERE description ILIKE ANY($1::text[])`,
+      [ids.map((id) => `%Place ID: ${id}%`)],
+    );
+    const deleted = await pool.query(
+      `DELETE FROM places
+       WHERE id = ANY($1::uuid[])
+         AND name = 'Smoke Test Mekan'
+         AND status = 'pending'`,
+      [ids],
+    );
+    await pool.query('COMMIT');
+    return deleted.rowCount || 0;
+  } catch (error) {
+    try {
+      await pool.query('ROLLBACK');
+    } catch {
+      // ignore rollback errors during smoke cleanup
+    }
+    throw error;
+  } finally {
+    await pool.end();
+  }
 }
 
 async function waitForHealth(maxMs = 30000) {
@@ -106,11 +192,13 @@ async function ensureAuthUser() {
   const loginPassword = process.env.SMOKE_PASSWORD || 'SmokeTest123!';
   const loginFullName = process.env.SMOKE_FULL_NAME || 'smoke user';
 
-  const login = await loginWithCredentials(loginEmail, loginPassword);
-  if (login.ok) {
-    if (login.token) authCookieHeader = { Cookie: `auth-token=${login.token}` };
-    activeUserId = login.userId;
-    return { ok: true, token: login.token, userId: login.userId, source: 'login' };
+  if (process.env.SMOKE_EMAIL) {
+    const login = await loginWithCredentials(loginEmail, loginPassword);
+    if (login.ok) {
+      if (login.token) authCookieHeader = { Cookie: `auth-token=${login.token}` };
+      activeUserId = login.userId;
+      return { ok: true, token: login.token, userId: login.userId, source: 'login' };
+    }
   }
 
   const identity = process.env.SMOKE_EMAIL
@@ -133,10 +221,12 @@ async function ensureTargetUser() {
   const targetPassword = process.env.SMOKE_TARGET_PASSWORD || 'SmokeTest123!';
   const targetFullName = process.env.SMOKE_TARGET_FULL_NAME || 'smoke target';
 
-  const login = await loginWithCredentials(targetEmail, targetPassword);
-  if (login.ok) {
-    targetUserId = login.userId;
-    return { ok: true, userId: login.userId, source: 'login' };
+  if (process.env.SMOKE_TARGET_EMAIL) {
+    const login = await loginWithCredentials(targetEmail, targetPassword);
+    if (login.ok) {
+      targetUserId = login.userId;
+      return { ok: true, userId: login.userId, source: 'login' };
+    }
   }
 
   const identity = process.env.SMOKE_TARGET_EMAIL
@@ -153,6 +243,13 @@ async function ensureTargetUser() {
 
 async function run() {
   let failed = 0;
+
+  try {
+    const cleaned = await cleanupSmokePlaceApplications();
+    if (cleaned > 0) logStep('Place Submit Cleanup', true, `removed_stale=${cleaned}`);
+  } catch (err) {
+    logStep('Place Submit Cleanup', true, `non-blocking cleanup skipped (${String(err)})`);
+  }
 
   try {
     const health = await waitForHealth(30000);
@@ -178,6 +275,13 @@ async function run() {
         ownerEmail: 'smoke@sanliurfa.com',
       }),
     });
+    let applyBody = null;
+    try {
+      applyBody = await applyRes.json();
+    } catch {
+      applyBody = null;
+    }
+    createdSmokePlaceId = applyBody?.data?.place?.id || applyBody?.place?.id || '';
 
     const ok = applyRes.status >= 200 && applyRes.status < 400;
     logStep('Place Submit', ok, `apply=${applyRes.status}`);
@@ -201,6 +305,12 @@ async function run() {
   if (!authBootstrap.ok) {
     logStep('Auth Bootstrap', false, 'main user token alınamadı');
     failed++;
+    try {
+      const cleaned = await cleanupSmokePlaceApplications(createdSmokePlaceId);
+      if (cleaned > 0) logStep('Place Submit Cleanup', true, `removed_created=${cleaned}`);
+    } catch (err) {
+      logStep('Place Submit Cleanup', true, `non-blocking cleanup skipped (${String(err)})`);
+    }
     process.exit(failed ? 1 : 0);
   }
   logStep('Auth Bootstrap', true, `user=${authBootstrap.userId} (${authBootstrap.source})`);
@@ -259,6 +369,14 @@ async function run() {
   if (!targetBootstrap.ok) {
     logStep('Target User Bootstrap', false, 'hedef kullanıcı alınamadı');
     failed++;
+    try {
+      const cleaned = createdSmokePlaceId
+        ? await cleanupSmokePlaceApplications(createdSmokePlaceId)
+        : await cleanupSmokePlaceApplications();
+      if (cleaned > 0) logStep('Place Submit Cleanup', true, `removed_created=${cleaned}`);
+    } catch (err) {
+      logStep('Place Submit Cleanup', true, `non-blocking cleanup skipped (${String(err)})`);
+    }
     process.exit(failed ? 1 : 0);
   }
   logStep('Target User Bootstrap', true, `target=${targetBootstrap.userId} (${targetBootstrap.source})`);
@@ -299,6 +417,15 @@ async function run() {
   } catch (err) {
     logStep('Conversation/Message', false, String(err));
     failed++;
+  }
+
+  try {
+    const cleaned = createdSmokePlaceId
+      ? await cleanupSmokePlaceApplications(createdSmokePlaceId)
+      : await cleanupSmokePlaceApplications();
+    if (cleaned > 0) logStep('Place Submit Cleanup', true, `removed_created=${cleaned}`);
+  } catch (err) {
+    logStep('Place Submit Cleanup', true, `non-blocking cleanup skipped (${String(err)})`);
   }
 
   process.exit(failed ? 1 : 0);

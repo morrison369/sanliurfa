@@ -1,14 +1,14 @@
 // API: Update contact message status (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { logger } from '../../../../../lib/logging';
-import { problemJson } from '../../../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../../../lib/api';
 import { updateAdminMessageStatus } from '../../../../../lib/admin/message-status';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
   try {
     const { id } = params;
     
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       return problemJson({
         status: 403,
         title: 'Unauthorized',
@@ -46,7 +46,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     return problemJson({
       status: 500,
       title: 'Mesaj Durumu Güncellenemedi',
-      detail: err instanceof Error ? err.message : 'server_error',
+      detail: safeErrorDetail(err, 'server_error'),
       type: '/problems/admin-messages-status-failed',
       instance: '/api/admin/messages/{id}/status',
     });

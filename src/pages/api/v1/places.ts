@@ -6,17 +6,17 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeIntParam } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
   const url = new URL(request.url);
-  const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+  const page = safeIntParam(url.searchParams.get('page'), 1, 1, 1_000_000);
+  const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
   const offset = (page - 1) * limit;
   const category = url.searchParams.get('category');
 
   try {
-    const params: any[] = [];
+    const params: unknown[] = [];
     let where = `WHERE p.status = 'active'`;
     let idx = 1;
 
@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ request }) => {
       `SELECT COUNT(*) FROM places p LEFT JOIN categories c ON c.id = p.category_id ${where}`,
       params
     );
-    const total = parseInt(countResult.rows[0].count || '0');
+    const total = parseInt(countResult.rows[0].count || '0', 10);
 
     const dataResult = await query(
       `SELECT
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ request }) => {
       [...params, limit, offset]
     );
 
-    const places = dataResult.rows.map((p: any) => ({
+    const places = dataResult.rows.map((p) => ({
       id: p.id,
       name: p.name,
       slug: p.slug,
@@ -97,7 +97,7 @@ export const GET: APIRoute = async ({ request }) => {
 };
 
 // POST: Create place — redirect to the proper apply endpoint
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (_ctx) => {
   const response = problemJson({
     status: 405,
     title: 'Method Not Allowed',

@@ -5,7 +5,7 @@
 import type { APIRoute } from 'astro';
 import { verifyToken } from '../../../../lib/auth';
 import { query } from '../../../../lib/postgres';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -54,13 +54,10 @@ export const GET: APIRoute = async ({ request }) => {
       });
     }
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       data: result.rows[0]
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     return problemJson({
@@ -127,10 +124,7 @@ export const PATCH: APIRoute = async ({ request }) => {
       values
     );
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse({ success: true }, HttpStatus.OK);
 
   } catch (error) {
     return problemJson({

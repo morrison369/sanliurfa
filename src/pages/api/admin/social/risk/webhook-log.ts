@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../../lib/postgres';
 import { getSiteSetting } from '../../../../../lib/site-content';
-import { problemJson } from '../../../../../lib/api';
+import { problemJson, safeErrorDetail, safeIntParam } from '../../../../../lib/api';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 export const GET: APIRoute = async ({ locals, url }) => {
@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
     cooldownMinutes: 30,
   });
   const eventName = String(webhook.eventName || 'admin.social_risk.alert');
-  const limit = Math.max(1, Math.min(200, Number(url.searchParams.get('limit') || 30)));
+  const limit = safeIntParam(url.searchParams.get('limit'), 30, 1, 200);
 
   try {
     const result = await query(
@@ -56,7 +56,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
     return problemJson({
       status: 500,
       title: 'Webhook Log Alınamadı',
-      detail: error instanceof Error ? error.message : 'admin_social_risk_webhook_log_failed',
+      detail: safeErrorDetail(error, 'admin_social_risk_webhook_log_failed'),
       type: '/problems/admin-social-risk-webhook-log-failed',
       instance: '/api/admin/social/risk/webhook-log',
     });

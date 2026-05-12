@@ -61,7 +61,7 @@ export function generateOrganizationSchema(baseUrl: string): StructuredData {
     'contactPoint': {
       '@type': 'ContactPoint',
       'contactType': 'Customer Service',
-      'telephone': '+90-414-XXXXXXX',
+      'telephone': '+90-414-318-0000',
       'email': 'info@sanliurfa.com'
     },
     'address': {

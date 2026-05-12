@@ -1,119 +1,108 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../layouts/Layout.astro';
 import { actions, isInputError } from 'astro:actions';
 
-// SVG ikonlar
-const icons = {
-  mail: `<svg class="h-12 w-12 text-red-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
-  mailLg: `<svg class="h-16 w-16 text-red-600" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>`,
-  arrowLeft: `<svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
-  checkCircle: `<svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`,
-  alertCircle: `<svg class="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
-};
-
 const seo = {
-  title: 'Şifremi Unuttum - Sanliurfa.com',
-  description: 'Şifrenizi sıfırlayın',
-  noIndex: true
+ title: 'Şifremi Unuttum — Sanliurfa.com',
+ description: 'Sanliurfa.com şifrenizi sıfırlayın. E-posta adresinizi girerek yeni şifre belirleme bağlantısı alın.',
+ noIndex: true,
 };
 
-const success = Astro.url.searchParams.get('success');
-const error = Astro.url.searchParams.get('error');
 const result = Astro.getActionResult(actions.requestPasswordReset);
 const inputErrors = isInputError(result?.error) ? result.error.fields : {};
 const submitError =
-  !isInputError(result?.error) && result?.error?.message
-    ? result.error.message
-    : null;
+ !isInputError(result?.error) && result?.error?.message
+ ? result.error.message
+ : null;
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full">
-      <div class="bg-white rounded-2xl shadow-lg p-8">
-        <div class="text-center mb-8">
-          <div class="mx-auto h-16 w-16 bg-red-100 rounded-2xl flex items-center justify-center mb-4">
-            <span set:html={icons.mail}></span>
-          </div>
-          <h2 class="text-2xl font-bold text-gray-900">
-            Şifremi Unuttum
-          </h2>
-          <p class="mt-2 text-sm text-gray-600">
-            E-posta adresinizi girin, şifre sıfırlama bağlantısını gönderelim.
-          </p>
-        </div>
-        
-        {success || (result && !result.error) ? (
-          <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-            <div class="flex items-start gap-3">
-              <span set:html={icons.checkCircle}></span>
-              <div>
-                <p class="text-green-800 font-medium">
-                  Bağlantı Gönderildi
-                </p>
-                <p class="text-green-700 text-sm mt-1">
-                  {result?.data?.message || 'E-posta adresinize şifre sıfırlama bağlantısı gönderdik. Lütfen gelen kutunuzu kontrol edin.'}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <form action={actions.requestPasswordReset} method="POST" class="space-y-6">
-            {(error || submitError) && (
-              <div class="bg-red-50 border border-red-200 rounded-xl p-4">
-                <div class="flex items-start gap-3">
-                  <span set:html={icons.alertCircle}></span>
-                  <div>
-                    <p class="text-red-800 font-medium">
-                      {error === 'email_not_found' ? 'E-posta adresi bulunamadı' : 'Bir hata oluştu'}
-                    </p>
-                    <p class="text-red-700 text-sm mt-1">
-                      {submitError || (error === 'email_not_found' 
-                        ? 'Bu e-posta adresiyle kayıtlı bir hesap bulunmuyor.' 
-                        : 'Lütfen tekrar deneyin.')}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div>
-              <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-posta Adresi</label>
-              <div class="relative mt-1">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span set:html={icons.mail}></span>
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  aria-invalid={inputErrors.email ? 'true' : 'false'}
-                  class="w-full px-4 py-3 pl-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="ornek@email.com"
-                />
-              </div>
-              {inputErrors.email && (
-                <p class="mt-2 text-sm text-red-600">{inputErrors.email.join(', ')}</p>
-              )}
-            </div>
-            
-            <button 
-              type="submit" 
-              class="w-full py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-            >
-              Sıfırlama Bağlantısı Gönder
-            </button>
-          </form>
-        )}
-        
-        <div class="mt-6 text-center">
-          <a href="/giris" class="inline-flex items-center gap-2 text-sm text-red-600 hover:text-red-700">
-            <span set:html={icons.arrowLeft}></span>
-            Giriş sayfasına dön
-          </a>
-        </div>
-      </div>
-    </div>
-  </div>
+<Layout seo={seo} hideFooter>
+ <style is:inline>
+ .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:1.5rem}
+ .auth-box{width:100%;max-width:420px}
+ .auth-logo{text-align:center;margin-bottom:2rem}
+ .auth-logo-name{font-family:'Cormorant Garamond',Georgia,serif;font-size:2rem;font-weight:300;font-style:italic;color:var(--public-text);letter-spacing:-.02em}
+ .auth-logo-tld{font-family:'Jost',sans-serif;font-size:1rem;font-weight:700;color:var(--public-accent);letter-spacing:.06em}
+ .auth-card{background:var(--bg-card);border:1px solid var(--border);padding:2rem}
+ .auth-icon-ring{width:4rem;height:4rem;border:1px solid rgba(184,115,51,.2);display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;background:rgba(184,115,51,.06)}
+ .auth-card-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:var(--public-text);text-align:center;margin-bottom:.35rem}
+ .auth-card-sub{font-size:.8rem;color:var(--public-muted);text-align:center;margin-bottom:1.5rem;line-height:1.6}
+ .auth-lbl{display:block;font-size:.75rem;font-weight:600;color:var(--public-accent);margin-bottom:.4rem;letter-spacing:.03em}
+ .auth-input-wrap{position:relative}
+ .auth-input-icon{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--public-text-soft);width:1rem;height:1rem;pointer-events:none}
+ .auth-input{width:100%;padding:.7rem 1rem .7rem 2.6rem;background:rgba(255,255,255,.03);border:1px solid rgba(184,115,51,.2);color:var(--public-text);border-radius:.125rem;font-size:.875rem;font-family:inherit;transition:border-color .15s}
+ .auth-input:focus{outline:none;border-color:var(--public-accent)}
+ .auth-input::placeholder{color:var(--public-text-soft)}
+ .auth-field-err{font-size:.72rem;color:#E08090;margin-top:.3rem}
+ .auth-field{margin-bottom:1rem}
+ .auth-err{background:rgba(199,58,71,.1);border:1px solid rgba(199,58,71,.25);color:#E08090;padding:.65rem 1rem;border-radius:.125rem;font-size:.82rem;margin-bottom:1rem}
+ .auth-ok{background:rgba(23,184,166,.1);border:1px solid rgba(23,184,166,.25);color:#5ECFC6;padding:.75rem 1rem;border-radius:.125rem;font-size:.82rem;margin-bottom:1rem;line-height:1.6}
+ .auth-ok-title{font-weight:700;margin-bottom:.25rem}
+ .auth-submit{width:100%;padding:.75rem;margin-top:.5rem;font-size:.875rem}
+ .auth-back{text-align:center;margin-top:1.25rem}
+ .auth-back a{display:inline-flex;align-items:center;gap:.35rem;font-size:.8rem;color:var(--public-accent);transition:color .15s}
+ .auth-back a:hover{color:var(--public-text)}
+ .auth-footer{text-align:center;font-size:.78rem;color:var(--public-text-soft);margin-top:1.25rem}
+ .auth-footer a{color:var(--public-muted);transition:color .15s}.auth-footer a:hover{color:var(--public-accent)}
+ </style>
+
+ <div class="auth-wrap">
+ <div class="auth-box">
+ <div class="auth-logo">
+ <a href="/" style="display:inline-flex;align-items:baseline;gap:.0625rem;text-decoration:none;">
+ <span class="auth-logo-name">Sanliurfa</span>
+ <span class="auth-logo-tld">.com</span>
+ </a>
+ </div>
+
+ <div class="auth-card">
+ <div class="auth-icon-ring">
+ <Icon name="lucide:mail" style="color:var(--public-accent);width:1.75rem;height:1.75rem" />
+ </div>
+ <p class="auth-card-title">Şifremi Unuttum</p>
+ <p class="auth-card-sub">E-posta adresinizi girin, şifre sıfırlama bağlantısını gönderelim.</p>
+
+ {result && !result.error ? (
+ <div class="auth-ok">
+ <p class="auth-ok-title">Bağlantı Gönderildi</p>
+ <p>{result?.data?.message || 'E-posta adresinize şifre sıfırlama bağlantısı gönderdik. Lütfen gelen kutunuzu kontrol edin.'}</p>
+ </div>
+ ) : (
+ <>
+ {submitError && <div class="auth-err">{submitError}</div>}
+ <form action={actions.requestPasswordReset} method="POST">
+ <div class="auth-field">
+ <label class="auth-lbl" for="su-email">E-posta Adresi</label>
+ <div class="auth-input-wrap">
+ <Icon name="lucide:mail" class="auth-input-icon" aria-hidden="true" />
+ <input
+ id="su-email"
+ name="email"
+ type="email"
+ required
+ autocomplete="email"
+ aria-invalid={inputErrors.email ? 'true' : 'false'}
+ class="auth-input"
+ placeholder="ornek@email.com"
+ />
+ </div>
+ {inputErrors.email && <p class="auth-field-err">{inputErrors.email.join(', ')}</p>}
+ </div>
+ <button type="submit" class="sf-btn-primary auth-submit">Sıfırlama Bağlantısı Gönder</button>
+ </form>
+ </>
+ )}
+
+ <div class="auth-back">
+ <a href="/giris">
+ <Icon name="lucide:arrow-left" style="width:.9rem;height:.9rem" />
+ Giriş sayfasına dön
+ </a>
+ </div>
+ </div>
+
+ <p class="auth-footer"><a href="/">← Ana Sayfaya Dön</a></p>
+ </div>
+ </div>
 </Layout>

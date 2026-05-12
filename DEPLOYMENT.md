@@ -11,6 +11,7 @@ Bu proje production'da **CWP (CentOS Web Panel) shared hosting** ve
 - Process manager: PM2 (user-level)
 - App port: `4321` (localhost)
 - Public erişim: CWP webserver reverse proxy (80/443 -> 127.0.0.1:4321)
+- Runtime: Node.js `22.13.0+` (`.nvmrc` önerilen: `22.19.0`)
 
 ## 1) CWP panel hazırlığı
 
@@ -69,13 +70,25 @@ Alternatif (önerilen tek komut akışı):
 
 ```bash
 cd "$HOME/public_html"
+npm run ops:cwp:oneshot
+```
+
+Aynı akışın parçalı hali:
+
+```bash
+cd "$HOME/public_html"
 npm run ops:cwp:preflight
 npm run ops:cwp:env-check
+npm run ops:cwp:predeploy-checks
 npm run ops:cwp:safe-deploy
 ```
 
+`ops:cwp:preflight`, hafif runtime ve zorunlu dosya kontrolüdür; ağır CI/gate zinciri çalıştırmaz.
+`ops:cwp:predeploy-checks`, release candidate + frontend release gate + doctor/smoke/report zincirini
+ayrı bir komut olarak çalıştırır.
 `ops:cwp:deploy`, başarısız deploy senaryosunda son predeploy snapshot'a otomatik rollback dener.
-`ops:cwp:safe-deploy`, deploy öncesi `doctor + smoke` kontrollerini zorunlu çalıştırır.
+`ops:cwp:safe-deploy`, önce `predeploy-checks`, sonra deploy uygular; aynı ağır zinciri ikinci kez
+çalıştırmaz.
 
 Desteklenen env değişkenleri:
 
@@ -106,6 +119,10 @@ pm2 logs sanliurfa-app --lines 100
 curl -I http://127.0.0.1:4321/api/health
 ```
 
+`/api/health` yanıtında `integrations` alanı her servisin yapılandırılma durumunu (`configured` /
+`unconfigured`) raporlar — production'da hangi entegrasyonların kurulu olduğunu monitoring tool'larla
+izlemek için bu alan kullanılabilir. Sonuç 30 saniye in-process cache'lenir.
+
 Ops durum raporu:
 
 ```bash
@@ -115,6 +132,8 @@ npm run ops:cwp:smoke
 
 Not: `ops:cwp:report` çıktısı artık `bootstrap_audit`, `daily_ops`, `weekly_audit` ve
 `release_readiness` özetlerini de içerir.
+Not: Aynı rapor artık `access_log_probe` advisory bölümünü de taşır; domain user shell tarafında
+gerçek access log görünmüyorsa bu durum blocker olarak raporlanır ama readiness süresini uzatmaz.
 
 Release yönetimi:
 
@@ -122,6 +141,7 @@ Release yönetimi:
 npm run ops:cwp:releases
 npm run ops:cwp:cleanup
 npm run ops:cwp:report
+npm run ops:cwp:predeploy-checks
 npm run ops:cwp:cron:doctor
 npm run ops:cwp:cron:freshness
 npm run ops:cwp:cron:freshness:strict
@@ -156,6 +176,32 @@ npm run ops:cwp:daily
 npm run ops:cwp:weekly
 npm run ops:cwp:release-readiness
 ```
+
+Not: `ops:cwp:release-readiness` artık hafif `preflight` + bounded smoke timeout ile çalışır; ağır
+release gate zincirini tetiklemez ve normalde saniyeler içinde tamamlanır.
+
+## 5b) Admin entegrasyonları (post-deploy)
+
+Sunucu çalıştıktan sonra admin **`/admin/integrations`** sayfasından 6 servisi yönetir.
+**Önemli:** Bu key'ler veritabanında saklanır (`site_settings.integrations.*` ve `oauth_providers`)
+— `.env` dosyasına yazmanıza **gerek yok**. DB değer varsa env değeri yoksayılır (DB öncelikli).
+Admin panelden değiştirme **anında etkili olur** (sunucu restart gerekmez).
+
+| Servis | Yapılandırma adımları |
+|--------|------------------------|
+| **Resend** (e-posta) | resend.com/api-keys'den API key al, sender domain için DNS doğrulaması (SPF/DKIM) yap, admin panele gir. "Test Et" ile doğrula. |
+| **SMTP** (yedek tier) | Resend yoksa veya kotaya takılırsa kullanılır. Host/port/user/pass admin panelden. "Test Et" `nodemailer.verify()` çalıştırır (mail göndermez). |
+| **Stripe** (ödeme) | dashboard.stripe.com/apikeys'den secret + publishable key. Webhooks için panelin gösterdiği `<domain>/api/billing/webhook` URL'ini Stripe Dashboard'a kaydet, signing secret'i admin panele yapıştır. |
+| **Google Analytics 4** | GA4 → Yönetici → Veri Akışları → Web Akışı'ndan Measurement ID (`G-XXXXXXXXXX`) al, admin panele gir. |
+| **Unsplash + Pexels** | Her iki sağlayıcıdan ücretsiz API key. Sadece admin medya arama panelinde kullanılır. |
+| **OAuth** (Google/Facebook/Twitter) | Her provider için console linki + redirect URI admin panelde gösterilir, kopyalayıp provider tarafında kaydet, client_id/secret'i admin panele gir. Per-provider toggle ile etkin/devre dışı. |
+
+**Test akışı:** Admin yapılandırma sonrası "Tümünü Test Et" master butonuyla 6 servisi paralel
+probe edebilir. Her satırda inline status badge sonuç gösterir.
+
+**Health monitoring:** Production'da `/api/health` yanıtının `integrations` alanı uptime
+monitor'lar tarafından izlenebilir — herhangi bir servisin `unconfigured` durumda olması
+sağlık alarmı tetiklenebilir.
 
 ## 6) Sorun giderme
 

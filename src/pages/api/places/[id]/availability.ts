@@ -37,23 +37,21 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     const date = new Date(dateStr);
     const dayOfWeek = date.getDay();
 
-    // Get place hours for that day
-    const hours = await query(
-      `SELECT open_time, close_time, is_closed
-       FROM place_hours WHERE place_id = $1 AND day_of_week = $2`,
-      [id, dayOfWeek]
-    ).catch(() => ({ rows: [] as any[] }));
+    const [hours, existing] = await Promise.all([
+      query(
+        `SELECT open_time, close_time, is_closed FROM place_hours WHERE place_id = $1 AND day_of_week = $2`,
+        [id, dayOfWeek]
+      ).catch(() => ({ rows: [] as Record<string, unknown>[] })),
+      query(
+        `SELECT reservation_time, party_size FROM reservations
+         WHERE place_id = $1 AND reservation_date = $2 AND status NOT IN ('cancelled', 'no_show')`,
+        [id, dateStr]
+      ).catch(() => ({ rows: [] as Record<string, unknown>[] })),
+    ]);
 
     if (hours.rows[0]?.is_closed) {
       return apiResponse({ available: false, slots: [], reason: 'Kapalı' }, HttpStatus.OK, requestId);
     }
-
-    // Get existing reservations for that date
-    const existing = await query(
-      `SELECT reservation_time, party_size FROM reservations
-       WHERE place_id = $1 AND reservation_date = $2 AND status NOT IN ('cancelled', 'no_show')`,
-      [id, dateStr]
-    ).catch(() => ({ rows: [] as any[] }));
 
     // Generate 30-min slots between open_time and close_time (default 10:00-22:00)
     const openTime = hours.rows[0]?.open_time ? String(hours.rows[0].open_time).slice(0, 5) : '10:00';
@@ -65,7 +63,7 @@ export const GET: APIRoute = async ({ request, params, url }) => {
     const openMinutes = openH * 60 + openM;
     const closeMinutes = closeH * 60 + closeM;
 
-    const reservedTimes = new Set(existing.rows.map((r: any) => String(r.reservation_time).slice(0, 5)));
+    const reservedTimes = new Set(existing.rows.map((r) => String(r.reservation_time).slice(0, 5)));
 
     for (let m = openMinutes; m < closeMinutes - 30; m += 30) {
       const h = Math.floor(m / 60).toString().padStart(2, '0');

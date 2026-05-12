@@ -45,9 +45,11 @@ export async function addReviewResponse(
       is_public: true
     });
 
-    // Clear review caches
-    await deleteCachePattern(`review:${reviewId}:*`);
-    await deleteCachePattern(`place:${placeId}:reviews:*`);
+    // Clear review caches (paralel)
+    await Promise.all([
+      deleteCachePattern(`review:${reviewId}:*`),
+      deleteCachePattern(`place:${placeId}:reviews:*`),
+    ]);
 
     // Get reviewer info to send notification
     const review = await queryOne('SELECT user_id FROM reviews WHERE id = $1', [reviewId]);
@@ -118,30 +120,19 @@ export async function voteReviewHelpful(
       [reviewId, userId, isHelpful]
     );
 
-    // Update analytics
-    const counts = await queryOne(
-      `SELECT
-        SUM(CASE WHEN is_helpful = true THEN 1 ELSE 0 END) as helpful_count,
-        SUM(CASE WHEN is_helpful = false THEN 1 ELSE 0 END) as unhelpful_count
-       FROM review_helpful_votes
-       WHERE review_id = $1`,
+    // Update analytics atomically — subquery evaluates under the UPDATE row lock
+    const counts = await queryOne<{ helpful_count: number; unhelpful_count: number }>(
+      `UPDATE review_analytics SET
+         helpful_count   = (SELECT COUNT(*) FROM review_helpful_votes WHERE review_id = $1 AND is_helpful = true),
+         unhelpful_count = (SELECT COUNT(*) FROM review_helpful_votes WHERE review_id = $1 AND is_helpful = false)
+       WHERE review_id = $1
+       RETURNING helpful_count, unhelpful_count`,
       [reviewId]
     );
 
-    await update(
-      'review_analytics',
-      { review_id: reviewId },
-      {
-        helpful_count: parseInt(counts?.helpful_count || '0'),
-        unhelpful_count: parseInt(counts?.unhelpful_count || '0')
-      }
-    );
-
-    // Clear cache
     await deleteCache(`review:${reviewId}:helpful-count`);
     await deleteCachePattern(`review:${reviewId}:*`);
 
-    // Award points for helpful votes
     if (isHelpful) {
       const review = await queryOne('SELECT user_id FROM reviews WHERE id = $1', [reviewId]);
       if (review) {
@@ -152,8 +143,8 @@ export async function voteReviewHelpful(
     logger.info('Review helpful vote recorded', { reviewId, userId, isHelpful });
 
     return {
-      helpful_count: parseInt(counts?.helpful_count || '0'),
-      unhelpful_count: parseInt(counts?.unhelpful_count || '0')
+      helpful_count: Number(counts?.helpful_count ?? 0),
+      unhelpful_count: Number(counts?.unhelpful_count ?? 0)
     };
   } catch (error) {
     logger.error('Failed to record helpful vote', error instanceof Error ? error : new Error(String(error)));

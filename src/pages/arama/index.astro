@@ -1,62 +1,82 @@
 ---
+import Layout from '../../layouts/Layout.astro';
+import SearchResults from '../../components/SearchResults';
+import { getPublicAppUrl } from '../../lib/public-app-url';
 
-import Layout from "../../layouts/Layout.astro";
-import SearchResults from "../../components/SearchResults";
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
-
-const query = Astro.url.searchParams.get("q") || "";
+const baseUrl = getPublicAppUrl();
+const q = Astro.url.searchParams.get('q') || '';
 
 const seo = {
-  title: 'Arama - Şanlıurfa Rehberi',
-  description: 'Şanlıurfa\'daki mekanları, işletmeleri ve içerikleri arayın.',
-  keywords: ['şanlıurfa arama', 'urfa mekan ara', 'şanlıurfa mekan bul'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/arama',
-  noIndex: true,
+ title: q ? `"${q}" — Arama Sonuçları | Sanliurfa.com` : 'Mekan Ara — Sanliurfa.com',
+ description: 'Şanlıurfa\'daki mekanları, işletmeleri ve içerikleri arayın.',
+ keywords: ['şanlıurfa arama', 'urfa mekan ara', 'şanlıurfa mekan bul'],
+ canonical: '/arama',
+ noIndex: true,
 };
+
 const faqItems = [
-  { S: 'Şanlıurfa arama sayfasında ne arayabilirim?', C: 'Mekan adı, kategori, ilçe veya mahalle gibi anahtar kelimelerle Şanlıurfa genelinde arama yapabilirsiniz.' },
-  { S: 'Arama sonuçları nasıl sıralanıyor?', C: 'Sonuçlar alaka düzeyi, kullanıcı puanı ve aktiflik durumuna göre sıralanır.' },
-  { S: 'Arama yaparken filtre kullanabilir miyim?', C: 'Kategori, ilçe ve puan filtrelerini kullanarak sonuçları daraltabilirsiniz.' },
+ { S: 'Şanlıurfa arama sayfasında ne arayabilirim?', C: 'Mekan adı, kategori, ilçe veya mahalle gibi anahtar kelimelerle Şanlıurfa genelinde arama yapabilirsiniz.' },
+ { S: 'Arama sonuçları nasıl sıralanıyor?', C: 'Sonuçlar alaka düzeyi, kullanıcı puanı ve aktiflik durumuna göre sıralanır.' },
+ { S: 'Arama yaparken filtre kullanabilir miyim?', C: 'Kategori, ilçe ve puan filtrelerini kullanarak sonuçları daraltabilirsiniz.' },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Arama</h1>
-      <p class="text-gray-600 dark:text-gray-400">Mekanları, kullanıcıları ve koleksiyonları bul</p>
-    </div>
-    <SearchResults client:visible={{ rootMargin: '140px' }} query={query} />
-  </div>
+ <style is:inline>
+  .ar-hero{padding:4rem 0 3rem;border-bottom:1px solid rgba(192,87,31,.12);background:linear-gradient(135deg,#FBF6EC 0%,#F4ECD8 60%,#FBF6EC 100%);position:relative;overflow:hidden}
+  .ar-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 15% 0%,rgba(212,151,24,.10),transparent 45%),radial-gradient(circle at 85% 100%,rgba(44,122,82,.08),transparent 45%);pointer-events:none}
+  .ar-hero .sf-container{position:relative;z-index:1}
+  .ar-eyebrow{display:inline-flex;align-items:center;gap:.4rem;font-size:.7rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#1F5F40;margin-bottom:1rem;padding:.4rem 1rem;background:rgba(44,122,82,.10);border:1px solid rgba(44,122,82,.24);border-radius:999px}
+  .ar-eyebrow::before{content:'';width:.45rem;height:.45rem;background:#D49718;border-radius:50%}
+  .ar-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4.5vw,3rem);font-weight:700;line-height:1.1;margin:0 0 1.5rem;background:linear-gradient(135deg,#C0571F 0%,#D49718 60%,#C0571F 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#C0571F}
+  .ar-form{display:flex;align-items:stretch;max-width:640px;background:#fff;border:1px solid rgba(192,87,31,.18);border-radius:8px;overflow:hidden;box-shadow:0 4px 14px -4px rgba(31,20,16,.08);transition:border-color .15s,box-shadow .15s}
+  .ar-form:focus-within{border-color:#C0571F;box-shadow:0 8px 22px -6px rgba(192,87,31,.18)}
+  .ar-input{flex:1;padding:.95rem 1.25rem;background:transparent;border:none;outline:none;font-family:'Jost',sans-serif;font-size:.95rem;color:#1F1410}
+  .ar-input::placeholder{color:#9A7A5C}
+  .ar-btn{padding:0 1.75rem;background:linear-gradient(135deg,#C0571F,#D49718);border:none;cursor:pointer;font-family:'Jost',sans-serif;font-size:.85rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;transition:transform .15s;white-space:nowrap}
+  .ar-btn:hover{transform:translateX(2px)}
+  .ar-body{padding:2.5rem 0 5rem;min-height:60vh}
+ </style>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: 'Sanliurfa.com',
-    url: `${baseUrl}`,
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: `${baseUrl}/arama?q={search_term_string}`,
-      'query-input': 'required name=search_term_string',
-    },
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Arama', item: `${baseUrl}/arama` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <!-- Hero -->
+ <div class="ar-hero">
+ <div class="sf-container">
+ <p class="ar-eyebrow">Şanlıurfa Rehberi</p>
+ <h1 class="ar-h1">{q ? `"${q}" için sonuçlar` : 'Mekan Ara'}</h1>
+ <form action="/arama" method="get" class="ar-form" role="search" aria-label="Şanlıurfa'da ara">
+ <input
+ type="search"
+ name="q"
+ class="ar-input"
+ placeholder="Mekan, kategori veya ilçe…"
+ value={q}
+ aria-label="Arama terimi"
+ autocomplete="off"
+ />
+ <button type="submit" class="ar-btn" aria-label="Ara">Ara</button>
+ </form>
+ </div>
+ </div>
+
+ <!-- Results -->
+ <div class="sf-container ar-body">
+ <SearchResults client:visible={{ rootMargin: '140px' }} query={q} />
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'WebSite',
+ name: 'Sanliurfa.com', url: baseUrl,
+ potentialAction: {
+ '@type': 'SearchAction',
+ target: `${baseUrl}/arama?q={search_term_string}`,
+ 'query-input': 'required name=search_term_string',
+ },
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'FAQPage',
+ mainEntity: faqItems.map(item => ({
+ '@type': 'Question', name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

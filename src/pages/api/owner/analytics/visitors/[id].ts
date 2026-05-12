@@ -29,6 +29,16 @@ export const GET: APIRoute = async ({ request, params, locals, url }) => {
     }
 
     const { id: placeId } = params;
+    if (!placeId) {
+      recordRequest('GET', '/api/owner/analytics/visitors/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Place ID is required',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
     const startDate = url.searchParams.get('startDate') || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const endDate = url.searchParams.get('endDate') || new Date().toISOString();
 

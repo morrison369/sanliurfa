@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
@@ -56,7 +56,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 

@@ -386,7 +386,7 @@ export async function sendCampaign(campaignId: number | string, testMode: boolea
     let failedCount = 0;
 
     // Import sendEmail dynamically to avoid circular dependency
-    const { sendEmail } = await import('./email');
+    const { sendEmail } = await import('./index');
     const { shouldNotify } = await import('./email-preferences');
 
     // Send emails
@@ -399,13 +399,13 @@ export async function sendCampaign(campaignId: number | string, testMode: boolea
           continue;
         }
 
-        const success = await sendEmail({
+        const result = await sendEmail({
           to: user.email,
           subject: campaign.subject,
           html: campaign.htmlContent
         });
 
-        if (success) {
+        if (result.success) {
           sentCount++;
           // Track sent event
           await trackCampaignEvent(Number(campaignId), user.id, 'sent');

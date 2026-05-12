@@ -1,165 +1,293 @@
 ---
-
 import Layout from '../layouts/Layout.astro';
 import { query } from '../lib/postgres';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getCachedPublicRouteData } from '../lib/public-route-cache';
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
+const baseUrl = getPublicAppUrl();
 
-const today = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
+const nowDate = new Date();
+const todayKey = nowDate.toISOString().slice(0, 10); // 2026-05-10
+const todayLabel = nowDate.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
+const weekday = nowDate.getDay(); // 0=Sun, 6=Sat
+const isWeekend = weekday === 0 || weekday === 6;
 
 let events: any[] = [];
 let featuredPlaces: any[] = [];
+let historicalSites: any[] = [];
+let featuredRecipe: any = null;
+let featuredRestaurant: any = null;
 
 try {
-  const [eventsResult, placesResult] = await Promise.all([
-    query(`SELECT id, slug, title, description, start_date, end_date, location, image_url
-           FROM events
-           WHERE status = 'published'
-             AND (end_date IS NULL OR end_date >= CURRENT_DATE)
-           ORDER BY start_date ASC LIMIT 6`),
-    query(`SELECT p.slug, p.name, p.address, p.rating, p.review_count, c.name AS category_name
-           FROM places p LEFT JOIN categories c ON p.category_id = c.id
-           WHERE p.status = 'active' AND p.is_featured = true
-           ORDER BY p.rating DESC NULLS LAST LIMIT 8`),
-  ]);
-  events = eventsResult.rows;
-  featuredPlaces = placesResult.rows;
+  const data = await getCachedPublicRouteData(`page:guide:bugun:${todayKey}`, async () => {
+    const [eventsR, placesR, tarihi, recipeR, restaurantR] = await Promise.all([
+      query(`SELECT id, slug, title, description, start_date, end_date, location, image_url
+        FROM events WHERE status='published' AND (end_date IS NULL OR end_date >= CURRENT_DATE)
+        ORDER BY start_date ASC LIMIT 4`),
+      query(`SELECT p.slug, p.name, p.address, p.rating, p.review_count, c.name AS category_name, p.image_url
+        FROM places p LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.status='active' AND p.is_featured=true
+        ORDER BY p.rating DESC NULLS LAST LIMIT 6`),
+      query(`SELECT slug, name, short_description, cover_image FROM historical_sites WHERE status='published' ORDER BY RANDOM() LIMIT 4`),
+      query(`SELECT slug, name, category, description FROM recipes WHERE status='published' ORDER BY RANDOM() LIMIT 1`),
+      query(`SELECT p.slug, p.name, p.rating, c.name AS category_name
+        FROM places p LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.status='active' AND c.name ILIKE ANY(ARRAY['%restoran%','%lokanta%','%yemek%','%kebap%','%cafe%'])
+        ORDER BY p.rating DESC NULLS LAST LIMIT 1`),
+    ]);
+    return {
+      events: eventsR.rows,
+      featuredPlaces: placesR.rows,
+      historicalSites: tarihi.rows,
+      featuredRecipe: recipeR.rows[0] || null,
+      featuredRestaurant: restaurantR.rows[0] || null,
+    };
+  }, 3600); // 1 saatlik cache — günlük içerik
+  events = data.events;
+  featuredPlaces = data.featuredPlaces;
+  historicalSites = data.historicalSites;
+  featuredRecipe = data.featuredRecipe;
+  featuredRestaurant = data.featuredRestaurant;
 } catch (e) {
-  console.error('bugun-sanliurfada verileri yüklenemedi:', e);
+  logger.error('bugun-sanliurfada verileri yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const aktiviteler = [
-  { title: 'Balıklıgöl\'ü Ziyaret Et', emoji: '🐟', href: '/isletme/balikligol', desc: 'İbrahim Peygamber\'in ateşe atıldığı kutsal göl' },
-  { title: 'Urfa Kalesi\'ne Çık', emoji: '🏰', href: '/isletme/urfa-kalesi', desc: 'Şehrin panoramik manzarası' },
-  { title: 'Tarihi Çarşıyı Gez', emoji: '🛍️', href: '/isletme/kapali-carsi', desc: 'Bedesten ve Kapalı Çarşı' },
-  { title: 'Yöresel Lezzet Tad', emoji: '🍽️', href: '/sanliurfada-ne-yenir', desc: 'Kebap, ciğer ve çiğ köfte' },
-  { title: 'Göbeklitepe\'ye Git', emoji: '🏛️', href: '/isletme/gobeklitepe', desc: 'Dünyanın en eski tapınağı' },
-  { title: 'Halfeti\'yi Keşfet', emoji: '⛵', href: '/isletme/halfeti', desc: 'Kırmızı gülleri ile ünlü koy' },
+  { title: "Balıklıgöl'ü Ziyaret Et", emoji: '🐟', href: '/gezilecek-yerler/balikligol', desc: "İbrahim Peygamber'in kutsal gölü" },
+  { title: "Urfa Kalesi'ne Çık", emoji: '🏰', href: '/gezilecek-yerler', desc: 'Şehrin panoramik manzarası' },
+  { title: 'Tarihi Çarşıyı Gez', emoji: '🛍️', href: '/alisveris', desc: 'Bedesten ve Kapalı Çarşı' },
+  { title: 'Yöresel Lezzet Tad', emoji: '🍽️', href: '/yemek-tarifleri', desc: 'Kebap, ciğer ve çiğ köfte' },
+  { title: "Göbeklitepe'ye Git", emoji: '🏛️', href: '/gezilecek-yerler/gobeklitepe', desc: "Dünyanın en eski tapınağı" },
+  { title: isWeekend ? "Halfeti'yi Keşfet" : "Müzeyi Gez", emoji: isWeekend ? '⛵' : '🏺', href: isWeekend ? '/gezilecek-yerler/halfeti' : '/gezilecek-yerler', desc: isWeekend ? 'Tekne turu + kırmızı güller' : 'Arkeoloji ve Mozaik Müzesi' },
 ];
 
 const seo = {
-  title: `Bugün Şanlıurfa'da Ne Yapılır? | ${today}`,
-  description: "Şanlıurfa\'da yapılacak şeyler; etkinlikler, tarihi yerler, yöresel lezzetler ve öne çıkan mekanlar.",
+  title: `Bugün Şanlıurfa'da Ne Yapılır? ${todayLabel} | Güncel Rehber`,
+  description: `${todayLabel} Şanlıurfa'da yapılacak şeyler; etkinlikler, tarihi yerler, yöresel lezzetler ve öne çıkan mekanlar.`,
   keywords: ['şanlıurfada ne yapılır', 'urfa bugün etkinlik', 'şanlıurfa gezilecek yer bugün', 'urfa aktiviteler', 'şanlıurfa hafta sonu'],
-  ogImage: '/images/hero/hero-home.webp',
+  ogImage: '/images/places/balikligol.jpg',
   canonical: '/bugun-sanliurfada-ne-yapilir',
 };
 
 const faqItems = [
-  {
-    S: "Bugün Şanlıurfa\'da ne yapılır?",
-    C: "Şanlıurfa\'da bugün tarihi yerleri ziyaret edebilir, yöresel lezzetler tadabilir ve güncel etkinliklere katılabilirsiniz. Göbeklitepe, Balıklıgöl ve Kapalı Çarşı en popüler güzergahlar arasındadır.",
-  },
-  {
-    S: "Şanlıurfa\'da ücretsiz yapılacak şeyler neler?",
-    C: 'Balıklıgöl çevresi, Dergah ve tarihi çarşılar ücretsiz gezilebilir. Sabah erken saatlerde şehrin sessiz dokusunu keşfetmek de ayrıca güzeldir.',
-  },
-  {
-    S: "Şanlıurfa\'da çocuklarla nereye gidilir?",
-    C: 'Balıklıgöl ve çevresindeki parklar, Şanlıurfa Müzesi ve tarihi çarşılar aile dostu mekanlardır. Göbeklitepe gezisi çocuklar için eğitici bir deneyim sunar.',
-  },
+  { S: "Bugün Şanlıurfa'da ne yapılır?", C: "Şanlıurfa'da tarihi yerleri ziyaret edebilir, yöresel lezzetler tadabilir ve güncel etkinliklere katılabilirsiniz. Balıklıgöl, Göbeklitepe, Kapalı Çarşı ve tarihi kalıntılar başlıca duraklardır." },
+  { S: "Şanlıurfa'da ücretsiz yapılacak şeyler neler?", C: "Balıklıgöl ve çevresi, Dergah parkı, tarihi çarşılar ve Halilürrahman Camii ücretsiz gezilebilir. Tarihi Çarşı'da alışveriş yapmadan sadece gezmek de keyiflidir." },
+  { S: "Şanlıurfa'da çocuklarla nereye gidilir?", C: "Balıklıgöl ve çevresindeki parklar, Şanlıurfa Arkeoloji Müzesi, Mozaik Müzesi ve tarihi çarşılar çocuklar için de eğitici ve eğlencelidir. Göbeklitepe ziyareti 8 yaş üstü çocuklara tavsiye edilir." },
+  { S: "Şanlıurfa'da yarım günde neler yapılır?", C: "Yarım günde Balıklıgöl, Dergah, Halilürrahman Camii ve Kapalı Çarşı'yı rahatça gezebilirsiniz. Akşam üzeri Urfa Kalesi'nden şehrin siluetini izleyin." },
 ];
 ---
 
-
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-gradient-to-br from-indigo-700 to-purple-800 text-white py-16">
-      <div class="container mx-auto px-4 max-w-5xl">
-        <p class="text-indigo-200 font-medium mb-2">{today}</p>
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Bugün Şanlıurfa’da<br />Ne Yapılır?</h1>
-        <p class="text-indigo-100 text-lg max-w-2xl">
-          Etkinlikler, gezilecek yerler ve öne çıkan mekanlar. Şanlıurfa’da vakit geçirmenin en güzel yolları.
-        </p>
-      </div>
-    </div>
+  <style is:inline>
+  .bny-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+  .bny-hero-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-accent)}
+  .bny-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.7rem,4vw,2.6rem);font-weight:700;color:var(--public-text);margin:.75rem 0 .25rem}
+  .bny-hero-desc{color:var(--public-muted);font-size:.9rem;max-width:40rem}
+  .bny-body{background:var(--bg);padding:2rem 0 4rem}
+  .bny-layout{display:grid;gap:2.5rem}
+  @media(min-width:64rem){.bny-layout{grid-template-columns:1fr 300px;gap:3rem}}
+  .bny-section{margin-bottom:2.5rem}
+  .bny-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+  .bny-section-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:var(--public-text)}
+  .bny-see-all{font-size:.8rem;font-weight:600;color:var(--public-accent);text-decoration:none;transition:color .15s}
+  .bny-see-all:hover{color:var(--public-accent-strong)}
+  .bny-aktivite-grid{display:grid;gap:.85rem;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .bny-aktivite-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.1rem;transition:border-color .15s,transform .15s;text-decoration:none;display:block}
+  .bny-aktivite-card:hover{border-color:var(--public-accent);transform:translateY(-2px)}
+  .bny-aktivite-emoji{font-size:1.6rem;margin-bottom:.4rem}
+  .bny-aktivite-name{font-size:.88rem;font-weight:700;color:var(--public-text);transition:color .15s}
+  .bny-aktivite-card:hover .bny-aktivite-name{color:var(--public-accent)}
+  .bny-aktivite-desc{font-size:.75rem;color:var(--public-muted);margin-top:.2rem}
+  .bny-event-list{display:flex;flex-direction:column;gap:.75rem}
+  .bny-event-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1rem 1.1rem;transition:border-color .15s;text-decoration:none;display:flex;align-items:flex-start;gap:.85rem}
+  .bny-event-card:hover{border-color:var(--public-accent)}
+  .bny-event-icon{width:2.5rem;height:2.5rem;background:rgba(184,115,51,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+  .bny-event-title{font-size:.9rem;font-weight:600;color:var(--public-text);transition:color .15s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bny-event-card:hover .bny-event-title{color:var(--public-accent)}
+  .bny-event-loc{font-size:.72rem;color:var(--public-accent);margin-top:.1rem}
+  .bny-event-desc{font-size:.78rem;color:var(--public-muted);margin-top:.35rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .bny-place-grid{display:grid;gap:.75rem}
+  @media(min-width:36rem){.bny-place-grid{grid-template-columns:1fr 1fr}}
+  .bny-place-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);display:flex;align-items:center;gap:.85rem;padding:.85rem;transition:border-color .15s;text-decoration:none}
+  .bny-place-card:hover{border-color:var(--public-accent)}
+  .bny-place-icon{width:2.5rem;height:2.5rem;background:rgba(184,115,51,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+  .bny-place-name{font-size:.88rem;font-weight:600;color:var(--public-text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .15s}
+  .bny-place-card:hover .bny-place-name{color:var(--public-accent)}
+  .bny-place-cat{font-size:.7rem;color:var(--public-muted)}
+  .bny-place-rating{color:var(--public-accent);font-weight:700;font-size:.85rem;flex-shrink:0;margin-left:auto}
+  .bny-tarihi-grid{display:grid;gap:.85rem;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+  .bny-tarihi-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.1rem;transition:border-color .15s;text-decoration:none;display:block}
+  .bny-tarihi-card:hover{border-color:var(--public-accent)}
+  .bny-tarihi-name{font-size:.9rem;font-weight:700;color:var(--public-text);transition:color .15s}
+  .bny-tarihi-card:hover .bny-tarihi-name{color:var(--public-accent)}
+  .bny-tarihi-desc{font-size:.76rem;color:var(--public-muted);margin-top:.3rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .bny-sidebar{display:flex;flex-direction:column;gap:1.25rem}
+  .bny-widget{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.25rem}
+  .bny-widget-lbl{font-size:.63rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--public-accent);margin-bottom:.85rem}
+  .bny-widget-title{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:700;color:var(--public-text);margin-bottom:.4rem}
+  .bny-widget-desc{font-size:.8rem;color:var(--public-muted);line-height:1.5}
+  .bny-widget-btn{display:block;margin-top:.85rem;padding:.55rem .9rem;background:var(--public-accent);color:#fff;font-size:.82rem;font-weight:700;text-align:center;text-decoration:none;transition:opacity .15s}
+  .bny-widget-btn:hover{opacity:.88}
+  details summary{list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details[open] .faq-arrow{transform:rotate(180deg)}
+  </style>
 
-    <div class="container mx-auto px-4 max-w-5xl py-12 space-y-12">
-      <!-- Aktiviteler -->
-      <section>
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Yapılacaklar Listesi</h2>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {aktiviteler.map((a) => (
-            <a href={a.href} class="bg-white rounded-xl p-5 shadow-sm border hover:shadow-lg transition-all group">
-              <div class="text-3xl mb-3">{a.emoji}</div>
-              <h3 class="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{a.title}</h3>
-              <p class="text-sm text-gray-500 mt-1">{a.desc}</p>
-            </a>
-          ))}
-        </div>
-      </section>
-
-      <!-- Etkinlikler -->
-      {events.length > 0 && (
-        <section>
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">Yaklaşan Etkinlikler</h2>
-            <a href="/etkinlikler" class="text-indigo-600 hover:text-indigo-700 font-medium text-sm">Tümünü Gör →</a>
-          </div>
-          <div class="grid md:grid-cols-2 gap-4">
-            {events.map((e) => (
-              <a href={`/etkinlikler/${e.slug}`} class="bg-white rounded-xl p-5 shadow-sm border hover:shadow-lg transition-all group">
-                <div class="flex items-start gap-3">
-                  <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-2xl shrink-0">🎉</div>
-                  <div class="flex-1 min-w-0">
-                    <h3 class="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-1">{e.title}</h3>
-                    <p class="text-xs text-indigo-600 mt-0.5">{e.location || 'Şanlıurfa'}</p>
-                    <p class="text-sm text-gray-500 mt-1 line-clamp-2">{e.description}</p>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <!-- Öne Çıkan Mekanlar -->
-      {featuredPlaces.length > 0 && (
-        <section>
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">Öne Çıkan Mekanlar</h2>
-            <a href="/mekanlar" class="text-indigo-600 hover:text-indigo-700 font-medium text-sm">Tüm Mekanlar →</a>
-          </div>
-          <div class="grid md:grid-cols-2 gap-4">
-            {featuredPlaces.map((p) => (
-              <a href={`/isletme/${p.slug}`} class="bg-white rounded-xl p-4 shadow-sm border hover:shadow-lg transition-all group flex items-center gap-4">
-                <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-xl shrink-0">📍</div>
-                <div class="flex-1 min-w-0">
-                  <h3 class="font-semibold text-gray-900 group-hover:text-indigo-600 truncate">{p.name}</h3>
-                  <p class="text-xs text-gray-500">{p.category_name}</p>
-                </div>
-                {p.rating && <span class="text-yellow-600 font-bold shrink-0">★ {p.rating}</span>}
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+  <div class="bny-hero">
+    <div class="sf-container">
+      <p class="bny-hero-label">{todayLabel} {isWeekend ? '— Hafta Sonu' : ''}</p>
+      <h1 class="bny-h1">Bugün Şanlıurfa'da<br />Ne Yapılır?</h1>
+      <p class="bny-hero-desc">Etkinlikler, tarihi yerler, yöresel lezzetler ve öne çıkan mekanlar — güncel rehber.</p>
     </div>
   </div>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'TouristDestination',
-    name: 'Şanlıurfa',
-    description: 'Şanlıurfa\'da yapılacak aktiviteler, etkinlikler ve gezilecek yerler.',
-    url: `${baseUrl}/bugun-sanliurfada-ne-yapilir`,
-    touristType: ['Kültür Turizmi', 'Gastronomi Turizmi', 'Tarih Turizmi'],
-    includesAttraction: aktiviteler.map((a) => ({
-      '@type': 'TouristAttraction',
-      name: a.title,
-      description: a.desc,
-      url: `${baseUrl}${a.href}`,
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Etkinlikler', item: `${baseUrl}/etkinlikler` },
-      { '@type': 'ListItem', position: 3, name: 'Bugün Şanlıurfa\'da Ne Yapılır?', item: `${baseUrl}/bugun-sanliurfada-ne-yapilir` },
-    ],
-  })} is:inline />
+  <div class="bny-body">
+    <div class="sf-container">
+      <div class="bny-layout">
+        <!-- Ana içerik -->
+        <div>
+          <div class="bny-section">
+            <div class="bny-section-head">
+              <h2 class="bny-section-title">Yapılacaklar Listesi</h2>
+            </div>
+            <div class="bny-aktivite-grid">
+              {aktiviteler.map((a) => (
+                <a href={a.href} class="bny-aktivite-card">
+                  <div class="bny-aktivite-emoji">{a.emoji}</div>
+                  <h3 class="bny-aktivite-name">{a.title}</h3>
+                  <p class="bny-aktivite-desc">{a.desc}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {historicalSites.length > 0 && (
+            <div class="bny-section">
+              <div class="bny-section-head">
+                <h2 class="bny-section-title">Tarihi Yerler</h2>
+                <a href="/gezilecek-yerler" class="bny-see-all">Tümünü Gör →</a>
+              </div>
+              <div class="bny-tarihi-grid">
+                {historicalSites.map((s: any) => (
+                  <a href={`/gezilecek-yerler/${s.slug}`} class="bny-tarihi-card">
+                    <div style="font-size:1.4rem;margin-bottom:.4rem">🏛️</div>
+                    <h3 class="bny-tarihi-name">{s.name}</h3>
+                    {s.short_description && <p class="bny-tarihi-desc">{s.short_description}</p>}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {events.length > 0 && (
+            <div class="bny-section">
+              <div class="bny-section-head">
+                <h2 class="bny-section-title">Yaklaşan Etkinlikler</h2>
+                <a href="/etkinlikler" class="bny-see-all">Tümünü Gör →</a>
+              </div>
+              <div class="bny-event-list">
+                {events.map((e: any) => (
+                  <a href={`/etkinlikler/${e.slug}`} class="bny-event-card">
+                    <div class="bny-event-icon">🎉</div>
+                    <div style="flex:1;min-width:0">
+                      <h3 class="bny-event-title">{e.title}</h3>
+                      <p class="bny-event-loc">{e.location || 'Şanlıurfa'}</p>
+                      {e.description && <p class="bny-event-desc">{e.description}</p>}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {featuredPlaces.length > 0 && (
+            <div class="bny-section">
+              <div class="bny-section-head">
+                <h2 class="bny-section-title">Öne Çıkan Mekanlar</h2>
+                <a href="/mekanlar" class="bny-see-all">Tüm Mekanlar →</a>
+              </div>
+              <div class="bny-place-grid">
+                {featuredPlaces.map((p: any) => (
+                  <a href={`/isletme/${p.slug}`} class="bny-place-card">
+                    <div class="bny-place-icon">📍</div>
+                    <div style="flex:1;min-width:0">
+                      <h3 class="bny-place-name">{p.name}</h3>
+                      <p class="bny-place-cat">{p.category_name}</p>
+                    </div>
+                    {p.rating && <span class="bny-place-rating">★ {Number(p.rating).toFixed(1)}</span>}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="bny-sidebar">
+          {featuredRecipe && (
+            <div class="bny-widget">
+              <p class="bny-widget-lbl">Günün Tarifi</p>
+              <h3 class="bny-widget-title">{featuredRecipe.name}</h3>
+              <p class="bny-widget-desc">{featuredRecipe.description?.slice(0, 120) || 'Şanlıurfa mutfağından seçilmiş lezzet.'}</p>
+              <a href={`/yemek-tarifleri/${featuredRecipe.slug}`} class="bny-widget-btn">Tarife Git →</a>
+            </div>
+          )}
+
+          {featuredRestaurant && (
+            <div class="bny-widget">
+              <p class="bny-widget-lbl">Ne Yemeliyim?</p>
+              <h3 class="bny-widget-title">{featuredRestaurant.name}</h3>
+              <p class="bny-widget-desc" style="font-size:.78rem;color:var(--public-muted)">{featuredRestaurant.category_name}</p>
+              {featuredRestaurant.rating && <p style="color:var(--public-accent);font-weight:700;font-size:.9rem;margin-top:.35rem">★ {Number(featuredRestaurant.rating).toFixed(1)}</p>}
+              <a href={`/isletme/${featuredRestaurant.slug}`} class="bny-widget-btn">Restorana Git →</a>
+            </div>
+          )}
+
+          <div class="bny-widget">
+            <p class="bny-widget-lbl">Hızlı Bağlantılar</p>
+            {[
+              { label: 'Tüm Etkinlikler', href: '/etkinlikler' },
+              { label: 'Gezilecek Yerler', href: '/gezilecek-yerler' },
+              { label: 'Yemek Tarifleri', href: '/yemek-tarifleri' },
+              { label: 'Blog Yazıları', href: '/blog' },
+              { label: 'Gezi Rehberleri', href: '/gezi-rehberleri' },
+            ].map((l) => (
+              <a href={l.href} style="display:flex;align-items:center;justify-content:space-between;padding:.45rem 0;border-bottom:1px solid rgba(184,115,51,.08);font-size:.82rem;color:var(--public-text-soft);text-decoration:none;transition:color .15s">
+                {l.label}
+                <span style="color:var(--public-accent)">→</span>
+              </a>
+            ))}
+          </div>
+
+          <a href="/isletme-kayit" style="display:block;padding:1rem;background:var(--public-accent);color:#fff;text-align:center;font-size:.85rem;font-weight:700;text-decoration:none;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+            İşletmenizi Ekleyin
+          </a>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  {faqItems.length > 0 && (
+    <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+      <div class="sf-container">
+        <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          {faqItems.map((item) => (
+            <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+              <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+                {item.S}
+                <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+              </summary>
+              <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+                {item.C}
+              </div>
+            </details>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+
   <script type="application/ld+json" set:html={JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
@@ -168,5 +296,13 @@ const faqItems = [
       name: item.S,
       acceptedAnswer: { '@type': 'Answer', text: item.C },
     })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: "Bugün Şanlıurfa'da Ne Yapılır?", item: `${baseUrl}/bugun-sanliurfada-ne-yapilir` },
+    ],
   })} is:inline />
 </Layout>

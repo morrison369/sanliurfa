@@ -6,7 +6,7 @@
 import type { APIRoute } from 'astro';
 import { requireRole } from '../../../lib/auth';
 import { createPlace } from '../../../lib/places/db';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../lib/api';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -81,15 +81,15 @@ export const POST: APIRoute = async ({ request }) => {
           description: description || '',
           address,
           phone,
-          latitude: lat ? parseFloat(lat) : undefined,
-          longitude: lon ? parseFloat(lon) : undefined,
           status: 'active',
+          ...(lat ? { latitude: parseFloat(lat) } : {}),
+          ...(lon ? { longitude: parseFloat(lon) } : {}),
         });
 
         results.success++;
       } catch (error) {
         results.failed++;
-        results.errors.push(`Satır ${i + 2}: ${error instanceof Error ? error.message : 'Hata'}`);
+        results.errors.push(`Satır ${i + 2}: ${safeErrorDetail(error, 'Satır işlenemedi')}`);
       }
     }
 
@@ -101,7 +101,7 @@ export const POST: APIRoute = async ({ request }) => {
     return problemJson({
       status: 500,
       title: 'İçe Aktarım Başarısız',
-      detail: error instanceof Error ? error.message : 'İmport başarısız',
+      detail: safeErrorDetail(error, 'İmport başarısız'),
       type: '/problems/admin-import-failed',
       instance: '/api/admin/import',
     });

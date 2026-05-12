@@ -1,0 +1,222 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { query } from '../lib/postgres';
+import { getCachedPublicRouteData } from '../lib/public-route-cache';
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
+const baseUrl = getPublicAppUrl();
+
+let topPlaces: any[] = [];
+let blogPosts: any[] = [];
+try {
+  const data = await getCachedPublicRouteData('page:guide:sanliurfa-gezi', async () => {
+    const [placesResult, blogResult] = await Promise.all([
+      query(`
+        SELECT p.slug, p.name, p.address, p.rating, p.review_count, p.short_description
+        FROM places p
+        WHERE p.status = 'active'
+        ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+        LIMIT 12
+      `),
+      query(`
+        SELECT slug, title FROM blog_posts
+        WHERE status = 'published' AND published_at <= CURRENT_DATE
+          AND (tags && ARRAY['gezi-rehberi']::text[]
+            OR tags && ARRAY['şanlıurfa']::text[]
+            OR title ILIKE '%şanlıurfa%')
+        ORDER BY published_at DESC LIMIT 6
+      `).catch(() => ({ rows: [] })),
+    ]);
+    return { places: placesResult.rows, blogPosts: blogResult.rows };
+  });
+  topPlaces = data.places;
+  blogPosts = data.blogPosts;
+} catch (e) {
+  logger.error('Şanlıurfa gezi rehberi yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: 'Şanlıurfa Gezi Rehberi 2026 | Gezilecek Yerler, Ulaşım, Konaklama',
+  description: "Şanlıurfa'da gezilecek yerler, nerede yenir, nasıl gidilir, konaklama ve 2 günlük rota. Göbeklitepe, Balıklıgöl, Halfeti ve Harran için eksiksiz 2026 rehberi.",
+  keywords: ['şanlıurfa gezi rehberi', 'şanlıurfa gezilecek yerler', 'şanlıurfa nasıl gidilir', 'şanlıurfa 2026', 'şanlıurfa turizm', 'şanlıurfa ne zaman gidilir'],
+  ogImage: '/uploads/blogs/sanliurfa-2-gunluk-gezi-rotasi.jpg',
+  canonical: '/sanliurfa-gezi-rehberi',
+};
+
+const faqItems = [
+  { q: "Şanlıurfa'ya nasıl gidilir?", a: "Şanlıurfa'ya ulaşımın en hızlı yolu uçaktır; GAP Havalimanı İstanbul, Ankara, İzmir ve Antalya'dan düzenli seferler almaktadır. Karayoluyla Ankara'dan yaklaşık 10–11, İstanbul'dan 14–15 saat sürer. Adıyaman, Malatya ve Gaziantep'ten otobüs bağlantıları da mevcuttur." },
+  { q: "Şanlıurfa'da ne zaman gidilir?", a: "Şanlıurfa'ya en uygun ziyaret dönemi Ekim–Mayıs ayları arasıdır. Haziran–Eylül arasında sıcaklık 45°C'ye ulaşabilir. Bahar (Nisan–Mayıs) hem Halfeti'de siyah güller hem de Göbeklitepe ziyareti için idealdir. Kış aylarında ise hava ılımlı ve turistik mekanlar tenhadır." },
+  { q: "Şanlıurfa'da kaç gün kalınmalı?", a: "Şehir merkezi, Göbeklitepe ve Harran için minimum 2 gün önerilir. Halfeti tekne turunu da eklemek isteyenler için 3 gün idealdir. 4–5 günlük programda Birecik Kelaynak Kuşu, Siverek Kalesi ve Karahantepe de dahil edilebilir." },
+  { q: "Şanlıurfa'da nerede kalınır?", a: "Şanlıurfa şehir merkezinde her bütçeye uygun otel, butik konaklama ve pansiyon bulunur. Balıklıgöl ve tarihi çarşıya yakın konaklama tercih edilirse yürüyüş mesafesinde tüm tarihi noktalara ulaşılabilir. Göbeklitepe'ye yakın Örencik köyünde de butik konaklama seçenekleri mevcuttur." },
+  { q: "Şanlıurfa'da ne yenir?", a: "Şanlıurfa mutfağının olmazmazları: Urfa kebabı (acılı ve az pişirilmiş), tandır ciğeri, katmer, çiğ köfte, bostana (mevsim sebzeli kebap) ve Şanlıurfa baklavası. Balıklıgöl çevresindeki tarihi restoranlar ve esnaf lokantaları gerçek lezzetler için en doğru adres." },
+];
+
+const destinations = [
+  { href: '/balikligol-gezi-rehberi', icon: '🐟', title: 'Balıklıgöl', desc: "Hz. İbrahim'in kutsal gölü, şehir merkezi" },
+  { href: '/gobeklitepe-gezi-rehberi', icon: '🏛️', title: 'Göbeklitepe', desc: "UNESCO mirası, 12.000 yıllık tapınak, 18 km" },
+  { href: '/harran-gezi-rehberi', icon: '🏠', title: 'Harran', desc: 'Kümbet evler, Harran Kalesi, 44 km' },
+  { href: '/halfeti-gezi-rehberi', icon: '🚤', title: 'Halfeti', desc: 'Tekne turu, siyah güller, Rum Kale, 80 km' },
+];
+---
+
+<Layout seo={seo}>
+  <style is:inline>
+    .sg-hero{background:linear-gradient(135deg,#0a0605 0%,#1e0e06 40%,#0a1508 100%);border-bottom:1px solid rgba(192,87,31,.2);padding:4rem 0 3rem}
+    .sg-eyebrow{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#C0571F;margin-bottom:.75rem}
+    .sg-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.5rem);font-weight:700;color:#e8caa9;margin:0 0 1rem;line-height:1.12}
+    .sg-desc{font-size:1rem;color:rgba(232,202,169,.75);max-width:620px;line-height:1.65;margin-bottom:2rem}
+    .sg-badges{display:flex;flex-wrap:wrap;gap:.5rem}
+    .sg-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .85rem;background:rgba(192,87,31,.15);border:1px solid rgba(192,87,31,.3);color:#C0571F;font-size:.78rem;font-weight:600;border-radius:999px}
+    .sg-body{background:#FBF6EC;padding:3rem 0 5rem}
+    .sg-grid{display:grid;gap:2.5rem}
+    @media(min-width:64rem){.sg-grid{grid-template-columns:2fr 1fr}}
+    .sg-section-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:#1F1410;margin:0 0 1.25rem;padding-bottom:.65rem;border-bottom:2px solid rgba(192,87,31,.15)}
+    .sg-dest-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:2rem}
+    @media(max-width:40rem){.sg-dest-grid{grid-template-columns:1fr}}
+    .sg-dest{display:flex;align-items:flex-start;gap:.85rem;background:#fff;border:1px solid rgba(192,87,31,.12);padding:1rem 1.1rem;border-radius:8px;text-decoration:none;transition:border-color .15s,box-shadow .15s}
+    .sg-dest:hover{border-color:#C0571F;box-shadow:0 2px 8px rgba(192,87,31,.1)}
+    .sg-dest-icon{font-size:1.5rem;flex-shrink:0;margin-top:.1rem}
+    .sg-dest-title{font-weight:700;color:#1F1410;font-size:.92rem;margin-bottom:.15rem}
+    .sg-dest-desc{font-size:.78rem;color:#7A6448;line-height:1.4}
+    .sg-places{display:flex;flex-direction:column;gap:.6rem}
+    .sg-place{display:flex;align-items:center;gap:.85rem;background:#fff;border:1px solid rgba(192,87,31,.1);padding:.85rem 1.1rem;border-radius:7px;text-decoration:none;transition:border-color .15s}
+    .sg-place:hover{border-color:#C0571F}
+    .sg-place-name{font-weight:700;color:#1F1410;font-size:.88rem;flex:1}
+    .sg-place-rating{font-size:.8rem;color:#C0571F;font-weight:700;white-space:nowrap}
+    .sg-faq{margin-top:2rem}
+    .sg-faq-item{border:1px solid rgba(192,87,31,.12);border-radius:8px;margin-bottom:.65rem;overflow:hidden;background:#fff}
+    .sg-faq-q{padding:1rem 1.25rem;font-weight:700;font-size:.9rem;color:#1F1410}
+    .sg-faq-a{padding:0 1.25rem 1rem;font-size:.85rem;color:#2C1810;line-height:1.6}
+    .sg-tips{background:#fff;border:1px solid rgba(192,87,31,.15);border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .sg-tips-title{font-weight:700;color:#1F1410;margin-bottom:.85rem;font-size:.95rem}
+    .sg-tip{display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem;color:#2C1810;line-height:1.5;margin-bottom:.6rem}
+    .sg-tip-dot{width:.4rem;height:.4rem;background:#C0571F;border-radius:50%;flex-shrink:0;margin-top:.55rem}
+    .sg-blog-links{display:flex;flex-direction:column;gap:.4rem;margin-top:.75rem}
+    .sg-blog-link{font-size:.85rem;color:#C0571F;text-decoration:none;padding:.4rem .6rem;border-radius:4px;transition:background .12s}
+    .sg-blog-link:hover{background:rgba(192,87,31,.08)}
+  </style>
+
+  <div class="sg-hero">
+    <div class="sf-container">
+      <p class="sg-eyebrow">Türkiye Turizm Rehberi</p>
+      <h1 class="sg-h1">Şanlıurfa Gezi Rehberi 2026</h1>
+      <p class="sg-desc">
+        Peygamberler şehri, medeniyetlerin beşiği. Göbeklitepe'den Balıklıgöl'e, Halfeti'den
+        Harran'a uzanan eşsiz kültür ve doğa rotaları için eksiksiz rehber.
+      </p>
+      <div class="sg-badges">
+        <span class="sg-badge">🏛️ Göbeklitepe UNESCO</span>
+        <span class="sg-badge">🐟 Balıklıgöl</span>
+        <span class="sg-badge">🚤 Halfeti</span>
+        <span class="sg-badge">🏠 Harran</span>
+        <span class="sg-badge">🌶️ Urfa Mutfağı</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sg-body">
+    <div class="sf-container">
+      <div class="sg-grid">
+        <div>
+          <h2 class="sg-section-title">Şanlıurfa'da Gezilecek Yerler</h2>
+          <div class="sg-dest-grid">
+            {destinations.map((d) => (
+              <a href={d.href} class="sg-dest">
+                <span class="sg-dest-icon">{d.icon}</span>
+                <div>
+                  <div class="sg-dest-title">{d.title}</div>
+                  <div class="sg-dest-desc">{d.desc}</div>
+                </div>
+              </a>
+            ))}
+          </div>
+
+          <h2 class="sg-section-title">En Çok Tercih Edilen Mekanlar</h2>
+          <div class="sg-places">
+            {topPlaces.map((p: any) => (
+              <a href={`/isletme/${p.slug}`} class="sg-place">
+                <span style="font-size:1rem">📍</span>
+                <span class="sg-place-name">{p.name}</span>
+                {p.rating && <span class="sg-place-rating">★ {p.rating}</span>}
+              </a>
+            ))}
+          </div>
+
+          <div class="sg-faq" style="margin-top:2.5rem">
+            <h2 class="sg-section-title">Sık Sorulan Sorular</h2>
+            {faqItems.map((item) => (
+              <div class="sg-faq-item">
+                <div class="sg-faq-q">{item.q}</div>
+                <div class="sg-faq-a">{item.a}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <aside>
+          <div class="sg-tips">
+            <div class="sg-tips-title">✈️ Ulaşım</div>
+            <div class="sg-tip"><span class="sg-tip-dot"></span><span><strong>Uçak:</strong> GAP Havalimanı — İstanbul, Ankara, İzmir uçuşları</span></div>
+            <div class="sg-tip"><span class="sg-tip-dot"></span><span><strong>Otobüs:</strong> Büyük şehirlerden direkt seferler (8–15 saat)</span></div>
+            <div class="sg-tip"><span class="sg-tip-dot"></span><span><strong>Araç:</strong> Adıyaman–Şanlıurfa E90 üzerinden</span></div>
+          </div>
+
+          <div class="sg-tips">
+            <div class="sg-tips-title">🗓️ En İyi Sezon</div>
+            <div class="sg-tip"><span class="sg-tip-dot"></span><span><strong>İdeal:</strong> Ekim–Mayıs (ılımlı hava)</span></div>
+            <div class="sg-tip"><span class="sg-tip-dot"></span><span><strong>Bahar (Nis–May):</strong> Halfeti siyah gülleri, Göbeklitepe</span></div>
+            <div class="sg-tip"><span class="sg-tip-dot"></span><span><strong>Kaçın:</strong> Haziran–Eylül (45°C+)</span></div>
+          </div>
+
+          {blogPosts.length > 0 && (
+            <div class="sg-tips">
+              <div class="sg-tips-title">📖 Rehber Yazılar</div>
+              <div class="sg-blog-links">
+                {blogPosts.map((p: any) => (
+                  <a href={`/blog/${p.slug}`} class="sg-blog-link">{p.title}</a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div class="sg-tips">
+            <div class="sg-tips-title">🍽️ Şanlıurfa Mutfağı</div>
+            <div class="sg-tip"><span class="sg-tip-dot"></span><span>Urfa kebabı (acılı, az pişirilmiş)</span></div>
+            <div class="sg-tip"><span class="sg-tip-dot"></span><span>Tandır ciğeri</span></div>
+            <div class="sg-tip"><span class="sg-tip-dot"></span><span>Katmer ve çiğ köfte</span></div>
+            <div class="sg-tip"><span class="sg-tip-dot"></span><span>Şanlıurfa baklavası</span></div>
+            <a href="/gastronomi" class="sg-blog-link" style="display:inline-block;margin-top:.5rem">→ Tüm Şanlıurfa Mutfağı</a>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'TouristDestination',
+    name: 'Şanlıurfa',
+    description: "Türkiye'nin güneydoğusunda yer alan Şanlıurfa; Göbeklitepe, Balıklıgöl, Harran ve Halfeti ile Türkiye'nin en önemli kültür ve turizm merkezlerinden biridir.",
+    url: `${baseUrl}/sanliurfa-gezi-rehberi`,
+    touristType: ['Tarih', 'Kültür', 'Gastronomi', 'Doğa'],
+    containedInPlace: { '@type': 'Country', name: 'Türkiye' },
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Gezilecek Yerler', item: `${baseUrl}/gezilecek-yerler` },
+      { '@type': 'ListItem', position: 3, name: 'Şanlıurfa Gezi Rehberi', item: `${baseUrl}/sanliurfa-gezi-rehberi` },
+    ],
+  })} is:inline />
+</Layout>

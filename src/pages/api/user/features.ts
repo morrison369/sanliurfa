@@ -101,7 +101,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Filter valid features
     const validFeatures = featuresToCheck.filter(
-      (f): f is keyof typeof PREMIUM_FEATURES => f in PREMIUM_FEATURES
+      (f): f is keyof typeof PREMIUM_FEATURES => typeof f === 'string' && f in PREMIUM_FEATURES
     );
 
     const accessMap = await checkFeaturesAccess(locals.user.id, validFeatures);

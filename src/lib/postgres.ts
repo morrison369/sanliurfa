@@ -29,6 +29,19 @@ pool.on('error', (err) => {
   logger.error('[postgres] Unexpected pool error:', err.message);
 });
 
+// Graceful shutdown: PM2 SIGTERM gönderdiğinde in-flight query'ler bitince pool drain et.
+// Test ortamında lifecycle import'u skip — test runner kendi cleanup'ını yapar.
+if (process.env.NODE_ENV !== 'test') {
+  // Async import to avoid circular dep risk; lifecycle imports logger which imports nothing else.
+  void import('./lifecycle').then(({ registerShutdownHandler }) => {
+    registerShutdownHandler(async () => {
+      logger.info('[postgres] Draining pool...');
+      await pool.end();
+      logger.info('[postgres] Pool closed');
+    });
+  });
+}
+
 // Slow query threshold (ms)
 const SLOW_QUERY_THRESHOLD = 1000;
 
@@ -58,7 +71,11 @@ export async function query<T = any>(text: string, params?: any[]): Promise<Quer
     };
   } catch (error) {
     const duration = Date.now() - start;
-    logger.error(`[postgres] Query failed (${duration}ms):`, text.substring(0, 120), error instanceof Error ? error.message : error);
+    logger.error(
+      `[postgres] Query failed (${duration}ms):`,
+      text.substring(0, 120),
+      error instanceof Error ? error.message : String(error),
+    );
     throw error;
   }
 }
@@ -77,6 +94,25 @@ export async function queryOne<T = any>(text: string, params?: any[]): Promise<T
 export async function queryMany<T = any>(text: string, params?: any[]): Promise<T[]> {
   const result = await query<T>(text, params);
   return result.rows;
+}
+
+/**
+ * Read-only query via replica pool (falls back to primary when READ_REPLICA_URL not set).
+ * Use for SELECT-only endpoints to offload read traffic when a replica is configured.
+ */
+export async function queryRead<T = any>(text: string, params?: any[]): Promise<QueryResult<T>> {
+  const result = await readReplicaPool.query(text, params ?? []);
+  return { rows: result.rows as T[], rowCount: result.rowCount ?? 0, command: result.command };
+}
+
+export async function queryReadMany<T = any>(text: string, params?: any[]): Promise<T[]> {
+  const result = await queryRead<T>(text, params);
+  return result.rows;
+}
+
+export async function queryReadOne<T = any>(text: string, params?: any[]): Promise<T | null> {
+  const result = await queryRead<T>(text, params);
+  return result.rows[0] || null;
 }
 
 /**
@@ -223,7 +259,7 @@ const ALLOWED_TABLES = new Set([
   'client_errors', 'client_performance_metrics',
   's3_files', 'push_subscriptions',
   'two_factor_audit', 'trusted_devices',
-  'place_hours', 'place_analytics_events',
+  'place_hours', 'place_analytics_events', 'place_claims',
   'sms_logs', 'phone_verifications', 'feature_flags',
   // 2FA
   'user_2fa_methods', 'user_2fa_sessions',
@@ -250,10 +286,9 @@ const ALLOWED_TABLES = new Set([
   // Social & content
   'hashtags', 'leaderboards', 'moderation_queue',
   'content_flags', 'account_flags', 'content_items',
-  'collaboration_sessions', 'collaboration_participants', 'collaboration_comments',
-  'edit_conflicts', 'journey_paths',
+  'journey_paths',
   // Marketplace / vendor
-  'vendor_profiles', 'tenant_api_keys', 'tenant_branding',
+  'vendor_profiles',
   // Admin & infrastructure
   'admin_dashboard_widgets', 'push_subscription_stats',
   'transcoding_jobs',
@@ -268,8 +303,6 @@ const ALLOWED_TABLES = new Set([
   'report_executions',
   // Error tracking
   'error_fingerprints',
-  // Multi-tenant
-  'tenant_users',
   // Social matchmaking
   'user_match_profiles',
   // Webhook queue
@@ -288,7 +321,7 @@ const ALLOWED_TABLES = new Set([
   'user_loyalty_balance', 'user_points_transactions', 'user_tier_membership',
   'user_reward_achievements',
   // Subscriptions & billing
-  'subscriptions', 'subscription_events', 'billing_history',
+  'subscriptions', 'subscription_tiers', 'subscription_events', 'billing_history',
   'admin_subscription_logs',
   // Rewards & points
   'reward_redemptions', 'points_transactions',
@@ -301,17 +334,12 @@ const ALLOWED_TABLES = new Set([
   'retention_cohorts', 'cohort_members', 'trending_scores', 'request_metrics', 'search_clicks',
   // Admin
   'admin_dashboard_settings',
-  // Tenant / multi-tenant
-  'tenants', 'tenant_members', 'tenant_settings', 'tenant_features',
-  'tenant_audit_logs',
   // Promotions
   'promotion_redemptions', 'discount_codes',
   // Tier system
   'tier_history', 'tier_reset_schedule',
   // Privacy
   'privacy_settings', 'data_deletion_requests',
-  // Edit operations (collaboration)
-  'edit_operations', 'edit_snapshots',
   // Video
   'video_captions', 'video_metadata', 'video_streaming_settings', 'video_thumbnails',
   // Webhooks
@@ -357,6 +385,43 @@ const ALLOWED_TABLES = new Set([
   'notification_channels', 'notification_deliveries',
   // Journeys
   'journey_steps',
+  // Analytics & tracking
+  'activity_summaries', 'analytics_events_realtime', 'analytics_reports',
+  'api_request_logs', 'error_logs', 'heatmap_events', 'tracked_events',
+  // Blog & content interactions
+  'blog_likes', 'comment_likes', 'review_helpful', 'review_photos',
+  'social_shares', 'share_counts',
+  // Events
+  'event_tickets',
+  // Payments & billing
+  'invoices', 'payments',
+  // Operations & jobs
+  'bulk_operations', 'job_executions', 'job_logs',
+  'scheduled_jobs', 'scheduled_notifications',
+  // Presence & interactions
+  'interactions', 'user_presence',
+  // Newsletters
+  'newsletter_campaigns',
+  // Blog extensions
+  'blog_categories', 'blog_subscriptions',
+  // Admin & audit
+  'audit_logs', 'request_logs', 'site_change_audit', 'site_setting_versions', 'user_actions',
+  // Business intelligence
+  'business_insights', 'business_trends', 'satisfaction_scores',
+  // Collections
+  'collection_followers', 'place_collections',
+  // Content & media
+  'content_generation_jobs', 'place_photos',
+  // Reviews
+  'review_votes',
+  // Social
+  'social_event_store',
+  // Webhooks
+  'webhook_deliveries',
+  // Memberships
+  'memberships',
+  // SSR performance metrics (migration 177)
+  'ssr_perf_metrics',
 ]);
 
 function validateTable(table: string): void {
@@ -365,8 +430,34 @@ function validateTable(table: string): void {
   }
 }
 
-// Read replica pool — same pool for now, can be split for read-heavy workloads
-export const readReplicaPool = pool;
+// Read replica pool — uses READ_REPLICA_URL when configured, falls back to primary.
+// Set READ_REPLICA_URL env var to activate a real replica and halve primary write load.
+const READ_REPLICA_URL = process.env.READ_REPLICA_URL;
+export const readReplicaPool = READ_REPLICA_URL
+  ? (() => {
+      const replicaPool = new PgPool({
+        connectionString: READ_REPLICA_URL,
+        max: isProduction ? 8 : 5,
+        min: isProduction ? 1 : 0,
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
+        allowExitOnIdle: !isProduction,
+      });
+      replicaPool.on('error', (err) => {
+        logger.error('[postgres:replica] Unexpected pool error:', err.message);
+      });
+      if (process.env.NODE_ENV !== 'test') {
+        void import('./lifecycle').then(({ registerShutdownHandler }) => {
+          registerShutdownHandler(async () => {
+            logger.info('[postgres:replica] Draining pool...');
+            await replicaPool.end();
+          });
+        });
+      }
+      logger.info('[postgres] Read replica pool connected');
+      return replicaPool;
+    })()
+  : pool;
 
 export {pool, ALLOWED_TABLES};
 export default {

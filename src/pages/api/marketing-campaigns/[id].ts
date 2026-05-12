@@ -83,7 +83,7 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     const body = await request.json();
     const { action } = body;
 
-    let updated;
+    let updated: unknown;
 
     // Handle special actions
     if (action === 'publish') {

@@ -1,153 +1,231 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
-import { query, queryOne } from '../../lib/postgres';
+import { queryOne, query } from '../../lib/postgres';
+import ProfileStats from '../../components/profile/ProfileStats.astro';
+import ProfileSidebar from '../../components/profile/ProfileSidebar.astro';
+import { logger } from '../../lib/logging';
 
 const user = Astro.locals.user;
 
 if (!user) {
-  return Astro.redirect('/giris?redirect=/profil');
+ return Astro.redirect('/giris?redirect=/profil');
 }
 
 let profile: any = null;
-let stats: { reviews: number; favorites: number } = { reviews: 0, favorites: 0 };
+let recentReviews: any[] = [];
+let matchCount = 0;
+
 const seo = {
-    title: 'Profilim - Sanliurfa.com',
-    description: 'Profil bilgilerinizi yönetin.',
-  };
-let icons: Record<string, string> = {};
+ title: 'Profilim - Sanliurfa.com',
+ description: 'Profil bilgilerinizi yönetin.',
+ noIndex: true,
+};
 
 try {
-
-  profile = await queryOne('SELECT * FROM users WHERE id = $1', [user.id]);
-
-  // Kullanıcı istatistikleri
-  const reviewsCount = await query('SELECT COUNT(*) FROM reviews WHERE user_id = $1', [user.id]);
-  const favoritesCount = await query('SELECT COUNT(*) FROM favorites WHERE user_id = $1', [user.id]);
-
-  stats = {
-    reviews: parseInt(reviewsCount.rows[0]?.count || '0'),
-    favorites: parseInt(favoritesCount.rows[0]?.count || '0'),
-  };
-
-  // SVG ikonlar
-  icons = {
-    user: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-    star: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-    heart: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-    award: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>`,
-    activity: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
-    settings: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
-    logout: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
-  };
-
+ profile = await queryOne('SELECT * FROM users WHERE id = $1', [user.id]);
+ const [revRes, matchRes] = await Promise.all([
+  query(
+   `SELECT r.id, r.rating, r.title, r.created_at, p.name AS place_name, p.slug AS place_slug
+    FROM reviews r
+    JOIN places p ON p.id = r.place_id
+    WHERE r.user_id = $1 AND COALESCE(r.is_hidden, false) = false
+    ORDER BY r.created_at DESC LIMIT 5`,
+   [user.id]
+  ),
+  query(
+   `SELECT COUNT(*)::int AS c FROM social_matches WHERE user_a_id = $1 OR user_b_id = $1`,
+   [user.id]
+  ),
+ ]);
+ recentReviews = revRes.rows;
+ matchCount = Number(matchRes.rows[0]?.c || 0);
 } catch (e) {
-  console.error('Error loading data:', e);
+ logger.error('Error loading profile data:', e instanceof Error ? e : new Error(String(e)));
 }
+
+const initial = (profile?.full_name || user.email || 'U').charAt(0).toUpperCase();
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-    <div class="container mx-auto px-4">
-      <div class="grid lg:grid-cols-4 gap-8">
-        <!-- Sidebar -->
-        <aside class="lg:col-span-1">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 text-center">
-            <div class="w-24 h-24 bg-urfa-100 dark:bg-urfa-900/30 rounded-full flex items-center justify-center text-urfa-600 dark:text-urfa-400 text-3xl font-bold mx-auto">
-              {profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U'}
-            </div>
-            <h1 class="font-bold text-xl text-gray-900 dark:text-white mt-4">
-              {profile?.full_name || 'Kullanıcı'}
-            </h1>
-            <p class="text-gray-500 dark:text-gray-400 text-sm">{user.email}</p>
+ <style>
+  .pi-page{background:var(--public-bg);min-height:100vh;padding:2rem 0 4rem}
+  .pi-grid{display:grid;gap:1.75rem}
+  @media(min-width:64rem){.pi-grid{grid-template-columns:280px 1fr}}
 
-            <div class="flex items-center justify-center gap-2 mt-2">
-              <span set:html={icons.award}></span>
-              <span class="text-sm text-gray-600 dark:text-gray-400">
-                {profile?.points || 0} puan
-              </span>
-            </div>
+  /* Sidebar header */
+  .pi-side-head{text-align:center;padding-bottom:1.25rem;border-bottom:1px solid var(--public-border-soft);margin-bottom:1rem}
+  .pi-avatar{width:5.5rem;height:5.5rem;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.85rem;font-weight:700;margin:0 auto;box-shadow:0 6px 18px -4px color-mix(in srgb, var(--public-accent) 35%, transparent);background:linear-gradient(135deg,var(--public-accent) 0%,var(--public-warning) 100%);overflow:hidden}
+  .pi-avatar img{width:100%;height:100%;object-fit:cover}
+  .pi-username{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.2rem;color:var(--public-text);margin:.75rem 0 .15rem;text-align:center;line-height:1.2}
+  .pi-email{font-size:.78rem;color:var(--public-muted);text-align:center;margin:0;word-break:break-all}
+  .pi-points{display:inline-flex;align-items:center;gap:.4rem;font-size:.85rem;color:var(--public-accent);font-weight:700;margin-top:.6rem;padding:.4rem .85rem;background:var(--public-accent-soft);border:1px solid var(--public-border);border-radius:999px}
 
-            <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
-              <nav class="space-y-1 text-left">
-                <a href="/profil" class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/20 text-urfa-700 dark:text-urfa-300">
-                  <span set:html={icons.user}></span>
-                  Profil
-                </a>
-                <a href="/profil/yorumlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <span set:html={icons.star}></span>
-                  Yorumlarım ({stats.reviews})
-                </a>
-                <a href="/profil/favoriler" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <span set:html={icons.heart}></span>
-                  Favorilerim ({stats.favorites})
-                </a>
-                <a href="/profil/bildirimler" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <span set:html={icons.award}></span>
-                  Bildirimler
-                </a>
-                <a href="/profil/aktivite" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <span set:html={icons.activity}></span>
-                  Aktivite
-                </a>
-                <a href="/profil/ayarlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <span set:html={icons.settings}></span>
-                  Ayarlar
-                </a>
-                <a href="/cikis" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 mt-4">
-                  <span set:html={icons.logout}></span>
-                  Çıkış Yap
-                </a>
-              </nav>
-            </div>
-          </div>
-        </aside>
+  /* Cards */
+  .pi-card{background:var(--public-surface);border:1px solid var(--public-border);padding:1.5rem;border-radius:8px;box-shadow:0 2px 6px color-mix(in srgb, var(--public-text) 4%, transparent);margin-bottom:1.25rem}
+  .pi-card:last-child{margin-bottom:0}
+  .pi-card-h{display:flex;align-items:center;gap:.5rem;font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:700;color:var(--public-text);margin:0 0 .25rem;line-height:1.2}
+  .pi-card-h::before{content:'';width:.3rem;height:1.2rem;background:linear-gradient(180deg,var(--public-accent),var(--public-warning));border-radius:2px;align-self:center}
+  .pi-card-sub{font-size:.82rem;color:var(--public-muted);margin:0 0 1.25rem;padding-left:.6rem}
 
-        <!-- Main Content -->
-        <main class="lg:col-span-3">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="font-bold text-xl text-gray-900 dark:text-white mb-4">Profil Bilgileri</h2>
+  .pi-fields{display:grid;gap:1rem}
+  @media(min-width:48rem){.pi-fields{grid-template-columns:repeat(2,1fr)}}
+  .pi-field{padding:.85rem;background:var(--public-surface-muted);border-radius:6px;border:1px solid var(--public-border-soft)}
+  .pi-label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--public-accent);margin:0 0 .35rem}
+  .pi-value{color:var(--public-text);font-size:.95rem;font-weight:500;margin:0;word-break:break-word}
 
-            <div class="grid md:grid-cols-2 gap-6">
-              <div>
-                <label class="label">Ad Soyad</label>
-                <p class="text-gray-900 dark:text-white mt-1">{profile?.full_name || '-'}</p>
-              </div>
-              <div>
-                <label class="label">E-posta</label>
-                <p class="text-gray-900 dark:text-white mt-1">{user.email}</p>
-              </div>
-              <div>
-                <label class="label">Kullanıcı Adı</label>
-                <p class="text-gray-900 dark:text-white mt-1">{profile?.username || '-'}</p>
-              </div>
-              <div>
-                <label class="label">Üyelik Tarihi</label>
-                <p class="text-gray-900 dark:text-white mt-1">
-                  {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('tr-TR') : '-'}
-                </p>
-              </div>
-            </div>
+  /* Quick stats */
+  .pi-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1.25rem 0}
+  .pi-stat{padding:1rem;text-align:center;background:linear-gradient(135deg,var(--public-accent-soft),var(--public-surface-muted));border:1px solid var(--public-border);border-radius:8px}
+  .pi-stat-num{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:800;line-height:1;background:linear-gradient(135deg,var(--public-accent),var(--public-warning));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--public-accent)}
+  .pi-stat-lbl{font-size:.7rem;font-weight:600;color:var(--public-muted);margin-top:.4rem;text-transform:uppercase;letter-spacing:.08em}
 
-            <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <h3 class="font-medium text-gray-900 dark:text-white mb-4">İstatistikler</h3>
-              <div class="grid grid-cols-3 gap-4">
-                <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-lg p-4 text-center">
-                  <div class="text-2xl font-bold text-urfa-600 dark:text-urfa-400">{stats.reviews}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">Yorum</div>
-                </div>
-                <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-lg p-4 text-center">
-                  <div class="text-2xl font-bold text-urfa-600 dark:text-urfa-400">{stats.favorites}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">Favori</div>
-                </div>
-                <div class="bg-urfa-50 dark:bg-urfa-900/20 rounded-lg p-4 text-center">
-                  <div class="text-2xl font-bold text-urfa-600 dark:text-urfa-400">{profile?.points || 0}</div>
-                  <div class="text-sm text-gray-600 dark:text-gray-400">Puan</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
+  /* Recent reviews */
+  .pi-rev-list{display:flex;flex-direction:column;gap:.75rem}
+  .pi-rev{display:flex;justify-content:space-between;gap:.75rem;padding:.75rem;background:var(--public-surface-muted);border-radius:6px;border:1px solid var(--public-border-soft);text-decoration:none;transition:all .15s}
+  .pi-rev:hover{border-color:var(--public-accent);transform:translateX(2px)}
+  .pi-rev-info{flex:1;min-width:0}
+  .pi-rev-place{font-size:.92rem;font-weight:700;color:var(--public-text);margin:0 0 .2rem;display:block;text-overflow:ellipsis;overflow:hidden;white-space:nowrap}
+  .pi-rev-title{font-size:.78rem;color:var(--public-muted);margin:0;line-height:1.4;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .pi-rev-meta{display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;flex-shrink:0}
+  .pi-rev-rating{display:inline-flex;color:var(--public-warning);font-size:.85rem;letter-spacing:.5px}
+  .pi-rev-date{font-size:.7rem;color:var(--public-muted)}
+
+  .pi-empty{text-align:center;padding:1.5rem;color:var(--public-muted);font-size:.88rem;font-style:italic}
+
+  /* Action buttons */
+  .pi-actions{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.25rem}
+  .pi-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.05rem;font-size:.85rem;font-weight:700;text-decoration:none;border-radius:6px;transition:all .15s}
+  .pi-btn-primary{background:linear-gradient(135deg,var(--public-accent),var(--public-warning));color:#fff}
+  .pi-btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 12px -3px color-mix(in srgb, var(--public-accent) 35%, transparent)}
+  .pi-btn-outline{background:var(--public-surface);color:var(--public-accent);border:1px solid var(--public-border)}
+  .pi-btn-outline:hover{background:var(--public-surface-muted);border-color:var(--public-accent)}
+
+  .pi-skeleton-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+  .pi-skeleton{height:4.5rem;background:linear-gradient(90deg,var(--public-accent-soft),var(--public-surface-muted),var(--public-accent-soft));border-radius:6px;animation:piSkel 1.6s infinite}
+  @keyframes piSkel{0%,100%{opacity:.55}50%{opacity:1}}
+ </style>
+
+ <div class="pi-page">
+  <div class="sf-container">
+   <div class="pi-grid">
+    <ProfileSidebar activeKey="profile" showLogout>
+     <div slot="header" class="pi-side-head">
+      <div class="pi-avatar">
+       {profile?.avatar_url ? <img src={profile.avatar_url} alt={profile?.full_name || 'avatar'} loading="eager" /> : initial}
       </div>
+      <h1 class="pi-username">{profile?.full_name || 'Kullanıcı'}</h1>
+      <p class="pi-email">{user.email}</p>
+      <p class="pi-points">
+       <Icon name="lucide:award" style="width:.95rem;height:.95rem" />
+       {profile?.points || 0} puan
+      </p>
+     </div>
+    </ProfileSidebar>
+
+    <div>
+     <!-- Quick stats -->
+     <div class="pi-card">
+      <h2 class="pi-card-h">Genel Bakış</h2>
+      <p class="pi-card-sub">Aktivite özetiniz, etkileşimleriniz ve gelişiminiz.</p>
+      <div class="pi-stats-row">
+       <div class="pi-stat">
+        <div class="pi-stat-num">{recentReviews.length}</div>
+        <div class="pi-stat-lbl">Son Yorum</div>
+       </div>
+       <div class="pi-stat">
+        <div class="pi-stat-num">{matchCount}</div>
+        <div class="pi-stat-lbl">Eşleşme</div>
+       </div>
+       <div class="pi-stat">
+        <div class="pi-stat-num">{profile?.level || 1}</div>
+        <div class="pi-stat-lbl">Seviye</div>
+       </div>
+      </div>
+     </div>
+
+     <!-- Profile info -->
+     <div class="pi-card">
+      <h2 class="pi-card-h">Profil Bilgileri</h2>
+      <p class="pi-card-sub">Hesap detaylarınız.</p>
+      <div class="pi-fields">
+       <div class="pi-field">
+        <span class="pi-label">Ad Soyad</span>
+        <p class="pi-value">{profile?.full_name || '—'}</p>
+       </div>
+       <div class="pi-field">
+        <span class="pi-label">E-posta</span>
+        <p class="pi-value">{user.email}</p>
+       </div>
+       <div class="pi-field">
+        <span class="pi-label">Kullanıcı Adı</span>
+        <p class="pi-value">{profile?.username ? `@${profile.username}` : '—'}</p>
+       </div>
+       <div class="pi-field">
+        <span class="pi-label">Üyelik</span>
+        <p class="pi-value">{profile?.created_at ? new Date(profile.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}</p>
+       </div>
+      </div>
+      {profile?.bio && (
+       <div class="pi-field" style="margin-top:1rem">
+        <span class="pi-label">Hakkımda</span>
+        <p class="pi-value" style="font-weight:400;line-height:1.6">{profile.bio}</p>
+       </div>
+      )}
+      <div class="pi-actions">
+       <a href="/profil/ayarlar" class="pi-btn pi-btn-primary">
+        <Icon name="lucide:settings" style="width:.95rem;height:.95rem" />
+        Profili Düzenle
+       </a>
+       <a href="/profil/yorumlar" class="pi-btn pi-btn-outline">
+        <Icon name="lucide:message-square" style="width:.95rem;height:.95rem" />
+        Tüm Yorumlarım
+       </a>
+       <a href="/profil/favoriler" class="pi-btn pi-btn-outline">
+        <Icon name="lucide:heart" style="width:.95rem;height:.95rem" />
+        Favoriler
+       </a>
+      </div>
+     </div>
+
+     <!-- Recent reviews -->
+     <div class="pi-card">
+      <h2 class="pi-card-h">Son Yorumlarım</h2>
+      <p class="pi-card-sub">{recentReviews.length > 0 ? `Son ${recentReviews.length} yorumunuz.` : 'Henüz yorum yazmadınız.'}</p>
+      {recentReviews.length === 0 ? (
+       <p class="pi-empty">İlk yorumunuzu yazmak için bir mekan ziyaret edin.</p>
+      ) : (
+       <div class="pi-rev-list">
+        {recentReviews.map((rev) => (
+         <a href={`/isletme/${rev.place_slug}#yorumlar`} class="pi-rev">
+          <div class="pi-rev-info">
+           <span class="pi-rev-place">{rev.place_name}</span>
+           <p class="pi-rev-title">{rev.title || '(başlıksız yorum)'}</p>
+          </div>
+          <div class="pi-rev-meta">
+           <span class="pi-rev-rating">{'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}</span>
+           <span class="pi-rev-date">{new Date(rev.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}</span>
+          </div>
+         </a>
+        ))}
+       </div>
+      )}
+     </div>
+
+     <!-- Detailed stats island (server-rendered with defer) -->
+     <div class="pi-card">
+      <h2 class="pi-card-h">Detaylı İstatistikler</h2>
+      <p class="pi-card-sub">Puanlar, rozetler ve aktivite geçmişi.</p>
+      <ProfileStats userId={user.id} initialPoints={profile?.points || 0} server:defer>
+       <div slot="fallback" class="pi-skeleton-grid">
+        <div class="pi-skeleton"></div>
+        <div class="pi-skeleton"></div>
+        <div class="pi-skeleton"></div>
+       </div>
+      </ProfileStats>
+     </div>
     </div>
+   </div>
   </div>
+ </div>
 </Layout>

@@ -1,0 +1,13 @@
+UPDATE places SET thumbnail_url = '/uploads/places/oz-urfa-lahmacuncusu.jpg' WHERE slug = 'oz-urfa-lahmacuncusu';
+UPDATE places SET thumbnail_url = '/uploads/places/haci-mehmet-lahmacun.jpg' WHERE slug = 'haci-mehmet-lahmacun';
+UPDATE places SET thumbnail_url = '/uploads/places/selahattin-usta-kunefe.jpg' WHERE slug = 'selahattin-usta-kunefe';
+UPDATE places SET thumbnail_url = '/uploads/places/balikligol-kunefecisi.jpg' WHERE slug = 'balikligol-kunefecisi';
+UPDATE places SET thumbnail_url = '/uploads/places/harran-cay-bahcesi.jpg' WHERE slug = 'harran-cay-bahcesi';
+UPDATE places SET thumbnail_url = '/uploads/places/gobeklitepe-cafe.jpg' WHERE slug = 'gobeklitepe-cafe';
+UPDATE places SET thumbnail_url = '/uploads/places/urfa-pastanesi.jpg' WHERE slug = 'urfa-pastanesi';
+UPDATE places SET thumbnail_url = '/uploads/places/usta-katmercisi.jpg' WHERE slug = 'usta-katmercisi';
+UPDATE places SET thumbnail_url = '/uploads/places/meshur-urfa-katmeri.jpg' WHERE slug = 'meshur-urfa-katmeri';
+UPDATE places SET thumbnail_url = '/uploads/places/mirra-evi.jpg' WHERE slug = 'mirra-evi';
+UPDATE places SET thumbnail_url = '/uploads/places/dicle-et-lokantasi.jpg' WHERE slug = 'dicle-et-lokantasi';
+UPDATE places SET thumbnail_url = '/uploads/places/antep-usulu-dondurma.jpg' WHERE slug = 'antep-usulu-dondurma';
+SELECT slug, thumbnail_url FROM places WHERE slug IN ('oz-urfa-lahmacuncusu','haci-mehmet-lahmacun','selahattin-usta-kunefe','balikligol-kunefecisi','harran-cay-bahcesi','gobeklitepe-cafe','urfa-pastanesi','usta-katmercisi','meshur-urfa-katmeri','mirra-evi','dicle-et-lokantasi','antep-usulu-dondurma');

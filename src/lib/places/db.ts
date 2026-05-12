@@ -3,7 +3,7 @@
  * PostgreSQL based place management
  */
 
-import { query, queryOne } from '../postgres';
+import { query, queryOne, queryRead, queryReadOne } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 
 export interface Place {
@@ -59,6 +59,18 @@ const CACHE_KEYS = {
   categories: 'places:categories',
 };
 
+// HARD RULE #51: SQL column injection defense — allowlist için
+const PLACE_UPDATE_COLUMNS = new Set([
+  'slug', 'name', 'category_id', 'category_slug', 'category_name', 'district_id',
+  'short_description', 'description', 'meta_description',
+  'address', 'phone', 'website', 'email',
+  'latitude', 'longitude',
+  'thumbnail', 'images',
+  'price_range', 'price_min', 'price_max',
+  'features', 'opening_hours',
+  'is_verified', 'is_featured', 'status',
+]);
+
 /**
  * Get places with filters
  */
@@ -107,15 +119,6 @@ export async function getPlaces(filters: PlaceFilters = {}): Promise<{ places: P
     whereClause += ` AND (p.name ILIKE $${params.length - 1} OR p.short_description ILIKE $${params.length})`;
   }
 
-  // Get total count
-  const countResult = await queryOne<{ count: number }>(
-    `SELECT COUNT(*)::int as count 
-     FROM places p
-     LEFT JOIN place_categories c ON c.id = p.category_id
-     ${whereClause}`,
-    params
-  );
-
   // Build sort
   let orderBy = 'p.view_count DESC';
   switch (sortBy) {
@@ -130,21 +133,31 @@ export async function getPlaces(filters: PlaceFilters = {}): Promise<{ places: P
       break;
   }
 
-  params.push(limit);
-  params.push(offset);
+  const countParams = [...params];
+  const listParams = [...params, limit, offset];
 
-  const result = await query<Place>(
-    `SELECT 
-      p.*,
-      c.slug as category_slug,
-      c.name as category_name
-    FROM places p
-    LEFT JOIN place_categories c ON c.id = p.category_id
-    ${whereClause}
-    ORDER BY ${orderBy}
-    LIMIT $${params.length - 1} OFFSET $${params.length}`,
-    params
-  );
+  // Read replica routing — count + list SELECT-only.
+  const [countResult, result] = await Promise.all([
+    queryReadOne<{ count: number }>(
+      `SELECT COUNT(*)::int as count
+       FROM places p
+       LEFT JOIN place_categories c ON c.id = p.category_id
+       ${whereClause}`,
+      countParams
+    ),
+    queryRead<Place>(
+      `SELECT
+        p.*,
+        c.slug as category_slug,
+        c.name as category_name
+      FROM places p
+      LEFT JOIN place_categories c ON c.id = p.category_id
+      ${whereClause}
+      ORDER BY ${orderBy}
+      LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+      listParams
+    ),
+  ]);
 
   const response = { places: result.rows, total: countResult?.count || 0 };
   await setCache(cacheKey, response, 300);
@@ -162,8 +175,9 @@ export async function getPlaceBySlug(slug: string): Promise<Place | null> {
     return cached;
   }
 
-  const result = await queryOne<Place>(
-    `SELECT 
+  // Read replica routing — SELECT-only.
+  const result = await queryReadOne<Place>(
+    `SELECT
       p.*,
       c.slug as category_slug,
       c.name as category_name
@@ -185,8 +199,8 @@ export async function getPlaceBySlug(slug: string): Promise<Place | null> {
  * Search places
  */
 export async function searchPlaces(query_str: string): Promise<{ places: Place[] }> {
-  const result = await query<Place>(
-    `SELECT 
+  const result = await queryRead<Place>(
+    `SELECT
       p.*,
       c.slug as category_slug,
       c.name as category_name
@@ -206,8 +220,8 @@ export async function searchPlaces(query_str: string): Promise<{ places: Place[]
  * Get related places
  */
 export async function getRelatedPlaces(place: Place, limit = 4): Promise<Place[]> {
-  const result = await query<Place>(
-    `SELECT 
+  const result = await queryRead<Place>(
+    `SELECT
       p.*,
       c.slug as category_slug,
       c.name as category_name
@@ -232,7 +246,7 @@ export async function getFeaturedPlaces(limit = 8): Promise<Place[]> {
   const cached = await getCache<Place[]>(cacheKey);
   if (cached) return cached;
 
-  const result = await query<Place>(
+  const result = await queryRead<Place>(
     `SELECT 
       p.*,
       c.slug as category_slug,
@@ -258,8 +272,8 @@ export async function getPlaceReviews(
 ): Promise<any[]> {
   const { limit = 10, offset = 0 } = options;
 
-  const result = await query(
-    `SELECT 
+  const result = await queryRead(
+    `SELECT
       r.*,
       u.full_name as user_name,
       u.avatar_url as user_avatar
@@ -282,7 +296,7 @@ export async function getPlaceRatingBreakdown(placeId: string): Promise<{
   total: number;
   distribution: Record<number, number>;
 } | null> {
-  const result = await queryOne<{
+  const result = await queryReadOne<{
     avg_rating: number;
     total: number;
     five: number;
@@ -367,7 +381,7 @@ export async function updatePlace(id: string, data: Partial<Place>): Promise<Pla
   let paramIndex = 1;
 
   Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined && key !== 'id') {
+    if (value !== undefined && PLACE_UPDATE_COLUMNS.has(key)) {
       updates.push(`${key} = $${paramIndex++}`);
       values.push(value);
     }

@@ -2,20 +2,25 @@
 import Layout from '../../layouts/Layout.astro';
 import MessagingInbox from '../../components/MessagingInbox';
 
-// Redirect if not logged in
-if (!Astro.locals.user) {
-  return Astro.redirect('/giris');
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect('/giris?redirect=/mesajlar');
 }
 ---
 
-<Layout title="Mesajlar - Şanlıurfa Rehberi">
-  <div class="min-h-screen bg-gray-50">
-    <MessagingInbox client:visible={{ rootMargin: '160px' }} />
-  </div>
+<Layout seo={{ title: "Mesajlar - Şanlıurfa Rehberi", noIndex: true }}>
+ <div class="ms-page">
+ <MessagingInbox client:visible={{ rootMargin: '160px' }} />
+ </div>
 </Layout>
 
 <style>
-  div :global(body) {
-    overflow: hidden;
-  }
+ div :global(body) {
+ overflow: hidden;
+ }
+
+ .ms-page {
+ background: var(--public-bg);
+ min-height: 100vh;
+ }
 </style>

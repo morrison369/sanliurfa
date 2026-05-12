@@ -2,17 +2,30 @@
 import Layout from '../../layouts/Layout.astro';
 import LiveAnalyticsDashboard from '../../components/LiveAnalyticsDashboard';
 
-// Admin-only access
-const userId = Astro.locals.user?.id;
-const isAdmin = Astro.locals.user?.role === 'admin';
-
-if (!userId || !isAdmin) {
-  return Astro.redirect('/giris');
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+ return Astro.redirect('/giris?redirect=/canli-analitik');
 }
 ---
 
 <Layout seo={{ title: "Canlı Analitik | Şanlıurfa", noIndex: true }}>
-  <div class="container mx-auto px-4 py-8">
-    <LiveAnalyticsDashboard client:visible />
-  </div>
+ <style is:inline>
+ .ca-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:2.5rem 0}
+ .ca-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#4A3828}
+ .ca-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:700;color:#1F1410;margin:.5rem 0}
+ .ca-body{background:var(--bg);padding:2rem 0 4rem}
+ </style>
+
+ <div class="ca-hero">
+ <div class="sf-container">
+ <p class="ca-label">Analitik</p>
+ <h1 class="ca-h1">Canlı Analitik</h1>
+ </div>
+ </div>
+
+ <div class="ca-body">
+ <div class="sf-container">
+ <LiveAnalyticsDashboard client:visible />
+ </div>
+ </div>
 </Layout>

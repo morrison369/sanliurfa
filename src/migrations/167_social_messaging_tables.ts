@@ -41,13 +41,14 @@ export const migration_167_social_messaging_tables: Migration = {
 
     // Social messages table — richer schema used by messaging-db.ts
     // (distinct from the simple 'messages' table in migration 024)
+    // migration 024 already created 'messages' with body/subject schema — use IF NOT EXISTS + ALTER TABLE
     await pool.query(`
       CREATE TABLE IF NOT EXISTS messages (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-        sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        content TEXT NOT NULL,
-        type VARCHAR(20) DEFAULT 'text' CHECK (type IN ('text', 'image', 'location', 'place_share', 'voice')),
+        conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+        sender_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT,
+        type VARCHAR(20) DEFAULT 'text',
         metadata JSONB,
         is_read BOOLEAN DEFAULT false,
         read_at TIMESTAMP,
@@ -55,6 +56,18 @@ export const migration_167_social_messaging_tables: Migration = {
         is_deleted BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT NOW()
       )
+    `);
+
+    // Ensure all social-messaging columns exist on the pre-existing table from migration 024
+    await pool.query(`
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS content TEXT;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS type VARCHAR(20) DEFAULT 'text';
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS metadata JSONB;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMP;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMP;
+      ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT false;
     `);
 
     await pool.query(`
@@ -771,44 +784,8 @@ export const migration_167_social_messaging_tables: Migration = {
       )
     `);
 
-    // backup_configs — used by backup/index.ts
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS backup_configs (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name VARCHAR(255) NOT NULL,
-        type VARCHAR(50),
-        schedule VARCHAR(100),
-        retention INTEGER DEFAULT 7,
-        destination VARCHAR(50),
-        destination_config JSONB,
-        tables TEXT[],
-        compress BOOLEAN DEFAULT true,
-        encrypt BOOLEAN DEFAULT false,
-        encryption_key TEXT,
-        created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-
-    // backups — used by backup/index.ts
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS backups (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        config_id UUID REFERENCES backup_configs(id) ON DELETE SET NULL,
-        status VARCHAR(50) DEFAULT 'running',
-        started_at TIMESTAMP DEFAULT NOW(),
-        completed_at TIMESTAMP,
-        size BIGINT,
-        checksum VARCHAR(255),
-        path TEXT,
-        duration INTEGER,
-        error TEXT
-      )
-    `);
-
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_backups_config ON backups(config_id, started_at DESC);
-      CREATE INDEX IF NOT EXISTS idx_backups_status ON backups(status, started_at DESC);
-    `);
+    // backup_configs + backups tabloları kaldırıldı — migration 169'da drop edildi
+    // (feature production'da hiç aktive edilmedi, kod tamamen silindi).
 
     // recommendation_feedback — used by ai/recommendations.ts
     await pool.query(`
@@ -909,14 +886,38 @@ export const migration_167_social_messaging_tables: Migration = {
     `);
 
     // user_match_profiles — used by social/matchmaking-db.ts
+    // photos: TEXT[] (NOT JSONB) — matchmaking-db candidate query uses cardinality(mp.photos)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS user_match_profiles (
         user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-        bio TEXT,
-        photos JSONB DEFAULT '[]',
+        bio TEXT DEFAULT '',
+        photos TEXT[] DEFAULT '{}',
         is_discoverable BOOLEAN DEFAULT true,
-        updated_at TIMESTAMP DEFAULT NOW()
+        updated_at TIMESTAMPTZ DEFAULT NOW()
       )
+    `);
+    // Fix existing prod tables that were created with JSONB before this fix
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'user_match_profiles'
+            AND column_name = 'photos'
+            AND data_type = 'jsonb'
+        ) THEN
+          ALTER TABLE user_match_profiles
+            ALTER COLUMN photos DROP DEFAULT,
+            ALTER COLUMN photos TYPE TEXT[]
+              USING (
+                CASE
+                  WHEN photos IS NULL OR photos::text = 'null' THEN '{}'::text[]
+                  ELSE ARRAY(SELECT jsonb_array_elements_text(photos))
+                END
+              ),
+            ALTER COLUMN photos SET DEFAULT '{}';
+        END IF;
+      END $$;
     `);
 
     // webhook_delivery_queue — used by webhook/webhook-queue.ts

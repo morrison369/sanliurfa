@@ -39,6 +39,9 @@ export async function createApiKey(
       expiresAt: expiresAt?.toISOString()
     });
 
+    if (!keyId) {
+      return null;
+    }
     return { id: keyId, key };
   } catch (error) {
     logger.error('API key olusturulurken hata', error instanceof Error ? error : new Error(String(error)));

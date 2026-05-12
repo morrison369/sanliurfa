@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getPersonalizedRecommendations, recordRecommendationFeedback } from '../../../lib/ai/recommendations';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     const type = url.searchParams.get('type') as 'place' | 'blog' | 'event' | 'all' || 'all';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 50);
 
     const recommendations = await getPersonalizedRecommendations(locals.user.id, {
       type,

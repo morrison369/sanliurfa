@@ -1,3 +1,6 @@
+import { HOMEPAGE_CTA_CONFIG, HOMEPAGE_PUBLIC_SECTION_ORDER } from '../data/homepage-shell';
+import { HOMEPAGE_THEME_TOKENS } from '../data/homepage-theme';
+
 type SettingBundle = Record<string, Record<string, any>>;
 
 export type SitePreset = {
@@ -255,6 +258,11 @@ const agencyModernPreset: SitePreset = {
       secondaryLabel: 'Tüm Mekanları Gör',
       secondaryHref: '/mekanlar',
     },
+    'homepage.cta': HOMEPAGE_CTA_CONFIG,
+    'homepage.sectionOrder': {
+      items: HOMEPAGE_PUBLIC_SECTION_ORDER,
+    },
+    'homepage.theme': HOMEPAGE_THEME_TOKENS,
     'homepage.sectionStyles': SECTION_STYLES_BASE,
     'homepage.primaryActions': {
       items: [
@@ -303,7 +311,7 @@ const agencyModernPreset: SitePreset = {
           description: 'Kebapçılar, tarihi yerler, ilçeler ve Şanlıurfa tariflerini hızlı başlat.',
           href: '/mekanlar',
           links: [
-            { href: '/mekanlar/kebapcilar', label: 'Kebapçılar' },
+            { href: '/mekanlar/yeme-icme-kebapcilar', label: 'Kebapçılar' },
             { href: '/gezilecek-yerler', label: 'Gezilecek Yerler' },
             { href: '/yemek-tarifleri', label: 'Yemek Tarifleri' },
           ],
@@ -569,6 +577,15 @@ const serviceDensePreset: SitePreset = {
       ...agencyModernPreset.settings['homepage.mainCta'],
       secondaryLabel: 'Nöbetçi Eczane Aç',
       secondaryHref: '/saglik/nobetci-eczaneler',
+    },
+    'homepage.cta': {
+      ...(agencyModernPreset.settings['homepage.cta'] as Record<string, any>),
+      secondary: {
+        ...((agencyModernPreset.settings['homepage.cta'] as Record<string, any>).secondary || {}),
+        label: 'Nöbetçi Eczane',
+        href: '/saglik/nobetci-eczaneler',
+        ariaLabel: 'Nöbetçi eczane sayfasını aç',
+      },
     },
   },
 };

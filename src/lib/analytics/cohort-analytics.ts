@@ -89,7 +89,7 @@ export async function addUserToCohort(cohortId: string, userId: string): Promise
     );
 
     await update('user_cohorts', { id: cohortId }, {
-      member_count: parseInt(count?.count || '0')
+      member_count: parseInt(count?.count || '0', 10)
     });
 
     await deleteCache(`cohort:${cohortId}`);
@@ -150,7 +150,7 @@ export async function calculateRetention(cohortId: string, weekNumber: number): 
       [cohortId, weekNumber]
     );
 
-    const activeCount = parseInt(activeUsers[0]?.count || '0');
+    const activeCount = parseInt(activeUsers[0]?.count || '0', 10);
     const retentionRate = totalUsers > 0 ? (activeCount / totalUsers) * 100 : 0;
 
     await insert('retention_cohorts', {

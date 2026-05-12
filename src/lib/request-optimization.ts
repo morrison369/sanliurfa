@@ -103,6 +103,13 @@ export interface CursorPaginationResult<T> {
   limit: number;
 }
 
+function withOptional<K extends string, V>(key: K, value: V | null | undefined): { [P in K]?: V } {
+  if (value === null || value === undefined) {
+    return {} as { [P in K]?: V };
+  }
+  return { [key]: value } as { [P in K]?: V };
+}
+
 /**
  * Cursor-based pagination (keyset pagination)
  * More efficient than offset pagination for large datasets
@@ -185,9 +192,9 @@ export async function paginateWithCursor<T>(
 
   return {
     data,
-    nextCursor,
     hasMore,
-    limit
+    limit,
+    ...withOptional('nextCursor', nextCursor),
   };
 }
 

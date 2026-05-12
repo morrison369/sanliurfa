@@ -1,0 +1,489 @@
+1) Yeme İçme
+Restoranlar
+Kebapçılar
+Ciğerciler
+Lahmacuncular
+Pide salonları
+Dönerciler
+Et lokantaları
+Tavukçular
+Çiğ köfteciler
+Ev yemekleri
+Balık restoranları
+Kahvaltı mekanları
+Otoyağlı / yöresel yemek mekanları
+Kafeler
+Kahveciler
+Nargile kafeler
+Tatlı kafeler
+Kitap kafeler
+Manzaralı kafeler
+Pastaneler
+Fırınlar
+Tatlıcılar
+Künefeciler
+Katmerciler
+Dondurmacılar
+Fast food
+Burger
+Pizza
+Tost
+Sandviç
+Kuruyemişçiler
+Kasaplar
+Şarküteriler
+Manavlar
+Marketler
+Süpermarketler
+Yöresel ürün dükkanları
+Su bayileri
+2) Konaklama
+Oteller
+5 yıldızlı
+4 yıldızlı
+3 yıldızlı
+Butik oteller
+Apart oteller
+Pansiyonlar
+Günlük kiralık daireler
+Öğretmenevleri / misafirhaneler
+Kamp alanları
+Bungalov / doğa konaklama
+3) Sağlık
+Devlet hastaneleri
+Özel hastaneler
+Üniversite hastaneleri
+Tıp merkezleri
+Aile sağlık merkezleri
+Poliklinikler
+Diş klinikleri
+Ağız ve diş sağlığı merkezleri
+Eczaneler
+Nöbetçi eczaneler
+Veteriner klinikleri
+Psikologlar
+Psikiyatristler
+Diyetisyenler
+Fizyoterapistler
+Göz merkezleri
+Estetik / güzellik klinikleri
+Tıbbi laboratuvarlar
+Ambulans / evde sağlık hizmetleri
+4) Eğitim
+Anaokulları
+İlkokullar
+Ortaokullar
+Liseler
+Kolejler
+Üniversiteler
+Dershaneler
+Etüt merkezleri
+Dil kursları
+Yazılım kursları
+Sürücü kursları
+Müzik kursları
+Resim / sanat kursları
+Halk eğitim merkezleri
+Kütüphaneler
+Yurtlar
+Kreşler
+5) Resmi Kurumlar
+Valilik
+Kaymakamlıklar
+Belediyeler
+Nüfus müdürlükleri
+Tapu müdürlükleri
+Vergi daireleri
+SGK müdürlükleri
+İŞKUR
+Adliyeler
+Emniyet müdürlükleri
+Polis merkezleri
+Jandarma
+Muhtarlıklar
+Noterler
+PTT şubeleri
+Konsolosluk / temsilcilikler
+Ticaret odası
+Esnaf odaları
+6) Ulaşım
+Otogar
+Havalimanı
+Tren garı
+Minibüs hatları
+Otobüs hatları
+Taksi durakları
+Araç kiralama
+Transfer firmaları
+Otoparklar
+Oto kurtarma
+Oto ekspertiz
+Şehir içi ulaşım kart noktaları
+Akaryakıt istasyonları
+Elektrikli araç şarj istasyonları
+7) Otomotiv
+Oto servisler
+Oto tamirciler
+Kaportacılar
+Boyacılar
+Lastikçiler
+Oto elektrikçiler
+Oto yıkama
+Oto aksesuar
+Galeriler
+Motosiklet servisleri
+Yedek parça satıcıları
+Egzoz servisleri
+Cam filmi / oto cam
+Ekspertiz firmaları
+8) Alışveriş
+AVM’ler
+Giyim mağazaları
+Kadın giyim
+Erkek giyim
+Çocuk giyim
+Ayakkabıcılar
+Çantacılar
+Kuyumcular
+Saatçiler
+Telefoncular
+Bilgisayarcılar
+Elektronik mağazaları
+Beyaz eşya mağazaları
+Mobilyacılar
+Ev dekorasyon
+Züccaciyeler
+Yapı marketler
+Perdeciler
+Halıcılar
+Oyuncakçılar
+Kırtasiyeler
+Hediyelik eşya
+Çiçekçiler
+Optikçiler
+9) Ev ve Yaşam
+Temizlik firmaları
+Halı yıkama
+İlaçlama firmaları
+Tesisatçılar
+Elektrikçiler
+Boyacılar
+Çilingirler
+Mobilya ustaları
+Cam balkon firmaları
+Klima servisleri
+Beyaz eşya servisleri
+Asansör firmaları
+Güvenlik sistemleri
+Uyducular
+Nakliyat firmaları
+Depolama firmaları
+10) Hizmetler
+Kuaförler
+Erkek kuaförleri
+Kadın kuaförleri
+Berberler
+Güzellik merkezleri
+Spa / masaj salonları
+Gelinlikçiler
+Terziler
+Kuru temizleme
+Fotoğrafçılar
+Matbaalar
+Ajanslar
+Yazılım firmaları
+Web tasarım firmaları
+Reklam ajansları
+Organizasyon firmaları
+Danışmanlık firmaları
+Tercüme büroları
+11) Hukuk ve Finans
+Avukatlar
+Hukuk büroları
+Arabulucular
+Mali müşavirler
+Muhasebeciler
+Banka şubeleri
+ATM’ler
+Sigorta acenteleri
+Finans danışmanları
+Gayrimenkul danışmanları
+İcra / hukuki danışmanlık ofisleri
+12) Emlak
+Emlak ofisleri
+Satılık daire
+Kiralık daire
+Satılık arsa
+Kiralık iş yeri
+Günlük kiralık
+Ofis kiralama
+Ticari gayrimenkul
+İnşaat firmaları
+Müteahhitler
+Site yönetimleri
+13) Turizm ve Gezilecek Yerler
+Tarihi yerler
+Müzeler
+Ören yerleri
+Camiler
+Kiliseler
+Kümbetler / türbeler
+Hanlar
+Çarşılar
+Mesire alanları
+Piknik alanları
+Parklar
+Seyir terasları
+Fotoğraf çekim noktaları
+Doğal güzellikler
+Günübirlik gezi rotaları
+Rehberli turlar
+Tur şirketleri
+14) Eğlence ve Sosyal Yaşam
+Konser mekanları
+Etkinlik alanları
+Düğün salonları
+Kır düğün salonları
+Sinemalar
+Tiyatrolar
+Kültür merkezleri
+Canlı müzik mekanları
+Gece kulüpleri
+Oyun salonları
+Playstation kafeler
+Bowling salonları
+Çocuk oyun alanları
+Lunapark / eğlence parkları
+15) Etkinlikler
+Konserler
+Tiyatrolar
+Festivaller
+Sergiler
+Fuarlar
+Spor etkinlikleri
+Belediye etkinlikleri
+Çocuk etkinlikleri
+Atölyeler
+Seminerler
+Konferanslar
+Üniversite etkinlikleri
+Ramazan etkinlikleri
+Yerel şenlikler
+16) Spor ve Fitness
+Spor salonları
+Fitness merkezleri
+Yüzme havuzları
+Halı sahalar
+Futbol okulları
+Basketbol salonları
+Tenis kortları
+Dövüş sporları salonları
+Pilates stüdyoları
+Yoga salonları
+Bisiklet mağazaları
+Av malzemeleri
+Kamp malzemeleri
+17) Aile ve Çocuk
+Kreşler
+Oyun evleri
+Çocuk doktorları
+Çocuk giyim
+Oyuncak mağazaları
+Doğum günü mekanları
+Çocuk etkinlik merkezleri
+Etüt merkezleri
+Bebek mağazaları
+18) Dini ve Kültürel Yerler
+Camiler
+Kur’an kursları
+Medreseler
+Türbeler
+Dini vakıflar
+Kültür evleri
+Halk oyunları dernekleri
+Sanat merkezleri
+19) İş Dünyası ve Sanayi
+Organize sanayi bölgeleri
+Fabrikalar
+Toptancılar
+Depolar
+Tarım ekipman firmaları
+Hayvancılık firmaları
+Gıda üreticileri
+Tekstil üreticileri
+Ambalaj firmaları
+İhracat firmaları
+20) Tarım ve Hayvancılık
+Tarım ürünleri satıcıları
+Gübre bayileri
+Yem bayileri
+Zirai ilaç bayileri
+Sulama sistemleri
+Traktör / ekipman bayileri
+Hayvan pazarları
+Kasaplık / besicilik işletmeleri
+Veteriner hizmetleri
+Fide / tohum satıcıları
+21) Acil Durum
+Acil servisler
+Nöbetçi eczaneler
+Polis merkezleri
+Jandarma
+İtfaiye
+Çekici hizmetleri
+Acil su tesisatçı
+Acil çilingir
+Acil elektrikçi
+Yol yardım
+22) Medya ve İletişim
+Yerel gazeteler
+Haber siteleri
+Radyolar
+TV kanalları
+Reklam ajansları
+Basın kuruluşları
+Prodüksiyon firmaları
+23) Rehber İçerikler / Blog
+Şanlıurfa’da gezilecek yerler
+Şanlıurfa en iyi kebapçılar
+Şanlıurfa en iyi kahvaltı mekanları
+Şanlıurfa düğün salonları rehberi
+Şanlıurfa nöbetçi eczaneler
+Şanlıurfa hafta sonu etkinlikleri
+Şanlıurfa öğrenci rehberi
+Şanlıurfa hastane rehberi
+Şanlıurfa semt semt yaşam rehberi
+Şanlıurfa sıra gecesi mekanları
+Şanlıurfa çocuklu aileler için mekanlar
+Şanlıurfa düğün, nişan, organizasyon rehberi
+24) İlçeler Bazlı Yapı
+
+Bunu mutlaka ayrıca kur:
+
+Eyyübiye
+Haliliye
+Karaköprü
+Siverek
+Viranşehir
+Suruç
+Birecik
+Akçakale
+Ceylanpınar
+Hilvan
+Bozova
+Halfeti
+Harran
+
+Her ilçe altında tekrar:
+
+Mekanlar
+Hastaneler
+Eczaneler
+Okullar
+Noterler
+Kafeler
+Fırınlar
+Pastaneler
+Oteller
+Emlak
+Etkinlikler
+25) Mahalle Bazlı Yapı
+
+Büyümek istiyorsan çok değerlidir:
+
+Mahalle rehberleri
+Mahalledeki işletmeler
+Mahalledeki eczaneler
+Mahalledeki okullar
+Mahalledeki parklar
+Mahalledeki camiler
+Mahalledeki marketler
+26) Listeleme Sayfasında Filtreler
+
+Her kategori için filtre koy:
+
+İlçe
+Mahalle
+Puan
+Fiyat seviyesi
+Açık / kapalı
+7/24 açık
+Paket servis var
+Otopark var
+Çocuk alanı var
+Engelli erişimi var
+Wi-Fi var
+Kadınlara uygun
+Aileye uygun
+Rezervasyon var
+Kredi kartı geçiyor
+Haritada yakınlık
+27) Her işletme detay sayfasında olması gereken alanlar
+İşletme adı
+Kategori
+Alt kategori
+Açıklama
+Adres
+Konum haritası
+Telefon
+WhatsApp
+Web sitesi
+Sosyal medya
+Çalışma saatleri
+Fotoğraflar
+Hizmetler / menü
+Fiyat aralığı
+Yorumlar
+Puan
+Sık sorulan sorular
+Yakındaki benzer yerler
+İlçe / mahalle bağlantıları
+Schema verileri
+28) SEO için en güçlü ana omurga
+
+Ana menüde bence şunlar olmalı:
+
+Mekanlar
+Yeme İçme
+Hastaneler
+Eczaneler
+Noterler
+Oteller
+Gezilecek Yerler
+Etkinlikler
+Konserler
+Eğitim
+Emlak
+Otomotiv
+Hizmetler
+İlçeler
+Blog
+29) Şanlıurfa’ya özel mutlaka eklenmesi gereken özel kategoriler
+Sıra gecesi mekanları
+Kebapçılar
+Ciğerciler
+Çiğ köfteciler
+Balıklıgöl çevresi mekanlar
+Halfeti gezi noktaları
+Harran gezilecek yerler
+Yöresel ürün satıcıları
+Bakırcılar / el işi ürünler
+Taziye evleri
+Düğün salonları
+Oto yıkama / yaz sıcaklarına özel hizmetler
+Tarım ve hayvancılık firmaları
+
+En sağlıklı yapı şu olur:
+
+Seviye 1: Ana kategori
+Seviye 2: Alt kategori
+Seviye 3: İlçe
+Seviye 4: Mahalle
+Seviye 5: İşletme detay sayfası
+
+Örnek URL yapısı:
+/yeme-icme/kebapcilar/karakopru/
+/saglik/ozel-hastaneler/haliliye/
+/etkinlikler/konserler/
+/ilceler/eyyubiye/firinlar/
+/mekan/urun-adi/

@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getFileById, recordFileAccess, getFileAccessStats } from '../../../lib/file/file-management';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
@@ -18,14 +18,14 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     const fileId = url.searchParams.get('file_id');
-    const days = parseInt(url.searchParams.get('days') || '30');
+    const days = safeIntParam(url.searchParams.get('days'), 30, 0, 1_000_000);
 
     if (!fileId) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'File ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     const file = await getFileById(fileId);
-    if (!file || ((file as any).uploaded_by_user_id !== locals.user.id && !locals.isAdmin)) {
+    if (!file || (file.uploaded_by_user_id !== locals.user.id && !locals.isAdmin)) {
       return apiError(ErrorCode.FORBIDDEN, 'Cannot access this file', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 

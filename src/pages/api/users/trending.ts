@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '15'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 15, 1, 50);
     const period = url.searchParams.get('period') || '30'; // days
     const cacheKey = `users:trending:${period}`;
 
@@ -24,7 +24,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const cached = await getCache(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/users/trending', HttpStatus.OK, Date.now() - startTime);
-      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
+      return apiResponse(cached as any, HttpStatus.OK, requestId);
     }
 
     // Validate period
@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       [safePeriod, limit]
     );
 
-    const users = trendingUsers.map((u: any) => ({
+    const users = trendingUsers.map((u) => ({
       id: u.id,
       name: u.full_name,
       username: u.username,

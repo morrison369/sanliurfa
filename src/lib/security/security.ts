@@ -56,7 +56,11 @@ export async function logSecurityEvent(userId: string | null, eventType: string,
     if (isSuspicious) {
       logger.warn('Suspicious security event logged', Object.assign(new Error('Suspicious security event logged'), { userId, eventType, severity, ipAddress }));
     } else {
-      logger.info('Security event logged', { userId, eventType, severity });
+      logger.info('Security event logged', {
+        ...(userId ? { userId } : {}),
+        eventType,
+        severity,
+      });
     }
 
     // Clear cache
@@ -81,7 +85,7 @@ async function checkSuspiciousPattern(userId: string | null, eventType: string, 
         [userId]
       );
 
-      if (parseInt(failedLogins[0]?.count || '0') > 5) {
+      if (parseInt(failedLogins[0]?.count || '0', 10) > 5) {
         return true;
       }
     }
@@ -128,7 +132,7 @@ export async function getSuspiciousActivities(userId: string, limit: number = 20
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const events = await queryMany(
@@ -226,7 +230,7 @@ export async function getUserSessions(userId: string): Promise<UserSession[]> {
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const sessions = await queryMany(
@@ -339,7 +343,7 @@ export async function getActiveEncryptionKey(): Promise<any | null> {
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const key = await queryOne(
@@ -392,7 +396,7 @@ async function getNextKeyVersion(): Promise<number> {
     'SELECT MAX(key_version) as max_version FROM encryption_keys',
     []
   );
-  return (parseInt(latest?.max_version || '0') + 1);
+  return (parseInt(latest?.max_version || '0', 10) + 1);
 }
 
 // Encrypt sensitive data
@@ -472,4 +476,3 @@ export async function getLoginHistory(userId: string, limit: number = 20): Promi
     return [];
   }
 }
-

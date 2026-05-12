@@ -3,6 +3,7 @@
  * Model registry, prediction monitoring, experiment runner, drift detection
  */
 
+import { randomBytes } from 'node:crypto';
 import { logger } from '../logger';
 
 // ==================== TYPES & INTERFACES ====================
@@ -156,7 +157,7 @@ export class ExperimentRunner {
   private assignments = new Map<string, string>();
 
   createExperiment(experiment: Omit<ModelExperiment, 'id'>): ModelExperiment {
-    const id = 'exp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+    const id = 'exp-' + Date.now() + '-' + randomBytes(6).toString('hex');
 
     const exp: ModelExperiment = {
       ...experiment,

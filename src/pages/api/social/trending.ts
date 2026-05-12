@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getTrendingHashtags, getTrendingPlaces } from '../../../lib/social/social-features';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url }) => {
@@ -8,20 +8,18 @@ export const GET: APIRoute = async ({ request, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    const type = url.searchParams.get('type') || 'hashtags';
-    const limit = parseInt(url.searchParams.get('limit') || '20');
-    const period = url.searchParams.get('period') || 'day';
+    const VALID_TRENDING_TYPES = new Set(['hashtags', 'places']);
+    const rawType = url.searchParams.get('type') || 'hashtags';
+    const type = VALID_TRENDING_TYPES.has(rawType) ? rawType : 'hashtags';
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 0, 1_000_000);
+    const VALID_PERIODS = new Set(['hour', 'day', 'week', 'month', 'year']);
+    const rawPeriod = url.searchParams.get('period') || 'day';
+    const period = VALID_PERIODS.has(rawPeriod) ? rawPeriod : 'day';
 
     const data =
       type === 'hashtags'
         ? await getTrendingHashtags(limit, period)
-        : type === 'places'
-          ? await getTrendingPlaces(limit, period)
-          : null;
-
-    if (!data) {
-      return apiError(ErrorCode.VALIDATION_ERROR, 'Invalid type', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
-    }
+        : await getTrendingPlaces(limit, period);
 
     return apiResponse({ success: true, data }, HttpStatus.OK, requestId);
   } catch (error) {

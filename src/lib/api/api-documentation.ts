@@ -4,6 +4,7 @@
  */
 
 import { logger } from '../logger';
+import { randomBytes } from 'node:crypto';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -153,8 +154,8 @@ export class DeveloperPortal {
    * Create API key for vendor
    */
   createAPIKey(vendorId: string, name: string): APIKey {
-    const keyId = 'key-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
-    const secret = 'secret-' + Math.random().toString(36).slice(2, 34);
+    const keyId = 'key-' + Date.now() + '-' + randomBytes(6).toString('hex');
+    const secret = randomBytes(32).toString('hex');
 
     const apiKey: APIKey = {
       id: keyId,

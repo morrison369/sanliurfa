@@ -4,7 +4,7 @@
 
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logger';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
@@ -15,8 +15,8 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 200);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     // Try notification_broadcasts table; fall back to notifications table if missing
     const history = await (async () => {

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-04-21T12:28:25.271Z",
-  "status": "ready",
+  "generatedAt": "2026-05-07T15:54:42.380Z",
+  "status": "ready_with_advisories",
   "checks": [
     {
       "name": "OpenAPI P0 report",
@@ -23,13 +23,35 @@
       "artifact": "docs/DB_FIRST_SITE_MANAGEMENT.md"
     },
     {
-      "name": "Detail plan doc",
+      "name": "Public acceptance doc",
       "ok": true,
-      "artifact": "docs/DETAYLI_PROJE_ONERILERI_VE_UYGULAMA_PLANI.md"
+      "artifact": "docs/MVP_PUBLIC_ACCEPTANCE.md"
+    },
+    {
+      "name": "Astro frontend stack doc",
+      "ok": true,
+      "artifact": "docs/ASTRO_SSR_FRONTEND_STACK.md"
+    },
+    {
+      "name": "Migration duplicate remediation plan",
+      "ok": true,
+      "artifact": "docs/MIGRATION_DUPLICATE_REMEDIATION.md"
     }
   ],
   "openapi": {
     "p0TotalMissing": 0
   },
-  "summary": "Tüm temel artefaktlar mevcut ve OpenAPI P0 gap kapalı."
+  "migrationDuplicates": {
+    "duplicateNumberGroups": 3,
+    "duplicateSlugGroups": 14
+  },
+  "advisories": [
+    {
+      "name": "Migration duplicate baseline",
+      "severity": "advisory",
+      "detail": "3 duplicate number group(s), 14 duplicate slug group(s). Dosya rename prod schema_migrations versiyonlarını etkileyebileceği için docs/MIGRATION_DUPLICATE_REMEDIATION.md planıyla çözülmeli.",
+      "artifact": "docs/migration-duplicate-report.json"
+    }
+  ],
+  "summary": "Temel artefaktlar mevcut. Advisory maddeleri release notlarında takip edilmeli."
 }

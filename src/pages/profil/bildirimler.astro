@@ -1,279 +1,261 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
+import ProfileSidebar from '../../components/profile/ProfileSidebar.astro';
 import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
 
 const user = Astro.locals.user;
 
 if (!user) {
-  return Astro.redirect('/giris?redirect=/profil/bildirimler');
+ return Astro.redirect('/giris?redirect=/profil/bildirimler');
 }
 
 let notifications: any[] = [];
 let unreadCount: any = null;
-let icons: Record<string, string> = {};
-let notificationTypeConfig: Record<string, { icon: string; color: string; label: string }> = {};
+let notificationTypeConfig: Record<string, { iconName: string; color: string; label: string }> = {};
 const seo = {
-    title: 'Bildirimlerim - Sanliurfa.com',
-    description: 'Bildirimlerinizi görüntüleyin ve yönetin.',
-  };
+ title: 'Bildirimlerim - Sanliurfa.com',
+ description: 'Bildirimlerinizi görüntüleyin ve yönetin.',
+ noIndex: true,
+};
 
 function getTimeAgo(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
+ const now = new Date();
+ const diffMs = now.getTime() - date.getTime();
+ const diffMins = Math.floor(diffMs / 60000);
+ const diffHours = Math.floor(diffMs / 3600000);
+ const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'Az önce';
-  if (diffMins < 60) return `${diffMins} dakika önce`;
-  if (diffHours < 24) return `${diffHours} saat önce`;
-  if (diffDays < 7) return `${diffDays} gün önce`;
-  return date.toLocaleDateString('tr-TR');
+ if (diffMins < 1) return 'Az önce';
+ if (diffMins < 60) return `${diffMins} dakika önce`;
+ if (diffHours < 24) return `${diffHours} saat önce`;
+ if (diffDays < 7) return `${diffDays} gün önce`;
+ return date.toLocaleDateString('tr-TR');
 }
 
 try {
+ const [result, unreadResult] = await Promise.all([
+ query(
+ `SELECT * FROM notifications
+ WHERE user_id = $1
+ ORDER BY created_at DESC
+ LIMIT 100`,
+ [user.id]
+ ),
+ query(
+ `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND read = false`,
+ [user.id]
+ ),
+ ]);
+ notifications = result.rows;
+ unreadCount = parseInt(unreadResult.rows[0]?.count || '0');
 
-  const result = await query(
-    `SELECT * FROM notifications
-     WHERE user_id = $1
-     ORDER BY created_at DESC
-     LIMIT 100`,
-    [user.id]
-  );
-  notifications = result.rows;
-
-  // Okunmamış bildirim sayısı
-  const unreadResult = await query(
-    `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND read = false`,
-    [user.id]
-  );
-  unreadCount = parseInt(unreadResult.rows[0]?.count || '0');
-
-  // SVG ikonlar
-  icons = {
-    user: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
-    star: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-    heart: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-    settings: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
-    bell: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
-    bellLarge: `<svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
-    check: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
-    checkDouble: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 6 7 17 2 12"/><polyline points="22 6 11 17"/></svg>`,
-    trash: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
-  };
-
-  // Bildirim tipi ikonları ve renkleri
-  notificationTypeConfig = {
-    review: { icon: icons.star, color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400', label: 'Yorum' },
-    comment: { icon: icons.star, color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400', label: 'Yorum' },
-    like: { icon: icons.heart, color: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400', label: 'Beğeni' },
-    follow: { icon: icons.user, color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400', label: 'Takip' },
-    badge: { icon: icons.bell, color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400', label: 'Rozet' },
-    system: { icon: icons.bell, color: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400', label: 'Sistem' },
-    booking: { icon: icons.bell, color: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400', label: 'Rezervasyon' },
-    promotion: { icon: icons.bell, color: 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400', label: 'Kampanya' },
-  };
-
+ notificationTypeConfig = {
+ review: { iconName: 'star', color: 'pb-type-copper', label: 'Yorum' },
+ comment: { iconName: 'star', color: 'pb-type-copper', label: 'Yorum' },
+ like: { iconName: 'heart', color: 'pb-type-isot', label: 'Beğeni' },
+ follow: { iconName: 'user', color: 'pb-type-sand', label: 'Takip' },
+ badge: { iconName: 'bell', color: 'pb-type-gold', label: 'Rozet' },
+ system: { iconName: 'bell', color: 'pb-type-dim', label: 'Sistem' },
+ booking: { iconName: 'bell', color: 'pb-type-copper', label: 'Rezervasyon' },
+ promotion: { iconName: 'bell', color: 'pb-type-isot', label: 'Kampanya' },
+ };
 } catch (e) {
-  console.error('Error loading data:', e);
+ logger.error('Error loading data:', e instanceof Error ? e : new Error(String(e)));
 }
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-    <div class="container mx-auto px-4">
-      <div class="grid lg:grid-cols-4 gap-8">
-        <aside class="lg:col-span-1">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <nav class="space-y-1">
-              <a href="/profil" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                <span set:html={icons.user}></span>
-                Profil
-              </a>
-              <a href="/profil/yorumlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                <span set:html={icons.star}></span>
-                Yorumlarım
-              </a>
-              <a href="/profil/favoriler" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                <span set:html={icons.heart}></span>
-                Favorilerim
-              </a>
-              <a href="/profil/bildirimler" class="flex items-center gap-2 p-2 rounded-lg bg-urfa-50 dark:bg-urfa-900/20 text-urfa-700 dark:text-urfa-300">
-                <span set:html={icons.bell}></span>
-                Bildirimler {unreadCount > 0 && `(${unreadCount})`}
-              </a>
-              <a href="/profil/ayarlar" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-                <span set:html={icons.settings}></span>
-                Ayarlar
-              </a>
-            </nav>
-          </div>
-        </aside>
+ <style>
+ .pb-page{background:var(--public-bg);min-height:100vh;padding:2rem 0 4rem}
+ .pb-grid{display:grid;gap:2rem}
+ @media(min-width:64rem){.pb-grid{grid-template-columns:1fr 3fr}}
+ .pb-card{background:var(--public-surface);border:1px solid var(--public-border);padding:1.5rem}
+ .pb-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;gap:1rem;flex-wrap:wrap}
+ .pb-h2{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:700;color:var(--public-text);display:flex;align-items:center;gap:.5rem}
+ .pb-actions{display:flex;align-items:center;gap:.75rem}
+ .pb-mark-all{font-size:.8rem;padding:.35rem .85rem;border:1px solid var(--public-border);color:var(--public-muted);background:none;cursor:pointer;transition:border-color .15s,color .15s;display:flex;align-items:center;gap:.35rem}
+ .pb-mark-all:hover{border-color:var(--public-accent);color:var(--public-accent)}
+ .pb-clear-btn{font-size:.8rem;color:var(--public-muted);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:.35rem;transition:color .15s}
+ .pb-clear-btn:hover{color:var(--public-accent-strong)}
+ .pb-list{display:flex;flex-direction:column;gap:.5rem}
+ .pb-notification-item{display:flex;align-items:flex-start;gap:1rem;padding:1rem;cursor:pointer;transition:background .15s;background:var(--public-accent-soft)}
+ .pb-notification-item--unread{background:var(--public-surface-muted);border:1px solid var(--public-accent)}
+ .pb-icon-wrap{padding:.4rem;flex-shrink:0;border-radius:.125rem}
+ .pb-type-copper{background:var(--public-accent-soft);color:var(--public-accent-strong)}
+ .pb-type-isot{background:rgba(150,40,40,.15);color:#C07070}
+ .pb-type-sand{background:var(--public-surface-muted);color:var(--public-muted)}
+ .pb-type-gold{background:var(--public-accent-soft);color:var(--public-accent)}
+ .pb-type-dim{background:var(--public-surface-muted);color:var(--public-text-soft)}
+ .pb-notif-body{flex:1;min-width:0}
+ .pb-notif-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem}
+ .pb-notif-link{font-weight:600;color:var(--public-text);transition:color .15s}
+ .pb-notif-link:hover{color:var(--public-accent-strong)}
+ .pb-notif-title{font-weight:600;color:var(--public-text)}
+ .pb-notif-msg{font-size:.82rem;color:var(--public-muted);margin-top:.2rem;line-height:1.55}
+ .pb-notif-time{font-size:.72rem;color:var(--public-text-soft);display:inline-block;margin-top:.25rem}
+ .pb-notif-right{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+ .pb-unread-dot{width:.5rem;height:.5rem;background:var(--public-accent);border-radius:50%;flex-shrink:0}
+ .pb-del-btn{padding:.25rem;color:var(--public-text-soft);background:none;border:none;cursor:pointer;transition:color .15s}
+ .pb-del-btn:hover{color:var(--public-accent-strong)}
+ .pb-empty{text-align:center;padding:3rem 1rem}
+ .pb-empty-icon{color:var(--public-border);display:block;margin:0 auto 1rem}
+ .pb-empty-title{font-size:1.1rem;font-weight:700;color:var(--public-text);margin-bottom:.4rem}
+ .pb-empty-desc{color:var(--public-muted);font-size:.88rem}
+ </style>
 
-        <main class="lg:col-span-3">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div class="flex items-center justify-between mb-6">
-              <h2 class="font-bold text-xl text-gray-900 dark:text-white flex items-center gap-2">
-                <span set:html={icons.bell}></span>
-                Bildirimler
-              </h2>
-              <div class="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <button
-                    id="mark-all-read"
-                    class="btn-secondary text-sm flex items-center gap-1"
-                  >
-                    <span set:html={icons.checkDouble}></span>
-                    Tümünü Oku
-                  </button>
-                )}
-                <button
-                  id="clear-notifications"
-                  class="btn-ghost text-sm text-red-600 dark:text-red-400 flex items-center gap-1"
-                >
-                  <span set:html={icons.trash}></span>
-                  Temizle
-                </button>
-              </div>
-            </div>
+ <div class="pb-page">
+ <div class="sf-container">
+ <div class="pb-grid">
+ <ProfileSidebar activeKey="notifications" unreadCount={unreadCount} />
 
-            {notifications.length > 0 ? (
-              <div class="space-y-2">
-                {notifications.map((notification) => {
-                  const typeConfig = notificationTypeConfig[notification.type] || notificationTypeConfig.system;
-                  const isUnread = !notification.read;
-                  const timeAgo = getTimeAgo(new Date(notification.created_at));
+ <div>
+ <div class="pb-card">
+ <div class="pb-header">
+ <h2 class="pb-h2">
+ <Icon name="lucide:bell" class="w-4 h-4" />
+ Bildirimler
+ </h2>
+ <div class="pb-actions">
+ {unreadCount > 0 && (
+ <button id="mark-all-read" class="pb-mark-all">
+ <Icon name="lucide:check-check" class="w-4 h-4" />
+ Tümünü Oku
+ </button>
+ )}
+ <button id="clear-notifications" class="pb-clear-btn">
+ <Icon name="lucide:trash-2" class="w-4 h-4" />
+ Temizle
+ </button>
+ </div>
+ </div>
 
-                  return (
-                    <div
-                      class={`notification-item flex items-start gap-4 p-4 rounded-lg transition-colors cursor-pointer ${
-                        isUnread
-                          ? 'bg-urfa-50 dark:bg-urfa-900/10 border border-urfa-100 dark:border-urfa-900/30'
-                          : 'bg-gray-50 dark:bg-gray-700/50'
-                      }`}
-                      data-notification-id={notification.id}
-                    >
-                      <div class={`p-2 rounded-lg flex-shrink-0 ${typeConfig.color}`}>
-                        <span set:html={typeConfig.icon}></span>
-                      </div>
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-start justify-between gap-2">
-                          <div>
-                            {notification.link ? (
-                              <a href={notification.link} class="font-medium text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400">
-                                {notification.title}
-                              </a>
-                            ) : (
-                              <span class="font-medium text-gray-900 dark:text-white">{notification.title}</span>
-                            )}
-                            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">{notification.message}</p>
-                            <span class="text-xs text-gray-500 dark:text-gray-500 mt-1 inline-block">{timeAgo}</span>
-                          </div>
-                          <div class="flex items-center gap-2 flex-shrink-0">
-                            {isUnread && (
-                              <span class="w-2 h-2 bg-urfa-600 dark:bg-urfa-400 rounded-full flex-shrink-0"></span>
-                            )}
-                            <button
-                              class="delete-notification p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400"
-                              data-notification-id={notification.id}
-                              title="Bildirimi Sil"
-                            >
-                              <span set:html={icons.trash}></span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div class="text-center py-12">
-                <span set:html={icons.bellLarge}></span>
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Bildirim yok</h3>
-                <p class="text-gray-600 dark:text-gray-400">Yeni bildirimleriniz burada görünecek.</p>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-    </div>
-  </div>
+ {notifications.length > 0 ? (
+ <div class="pb-list">
+ {notifications.map((notification) => {
+ const typeConfig = notificationTypeConfig[notification.type] || notificationTypeConfig.system;
+ const isUnread = !notification.read;
+ const timeAgo = getTimeAgo(new Date(notification.created_at));
 
-  <script>
-    // Bildirime tıkla -> okundu işaretle
-    document.addEventListener('click', async (e: Event) => {
-      const target = e.target as HTMLElement;
-      const item = target.closest('.notification-item') as HTMLElement | null;
-      if (item && !target.closest('.delete-notification')) {
-        const id = item.dataset.notificationId;
-        if (id) {
-          await markAsRead(id);
-          // Linke yönlendir (eğer varsa)
-          const link = item.querySelector('a');
-          if (link) {
-            window.location.href = link.href;
-          }
-        }
-      }
-    });
+ return (
+ <div
+ class:list={['pb-notification-item', { 'pb-notification-item--unread': isUnread }]}
+ data-notification-id={notification.id}
+ >
+ <div class={`pb-icon-wrap ${typeConfig.color}`}>
+ <Icon name={`lucide:${typeConfig.iconName}`} class="w-4 h-4" />
+ </div>
+ <div class="pb-notif-body">
+ <div class="pb-notif-top">
+ <div>
+ {notification.link ? (
+ <a href={notification.link} class="pb-notif-link">{notification.title}</a>
+ ) : (
+ <span class="pb-notif-title">{notification.title}</span>
+ )}
+ <p class="pb-notif-msg">{notification.message}</p>
+ <span class="pb-notif-time">{timeAgo}</span>
+ </div>
+ <div class="pb-notif-right">
+ {isUnread && <span class="pb-unread-dot"></span>}
+ <button
+ class="pb-del-btn delete-notification"
+ data-notification-id={notification.id}
+ title="Bildirimi Sil"
+ >
+ <Icon name="lucide:trash-2" class="w-4 h-4" />
+ </button>
+ </div>
+ </div>
+ </div>
+ </div>
+ );
+ })}
+ </div>
+ ) : (
+ <div class="pb-empty">
+ <Icon name="lucide:bell" class="pb-empty-icon" style="width:4rem;height:4rem" />
+ <h3 class="pb-empty-title">Bildirim yok</h3>
+ <p class="pb-empty-desc">Yeni bildirimleriniz burada görünecek.</p>
+ </div>
+ )}
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-    // Bildirimi sil
-    document.addEventListener('click', async (e: Event) => {
-      const target = e.target as HTMLElement;
-      const btn = target.closest('.delete-notification') as HTMLElement | null;
-      if (!btn) return;
+ <script>
+ document.addEventListener('click', async (e: Event) => {
+ const target = e.target as HTMLElement;
+ const item = target.closest('.pb-notification-item') as HTMLElement | null;
+ if (item && !target.closest('.pb-del-btn')) {
+ const id = item.dataset.notificationId;
+ if (id) {
+ await markAsRead(id);
+ const link = item.querySelector('a');
+ if (link) {
+ window.location.href = link.href;
+ }
+ }
+ }
+ });
 
-      e.stopPropagation();
-      const id = btn.dataset.notificationId;
-      await deleteNotification(id!);
-      btn.closest('.notification-item')?.remove();
-    });
+ document.addEventListener('click', async (e: Event) => {
+ const target = e.target as HTMLElement;
+ const btn = target.closest('.pb-del-btn') as HTMLElement | null;
+ if (!btn) return;
 
-    // Tümünü oku
-    document.addEventListener('click', async (e: Event) => {
-      const target = e.target as HTMLElement;
-      const btn = target.closest('#mark-all-read');
-      if (!btn) return;
+ e.stopPropagation();
+ const id = btn.dataset.notificationId;
+ await deleteNotification(id!);
+ btn.closest('.pb-notification-item')?.remove();
+ });
 
-      try {
-        await fetch('/api/notifications/mark-all-read', { method: 'POST' });
-        window.location.reload();
-      } catch (error) {
-        console.error('Tümünü oku hatası:', error);
-      }
-    });
+ document.addEventListener('click', async (e: Event) => {
+ const target = e.target as HTMLElement;
+ const btn = target.closest('#mark-all-read');
+ if (!btn) return;
 
-    // Tümünü temizle
-    document.addEventListener('click', async (e: Event) => {
-      const target = e.target as HTMLElement;
-      const btn = target.closest('#clear-notifications');
-      if (!btn) return;
+ try {
+ await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+ window.location.reload();
+ } catch (error) {
+ console.error('Tümünü oku hatası:', error);
+ }
+ });
 
-      if (!confirm('Tüm bildirimleriniz silinecek. Emin misiniz?')) return;
+ document.addEventListener('click', async (e: Event) => {
+ const target = e.target as HTMLElement;
+ const btn = target.closest('#clear-notifications');
+ if (!btn) return;
 
-      try {
-        await fetch('/api/notifications/clear', { method: 'DELETE' });
-        window.location.reload();
-      } catch (error) {
-        console.error('Temizleme hatası:', error);
-      }
-    });
+ if (!window.showConfirm) return;
+ if (!await window.showConfirm('Tüm bildirimleriniz silinecek. Emin misiniz?')) return;
 
-    async function markAsRead(id: string) {
-      try {
-        await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
-      } catch (error) {
-        console.error('Okundu işaretleme hatası:', error);
-      }
-    }
+ try {
+ await fetch('/api/notifications/clear', { method: 'DELETE' });
+ window.location.reload();
+ } catch (error) {
+ console.error('Temizleme hatası:', error);
+ }
+ });
 
-    async function deleteNotification(id: string) {
-      try {
-        await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
-      } catch (error) {
-        console.error('Silme hatası:', error);
-      }
-    }
-  </script>
+ async function markAsRead(id: string) {
+ try {
+ await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+ } catch (error) {
+ console.error('Okundu işaretleme hatası:', error);
+ }
+ }
+
+ async function deleteNotification(id: string) {
+ try {
+ await fetch(`/api/notifications/${id}`, { method: 'DELETE' });
+ } catch (error) {
+ console.error('Silme hatası:', error);
+ }
+ }
+ </script>
 </Layout>

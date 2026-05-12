@@ -3,6 +3,7 @@
  * Commission calculation, payout tracking, settlement periods, earnings reports
  */
 
+import { randomBytes } from 'node:crypto';
 import { logger } from '../logger';
 
 // ==================== TYPES & INTERFACES ====================
@@ -182,7 +183,7 @@ export class PayoutProcessor {
    * Create payout
    */
   createPayout(vendorId: string, amount: number, settlementDate: number): Payout {
-    const payoutId = 'payout-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+    const payoutId = 'payout-' + Date.now() + '-' + randomBytes(8).toString('hex');
 
     const payout: Payout = {
       id: payoutId,

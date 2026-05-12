@@ -24,6 +24,7 @@ export interface FollowerStats {
   following_count: number;
   is_following: boolean;
   is_follower: boolean;
+  mutual_friends_count?: number;
 }
 
 /**
@@ -36,28 +37,22 @@ export async function followUser(followerId: string, followingId: string): Promi
       throw new Error('Cannot follow yourself');
     }
 
-    // Check if already following
-    const existing = await queryOne(
-      'SELECT id FROM followers WHERE follower_id = $1 AND following_id = $2',
+    const result = await query(
+      `INSERT INTO followers (follower_id, following_id) VALUES ($1, $2)
+       ON CONFLICT (follower_id, following_id) DO NOTHING`,
       [followerId, followingId]
     );
 
-    if (existing) {
-      return false; // Already following
+    if ((result.rowCount ?? 0) === 0) {
+      return false; // Already following (concurrent or duplicate)
     }
 
-    // Insert follow relationship
-    await query(
-      'INSERT INTO followers (follower_id, following_id) VALUES ($1, $2)',
-      [followerId, followingId]
-    );
-
-    // Clear cache
-    await clearFollowerCache(followerId);
-    await clearFollowerCache(followingId);
-
-    // Notify the followed user
-    const follower = await queryOne('SELECT full_name FROM users WHERE id = $1', [followerId]);
+    // Cache invalidate (paralel) + notification follower lookup (independent)
+    const [, , follower] = await Promise.all([
+      clearFollowerCache(followerId),
+      clearFollowerCache(followingId),
+      queryOne('SELECT full_name FROM users WHERE id = $1', [followerId]),
+    ]);
     await createNotification(
       followingId,
       'new_follower',
@@ -65,7 +60,7 @@ export async function followUser(followerId: string, followingId: string): Promi
       'action',
       {
         icon: '👤',
-        actionUrl: `/kullanıcı/${followerId}`,
+        actionUrl: `/kullanici/${followerId}`,
         actionLabel: 'Profili Gör'
       }
     );
@@ -92,9 +87,11 @@ export async function unfollowUser(followerId: string, followingId: string): Pro
     );
 
     if ((result.rowCount || 0) > 0) {
-      // Clear cache
-      await clearFollowerCache(followerId);
-      await clearFollowerCache(followingId);
+      // Clear cache (paralel)
+      await Promise.all([
+        clearFollowerCache(followerId),
+        clearFollowerCache(followingId),
+      ]);
     }
 
     logger.info('User unfollowed', { followerId, followingId });
@@ -289,10 +286,10 @@ export async function getFollowerStats(userId: string, currentUserId?: string): 
     );
 
     return {
-      followers_count: parseInt(result?.followers_count || '0'),
-      following_count: parseInt(result?.following_count || '0'),
-      is_following: currentUserId ? (parseInt(result?.is_following || '0') > 0) : false,
-      is_follower: currentUserId ? (parseInt(result?.is_follower || '0') > 0) : false
+      followers_count: parseInt(result?.followers_count || '0', 10),
+      following_count: parseInt(result?.following_count || '0', 10),
+      is_following: currentUserId ? (parseInt(result?.is_following || '0', 10) > 0) : false,
+      is_follower: currentUserId ? (parseInt(result?.is_follower || '0', 10) > 0) : false
     };
   } catch (error) {
     logger.error('Failed to get follower stats', error instanceof Error ? error : new Error(String(error)), {
@@ -324,11 +321,23 @@ export async function isFollowing(followerId: string, followingId: string): Prom
 
 /**
  * Clear follower cache for a user
+ *
+ * NOT: Bu modül ile `lib/following/following.ts` paralel cache pattern'leri kullanır:
+ * - Liste: `followers:${userId}` (bu modül) ve `followers:${userId}:${limit}:${offset}` (following modülü)
+ * - Sayım: `follower_count:${userId}` + `following_count:${userId}` (yalnızca following modülünden okunur/yazılır)
+ * - Mutuals: `mutual-friends:${userId}` (yalnızca bu modülden)
+ *
+ * Bir taraftan follow/unfollow yapıldığında karşı modülün cache key'leri stale kalmasın diye
+ * burası HER İKİ ailenin de cache key'lerini invalidate eder.
  */
 async function clearFollowerCache(userId: string): Promise<void> {
-  await deleteCache(`followers:${userId}`);
-  await deleteCache(`following:${userId}`);
-  await deleteCache(`mutual-friends:${userId}`);
+  await Promise.all([
+    deleteCache(`followers:${userId}`),
+    deleteCache(`following:${userId}`),
+    deleteCache(`mutual-friends:${userId}`),
+    deleteCache(`follower_count:${userId}`),
+    deleteCache(`following_count:${userId}`),
+  ]);
 }
 
 

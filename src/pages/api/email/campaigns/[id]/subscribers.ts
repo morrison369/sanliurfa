@@ -7,7 +7,7 @@
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../../../lib/postgres';
 import { getCampaignSubscribers, addCampaignSubscribers } from '../../../../../lib/email/email-marketing';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../../lib/api';
 import { recordRequest } from '../../../../../lib/metrics';
 import { logger } from '../../../../../lib/logging';
 
@@ -39,8 +39,8 @@ export const GET: APIRoute = async ({ request, locals, params, url }) => {
       return apiError(ErrorCode.FORBIDDEN, 'Access denied', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
-    const limit = parseInt(url.searchParams.get('limit') || '100', 10);
-    const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+    const limit = safeIntParam(url.searchParams.get('limit'), 100, 0, 1_000_000);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     const subscribers = await getCampaignSubscribers(campaignId, limit, offset);
 
@@ -103,11 +103,11 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const body = await request.json();
     const { subscribers } = body;
 
-    if (!Array.isArray(subscribers) || subscribers.length === 0) {
+    if (!Array.isArray(subscribers) || subscribers.length === 0 || subscribers.length > 1000) {
       recordRequest('POST', '/api/email/campaigns/[id]/subscribers', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Subscribers array required',
+        'subscribers dizisi 1-1000 arası öğe içermelidir',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId

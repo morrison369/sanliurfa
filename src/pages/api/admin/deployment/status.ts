@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('GET', '/api/admin/deployment/status', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Admin yetkisi gerekli', HttpStatus.FORBIDDEN, undefined, requestId);
     }

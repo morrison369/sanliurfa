@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-05-07T14:13:51.728Z",
+  "ready": true,
+  "checks": [
+    {
+      "rel": "docs/FRONTEND_RELEASE_CHECKLIST.md",
+      "ok": true
+    },
+    {
+      "rel": "docs/PAGE_TEMPLATE_SYSTEM.md",
+      "ok": true
+    },
+    {
+      "rel": "docs/PERFORMANCE_BUDGET.md",
+      "ok": true
+    },
+    {
+      "rel": "docs/SEO_TEMPLATE_STANDARD.md",
+      "ok": true
+    },
+    {
+      "rel": "docs/SSR_PWA_RUNTIME_CHECKLIST.md",
+      "ok": true
+    },
+    {
+      "rel": "docs/CONTENT_PIPELINE_STANDARD.md",
+      "ok": true
+    },
+    {
+      "rel": "docs/ROUTE_OWNERSHIP.md",
+      "ok": true
+    },
+    {
+      "rel": "scripts/ci/visual-regression-gate.mjs",
+      "ok": true
+    },
+    {
+      "rel": "scripts/ci/page-template-system-gate.mjs",
+      "ok": true
+    },
+    {
+      "rel": "scripts/ci/template-adoption-gate.mjs",
+      "ok": true
+    },
+    {
+      "rel": "scripts/ci/seo-helper-adoption-gate.mjs",
+      "ok": true
+    },
+    {
+      "rel": "scripts/ci/home-section-contract-gate.mjs",
+      "ok": true
+    },
+    {
+      "rel": "scripts/ci/release-readiness-admin-gate.mjs",
+      "ok": true
+    },
+    {
+      "rel": "src/pages/admin/release-readiness.astro",
+      "ok": true
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getRecommendationsForUser, recordRecommendationClick, generateRecommendations } from '../../../lib/recommendation/recommendations';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       return apiError(ErrorCode.UNAUTHORIZED, 'Auth required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const limit = parseInt(url.searchParams.get('limit') || '10', 10);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 0, 1_000_000);
     const recs = await getRecommendationsForUser(locals.user.id, limit);
 
     const duration = Date.now() - startTime;

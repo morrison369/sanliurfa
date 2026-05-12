@@ -2,7 +2,7 @@
  * Badges Library
  * Badge system for user achievements
  */
-import { queryOne, queryMany, insert, update } from '../postgres';
+import { queryOne, queryMany, update } from '../postgres';
 import { logger } from '../logger';
 
 export async function getAllBadges(): Promise<any[]> {
@@ -47,20 +47,17 @@ export async function awardBadgeToUser(userId: string, badgeKey: string, reason?
       return false;
     }
 
-    const existing = await queryOne(
-      'SELECT id FROM user_badges WHERE user_id = $1 AND badge_id = $2',
-      [userId, badge.id]
+    const awarded = await queryOne<{ id: string }>(
+      `INSERT INTO user_badges (user_id, badge_id, unlock_reason, earned_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (user_id, badge_id) DO NOTHING
+       RETURNING id`,
+      [userId, badge.id, reason ?? null]
     );
 
-    if (existing) {
+    if (!awarded) {
       return false;
     }
-
-    await insert('user_badges', {
-      user_id: userId,
-      badge_id: badge.id,
-      unlock_reason: reason
-    });
 
     logger.info('Badge awarded to user', { userId, badgeKey, reason });
     return true;
@@ -100,7 +97,7 @@ export async function getUserBadgeCount(userId: string): Promise<number> {
       'SELECT COUNT(*) as count FROM user_badges WHERE user_id = $1',
       [userId]
     );
-    return parseInt(result?.count || '0');
+    return parseInt(result?.count || '0', 10);
   } catch (error) {
     logger.error('Failed to get badge count', error instanceof Error ? error : new Error(String(error)));
     return 0;

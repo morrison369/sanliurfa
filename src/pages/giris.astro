@@ -1,182 +1,188 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { actions, isInputError } from 'astro:actions';
+import { safeRedirectTarget } from '../lib/auth/safe-redirect';
 
 const seo = {
-  title: 'Giriş Yap - Sanliurfa.com',
-  description: 'Hesabınıza giriş yapın',
-  noIndex: true,
+ title: 'Giriş Yap — Sanliurfa.com',
+ description: 'Sanliurfa.com hesabınıza giriş yapın.',
+ noIndex: true,
 };
 
-// Check if already logged in
 const user = Astro.locals.user;
-if (user) {
-  return Astro.redirect('/');
-}
+if (user) return Astro.redirect('/');
 
-const redirectTarget = Astro.url.searchParams.get('redirect') || '/';
+const redirectTarget = safeRedirectTarget(Astro.url.searchParams.get('redirect'));
 const loginResult = Astro.getActionResult(actions.login);
 const loginInputErrors = isInputError(loginResult?.error) ? loginResult.error.fields : {};
 const loginSubmitError =
-  !isInputError(loginResult?.error) && loginResult?.error?.message
-    ? loginResult.error.message
-    : null;
+ !isInputError(loginResult?.error) && loginResult?.error?.message
+ ? loginResult.error.message
+ : null;
 const verifyResult = Astro.getActionResult(actions.verifyLoginTwoFactor);
 const verifyInputErrors = isInputError(verifyResult?.error) ? verifyResult.error.fields : {};
 const verifySubmitError =
-  !isInputError(verifyResult?.error) && verifyResult?.error?.message
-    ? verifyResult.error.message
-    : null;
+ !isInputError(verifyResult?.error) && verifyResult?.error?.message
+ ? verifyResult.error.message
+ : null;
 const twoFactorState = loginResult?.data?.requiresTwoFactor
-  ? { active: true, tempToken: loginResult.data.tempToken || '' }
-  : null;
+ ? { active: true, tempToken: loginResult.data.tempToken || '' }
+ : null;
 
 if (loginResult?.data?.success && !loginResult.data.requiresTwoFactor) {
-  return Astro.redirect(redirectTarget);
+ return Astro.redirect(redirectTarget);
 }
-
 if (verifyResult?.data?.success) {
-  return Astro.redirect(redirectTarget);
+ return Astro.redirect(redirectTarget);
 }
 ---
 <Layout seo={seo} hideFooter>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-    <div class="w-full max-w-md">
-      <div class="text-center mb-8">
-        <a href="/" class="text-3xl font-bold text-gray-900">
-          Şanlıurfa<span class="text-red-600">.com</span>
-        </a>
-        <p class="text-gray-500 mt-2">Hesabınıza giriş yapın</p>
-      </div>
+ <style is:inline>
+ .auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:1.5rem}
+ .auth-box{width:100%;max-width:420px}
+ .auth-logo{text-align:center;margin-bottom:2rem}
+ .auth-logo-name{font-family:'Cormorant Garamond',Georgia,serif;font-size:2rem;font-weight:300;font-style:italic;color:var(--public-text);letter-spacing:-.02em}
+ .auth-logo-tld{font-family:'Jost',sans-serif;font-size:1rem;font-weight:700;color:var(--public-accent);letter-spacing:.06em}
+ .auth-logo-sub{font-size:.8rem;color:var(--public-muted);margin-top:.4rem;letter-spacing:.04em}
+ .auth-card{background:var(--bg-card);border:1px solid var(--border);padding:2rem}
+ .auth-lbl{display:block;font-size:.75rem;font-weight:600;color:var(--public-accent);margin-bottom:.4rem;letter-spacing:.03em}
+ .auth-input{width:100%;padding:.7rem 1rem;background:rgba(255,255,255,.03);border:1px solid rgba(184,115,51,.2);color:var(--public-text);border-radius:.125rem;font-size:.875rem;font-family:inherit;transition:border-color .15s}
+ .auth-input:focus{outline:none;border-color:var(--public-accent)}
+ .auth-input::placeholder{color:var(--public-text-soft)}
+ .auth-field{margin-bottom:1rem}
+ .auth-err{background:rgba(199,58,71,.1);border:1px solid rgba(199,58,71,.25);color:#E08090;padding:.65rem 1rem;border-radius:.125rem;font-size:.82rem;margin-bottom:1rem}
+ .auth-field-err{font-size:.72rem;color:#E08090;margin-top:.3rem}
+ .auth-submit{width:100%;padding:.75rem;margin-top:.5rem;font-size:.875rem}
+ .auth-divider{border:none;border-top:1px solid rgba(184,115,51,.1);margin:1.5rem 0}
+ .auth-divider-lbl{text-align:center;font-size:.75rem;color:var(--public-text-soft);position:relative;margin:1.25rem 0}
+ .auth-divider-lbl::before,.auth-divider-lbl::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:rgba(184,115,51,.1)}
+ .auth-divider-lbl::before{left:0}.auth-divider-lbl::after{right:0}
+ .auth-oauth{width:100%;padding:.65rem 1rem;background:rgba(255,255,255,.02);border:1px solid rgba(184,115,51,.2);color:var(--public-accent);border-radius:.125rem;font-size:.82rem;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.6rem;cursor:pointer;transition:border-color .15s,background .15s,color .15s;text-decoration:none}
+ .auth-oauth:hover{border-color:var(--public-accent);background:rgba(184,115,51,.06);color:var(--public-text)}
+ .auth-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+ .auth-check{display:flex;align-items:center;gap:.5rem;font-size:.78rem;color:var(--public-muted);cursor:pointer}
+ .auth-check input{accent-color:var(--public-accent)}
+ .auth-forgot{font-size:.78rem;color:var(--public-accent)}
+ .auth-forgot:hover{color:var(--public-text)}
+ .auth-footer{text-align:center;font-size:.8rem;color:var(--public-muted);margin-top:1.25rem}
+ .auth-footer a{color:var(--public-accent)}.auth-footer a:hover{color:var(--public-text)}
+ .auth-back{text-align:center;font-size:.78rem;color:var(--public-text-soft);margin-top:1.25rem}
+ .auth-back a{color:var(--public-muted);transition:color .15s}.auth-back a:hover{color:var(--public-accent)}
+ </style>
 
-      <div class="bg-white rounded-2xl shadow-lg p-8">
-        {twoFactorState ? (
-          <form action={actions.verifyLoginTwoFactor} method="POST" class="space-y-6">
-            <input type="hidden" name="tempToken" value={twoFactorState.tempToken} />
-            <input type="hidden" name="redirect" value={redirectTarget} />
+ <div class="auth-wrap">
+ <div class="auth-box">
+ <!-- Logo -->
+ <div class="auth-logo">
+ <a href="/" style="display:inline-flex;align-items:baseline;gap:.0625rem;text-decoration:none;">
+ <span class="auth-logo-name">Sanliurfa</span>
+ <span class="auth-logo-tld">.com</span>
+ </a>
+ <p class="auth-logo-sub">{twoFactorState ? 'İki adımlı doğrulama' : 'Hesabınıza giriş yapın'}</p>
+ </div>
 
-            <div>
-              <h2 class="text-2xl font-bold text-gray-900">İki Adımlı Doğrulama</h2>
-              <p class="mt-2 text-sm text-gray-500">
-                Kimlik doğrulayıcı uygulamanızdaki 6 haneli kodu girin.
-              </p>
-            </div>
+ <div class="auth-card">
+ {twoFactorState ? (
+ <!-- 2FA form -->
+ <form action={actions.verifyLoginTwoFactor} method="POST">
+ <input type="hidden" name="tempToken" value={twoFactorState.tempToken} />
+ <input type="hidden" name="redirect" value={redirectTarget} />
 
-            {verifySubmitError && (
-              <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {verifySubmitError}
-              </div>
-            )}
+ {verifySubmitError && <div class="auth-err">{verifySubmitError}</div>}
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Doğrulama Kodu</label>
-              <input
-                type="text"
-                name="code"
-                inputmode="numeric"
-                pattern="[0-9]{6}"
-                maxlength="6"
-                required
-                aria-invalid={verifyInputErrors.code ? 'true' : 'false'}
-                class="w-full px-4 py-3 text-center tracking-[0.4em] border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                placeholder="000000"
-              />
-              {verifyInputErrors.code && (
-                <p class="mt-2 text-sm text-red-600">{verifyInputErrors.code.join(', ')}</p>
-              )}
-            </div>
+ <div class="auth-field">
+ <label class="auth-lbl">Doğrulama Kodu</label>
+ <input
+ type="text"
+ name="code"
+ inputmode="numeric"
+ pattern="[0-9]{6}"
+ maxlength="6"
+ required
+ autocomplete="one-time-code"
+ aria-invalid={verifyInputErrors.code ? 'true' : 'false'}
+ class="auth-input"
+ placeholder="000 000"
+ style="text-align:center;letter-spacing:.4em;font-size:1.1rem"
+ />
+ {verifyInputErrors.code && <p class="auth-field-err">{verifyInputErrors.code.join(', ')}</p>}
+ </div>
+ <p style="font-size:.78rem;color:var(--public-muted);margin-bottom:1.25rem;line-height:1.6">
+ Kimlik doğrulayıcı uygulamanızdaki 6 haneli kodu girin.
+ </p>
+ <button type="submit" class="sf-btn-primary auth-submit">Kodu Doğrula</button>
+ </form>
+ ) : (
+ <!-- Login form -->
+ <form action={actions.login} method="POST">
+ <input type="hidden" name="redirect" value={redirectTarget} />
 
-            <button
-              type="submit"
-              class="w-full py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-            >
-              Kodu Doğrula
-            </button>
-          </form>
-        ) : (
-          <form action={actions.login} method="POST" class="space-y-6">
-            <input type="hidden" name="redirect" value={redirectTarget} />
-            {loginSubmitError && (
-              <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {loginSubmitError}
-              </div>
-            )}
+ {loginSubmitError && <div class="auth-err">{loginSubmitError}</div>}
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">E-posta</label>
-              <input 
-                type="email" 
-                name="email" 
-                required
-                transition:persist
-                aria-invalid={loginInputErrors.email ? 'true' : 'false'}
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                placeholder="ornek@email.com"
-              />
-              {loginInputErrors.email && (
-                <p class="mt-2 text-sm text-red-600">{loginInputErrors.email.join(', ')}</p>
-              )}
-            </div>
+ <div class="auth-field">
+ <label class="auth-lbl" for="email-input">E-posta</label>
+ <input
+ id="email-input"
+ type="email"
+ name="email"
+ required
+ transition:persist
+ autocomplete="email"
+ aria-invalid={loginInputErrors.email ? 'true' : 'false'}
+ class="auth-input"
+ placeholder="ornek@email.com"
+ />
+ {loginInputErrors.email && <p class="auth-field-err">{loginInputErrors.email.join(', ')}</p>}
+ </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
-              <input 
-                type="password" 
-                name="password" 
-                required
-                aria-invalid={loginInputErrors.password ? 'true' : 'false'}
-                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                placeholder="••••••••"
-              />
-              {loginInputErrors.password && (
-                <p class="mt-2 text-sm text-red-600">{loginInputErrors.password.join(', ')}</p>
-              )}
-            </div>
+ <div class="auth-field">
+ <label class="auth-lbl" for="pw-input">Şifre</label>
+ <input
+ id="pw-input"
+ type="password"
+ name="password"
+ autocomplete="current-password"
+ required
+ aria-invalid={loginInputErrors.password ? 'true' : 'false'}
+ class="auth-input"
+ placeholder="••••••••"
+ />
+ {loginInputErrors.password && <p class="auth-field-err">{loginInputErrors.password.join(', ')}</p>}
+ </div>
 
-            <div class="flex items-center justify-between">
-              <label class="flex items-center">
-                <input type="checkbox" name="remember" class="w-4 h-4 text-red-600 rounded border-gray-300" />
-                <span class="ml-2 text-sm text-gray-600">Beni hatırla</span>
-              </label>
-              <a href="/sifremi-unuttum" class="text-sm text-red-600 hover:underline">Şifremi unuttum</a>
-            </div>
+ <div class="auth-row">
+ <label class="auth-check">
+ <input type="checkbox" name="remember" />
+ Beni hatırla
+ </label>
+ <a href="/sifremi-unuttum" class="auth-forgot">Şifremi unuttum</a>
+ </div>
 
-            <button 
-              type="submit" 
-              class="w-full py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
-            >
-              Giriş Yap
-            </button>
-          </form>
-        )}
+ <button type="submit" class="sf-btn-primary auth-submit">Giriş Yap</button>
 
-        <div class="mt-6 text-center">
-          <p class="text-gray-500">
-            Hesabınız yok mu? 
-            <a href="/kayit" class="text-red-600 font-medium hover:underline">Kayıt Ol</a>
-          </p>
-        </div>
+ <p class="auth-divider-lbl">veya</p>
 
-        <div class="mt-6 pt-6 border-t border-gray-200">
-          <p class="center text-sm text-gray-500 mb-4">Veya ile giriş yap</p>
-          <div class="space-y-3">
-            <a
-              href={`/api/auth/oauth/authorize?provider=google&redirect=${encodeURIComponent(redirectTarget)}`}
-              class="w-full py-3 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
-            >
-              <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-              Google ile Devam Et
-            </a>
-          </div>
-        </div>
-      </div>
+ <a
+ href={`/api/auth/oauth/authorize?provider=google&redirect=${encodeURIComponent(redirectTarget)}`}
+ class="auth-oauth"
+ >
+ <!-- Google brand mark — intentional inline SVG (whitelist exception per HARD RULE #21) -->
+ <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+ <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+ <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+ <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+ <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+ </svg>
+ Google ile Devam Et
+ </a>
+ </form>
+ )}
+ </div>
 
-      <p class="text-center text-sm text-gray-500 mt-8">
-        <a href="/" class="hover:text-gray-700">← Ana Sayfaya Dön</a>
-      </p>
-    </div>
-  </div>
+ <p class="auth-footer">
+ Hesabınız yok mu? <a href="/kayit">Kayıt Ol</a>
+ </p>
+ <p class="auth-back"><a href="/">← Ana Sayfaya Dön</a></p>
+ </div>
+ </div>
 </Layout>
-
-
-

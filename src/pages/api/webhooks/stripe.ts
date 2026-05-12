@@ -11,7 +11,7 @@ import { updateUserQuotas } from '../../../lib/usage/usage-tracking';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { emailOnSubscriptionCreated, emailOnPaymentSuccess, emailOnSubscriptionCancelled } from '../../../lib/subscription/subscription-email-integration';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   try {
@@ -37,7 +37,6 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       `SELECT id FROM subscriptions WHERE user_id = $1 AND status = 'active'`,
       [userId]
     );
-
     if (existingSub) {
       await updateDb('subscriptions', existingSub.id, {
         status: 'cancelled',
@@ -45,7 +44,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       });
     }
 
-    // Create new subscription
+    // Create new subscription — atomic INSERT ON CONFLICT (HARD RULE #47).
+    // ON CONFLICT (stripe_subscription_id) DO NOTHING guarantees idempotency:
+    // concurrent webhook retries both attempt INSERT; only one succeeds, the other
+    // gets NULL back and returns early without duplicating side-effects (email, quota).
     const nextBillingDate = new Date();
     if (billingCycle === 'annual') {
       nextBillingDate.setFullYear(nextBillingDate.getFullYear() + 1);
@@ -53,24 +55,29 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
     }
 
-    const subscription = await insert('subscriptions', {
-      user_id: userId,
-      tier_id: tierId,
-      subscription_type: 'stripe',
-      status: 'active',
-      start_date: new Date().toISOString(),
-      auto_renew: true,
-      billing_cycle: billingCycle,
-      stripe_customer_id: session.customer || session.customer_email,
-      stripe_subscription_id: session.subscription,
-      next_billing_date: nextBillingDate.toISOString(),
-      created_at: new Date().toISOString(),
-    });
+    const subscription = await queryOne<{ id: string; user_id: string; tier_id: string }>(
+      `INSERT INTO subscriptions
+         (user_id, tier_id, subscription_type, status, start_date, auto_renew, billing_cycle,
+          stripe_customer_id, stripe_subscription_id, next_billing_date, created_at)
+       VALUES ($1, $2, 'stripe', 'active', NOW(), true, $3, $4, $5, $6, NOW())
+       ON CONFLICT (stripe_subscription_id) DO NOTHING
+       RETURNING id, user_id, tier_id`,
+      [userId, tierId, billingCycle, String(session.customer || session.customer_email || ''),
+       session.subscription, nextBillingDate.toISOString()]
+    );
+
+    if (!subscription) {
+      logger.info('Stripe checkout webhook duplicate — skipping (ON CONFLICT)', {
+        sessionId: session.id,
+        stripeSubscriptionId: session.subscription,
+      });
+      return;
+    }
 
     // Create billing history record
     await insert('billing_history', {
       subscription_id: subscription.id,
-      user_id: userId,
+      user_id: subscription.user_id,
       amount: (stripeSubscription.items.data[0]?.price?.unit_amount || 0) / 100,
       currency: stripeSubscription.currency || 'try',
       billing_cycle: billingCycle,
@@ -81,11 +88,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     });
 
     // Update quotas for new subscription
-    await updateUserQuotas(userId);
+    await updateUserQuotas(subscription.user_id);
 
     // Send subscription created email
     const amount = (stripeSubscription.items.data[0]?.price?.unit_amount || 0) / 100;
-    await emailOnSubscriptionCreated(userId, tierId, billingCycle, amount);
+    await emailOnSubscriptionCreated(subscription.user_id, subscription.tier_id, billingCycle, amount);
 
     logger.info('Subscription created from checkout', {
       subscriptionId: subscription.id,
@@ -95,6 +102,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     });
   } catch (error) {
     logger.error('Failed to handle checkout session completed', error instanceof Error ? error : new Error(String(error)));
+    // Re-throw: Stripe webhook outer catch 5xx döner → Stripe retry yapar.
+    // Idempotency check (stripe_subscription_id duplicate) retry'da silent skip yapacak.
+    throw error;
   }
 }
 
@@ -102,42 +112,38 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   let subscription: { id: string; user_id: string; tier_id: string; billing_cycle?: string } | null = null;
 
   try {
-    const subscriptionId = (invoice as any).subscription;
+    const subscriptionId = (invoice as Stripe.Invoice & { subscription?: string | null }).subscription;
 
     if (!subscriptionId || typeof subscriptionId !== 'string') {
       logger.warn('No subscription ID in invoice', new Error(`invoiceId: ${invoice.id}`));
       return;
     }
 
-    // Update billing history
-    const existingBilling = await queryOne(
-      `SELECT id FROM billing_history WHERE stripe_invoice_id = $1`,
-      [invoice.id]
+    subscription = await queryOne(
+      `SELECT id, user_id, tier_id, billing_cycle FROM subscriptions WHERE stripe_subscription_id = $1`,
+      [subscriptionId]
     );
 
-    if (!existingBilling) {
-      subscription = await queryOne(
-        `SELECT id, user_id, tier_id, billing_cycle FROM subscriptions WHERE stripe_subscription_id = $1`,
-        [subscriptionId]
+    if (subscription) {
+      // INSERT ON CONFLICT is atomic — prevents duplicate billing_history rows when Stripe
+      // retries the webhook (concurrent delivery / retry race condition).
+      await queryOne(
+        `INSERT INTO billing_history
+           (subscription_id, user_id, amount, currency, billing_cycle, payment_status,
+            stripe_invoice_id, invoice_number, created_at)
+         VALUES ($1, $2, $3, $4, $5, 'paid', $6, $7, $8)
+         ON CONFLICT (stripe_invoice_id) DO UPDATE SET payment_status = 'paid'`,
+        [
+          subscription.id,
+          subscription.user_id,
+          invoice.amount_paid / 100,
+          invoice.currency,
+          invoice.billing_reason === 'subscription_cycle' ? 'monthly' : 'annual',
+          invoice.id,
+          invoice.number,
+          new Date(invoice.created * 1000).toISOString(),
+        ]
       );
-
-      if (subscription) {
-        await insert('billing_history', {
-          subscription_id: subscription.id,
-          user_id: subscription.user_id,
-          amount: invoice.amount_paid / 100,
-          currency: invoice.currency,
-          billing_cycle: invoice.billing_reason === 'subscription_cycle' ? 'monthly' : 'annual',
-          payment_status: 'paid',
-          stripe_invoice_id: invoice.id,
-          invoice_number: invoice.number,
-          created_at: new Date(invoice.created * 1000).toISOString(),
-        });
-      }
-    } else {
-      await updateDb('billing_history', existingBilling.id, {
-        payment_status: 'paid',
-      });
     }
 
     // Send payment success email if we have subscription info
@@ -154,6 +160,8 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     logger.info('Invoice paid', { invoiceId: invoice.id });
   } catch (error) {
     logger.error('Failed to handle invoice paid', error instanceof Error ? error : new Error(String(error)));
+    // Re-throw → Stripe retries; idempotency check (existingBilling by stripe_invoice_id) skip eder.
+    throw error;
   }
 }
 
@@ -161,48 +169,72 @@ async function handleCustomerSubscriptionDeleted(subscription: Stripe.Subscripti
   try {
     const stripeSubscriptionId = subscription.id;
 
-    // Find and cancel subscription in our database
-    const dbSubscription = await queryOne(
-      `SELECT id, user_id, tier_id FROM subscriptions WHERE stripe_subscription_id = $1`,
+    // Find subscription in our database — `status` ile idempotency check
+    const dbSubscription = await queryOne<{ id: string; user_id: string; tier_id: string; status: string }>(
+      `SELECT id, user_id, tier_id, status FROM subscriptions WHERE stripe_subscription_id = $1`,
       [stripeSubscriptionId]
     );
 
-    if (dbSubscription) {
-      await updateDb('subscriptions', dbSubscription.id, {
-        status: 'cancelled',
-        end_date: new Date().toISOString(),
-      });
-
-      // Send subscription cancelled email
-      const accessUntilDate = new Date();
-      accessUntilDate.setDate(accessUntilDate.getDate() + 30); // Access for 30 more days
-      await emailOnSubscriptionCancelled(dbSubscription.user_id, dbSubscription.tier_id, accessUntilDate);
-
-      logger.info('Subscription cancelled', {
-        subscriptionId: dbSubscription.id,
-        userId: dbSubscription.user_id,
-      });
+    if (!dbSubscription) {
+      return;
     }
+
+    // Idempotency: zaten cancelled ise duplicate webhook — skip (aksi halde duplicate cancel email).
+    if (dbSubscription.status === 'cancelled') {
+      logger.info('Stripe subscription delete webhook duplicate — skipping', {
+        stripeSubscriptionId,
+        dbId: dbSubscription.id,
+      });
+      return;
+    }
+
+    await updateDb('subscriptions', dbSubscription.id, {
+      status: 'cancelled',
+      end_date: new Date().toISOString(),
+    });
+
+    // Send subscription cancelled email
+    const accessUntilDate = new Date();
+    accessUntilDate.setDate(accessUntilDate.getDate() + 30); // Access for 30 more days
+    await emailOnSubscriptionCancelled(dbSubscription.user_id, dbSubscription.tier_id, accessUntilDate);
+
+    logger.info('Subscription cancelled', {
+      subscriptionId: dbSubscription.id,
+      userId: dbSubscription.user_id,
+    });
   } catch (error) {
     logger.error('Failed to handle subscription deleted', error instanceof Error ? error : new Error(String(error)));
+    // Re-throw → Stripe retries; status === 'cancelled' check ile retry'da silent skip eder.
+    throw error;
   }
 }
 
 export const POST: APIRoute = async ({ request }) => {
   const startTime = Date.now();
 
+  // Step 1: Verify signature — failure 400 (no Stripe retry, request was tampered)
+  let event: Stripe.Event;
   try {
-    // Get raw body for signature verification
     const rawBody = await request.text();
     const signature = request.headers.get('stripe-signature');
+    event = await verifyStripeWebhookSignature(rawBody, signature || '');
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    recordRequest('POST', '/api/webhooks/stripe', 400, duration);
+    logger.error('Webhook signature verification failed', error instanceof Error ? error : new Error(String(error)));
+    return problemJson({
+      status: 400,
+      title: 'Webhook Doğrulanamadı',
+      detail: 'Webhook signature verification failed',
+      type: '/problems/webhook-stripe-signature-invalid',
+      instance: '/api/webhooks/stripe',
+    });
+  }
 
-    // Verify webhook signature
-    const event = await verifyStripeWebhookSignature(rawBody, signature || '');
+  logger.info('Stripe webhook received', new Error(`eventType: ${event.type}, eventId: ${event.id}`));
 
-    recordRequest('POST', '/api/webhooks/stripe', 200, Date.now() - startTime);
-    logger.info('Stripe webhook received', new Error(`eventType: ${event.type}, eventId: ${event.id}`));
-
-    // Handle different event types
+  // Step 2: Handler dispatch — failure 5xx (Stripe retry tetiklenir; idempotency check'ler safe yapar)
+  try {
     switch (event.type) {
       case 'checkout.session.completed':
         await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
@@ -218,27 +250,24 @@ export const POST: APIRoute = async ({ request }) => {
 
       case 'invoice.payment_failed':
         const inv = event.data.object as Stripe.Invoice;
-        logger.warn('Invoice payment failed', new Error(`invoiceId: ${inv.id}, subscriptionId: ${(inv as any).subscription}`));
+        logger.warn('Invoice payment failed', new Error(`invoiceId: ${inv.id}, subscriptionId: ${(inv as Stripe.Invoice & { subscription?: string }).subscription}`));
         break;
 
       default:
         logger.debug('Unhandled webhook event', new Error(`eventType: ${event.type}`));
     }
 
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    recordRequest('POST', '/api/webhooks/stripe', 200, Date.now() - startTime);
+    return apiResponse({ received: true }, HttpStatus.OK);
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/webhooks/stripe', 400, duration);
-    logger.error('Webhook verification failed', error instanceof Error ? error : new Error(String(error)));
-
+    recordRequest('POST', '/api/webhooks/stripe', 500, duration);
+    logger.error('Stripe webhook handler failed — Stripe will retry', error instanceof Error ? error : new Error(String(error)), { eventId: event.id, eventType: event.type });
     return problemJson({
-      status: 400,
-      title: 'Webhook Doğrulanamadı',
-      detail: 'Webhook signature verification failed',
-      type: '/problems/webhook-stripe-signature-invalid',
+      status: 500,
+      title: 'Webhook İşlenemedi',
+      detail: 'Internal handler failure — Stripe will retry',
+      type: '/problems/webhook-stripe-handler-failed',
       instance: '/api/webhooks/stripe',
     });
   }

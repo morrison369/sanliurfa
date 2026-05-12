@@ -16,6 +16,16 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
 
   try {
     const { id } = params;
+    if (!id) {
+      recordRequest('GET', '/api/events/[id]/details', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Event ID is required',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
 
     const event = await getEventById(id);
     if (!event) {
@@ -30,7 +40,7 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
     }
 
     let userHasRsvpd = false;
-    let attendees = [];
+    let attendees: Awaited<ReturnType<typeof getEventAttendees>> = [];
 
     if (locals.user) {
       userHasRsvpd = await hasUserRsvpd(id, locals.user.id);
@@ -43,12 +53,21 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
 
     recordRequest('GET', '/api/events/[id]/details', HttpStatus.OK, Date.now() - startTime);
 
-    return apiResponse({
+    const payload: {
+      success: true;
+      event: typeof event;
+      userHasRsvpd: boolean;
+      attendees?: Awaited<ReturnType<typeof getEventAttendees>>;
+    } = {
       success: true,
       event,
       userHasRsvpd,
-      attendees: includeAttendees ? attendees : undefined
-    }, HttpStatus.OK, requestId);
+    };
+    if (includeAttendees) {
+      payload.attendees = attendees;
+    }
+
+    return apiResponse(payload, HttpStatus.OK, requestId);
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/events/[id]/details', HttpStatus.INTERNAL_SERVER_ERROR, duration);

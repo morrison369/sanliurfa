@@ -1,0 +1,204 @@
+---
+import Layout from '../layouts/Layout.astro';
+import RankedPlaceCard from '../components/landing/RankedPlaceCard.astro';
+import { query } from '../lib/postgres';
+import { getCachedPublicRouteData } from '../lib/public-route-cache';
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
+import {
+  buildItemListSchema,
+  buildBreadcrumbSchema,
+  buildFAQSchema,
+  type LandingPlace,
+} from '../lib/landing/landing-schema';
+const baseUrl = getPublicAppUrl();
+
+let ucretsizYerler: LandingPlace[] = [];
+let ucretsizEtkinlikler: any[] = [];
+try {
+  [ucretsizYerler, ucretsizEtkinlikler] = await Promise.all([
+    getCachedPublicRouteData('page:guide:ucretsiz-yerler', async () => {
+      const result = await query(`
+        SELECT p.id, p.slug, p.name, p.address, p.avg_rating AS rating, p.review_count, p.image_url, p.images,
+               p.short_description, c.name AS category_name
+        FROM places p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.status = 'active'
+          AND (c.name ILIKE '%park%' OR c.name ILIKE '%tarihi%'
+               OR c.name ILIKE '%turizm%' OR c.name ILIKE '%gezilecek%'
+               OR c.name ILIKE '%müze%')
+        ORDER BY p.avg_rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+        LIMIT 12
+      `);
+      return result.rows;
+    }),
+    getCachedPublicRouteData('page:guide:ucretsiz-etkinlikler', async () => {
+      const result = await query(`
+        SELECT title, slug, start_date, location
+        FROM events
+        WHERE status = 'published' AND is_free = true
+          AND start_date >= CURRENT_DATE
+        ORDER BY start_date ASC
+        LIMIT 8
+      `);
+      return result.rows;
+    }),
+  ]);
+} catch (e) {
+  logger.error('Ücretsiz yerler yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: "Şanlıurfa Ücretsiz Gezilecek Yerler 2026 | Bedava Mekanlar",
+  description: "Şanlıurfa'da ücretsiz gezilecek tarihi alanlar, parklar ve kültürel mekanlar. Bütçenizi zorlamadan Şanlıurfa'yı keşfedin.",
+  keywords: ["şanlıurfa ücretsiz gezilecek yerler", "urfa bedava gezi", "şanlıurfa ücretsiz", "şanlıurfa parasız gezi"],
+  canonical: '/ucretsiz-gezilecek-yerler',
+};
+
+const fmt = (d: string) => new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+
+const faqItems = [
+  {
+    S: "Şanlıurfa'da ücretsiz gezilecek yer var mı?",
+    C: "Evet. Balıklıgöl çevresi, Hz. İbrahim Mağarası ve Rızvaniye Camii, tarihi çarşılar, Kapalı Çarşı ve Gümrük Hanı alanları ücretsiz gezilebilir.",
+  },
+  {
+    S: "Şanlıurfa'da bütçe gezisi nasıl yapılır?",
+    C: "Tarihi çarşılar, Balıklıgöl ve çevresi, camiler ve park alanları ücretsizdir. Göbeklitepe ve Harran için küçük giriş ücretleri alınmaktadır. Yemekte yerel pide ve lahmacun mekanları ekonomik seçenektir.",
+  },
+  {
+    S: "Şanlıurfa'da ücretsiz etkinlikler var mı?",
+    C: "Evet. Şanlıurfa'da Nevruz Şenlikleri, Sıra Geceleri, Ramazan etkinlikleri ve kültür festivalleri gibi ücretsiz giriş imkânı sunan etkinlikler düzenlenmektedir.",
+  },
+];
+---
+
+<Layout seo={seo}>
+  <style is:inline>
+  .ek-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(44,122,82,0.12) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(212,151,24,0.08) 0%,transparent 40%),linear-gradient(180deg,#f0f8f4 0%,#e8f5ee 58%,#f0f8f4 100%)}
+  .ek-hero-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#2c7a52}
+  .ek-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.7rem,4vw,2.6rem);font-weight:700;color:var(--public-text);margin:.75rem 0 .25rem}
+  .ek-hero-desc{color:var(--public-muted);font-size:.9rem;max-width:40rem}
+  .ek-body{background:var(--bg);padding:2rem 0 4rem}
+  .ek-info{background:rgba(44,122,82,.05);border:1px solid rgba(44,122,82,.18);padding:1.25rem;margin-bottom:1.75rem}
+  .ek-info-h2{font-size:.9rem;font-weight:700;color:#2c7a52;margin-bottom:.25rem}
+  .ek-info-p{font-size:.8rem;line-height:1.7;color:var(--public-muted)}
+  .ek-section-title{font-size:1rem;font-weight:700;color:var(--public-text);margin:2rem 0 1rem}
+  .ek-grid{display:grid;gap:1rem}
+  @media(min-width:48rem){.ek-grid{grid-template-columns:1fr 1fr}}
+  .ek-card{background:var(--bg-card);border:1px solid rgba(44,122,82,.14);display:flex;overflow:hidden;transition:border-color .15s}
+  .ek-card:hover{border-color:#2c7a52}
+  .ek-card-rank{width:6rem;height:6rem;background:rgba(44,122,82,.1);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#2c7a52;flex-shrink:0}
+  .ek-card-body{padding:1rem;flex:1;min-width:0}
+  .ek-card-name{font-size:.9rem;font-weight:700;color:var(--public-text);transition:color .15s}
+  .ek-card:hover .ek-card-name{color:#2c7a52}
+  .ek-card-cat{font-size:.72rem;color:var(--public-muted);margin-top:.15rem}
+  .ek-card-meta{display:flex;align-items:center;gap:.75rem;margin-top:.5rem;font-size:.8rem}
+  .ek-rating{color:var(--public-accent);font-weight:600}
+  .ek-badge-free{background:rgba(44,122,82,.15);color:#2c7a52;font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:.3rem}
+  .ek-ev-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.6rem}
+  .ek-ev-item{display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;background:var(--bg-card);border:1px solid rgba(44,122,82,.12);border-radius:.5rem}
+  .ek-ev-date{font-size:.75rem;color:#2c7a52;font-weight:600;min-width:4rem}
+  .ek-ev-title{font-size:.85rem;font-weight:600;color:var(--public-text)}
+  .ek-ev-loc{font-size:.72rem;color:var(--public-muted)}
+  .ek-cta{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:2.5rem}
+  .ek-btn-primary{background:#2c7a52;color:#fff;font-size:.85rem;font-weight:600;padding:.65rem 1.25rem;transition:background .15s}
+  .ek-btn-outline{border:1px solid rgba(44,122,82,.25);color:#2c7a52;font-size:.85rem;font-weight:500;padding:.65rem 1.25rem}
+  details summary{list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details[open] .faq-arrow{transform:rotate(180deg)}
+  </style>
+
+  <div class="ek-hero">
+    <div class="sf-container">
+      <p class="ek-hero-label">Bütçe Dostu Şanlıurfa</p>
+      <h1 class="ek-h1">Şanlıurfa'da Ücretsiz Gezilecek Yerler</h1>
+      <p class="ek-hero-desc">Para harcamadan keşfedilecek tarihi alanlar, parklar, camiler ve kültürel mekanlar.</p>
+    </div>
+  </div>
+
+  <div class="ek-body">
+    <div class="sf-container">
+      <div class="ek-info">
+        <h2 class="ek-info-h2">Ücretsiz Gezi İpuçları</h2>
+        <p class="ek-info-p">Balıklıgöl çevresi, Hz. İbrahim Mağarası, Dergah bölgesi, tarihi Kapalı Çarşı ve Gümrük Hanı ücretsiz gezilebilir. Sabah saatlerinde camiler için de uygun ziyaret yapılabilir. Pazartesi dışı tüm günler erişilebilir mekanlar listemizde.</p>
+      </div>
+
+      {ucretsizYerler.length > 0 && (
+        <>
+          <h2 class="ek-section-title">Ücretsiz Mekanlar</h2>
+          <div class="ek-grid">
+            {ucretsizYerler.map((place, i) => (
+              <RankedPlaceCard place={place} rank={i + 1} variant="attraction" />
+            ))}
+          </div>
+        </>
+      )}
+
+      {ucretsizEtkinlikler.length > 0 && (
+        <>
+          <h2 class="ek-section-title">Yaklaşan Ücretsiz Etkinlikler</h2>
+          <ul class="ek-ev-list">
+            {ucretsizEtkinlikler.map((ev) => (
+              <li class="ek-ev-item">
+                <span class="ek-ev-date">{fmt(ev.start_date)}</span>
+                <div>
+                  <a href={`/etkinlikler/${ev.slug}`} class="ek-ev-title">{ev.title}</a>
+                  {ev.location && <p class="ek-ev-loc">{ev.location}</p>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <div class="ek-cta">
+        <a href="/etkinlikler" class="ek-btn-primary">Tüm Etkinlikler</a>
+        <a href="/en-iyi-gezilecek-yerler" class="ek-btn-outline">En İyi Gezilecek Yerler</a>
+        <a href="/sanliurfa-gezi-rehberi" class="ek-btn-outline">Gezi Rehberi →</a>
+      </div>
+    </div>
+  </div>
+
+  {faqItems.length > 0 && (
+    <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+      <div class="sf-container">
+        <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          {faqItems.map((item) => (
+            <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+              <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+                {item.S}
+                <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+              </summary>
+              <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+                {item.C}
+              </div>
+            </details>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+
+  <script type="application/ld+json" set:html={JSON.stringify(buildItemListSchema({
+    places: ucretsizYerler,
+    pageName: 'Şanlıurfa Ücretsiz Gezilecek Yerler',
+    pagePath: '/ucretsiz-gezilecek-yerler',
+    baseUrl,
+    type: 'TouristAttraction',
+    description: "Şanlıurfa'da giriş ücreti olmayan, ücretsiz ziyaret edebileceğiniz parklar, müzeler ve tarihi mekanlar.",
+  }))} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify(buildBreadcrumbSchema({
+    baseUrl,
+    crumbs: [
+      { name: 'Ana Sayfa', href: '/' },
+      { name: 'Gezilecek Yerler', href: '/gezilecek-yerler' },
+      { name: 'Ücretsiz Gezilecek Yerler', href: '/ucretsiz-gezilecek-yerler' },
+    ],
+  }))} is:inline />
+  {(() => {
+    const faqJson = buildFAQSchema(faqItems);
+    return faqJson ? <script type="application/ld+json" set:html={JSON.stringify(faqJson)} is:inline /> : null;
+  })()}
+</Layout>

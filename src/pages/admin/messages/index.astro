@@ -1,127 +1,114 @@
 ---
 import { actions } from 'astro:actions';
-import Layout from '../../../layouts/Layout.astro';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { query } from '../../../lib/postgres';
-
-const user = Astro.locals.user;
-
-if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin/messages');
-}
+import { logger } from '../../../lib/logging';
 
 let messages: any[] = [];
-const seo = {
-  title: 'İletişim Mesajları - Admin',
-  description: 'Admin iletişim talepleri yönetim ekranı',
-  noIndex: true,
-};
 const statusResult = Astro.getActionResult(actions.updateAdminMessageStatus);
 
 try {
-
-  const result = await query(
-    `SELECT
-       id,
-       COALESCE(name, 'İsimsiz') as name,
-       email,
-       COALESCE(subject, title, 'Konu yok') as subject,
-       COALESCE(message, description, '') as message,
-       status,
-       priority,
-       type,
-       ticket_number,
-       created_at
-     FROM support_tickets
-     ORDER BY created_at DESC`
-  );
-  messages = result.rows;
-
+ const result = await query(
+ `SELECT
+ id,
+ COALESCE(name, 'İsimsiz') as name,
+ email,
+ COALESCE(subject, title, 'Konu yok') as subject,
+ COALESCE(message, description, '') as message,
+ status,
+ priority,
+ type,
+ ticket_number,
+ created_at
+ FROM support_tickets
+ ORDER BY created_at DESC`
+ );
+ messages = result.rows;
 } catch (e) {
-  console.error('Error loading data:', e);
+ logger.error('Error loading admin messages', e instanceof Error ? e : new Error(String(e)));
 }
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-100 dark:bg-gray-900 py-8">
-    <div class="container-custom">
-      <div class="flex items-center justify-between mb-8">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">İletişim Mesajları</h1>
-        <a href="/admin" class="text-urfa-600 hover:text-urfa-700">← Yönetim Paneli</a>
-      </div>
+<AdminLayout
+ title="İletişim Mesajları"
+ subtitle={`${messages.length} mesaj`}
+ seo={{ title: 'İletişim Mesajları - Admin', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-6xl space-y-5">
+ <div class="mb-2">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ </div>
 
-      {statusResult?.data?.success && (
-        <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-          Mesaj durumu güncellendi.
-        </div>
-      )}
+ {statusResult?.data?.success && (
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
+ Mesaj durumu güncellendi.
+ </div>
+ )}
 
-      {statusResult?.error && (
-        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {statusResult.error.message || 'Mesaj durumu güncellenemedi.'}
-        </div>
-      )}
-      
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-gray-50 dark:bg-gray-700">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Gönderen</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Konu</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Durum</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tarih</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">İşlem</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-            {messages.map((msg) => (
-              <tr>
-                <td class="px-6 py-4">
-                  <div class="text-sm font-medium text-gray-900 dark:text-white">{msg.name}</div>
-                  <div class="text-sm text-gray-500 dark:text-gray-400">{msg.email}</div>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{msg.subject}</td>
-                <td class="px-6 py-4">
-                  <span class={`inline-flex px-2 py-1 text-xs rounded-full ${
-                    msg.status === 'open' ? 'bg-red-100 text-red-800' :
-                    msg.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                    msg.status === 'spam' ? 'bg-gray-100 text-gray-700' :
-                    'bg-green-100 text-green-800'
-                  }`}>
-                    {msg.status === 'open' ? 'Yeni' : msg.status === 'in_progress' ? 'İşlemde' : msg.status === 'spam' ? 'Spam' : msg.status === 'closed' ? 'Kapalı' : 'Çözüldü'}
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  {new Date(msg.created_at).toLocaleDateString('tr-TR')}
-                </td>
-                <td class="px-6 py-4">
-                  {msg.status === 'open' && (
-                    <form method="POST" action={actions.updateAdminMessageStatus} class="inline">
-                      <input type="hidden" name="id" value={msg.id} />
-                      <input type="hidden" name="status" value="in_progress" />
-                      <button type="submit" class="text-sm text-urfa-600">İşleme Al</button>
-                    </form>
-                  )}
-                  {msg.status === 'in_progress' && (
-                    <form method="POST" action={actions.updateAdminMessageStatus} class="inline">
-                      <input type="hidden" name="id" value={msg.id} />
-                      <input type="hidden" name="status" value="resolved" />
-                      <button type="submit" class="text-sm text-green-600">Çözüldü İşaretle</button>
-                    </form>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      
-      {messages.length === 0 && (
-        <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl mt-4">
-          <p class="text-gray-600 dark:text-gray-400">Henüz mesaj bulunmuyor.</p>
-        </div>
-      )}
-    </div>
-  </div>
-</Layout>
+ {statusResult?.error && (
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
+ {statusResult.error.message || 'Mesaj durumu güncellenemedi.'}
+ </div>
+ )}
 
-
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ {messages.length === 0 ? (
+ <div class="py-12 text-center text-sm text-[#7A6B58]">Henüz mesaj bulunmuyor.</div>
+ ) : (
+ <div class="overflow-x-auto">
+ <table class="w-full text-sm">
+ <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <tr>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Gönderen</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Konu</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Durum</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Tarih</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İşlem</th>
+ </tr>
+ </thead>
+ <tbody class="divide-y divide-[rgba(184,115,51,0.08)]">
+ {messages.map((msg) => (
+ <tr class="hover:bg-[rgba(184,115,51,0.04)]">
+ <td class="px-6 py-4">
+ <div class="text-sm font-medium text-[#1F1410]">{msg.name}</div>
+ <div class="text-sm text-[#7A6B58]">{msg.email}</div>
+ </td>
+ <td class="px-6 py-4 text-sm text-[#1F1410]">{msg.subject}</td>
+ <td class="px-6 py-4">
+ <span class={`inline-flex px-2 py-0.5 rounded-sm text-xs font-medium ${
+ msg.status === 'open' ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' :
+ msg.status === 'in_progress' ? 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]' :
+ msg.status === 'spam' ? 'bg-[rgba(184,115,51,0.04)] text-[#7A6B58]' :
+ 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'
+ }`}>
+ {msg.status === 'open' ? 'Yeni' : msg.status === 'in_progress' ? 'İşlemde' : msg.status === 'spam' ? 'Spam' : msg.status === 'closed' ? 'Kapalı' : 'Çözüldü'}
+ </span>
+ </td>
+ <td class="px-6 py-4 text-sm text-[#7A6B58]">
+ {new Date(msg.created_at).toLocaleDateString('tr-TR')}
+ </td>
+ <td class="px-6 py-4">
+ {msg.status === 'open' && (
+ <form method="POST" action={actions.updateAdminMessageStatus} class="inline">
+ <input type="hidden" name="id" value={msg.id} />
+ <input type="hidden" name="status" value="in_progress" />
+ <button type="submit" class="text-sm text-urfa-600 hover:text-[#7A6B58]">İşleme Al</button>
+ </form>
+ )}
+ {msg.status === 'in_progress' && (
+ <form method="POST" action={actions.updateAdminMessageStatus} class="inline">
+ <input type="hidden" name="id" value={msg.id} />
+ <input type="hidden" name="status" value="resolved" />
+ <button type="submit" class="text-sm text-[#7A6B58] hover:text-urfa-600">Çözüldü İşaretle</button>
+ </form>
+ )}
+ </td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ </div>
+ )}
+ </div>
+ </div>
+</AdminLayout>

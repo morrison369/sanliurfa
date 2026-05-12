@@ -4,7 +4,7 @@
  */
 
 import { queryOne, queryMany, insert, update } from '../postgres';
-import { sendEmail } from './email';
+import { sendEmail } from './index';
 import { logger } from '../logger';
 
 export type SequenceTriggerType = 'user_signup' | 'subscription_start' | 'inactive_30d' | 'inactive_7d';
@@ -55,29 +55,22 @@ export async function enrollInSequence(userId: string, triggerType: SequenceTrig
       return false;
     }
 
-    // Check if user already enrolled
-    const existing = await queryOne(
-      'SELECT id FROM email_sequence_enrollments WHERE user_id = $1 AND sequence_id = $2',
-      [userId, sequence.id]
+    // Atomic INSERT (HARD RULE #47): SELECT-then-INSERT race-prone
+    const nextSendAt = new Date(Date.now() + (sequence.delay_minutes * 60 * 1000));
+
+    const inserted = await queryOne(
+      `INSERT INTO email_sequence_enrollments
+        (user_id, sequence_id, current_step, status, next_send_at, enrolled_at)
+       VALUES ($1, $2, 0, 'active', $3, NOW())
+       ON CONFLICT (user_id, sequence_id) DO NOTHING
+       RETURNING id`,
+      [userId, sequence.id, nextSendAt.toISOString()]
     );
 
-    if (existing) {
+    if (!inserted) {
       logger.info('User already enrolled in sequence', { userId, sequenceId: sequence.id });
       return true;
     }
-
-    // Calculate next send time (now + sequence delay)
-    const nextSendAt = new Date(Date.now() + (sequence.delay_minutes * 60 * 1000));
-
-    // Enroll user
-    const result = await insert('email_sequence_enrollments', {
-      user_id: userId,
-      sequence_id: sequence.id,
-      current_step: 0,
-      status: 'active',
-      next_send_at: nextSendAt.toISOString(),
-      enrolled_at: new Date().toISOString()
-    });
 
     logger.info('User enrolled in sequence', {
       userId,
@@ -86,7 +79,7 @@ export async function enrollInSequence(userId: string, triggerType: SequenceTrig
       nextSendAt
     });
 
-    return !!result;
+    return true;
   } catch (error) {
     logger.error('Enroll in sequence failed', error instanceof Error ? error : new Error(String(error)), {
       userId,
@@ -129,14 +122,14 @@ export async function processSequenceQueue(): Promise<{ processed: number; faile
 
     for (const enrollment of enrollments) {
       try {
-        // Send email
-        const success = await sendEmail({
+        // Send email (3-tier: Resend → SMTP → dev log)
+        const result = await sendEmail({
           to: enrollment.email,
           subject: enrollment.subject,
           html: enrollment.html_content
         });
 
-        if (!success) {
+        if (!result.success) {
           failed++;
           continue;
         }
@@ -289,9 +282,7 @@ async function createWelcomeSequenceSteps(sequenceId: number): Promise<void> {
     }
   ];
 
-  for (const step of steps) {
-    await insert('email_sequence_steps', step);
-  }
+  await Promise.all(steps.map((step) => insert('email_sequence_steps', step)));
 }
 
 /**
@@ -321,9 +312,7 @@ async function createPremiumSequenceSteps(sequenceId: number): Promise<void> {
     }
   ];
 
-  for (const step of steps) {
-    await insert('email_sequence_steps', step);
-  }
+  await Promise.all(steps.map((step) => insert('email_sequence_steps', step)));
 }
 
 /**
@@ -353,9 +342,7 @@ async function createReengagementSequenceSteps(sequenceId: number): Promise<void
     }
   ];
 
-  for (const step of steps) {
-    await insert('email_sequence_steps', step);
-  }
+  await Promise.all(steps.map((step) => insert('email_sequence_steps', step)));
 }
 
 /**

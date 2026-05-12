@@ -42,7 +42,7 @@ export class GoogleAnalytics {
     // Initialize gtag
     window.dataLayer = window.dataLayer || [];
     function gtag(..._args: any[]) {
-      window.dataLayer.push(arguments);
+      window.dataLayer?.push(arguments);
     }
     window.gtag = gtag;
 
@@ -101,7 +101,7 @@ export class GoogleAnalytics {
       name: 'view_item',
       category: 'place',
       label: placeName,
-      value: parseInt(placeId),
+      value: parseInt(placeId, 10),
       properties: {
         item_id: placeId,
         item_name: placeName,
@@ -261,7 +261,9 @@ export class GoogleAnalytics {
     const stored = sessionStorage.getItem('ga_session_id');
     if (stored) return stored;
 
-    const sessionId = `${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+    const bytes = new Uint8Array(6);
+    globalThis.crypto.getRandomValues(bytes);
+    const sessionId = `${Date.now()}_${Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')}`;
     sessionStorage.setItem('ga_session_id', sessionId);
     return sessionId;
   }

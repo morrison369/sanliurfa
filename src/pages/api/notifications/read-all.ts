@@ -3,6 +3,7 @@ import { markAllAsRead } from '../../../lib/notification/notifications-queue';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
+import { invalidateNotification } from '../../../lib/cache/invalidation';
 
 export const PUT: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId(request);
@@ -16,6 +17,9 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
 
     const count = await markAllAsRead(locals.user.id);
+
+    // Cache invalidation: unread count + user notifications cache'lerini etkiler
+    await invalidateNotification(locals.user.id);
 
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/notifications/read-all', HttpStatus.OK, duration);

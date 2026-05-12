@@ -2,7 +2,7 @@
  * Notification Delivery Library
  * Multi-channel notification delivery (in-app, push, email)
  */
-import { queryOne, queryMany, insert, update } from '../postgres';
+import { query, queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { sendPushToUser } from '../push/push';
 
@@ -147,7 +147,7 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
       'SELECT COUNT(*) as count FROM notification_history WHERE user_id = $1 AND is_read = false AND is_archived = false',
       [userId]
     );
-    return parseInt(result?.count || '0');
+    return parseInt(result?.count || '0', 10);
   } catch (error) {
     logger.error('Failed to get unread count', error instanceof Error ? error : new Error(String(error)));
     return 0;
@@ -189,29 +189,26 @@ export async function updateNotificationTypePreferences(
   preferences: any
 ): Promise<void> {
   try {
-    const existing = await queryOne(
-      'SELECT id FROM notification_type_preferences WHERE user_id = $1 AND notification_type = $2',
-      [userId, notificationType]
+    await query(
+      `INSERT INTO notification_type_preferences
+        (user_id, notification_type, in_app_enabled, push_enabled, email_enabled, frequency, created_at, updated_at)
+       VALUES
+        ($1, $2, COALESCE($3, true), COALESCE($4, true), COALESCE($5, true), COALESCE($6, 'immediate'), NOW(), NOW())
+       ON CONFLICT (user_id, notification_type) DO UPDATE SET
+        in_app_enabled = COALESCE($3, notification_type_preferences.in_app_enabled),
+        push_enabled = COALESCE($4, notification_type_preferences.push_enabled),
+        email_enabled = COALESCE($5, notification_type_preferences.email_enabled),
+        frequency = COALESCE($6, notification_type_preferences.frequency),
+        updated_at = NOW()`,
+      [
+        userId,
+        notificationType,
+        preferences.inAppEnabled ?? null,
+        preferences.pushEnabled ?? null,
+        preferences.emailEnabled ?? null,
+        preferences.frequency || null
+      ]
     );
-
-    if (existing) {
-      await update('notification_type_preferences', { user_id: userId, notification_type: notificationType }, {
-        in_app_enabled: preferences.inAppEnabled !== undefined ? preferences.inAppEnabled : null,
-        push_enabled: preferences.pushEnabled !== undefined ? preferences.pushEnabled : null,
-        email_enabled: preferences.emailEnabled !== undefined ? preferences.emailEnabled : null,
-        frequency: preferences.frequency || null,
-        updated_at: new Date()
-      });
-    } else {
-      await insert('notification_type_preferences', {
-        user_id: userId,
-        notification_type: notificationType,
-        in_app_enabled: preferences.inAppEnabled !== undefined ? preferences.inAppEnabled : true,
-        push_enabled: preferences.pushEnabled !== undefined ? preferences.pushEnabled : true,
-        email_enabled: preferences.emailEnabled !== undefined ? preferences.emailEnabled : true,
-        frequency: preferences.frequency || 'immediate'
-      });
-    }
 
     logger.info('Notification preferences updated', { userId, notificationType });
   } catch (error) {

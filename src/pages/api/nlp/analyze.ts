@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 import {
   tokenize, 
   extractKeywords, 
@@ -88,13 +88,10 @@ export const POST: APIRoute = async ({ request }) => {
         break;
     }
 
-      return new Response(JSON.stringify({ 
+      return apiResponse({ 
         success: true, 
         data: result,
-      }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+      }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('NLP analyze error:', error);

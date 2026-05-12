@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getPlaceFollowers } from '../../../../lib/place/place-followers';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 import { queryOne } from '../../../../lib/postgres';
@@ -17,7 +17,11 @@ export const GET: APIRoute = async ({ request, params, url }) => {
 
   try {
     const { id: placeId } = params;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    if (!placeId) {
+      recordRequest('GET', '/api/places/[id]/followers', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan kimliği gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
 
     // Verify place exists
     const place = await queryOne('SELECT id FROM places WHERE id = $1', [placeId]);

@@ -2,169 +2,205 @@
 
 import Layout from '../../../layouts/Layout.astro';
 import { query, queryOne } from '../../../lib/postgres';
-import { getSiteBranding } from '../../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getCachedPublicRouteData } from '../../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../../lib/public-app-url';
+import NearbyPharmacies from '../../../components/health/NearbyPharmacies.astro';
+import { logger } from '../../../lib/logging';
+const baseUrl = getPublicAppUrl();
 
 const { ilce, mahalle } = Astro.params;
 let district: any = null;
 let neighborhood: any = null;
 let places: any[] = [];
-let nearbyPharmacies: any[] = [];
 
 try {
-  district = await queryOne("SELECT * FROM districts WHERE slug = $1", [ilce]);
-  if (!district) return Astro.redirect('/ilceler');
+ const data = await getCachedPublicRouteData(`page:mahalleler:detail:${ilce || 'unknown'}:${mahalle || 'unknown'}`, async () => {
+  const districtRow = await queryOne("SELECT * FROM districts WHERE slug = $1", [ilce]);
+  if (!districtRow) return { district: null, neighborhood: null, places: [] };
 
-  neighborhood = await queryOne(
-    "SELECT * FROM neighborhoods WHERE slug = $1 AND district_id = $2",
-    [mahalle, district.id]
+  const neighborhoodRow = await queryOne(
+   "SELECT * FROM neighborhoods WHERE slug = $1 AND district_id = $2",
+   [mahalle, districtRow.id]
   );
-  if (!neighborhood) return Astro.redirect(`/ilceler/${ilce}`);
+  if (!neighborhoodRow) return { district: districtRow, neighborhood: null, places: [] };
 
   const placesResult = await query(
-    `SELECT p.*, c.name as category_name FROM places p
-     LEFT JOIN categories c ON p.category_id = c.id
-     WHERE p.neighborhood_id = $1 AND p.status = 'active'
-     ORDER BY p.rating DESC LIMIT 20`,
-    [neighborhood.id]
+   `SELECT p.*, c.name as category_name FROM places p
+ LEFT JOIN categories c ON p.category_id = c.id
+ WHERE p.neighborhood_id = $1 AND p.status = 'active'
+ ORDER BY p.rating DESC LIMIT 20`,
+   [neighborhoodRow.id]
   );
-  places = placesResult.rows;
 
-  const pharmResult = await query(
-    "SELECT * FROM pharmacies WHERE neighborhood_id = $1 ORDER BY name LIMIT 10",
-    [neighborhood.id]
-  );
-  nearbyPharmacies = pharmResult.rows;
+  return { district: districtRow, neighborhood: neighborhoodRow, places: placesResult.rows };
+ });
+ district = data.district;
+ if (!district) return Astro.redirect('/ilceler');
+
+ neighborhood = data.neighborhood;
+ if (!neighborhood) return Astro.redirect(`/ilceler/${ilce}`);
+ places = data.places;
+ // Nearby pharmacies query moved to <NearbyPharmacies server:defer> below.
 } catch (e) {
-  console.error('Error loading neighborhood:', e);
+ logger.error('Error loading neighborhood:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const seo = {
-  title: `${neighborhood?.name || mahalle} Mahallesi - ${district?.name || ilce} | Şanlıurfa`,
-  description: `${district?.name} ${neighborhood?.name} mahallesindeki mekanlar, eczaneler ve yaşam rehberi.`,
-  keywords: [(neighborhood?.name || mahalle) + ' mahallesi', (district?.name || ilce) + ' mahalle', 'şanlıurfa mahalle rehberi'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: `/mahalleler/${ilce}/${mahalle}`,
+ title: `${neighborhood?.name || mahalle} Mahallesi - ${district?.name || ilce} | Şanlıurfa`,
+ description: `${district?.name} ${neighborhood?.name} mahallesindeki mekanlar, eczaneler ve yaşam rehberi.`,
+ keywords: [(neighborhood?.name || mahalle) + ' mahallesi', (district?.name || ilce) + ' mahalle', 'şanlıurfa mahalle rehberi'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: `/mahalleler/${ilce}/${mahalle}`,
 };
 const faqItems = [
-  { S: `${neighborhood?.name || mahalle} mahallesi hangi ilçeye bağlı?`, C: `${neighborhood?.name || mahalle} mahallesi, ${district?.name || ilce} ilçesine bağlıdır.` },
-  { S: `${neighborhood?.name || mahalle} mahallesinde hangi mekanlar var?`, C: `${neighborhood?.name || mahalle} mahallesindeki aktif mekanlar sayfamızda listelenmektedir.` },
-  { S: `${district?.name || ilce} ilçesindeki diğer mahalleleri nasıl görüntüleyebilirim?`, C: `${district?.name || ilce} ilçesindeki tüm mahallelere /ilceler/${ilce} sayfasından ulaşabilirsiniz.` },
+ { S: `${neighborhood?.name || mahalle} mahallesi hangi ilçeye bağlı?`, C: `${neighborhood?.name || mahalle} mahallesi, ${district?.name || ilce} ilçesine bağlıdır.` },
+ { S: `${neighborhood?.name || mahalle} mahallesinde hangi mekanlar var?`, C: `${neighborhood?.name || mahalle} mahallesindeki aktif mekanlar sayfamızda listelenmektedir.` },
+ { S: `${district?.name || ilce} ilçesindeki diğer mahalleleri nasıl görüntüleyebilirim?`, C: `${district?.name || ilce} ilçesindeki tüm mahallelere /ilceler/${ilce} sayfasından ulaşabilirsiniz.` },
 ];
 
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-white border-b">
-      <div class="container mx-auto px-4 py-3">
-        <nav class="flex items-center gap-2 text-sm text-gray-500">
-          <a href="/" class="hover:text-red-600">Ana Sayfa</a><span>/</span>
-          <a href="/ilceler" class="hover:text-red-600">İlçeler</a><span>/</span>
-          <a href={`/ilceler/${ilce}`} class="hover:text-red-600">{district?.name}</a><span>/</span>
-          <span class="text-gray-900 font-medium">{neighborhood?.name} Mah.</span>
-        </nav>
-      </div>
-    </div>
+ <style>
+ .mh-page{background:var(--public-bg);min-height:100vh}
+ .mh-breadcrumb{background:var(--public-surface);border-bottom:1px solid var(--public-border);padding:.75rem 0}
+ .mh-nav{display:flex;align-items:center;gap:.5rem;font-size:.875rem;color:var(--public-muted)}
+ .mh-nav a{color:var(--public-muted);text-decoration:none;transition:color .15s}
+ .mh-nav a:hover{color:var(--public-accent)}
+ .mh-nav-current{color:var(--public-text);font-weight:500}
+ .mh-hero{background:var(--public-bg);border-bottom:1px solid var(--public-border);padding:2.5rem 0}
+ .mh-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-text-soft);margin-bottom:.5rem}
+ .mh-h1{font-size:1.75rem;font-weight:700;color:var(--public-text)}
+ .mh-hero-sub{color:var(--public-muted)}
+ .mh-body{padding:2rem 0 4rem}
+ .mh-grid{display:grid;gap:2rem}
+ @media(min-width:64rem){.mh-grid{grid-template-columns:2fr 1fr}}
+ .mh-section-title{font-size:1.125rem;font-weight:700;color:var(--public-text);margin-bottom:1rem}
+ .mh-places{display:flex;flex-direction:column;gap:.75rem}
+ .mh-place{display:flex;align-items:center;gap:1rem;background:var(--public-surface);border:1px solid var(--public-border);padding:1rem;text-decoration:none;transition:border-color .15s}
+ .mh-place:hover{border-color:var(--public-accent)}
+ .mh-place-icon{width:3rem;height:3rem;background:var(--public-accent-soft);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+ .mh-place-main{flex:1}
+ .mh-place-name{font-weight:700;color:var(--public-text)}
+ .mh-place-cat{font-size:.75rem;color:var(--public-accent)}
+ .mh-place-rating{color:var(--public-accent);font-weight:700}
+ .mh-empty{color:var(--public-muted);background:var(--public-surface);border:1px solid var(--public-border);padding:2rem;text-align:center}
+ @keyframes mh-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+ .mh-fallback-skeleton{background:var(--public-surface);border:1px solid var(--public-border);padding:1.25rem;margin-bottom:1.5rem;animation:mh-pulse 2s ease-in-out infinite}
+ .mh-skel-head{height:1.25rem;background:var(--public-accent-soft);width:10rem;margin-bottom:1rem}
+ .mh-skel-items{display:flex;flex-direction:column;gap:.75rem}
+ .mh-skel-item{height:3rem;background:var(--public-accent-soft)}
+ .mh-ql-card{background:var(--public-surface);border:1px solid var(--public-border);padding:1.25rem}
+ .mh-ql-title{font-weight:700;color:var(--public-text);margin-bottom:.75rem}
+ .mh-ql-links{display:flex;flex-direction:column;gap:.5rem;font-size:.875rem}
+ .mh-ql-links a{color:var(--public-accent);text-decoration:none;transition:color .15s}
+ .mh-ql-links a:hover{color:var(--public-accent-strong)}
+ </style>
 
-    <div class="bg-gradient-to-br from-indigo-700 to-indigo-900 text-white py-10">
-      <div class="container mx-auto px-4">
-        <h1 class="text-3xl font-bold">{neighborhood?.name} Mahallesi</h1>
-        <p class="text-indigo-200">{district?.name}, Şanlıurfa</p>
-      </div>
-    </div>
+ <div class="mh-page">
+ <div class="mh-breadcrumb">
+ <div class="sf-container">
+ <nav class="mh-nav">
+ <a href="/">Ana Sayfa</a><span>/</span>
+ <a href="/ilceler">İlçeler</a><span>/</span>
+ <a href={`/ilceler/${ilce}`}>{district?.name}</a><span>/</span>
+ <span class="mh-nav-current">{neighborhood?.name} Mah.</span>
+ </nav>
+ </div>
+ </div>
 
-    <div class="container mx-auto px-4 py-8">
-      <div class="grid lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">Mekanlar</h2>
-          {places.length > 0 ? (
-            <div class="space-y-3">
-              {places.map((p) => (
-                <a href={`/isletme/${p.slug}`} class="flex items-center gap-4 bg-white rounded-xl p-4 shadow-sm hover:shadow-lg transition-all group">
-                  <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-xl flex-shrink-0">📍</div>
-                  <div class="flex-1">
-                    <h3 class="font-bold text-gray-900 group-hover:text-indigo-600">{p.name}</h3>
-                    <span class="text-xs text-indigo-600">{p.category_name}</span>
-                  </div>
-                  {p.rating && <div class="text-yellow-500 font-bold">★ {p.rating}</div>}
-                </a>
-              ))}
-            </div>
-          ) : (
-            <p class="text-gray-500 bg-white rounded-xl p-8 text-center">Henüz kayıtlı mekan yok.</p>
-          )}
-        </div>
+ <div class="mh-hero">
+ <div class="sf-container">
+ <p class="mh-label">Şanlıurfa Semt Rehberi</p>
+ <h1 class="mh-h1">{neighborhood?.name} Mahallesi</h1>
+ <p class="mh-hero-sub">{district?.name}, Şanlıurfa</p>
+ </div>
+ </div>
 
-        <aside>
-          {/* Eczaneler */}
-          <div class="bg-white rounded-xl p-5 shadow-sm mb-6">
-            <h3 class="font-bold text-gray-900 mb-3">💊 Yakın Eczaneler</h3>
-            {nearbyPharmacies.length > 0 ? (
-              <div class="space-y-3">
-                {nearbyPharmacies.map((ph) => (
-                  <div class="text-sm">
-                    <p class="font-medium text-gray-900">{ph.name}</p>
-                    <p class="text-gray-500 text-xs">{ph.address}</p>
-                    {ph.phone && <a href={`tel:${ph.phone}`} class="text-green-600 text-xs">{ph.phone}</a>}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p class="text-gray-500 text-sm">Yakın eczane bilgisi eklenecek.</p>
-            )}
-            <a href="/saglik/nobetci-eczaneler" class="text-sm text-green-600 hover:underline mt-3 block">Nöbetçi Eczaneler →</a>
-          </div>
+ <div class="mh-body">
+ <div class="sf-container">
+ <div class="mh-grid">
+ <div>
+ <h2 class="mh-section-title">Mekanlar</h2>
+ {places.length > 0 ? (
+ <div class="mh-places">
+ {places.map((p) => (
+ <a href={`/isletme/${p.slug}`} class="mh-place">
+ <div class="mh-place-icon">📍</div>
+ <div class="mh-place-main">
+ <h3 class="mh-place-name">{p.name}</h3>
+ <span class="mh-place-cat">{p.category_name}</span>
+ </div>
+ {p.rating && <div class="mh-place-rating">★ {p.rating}</div>}
+ </a>
+ ))}
+ </div>
+ ) : (
+ <p class="mh-empty">Henüz kayıtlı mekan yok.</p>
+ )}
+ </div>
 
-          {/* Hızlı Linkler */}
-          <div class="bg-white rounded-xl p-5 shadow-sm">
-            <h3 class="font-bold text-gray-900 mb-3">Hızlı Linkler</h3>
-            <div class="space-y-2 text-sm">
-              <a href={`/ilceler/${ilce}`} class="block text-indigo-600 hover:underline">{district?.name} Rehberi</a>
-              <a href="/saglik/nobetci-eczaneler" class="block text-indigo-600 hover:underline">Nöbetçi Eczaneler</a>
-              <a href="/mekanlar" class="block text-indigo-600 hover:underline">Tüm Mekanlar</a>
-            </div>
-          </div>
-        </aside>
-      </div>
-    </div>
-  </div>
+ <aside>
+ <NearbyPharmacies neighborhoodId={neighborhood.id} server:defer>
+ <div slot="fallback" class="mh-fallback-skeleton">
+ <div class="mh-skel-head"></div>
+ <div class="mh-skel-items">
+ <div class="mh-skel-item"></div>
+ <div class="mh-skel-item"></div>
+ <div class="mh-skel-item"></div>
+ </div>
+ </div>
+ </NearbyPharmacies>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'Neighborhood',
-    name: neighborhood.name,
-    description: neighborhood.description || `${neighborhood.name} mahallesi, ${district?.name || ''} ilçesi, Şanlıurfa`,
-    url: `${baseUrl}/mahalleler/${Astro.params.ilce}/${Astro.params.mahalle}`,
-    containedInPlace: {
-      '@type': 'AdministrativeArea',
-      name: district?.name || 'Şanlıurfa',
-      url: district?.slug ? `${baseUrl}/ilceler/${district.slug}` : `${baseUrl}/ilceler`,
-    },
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: district?.name || 'Şanlıurfa',
-      addressRegion: 'Şanlıurfa',
-      addressCountry: 'TR',
-    },
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: `${baseUrl}/mahalleler` },
-      { '@type': 'ListItem', position: 3, name: district?.name || ilce, item: `${baseUrl}/mahalleler/${ilce}` },
-      { '@type': 'ListItem', position: 4, name: neighborhood?.name || mahalle, item: `${baseUrl}/mahalleler/${ilce}/${mahalle}` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <div class="mh-ql-card">
+ <h3 class="mh-ql-title">Hızlı Linkler</h3>
+ <div class="mh-ql-links">
+ <a href={`/ilceler/${ilce}`}>{district?.name} Rehberi</a>
+ <a href="/saglik/nobetci-eczaneler">Nöbetçi Eczaneler</a>
+ <a href="/mekanlar">Tüm Mekanlar</a>
+ </div>
+ </div>
+ </aside>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'Neighborhood',
+ name: neighborhood.name,
+ description: neighborhood.description || `${neighborhood.name} mahallesi, ${district?.name || ''} ilçesi, Şanlıurfa`,
+ url: `${baseUrl}/mahalleler/${Astro.params.ilce}/${Astro.params.mahalle}`,
+ containedInPlace: {
+ '@type': 'AdministrativeArea',
+ name: district?.name || 'Şanlıurfa',
+ url: district?.slug ? `${baseUrl}/ilceler/${district.slug}` : `${baseUrl}/ilceler`,
+ },
+ address: {
+ '@type': 'PostalAddress',
+ addressLocality: district?.name || 'Şanlıurfa',
+ addressRegion: 'Şanlıurfa',
+ addressCountry: 'TR',
+ },
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: `${baseUrl}/mahalleler` },
+ { '@type': 'ListItem', position: 3, name: district?.name || ilce, item: `${baseUrl}/mahalleler/${ilce}` },
+ { '@type': 'ListItem', position: 4, name: neighborhood?.name || mahalle, item: `${baseUrl}/mahalleler/${ilce}/${mahalle}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

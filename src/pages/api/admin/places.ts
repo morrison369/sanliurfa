@@ -2,9 +2,10 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail, safeIntParam } from '../../../lib/api';
 import { canTransitionPlaceStatus } from '../../../lib/place/lifecycle';
 import { recordPlaceLifecycleEvent } from '../../../lib/place/lifecycle-events';
+import { deleteCachePattern } from '../../../lib/cache';
 
 export const GET: APIRoute = async (context) => {
   try {
@@ -20,10 +21,13 @@ export const GET: APIRoute = async (context) => {
     }
 
     const url = new URL(context.request.url);
-    const status = url.searchParams.get('status') || 'all';
-    const search = url.searchParams.get('search');
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const VALID_PLACE_STATUSES = new Set(['all', 'active', 'pending', 'rejected', 'suspended', 'deleted']);
+    const rawStatus = url.searchParams.get('status') || 'all';
+    const status = VALID_PLACE_STATUSES.has(rawStatus) ? rawStatus : 'all';
+    const rawSearch = url.searchParams.get('search');
+    const search = rawSearch ? rawSearch.substring(0, 200) : null;
+    const page = safeIntParam(url.searchParams.get('page'), 1, 1, 100_000);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 1_000);
     const offset = (page - 1) * limit;
 
     let sql = `
@@ -39,7 +43,7 @@ export const GET: APIRoute = async (context) => {
       LEFT JOIN place_daily_analytics a ON a.place_id = p.id
       WHERE 1=1
     `;
-    const params: any[] = [];
+    const params: unknown[] = [];
     let paramIndex = 1;
 
     if (status !== 'all') {
@@ -49,39 +53,35 @@ export const GET: APIRoute = async (context) => {
     }
 
     if (search) {
-      sql += ` AND (p.name ILIKE $${paramIndex} OR p.address ILIKE $${paramIndex})`;
-      params.push(`%${search}%`);
+      sql += ` AND to_tsvector('turkish', coalesce(p.name,'') || ' ' || coalesce(p.address,'')) @@ plainto_tsquery('turkish', $${paramIndex})`;
+      params.push(search);
       paramIndex++;
     }
 
     sql += ` GROUP BY p.id, u.name, u.email ORDER BY p.created_at DESC`;
 
-    // Count
+    // Count + data in parallel — params not mutated between queries
     const countSql = sql.replace(/SELECT.*?FROM/s, 'SELECT COUNT(DISTINCT p.id) FROM').replace(/GROUP BY.*/, '');
-    const countResult = await query(countSql, params);
-    const total = parseInt(countResult.rows[0]?.count || '0');
+    const dataSql = sql + ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
 
-    // Limit
-    sql += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-    params.push(limit, offset);
+    const [countResult, result] = await Promise.all([
+      query(countSql, params),
+      query(dataSql, [...params, limit, offset]),
+    ]);
+    const total = parseInt(countResult.rows[0]?.count || '0', 10);
 
-    const result = await query(sql, params);
-
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       places: result.rows,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Admin places error:', error);
     return problemJson({
       status: 500,
       title: 'Mekan Listesi Alınamadı',
-      detail: error instanceof Error ? error.message : 'server_error',
+      detail: safeErrorDetail(error, 'server_error'),
       type: '/problems/admin-places-fetch-failed',
       instance: '/api/admin/places',
     });
@@ -105,11 +105,11 @@ export const PUT: APIRoute = async (context) => {
     const body = await context.request.json();
     const { placeIds, action } = body;
 
-    if (!placeIds || !Array.isArray(placeIds) || placeIds.length === 0) {
+    if (!placeIds || !Array.isArray(placeIds) || placeIds.length === 0 || placeIds.length > 1000) {
       return problemJson({
         status: 400,
         title: 'Geçersiz İstek',
-        detail: 'placeIds array required',
+        detail: 'placeIds array required (max 1000)',
         type: '/problems/admin-places-validation',
         instance: '/api/admin/places',
       });
@@ -185,39 +185,43 @@ export const PUT: APIRoute = async (context) => {
     }
 
     if (targetStatus) {
-      for (const row of result.rows || []) {
-        const placeId = String(row.id);
-        const previousStatus = statusById.get(placeId) || null;
-        await recordPlaceLifecycleEvent({
-          placeId,
-          fromStatus: previousStatus,
-          toStatus: targetStatus,
-          actorUserId: auth.user.id,
-          reason: `admin_bulk_${action}`,
-          metadata: {
-            action,
-            skippedCount: Math.max(0, placeIds.length - validPlaceIds.length),
-          },
-        }).catch(() => null);
-      }
+      await Promise.all(
+        (result.rows || []).map(async (row) => {
+          const placeId = String(row.id);
+          await recordPlaceLifecycleEvent({
+            placeId,
+            fromStatus: statusById.get(placeId) || null,
+            toStatus: targetStatus,
+            actorUserId: auth.user.id,
+            reason: `admin_bulk_${action}`,
+            metadata: {
+              action,
+              skippedCount: Math.max(0, placeIds.length - validPlaceIds.length),
+            },
+          }).catch(() => null);
+        }),
+      );
     }
 
-    return new Response(JSON.stringify({
+    // Invalidate public places cache after any bulk mutation
+    await Promise.all([
+      deleteCachePattern('places:list:*'),
+      deleteCachePattern('places:detail:*'),
+    ]).catch(() => null);
+
+    return apiResponse({
       success: true,
       updated: result.rows.length,
       action,
       skipped: Math.max(0, placeIds.length - (targetStatus ? validPlaceIds.length : placeIds.length)),
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Bulk update places error:', error);
     return problemJson({
       status: 500,
       title: 'Toplu Mekan Güncelleme Başarısız',
-      detail: error instanceof Error ? error.message : 'server_error',
+      detail: safeErrorDetail(error, 'server_error'),
       type: '/problems/admin-places-update-failed',
       instance: '/api/admin/places',
     });

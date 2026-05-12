@@ -24,12 +24,33 @@ APP_DIR="${APP_DIR:-$HOME/public_html}"
 STATE_DIR="$APP_DIR/backups/.ops"
 JSON_FILE="$STATE_DIR/release-readiness-summary.json"
 MD_FILE="$STATE_DIR/release-readiness-summary.md"
+REPORT_JSON="$STATE_DIR/report.json"
 
 mkdir -p "$STATE_DIR"
 cd "$APP_DIR"
 
 started_at="$(date -u +%FT%TZ)"
 started_epoch="$(date +%s)"
+
+read_report_access_log_probe() {
+  if [ ! -f "$REPORT_JSON" ]; then
+    echo "missing|false|-1|"
+    return 0
+  fi
+
+  node -e '
+    const fs = require("fs");
+    const report = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+    const probe = report.access_log_probe || {};
+    const blocker = Buffer.from(String(probe.blocker || ""), "utf8").toString("base64");
+    console.log([
+      probe.status || "missing",
+      String(Boolean(probe.access_log_available)),
+      String(probe.exit_code ?? -1),
+      blocker,
+    ].join("|"));
+  ' "$REPORT_JSON" 2>/dev/null || echo "missing|false|-1|"
+}
 
 step1_name="preflight"; step1_status="skip"; step1_exit=0; step1_duration=0
 step2_name="env-check"; step2_status="skip"; step2_exit=0; step2_duration=0
@@ -39,6 +60,10 @@ step5_name="cron-doctor"; step5_status="skip"; step5_exit=0; step5_duration=0
 step6_name="cron-freshness-strict"; step6_status="skip"; step6_exit=0; step6_duration=0
 step7_name="audit"; step7_status="skip"; step7_exit=0; step7_duration=0
 step8_name="report"; step8_status="skip"; step8_exit=0; step8_duration=0
+access_log_probe_status="missing"
+access_log_probe_available="false"
+access_log_probe_exit=-1
+access_log_probe_blocker=""
 
 run_step() {
   local key="$1"
@@ -105,6 +130,16 @@ if ! run_step step8 "bash scripts/prod-cwp-ops.sh report"; then
     overall_exit="$step8_exit"
   fi
 fi
+if [ "$step8_status" = "pass" ]; then
+  probe_fields="$(read_report_access_log_probe)"
+  access_log_probe_status="$(printf '%s' "$probe_fields" | cut -d'|' -f1)"
+  access_log_probe_available="$(printf '%s' "$probe_fields" | cut -d'|' -f2)"
+  access_log_probe_exit="$(printf '%s' "$probe_fields" | cut -d'|' -f3)"
+  access_log_probe_blocker_b64="$(printf '%s' "$probe_fields" | cut -d'|' -f4)"
+  if [ -n "$access_log_probe_blocker_b64" ]; then
+    access_log_probe_blocker="$(printf '%s' "$access_log_probe_blocker_b64" | base64 --decode 2>/dev/null || true)"
+  fi
+fi
 
 if [ "${overall_exit:-0}" -eq 0 ]; then
   overall_status="pass"
@@ -133,7 +168,13 @@ cat > "$JSON_FILE" <<EOF
     {"name":"$step6_name","status":"$step6_status","exit_code":$step6_exit,"duration_sec":$step6_duration},
     {"name":"$step7_name","status":"$step7_status","exit_code":$step7_exit,"duration_sec":$step7_duration},
     {"name":"$step8_name","status":"$step8_status","exit_code":$step8_exit,"duration_sec":$step8_duration}
-  ]
+  ],
+  "access_log_probe": {
+    "status": "$access_log_probe_status",
+    "exit_code": $access_log_probe_exit,
+    "access_log_available": $access_log_probe_available,
+    "blocker": "$(printf '%s' "$access_log_probe_blocker" | sed 's/\\/\\\\/g; s/"/\\"/g')"
+  }
 }
 EOF
 
@@ -155,6 +196,14 @@ EOF
   echo "- $step6_name: $step6_status (exit=$step6_exit, duration=${step6_duration}s)"
   echo "- $step7_name: $step7_status (exit=$step7_exit, duration=${step7_duration}s)"
   echo "- $step8_name: $step8_status (exit=$step8_exit, duration=${step8_duration}s)"
+  echo ""
+  echo "## Access Log Probe"
+  echo "- Status: $access_log_probe_status"
+  echo "- Exit code: $access_log_probe_exit"
+  echo "- Access log erişimi: $access_log_probe_available"
+  if [ -n "$access_log_probe_blocker" ]; then
+    echo "- Bloker: $access_log_probe_blocker"
+  fi
 } > "$MD_FILE"
 
 echo "Release readiness summary generated:"
@@ -164,4 +213,3 @@ echo "- $MD_FILE"
 if [ "$overall_exit" -ne 0 ]; then
   exit "$overall_exit"
 fi
-

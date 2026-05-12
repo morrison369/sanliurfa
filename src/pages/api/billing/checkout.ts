@@ -6,12 +6,13 @@ import type { APIRoute } from 'astro';
 import { createSubscription } from '../../../lib/stripe';
 import { queryOne } from '../../../lib/postgres';
 import { validateWithSchema } from '../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import type { ValidationSchema } from '../../../lib/validation';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeErrorDetail } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { PHASE1_FREE_MODE } from '../../../lib/runtime/phase-policy';
 
-const checkoutSchema = {
+const checkoutSchema: ValidationSchema = {
   tier: {
     type: 'string' as const,
     required: true,
@@ -51,7 +52,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Parse and validate input
     const body = await request.json();
-    const validation = validateWithSchema(body, checkoutSchema as any);
+    const validation = validateWithSchema(body, checkoutSchema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/billing/checkout', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -95,7 +96,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/billing/checkout', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: error instanceof Error ? error.message : String(error)
+      error: safeErrorDetail(error, 'Ödeme işlemi başarısız')
     });
     logger.error('Checkout failed', error instanceof Error ? error : new Error(String(error)), { duration });
     return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);

@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { authenticateUser } from '../../../../../lib/auth/middleware';
 import { query } from '../../../../../lib/postgres';
-import { problemJson } from '../../../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../../../lib/api';
 import { getPendingSlaHours } from '../../../../../lib/place/lifecycle-events';
 import { getSiteSetting } from '../../../../../lib/site-content';
 
@@ -125,7 +125,7 @@ export const GET: APIRoute = async (context) => {
     return problemJson({
       status: 500,
       title: 'Mekan Lifecycle SLA Alınamadı',
-      detail: error instanceof Error ? error.message : 'admin_places_lifecycle_sla_failed',
+      detail: safeErrorDetail(error, 'admin_places_lifecycle_sla_failed'),
       type: '/problems/admin-places-lifecycle-sla-failed',
       instance: '/api/admin/places/lifecycle/sla',
     });
@@ -208,7 +208,7 @@ export const POST: APIRoute = async (context) => {
     return problemJson({
       status: 500,
       title: 'SLA Aksiyonu Kaydedilemedi',
-      detail: error instanceof Error ? error.message : 'admin_places_lifecycle_sla_action_failed',
+      detail: safeErrorDetail(error, 'admin_places_lifecycle_sla_action_failed'),
       type: '/problems/admin-places-lifecycle-sla-action-failed',
       instance: '/api/admin/places/lifecycle/sla',
     });

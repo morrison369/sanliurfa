@@ -1,123 +1,151 @@
 ---
-// Followers Page
+import { Icon } from 'astro-icon/components';
 import Layout from '../layouts/Layout.astro';
+import Image from '../components/Image.astro';
 import { requireAuth } from '../lib/auth';
 import { getFollowers, getSocialStats } from '../lib/social/friendship-db';
 
 const auth = await requireAuth(Astro.request);
 if (auth instanceof Response) return auth;
+if (!auth.user) return Astro.redirect('/giris');
+const user = auth.user;
 
 const [followers, stats] = await Promise.all([
-  getFollowers(auth.user.id, 50),
-  getSocialStats(auth.user.id),
+ getFollowers(user.id, 50),
+ getSocialStats(user.id),
 ]);
 ---
 
 <Layout seo={{ title: `Takipçiler (${stats?.follower_count || 0}) - Şanlıurfa Rehberi`, noIndex: true }}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="container-custom py-8">
-      <div class="max-w-3xl mx-auto">
-        {/* Header */}
-        <div class="flex items-center justify-between mb-8">
-          <div>
-            <h1 class="text-3xl font-bold">Takipçiler</h1>
-            <p class="text-gray-600 mt-1">Seni takip eden {stats?.follower_count || 0} kişi</p>
-          </div>
-          <a href="/takip-edilenler" class="text-amber-600 hover:text-amber-700">
-            Takip Edilenler →
-          </a>
-        </div>
+ <style is:inline>
+ .tk-page{background:var(--bg);min-height:100vh}
+ .tk-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:2.5rem 0}
+ .tk-inner{max-width:48rem;margin:0 auto}
+ .tk-hero-top{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+ .tk-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2rem);font-weight:700;color:var(--public-text);margin:.25rem 0 0}
+ .tk-hero-desc{color:var(--public-muted);font-size:.88rem;margin-top:.2rem}
+ .tk-link{color:var(--public-accent);font-size:.85rem;font-weight:500;transition:color .15s;white-space:nowrap}
+ .tk-link:hover{color:var(--public-accent-strong)}
+ .tk-body{padding:2rem 0 4rem}
+ .tk-list{background:var(--bg-card);border:1px solid rgba(184,115,51,.14)}
+ .tk-item{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid rgba(184,115,51,.1)}
+ .tk-item:last-child{border-bottom:none}
+ .tk-user-link{display:flex;align-items:center;gap:1rem}
+ .tk-avatar{width:3.5rem;height:3.5rem;border-radius:50%;background:linear-gradient(135deg,var(--public-accent-strong),var(--public-accent));display:flex;align-items:center;justify-content:center;color:var(--public-text);font-size:1.1rem;font-weight:700;flex-shrink:0;overflow:hidden}
+ .tk-avatar-img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+ .tk-name{font-weight:700;color:var(--public-text);transition:color .15s;font-size:.95rem}
+ .tk-user-link:hover .tk-name{color:var(--public-accent)}
+ .tk-handle{font-size:.82rem;color:var(--public-text-soft);margin-top:.1rem}
+ .tk-stats{font-size:.78rem;color:var(--public-muted);margin-top:.2rem}
+ .tk-actions{display:flex;align-items:center;gap:.75rem;flex-shrink:0}
+ .tk-mutual{font-size:.78rem;padding:.35rem .85rem;background:rgba(184,115,51,.08);color:var(--public-muted)}
+ .tk-follow-btn{font-size:.8rem;padding:.35rem .85rem;background:var(--public-accent);color:var(--public-text);font-weight:600;cursor:pointer;border:none;transition:background .15s}
+ .tk-follow-btn:hover{background:var(--public-accent-strong)}
+ .tk-msg-btn{padding:.4rem;color:var(--public-muted);transition:color .15s}
+ .tk-msg-btn:hover{color:var(--public-accent)}
+ .tk-empty{text-align:center;padding:4rem 1rem}
+ .tk-empty-emoji{font-size:3.5rem;display:block;margin-bottom:1rem}
+ .tk-empty-title{font-size:1.1rem;font-weight:700;color:var(--public-text);margin-bottom:.5rem}
+ .tk-empty-desc{color:var(--public-muted);margin-bottom:1.5rem;font-size:.88rem}
+ .tk-share-btn{padding:.6rem 1.5rem;background:var(--public-accent);color:var(--public-text);font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:background .15s}
+ .tk-share-btn:hover{background:var(--public-accent-strong)}
+ </style>
 
-        {/* Followers List */}
-        <div class="bg-white rounded-2xl shadow-sm">
-          {followers.length > 0 ? (
-            <div class="divide-y">
-              {followers.map(user => (
-                <div class="p-6 flex items-center justify-between">
-                  <a href={`/kullanıcı/${user.username || user.id}`} class="flex items-center gap-4">
-                    <div class="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-xl font-bold">
-                      {user.avatar_url ? (
-                        <img src={user.avatar_url} alt={user.full_name} class="w-full h-full rounded-full object-cover" />
-                      ) : (
-                        user.full_name?.charAt(0).toUpperCase() || 'U'
-                      )}
-                    </div>
-                    <div>
-                      <h3 class="font-bold text-lg hover:text-amber-600 transition-colors">{user.full_name}</h3>
-                      <p class="text-gray-500">@{user.username || 'kullanici'}</p>
-                      <p class="text-sm text-gray-400 mt-1">{user.follower_count} takipçi • {user.following_count} takip</p>
-                    </div>
-                  </a>
-                  
-                  <div class="flex items-center gap-3">
-                    {user.friendship_status === 'mutual' ? (
-                      <span class="px-4 py-2 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">
-                        Karşılıklı Takip
-                      </span>
-                    ) : user.friendship_status === 'follows_you' ? (
-                      <button
-                        onclick={`followUser('${user.id}')`}
-                        class="px-4 py-2 bg-amber-600 text-white rounded-full text-sm font-medium hover:bg-amber-700 transition-colors"
-                      >
-                        Takip Et
-                      </button>
-                    ) : null}
-                    
-                    <a
-                      href={`/mesajlar?user=${user.id}`}
-                      class="p-2 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
-                      title="Mesaj gönder"
-                    >
-                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div class="text-center py-16">
-              <div class="text-6xl mb-4">👥</div>
-              <h3 class="text-xl font-bold mb-2">Henüz takipçi yok</h3>
-              <p class="text-gray-600 mb-6">Profilinizi paylaşarak daha fazla kişiye ulaşın</p>
-              <button onclick="shareProfile()" class="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
-                Profili Paylaş
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  </div>
+ <div class="tk-page">
+ <div class="tk-hero">
+ <div class="sf-container">
+ <div class="tk-inner">
+ <div class="tk-hero-top">
+ <div>
+ <h1 class="tk-h1">Takipçiler</h1>
+ <p class="tk-hero-desc">Seni takip eden {stats?.follower_count || 0} kişi</p>
+ </div>
+ <a href="/takip-edilenler" class="tk-link">Takip Edilenler →</a>
+ </div>
+ </div>
+ </div>
+ </div>
 
-  <script is:inline>
-    window.followUser = async function (userId) {
-      try {
-        const response = await fetch('/api/social/follow', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, action: 'follow' }),
-        });
-        
-        if (response.ok) {
-          window.location.reload();
-        }
-      } catch {
-        alert('Takip işlemi başarısız');
-      }
-    };
-    
-    window.shareProfile = function () {
-      if (navigator.share) {
-        navigator.share({
-          title: 'Profilim - Şanlıurfa Rehberi',
-          url: window.location.origin + '/profil',
-        });
-      } else {
-        navigator.clipboard.writeText(window.location.origin + '/profil');
-        alert('Profil linki kopyalandı!');
-      }
-    };
-  </script>
+ <div class="tk-body">
+ <div class="sf-container">
+ <div class="tk-inner">
+ {followers.length > 0 ? (
+ <div class="tk-list">
+ {followers.map(follower => (
+ <div class="tk-item">
+ <a href={`/kullanici/${follower.username || follower.id}`} class="tk-user-link">
+ <div class="tk-avatar">
+ {follower.avatar_url ? (
+ <Image src={follower.avatar_url} alt={follower.full_name || 'Avatar'} width={56} height={56} class="tk-avatar-img" loading="lazy" />
+ ) : (
+ follower.full_name?.charAt(0).toUpperCase() || 'U'
+ )}
+ </div>
+ <div>
+ <p class="tk-name">{follower.full_name}</p>
+ <p class="tk-handle">@{follower.username || 'kullanici'}</p>
+ <p class="tk-stats">{follower.follower_count} takipçi · {follower.following_count} takip</p>
+ </div>
+ </a>
+
+ <div class="tk-actions">
+ {follower.friendship_status === 'mutual' ? (
+ <span class="tk-mutual">Karşılıklı Takip</span>
+ ) : follower.friendship_status === 'follows_you' ? (
+ <button
+ onclick={`followUser('${follower.id}')`}
+ class="tk-follow-btn"
+ >
+ Takip Et
+ </button>
+ ) : null}
+ <a href={`/mesajlar?user=${follower.id}`} class="tk-msg-btn" title="Mesaj gönder">
+ <Icon name="lucide:message-circle" class="w-5 h-5" />
+ </a>
+ </div>
+ </div>
+ ))}
+ </div>
+ ) : (
+ <div class="tk-empty">
+ <span class="tk-empty-emoji">👥</span>
+ <h3 class="tk-empty-title">Henüz takipçi yok</h3>
+ <p class="tk-empty-desc">Profilinizi paylaşarak daha fazla kişiye ulaşın</p>
+ <button onclick="shareProfile()" class="tk-share-btn">Profili Paylaş</button>
+ </div>
+ )}
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <script is:inline>
+ window.followUser = async function (userId) {
+ try {
+ const response = await fetch('/api/social/follow', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ userId, action: 'follow' }),
+ });
+
+ if (response.ok) {
+ window.location.reload();
+ }
+ } catch {
+ window.toast?.error('Takip işlemi başarısız');
+ }
+ };
+
+ window.shareProfile = function () {
+ if (navigator.share) {
+ navigator.share({
+ title: 'Profilim - Şanlıurfa Rehberi',
+ url: window.location.origin + '/profil',
+ });
+ } else {
+ navigator.clipboard.writeText(window.location.origin + '/profil');
+ window.toast?.success('Profil linki kopyalandı!');
+ }
+ };
+ </script>
 </Layout>

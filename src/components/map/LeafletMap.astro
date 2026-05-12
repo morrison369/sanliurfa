@@ -1,190 +1,136 @@
 ---
-// Leaflet Map Component
+import { randomBytes } from 'node:crypto';
+
+interface PlaceItem {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  category?: string;
+  thumbnail?: string;
+  rating?: number;
+  slug?: string;
+}
+
 interface Props {
-  places: Array<{
-    id: string;
-    name: string;
-    lat: number;
-    lon: number;
-    category?: string;
-    thumbnail?: string;
-    rating?: number;
-    slug?: string;
-  }>;
+  places: PlaceItem[];
   center?: [number, number];
   zoom?: number;
   height?: string;
   singlePlace?: boolean;
+  showCategoryFilter?: boolean;
 }
 
-const { 
-  places, 
-  center = [37.1592, 38.7969], // Şanlıurfa center
+const {
+  places,
+  center = [37.1592, 38.7969],
   zoom = 13,
   height = '500px',
-  singlePlace = false
+  singlePlace = false,
+  showCategoryFilter = false,
 } = Astro.props;
 
-const mapId = `map-${Math.random().toString(36).slice(2, 11)}`;
+const mapId = `map-${randomBytes(6).toString('hex')}`;
+const mapDataId = `${mapId}-data`;
+
+const categories = showCategoryFilter
+  ? ([...new Set(places.map(p => p.category).filter(Boolean))] as string[])
+  : [];
+
+const mapData = JSON.stringify({ places, center, zoom, singlePlace, showCategoryFilter });
 ---
 
-<div id={mapId} style={`height: ${height}; width: 100%; border-radius: 1rem; z-index: 1;`}></div>
+<div class="lm-wrapper" data-leaflet-map-root data-map-id={mapId} data-map-data-id={mapDataId}>
+  {showCategoryFilter && categories.length > 0 && (
+    <div class="lm-filters" id={`${mapId}-filters`}>
+      <button class="lm-filter-btn lm-filter-active" data-category="">Tümü</button>
+      {categories.map(cat => (
+        <button class="lm-filter-btn" data-category={cat}>{cat}</button>
+      ))}
+    </div>
+  )}
+  <div id={mapId} class="lm-canvas" style={`--lm-height: ${height}; width: 100%; border-radius: 1rem; z-index: 1;`}></div>
+</div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script id={mapDataId} type="application/json" set:html={mapData} is:inline></script>
 
-<script define:vars={{ mapId, places, center, zoom, singlePlace }} is:inline>
-  // Initialize map
-  const map = L.map(mapId).setView(center, zoom);
-  
-  // Add OpenStreetMap tile layer
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    maxZoom: 19,
-  }).addTo(map);
-  
-  // Category colors
-  const categoryColors = {
-    'tarihi-yerler': '#8B4513',
-    'restoran': '#E63946',
-    'cafe': '#6F4E37',
-    'otel': '#1D3557',
-    'park': '#2A9D8F',
-    'muze': '#9B2226',
-    'alisveris': '#E9C46A',
-    'eglence': '#F4A261',
-    'spor': '#264653',
-    'saglik': '#E76F51',
-    'egitim': '#457B9D',
-    'dini': '#1D3557',
-    'dogal': '#2A9D8F',
-    'piknik': '#A8DADC',
-  };
-  
-  // Custom icon creator
-  function createCustomIcon(category, isFeatured = false) {
-    const color = categoryColors[category] || '#F4A261';
-    const size = isFeatured ? 40 : 32;
-    
-    return L.divIcon({
-      className: 'custom-marker',
-      html: `
-        <div style="
-          width: ${size}px;
-          height: ${size}px;
-          background: ${color};
-          border: 3px solid white;
-          border-radius: 50%;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-weight: bold;
-          font-size: ${isFeatured ? '16px' : '12px'};
-        ">
-          ${isFeatured ? '★' : '•'}
-        </div>
-      `,
-      iconSize: [size, size],
-      iconAnchor: [size / 2, size / 2],
-    });
-  }
-  
-  // Add markers
-  const markers = [];
-  places.forEach(place => {
-    if (!place.lat || !place.lon) return;
-    
-    const marker = L.marker([place.lat, place.lon], {
-      icon: createCustomIcon(place.category, place.rating >= 4.5),
-    }).addTo(map);
-    
-    // Popup content
-    const popupContent = `
-      <div style="min-width: 200px; font-family: system-ui;">
-        ${place.thumbnail ? `
-          <img src="${place.thumbnail}" alt="${place.name}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;">
-        ` : ''}
-        <h3 style="margin: 0 0 4px 0; font-size: 16px; font-weight: 600;">${place.name}</h3>
-        ${place.rating ? `
-          <div style="color: #F4A261; margin-bottom: 4px;">
-            ${'★'.repeat(Math.floor(place.rating))}
-            <span style="color: #999;">${place.rating.toFixed(1)}</span>
-          </div>
-        ` : ''}
-        ${place.slug ? `
-          <a href="/isletme/${place.slug}" style="color: #D97706; text-decoration: none; font-weight: 500; display: inline-block; margin-top: 4px;">
-            Detayları Gör →
-          </a>
-        ` : ''}
-      </div>
-    `;
-    
-    marker.bindPopup(popupContent);
-    markers.push(marker);
-  });
-  
-  // Fit bounds if multiple places
-  if (!singlePlace && markers.length > 0) {
-    const group = new L.featureGroup(markers);
-    map.fitBounds(group.getBounds().pad(0.1));
-  }
-  
-  // Add locate control for user position without mutating typed Leaflet namespaces.
-  const LocateControl = L.Control.extend({
-    options: {
-      position: 'bottomright',
-      title: 'Konumumu Bul',
-    },
-    onAdd: function(map) {
-      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-      const button = L.DomUtil.create('a', 'leaflet-control-button', container);
-      button.innerHTML = '📍';
-      button.title = this.options.title;
-      button.style.cssText = 'cursor: pointer; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 20px; background: white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);';
-      
-      L.DomEvent.on(button, 'click', function(e) {
-        L.DomEvent.stopPropagation(e);
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(function(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            map.setView([lat, lng], 15);
-            L.marker([lat, lng], {
-              icon: L.divIcon({
-                className: 'user-location',
-                html: '<div style="width: 16px; height: 16px; background: #3B82F6; border: 3px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(59,130,246,0.5);"></div>',
-                iconSize: [16, 16],
-                iconAnchor: [8, 8],
-              })
-            }).addTo(map).bindPopup('Konumunuz').openPopup();
-          });
-        }
-      });
-      
-      return container;
-    }
-  });
-  
-  new LocateControl().addTo(map);
+<script>
+ import { initLeafletMaps } from './leaflet-map.client';
+
+ initLeafletMaps();
 </script>
 
 <style>
-  .custom-marker {
-    background: transparent !important;
-    border: none !important;
+  .lm-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    height: 100%;
   }
-  
+
+  /* Harita yüksekliği — desktop'ta prop'tan gelir (--lm-height), mobilde 320px'e düşer */
+  .lm-canvas {
+    height: var(--lm-height, 500px);
+  }
+  @media (max-width: 640px) {
+    .lm-canvas {
+      height: 320px;
+    }
+  }
+
+  .lm-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    padding: 0.25rem 0;
+  }
+
+  .lm-filter-btn {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(184, 115, 51, 0.3);
+    background: rgba(184, 115, 51, 0.06);
+    color: #4A3828;
+    font-size: 0.8125rem;
+    font-family: 'Jost', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .lm-filter-btn:hover {
+    background: rgba(184, 115, 51, 0.15);
+    color: #1F1410;
+  }
+
+  .lm-filter-active {
+    background: #B87333 !important;
+    border-color: #B87333 !important;
+    color: #0D0A08 !important;
+    font-weight: 600;
+  }
+
+  .lm-locate-btn {
+    cursor: pointer;
+    width: 44px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 20px;
+    line-height: 1 !important;
+    text-decoration: none !important;
+  }
+
   :global(.leaflet-popup-content-wrapper) {
     border-radius: 12px !important;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
   }
-  
+
   :global(.leaflet-popup-content) {
     margin: 12px !important;
   }
-  
+
   :global(.leaflet-container) {
     font-family: system-ui, -apple-system, sans-serif;
   }

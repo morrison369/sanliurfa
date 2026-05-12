@@ -4,6 +4,7 @@
  */
 
 import { logger } from '../logger';
+import { randomBytes } from 'node:crypto';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -41,7 +42,7 @@ export class CampaignManager {
   private schedules = new Map<string, number>();
 
   createCampaign(campaign: Omit<Campaign, 'id' | 'status'>): Campaign {
-    const campaignId = 'campaign-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+    const campaignId = 'campaign-' + Date.now() + '-' + randomBytes(6).toString('hex');
     const fullCampaign: Campaign = { ...campaign, id: campaignId, status: 'draft' };
     this.campaigns.set(campaignId, fullCampaign);
     const vendorId = campaign.target.split(':')[0];
@@ -102,7 +103,7 @@ export class TemplateEngine {
   private vendorTemplates = new Map<string, Set<string>>();
 
   createTemplate(name: string, content: string, variables: string[]): string {
-    const templateId = 'template-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+    const templateId = 'template-' + Date.now() + '-' + randomBytes(6).toString('hex');
     this.templates.set(templateId, { content, variables });
     logger.debug('Template created', { templateId, name, variables: variables.length });
     return templateId;
@@ -113,7 +114,8 @@ export class TemplateEngine {
     if (!template) return '';
     let rendered = template.content;
     for (const variable of template.variables) {
-      const pattern = new RegExp(`{{\\s*${variable}\\s*}}`, 'g');
+      const escapedVar = variable.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(`{{\\s*${escapedVar}\\s*}}`, 'g');
       rendered = rendered.replace(pattern, String(data[variable] || ''));
     }
     return rendered;

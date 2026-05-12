@@ -10,6 +10,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 import { queryOne } from '../../../../lib/postgres';
+import { invalidatePlaceFollow } from '../../../../lib/cache/invalidation';
 
 export const POST: APIRoute = async ({ request, locals, params }) => {
   const requestId = getRequestId(request);
@@ -31,6 +32,10 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
     const { id: placeId } = params;
     const userId = locals.user.id;
+    if (!placeId) {
+      recordRequest('POST', '/api/places/[id]/follow', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan kimliği gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     // Verify place exists
     const place = await queryOne('SELECT id FROM places WHERE id = $1', [placeId]);
@@ -64,6 +69,9 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     if (!success) {
       throw new Error('Failed to follow place');
     }
+
+    // Cache invalidation: place follow user-followed-places + place follower count cache'ini etkiler
+    await invalidatePlaceFollow(userId, placeId);
 
     recordRequest('POST', '/api/places/[id]/follow', HttpStatus.CREATED, Date.now() - startTime);
 
@@ -105,6 +113,10 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
 
     const { id: placeId } = params;
     const userId = locals.user.id;
+    if (!placeId) {
+      recordRequest('DELETE', '/api/places/[id]/follow', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan kimliği gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     // Check if following
     const isFollowing = await isFollowingPlace(userId, placeId);
@@ -125,6 +137,9 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     if (!success) {
       throw new Error('Failed to unfollow place');
     }
+
+    // Cache invalidation: place unfollow user-followed-places + place follower count cache'ini etkiler
+    await invalidatePlaceFollow(userId, placeId);
 
     recordRequest('DELETE', '/api/places/[id]/follow', HttpStatus.OK, Date.now() - startTime);
 

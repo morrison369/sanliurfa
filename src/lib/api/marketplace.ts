@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+
 /**
  * API Marketplace Module
  * Stub implementation for API marketplace
@@ -17,7 +19,7 @@ export class APIMarketplace {
   register(product: Omit<APIProduct, 'id'>): APIProduct {
     const newProduct: APIProduct = {
       ...product,
-      id: Math.random().toString(36).substring(7)
+      id: randomBytes(6).toString('hex')
     };
     this.products.set(newProduct.id, newProduct);
     return newProduct;

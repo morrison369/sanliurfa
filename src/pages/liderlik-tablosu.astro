@@ -1,50 +1,92 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import LeaderboardsDisplay from '../components/LeaderboardsDisplay';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import PublicPageIntro from '../components/public/PublicPageIntro.astro';
+import { getPublicAppUrl } from '../lib/public-app-url';
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'Liderlik Tablosu - Sanliurfa.com',
-  description: 'Şanlıurfa topluluğunun en aktif üyeleri, rozetleri ve katkı sıralamaları',
-  keywords: ['liderlik tablosu', 'şanlıurfa topluluğu', 'rozet', 'sıralama', 'puan', 'aktif üyeler'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/liderlik-tablosu',
+ title: 'Liderlik Tablosu - Sanliurfa.com',
+ description: 'Şanlıurfa topluluğunun en aktif üyeleri, rozetleri ve katkı sıralamaları',
+ keywords: ['liderlik tablosu', 'şanlıurfa topluluğu', 'rozet', 'sıralama', 'puan', 'aktif üyeler'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/liderlik-tablosu',
 };
 
 const faqItems = [
-  { S: 'Liderlik tablosu nasıl güncelleniyor?', C: "Liderlik tablosu, kullanıcıların yorum, beğeni ve katkı aktivitelerine göre gerçek zamanlı olarak güncellenir." },
-  { S: 'Liderlik tablosuna nasıl girebilirim?', C: "Mekan değerlendirmesi yaparak, toplulukta gönderi paylaşarak ve diğer kullanıcılarla etkileşime girerek puan kazanabilirsiniz." },
-  { S: 'Rozet nedir?', C: "Rozetler, belirli başarıları tamamlayan kullanıcılara verilen ödüllerdir. Liderlik tablosundaki rozet sayısı topluluk prestijinizi gösterir." },
+ { S: 'Liderlik tablosu nasıl güncelleniyor?', C: "Liderlik tablosu, kullanıcıların yorum, beğeni ve katkı aktivitelerine göre gerçek zamanlı olarak güncellenir." },
+ { S: 'Liderlik tablosuna nasıl girebilirim?', C: "Mekan değerlendirmesi yaparak, toplulukta gönderi paylaşarak ve diğer kullanıcılarla etkileşime girerek puan kazanabilirsiniz." },
+ { S: 'Rozet nedir?', C: "Rozetler, belirli başarıları tamamlayan kullanıcılara verilen ödüllerdir. Liderlik tablosundaki rozet sayısı topluluk prestijinizi gösterir." },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="container-custom py-8">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Liderlik Tablosu</h1>
-      <p class="text-gray-600 dark:text-gray-400 mt-2">Topluluğun en etkin üyelerini keşfet ve onlarla yarışa</p>
-    </div>
+ <PublicPageIntro
+ eyebrow="Şanlıurfa Topluluğu"
+ title="Liderlik Tablosu"
+ description="Yorum, keşif, takip ve katkı puanlarıyla öne çıkan Şanlıurfa.com üyelerini takip et."
+ quickAnswerTitle="Hızlı cevap"
+ quickAnswerText="Sıralama kullanıcı katkıları, etkileşim ve rozet verilerine göre güncel tutulur."
+ actions={[
+ { href: '/kayit', label: 'Katıl' },
+ { href: '/kullanicilar', label: 'Kullanıcılar' },
+ { href: '/topluluk', label: 'Topluluk' },
+ ]}
+ />
 
-    <LeaderboardsDisplay client:visible={{ rootMargin: '120px' }} />
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Liderlik Tablosu', item: `${baseUrl}/liderlik-tablosu` },
-    ],
-  })} is:inline />
+ <div class="lt-body">
+ <div class="sf-container">
+ <LeaderboardsDisplay client:visible={{ rootMargin: '120px' }} />
+ </div>
+ </div>
+
+ <style is:inline>
+ details summary{list-style:none}
+ details summary::-webkit-details-marker{display:none}
+ details[open] .faq-arrow{transform:rotate(180deg)}
+ </style>
+ {faqItems.length > 0 && (
+ <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+ <div class="sf-container">
+ <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+ <div style="display:flex;flex-direction:column;gap:.75rem">
+ {faqItems.map((item) => (
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ {item.S}
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ {item.C}
+ </div>
+ </details>
+ ))}
+ </div>
+ </div>
+ </div>
+ )}
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Liderlik Tablosu', item: `${baseUrl}/liderlik-tablosu` },
+ ],
+ })} is:inline />
 </Layout>
 
-
+<style>
+ .lt-body {
+ background: var(--public-bg);
+ padding: 2rem 0 4rem;
+ }
+</style>

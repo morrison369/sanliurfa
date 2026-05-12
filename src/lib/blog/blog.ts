@@ -3,7 +3,7 @@
  * Blog yazıları, kategoriler, yorumlar ve arama
  */
 
-import { queryMany, queryOne, insert, update } from '../postgres';
+import { query, queryMany, queryOne, queryReadMany, queryReadOne, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache, deleteCache, deleteCachePattern } from '../cache';
 
@@ -67,7 +67,7 @@ export async function getBlogCategories(): Promise<BlogCategory[]> {
       return cached;
     }
 
-    const result = await queryMany(
+    const result = await queryReadMany(
       `SELECT id, name, slug, description, icon, order_index as "orderIndex",
               (SELECT COUNT(*) FROM blog_posts WHERE category_id = blog_categories.id AND status = 'published') as "postCount"
        FROM blog_categories ORDER BY order_index ASC`
@@ -80,7 +80,7 @@ export async function getBlogCategories(): Promise<BlogCategory[]> {
       description: row.description,
       icon: row.icon,
       orderIndex: row.orderIndex,
-      postCount: parseInt(row.postCount || '0')
+      postCount: parseInt(row.postCount || '0', 10)
     }));
 
     await setCache(cacheKey, JSON.stringify(categories), 3600);
@@ -134,19 +134,18 @@ export async function getBlogPosts(options: {
     query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
-    const posts = await queryMany(query, params) as any[];
-
-    // Toplam sayı
+    // Read replica: list + count SELECT-only, parallel.
     let countQuery = 'SELECT COUNT(*) as total FROM blog_posts WHERE status = $1';
     const countParams: any[] = [status];
-
     if (categoryId) {
       countQuery += ` AND category_id = $${countParams.length + 1}`;
       countParams.push(categoryId);
     }
-
-    const countResult = await queryOne(countQuery, countParams);
-    const total = parseInt(countResult?.total || '0');
+    const [posts, countResult] = await Promise.all([
+      queryReadMany(query, params) as Promise<any[]>,
+      queryReadOne(countQuery, countParams),
+    ]);
+    const total = parseInt(countResult?.total || '0', 10);
 
     return {
       posts: posts.map(formatBlogPost),
@@ -170,7 +169,8 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
       return cached;
     }
 
-    const result = await queryOne(
+    // Read replica routing — SELECT-only.
+    const result = await queryReadOne(
       `SELECT bp.*, bc.name as category_name, u.full_name as author_name,
               array_agg(DISTINCT bt.name) FILTER (WHERE bt.name IS NOT NULL) as tags
        FROM blog_posts bp
@@ -189,8 +189,11 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 
     const post = formatBlogPost(result);
 
-    // Görüntüleme sayısını artır
-    await update('blog_posts', String(result.id), { view_count: result.view_count + 1 });
+    // Görüntüleme sayısını atomik artır (fire-and-forget — response'u bloklamaz).
+    // Atomic UPDATE WHERE id eliminates read-modify-write race ile aynı anda
+    // birden fazla okur view_count'u stale değer üzerine yazmasını önler.
+    query('UPDATE blog_posts SET view_count = view_count + 1 WHERE id = $1', [result.id])
+      .catch((e) => logger.warn('view_count increment failed', { id: result.id, error: e instanceof Error ? e.message : String(e) }));
 
     await setCache(cacheKey, JSON.stringify(post), 1800); // 30 dakika cache
     return post;
@@ -388,7 +391,7 @@ export async function addBlogComment(postId: number, data: {
       id: result.id,
       postId,
       authorName: data.authorName,
-      authorEmail: data.authorEmail,
+      ...(data.authorEmail ? { authorEmail: data.authorEmail } : {}),
       content: data.content,
       status: 'pending',
       createdAt: new Date()
@@ -533,29 +536,27 @@ export async function restoreBlogPostRevision(postId: number, revisionId: number
 }
 
 async function addTagsToPost(postId: number, tagNames: string[]): Promise<void> {
-  for (const tagName of tagNames) {
-    const tag = await queryOne(
-      'SELECT id FROM blog_tags WHERE name = $1',
-      [tagName]
-    );
+  const valid = tagNames.map(t => t.trim()).filter(Boolean);
+  if (valid.length === 0) return;
 
-    let tagId: number;
+  // Batch upsert tags — single query instead of 2-3 per tag
+  const slugs = valid.map(name => generateSlug(name));
+  const tagResult = await query(
+    `INSERT INTO blog_tags (name, slug)
+     SELECT * FROM UNNEST($1::text[], $2::text[]) AS t(name, slug)
+     ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name
+     RETURNING id`,
+    [valid, slugs]
+  );
 
-    if (!tag) {
-      const newTag = await insert('blog_tags', {
-        name: tagName,
-        slug: generateSlug(tagName)
-      });
-      tagId = newTag.id;
-    } else {
-      tagId = tag.id;
-    }
+  const tagIds = tagResult.rows.map((r: { id: unknown }) => r.id).filter(Boolean);
+  if (tagIds.length === 0) return;
 
-    await insert('blog_post_tags', {
-      post_id: postId,
-      tag_id: tagId
-    });
-  }
+  // Batch insert post-tag relationships
+  const placeholders = tagIds.map((_: unknown, i: number) => `($1, $${i + 2})`).join(', ');
+  await query(
+    `INSERT INTO blog_post_tags (post_id, tag_id) VALUES ${placeholders} ON CONFLICT DO NOTHING`,
+    [postId, ...tagIds]
+  );
 }
-
 

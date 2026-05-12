@@ -3,6 +3,7 @@
  * Context-aware conversations, RAG integration, intent recognition
  */
 
+import { randomBytes } from 'node:crypto';
 import { logger } from '../logger';
 
 // ==================== INTENT RECOGNITION ====================
@@ -122,7 +123,7 @@ export class ChatbotConversationManager {
    * Create new conversation
    */
   createConversation(userId: string): ConversationContext {
-    const sessionId = `session-${Date.now()}-${Math.random()}`;
+    const sessionId = `session-${Date.now()}-${randomBytes(8).toString('hex')}`;
 
     const context: ConversationContext = {
       sessionId,

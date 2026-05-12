@@ -35,6 +35,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    const VALID_NOTIFICATION_TYPES = new Set(['comment', 'like', 'follow', 'message', 'review', 'event', 'promotion', 'system', 'achievement', 'mention']);
+    if (!VALID_NOTIFICATION_TYPES.has(notificationType)) {
+      recordRequest('GET', '/api/notifications/preferences', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz bildirim tipi', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+
     const prefs = await getNotificationTypePreferences(locals.user.id, notificationType);
 
     const duration = Date.now() - startTime;
@@ -88,6 +94,14 @@ export const PUT: APIRoute = async ({ request, locals }) => {
         undefined,
         requestId
       );
+    }
+
+    const VALID_NOTIFICATION_TYPES = new Set(['comment', 'like', 'follow', 'message', 'review', 'event', 'promotion', 'system', 'achievement', 'mention']);
+    if (!VALID_NOTIFICATION_TYPES.has(notificationType)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz bildirim tipi', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    if (JSON.stringify(preferences).length > 5000) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'preferences verisi 5000 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     await updateNotificationTypePreferences(locals.user.id, notificationType, preferences);

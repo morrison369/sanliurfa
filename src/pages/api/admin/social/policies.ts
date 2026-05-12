@@ -1,15 +1,13 @@
 import type { APIRoute } from 'astro';
+import { apiResponse, safeErrorDetail, safeIntParam } from '../../../../lib/api';
 import { query } from '../../../../lib/postgres';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  return locals?.user?.role === 'admin';
 }
 
 export const GET: APIRoute = async ({ locals }) => {
@@ -24,7 +22,7 @@ export const GET: APIRoute = async ({ locals }) => {
     return json({ success: true, items: result.rows });
   } catch (error) {
     return json(
-      { success: false, error: error instanceof Error ? error.message : 'policy list failed' },
+      { success: false, error: safeErrorDetail(error, 'policy list failed') },
       500,
     );
   }
@@ -33,7 +31,7 @@ export const GET: APIRoute = async ({ locals }) => {
 export const PUT: APIRoute = async ({ request, locals }) => {
   if (!isAdmin(locals)) return json({ error: 'Unauthorized' }, 401);
 
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
@@ -43,14 +41,16 @@ export const PUT: APIRoute = async ({ request, locals }) => {
   const tenantId = String(body?.tenantId || '').trim();
   if (!tenantId) return json({ error: 'tenantId zorunlu' }, 400);
 
-  const swipeLimit = Math.max(1, Number(body?.swipeLimit || 120));
-  const swipeWindowSeconds = Math.max(10, Number(body?.swipeWindowSeconds || 60));
-  const followLimit = Math.max(1, Number(body?.followLimit || 60));
-  const followWindowSeconds = Math.max(10, Number(body?.followWindowSeconds || 60));
-  const messageWriteLimit = Math.max(1, Number(body?.messageWriteLimit || 80));
-  const messageWriteWindowSeconds = Math.max(10, Number(body?.messageWriteWindowSeconds || 60));
+  const swipeLimit = safeIntParam(body?.swipeLimit, 120, 1, 10_000);
+  const swipeWindowSeconds = safeIntParam(body?.swipeWindowSeconds, 60, 10, 86_400);
+  const followLimit = safeIntParam(body?.followLimit, 60, 1, 10_000);
+  const followWindowSeconds = safeIntParam(body?.followWindowSeconds, 60, 10, 86_400);
+  const messageWriteLimit = safeIntParam(body?.messageWriteLimit, 80, 1, 10_000);
+  const messageWriteWindowSeconds = safeIntParam(body?.messageWriteWindowSeconds, 60, 10, 86_400);
   const isActive = body?.isActive !== false;
-  const note = body?.note ? String(body.note) : null;
+  const noteRaw = body?.note ? String(body.note) : null;
+  if (noteRaw !== undefined && noteRaw !== null && (typeof noteRaw !== 'string' || noteRaw.length > 500)) return json({ error: 'Not 500 karakteri aşamaz' }, 422);
+  const note = noteRaw;
   const updatedBy = locals?.user?.id ? String(locals.user.id) : null;
 
   try {
@@ -91,7 +91,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     return json({ success: true, tenantId });
   } catch (error) {
     return json(
-      { success: false, error: error instanceof Error ? error.message : 'policy upsert failed' },
+      { success: false, error: safeErrorDetail(error, 'policy upsert failed') },
       500,
     );
   }

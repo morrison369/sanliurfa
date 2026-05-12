@@ -1,169 +1,216 @@
 ---
-
-// Blog Index Page
 import Layout from '../../layouts/Layout.astro';
+import PublicPageIntro from '../../components/public/PublicPageIntro.astro';
 import Image from '../../components/Image.astro';
 import { query } from '../../lib/postgres';
-import { resolveContentImage } from '../../lib/content-images';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { logger } from '../../lib/logging';
+import { resolveBlogImage } from '../../lib/public-image-resolvers';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+
+const etiket = Astro.url.searchParams.get('etiket') || '';
+const category = Astro.url.searchParams.get('category') || '';
 
 let posts: any[] = [];
 let categories: any[] = [];
+let popularTags: string[] = [];
 
 try {
-  const postsResult = await query(
-    "SELECT * FROM blog_posts WHERE status = 'published' ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 12"
-  );
-  posts = postsResult.rows;
+  if (etiket) {
+    // Etiket filtresi — cache'leme yok (dinamik)
+    const r = await query(
+      `SELECT * FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND $1=ANY(tags) ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 50`,
+      [etiket]
+    );
+    posts = r.rows;
+  } else if (category) {
+    const r = await query(
+      `SELECT * FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND category=$1 ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 50`,
+      [category]
+    );
+    posts = r.rows;
+  } else {
+    const today = new Date().toISOString().slice(0, 10);
+    const data = await getCachedPublicRouteData(`page:blog:index:${today}`, async () => {
+      const [postsResult, catResult, tagResult] = await Promise.all([
+        query("SELECT * FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 12"),
+        query("SELECT category, COUNT(*) as count FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND category IS NOT NULL GROUP BY category ORDER BY count DESC"),
+        query("SELECT unnest(tags) as tag, COUNT(*) as cnt FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND tags IS NOT NULL GROUP BY tag ORDER BY cnt DESC LIMIT 20"),
+      ]);
+      return {
+        posts: postsResult.rows,
+        categories: catResult.rows,
+        tags: tagResult.rows.map((r: any) => r.tag as string),
+      };
+    });
+    posts = data.posts;
+    categories = data.categories;
+    popularTags = data.tags || [];
+  }
 
-  const catResult = await query(
-    "SELECT category, COUNT(*) as count FROM blog_posts WHERE status = 'published' AND category IS NOT NULL GROUP BY category ORDER BY count DESC"
-  );
-  categories = catResult.rows;
+  if (!categories.length) {
+    const catResult = await query("SELECT category, COUNT(*) as count FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND category IS NOT NULL GROUP BY category ORDER BY count DESC");
+    categories = catResult.rows;
+  }
+  if (!popularTags.length) {
+    const tagResult = await query("SELECT unnest(tags) as tag, COUNT(*) as cnt FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND tags IS NOT NULL GROUP BY tag ORDER BY cnt DESC LIMIT 20");
+    popularTags = tagResult.rows.map((r: any) => r.tag as string);
+  }
 } catch (e) {
-  console.error('Error loading blog:', e);
+  logger.error('blog/index error', e instanceof Error ? e : new Error(String(e)));
 }
 
+const filterLabel = etiket ? `"${etiket}" Etiketi` : category ? `"${category}" Kategorisi` : '';
+const isFiltered = !!(etiket || category);
+
 const seo = {
-  title: 'Şanlıurfa Blog - Gezi Rehberi ve Haberler',
+  title: isFiltered
+    ? `${filterLabel} — Şanlıurfa Blog`
+    : 'Şanlıurfa Blog — Gezi Rehberi, Tarih ve Lezzet Yazıları',
   description: 'Şanlıurfa hakkında en güncel blog yazıları, gezi rehberleri, tarihi yerler ve lezzet durakları.',
-  ogImage: '/images/blog/tarihi-yerler-rehberi.jpg',
-  keywords: ['şanlıurfa blog', 'urfa gezi rehberi', 'şanlıurfa haberler', 'urfa tarihi yazılar', 'şanlıurfa seyahat', 'urfa kültür', 'şanlıurfa yaşam'],
+  keywords: ['şanlıurfa blog', 'urfa gezi rehberi', 'şanlıurfa tarihi', 'urfa lezzetleri'],
   canonical: '/blog',
+  ogImage: '/images/blog/urfa-tarihi.webp',
 };
 
-const faqItems = [
-  {
-    S: 'Şanlıurfa hakkında gezi rehberi nerede bulunur?',
-    C: 'Şanlıurfa blog sayfasında Göbeklitepe, Balıklıgöl, Harran ve şehrin tarihi mekânlarını anlatan detaylı gezi rehberleri yayımlanmaktadır.',
-  },
-  {
-    S: 'Şanlıurfa yemek tarifleri ve gastronomi yazıları var mı?',
-    C: 'Evet. Blogda çiğ köfte, lahmacun, kebap ve diğer yöresel Urfa lezzetleri hakkında tarifler ve gastronomi yazıları yer almaktadır.',
-  },
-  {
-    S: 'Şanlıurfa blog yazıları ne sıklıkla güncelleniyor?',
-    C: 'Blog, şehirdeki etkinlikler, tatil dönemleri ve öne çıkan gelişmelere göre düzenli olarak güncellenmektedir.',
-  },
-];
-
-const getBlogImage = (post: any) =>
-  resolveContentImage({
-    category: 'blog',
-    slug: post?.slug,
-    explicit: post?.cover_image,
-    placeholder: '/images/placeholder-blog.jpg',
-  });
+const getBlogImage = (post: any) => resolveBlogImage(post);
+const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Hero -->
-    <div class="bg-gradient-to-br from-amber-600 to-orange-700 text-white py-16">
-      <div class="container mx-auto px-4">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Şanlıurfa Blog</h1>
-        <p class="text-xl text-amber-100 max-w-2xl">
-          Şanlıurfa’nın tarihi, kültürü ve lezzetleri hakkında detaylı rehberler ve haberler
-        </p>
-      </div>
-    </div>
+  <style is:inline>
+  .bl-layout{display:grid;grid-template-columns:1fr;gap:3rem;padding:3rem 0 5rem}
+  @media(min-width:1024px){.bl-layout{grid-template-columns:1fr 240px}}
+  .bl-list{display:flex;flex-direction:column;gap:1px;background:rgba(184,115,51,.08)}
+  .bl-card{background:var(--bg-card);text-decoration:none;display:flex;flex-direction:column;transition:background .2s}
+  @media(min-width:640px){.bl-card{flex-direction:row}}
+  .bl-card:hover{background:var(--bg-hover)}
+  .bl-card-img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--public-accent-soft);flex-shrink:0}
+  @media(min-width:640px){.bl-card-img{width:220px;aspect-ratio:auto;height:160px}}
+  .bl-card-ph{width:100%;aspect-ratio:16/9;background:var(--public-accent-soft);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0}
+  @media(min-width:640px){.bl-card-ph{width:220px;height:160px;aspect-ratio:auto}}
+  .bl-card-body{padding:1.25rem;display:flex;flex-direction:column;gap:.3rem;flex:1}
+  .bl-card-cat{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--public-accent)}
+  .bl-card-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--public-text);line-height:1.3}
+  .bl-card-excerpt{font-size:.8rem;color:var(--public-muted);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:.2rem}
+  .bl-card-date{font-size:.7rem;color:var(--public-muted);margin-top:auto;padding-top:.5rem}
+  .bl-side{display:flex;flex-direction:column;gap:1.25rem}
+  .bl-side-card{background:var(--bg-card);border:1px solid var(--border);padding:1.25rem}
+  .bl-side-lbl{font-size:.65rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--public-accent);margin-bottom:.85rem}
+  .bl-cat-link{display:flex;align-items:center;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(184,115,51,.08);font-size:.82rem;color:var(--public-text-soft);text-decoration:none;transition:color .15s}
+  .bl-cat-link:last-child{border-bottom:none}
+  .bl-cat-link:hover,.bl-cat-link.active{color:var(--public-accent)}
+  .bl-tag-cloud{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.25rem}
+  .bl-tag{font-size:.72rem;padding:.2rem .6rem;background:rgba(184,115,51,.1);color:var(--public-text-soft);border-radius:2rem;text-decoration:none;transition:background .15s,color .15s}
+  .bl-tag:hover,.bl-tag.active{background:var(--public-accent);color:#fff}
+  .bl-filter-bar{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;padding:.75rem 1rem;background:var(--bg-card);border:1px solid rgba(184,115,51,.2);font-size:.82rem;color:var(--public-text-soft)}
+  .bl-empty{padding:5rem 0;text-align:center;color:var(--public-muted)}
+  </style>
 
-    <div class="container mx-auto px-4 py-12">
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <!-- Main Content -->
-        <div class="lg:col-span-3">
-          {posts.length > 0 ? (
-            <div class="space-y-8">
-              {posts.map((post) => (
-                <a href={`/blog/${post.slug}`} class="group block">
-                  <article class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
-                    <div class="bg-gradient-to-br from-amber-100 to-orange-100 h-48">
-                      <Image
-                        src={getBlogImage(post)}
-                        alt={post.title}
-                        class="w-full h-full object-cover"
-                        loading="lazy"
-                        width={1200}
-                        height={480}
-                      />
-                    </div>
-                    <div class="p-6">
-                      <span class="text-xs font-medium text-amber-600 uppercase tracking-wider">{post.category}</span>
-                      <h3 class="font-bold text-gray-900 mt-2 group-hover:text-amber-600 transition-colors text-lg">
-                        {post.title}
-                      </h3>
-                      <p class="text-gray-600 mt-2 line-clamp-2">{post.excerpt}</p>
-                      <div class="flex items-center gap-4 mt-4 text-sm text-gray-500">
-                        <span>{post.created_at ? new Date(post.created_at).toLocaleDateString('tr-TR') : ''}</span>
-                      </div>
-                    </div>
-                  </article>
+  <PublicPageIntro
+    eyebrow="Şanlıurfa Yazıları"
+    title={isFiltered ? filterLabel : 'Blog'}
+    description="Tarihi yerler, yöresel lezzetler, gezi rehberleri ve şehrin gündelik yaşamı."
+  />
+
+  <div class="sf-container">
+    <div class="bl-layout">
+      <div>
+        {isFiltered && (
+          <div class="bl-filter-bar">
+            <span>{posts.length} yazı bulundu</span>
+            <a href="/blog" style="margin-left:auto;color:var(--public-accent);text-decoration:none;font-size:.78rem">✕ Filtreyi Kaldır</a>
+          </div>
+        )}
+
+        {posts.length > 0 ? (
+          <div class="bl-list" role="list" aria-label="Blog yazıları">
+            {posts.map(post => (
+              <a href={`/blog/${post.slug}`} class="bl-card" role="listitem" aria-label={post.title}>
+                {getBlogImage(post)
+                  ? <Image src={getBlogImage(post)} alt={post.title} class="bl-card-img" loading="lazy" width={220} height={160} />
+                  : <div class="bl-card-ph" aria-hidden="true">📰</div>
+                }
+                <div class="bl-card-body">
+                  {post.category && <span class="bl-card-cat">{post.category}</span>}
+                  <h2 class="bl-card-title">{post.title}</h2>
+                  {post.excerpt && <p class="bl-card-excerpt">{post.excerpt}</p>}
+                  <span class="bl-card-date">{formatDate(post.published_at || post.created_at)}</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div class="bl-empty">
+            <p style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--public-text-soft);margin-bottom:.5rem">
+              {isFiltered ? `"${etiket || category}" için yazı bulunamadı` : 'Henüz yazı yok'}
+            </p>
+            {isFiltered && <a href="/blog" style="font-size:.85rem;color:var(--public-accent)">Tüm yazılara dön →</a>}
+          </div>
+        )}
+      </div>
+
+      <aside class="bl-side">
+        {categories.length > 0 && (
+          <div class="bl-side-card">
+            <p class="bl-side-lbl">Kategoriler</p>
+            <a href="/blog" class={`bl-cat-link${!isFiltered ? ' active' : ''}`}>
+              <span>Tümü</span>
+            </a>
+            {categories.map((cat: any) => (
+              <a
+                href={`/blog?category=${encodeURIComponent(cat.category)}`}
+                class={`bl-cat-link${category === cat.category ? ' active' : ''}`}
+              >
+                <span>{cat.category}</span>
+                <span style="font-size:.7rem;color:var(--public-muted)">{cat.count}</span>
+              </a>
+            ))}
+          </div>
+        )}
+
+        {popularTags.length > 0 && (
+          <div class="bl-side-card">
+            <p class="bl-side-lbl">Etiketler</p>
+            <div class="bl-tag-cloud">
+              {popularTags.map((tag: string) => (
+                <a
+                  href={`/blog?etiket=${encodeURIComponent(tag)}`}
+                  class={`bl-tag${etiket === tag ? ' active' : ''}`}
+                >
+                  {tag}
                 </a>
               ))}
             </div>
-          ) : (
-            <div class="text-center py-16">
-              <p class="text-gray-500 text-lg">Henüz blog yazısı yok.</p>
-            </div>
-          )}
+          </div>
+        )}
+
+        <div class="bl-side-card">
+          <p class="bl-side-lbl">Hızlı Bağlantılar</p>
+          {[
+            { label: 'Göbeklitepe Rehberi', href: '/blog/gobeklitepe-rehberi-ziyaret-bilgileri' },
+            { label: 'Balıklıgöl Tarihi', href: '/blog/balikligol-ziyaret-rehberi' },
+            { label: 'Urfa Mutfağı', href: '/yemek-tarifleri' },
+            { label: 'Halfeti Gezi', href: '/blog/halfeti-tekne-turu-rehberi' },
+          ].map(l => (
+            <a href={l.href} class="bl-cat-link">{l.label}</a>
+          ))}
         </div>
 
-        <!-- Sidebar -->
-        <div class="space-y-6">
-          {categories.length > 0 && (
-            <div class="bg-white rounded-xl shadow-sm p-6">
-              <h3 class="font-bold text-gray-900 mb-4">Kategoriler</h3>
-              <div class="space-y-2">
-                {categories.map((cat) => (
-                  <a href={`/blog?category=${cat.slug}`} class="flex items-center justify-between py-2 text-gray-600 hover:text-amber-600">
-                    <span>{cat.name}</span>
-                    <span class="text-sm text-gray-400">({cat.count})</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+        <a href="/isletme-kayit" class="sf-btn-primary" style="text-align:center;justify-content:center">
+          İşletme Ekle
+        </a>
+      </aside>
     </div>
   </div>
+
   <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'Blog',
-    name: 'Şanlıurfa Blog',
-    description: 'Şanlıurfa hakkında gezi rehberleri, tarihi yerler ve lezzet yazıları.',
-    url: `${baseUrl}/blog`,
+    '@context': 'https://schema.org', '@type': 'Blog',
+    name: 'Şanlıurfa Blog', url: 'https://sanliurfa.com/blog',
     inLanguage: 'tr',
-    publisher: {
-      '@type': 'Organization',
-      name: 'Sanliurfa.com',
-      url: `${baseUrl}`,
-    },
+    publisher: { '@type': 'Organization', name: 'Sanliurfa.com', url: 'https://sanliurfa.com' },
     blogPost: posts.slice(0, 10).map((p: any) => ({
-      '@type': 'BlogPosting',
-      headline: p.title,
-      url: `${baseUrl}/blog/${p.slug}`,
-      datePublished: p.published_at || p.created_at,
-      dateModified: p.updated_at || p.published_at || p.created_at,
-      image: p.cover_image || `${baseUrl}/images/placeholder-blog.jpg`,
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${baseUrl}/blog` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
+      '@type': 'BlogPosting', headline: p.title, url: `https://sanliurfa.com/blog/${p.slug}`,
+      datePublished: p.published_at || p.created_at, image: `https://sanliurfa.com${getBlogImage(p)}`,
     })),
   })} is:inline />
 </Layout>

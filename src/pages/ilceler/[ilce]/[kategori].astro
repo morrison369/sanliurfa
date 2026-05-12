@@ -1,176 +1,222 @@
 ---
 
 import Layout from '../../../layouts/Layout.astro';
+import PublicCollectionHero from '../../../components/public/PublicCollectionHero.astro';
+import PublicCollectionBody from '../../../components/public/PublicCollectionBody.astro';
+import PublicSidebarCard from '../../../components/public/PublicSidebarCard.astro';
+import PublicFaqList from '../../../components/public/PublicFaqList.astro';
+import PlaceCard from '../../../components/PlaceCard.astro';
 import { query, queryOne } from '../../../lib/postgres';
+import { getCachedPublicRouteData } from '../../../lib/public-route-cache';
 import { getMediaAsset, getSeoOverride } from '../../../lib/site-platform';
-import { getSiteBranding } from '../../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../../../lib/public-app-url';
+import { logger } from '../../../lib/logging';
+import { resolvePlaceImage } from '../../../lib/public-image-resolvers';
+const baseUrl = getPublicAppUrl();
 
 const { ilce, kategori } = Astro.params;
 let district: any = null;
 let category: any = null;
 let places: any[] = [];
-let heroImage = '/images/hero/hero-home.webp';
+let heroImage = '/images/places/balikligol.jpg';
 let seoOverridePayload: Record<string, any> | null = null;
 let seoOverrideCanonical = '';
 
 try {
-  district = await queryOne("SELECT * FROM districts WHERE slug = $1", [ilce]);
-  category = await queryOne("SELECT * FROM categories WHERE slug = $1", [kategori]);
+ const data = await getCachedPublicRouteData(`page:ilceler:category:${ilce || 'unknown'}:${kategori || 'unknown'}`, async () => {
+  const [districtRow, categoryRow] = await Promise.all([
+   queryOne("SELECT * FROM districts WHERE slug = $1", [ilce]),
+   queryOne("SELECT * FROM categories WHERE slug = $1", [kategori]),
+  ]);
 
-  if (!district || !category) return Astro.redirect('/ilceler');
+  if (!districtRow || !categoryRow) return { district: districtRow, category: categoryRow, places: [] };
 
   const result = await query(
-    `SELECT p.* FROM places p
-     JOIN categories c ON p.category_id = c.id
-     WHERE p.district_id = $1
-     AND (c.slug = $2 OR c.parent_id = (SELECT id FROM categories WHERE slug = $2))
-     AND p.status = 'active'
-     ORDER BY p.rating DESC`,
-    [district.id, kategori]
+   `SELECT p.* FROM places p
+ JOIN categories c ON p.category_id = c.id
+ WHERE p.district_id = $1
+ AND (c.slug = $2 OR c.parent_id = (SELECT id FROM categories WHERE slug = $2))
+ AND p.status = 'active'
+ ORDER BY p.rating DESC`,
+   [districtRow.id, kategori]
   );
-  places = result.rows;
+  return { district: districtRow, category: categoryRow, places: result.rows };
+ });
+ district = data.district;
+ category = data.category;
+ if (!district || !category) return Astro.redirect('/ilceler');
+ places = data.places;
 } catch (e) {
-  console.error('Error:', e);
+ logger.error('Error:', e instanceof Error ? e : new Error(String(e)));
 }
 
+if (!district || !category) return Astro.redirect(`/ilceler/${ilce || ''}`);
+
 try {
-  const [heroAsset, seoOverride] = await Promise.all([
-    getMediaAsset(
-      `district-category.${String(ilce || '').trim()}.${String(kategori || '').trim()}.hero`,
-    ),
-    getSeoOverride(
-      'district-category',
-      `${String(ilce || '').trim()}/${String(kategori || '').trim()}`,
-    ),
-  ]);
-  heroImage = String(heroAsset?.url || heroImage);
-  seoOverridePayload = seoOverride?.seo_payload || null;
-  seoOverrideCanonical = String(seoOverride?.canonical_path || '').trim();
+ const [heroAsset, seoOverride] = await Promise.all([
+ getMediaAsset(
+ `district-category.${String(ilce || '').trim()}.${String(kategori || '').trim()}.hero`,
+ ),
+ getSeoOverride(
+ 'district-category',
+ `${String(ilce || '').trim()}/${String(kategori || '').trim()}`,
+ ),
+ ]);
+ heroImage = String(heroAsset?.url || heroImage);
+ seoOverridePayload = seoOverride?.seo_payload || null;
+ seoOverrideCanonical = String(seoOverride?.canonical_path || '').trim();
 } catch (e) {
-  console.error('Error loading district category platform data:', e);
+ logger.error('Error loading district category platform data:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const seo = {
-  title: `${district?.name || ilce} ${category?.name || kategori} | Şanlıurfa`,
-  description: `${district?.name} ilçesindeki en iyi ${(category?.name || '').toLowerCase()} mekanları.`,
-  canonical: `/ilceler/${ilce}/${kategori}`,
-  keywords: [(district?.name || ilce) + ' ' + (category?.name || kategori).toLowerCase(), 'şanlıurfa ' + (category?.name || kategori).toLowerCase()],
-  ogImage: '/images/hero/hero-home.webp',
+ title: `${district?.name || ilce} ${category?.name || kategori} Mekanları | Şanlıurfa`,
+ description: `${district?.name || ilce} ilçesindeki ${(category?.name || kategori).toLowerCase()} mekanlarını keşfedin. Puan, yorum ve konuma göre sıralanmış güncel liste, adres ve iletişim bilgileri.`,
+ canonical: `/ilceler/${ilce}/${kategori}`,
+ keywords: [
+  (district?.name || ilce) + ' ' + (category?.name || kategori).toLowerCase(),
+  'şanlıurfa ' + (category?.name || kategori).toLowerCase(),
+  (district?.name || ilce) + ' mekanlar',
+ ],
+ ogImage: '/images/places/balikligol.jpg',
 };
 
 if (seoOverridePayload) {
-  Object.assign(seo, seoOverridePayload, {
-    canonical: seoOverrideCanonical || seoOverridePayload.canonical || seo.canonical,
-  });
+ Object.assign(seo, seoOverridePayload, {
+ canonical: seoOverrideCanonical || seoOverridePayload.canonical || seo.canonical,
+ });
 }
+const resolveDistrictCategoryPlaceImage = (place: any) =>
+ resolvePlaceImage({
+  slug: place?.slug,
+  image_url: place?.image_url ?? place?.cover_image ?? null,
+  cover_image: place?.cover_image ?? null,
+  images: Array.isArray(place?.images) ? place.images : [],
+ });
+const districtName = district?.name || String(ilce || '');
+const categoryName = category?.name || String(kategori || '');
 const faqItems = [
-  { S: `${district?.name || ilce} ilçesinde ${category?.name || kategori} var mı?`, C: `${district?.name || ilce} ilçesindeki ${category?.name || kategori} mekanları puan ve öne çıkarılma durumuna göre listelenmiştir.` },
-  { S: `${category?.name || kategori} mekanlarına nasıl ulaşabilirim?`, C: `Mekan adreslerine tıklayarak harita üzerinde konumlarını görebilir ve yol tarifi alabilirsiniz.` },
-  { S: `${district?.name || ilce} ilçesinde başka hangi kategoriler var?`, C: `${district?.name || ilce} ilçesinin tüm mekan kategorileri için /ilceler/${ilce} sayfasını ziyaret edebilirsiniz.` },
+ {
+  S: `${districtName} ilçesinde ${categoryName} var mı?`,
+  C: `${districtName} ilçesinde ${categoryName} kategorisinde birden fazla mekan aktif olarak hizmet vermektedir. Mekanlar puan, yorum sayısı ve öne çıkarılma durumuna göre sıralanmaktadır. Detaylı bilgi edinmek ve iletişime geçmek için her mekan kartına tıklayabilirsiniz.`,
+ },
+ {
+  S: `${districtName} ilçesindeki ${categoryName} mekanlarına nasıl ulaşılır?`,
+  C: `Mekan kartlarındaki adres bilgilerine tıklayarak Google Harita veya benzeri uygulamalar üzerinden yol tarifi alabilirsiniz. ${districtName} ilçesindeki mekanların büyük bölümüne şehir merkezi toplu taşıması veya özel araçla kolayca ulaşmak mümkündür.`,
+ },
+ {
+  S: `${districtName} ${categoryName} mekanları yorumlanabilir mi?`,
+  C: `Evet, üye girişi yaptıktan sonra ziyaret ettiğiniz her ${categoryName} mekanını puanlayabilir ve yorum bırakabilirsiniz. Yorumlar diğer kullanıcıların doğru mekanı seçmesine yardımcı olmak için yayımlanmaktadır.`,
+ },
+ {
+  S: `${districtName} ilçesinde başka mekan kategorileri var mı?`,
+  C: `${districtName} ilçesinde restoran, kafe, sağlık hizmeti, alışveriş, konaklama ve daha pek çok kategoride mekan bulunmaktadır. Tüm kategorileri ve aktif mekanları keşfetmek için ${districtName} ilçe rehber sayfasını ziyaret edebilirsiniz.`,
+ },
 ];
 
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-white border-b">
-      <div class="container mx-auto px-4 py-3">
-        <nav class="flex items-center gap-2 text-sm text-gray-500">
-          <a href="/" class="hover:text-red-600">Ana Sayfa</a><span>/</span>
-          <a href="/ilceler" class="hover:text-red-600">İlçeler</a><span>/</span>
-          <a href={`/ilceler/${ilce}`} class="hover:text-red-600">{district?.name || ilce}</a><span>/</span>
-          <span class="text-gray-900 font-medium">{category?.name || kategori}</span>
-        </nav>
-      </div>
-    </div>
+ <style is:inline>
+ .ik-page{background:var(--bg);min-height:100vh}
+ .ik-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+ .ik-empty{text-align:center;padding:4rem 0}
+ .ik-empty-back{color:var(--public-accent);text-decoration:none;display:inline-block;margin-top:.5rem}
+ .ik-empty-back:hover{text-decoration:underline}
+ </style>
 
-    <div class="relative overflow-hidden bg-gradient-to-br from-teal-700 to-teal-900 text-white py-10">
-      <img
-        src={heroImage}
-        alt={`${district?.name || ilce} ${category?.name || kategori} hero`}
-        class="absolute inset-0 h-full w-full object-cover opacity-15"
-        loading="eager"
-        onerror="this.style.display='none'"
-      />
-      <div class="absolute inset-0 bg-gradient-to-br from-teal-900/85 to-teal-700/80"></div>
-      <div class="container mx-auto px-4">
-        <div class="relative">
-          <h1 class="text-3xl font-bold">{district?.name} {category?.name}</h1>
-          <p class="text-teal-100 mt-1">{places.length} mekan bulundu</p>
-        </div>
-      </div>
-    </div>
+ <div class="ik-page">
+ <PublicCollectionHero
+  title={`${district?.name} ${category?.name}`}
+  description={`${district?.name} ilçesindeki ${category?.name} mekanları puan, görünürlük ve aktif kayıt durumuna göre listelenir.`}
+  imageSrc={heroImage}
+  imageAlt={`${district?.name || ilce} ${category?.name || kategori} hero`}
+  eyebrow="İlçe Kategori Rehberi"
+  breadcrumbItems={[
+   { href: '/', label: 'Ana Sayfa' },
+   { href: '/ilceler', label: 'İlçeler' },
+   { href: `/ilceler/${ilce}`, label: district?.name || ilce },
+   { label: category?.name || kategori },
+  ]}
+  stats={[
+   { label: 'Bulunan Mekan', value: places.length },
+   { label: 'İlçe', value: district?.name || ilce },
+  ]}
+ />
 
-    <div class="container mx-auto px-4 py-8">
-      {places.length > 0 ? (
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {places.map((place) => (
-            <a href={`/isletme/${place.slug}`} class="group overflow-hidden bg-white rounded-xl shadow-sm hover:shadow-lg transition-all">
-              <div class="h-36 overflow-hidden bg-gradient-to-br from-teal-50 to-cyan-50">
-                <img
-                  src={place.cover_image || place.images?.[0] || heroImage}
-                  alt={place.name}
-                  class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                  loading="lazy"
-                  onerror={`this.setAttribute('src','${heroImage}')`}
-                />
-              </div>
-              <div class="p-5">
-              <h3 class="font-bold text-gray-900 group-hover:text-teal-600">{place.name}</h3>
-              <p class="text-sm text-gray-500 mt-2">{place.short_description || place.address}</p>
-              <div class="flex items-center gap-1 mt-3">
-                <span class="text-yellow-500">★</span>
-                <span class="font-medium">{place.rating || '-'}</span>
-              </div>
-              </div>
-            </a>
-          ))}
-        </div>
-      ) : (
-        <div class="text-center py-16">
-          <p class="text-gray-500">Bu kategoride mekan bulunmuyor.</p>
-          <a href={`/ilceler/${ilce}`} class="text-teal-600 hover:underline mt-2 inline-block">← {district?.name} Rehberine Dön</a>
-        </div>
-      )}
-    </div>
-  </div>
+ <PublicCollectionBody compactSidebar>
+  {places.length > 0 ? (
+   <div class="ik-grid">
+    {places.map((place) => (
+     <PlaceCard
+      place={{
+       id: String(place.id),
+       name: place.name,
+       slug: place.slug,
+       description: place.short_description || place.address || '',
+       image_url: resolveDistrictCategoryPlaceImage(place),
+       category: String(kategori || 'general'),
+       rating: place.rating,
+       review_count: place.review_count,
+      }}
+     />
+    ))}
+   </div>
+  ) : (
+   <div class="ik-empty">
+    <p style="color:var(--public-muted)">Bu kategoride mekan bulunmuyor.</p>
+    <a href={`/ilceler/${ilce}`} class="ik-empty-back">← {district?.name} Rehberine Dön</a>
+   </div>
+  )}
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: `${district?.name || ilce} ${category?.name || kategori}`,
-    description: `${district?.name} ilçesindeki en iyi ${(category?.name || '').toLowerCase()} mekanları.`,
-    url: `${baseUrl}/ilceler/${ilce}/${kategori}`,
-    about: { '@type': 'City', name: 'Şanlıurfa' },
-    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'LocalBusiness',
-        '@id': `${baseUrl}/isletme/${p.slug}`,
-        name: p.name,
-        url: `${baseUrl}/isletme/${p.slug}`,
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'İlçeler', item: `${baseUrl}/ilceler` },
-      { '@type': 'ListItem', position: 3, name: district?.name || ilce, item: `${baseUrl}/ilceler/${ilce}` },
-      { '@type': 'ListItem', position: 4, name: category?.name || kategori, item: `${baseUrl}/ilceler/${ilce}/${kategori}` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+  <Fragment slot="sidebar">
+   <PublicSidebarCard title="Kategori Özeti">
+    <p style="margin:0;color:var(--public-muted);line-height:1.7;font-size:.88rem">
+     {district?.name} ilçesindeki {category?.name} mekanları puan, görünürlük ve aktif kayıt durumuna göre listelenir.
+    </p>
+   </PublicSidebarCard>
+   <PublicSidebarCard title="Sık Sorulanlar">
+    <PublicFaqList items={faqItems.map((item) => ({ q: item.S, a: item.C }))} />
+   </PublicSidebarCard>
+  </Fragment>
+ </PublicCollectionBody>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'CollectionPage',
+ name: `${district?.name || ilce} ${category?.name || kategori}`,
+ description: `${district?.name} ilçesindeki en iyi ${(category?.name || '').toLowerCase()} mekanları.`,
+ url: `${baseUrl}/ilceler/${ilce}/${kategori}`,
+ about: { '@type': 'City', name: 'Şanlıurfa' },
+ itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+ '@type': 'ListItem',
+ position: i + 1,
+ item: {
+ '@type': 'LocalBusiness',
+ '@id': `${baseUrl}/isletme/${p.slug}`,
+ name: p.name,
+ url: `${baseUrl}/isletme/${p.slug}`,
+ },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'İlçeler', item: `${baseUrl}/ilceler` },
+ { '@type': 'ListItem', position: 3, name: district?.name || ilce, item: `${baseUrl}/ilceler/${ilce}` },
+ { '@type': 'ListItem', position: 4, name: category?.name || kategori, item: `${baseUrl}/ilceler/${ilce}/${kategori}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

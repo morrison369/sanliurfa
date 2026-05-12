@@ -4,12 +4,12 @@
  */
 
 import type { APIRoute } from 'astro';
-import { insert, queryOne, update as updateDb } from '../../../lib/postgres';
-import { checkQuota, incrementUsage } from '../../../lib/usage/usage-tracking';
+import { insert, query, queryOne } from '../../../lib/postgres';
+import { checkAndIncrementQuota } from '../../../lib/usage/usage-tracking';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { validateWithSchema } from '../../../lib/validation';
+import { validateWithSchema, type ValidationSchema } from '../../../lib/validation';
 import { deleteCache } from '../../../lib/cache';
 
 const createReviewSchema = {
@@ -37,7 +37,7 @@ const createReviewSchema = {
     maxLength: 5000,
     sanitize: true,
   },
-} as any;
+} as ValidationSchema;
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId(request);
@@ -72,20 +72,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // CHECK QUOTA - Reviews are limited for free tier users
-    const quotaStatus = await checkQuota(locals.user.id, 'UNLIMITED_REVIEWS');
-
-    if (!quotaStatus.canUse) {
-      recordRequest('POST', '/api/reviews/post', HttpStatus.FORBIDDEN, Date.now() - startTime);
-      return apiError(
-        ErrorCode.FORBIDDEN,
-        `Aylık yorum kotanız tükendi. Sıfırlanması: 30 gün sonra. (${quotaStatus.current}/${quotaStatus.limit})`,
-        HttpStatus.FORBIDDEN,
-        undefined,
-        requestId
-      );
-    }
-
     const { placeId, rating, title, content } = validation.data;
 
     // Verify place exists
@@ -105,6 +91,21 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    // Atomic quota check + increment (HARD RULE #47) — prevents race condition where
+    // concurrent requests both pass checkQuota and both create reviews beyond the limit.
+    const quotaResult = await checkAndIncrementQuota(locals.user.id, 'UNLIMITED_REVIEWS');
+    if (!quotaResult.allowed) {
+      recordRequest('POST', '/api/reviews/post', HttpStatus.FORBIDDEN, Date.now() - startTime);
+      const limit = quotaResult.limit ?? '?';
+      return apiError(
+        ErrorCode.FORBIDDEN,
+        `Aylık yorum kotanız tükendi. Sıfırlanması: 30 gün sonra. (${quotaResult.current}/${limit})`,
+        HttpStatus.FORBIDDEN,
+        undefined,
+        requestId
+      );
+    }
+
     // Create review
     const review = await insert('reviews', {
       place_id: placeId,
@@ -116,8 +117,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       created_at: new Date().toISOString(),
     });
 
-    // Increment quota usage
-    const newUsage = await incrementUsage(locals.user.id, 'UNLIMITED_REVIEWS', 1);
+    const newUsage = quotaResult.current;
 
     // Award points
     await insert('points_transactions', {
@@ -129,19 +129,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
       created_at: new Date().toISOString(),
     });
 
-    // Update user points
-    const user = await queryOne(
-      'SELECT points FROM users WHERE id = $1',
+    // Atomic points increment — avoids SELECT+UPDATE race condition (HARD RULE #47)
+    await query(
+      'UPDATE users SET points = COALESCE(points, 0) + 50 WHERE id = $1',
       [locals.user.id]
     );
 
-    await updateDb('users', locals.user.id, {
-      points: (user?.points || 0) + 50,
-    });
-
-    // Invalidate caches
-    await deleteCache(`reviews:${placeId}`);
-    await deleteCache(`places:${placeId}`);
+    // Invalidate caches (paralel)
+    await Promise.all([
+      deleteCache(`reviews:${placeId}`),
+      deleteCache(`places:${placeId}`),
+      deleteCache(`user:profile:${locals.user.id}`),
+    ]);
 
     recordRequest('POST', '/api/reviews/post', HttpStatus.CREATED, Date.now() - startTime);
     logger.logMutation('create', 'reviews', review.id, locals.user.id);
@@ -153,8 +152,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         pointsEarned: 50,
         quotaStatus: {
           current: newUsage,
-          limit: quotaStatus.limit,
-          remaining: quotaStatus.limit ? quotaStatus.limit - newUsage : null,
+          limit: quotaResult.limit,
+          remaining: quotaResult.limit ? quotaResult.limit - newUsage : null,
         },
       },
       HttpStatus.CREATED,

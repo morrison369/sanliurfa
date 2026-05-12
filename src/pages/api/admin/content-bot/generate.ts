@@ -7,7 +7,7 @@ import type { APIRoute } from 'astro';
 import { requireRole } from '../../../../lib/auth';
 import { query, queryOne } from '../../../../lib/postgres';
 import { createPost } from '../../../../lib/blog/db';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../../lib/api';
 
 // Content templates
 const CONTENT_TEMPLATES = {
@@ -34,10 +34,18 @@ const CONTENT_TEMPLATES = {
   },
 };
 
-/**
- * Generate content for a place
- */
-function generatePlaceContent(place: any): { title: string; content: string; excerpt: string } {
+interface PlaceRow {
+  id?: string | number;
+  name: string;
+  category?: string;
+  address?: string;
+  phone?: string;
+  website?: string;
+  description?: string;
+  slug?: string;
+}
+
+function generatePlaceContent(place: PlaceRow): { title: string; content: string; excerpt: string } {
   const template = CONTENT_TEMPLATES[place.category as keyof typeof CONTENT_TEMPLATES] || CONTENT_TEMPLATES['tarihi-yerler'];
   const intro = template.intro[Math.floor(Math.random() * template.intro.length)].replace('{name}', place.name);
   
@@ -149,10 +157,23 @@ export const POST: APIRoute = async ({ request }) => {
         [placeIds]
       );
 
+      // Batch category lookup — one query instead of one per place
+      const uniqueCatSlugs = [...new Set(
+        places.rows.map((p: { category?: string }) =>
+          p.category === 'tarihi-yerler' ? 'tarih' : (p.category ?? '')
+        ).filter(Boolean)
+      )];
+      const catRows = uniqueCatSlugs.length > 0
+        ? await query('SELECT id, slug FROM blog_categories WHERE slug = ANY($1)', [uniqueCatSlugs])
+        : { rows: [] };
+      const categoryMap = new Map<string, string>(
+        catRows.rows.map((r: { id: string; slug: string }) => [r.slug, r.id])
+      );
+
       const generated = [];
       for (const place of places.rows) {
         const { title, content, excerpt } = generatePlaceContent(place);
-        
+
         // Create slug
         const slug = place.name
           .toLowerCase()
@@ -165,42 +186,32 @@ export const POST: APIRoute = async ({ request }) => {
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-|-$/g, '');
 
-        // Check if post exists
-        const existing = await queryOne(
-          'SELECT id FROM blog_posts WHERE slug = $1',
-          [slug]
-        );
+        const catSlug = place.category === 'tarihi-yerler' ? 'tarih' : place.category;
+        const catResult = catSlug ? { id: categoryMap.get(catSlug) } : null;
 
-        if (existing) {
-          generated.push({ place: place.name, status: 'skipped', reason: 'Already exists' });
-          continue;
+        // Unique constraint on slug is the race-safe check (HARD RULE #47)
+        try {
+          const post = await createPost({
+            title,
+            slug,
+            excerpt,
+            content,
+            ...(catResult?.id ? { category_id: catResult.id } : {}),
+            author_id: auth.user.id,
+            author_name: 'Content Bot',
+            status: 'draft',
+          });
+          generated.push({ place: place.name, status: 'created', postId: post.id });
+        } catch (dupErr: any) {
+          if (dupErr?.code === '23505') {
+            generated.push({ place: place.name, status: 'skipped', reason: 'Already exists' });
+          } else {
+            throw dupErr;
+          }
         }
-
-        // Get category id
-        const catResult = await queryOne(
-          'SELECT id FROM blog_categories WHERE slug = $1',
-          [place.category === 'tarihi-yerler' ? 'tarih' : place.category]
-        );
-
-        // Create post
-        const post = await createPost({
-          title,
-          slug,
-          excerpt,
-          content,
-          category_id: catResult?.id,
-          author_id: auth.user.id,
-          author_name: 'Content Bot',
-          status: 'draft',
-        });
-
-        generated.push({ place: place.name, status: 'created', postId: post.id });
       }
 
-      return new Response(JSON.stringify({ success: true, generated }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      return apiResponse({ success: true, generated }, HttpStatus.OK);
     }
 
     if (type === 'category-guide') {
@@ -216,7 +227,7 @@ export const POST: APIRoute = async ({ request }) => {
       let content = `# ${title}\n\n`;
       content += `${category} kategorisinde Şanlıurfa’da görülmesi gereken yerleri sizin için derledik.\n\n`;
 
-      places.rows.forEach((place: any, index: number) => {
+      places.rows.forEach((place: PlaceRow, index: number) => {
         content += `## ${index + 1}. ${place.name}\n\n`;
         content += `${place.description || `${place.name} hakkında bilgi.`}\n\n`;
         content += `**Adres:** ${place.address || 'Şanlıurfa'}\n\n`;
@@ -237,13 +248,10 @@ export const POST: APIRoute = async ({ request }) => {
         is_featured: true,
       });
 
-      return new Response(JSON.stringify({ 
+      return apiResponse({ 
         success: true, 
         post: { id: post.id, title: post.title, slug: post.slug }
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      }, HttpStatus.OK);
     }
 
     return problemJson({
@@ -257,7 +265,7 @@ export const POST: APIRoute = async ({ request }) => {
     return problemJson({
       status: 500,
       title: 'İçerik Üretimi Başarısız',
-      detail: error instanceof Error ? error.message : 'Generation failed',
+      detail: safeErrorDetail(error, 'Generation failed'),
       type: '/problems/admin-content-bot-failed',
       instance: '/api/admin/content-bot/generate',
     });
@@ -277,40 +285,32 @@ export const GET: APIRoute = async ({ request }) => {
       });
     }
 
-    // Get generation jobs
-    const jobs = await query(
-      `SELECT * FROM content_generation_jobs 
-       ORDER BY created_at DESC 
-       LIMIT 20`
-    );
+    const [jobs, categories, placesWithoutContent] = await Promise.all([
+      query(
+        `SELECT * FROM content_generation_jobs
+         ORDER BY created_at DESC
+         LIMIT 20`
+      ),
+      query(`SELECT DISTINCT category FROM places WHERE category IS NOT NULL`),
+      query(
+        `SELECT p.id, p.name, p.category
+         FROM places p
+         LEFT JOIN blog_posts bp ON bp.slug = LOWER(REGEXP_REPLACE(p.name, '[^a-zA-Z0-9]', '-', 'g'))
+         WHERE bp.id IS NULL
+         LIMIT 50`
+      ),
+    ]);
 
-    // Get available categories
-    const categories = await query(
-      `SELECT DISTINCT category FROM places WHERE category IS NOT NULL`
-    );
-
-    // Get places without blog posts
-    const placesWithoutContent = await query(
-      `SELECT p.id, p.name, p.category 
-       FROM places p
-       LEFT JOIN blog_posts bp ON bp.slug = LOWER(REGEXP_REPLACE(p.name, '[^a-zA-Z0-9]', '-', 'g'))
-       WHERE bp.id IS NULL
-       LIMIT 50`
-    );
-
-    return new Response(JSON.stringify({
+    return apiResponse({
       jobs: jobs.rows,
-      categories: categories.rows.map((r: any) => r.category),
+      categories: categories.rows.map((r) => r.category),
       placesWithoutContent: placesWithoutContent.rows,
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'İçerik Bot Verileri Alınamadı',
-      detail: error instanceof Error ? error.message : 'Failed to get data',
+      detail: safeErrorDetail(error, 'Failed to get data'),
       type: '/problems/admin-content-bot-get-failed',
       instance: '/api/admin/content-bot/generate',
     });

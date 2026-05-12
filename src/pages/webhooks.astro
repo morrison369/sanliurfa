@@ -3,114 +3,99 @@ import Layout from '../layouts/Layout.astro';
 import WebhookManager from '../components/WebhookManager';
 import WebhookAnalyticsDashboard from '../components/WebhookAnalyticsDashboard';
 
-// Check if user is authenticated
 const user = Astro.locals.user;
 if (!user) {
-  return Astro.redirect('/giris');
+ return Astro.redirect('/giris?redirect=/webhooks');
 }
 
-// Get auth token from session
 const authToken = Astro.cookies.get('token')?.value || '';
 ---
 
 <Layout seo={{ title: "Webhooks", noIndex: true }}>
-  <div class="max-w-7xl mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900">Webhooks</h1>
-      <p class="text-gray-600 mt-2">Uygulamalarınızı gerçek zamanlı olaylarla entegre edin</p>
-    </div>
+ <style is:inline>
+ .wh-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:2.5rem 0}
+ .wh-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#4A3828}
+ .wh-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:700;color:#1F1410;margin:.5rem 0 .25rem}
+ .wh-desc{color:#7A6B58;font-size:.9rem}
+ .wh-body{background:var(--bg);padding:2rem 0 4rem}
+ .wh-info-grid{display:grid;gap:1rem;margin-bottom:1.5rem}
+ @media(min-width:64rem){.wh-info-grid{grid-template-columns:repeat(3,1fr)}}
+ .wh-info-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem}
+ .wh-info-title{font-size:.9rem;font-weight:700;color:#1F1410;margin-bottom:.4rem}
+ .wh-info-desc{font-size:.82rem;color:#7A6B58;line-height:1.6}
+ .wh-island{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem;margin-bottom:1.5rem}
+ .wh-docs{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.75rem}
+ .wh-docs-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:700;color:#1F1410;margin-bottom:1.5rem}
+ .wh-step{margin-bottom:1.5rem}
+ .wh-step-title{font-size:.9rem;font-weight:700;color:#4A3828;margin-bottom:.4rem}
+ .wh-step-desc{font-size:.82rem;color:#7A6B58;margin-bottom:.5rem;line-height:1.6}
+ .wh-code{background:#0a0a0a;border:1px solid rgba(0,255,0,.1);color:#4ade80;padding:.85rem 1rem;font-size:.78rem;font-family:monospace;line-height:1.65;overflow-x:auto}
+ .wh-tip{background:rgba(184,115,51,.06);border:1px solid rgba(184,115,51,.14);padding:.85rem 1rem;margin-top:1.25rem;font-size:.82rem;color:#7A6B58;line-height:1.6}
+ .wh-tip strong{color:#B87333}
+ </style>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 border border-blue-200">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="font-semibold text-blue-900">Webhook Nedir?</h3>
-        </div>
-        <p class="text-sm text-blue-800">
-          Webhooks, belirli olaylar gerçekleştiğinde URL'nize HTTP POST istekleri göndererek sisteminizi güncellenmiş tutar.
-        </p>
-      </div>
+ <div class="wh-hero">
+ <div class="sf-container">
+ <p class="wh-label">Entegrasyon</p>
+ <h1 class="wh-h1">Webhooks</h1>
+ <p class="wh-desc">Uygulamalarınızı gerçek zamanlı olaylarla entegre edin</p>
+ </div>
+ </div>
 
-      <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border border-green-200">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="font-semibold text-green-900">Güvenlik</h3>
-        </div>
-        <p class="text-sm text-green-800">
-          Tüm webhook istekleri HMAC-SHA256 imzası ile doğrulanır. X-Signature başlığında bulunur.
-        </p>
-      </div>
+ <div class="wh-body">
+ <div class="sf-container">
+ <div class="wh-info-grid">
+ <div class="wh-info-card">
+ <h3 class="wh-info-title">Webhook Nedir?</h3>
+ <p class="wh-info-desc">Webhooks, belirli olaylar gerçekleştiğinde URL'nize HTTP POST istekleri göndererek sisteminizi güncellenmiş tutar.</p>
+ </div>
+ <div class="wh-info-card">
+ <h3 class="wh-info-title">Güvenlik</h3>
+ <p class="wh-info-desc">Tüm webhook istekleri HMAC-SHA256 imzası ile doğrulanır. X-Signature başlığında bulunur.</p>
+ </div>
+ <div class="wh-info-card">
+ <h3 class="wh-info-title">Otomatik Yeniden Deneme</h3>
+ <p class="wh-info-desc">Başarısız teslimler otomatik olarak katlanarak artan gecikmelerle yeniden denenilir.</p>
+ </div>
+ </div>
 
-      <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 border border-purple-200">
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="font-semibold text-purple-900">Otomatik Yeniden Deneme</h3>
-        </div>
-        <p class="text-sm text-purple-800">
-          Başarısız teslimler otomatik olarak katlanarak artan gecikmelerle yeniden denenilir.
-        </p>
-      </div>
-    </div>
+ <div class="wh-island">
+ <WebhookManager client:visible token={authToken} />
+ </div>
 
-    <!-- Webhook Manager -->
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-      <WebhookManager client:visible token={authToken} />
-    </div>
+ <div class="wh-island">
+ <WebhookAnalyticsDashboard client:visible token={authToken} />
+ </div>
 
-    <!-- Webhook Analytics Dashboard -->
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-      <WebhookAnalyticsDashboard client:visible token={authToken} />
-    </div>
+ <div class="wh-docs">
+ <h2 class="wh-docs-title">Başlangıç Rehberi</h2>
 
-    <!-- Documentation -->
-    <div class="bg-white rounded-lg shadow-lg p-6">
-      <h2 class="text-2xl font-bold text-gray-900 mb-6">Başlangıç Rehberi</h2>
+ <div class="wh-step">
+ <h3 class="wh-step-title">1. Webhook Oluşturun</h3>
+ <p class="wh-step-desc">Yukarıdaki "Yeni Webhook" butonuna tıklayarak yeni webhook oluşturun. Olay türü, URL ve (isteğe bağlı) secret sağlayın.</p>
+ <div class="wh-code">Event: place.created<br/>URL: https://sanliurfa.com/webhooks/places<br/>Secret: webhook-secret</div>
+ </div>
 
-      <div class="space-y-6">
-        <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">1. Webhook Oluşturun</h3>
-          <p class="text-gray-600 mb-2">
-            Yukarıdaki "Yeni Webhook" butonuna tıklayarak yeni webhook oluşturun.
-            Olay türü, URL ve (isteğe bağlı) secret sağlayın.
-          </p>
-          <div class="bg-gray-50 rounded p-3 text-sm font-mono">
-            Event: place.created<br/>
-            URL: https://sanliurfa.com/webhooks/places<br/>
-            Secret: webhook-secret
-          </div>
-        </div>
+ <div class="wh-step">
+ <h3 class="wh-step-title">2. İmzayı Doğrulayın</h3>
+ <p class="wh-step-desc">Her webhook isteği X-Signature başlığında HMAC-SHA256 imzası ile gelir.</p>
+ <div class="wh-code">const crypto = require('crypto');<br/>const signature = crypto<br/>&nbsp;&nbsp;.createHmac('sha256', secret)<br/>&nbsp;&nbsp;.update(JSON.stringify(body))<br/>&nbsp;&nbsp;.digest('hex');</div>
+ </div>
 
-        <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">2. İmzayı Doğrulayın</h3>
-          <p class="text-gray-600 mb-2">
-            Her webhook isteği X-Signature başlığında HMAC-SHA256 imzası ile gelir.
-          </p>
-          <div class="bg-gray-50 rounded p-3 text-sm font-mono overflow-x-auto">
-            const crypto = require('crypto');<br/>
-            const signature = crypto<br/>
-            &nbsp;&nbsp;.createHmac('sha256', secret)<br/>
-            &nbsp;&nbsp;.update(JSON.stringify(body))<br/>
-            &nbsp;&nbsp;.digest('hex');
-          </div>
-        </div>
+ <div class="wh-step">
+ <h3 class="wh-step-title">3. Test Edin</h3>
+ <p class="wh-step-desc">Webhook listesinden webhook seçerek "Test Et" butonuyla örnek olay gönderin.</p>
+ </div>
 
-        <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">3. Test Edin</h3>
-          <p class="text-gray-600">
-            Webhook listesinden webhook seçerek "Test Et" butonuyla örnek olay gönderin.
-          </p>
-        </div>
+ <div class="wh-step" style="margin-bottom:0">
+ <h3 class="wh-step-title">4. İzleyin</h3>
+ <p class="wh-step-desc">Analitikler sekmesinden webhook teslim oranını, başarısız olayları ve performans metriklerini izleyin.</p>
+ </div>
 
-        <div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">4. İzleyin</h3>
-          <p class="text-gray-600">
-            "Analitikler" sekmesinden webhook teslim oranını, başarısız olayları ve performans metriklerini izleyin.
-          </p>
-        </div>
-      </div>
-
-      <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-        <p class="text-sm text-blue-800">
-          <strong>İpucu:</strong> Webhook URL'niz geçerli bir HTTPS adresi olmalı ve 200-299 arasında HTTP durum kodu döndürmelidir.
-        </p>
-      </div>
-    </div>
-  </div>
+ <div class="wh-tip">
+ <strong>İpucu:</strong> Webhook URL'niz geçerli bir HTTPS adresi olmalı ve 200-299 arasında HTTP durum kodu döndürmelidir.
+ </div>
+ </div>
+ </div>
+ </div>
 </Layout>

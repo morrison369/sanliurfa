@@ -6,7 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { getNotifications, markNotificationAsRead, archiveNotification, getUnreadNotificationCount } from '../../../lib/notification/notification-delivery';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
     const archived = url.searchParams.get('archived') === 'true';
 
     const [notifications, unreadCount] = await Promise.all([
@@ -83,6 +83,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
         undefined,
         requestId
       );
+    }
+
+    const VALID_ACTIONS = new Set(['read', 'archive']);
+    if (!VALID_ACTIONS.has(action)) {
+      recordRequest('POST', '/api/notifications/center', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz action (read veya archive olmalıdır)', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
     if (action === 'read') {

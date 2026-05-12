@@ -2,7 +2,7 @@
  * Loyalty Tiers Library
  * Tier system management, progression, and benefits
  */
-import { queryOne, queryMany, insert, update } from '../postgres';
+import { queryOne, queryMany, insert } from '../postgres';
 import { logger } from '../logger';
 import { deleteCache, getCache, setCache } from '../cache';
 
@@ -76,31 +76,17 @@ export async function updateUserTier(userId: string, newTierId: string, reason?:
 
     const previousTierId = currentTierInfo?.current_tier_id;
 
-    // Update or create membership record
-    const existing = await queryOne(
-      'SELECT id FROM user_tier_membership WHERE user_id = $1',
-      [userId]
+    // Atomic upsert (HARD RULE #47): SELECT-then-UPDATE/INSERT race-prone
+    await queryOne(
+      `INSERT INTO user_tier_membership (user_id, current_tier_id, tier_achieved_at, is_active)
+       VALUES ($1, $2, NOW(), true)
+       ON CONFLICT (user_id) DO UPDATE SET
+         current_tier_id = EXCLUDED.current_tier_id,
+         tier_achieved_at = NOW(),
+         is_active = true,
+         updated_at = NOW()`,
+      [userId, newTierId]
     );
-
-    if (existing) {
-      await update(
-        'user_tier_membership',
-        { user_id: userId },
-        {
-          current_tier_id: newTierId,
-          tier_achieved_at: new Date(),
-          is_active: true,
-          updated_at: new Date()
-        }
-      );
-    } else {
-      await insert('user_tier_membership', {
-        user_id: userId,
-        current_tier_id: newTierId,
-        tier_achieved_at: new Date(),
-        is_active: true
-      });
-    }
 
     // Record tier progression history
     if (previousTierId && previousTierId !== newTierId) {
@@ -201,27 +187,20 @@ export async function processBirthdayBonus(userId: string): Promise<boolean> {
       return false;
     }
 
-    // Award birthday bonus points
-    const points = await queryOne(
-      'SELECT current_balance FROM loyalty_points WHERE user_id = $1',
-      [userId]
+    // Atomic: add bonus and return old/new balance in one query
+    const result = await queryOne<{ prev_balance: number; current_balance: number }>(
+      `UPDATE loyalty_points
+       SET current_balance = current_balance + $1,
+           lifetime_earned = COALESCE(lifetime_earned, 0) + $1,
+           last_earned_at = NOW()
+       WHERE user_id = $2
+       RETURNING current_balance - $1 AS prev_balance, current_balance`,
+      [tierInfo.birthday_bonus, userId]
     );
 
-    if (!points) {
+    if (!result) {
       return false;
     }
-
-    const newBalance = points.current_balance + tierInfo.birthday_bonus;
-
-    await update(
-      'loyalty_points',
-      { user_id: userId },
-      {
-        current_balance: newBalance,
-        lifetime_earned: (points.lifetime_earned || 0) + tierInfo.birthday_bonus,
-        last_earned_at: new Date()
-      }
-    );
 
     // Record transaction
     await insert('loyalty_transactions', {
@@ -229,8 +208,8 @@ export async function processBirthdayBonus(userId: string): Promise<boolean> {
       transaction_type: 'birthday_bonus',
       points_amount: tierInfo.birthday_bonus,
       transaction_reason: 'Birthday bonus',
-      balance_before: points.current_balance,
-      balance_after: newBalance
+      balance_before: result.prev_balance,
+      balance_after: result.current_balance
     });
 
     await deleteCache(`loyalty:points:${userId}`);
@@ -253,8 +232,8 @@ export async function processAnnualReset(userId: string): Promise<boolean> {
     // Get annual gift points if applicable
     const annualGift = tierInfo.annual_gift_points || 0;
 
-    // Get current points
-    const points = await queryOne(
+    // Read current balance (needed for tier_reset_schedule record)
+    const points = await queryOne<{ current_balance: number }>(
       'SELECT current_balance FROM loyalty_points WHERE user_id = $1',
       [userId]
     );
@@ -272,17 +251,16 @@ export async function processAnnualReset(userId: string): Promise<boolean> {
       is_completed: true
     });
 
-    // Optionally reset balance to 0 and award annual gift
+    // Optionally reset balance to annualGift and record atomically
     if (annualGift > 0) {
-      await update(
-        'loyalty_points',
-        { user_id: userId },
-        {
-          current_balance: annualGift,
-          lifetime_earned: (points.lifetime_earned || 0) + annualGift,
-          pending_points: 0,
-          last_earned_at: new Date()
-        }
+      await queryOne(
+        `UPDATE loyalty_points
+         SET current_balance = $1,
+             lifetime_earned = COALESCE(lifetime_earned, 0) + $1,
+             pending_points = 0,
+             last_earned_at = NOW()
+         WHERE user_id = $2`,
+        [annualGift, userId]
       );
 
       await insert('loyalty_transactions', {
@@ -295,8 +273,10 @@ export async function processAnnualReset(userId: string): Promise<boolean> {
       });
     }
 
-    await deleteCache(`loyalty:points:${userId}`);
-    await deleteCache(`tier:user:${userId}`);
+    await Promise.all([
+      deleteCache(`loyalty:points:${userId}`),
+      deleteCache(`tier:user:${userId}`),
+    ]);
 
     logger.info('Annual reset processed', { userId, annualGift });
     return true;

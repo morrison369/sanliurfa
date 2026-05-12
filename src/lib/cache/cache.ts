@@ -10,7 +10,6 @@ const KEY_PREFIX = process.env.REDIS_KEY_PREFIX || import.meta.env?.REDIS_KEY_PR
 
 let client: ReturnType<typeof createClient> | null = null;
 let connectionError: Error | null = null;
-let rateLimitFallbackWarned = false;
 let cacheDeleteFallbackWarned = false;
 let cachePatternFallbackWarned = false;
 let rateLimitErrorWarned = false;
@@ -111,6 +110,34 @@ export function isRedisAvailable(): boolean {
 }
 
 /**
+ * Coerce Redis 5+ get/hGet response to string.
+ * Redis 5 changed return type from `string | null` to `string | Buffer | null`
+ * (Buffer when client configured for binary). All our usage is text-only — coerce.
+ */
+export function redisToString(value: string | Buffer | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  return typeof value === 'string' ? value : value.toString();
+}
+
+// Graceful shutdown: PM2 SIGTERM gönderdiğinde Redis client'ı düzgün kapat.
+// Test ortamında lifecycle import skip edilir.
+if (process.env.NODE_ENV !== 'test') {
+  void import('../lifecycle').then(({ registerShutdownHandler }) => {
+    registerShutdownHandler(async () => {
+      if (client && client.isOpen) {
+        logger.info('[redis] Quitting client...');
+        try {
+          await client.quit();
+          logger.info('[redis] Client closed');
+        } catch (err) {
+          logger.error('[redis] Client quit failed', err instanceof Error ? err : new Error(String(err)));
+        }
+      }
+    });
+  });
+}
+
+/**
  * Add prefix to key
  */
 export function prefixKey(key: string): string {
@@ -124,7 +151,7 @@ export async function getCache<T>(key: string): Promise<T | null> {
   try {
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
-    const value = await redis.get(prefixedKey);
+    const value = redisToString(await redis.get(prefixedKey));
     return value ? JSON.parse(value) : null;
   } catch (error) {
     logger.error('Cache get error', toError(error), { key });
@@ -139,7 +166,23 @@ export async function setCache(key: string, value: any, ttlSeconds = 3600): Prom
   try {
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(key);
-    await redis.setEx(prefixedKey, ttlSeconds, JSON.stringify(value));
+    // Robust serialization:
+    // - Object/array → JSON.stringify
+    // - String that is valid JSON (e.g. caller pre-stringified `JSON.stringify(obj)`) → store raw
+    //   to avoid double-encoding. After JSON.parse on read, caller gets the original object.
+    // - Raw string ('ok', 'pending', etc.) → JSON.stringify so getCache + JSON.parse round-trips.
+    let serialized: string;
+    if (typeof value === 'string') {
+      try {
+        JSON.parse(value);
+        serialized = value; // pre-encoded JSON
+      } catch {
+        serialized = JSON.stringify(value); // raw string — wrap as JSON literal
+      }
+    } else {
+      serialized = JSON.stringify(value);
+    }
+    await redis.setEx(prefixedKey, ttlSeconds, serialized);
   } catch (error) {
     logger.error('Cache set error', toError(error), { key });
   }
@@ -227,7 +270,8 @@ export async function checkRateLimit(key: string, limit: number, windowSeconds: 
   try {
     const redis = await getRedisClient();
     const prefixedKey = prefixKey(`ratelimit:${key}`);
-    const current = await redis.incr(prefixedKey);
+    // Redis 5+ incr() returns `number | string` (template literal); coerce
+    const current = Number(await redis.incr(prefixedKey));
 
     if (current === 1) {
       await redis.expire(prefixedKey, windowSeconds);

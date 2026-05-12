@@ -3,6 +3,8 @@
  * Stub for automated email workflows
  */
 
+import { randomBytes } from 'node:crypto';
+
 export interface AutomationRule {
   id: string;
   name: string;
@@ -17,7 +19,7 @@ export class EmailAutomation {
   createRule(rule: Omit<AutomationRule, 'id'>): AutomationRule {
     const newRule: AutomationRule = {
       ...rule,
-      id: Math.random().toString(36).substring(7)
+      id: randomBytes(6).toString('hex')
     };
     this.rules.set(newRule.id, newRule);
     return newRule;

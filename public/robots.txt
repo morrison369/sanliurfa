@@ -9,6 +9,7 @@ Sitemap: https://sanliurfa.com/sitemap.xml
 
 # Özel sayfalar - indekslenmemeli
 Disallow: /admin/
+Disallow: /vendor/
 Disallow: /profil/
 Disallow: /ayarlar
 Disallow: /giris
@@ -25,6 +26,8 @@ Disallow: /sosyal
 Disallow: /koleksiyonlar
 Disallow: /loyalty
 Disallow: /aktivitelerim
+Disallow: /bildirim-tercihleri
+Disallow: /icerik
 Disallow: /takip-edilenler
 Disallow: /takipciler
 Disallow: /webhooks
@@ -60,7 +63,12 @@ Allow: /
 Crawl-delay: 2
 
 # AI botlar ve cevap motorları
+# GPTBot = OpenAI eğitim crawler'ı (model training)
 User-agent: GPTBot
+Allow: /
+
+# OAI-SearchBot = ChatGPT Search canlı arama crawler'ı (GPTBot'tan farklı!)
+User-agent: OAI-SearchBot
 Allow: /
 
 User-agent: ChatGPT-User
@@ -76,6 +84,14 @@ User-agent: Google-Extended
 Allow: /
 
 User-agent: Amazonbot
+Allow: /
+
+# Meta AI (Facebook, Instagram AI)
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Apple AI
+User-agent: Applebot-Extended
 Allow: /
 
 # llms.txt - AI için yapılandırılmış site haritası

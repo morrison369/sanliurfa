@@ -2,11 +2,29 @@
 import fs from 'node:fs';
 import process from 'node:process';
 import { execSync } from 'node:child_process';
+import path from 'node:path';
 
 const ignoreFiles = new Set([
   '.env.example',
   'package-lock.json',
   'lighthouse-report.json',
+]);
+
+const ignoreDirs = new Set([
+  '.astro',
+  '.git',
+  '.idea',
+  '.next',
+  '.vscode',
+  'backups',
+  'certs',
+  'coverage',
+  'dist',
+  'logs',
+  'node_modules',
+  'ssl',
+  'tmp',
+  'uploads',
 ]);
 
 const detectors = [
@@ -53,25 +71,51 @@ const safePlaceholder = (raw) => {
 };
 
 function shouldIgnore(relPath) {
+  const normalizedPath = relPath.replace(/\\/g, '/');
+  const baseName = path.posix.basename(normalizedPath);
   if (ignoreFiles.has(relPath)) return true;
-  return relPath.endsWith('.png')
-    || relPath.endsWith('.jpg')
-    || relPath.endsWith('.jpeg')
-    || relPath.endsWith('.webp')
-    || relPath.endsWith('.gif')
-    || relPath.endsWith('.ico')
-    || relPath.endsWith('.woff')
-    || relPath.endsWith('.woff2')
-    || relPath.endsWith('.zip')
-    || relPath.endsWith('.pdf')
-    || relPath.endsWith('.pyc');
+  if (/^\.env(?:$|\.)/i.test(baseName) && !/(example|template)/i.test(baseName)) return true;
+  return normalizedPath.endsWith('.png')
+    || normalizedPath.endsWith('.jpg')
+    || normalizedPath.endsWith('.jpeg')
+    || normalizedPath.endsWith('.webp')
+    || normalizedPath.endsWith('.gif')
+    || normalizedPath.endsWith('.ico')
+    || normalizedPath.endsWith('.woff')
+    || normalizedPath.endsWith('.woff2')
+    || normalizedPath.endsWith('.zip')
+    || normalizedPath.endsWith('.pdf')
+    || normalizedPath.endsWith('.pyc');
 }
 
-const trackedFiles = execSync('git ls-files', { encoding: 'utf8' })
-  .split(/\r?\n/)
-  .map((line) => line.trim())
-  .filter(Boolean)
-  .filter((relPath) => !shouldIgnore(relPath));
+function walkFiles(dir, root = dir) {
+  const files = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      if (ignoreDirs.has(entry.name)) continue;
+      files.push(...walkFiles(fullPath, root));
+      continue;
+    }
+    const relPath = path.relative(root, fullPath).replace(/\\/g, '/');
+    if (!shouldIgnore(relPath)) files.push(relPath);
+  }
+  return files;
+}
+
+function getCandidateFiles() {
+  try {
+    return execSync('git ls-files', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .filter((relPath) => !shouldIgnore(relPath));
+  } catch {
+    return walkFiles(process.cwd());
+  }
+}
+
+const trackedFiles = getCandidateFiles();
 
 const envLikeFile = (relPath) =>
   /(^|\/)\.env(\.|$)|\.(ya?ml|json|toml|ini|cfg|conf)$/i.test(relPath);

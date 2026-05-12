@@ -1,195 +1,214 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-
-const seo = {
-  title: 'Sosyal Olay Zaman Akışı - Admin',
-  description: 'Sosyal olayları canlı izle ve filtrele.',
-  noIndex: true,
-};
+import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
-    <div class="container mx-auto px-4 space-y-6">
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h1 class="text-2xl font-bold text-gray-900">Sosyal Olay Zaman Akışı</h1>
-        <p class="text-gray-500 mt-1">Takip, kaydırma ve mesaj olaylarını canlı izle.</p>
-      </div>
+<AdminLayout
+ title="Sosyal Olay Zaman Akışı"
+ subtitle="Takip, kaydırma ve mesaj olaylarını canlı izle."
+ seo={{ title: 'Sosyal Olay Zaman Akışı - Admin', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-6xl space-y-5">
+ <div class="mb-2">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ </div>
 
-      <div class="bg-white rounded-xl shadow-sm p-6 grid md:grid-cols-5 gap-3">
-        <input id="eventType" class="border rounded-lg px-3 py-2" placeholder="Olay tipi (örn: swipe.match)" />
-        <input id="actorUserId" class="border rounded-lg px-3 py-2" placeholder="İşlem yapan kullanıcı ID" />
-        <input id="targetUserId" class="border rounded-lg px-3 py-2" placeholder="Hedef kullanıcı ID" />
-        <button id="applyBtn" class="rounded-lg bg-slate-900 text-white px-4 py-2 font-semibold">Filtrele</button>
-        <button id="liveBtn" class="rounded-lg bg-emerald-600 text-white px-4 py-2 font-semibold">Canlı Aç/Kapat</button>
-        <a id="exportLink" class="rounded-lg border px-4 py-2 text-center font-semibold hover:bg-gray-50 md:col-span-5" href="/api/admin/social/events/export">
-          CSV Dışa Aktar
-        </a>
-        <button id="signedLinkBtn" class="rounded-lg border px-4 py-2 text-center font-semibold hover:bg-gray-50 md:col-span-5" type="button">
-          5dk İmzalı Link Üret
-        </button>
-        <input id="signedLinkOut" class="border rounded-lg px-3 py-2 md:col-span-5 text-xs" readonly placeholder="İmzalı link burada görünecek" />
-      </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+ <div class="grid md:grid-cols-5 gap-3">
+ <input id="eventType" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm" placeholder="Olay tipi (örn: swipe.match)" />
+ <input id="actorUserId" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm" placeholder="İşlem yapan kullanıcı ID" />
+ <input id="targetUserId" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm" placeholder="Hedef kullanıcı ID" />
+ <button id="applyBtn" class="rounded-sm bg-urfa-600 text-white px-4 py-2 text-sm font-semibold hover:bg-urfa-700">Filtrele</button>
+ <button id="liveBtn" class="rounded-sm bg-[#6B5540] text-white px-4 py-2 text-sm font-semibold hover:bg-[#4A3A28]">Canlı Aç/Kapat</button>
+ <a id="exportLink" class="rounded-sm border border-[rgba(184,115,51,0.14)] px-4 py-2 text-center text-sm font-medium text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)] md:col-span-5" href="/api/admin/social/events/export">
+ CSV Dışa Aktar
+ </a>
+ <button id="signedLinkBtn" class="rounded-sm border border-[rgba(184,115,51,0.14)] px-4 py-2 text-center text-sm font-medium text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)] md:col-span-5" type="button">
+ 5dk İmzalı Link Üret
+ </button>
+ <input id="signedLinkOut" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 md:col-span-5 text-xs text-[#7A6B58]" readonly placeholder="İmzalı link burada görünecek" />
+ </div>
+ </div>
 
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="text-lg font-bold text-gray-900">Olaylar</h2>
-          <span id="statusText" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">pasif</span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead>
-              <tr class="border-b text-left text-gray-600">
-                <th class="px-2 py-2">Zaman</th>
-                <th class="px-2 py-2">Olay</th>
-                <th class="px-2 py-2">İşlem Yapan</th>
-                <th class="px-2 py-2">Hedef</th>
-                <th class="px-2 py-2">Konuşma</th>
-                <th class="px-2 py-2">Meta Veri</th>
-              </tr>
-            </thead>
-            <tbody id="rows">
-              <tr><td class="px-2 py-3 text-gray-400" colspan="6">Yükleniyor...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <div class="p-4 border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] flex items-center justify-between">
+ <h2 class="font-semibold text-[#7A6B58] text-sm">Olaylar</h2>
+ <span id="statusText" class="text-xs px-2 py-1 rounded-sm bg-[rgba(184,115,51,0.06)] text-[#7A6B58]">pasif</span>
+ </div>
+ <div class="overflow-x-auto">
+ <table class="min-w-full text-sm">
+ <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <tr>
+ <th class="px-3 py-3 text-left font-medium text-[#7A6B58]">Zaman</th>
+ <th class="px-3 py-3 text-left font-medium text-[#7A6B58]">Olay</th>
+ <th class="px-3 py-3 text-left font-medium text-[#7A6B58]">İşlem Yapan</th>
+ <th class="px-3 py-3 text-left font-medium text-[#7A6B58]">Hedef</th>
+ <th class="px-3 py-3 text-left font-medium text-[#7A6B58]">Konuşma</th>
+ <th class="px-3 py-3 text-left font-medium text-[#7A6B58]">Meta Veri</th>
+ </tr>
+ </thead>
+ <tbody id="rows">
+ <tr><td class="px-3 py-4 text-[#7A6B58]" colspan="6">Yükleniyor...</td></tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
 
-  <script is:inline>
-    const rowsEl = document.getElementById('rows');
-    const statusEl = document.getElementById('statusText');
-    const maxRows = 400;
-    let source = null;
-    let live = false;
-    const rowCache = [];
+ <script is:inline>
+ const rowsEl = document.getElementById('rows');
+ const statusEl = document.getElementById('statusText');
+ const maxRows = 400;
+ let source = null;
+ let live = false;
+ const rowCache = [];
 
-    function renderRows() {
-      if (!rowCache.length) {
-        rowsEl.innerHTML = '<tr><td class="px-2 py-3 text-gray-400" colspan="6">Kayıt yok</td></tr>';
-        return;
-      }
-      rowsEl.innerHTML = rowCache.map((item) => `
-        <tr class="border-b border-gray-100 align-top">
-          <td class="px-2 py-2 whitespace-nowrap">${item.created_at ? new Date(item.created_at).toLocaleString('tr-TR') : '-'}</td>
-          <td class="px-2 py-2"><span class="font-mono">${item.event_type || '-'}</span></td>
-          <td class="px-2 py-2 font-mono">${item.actor_user_id || '-'}</td>
-          <td class="px-2 py-2 font-mono">${item.target_user_id || '-'}</td>
-          <td class="px-2 py-2 font-mono">${item.conversation_id || '-'}</td>
-          <td class="px-2 py-2"><pre class="text-[11px] whitespace-pre-wrap">${JSON.stringify(item.metadata || {}, null, 2)}</pre></td>
-        </tr>
-      `).join('');
-    }
+ function buildEventRow(item) {
+ const tr = document.createElement('tr');
+ tr.className = 'border-b border-[rgba(184,115,51,0.08)] align-top hover:bg-[rgba(184,115,51,0.04)]';
 
-    function addItems(items) {
-      for (const item of items) rowCache.unshift(item);
-      if (rowCache.length > maxRows) rowCache.length = maxRows;
-      renderRows();
-    }
+ const cells = [
+ ['px-3 py-2 text-xs whitespace-nowrap text-[#7A6B58]', item.created_at ? new Date(item.created_at).toLocaleString('tr-TR') : '-'],
+ ['px-3 py-2 text-xs font-mono text-[#7A6B58]', item.event_type || '-'],
+ ['px-3 py-2 text-xs font-mono text-[#7A6B58]', item.actor_user_id || '-'],
+ ['px-3 py-2 text-xs font-mono text-[#7A6B58]', item.target_user_id || '-'],
+ ['px-3 py-2 text-xs font-mono text-[#7A6B58]', item.conversation_id || '-'],
+ ];
+ cells.forEach(([cls, text]) => {
+ const td = document.createElement('td');
+ td.className = cls;
+ td.textContent = text;
+ tr.appendChild(td);
+ });
 
-    function buildQuery() {
-      const p = new URLSearchParams();
-      const eventType = document.getElementById('eventType').value.trim();
-      const actorUserId = document.getElementById('actorUserId').value.trim();
-      const targetUserId = document.getElementById('targetUserId').value.trim();
-      if (eventType) p.set('eventType', eventType);
-      if (actorUserId) p.set('actorUserId', actorUserId);
-      if (targetUserId) p.set('targetUserId', targetUserId);
-      p.set('limit', '100');
-      p.set('offset', '0');
-      const exportLink = document.getElementById('exportLink');
-      exportLink.setAttribute('href', `/api/admin/social/events/export?${p.toString()}`);
-      return p.toString();
-    }
+ const metaTd = document.createElement('td');
+ metaTd.className = 'px-3 py-2';
+ const pre = document.createElement('pre');
+ pre.className = 'text-[11px] whitespace-pre-wrap text-[#7A6B58]';
+ pre.textContent = JSON.stringify(item.metadata || {}, null, 2);
+ metaTd.appendChild(pre);
+ tr.appendChild(metaTd);
 
-    async function loadInitial() {
-      const qs = buildQuery();
-      const res = await fetch(`/api/admin/social/events?${qs}`);
-      const json = await res.json();
-      rowCache.length = 0;
-      if (res.ok && json?.success && Array.isArray(json.items)) {
-        rowCache.push(...json.items);
-      }
-      renderRows();
-    }
+ return tr;
+ }
 
-    function stopLive() {
-      if (source) {
-        source.close();
-        source = null;
-      }
-      live = false;
-      statusEl.textContent = 'pasif';
-      statusEl.className = 'text-xs px-2 py-1 rounded bg-gray-100 text-gray-700';
-    }
+ function renderRows() {
+ rowsEl.textContent = '';
+ if (!rowCache.length) {
+ const tr = document.createElement('tr');
+ const td = document.createElement('td');
+ td.colSpan = 6;
+ td.className = 'px-3 py-4 text-[#7A6B58] text-sm';
+ td.textContent = 'Kayıt yok';
+ tr.appendChild(td);
+ rowsEl.appendChild(tr);
+ return;
+ }
+ rowCache.forEach(item => rowsEl.appendChild(buildEventRow(item)));
+ }
 
-    function startLive() {
-      stopLive();
-      source = new EventSource('/api/admin/social/events/stream');
-      source.addEventListener('ready', () => {
-        live = true;
-        statusEl.textContent = 'canlı';
-        statusEl.className = 'text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700';
-      });
-      source.addEventListener('social-events', (ev) => {
-        try {
-          const items = JSON.parse(ev.data);
-          if (!Array.isArray(items)) return;
-          const qs = buildQuery();
-          const params = new URLSearchParams(qs);
-          const eventType = params.get('eventType');
-          const actorUserId = params.get('actorUserId');
-          const targetUserId = params.get('targetUserId');
-          const filtered = items.filter((item) => {
-            if (eventType && item.event_type !== eventType) return false;
-            if (actorUserId && item.actor_user_id !== actorUserId) return false;
-            if (targetUserId && item.target_user_id !== targetUserId) return false;
-            return true;
-          });
-          if (filtered.length) addItems(filtered.reverse());
-        } catch {}
-      });
-      source.onerror = () => {
-        stopLive();
-      };
-    }
+ function addItems(items) {
+ for (const item of items) rowCache.unshift(item);
+ if (rowCache.length > maxRows) rowCache.length = maxRows;
+ renderRows();
+ }
 
-    document.getElementById('applyBtn').addEventListener('click', () => {
-      void loadInitial();
-    });
-    document.getElementById('signedLinkBtn').addEventListener('click', async () => {
-      const qs = buildQuery();
-      const params = new URLSearchParams(qs);
-      const payload = {};
-      ['eventType', 'actorUserId', 'targetUserId', 'tenantId'].forEach((k) => {
-        const v = params.get(k);
-        if (v) payload[k] = v;
-      });
-      const res = await fetch('/api/admin/exports/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resourceKey: 'admin.social.events.export',
-          payload,
-          ttlSeconds: 300,
-          maxDownloads: 1,
-        }),
-      });
-      const json = await res.json();
-      const out = document.getElementById('signedLinkOut');
-      if (!res.ok || !json?.success) {
-        out.value = 'Token üretilemedi';
-        return;
-      }
-      const link = `${location.origin}/api/admin/social/events/export?token=${encodeURIComponent(json.token)}`;
-      out.value = link;
-    });
-    document.getElementById('liveBtn').addEventListener('click', () => {
-      if (live) stopLive();
-      else startLive();
-    });
+ function buildQuery() {
+ const p = new URLSearchParams();
+ const eventType = document.getElementById('eventType').value.trim();
+ const actorUserId = document.getElementById('actorUserId').value.trim();
+ const targetUserId = document.getElementById('targetUserId').value.trim();
+ if (eventType) p.set('eventType', eventType);
+ if (actorUserId) p.set('actorUserId', actorUserId);
+ if (targetUserId) p.set('targetUserId', targetUserId);
+ p.set('limit', '100');
+ p.set('offset', '0');
+ const exportLink = document.getElementById('exportLink');
+ exportLink.setAttribute('href', `/api/admin/social/events/export?${p.toString()}`);
+ return p.toString();
+ }
 
-    void loadInitial();
-  </script>
-</Layout>
+ async function loadInitial() {
+ const qs = buildQuery();
+ const res = await fetch(`/api/admin/social/events?${qs}`);
+ const json = await res.json();
+ rowCache.length = 0;
+ if (res.ok && json?.success && Array.isArray(json.items)) {
+ rowCache.push(...json.items);
+ }
+ renderRows();
+ }
+
+ function stopLive() {
+ if (source) {
+ source.close();
+ source = null;
+ }
+ live = false;
+ statusEl.textContent = 'pasif';
+ statusEl.className = 'text-xs px-2 py-1 rounded-sm bg-[rgba(184,115,51,0.06)] text-[#7A6B58]';
+ }
+
+ function startLive() {
+ stopLive();
+ source = new EventSource('/api/admin/social/events/stream');
+ source.addEventListener('ready', () => {
+ live = true;
+ statusEl.textContent = 'canlı';
+ statusEl.className = 'text-xs px-2 py-1 rounded-sm bg-[rgba(184,115,51,0.15)] text-[#7A6B58]';
+ });
+ source.addEventListener('social-events', (ev) => {
+ try {
+ const items = JSON.parse(ev.data);
+ if (!Array.isArray(items)) return;
+ const qs = buildQuery();
+ const params = new URLSearchParams(qs);
+ const eventType = params.get('eventType');
+ const actorUserId = params.get('actorUserId');
+ const targetUserId = params.get('targetUserId');
+ const filtered = items.filter((item) => {
+ if (eventType && item.event_type !== eventType) return false;
+ if (actorUserId && item.actor_user_id !== actorUserId) return false;
+ if (targetUserId && item.target_user_id !== targetUserId) return false;
+ return true;
+ });
+ if (filtered.length) addItems(filtered.reverse());
+ } catch {}
+ });
+ source.onerror = () => { stopLive(); };
+ }
+
+ document.getElementById('applyBtn').addEventListener('click', () => { void loadInitial(); });
+ document.getElementById('signedLinkBtn').addEventListener('click', async () => {
+ const qs = buildQuery();
+ const params = new URLSearchParams(qs);
+ const payload = {};
+ ['eventType', 'actorUserId', 'targetUserId', 'tenantId'].forEach((k) => {
+ const v = params.get(k);
+ if (v) payload[k] = v;
+ });
+ const res = await fetch('/api/admin/exports/token', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({
+ resourceKey: 'admin.social.events.export',
+ payload,
+ ttlSeconds: 300,
+ maxDownloads: 1,
+ }),
+ });
+ const json = await res.json();
+ const out = document.getElementById('signedLinkOut');
+ if (!res.ok || !json?.success) {
+ out.value = 'Token üretilemedi';
+ return;
+ }
+ out.value = `${location.origin}/api/admin/social/events/export?token=${encodeURIComponent(json.token)}`;
+ });
+ document.getElementById('liveBtn').addEventListener('click', () => {
+ if (live) stopLive();
+ else startLive();
+ });
+
+ void loadInitial();
+ </script>
+</AdminLayout>

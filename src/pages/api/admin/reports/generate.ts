@@ -73,7 +73,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/admin/reports/generate', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Admin yetkisi gerekli', HttpStatus.FORBIDDEN, undefined, requestId);
     }
@@ -134,7 +134,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
         status: 200,
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition': `attachment; filename="${type}_${period}_${Date.now()}.csv"`,
+          'Content-Disposition': `attachment; filename="${type.replace(/[\r\n\0"\\]/g, '')}_${period.replace(/[\r\n\0"\\]/g, '')}_${Date.now()}.csv"`,
           'X-Request-ID': requestId,
         },
       });

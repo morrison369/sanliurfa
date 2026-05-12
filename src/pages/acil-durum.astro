@@ -1,0 +1,9 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CategoryHub from '../components/public/CategoryHub.astro';
+import { CITY_TAXONOMY_CATEGORIES } from '../data/city-taxonomy';
+const category = CITY_TAXONOMY_CATEGORIES.find((item) => item.slug === 'acil-durum')!;
+---
+<Layout seo={{ title: 'Şanlıurfa Acil Durum Rehberi | Eczane, Polis ve Yol Yardım', description: category.description, canonical: '/acil-durum' }}>
+  <CategoryHub category={category} />
+</Layout>

@@ -1,7 +1,8 @@
 // API: Historical site delete (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../../lib/api';
 import { deleteAdminHistoricalSite } from '../../../../lib/admin/historical-sites-admin';
+import { invalidateHistoricalSite } from '../../../../lib/cache/invalidation';
 
 export const POST: APIRoute = async ({ params, locals }) => {
   try {
@@ -19,10 +20,10 @@ export const POST: APIRoute = async ({ params, locals }) => {
 
     await deleteAdminHistoricalSite(id || '');
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    // Cache invalidation: tarihi yer silme list + detail cache'lerini etkiler
+    await invalidateHistoricalSite(id || null);
+
+    return apiResponse({ success: true }, HttpStatus.OK);
   } catch (err) {
     return problemJson({
       status: 500,

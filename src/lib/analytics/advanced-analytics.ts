@@ -103,9 +103,9 @@ export function trackEvent(
     sessionId,
     page: data.page || '/',
     timestamp: new Date().toISOString(),
-    userId: data.userId,
-    properties: data.properties,
-    metadata: data.metadata,
+    ...(data.userId ? { userId: data.userId } : {}),
+    ...(data.properties ? { properties: data.properties } : {}),
+    ...(data.metadata ? { metadata: data.metadata } : {}),
   };
 
   eventStore.push(event);
@@ -130,7 +130,7 @@ export function recordMetric(
     name,
     value,
     timestamp: new Date().toISOString(),
-    dimensions,
+    ...(dimensions ? { dimensions } : {}),
   });
 }
 

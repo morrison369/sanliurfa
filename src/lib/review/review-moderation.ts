@@ -60,22 +60,23 @@ export async function getModerationQueue(
     const cached = await getCache<{ flags: ReviewFlag[]; total: number }>(cacheKey);
     if (cached) return cached;
 
-    const flags = await queryMany(
-      `SELECT * FROM review_flags
-       WHERE status = $1
-       ORDER BY created_at ASC
-       LIMIT $2 OFFSET $3`,
-      [status, limit, offset]
-    );
-
-    const countResult = await queryOne(
-      'SELECT COUNT(*) as total FROM review_flags WHERE status = $1',
-      [status]
-    );
+    const [flags, countResult] = await Promise.all([
+      queryMany(
+        `SELECT * FROM review_flags
+         WHERE status = $1
+         ORDER BY created_at ASC
+         LIMIT $2 OFFSET $3`,
+        [status, limit, offset]
+      ),
+      queryOne(
+        'SELECT COUNT(*) as total FROM review_flags WHERE status = $1',
+        [status]
+      ),
+    ]);
 
     const data = {
       flags: flags,
-      total: parseInt(countResult?.total || '0')
+      total: parseInt(countResult?.total || '0', 10)
     };
 
     await setCache(cacheKey, data, 300);
@@ -128,9 +129,11 @@ export async function resolveFlag(
       visibility_status: action === 'delete' ? 'deleted' : action === 'hide' ? 'hidden' : 'visible'
     });
 
-    // Clear caches
-    await deleteCache(`moderation:queue:pending:*`);
-    await deleteCache(`review:${flag.review_id}:*`);
+    // Clear caches (paralel)
+    await Promise.all([
+      deleteCache(`moderation:queue:pending:*`),
+      deleteCache(`review:${flag.review_id}:*`),
+    ]);
 
     logger.info('Flag resolved', { flagId, action, adminId });
   } catch (error) {

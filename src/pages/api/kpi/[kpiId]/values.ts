@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { recordKPIValue, getKPITrend } from '../../../../lib/analytics/business-analytics';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { validateWithSchema } from '../../../../lib/validation';
@@ -37,7 +37,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     const { kpiId } = params;
     const url = new URL(request.url);
     const periodType = url.searchParams.get('period') || 'daily';
-    const days = parseInt(url.searchParams.get('days') || '30');
+    const days = safeIntParam(url.searchParams.get('days'), 30, 0, 1_000_000);
 
     if (!kpiId) {
       recordRequest('GET', '/api/kpi/:kpiId/values', HttpStatus.BAD_REQUEST, Date.now() - startTime);

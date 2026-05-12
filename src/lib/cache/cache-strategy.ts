@@ -154,7 +154,7 @@ export async function warmCache(): Promise<void> {
   logger.info('Starting cache warming');
   
   // Warm most accessed data
-  const warmTasks = [
+  const warmTasks: Promise<unknown>[] = [
     // Popular places
     // Recent blog posts
     // Active events
@@ -181,7 +181,7 @@ export async function getMany<T>(keys: string[]): Promise<(T | null)[]> {
 export async function setMany<T>(
   items: { key: string; value: T; ttl?: number }[]
 ): Promise<void> {
-  await Promise.all(
+  await Promise.allSettled(
     items.map(({ key, value, ttl }) => setCache(key, value, ttl))
   );
 }

@@ -1,7 +1,7 @@
 // API: Review reject (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { logger } from '../../../../lib/logging';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../../lib/api';
 import { moderateReview } from '../../../../lib/review/admin-review-moderation';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
@@ -37,7 +37,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     return problemJson({
       status: 500,
       title: 'Yorum Reddedilemedi',
-      detail: err instanceof Error ? err.message : 'server_error',
+      detail: safeErrorDetail(err, 'server_error'),
       type: '/problems/review-reject-failed',
       instance: '/api/reviews/{id}/reject',
     });

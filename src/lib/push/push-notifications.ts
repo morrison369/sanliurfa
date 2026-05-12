@@ -27,19 +27,15 @@ export async function subscribeToPushNotifications(
       is_active: true
     }, true);
 
-    // Update or create stats
-    const stats = await queryOne('SELECT id FROM push_subscription_stats WHERE user_id = $1', [userId]);
-    if (stats) {
-      await update('push_subscription_stats', { user_id: userId }, {
-        total_subscriptions: (await queryMany('SELECT COUNT(*) FROM push_subscriptions WHERE user_id = $1 AND is_active = true', [userId])).length,
-        updated_at: new Date()
-      });
-    } else {
-      await insert('push_subscription_stats', {
-        user_id: userId,
-        total_subscriptions: 1
-      });
-    }
+    // Atomic upsert stats — avoids SELECT+INSERT/UPDATE race + fixes .length=1 bug (HARD RULE #47)
+    await queryOne(
+      `INSERT INTO push_subscription_stats (user_id, total_subscriptions, updated_at)
+       SELECT $1, COUNT(*), NOW() FROM push_subscriptions WHERE user_id = $1 AND is_active = true
+       ON CONFLICT (user_id) DO UPDATE SET
+         total_subscriptions = EXCLUDED.total_subscriptions,
+         updated_at = EXCLUDED.updated_at`,
+      [userId]
+    );
 
     logger.info('User subscribed to push notifications', { userId, deviceType: metadata?.deviceType });
     return id;
@@ -56,15 +52,15 @@ export async function unsubscribeFromPushNotifications(userId: string, endpoint:
       updated_at: new Date()
     });
 
-    const activeCount = await queryOne(
-      'SELECT COUNT(*) as count FROM push_subscriptions WHERE user_id = $1 AND is_active = true',
+    // Atomic subquery update — avoids SELECT COUNT + UPDATE race (HARD RULE #47)
+    await queryOne(
+      `UPDATE push_subscription_stats
+       SET total_subscriptions = (
+         SELECT COUNT(*) FROM push_subscriptions WHERE user_id = $1 AND is_active = true
+       ), updated_at = NOW()
+       WHERE user_id = $1`,
       [userId]
     );
-
-    await update('push_subscription_stats', { user_id: userId }, {
-      total_subscriptions: parseInt(activeCount?.count || '0'),
-      updated_at: new Date()
-    });
 
     logger.info('User unsubscribed from push notifications', { userId });
   } catch (error) {
@@ -142,7 +138,7 @@ export async function cleanupInactiveSubscriptions(daysInactive: number = 30): P
       [daysInactive]
     );
 
-    const count = parseInt(result?.count || '0');
+    const count = parseInt(result?.count || '0', 10);
     if (count > 0) {
       logger.info('Cleaned up inactive push subscriptions', { count, daysInactive });
     }

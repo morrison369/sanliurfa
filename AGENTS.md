@@ -12,11 +12,25 @@ Core app code is under `src/`.
 Phase delivery artifacts are tracked at repo root:
 - `PHASE_*.md`, `PHASE_INDEX.md`, `memory.md`, `TASK_TRACKER.md`.
 
+## Product Scope (Non-Negotiable)
+
+Sanliurfa.com is a Turkish-only Şanlıurfa city guide and local social platform.
+The core product is:
+
+- premium Şanlıurfa city guide: places, districts, routes, food culture, events, transport, pharmacies
+- member contribution: registered users can add places, add events, review places and rate places
+- social layer: profiles, follow/friend surface, messaging and Şanlıurfa-focused swipe/match experience
+- business layer: local businesses can submit and manage their presence
+
+Do not reduce the project to a static blog, generic directory, travel template or admin-only CMS.
+Public UX must make the city guide, contribution flows and social/match layer visible.
+
 ## Build, Test, and Development Commands
 - `npm run dev`: run Astro dev server.
 - `npm run build`: production build to `dist/`.
 - `npm run preview`: preview built output.
-- `npm run lint`: `astro check` + TypeScript no-emit.
+- `npm run type-check`: `astro check`.
+- `npm run lint`: ESLint over `src/**/*.{ts,tsx,astro}`.
 - `npm run test:unit`: run all unit tests.
 - `npm run test:phase:311-316`: run current phase regression quickly.
 - `npm run test:e2e`: run Playwright tests.
@@ -25,11 +39,17 @@ Recommended local gate for phase work:
 `npm run test:unit -- <phase-test-file> && npm run build`
 
 ## Coding Style & Naming Conventions
-- TypeScript + Astro strict mode.
+- Astro 6.x SSR, React 19, TypeScript 6 strict mode.
+- Tailwind CSS 4.x is configured through `@tailwindcss/vite`.
+- PostgreSQL access goes through canonical `src/lib/postgres.ts`.
+- Canonical env names: `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `SESSION_SECRET`, `CORS_ORIGINS`, `EMAIL_FROM`, `SITE_URL`, `PUBLIC_SITE_URL`.
 - 2-space indentation; keep formatting Prettier-compatible.
 - Prefer descriptive `kebab-case` for `src/lib` modules.
 - Keep phase modules small and composable (store/scorer/gate/reporter pattern).
 - Test files use `*.test.ts` and live in `src/lib/__tests__/`.
+
+Recommended release sanity gate:
+`npm run type-check && npm run lint && npm run build && npm run security:scan-secrets && npm run db:migrate:check-duplicates && npm run release:readiness:report`
 
 ## Testing Guidelines
 - Each phase block ships with 24 unit tests (6 modules x 4 tests).
@@ -92,15 +112,12 @@ For every new phase range:
 
 **Referans Doküman:**
 - `docs/DB_FIRST_SITE_MANAGEMENT.md`
+- `docs/MVP_PUBLIC_ACCEPTANCE.md`
+- `docs/CITY_TAXONOMY_AND_SOCIAL_SURFACE.md`
 
-## 🎯 MVP Bitirme Modu (Varsayılan)
+## 🎯 Geliştirme Yaklaşımı
 
 **Kalıcı Kural:**
-- Bu proje varsayılan olarak MVP bitirme modunda ilerler.
-- Öncelik altyapı, test, CI veya deploy döngüleri değil; kullanıcıya görünen site, admin paneli ve temel kullanıcı akışlarıdır.
-- Zorunlu runtime hatası dışında port/Redis/dev-server operasyonlarına geri dönülmez.
-- Test yazımı ve büyük gate çalıştırmaları kullanıcı açıkça istemedikçe ertelenir.
-- Her çalışma turu ana sayfa, mekan sistemi, admin yönetimi, sosyal MVP veya SEO/AEO/GEO yüzeyinden somut bir eksik kapatmalıdır.
-
-**Referans Doküman:**
-- `docs/MVP_BITIRME_MODU.md`
+- Öncelik altyapı, test veya CI döngüleri değil; kullanıcıya görünen site, admin paneli ve kullanıcı akışlarıdır.
+- Test yazımı kullanıcı açıkça istemedikçe ertelenir.
+- Her çalışma turu somut kullanıcı değeri üretir: sayfa, içerik, özellik veya performans iyileştirmesi.

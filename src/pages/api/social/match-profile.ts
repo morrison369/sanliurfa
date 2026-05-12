@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { requireAuth } from '../../../lib/auth';
 import { getMatchProfile, upsertMatchProfile } from '../../../lib/social/matchmaking-db';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request }) => {
     return problemJson({
       status: 500,
       title: 'Profil Alınamadı',
-      detail: error instanceof Error ? error.message : 'failed_to_get_match_profile',
+      detail: safeErrorDetail(error, 'failed_to_get_match_profile'),
       type: '/problems/social-match-profile-fetch-failed',
       instance: '/api/social/match-profile',
     });
@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const body = await request.json();
-    const photos = Array.isArray(body?.photos) ? body.photos.map((p: any) => String(p)) : [];
+    const photos = Array.isArray(body?.photos) ? body.photos.filter((p: unknown) => typeof p === 'string') : [];
 
     if (photos.length > 4) {
       return problemJson({
@@ -61,21 +61,23 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    const bio = typeof body?.bio === 'string' ? body.bio : '';
+    if (bio.length > 2000) {
+      return problemJson({ status: 400, title: 'Geçersiz Bio', detail: 'Bio 2000 karakterden uzun olamaz', type: '/problems/social-match-profile-bio-too-long', instance: '/api/social/match-profile' });
+    }
+
     const profile = await upsertMatchProfile(auth.user.id, {
-      bio: body?.bio?.toString?.() || '',
+      bio,
       photos,
       isDiscoverable: body?.isDiscoverable !== false,
     });
 
-    return new Response(JSON.stringify({ success: true, data: profile }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, data: profile }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 400,
       title: 'Profil Kaydedilemedi',
-      detail: error instanceof Error ? error.message : 'failed_to_save_match_profile',
+      detail: safeErrorDetail(error, 'failed_to_save_match_profile'),
       type: '/problems/social-match-profile-save-failed',
       instance: '/api/social/match-profile',
     });

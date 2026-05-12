@@ -1,7 +1,4 @@
-/**
- * Feature Gating Module
- * Stub for feature flag management
- */
+import { createHash } from 'node:crypto';
 
 export interface FeatureFlag {
   name: string;
@@ -25,7 +22,12 @@ export class FeatureGating {
       return flag.users.includes(userId);
     }
     if (flag.percentage !== undefined) {
-      return Math.random() * 100 < flag.percentage;
+      if (!userId) return false;
+      const bucket = parseInt(
+        createHash('sha256').update(`${userId}:${featureName}`).digest('hex').slice(0, 8),
+        16
+      ) % 100;
+      return bucket < flag.percentage;
     }
     return true;
   }

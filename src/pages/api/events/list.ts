@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getEvents } from '../../../lib/events/events-management';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
@@ -15,12 +15,16 @@ export const GET: APIRoute = async ({ request, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
-    const category = url.searchParams.get('category') || undefined;
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
+    const rawCategory = url.searchParams.get('category');
+    const category = rawCategory ? rawCategory.substring(0, 100) : undefined;
     const placeId = url.searchParams.get('placeId') || undefined;
 
-    const { events, total } = await getEvents(limit, offset, { category, placeId });
+    const { events, total } = await getEvents(limit, offset, {
+      ...(category ? { category } : {}),
+      ...(placeId ? { placeId } : {}),
+    });
 
     recordRequest('GET', '/api/events/list', HttpStatus.OK, Date.now() - startTime);
 

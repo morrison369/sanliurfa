@@ -3,7 +3,7 @@ import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { sendEmail } from '../../../lib/email';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 // Rezervasyonları listele (işletme sahibi veya admin)
 export const GET: APIRoute = async (context) => {
@@ -30,21 +30,43 @@ export const GET: APIRoute = async (context) => {
       JOIN places p ON r.place_id = p.id
       WHERE 1=1
     `;
-    const params: any[] = [];
+    const params: unknown[] = [];
     let paramIndex = 1;
 
-    // Yetki kontrolü
-    if (auth.user.role === 'vendor' && auth.placeId) {
+    // Yetki: admin tüm rezervasyonları görür (placeId filter opsiyonel),
+    // vendor sadece kendi mekanına ait olanları, diğer roller (user, moderator) erişemez
+    // (rezervasyonlar guest-only — customer_email/phone PII içerir)
+    if (auth.user.role === 'admin') {
+      if (placeId) {
+        sql += ` AND r.place_id = $${paramIndex}`;
+        params.push(placeId);
+        paramIndex++;
+      }
+    } else if (auth.user.role === 'vendor' && auth.placeId) {
       sql += ` AND r.place_id = $${paramIndex}`;
       params.push(auth.placeId);
       paramIndex++;
-    } else if (placeId && auth.user.role === 'admin') {
-      sql += ` AND r.place_id = $${paramIndex}`;
-      params.push(placeId);
-      paramIndex++;
+    } else {
+      return problemJson({
+        status: 403,
+        title: 'Forbidden',
+        detail: 'Rezervasyon listesini görüntüleme yetkiniz yok',
+        type: '/problems/reservations-list-forbidden',
+        instance: '/api/reservations',
+      });
     }
 
     if (status) {
+      const VALID_RESERVATION_STATUSES = new Set(['pending', 'confirmed', 'cancelled', 'completed', 'no_show']);
+      if (!VALID_RESERVATION_STATUSES.has(status)) {
+        return problemJson({
+          status: 400,
+          title: 'Geçersiz İstek',
+          detail: 'Geçersiz rezervasyon durumu',
+          type: '/problems/reservations-status-invalid',
+          instance: '/api/reservations',
+        });
+      }
       sql += ` AND r.status = $${paramIndex}`;
       params.push(status);
       paramIndex++;
@@ -60,13 +82,10 @@ export const GET: APIRoute = async (context) => {
 
     const result = await query(sql, params);
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       reservations: result.rows
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
   } catch (error) {
     logger.error('Reservations list error:', error);
     return problemJson({
@@ -117,6 +136,13 @@ export const POST: APIRoute = async (context) => {
         instance: '/api/reservations',
       });
     }
+
+    if (customerName.length > 200) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'İsim 200 karakterden uzun olamaz', type: '/problems/reservations-create-name-too-long', instance: '/api/reservations' });
+    if (customerEmail !== undefined && customerEmail !== null && (typeof customerEmail !== 'string' || customerEmail.length > 254)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'E-posta 254 karakterden uzun olamaz', type: '/problems/reservations-create-email-too-long', instance: '/api/reservations' });
+    if (specialRequests !== undefined && specialRequests !== null && (typeof specialRequests !== 'string' || specialRequests.length > 1000)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Özel istek 1000 karakterden uzun olamaz', type: '/problems/reservations-create-requests-too-long', instance: '/api/reservations' });
+    if (occasion !== undefined && occasion !== null && (typeof occasion !== 'string' || occasion.length > 200)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Özel gün 200 karakterden uzun olamaz', type: '/problems/reservations-create-occasion-too-long', instance: '/api/reservations' });
+    const partySizeNum = parseInt(String(partySize), 10);
+    if (!Number.isFinite(partySizeNum) || partySizeNum < 1 || partySizeNum > 500) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Kişi sayısı 1-500 arasında olmalıdır', type: '/problems/reservations-create-partysize-invalid', instance: '/api/reservations' });
 
     // Tarih validasyonu
     const reservationDateObj = new Date(reservationDate);
@@ -172,15 +198,26 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    // Aynı gün/saat için mevcut rezervasyon kontrolü (telefon bazlı)
-    const existingResult = await query(
-      `SELECT id FROM reservations 
-       WHERE place_id = $1 AND reservation_date = $2 AND reservation_time = $3 
-       AND customer_phone = $4 AND status IN ('pending', 'confirmed')`,
-      [placeId, reservationDate, reservationTime, customerPhone]
+    // Atomic INSERT WHERE NOT EXISTS — eliminates SELECT→INSERT race (HARD RULE #47)
+    const reservationResult = await query(
+      `INSERT INTO reservations (
+        place_id, customer_name, customer_email, customer_phone,
+        reservation_date, reservation_time, party_size, special_requests,
+        occasion, status, created_at
+      )
+      SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', NOW()
+      WHERE NOT EXISTS (
+        SELECT 1 FROM reservations
+        WHERE place_id = $1 AND reservation_date = $5 AND reservation_time = $6
+          AND customer_phone = $4 AND status IN ('pending', 'confirmed')
+      )
+      RETURNING *`,
+      [placeId, customerName, customerEmail || null, customerPhone,
+       reservationDate, reservationTime, partySizeNum, specialRequests || null,
+       occasion || null]
     );
 
-    if (existingResult.rows.length > 0) {
+    if (reservationResult.rows.length === 0) {
       return problemJson({
         status: 409,
         title: 'Çakışma',
@@ -189,19 +226,6 @@ export const POST: APIRoute = async (context) => {
         instance: '/api/reservations',
       });
     }
-
-    // Rezervasyon oluştur
-    const reservationResult = await query(
-      `INSERT INTO reservations (
-        place_id, customer_name, customer_email, customer_phone,
-        reservation_date, reservation_time, party_size, special_requests,
-        occasion, status, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', NOW())
-      RETURNING *`,
-      [placeId, customerName, customerEmail || null, customerPhone,
-       reservationDate, reservationTime, partySize, specialRequests || null,
-       occasion || null]
-    );
 
     const reservation = reservationResult.rows[0];
 
@@ -212,7 +236,7 @@ export const POST: APIRoute = async (context) => {
     );
     const ownerEmail = ownerResult.rows[0]?.email;
     if (ownerEmail) {
-      await sendEmail({
+      const notifyResult = await sendEmail({
         to: ownerEmail,
         subject: `Yeni Rezervasyon - ${place.name}`,
         html: `<p><strong>${customerName}</strong> adına yeni rezervasyon:</p>
@@ -223,9 +247,12 @@ export const POST: APIRoute = async (context) => {
   ${specialRequests ? `<li><strong>Not:</strong> ${specialRequests}</li>` : ''}
 </ul>`,
       });
+      if (!notifyResult.success) {
+        logger.warn('Reservation owner notification email failed', { reservationId: reservation.id, ownerEmail, error: notifyResult.error });
+      }
     }
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       message: 'Reservation created successfully',
       reservation: {
@@ -237,10 +264,7 @@ export const POST: APIRoute = async (context) => {
         partySize: reservation.party_size,
         status: reservation.status
       }
-    }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.CREATED);
   } catch (error) {
     logger.error('Reservation creation error:', error);
     return problemJson({

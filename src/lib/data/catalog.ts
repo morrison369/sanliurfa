@@ -3,6 +3,8 @@
  * Stub implementation for data catalog
  */
 
+import { randomBytes } from 'node:crypto';
+
 export interface Dataset {
   id: string;
   name: string;
@@ -17,7 +19,7 @@ export class DataCatalog {
   register(dataset: Omit<Dataset, 'id' | 'createdAt'>): Dataset {
     const newDataset: Dataset = {
       ...dataset,
-      id: Math.random().toString(36).substring(7),
+      id: randomBytes(6).toString('hex'),
       createdAt: new Date()
     };
     this.datasets.set(newDataset.id, newDataset);

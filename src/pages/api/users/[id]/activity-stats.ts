@@ -17,6 +17,16 @@ export const GET: APIRoute = async ({ request, params }) => {
 
   try {
     const { id: userId } = params;
+    if (!userId) {
+      recordRequest('GET', '/api/users/{id}/activity-stats', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Kullanıcı kimliği gerekli',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
 
     // Verify user exists
     const user = await queryOne('SELECT id FROM users WHERE id = $1', [userId]);
@@ -47,7 +57,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('GET', `/api/users/${params.id}/activity-stats`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    recordRequest('GET', `/api/users/${params.id ?? '{id}'}/activity-stats`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get activity stats failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,

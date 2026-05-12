@@ -3,7 +3,7 @@
  * Track and enforce usage quotas for limited premium features
  */
 
-import { queryOne, queryMany, update as updateDb } from '../postgres';
+import { queryOne, queryMany } from '../postgres';
 import { getActiveSubscription } from '../subscription/subscription-management';
 import { logger } from '../logger';
 import { PHASE1_FREE_MODE } from '../runtime/phase-policy';
@@ -193,6 +193,69 @@ export async function checkQuota(userId: string, feature: QuotaFeature): Promise
 }
 
 /**
+ * Atomically check quota and increment if allowed (HARD RULE #47).
+ * Use instead of separate checkQuota + incrementUsage to prevent race conditions.
+ */
+export async function checkAndIncrementQuota(
+  userId: string,
+  feature: QuotaFeature,
+): Promise<{ allowed: boolean; current: number; limit: number | null }> {
+  if (PHASE1_FREE_MODE) {
+    return { allowed: true, current: 0, limit: null };
+  }
+
+  try {
+    await getOrInitializeUsage(userId, feature);
+
+    // Reset if period has passed, then allow
+    const record = await queryOne(
+      `SELECT current_usage, limit_value, reset_date FROM feature_access WHERE user_id = $1 AND feature_name = $2`,
+      [userId, feature],
+    );
+    if (record?.reset_date && new Date(record.reset_date) < new Date()) {
+      // Atomic reset + first increment — avoids 3-step SELECT → resetUsage → UPDATE race
+      const subscription = await getActiveSubscription(userId);
+      const tierLevel = subscription?.tier?.tierLevel ?? 0;
+      const quotaConfig = FEATURE_QUOTAS[feature];
+      const limitValue = quotaConfig?.[tierLevel as keyof typeof quotaConfig] ?? null;
+      const nextResetDate = new Date();
+      nextResetDate.setDate(nextResetDate.getDate() + 30);
+      const resetResult = await queryOne<{ current_usage: number; limit_value: number | null }>(
+        `UPDATE feature_access
+         SET current_usage = 1, limit_value = $1, reset_date = $2, updated_at = NOW()
+         WHERE user_id = $3 AND feature_name = $4
+         RETURNING current_usage, limit_value`,
+        [limitValue, nextResetDate.toISOString(), userId, feature],
+      );
+      return { allowed: true, current: resetResult?.current_usage ?? 1, limit: resetResult?.limit_value ?? null };
+    }
+
+    // Atomic increment with limit guard
+    const result = await queryOne<{ current_usage: number; limit_value: number | null }>(
+      `UPDATE feature_access
+       SET current_usage = current_usage + 1, updated_at = NOW()
+       WHERE user_id = $1 AND feature_name = $2
+         AND (limit_value IS NULL OR current_usage + 1 <= limit_value)
+       RETURNING current_usage, limit_value`,
+      [userId, feature],
+    );
+
+    if (!result) {
+      const cur = await queryOne<{ current_usage: number; limit_value: number | null }>(
+        `SELECT current_usage, limit_value FROM feature_access WHERE user_id = $1 AND feature_name = $2`,
+        [userId, feature],
+      );
+      return { allowed: false, current: cur?.current_usage ?? 0, limit: cur?.limit_value ?? null };
+    }
+
+    return { allowed: true, current: result.current_usage, limit: result.limit_value };
+  } catch (error) {
+    logger.error('Failed to check and increment quota', error instanceof Error ? error : new Error(String(error)));
+    return { allowed: true, current: 0, limit: null }; // fail open
+  }
+}
+
+/**
  * Increment usage counter for a feature
  * Returns the new usage count
  */
@@ -234,12 +297,12 @@ export async function resetUsage(userId: string, feature: QuotaFeature): Promise
     const nextResetDate = new Date();
     nextResetDate.setDate(nextResetDate.getDate() + 30);
 
-    await updateDb('feature_access', userId, {
-      current_usage: 0,
-      limit_value: limitValue,
-      reset_date: nextResetDate.toISOString(),
-      updated_at: new Date().toISOString(),
-    });
+    await queryOne(
+      `UPDATE feature_access
+       SET current_usage = 0, limit_value = $1, reset_date = $2, updated_at = NOW()
+       WHERE user_id = $3 AND feature_name = $4`,
+      [limitValue, nextResetDate.toISOString(), userId, feature]
+    );
   } catch (error) {
     logger.error('Failed to reset usage', error instanceof Error ? error : new Error(String(error)));
     throw error;
@@ -321,17 +384,18 @@ export async function updateUserQuotas(userId: string): Promise<void> {
     // Update all feature quotas for this user
     const allFeatures = Object.keys(FEATURE_QUOTAS) as QuotaFeature[];
 
-    for (const feature of allFeatures) {
-      const quotaConfig = FEATURE_QUOTAS[feature];
-      const limitValue = quotaConfig?.[tierLevel as keyof typeof quotaConfig] ?? null;
-
-      await queryOne(
-        `UPDATE feature_access
-         SET limit_value = $1, updated_at = NOW()
-         WHERE user_id = $2 AND feature_name = $3`,
-        [limitValue, userId, feature]
-      );
-    }
+    await Promise.all(
+      allFeatures.map((feature) => {
+        const quotaConfig = FEATURE_QUOTAS[feature];
+        const limitValue = quotaConfig?.[tierLevel as keyof typeof quotaConfig] ?? null;
+        return queryOne(
+          `UPDATE feature_access
+           SET limit_value = $1, updated_at = NOW()
+           WHERE user_id = $2 AND feature_name = $3`,
+          [limitValue, userId, feature]
+        );
+      })
+    );
 
     logger.info('Updated user quotas after subscription change', { userId, tierLevel });
   } catch (error) {

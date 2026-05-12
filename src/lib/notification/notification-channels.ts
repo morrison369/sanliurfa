@@ -57,7 +57,7 @@ export async function getUserChannels(userId: string): Promise<NotificationChann
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const channels = await queryMany(
@@ -159,7 +159,7 @@ export async function getUserPushSubscriptions(userId: string): Promise<PushSubs
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const subscriptions = await queryMany(
@@ -199,7 +199,7 @@ export async function getEmailTemplate(key: string): Promise<EmailTemplate | nul
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const template = await queryOne(
@@ -369,7 +369,7 @@ export async function getNotificationPreferences(userId: string): Promise<Notifi
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const prefs = await queryOne(
@@ -396,19 +396,34 @@ export async function updateNotificationPreferences(
   preferences: Partial<NotificationPreferences>
 ): Promise<boolean> {
   try {
-    const existing = await queryOne(
-      'SELECT id FROM notification_preferences WHERE user_id = $1',
-      [userId]
-    );
+    // Atomic upsert (HARD RULE #47): SELECT-then-INSERT/UPDATE race-prone.
+    // Allowlist column names to prevent SQL column injection (HARD RULE #51 spirit).
+    const ALLOWED = new Set<keyof NotificationPreferences>([
+      'push_enabled', 'email_enabled', 'sms_enabled', 'digest_enabled',
+      'digest_frequency', 'quiet_hours_start', 'quiet_hours_end', 'muted_categories',
+    ]);
 
-    if (existing) {
-      await update('notification_preferences', { user_id: userId }, preferences);
+    const entries = Object.entries(preferences).filter(([k]) => ALLOWED.has(k as keyof NotificationPreferences));
+    const cols = entries.map(([k]) => k);
+    const vals = entries.map(([, v]) => v);
+
+    if (cols.length === 0) {
+      // Caller passed only unknown keys — still ensure row exists with defaults
+      await queryOne(
+        `INSERT INTO notification_preferences (user_id, created_at)
+         VALUES ($1, NOW())
+         ON CONFLICT (user_id) DO NOTHING`,
+        [userId]
+      );
     } else {
-      await insert('notification_preferences', {
-        user_id: userId,
-        ...preferences,
-        created_at: new Date()
-      });
+      const placeholders = cols.map((_, i) => `$${i + 2}`).join(', ');
+      const updateSet = cols.map((c) => `${c} = EXCLUDED.${c}`).join(', ');
+      await queryOne(
+        `INSERT INTO notification_preferences (user_id, ${cols.join(', ')}, created_at)
+         VALUES ($1, ${placeholders}, NOW())
+         ON CONFLICT (user_id) DO UPDATE SET ${updateSet}`,
+        [userId, ...vals]
+      );
     }
 
     await deleteCache(`prefs:${userId}`);

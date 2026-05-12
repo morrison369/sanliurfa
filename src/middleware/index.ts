@@ -1,3 +1,8 @@
+// NOTE: This file is NOT the active Astro middleware.
+// Astro uses src/middleware.ts (the file directly in src/) as its middleware entry.
+// This file was an alternative middleware chain that is never imported by src/middleware.ts,
+// so none of the handlers below actually run. All auth, CORS, rate limiting, and security
+// header logic is in src/middleware.ts.
 import { defineMiddleware } from 'astro:middleware';
 import { securityHeaders } from './security';
 import { performanceOptimizations } from './performance';

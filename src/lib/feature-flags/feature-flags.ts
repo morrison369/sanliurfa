@@ -2,6 +2,7 @@
  * Feature flags system — PostgreSQL backed
  */
 
+import { createHash } from 'node:crypto';
 import { query, queryOne } from '../postgres';
 
 export type FlagType = 'boolean' | 'percentage' | 'user' | 'group';
@@ -58,7 +59,7 @@ export async function initFeatureFlags(): Promise<void> {
   await ensureTable();
   // Seed defaults if table is empty
   const count = await queryOne(`SELECT COUNT(*) as c FROM feature_flags`);
-  if (parseInt(count?.c || '0') === 0) {
+  if (parseInt(count?.c || '0', 10) === 0) {
     await query(`
       INSERT INTO feature_flags (key, name, type, value, default_value) VALUES
         ('new_search', 'New Search Interface', 'percentage', '50', false),
@@ -91,22 +92,20 @@ export async function isEnabled(key: string, context?: UserContext): Promise<boo
 }
 
 function checkPercentage(percentage: number, userId?: string): boolean {
-  if (!userId) return Math.random() * 100 < percentage;
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
-    hash = hash & hash;
-  }
-  return Math.abs(hash) % 100 < percentage;
+  if (!userId) return false;
+  const bucket = parseInt(
+    createHash('sha256').update(`${userId}:ff`).digest('hex').slice(0, 8),
+    16
+  ) % 100;
+  return bucket < percentage;
 }
 
 export async function getAllFlags(context?: UserContext): Promise<Record<string, boolean>> {
   const flags = await listFlags();
-  const result: Record<string, boolean> = {};
-  for (const flag of flags) {
-    result[flag.key] = await isEnabled(flag.key, context);
-  }
-  return result;
+  const evaluated = await Promise.all(
+    flags.map(async (flag) => [flag.key, await isEnabled(flag.key, context)] as const)
+  );
+  return Object.fromEntries(evaluated);
 }
 
 export async function listFlags(): Promise<FeatureFlag[]> {
@@ -124,8 +123,8 @@ export async function getFlagStats(): Promise<{ total: number; enabled: number; 
     FROM feature_flags
   `);
   const row = result.rows[0];
-  const total = parseInt(row?.total || '0');
-  const enabled = parseInt(row?.enabled || '0');
+  const total = parseInt(row?.total || '0', 10);
+  const enabled = parseInt(row?.enabled || '0', 10);
   return { total, enabled, disabled: total - enabled };
 }
 

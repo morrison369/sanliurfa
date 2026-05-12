@@ -8,7 +8,14 @@ import { deleteCachePattern } from '../cache';
 
 export async function likePlace(placeId: string, userId: string): Promise<boolean> {
   try {
-    await insert('place_likes', { place_id: placeId, user_id: userId, created_at: new Date() });
+    const inserted = await queryOne<{ id: string }>(
+      `INSERT INTO place_likes (place_id, user_id, created_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (place_id, user_id) DO NOTHING
+       RETURNING id`,
+      [placeId, userId]
+    );
+    if (!inserted) return false;
     await deleteCachePattern(`place:${placeId}:*`);
     logger.info('Place liked', { placeId, userId });
     return true;
@@ -47,9 +54,16 @@ export async function getPlaceLikeCount(placeId: string): Promise<number> {
 
 export async function addReaction(reviewId: string, userId: string, reactionType: string): Promise<boolean> {
   try {
-    const validTypes = ['like', 'helpful', 'funny', 'insightful', 'love'];
-    if (!validTypes.includes(reactionType)) return false;
-    await insert('review_reactions', { review_id: reviewId, user_id: userId, reaction_type: reactionType });
+    const validTypes = new Set(['like', 'helpful', 'funny', 'insightful', 'love']);
+    if (!validTypes.has(reactionType)) return false;
+    const inserted = await queryOne<{ id: string }>(
+      `INSERT INTO review_reactions (review_id, user_id, reaction_type)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (review_id, user_id, reaction_type) DO NOTHING
+       RETURNING id`,
+      [reviewId, userId, reactionType]
+    );
+    if (!inserted) return false;
     await deleteCachePattern(`review:${reviewId}:*`);
     logger.info('Reaction added', { reviewId, userId, reactionType });
     return true;
@@ -70,7 +84,7 @@ export async function removeReaction(reviewId: string, userId: string, reactionT
 
 export async function getReactionCounts(reviewId: string): Promise<Record<string, number>> {
   try {
-    const results = await queryMany('SELECT reaction_type, COUNT(*) as any[] as count FROM review_reactions WHERE review_id = $1 GROUP BY reaction_type', [reviewId]);
+    const results = await queryMany('SELECT reaction_type, COUNT(*) as count FROM review_reactions WHERE review_id = $1 GROUP BY reaction_type', [reviewId]);
     const counts: Record<string, number> = {};
     results.forEach((r: any) => {
       counts[r.reaction_type] = parseInt(r.count, 10);
@@ -187,4 +201,3 @@ export async function getUserPreferences(userId: string): Promise<any> {
     return null;
   }
 }
-

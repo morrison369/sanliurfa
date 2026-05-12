@@ -3,7 +3,7 @@
  * Handles user notification preferences
  */
 
-import { queryOne, update } from '../postgres';
+import { queryOne } from '../postgres';
 import { logger } from '../logger';
 
 export type NotificationChannel = 'email' | 'in_app' | 'push';
@@ -87,16 +87,33 @@ export async function updateUserPreferences(userId: string, preferences: Partial
       return true;
     }
 
-    updates.updated_at = new Date().toISOString();
-
-    const result = await update('email_preferences', { user_id: userId }, updates);
-
-    if (!result) {
-      return false;
-    }
+    const result = await queryOne(
+      `INSERT INTO email_preferences
+        (user_id, review_response, new_review, weekly_summary, promotional, account_changes, preferred_channel, created_at, updated_at)
+       VALUES
+        ($1, COALESCE($2, true), COALESCE($3, true), COALESCE($4, true), COALESCE($5, false), COALESCE($6, true), COALESCE($7, 'email'), NOW(), NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+        review_response = COALESCE($2, email_preferences.review_response),
+        new_review = COALESCE($3, email_preferences.new_review),
+        weekly_summary = COALESCE($4, email_preferences.weekly_summary),
+        promotional = COALESCE($5, email_preferences.promotional),
+        account_changes = COALESCE($6, email_preferences.account_changes),
+        preferred_channel = COALESCE($7, email_preferences.preferred_channel),
+        updated_at = NOW()
+       RETURNING user_id`,
+      [
+        userId,
+        updates.review_response ?? null,
+        updates.new_review ?? null,
+        updates.weekly_summary ?? null,
+        updates.promotional ?? null,
+        updates.account_changes ?? null,
+        updates.preferred_channel ?? null
+      ]
+    );
 
     logger.info('Email preferences updated', { userId, updates });
-    return true;
+    return Boolean(result);
   } catch (error) {
     logger.error('Update email preferences failed', error instanceof Error ? error : new Error(String(error)));
     return false;
@@ -124,6 +141,8 @@ export async function createDefaultPreferences(userId: string): Promise<EmailPre
       INSERT INTO email_preferences
       (user_id, review_response, new_review, weekly_summary, promotional, account_changes, preferred_channel, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      ON CONFLICT (user_id) DO UPDATE SET
+        user_id = EXCLUDED.user_id
       RETURNING user_id, review_response, new_review, weekly_summary, promotional, account_changes, preferred_channel
     `;
 

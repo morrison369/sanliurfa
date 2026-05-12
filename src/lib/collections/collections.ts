@@ -113,9 +113,11 @@ export async function updateCollection(
 
     const result = await queryOne(sql, values);
 
-    // Clear caches
-    await deleteCache(`collection:${collectionId}`);
-    await deleteCache(`collections:${userId}`);
+    // Clear caches (paralel)
+    await Promise.all([
+      deleteCache(`collection:${collectionId}`),
+      deleteCache(`collections:${userId}`),
+    ]);
 
     logger.info('Collection updated', { userId, collectionId });
     return !!result;
@@ -145,9 +147,11 @@ export async function deleteCollection(collectionId: string, userId: string): Pr
       userId
     ]);
 
-    // Clear caches
-    await deleteCache(`collection:${collectionId}`);
-    await deleteCache(`collections:${userId}`);
+    // Clear caches (paralel)
+    await Promise.all([
+      deleteCache(`collection:${collectionId}`),
+      deleteCache(`collections:${userId}`),
+    ]);
 
     logger.info('Collection deleted', { userId, collectionId });
     return (result.rowCount || 0) > 0;
@@ -269,17 +273,14 @@ export async function addPlaceToCollection(
       [collectionId, placeId, note || null, position]
     );
 
-    // Update place count
-    const count = await queryOne('SELECT COUNT(*) as count FROM collection_items WHERE collection_id = $1', [
-      collectionId
-    ]);
+    await query(
+      `UPDATE place_collections SET
+         place_count = (SELECT COUNT(*) FROM collection_items WHERE collection_id = $1),
+         updated_at = NOW()
+       WHERE id = $1`,
+      [collectionId]
+    );
 
-    await query('UPDATE place_collections SET place_count = $1, updated_at = NOW() WHERE id = $2', [
-      count?.count || 0,
-      collectionId
-    ]);
-
-    // Clear cache
     await deleteCache(`collection:${collectionId}`);
 
     logger.info('Place added to collection', { userId, collectionId, placeId });
@@ -319,17 +320,14 @@ export async function removePlaceFromCollection(
     ]);
 
     if ((result.rowCount || 0) > 0) {
-      // Update place count
-      const count = await queryOne('SELECT COUNT(*) as count FROM collection_items WHERE collection_id = $1', [
-        collectionId
-      ]);
+      await query(
+        `UPDATE place_collections SET
+           place_count = (SELECT COUNT(*) FROM collection_items WHERE collection_id = $1),
+           updated_at = NOW()
+         WHERE id = $1`,
+        [collectionId]
+      );
 
-      await query('UPDATE place_collections SET place_count = $1, updated_at = NOW() WHERE id = $2', [
-        count?.count || 0,
-        collectionId
-      ]);
-
-      // Clear cache
       await deleteCache(`collection:${collectionId}`);
     }
 

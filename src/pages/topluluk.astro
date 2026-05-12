@@ -1,145 +1,154 @@
 ---
-
 import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
 import { SocialFeatures } from '../components/SocialFeatures';
 import { requireAuth } from '../lib/auth';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../lib/public-app-url';
 
 const auth = await requireAuth(Astro.request);
 const isAuthenticated = Boolean(auth.user);
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'Şanlıurfa Topluluk Özellikleri | Takip, Mesajlaşma ve Trendler',
-  description:
-    'Şanlıurfa topluluk sayfasında aktivite akışı, trend etiketler, takipçi yönetimi, mesajlaşma ve eşleşme özellikleri.',
-  keywords: ['şanlıurfa topluluk', 'urfa sosyal ağ', 'şanlıurfa üyeler', 'urfa yerel sosyal', 'şanlıurfa takip et'],
-  ogImage: '/images/hero/hero-home.webp',
+  title: 'Şanlıurfa Topluluk | Takip, Mesajlaşma ve Eşleşme',
+  description: 'Şanlıurfa topluluğunda üyeleri keşfet, takip et, mesajlaş, eşleşme akışına katıl ve yerel aktiviteleri gör.',
   canonical: '/topluluk',
+  ogImage: '/images/places/balikligol.jpg',
+  keywords: ['Şanlıurfa topluluk', 'Şanlıurfa eşleşme', 'Şanlıurfa mesajlaşma', 'Urfa sosyal ağ'],
 };
 
 const cards = [
-  {
-    title: 'Takipçi Ağı',
-    desc: 'Kullanıcıları takip edin, profil etkileşimini artırın.',
-    href: isAuthenticated ? '/takipciler' : '/kayit?redirect=/takipciler',
-  },
-  {
-    title: 'Mesajlaşma',
-    desc: 'Topluluk üyeleriyle doğrudan mesajlaşma deneyimi.',
-    href: isAuthenticated ? '/mesajlar' : '/kayit?redirect=/mesajlar',
-  },
-  {
-    title: 'Eşleşme',
-    desc: '4 fotoğraflı profil ile sağa/sola kaydırarak üyelerle eşleşin.',
-    href: '/eslesme',
-  },
-  {
-    title: 'Üyelik ve Planlar',
-    desc: 'İlk aşama ücretsiz erişim ve gelecek premium plan detaylarını inceleyin.',
-    href: '/fiyatlandirma',
-  },
+  { icon: 'user-plus', title: 'Takip ve Arkadaşlık', desc: 'Yerel profilleri keşfet, takip et ve şehir içi sosyal ağını oluştur.', href: isAuthenticated ? '/takipciler' : '/kayit?redirect=/takipciler' },
+  { icon: 'message-circle', title: 'Mesajlaşma', desc: 'Kayıtlı üyelerle doğrudan sohbet başlat ve eşleşme sonrası iletişime geç.', href: isAuthenticated ? '/mesajlar' : '/kayit?redirect=/mesajlar' },
+  { icon: 'heart-handshake', title: 'Eşleşme', desc: '4 fotoğraflı profil ile sağa/sola kaydırarak karşılıklı beğenide eşleş.', href: '/eslesme' },
+  { icon: 'map-pin-plus', title: 'Mekan Katkısı', desc: 'Şehir rehberine mekan, yorum ve yerel deneyim katkısı ekle.', href: isAuthenticated ? '/isletme-kayit' : '/kayit?redirect=/isletme-kayit' },
 ];
 
 const faqItems = [
-  {
-    S: 'Şanlıurfa topluluk özellikleri ücretsiz mi?',
-    C: 'İlk aşamada takip, mesajlaşma, mekan ekleme, yorum ve eşleşme özellikleri ücretsiz olarak açık tutulur.',
-  },
-  {
-    S: 'Üyeler birbirine mesaj atabilir mi?',
-    C: 'Evet. Kayıtlı üyeler mesajlaşma akışı üzerinden birbirleriyle doğrudan iletişim kurabilir.',
-  },
-  {
-    S: 'Eşleşme özelliğinde kaç fotoğraf kullanılabilir?',
-    C: 'Eşleşme profilinde 4 fotoğrafa kadar görsel kullanılabilir ve üyeler sağa/sola kaydırma deneyimiyle eşleşebilir.',
-  },
+  { S: 'Şanlıurfa topluluk özellikleri ücretsiz mi?', C: 'İlk aşamada takip, mesajlaşma, mekan ekleme, yorum ve eşleşme özellikleri ücretsiz olarak açık tutulur.' },
+  { S: 'Üyeler birbirine mesaj atabilir mi?', C: 'Evet. Kayıtlı üyeler mesajlaşma akışı üzerinden birbirleriyle doğrudan iletişim kurabilir.' },
+  { S: 'Eşleşme özelliğinde kaç fotoğraf kullanılabilir?', C: 'Eşleşme profilinde 4 fotoğrafa kadar görsel kullanılabilir ve üyeler sağa/sola kaydırma deneyimiyle eşleşebilir.' },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <section class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white py-14">
-      <div class="container mx-auto px-4">
-        <h1 class="text-4xl md:text-5xl font-bold">Şanlıurfa Topluluk Özellikleri</h1>
-        <p class="mt-3 text-indigo-100 max-w-3xl">
-          Şanlıurfa kullanıcı topluluğu için takip, trend ve etkileşim alanlarını tek sayfada yönetin.
-        </p>
-      </div>
-    </section>
-
-    <section class="py-10">
-      <div class="container mx-auto px-4">
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {cards.map((card) => (
-            <a
-              href={card.href}
-              class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <h2 class="text-lg font-bold text-gray-900">{card.title}</h2>
-              <p class="mt-1 text-sm text-gray-600">{card.desc}</p>
-            </a>
+  <section class="border-b border-[#eadcc4] bg-[radial-gradient(circle_at_top_left,#f0d8b7_0,#fff8ec_36%,#f8eddb_100%)] px-4 py-14 text-[#201711] sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl">
+      <p class="inline-flex rounded-full border border-[#e1c59d] bg-white/75 px-4 py-2 text-sm font-black text-[#8a3d22]">
+        Şanlıurfa Topluluk Özellikleri
+      </p>
+      <div class="mt-5 grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+        <div>
+          <h1 class="font-display text-4xl font-semibold leading-[1.08] text-[#201711] sm:text-5xl">
+            Şanlıurfa Topluluğu
+          </h1>
+          <p class="mt-4 max-w-2xl text-lg leading-8 text-[#5e4a38]">
+            Takip, mesajlaşma, eşleşme, mekan katkısı ve yerel aktivite akışını tek şehir rehberi içinde birleştiren topluluk alanı.
+          </p>
+        </div>
+        <div class="grid gap-3 sm:grid-cols-3">
+          {['Takip', 'Mesaj', 'Eşleşme'].map((label) => (
+            <div class="rounded-2xl border border-[#eadcc4] bg-white/80 p-5 shadow-sm">
+              <p class="text-2xl font-black text-[#78331d]">{label}</p>
+              <p class="mt-1 text-sm font-semibold text-[#66513d]">MVP sosyal akış</p>
+            </div>
           ))}
         </div>
+      </div>
+    </div>
+  </section>
 
-        {isAuthenticated ? (
-          <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 class="text-2xl font-bold text-gray-900 mb-2">Aktivite, Trend ve Takip</h2>
-            <p class="text-sm text-gray-600 mb-6">
-              Aşağıdaki modülde topluluk hareketlerini ve popüler etiketleri takip edebilirsiniz.
-            </p>
-            <SocialFeatures client:visible={{ rootMargin: '200px' }} />
-          </div>
-        ) : (
-          <div class="rounded-3xl border border-indigo-100 bg-white p-7 shadow-sm">
-            <p class="text-sm font-semibold uppercase tracking-wide text-indigo-700">Ücretsiz topluluk erişimi</p>
-            <h2 class="mt-2 text-3xl font-bold text-gray-900">Takip, mesajlaşma ve eşleşme için ücretsiz hesap açın</h2>
-            <p class="mt-3 max-w-2xl text-gray-600">
-              Topluluk özellikleri ilk aşamada ücretsizdir. Hesap açtıktan sonra kullanıcıları takip edebilir,
-              mesajlaşabilir, mekan ekleyebilir, yorum yapabilir ve eşleşme modülünü kullanabilirsiniz.
-            </p>
-            <div class="mt-5 flex flex-wrap gap-3">
-              <a href="/kayit?redirect=/topluluk" class="rounded-xl bg-indigo-700 px-5 py-3 font-semibold text-white hover:bg-indigo-800">
-                Ücretsiz Hesap Aç
-              </a>
-              <a href="/giris?redirect=/topluluk" class="rounded-xl border border-gray-300 px-5 py-3 font-semibold text-gray-800 hover:bg-gray-50">
-                Giriş Yap
-              </a>
-              <a href="/eslesme" class="rounded-xl border border-indigo-200 px-5 py-3 font-semibold text-indigo-800 hover:bg-indigo-50">
-                Eşleşme Modülünü Gör
-              </a>
-            </div>
-          </div>
-        )}
+  <section class="bg-[#fff8ec] px-4 py-14 sm:px-6 lg:px-8">
+    <div class="mx-auto grid max-w-7xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {cards.map((card) => (
+        <a href={card.href} class="rounded-2xl border border-[#eadcc4] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#d39b62] hover:shadow-xl hover:shadow-[#78331d]/10">
+          <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f3e4cc] text-[#78331d]">
+            <Icon name={card.icon} size={22} />
+          </span>
+          <h2 class="mt-4 font-display text-2xl font-semibold text-[#201711]">{card.title}</h2>
+          <p class="mt-2 text-sm leading-6 text-[#66513d]">{card.desc}</p>
+        </a>
+      ))}
+    </div>
+  </section>
 
-        <section class="mt-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <p class="text-sm font-semibold uppercase tracking-wide text-indigo-700">Hızlı Cevap</p>
-          <h2 class="mt-1 text-2xl font-bold text-gray-900">Şanlıurfa topluluk platformunda neler yapılır?</h2>
-          <p class="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
-            Üyeler birbirini takip edebilir, arkadaş olarak ekleyebilir, mesaj atabilir, mekan ekleyebilir,
-            mekanlara puan ve yorum bırakabilir. Eşleşme modülünde 4 fotoğraflı profil ile sağa/sola kaydırma deneyimi sunulur.
-          </p>
-        </section>
+  {isAuthenticated ? (
+    <section class="bg-[#fffdf7] px-4 py-14 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl rounded-[1.75rem] border border-[#eadcc4] bg-white p-5 shadow-xl shadow-[#78331d]/8 sm:p-8">
+        <h2 class="font-display text-3xl font-semibold text-[#201711]">Aktivite, Trend ve Takip</h2>
+        <p class="mt-2 max-w-3xl text-sm leading-6 text-[#66513d]">Topluluk hareketlerini, popüler etiketleri, mesaj bildirimlerini ve sosyal önerileri buradan takip et.</p>
+        <div class="mt-6">
+          <SocialFeatures client:visible={{ rootMargin: '200px' }} />
+        </div>
       </div>
     </section>
+  ) : (
+    <section class="bg-[#f6ead6] px-4 py-14 sm:px-6 lg:px-8">
+      <div class="mx-auto grid max-w-7xl gap-8 rounded-[1.75rem] border border-[#e2c79d] bg-white p-6 shadow-xl shadow-[#78331d]/8 sm:p-8 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
+          <p class="text-sm font-black uppercase tracking-[0.14em] text-[#8a3d22]">Ücretsiz topluluk erişimi</p>
+          <h2 class="mt-3 font-display text-3xl font-semibold text-[#201711]">Takip, mesajlaşma ve eşleşme için profil oluştur</h2>
+          <p class="mt-3 max-w-3xl text-base leading-7 text-[#66513d]">
+            Hesap açtıktan sonra kullanıcıları takip edebilir, mesajlaşabilir, mekan ekleyebilir, yorum yapabilir ve eşleşme modülünü kullanabilirsin.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <a href="/kayit?redirect=/topluluk" class="inline-flex min-h-12 items-center justify-center rounded-full bg-[#78331d] px-6 text-sm font-black text-white hover:bg-[#652918]">Ücretsiz Hesap Aç</a>
+          <a href="/eslesme" class="inline-flex min-h-12 items-center justify-center rounded-full border border-[#c99b6d] px-6 text-sm font-black text-[#7c3b24] hover:bg-[#fff8ec]">Eşleşmeyi Gör</a>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="bg-[#fff8ec] px-4 pb-14 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl rounded-[1.75rem] border border-[#eadcc4] bg-white p-6 sm:p-8">
+      <p class="text-sm font-black uppercase tracking-[0.14em] text-[#8a3d22]">Hızlı Cevap</p>
+      <h2 class="mt-3 font-display text-3xl font-semibold text-[#201711]">Şanlıurfa topluluk platformunda neler yapılır?</h2>
+      <p class="mt-3 max-w-4xl text-base leading-7 text-[#66513d]">
+        Üyeler birbirini takip edebilir, arkadaş olarak ekleyebilir, mesaj atabilir, mekan ekleyebilir, mekanlara puan ve yorum bırakabilir. Eşleşme modülünde 4 fotoğraflı profil ile sağa/sola kaydırma deneyimi sunulur.
+      </p>
+    </div>
+  </section>
+
+  <style is:inline>
+  details summary{list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details[open] .faq-arrow{transform:rotate(180deg)}
+  </style>
+  {faqItems.length > 0 && (
+  <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+  <div class="sf-container">
+  <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+  <div style="display:flex;flex-direction:column;gap:.75rem">
+  {faqItems.map((item) => (
+  <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+  <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+  {item.S}
+  <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+  </summary>
+  <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+  {item.C}
   </div>
+  </details>
+  ))}
+  </div>
+  </div>
+  </div>
+  )}
   <script type="application/ld+json" set:html={JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: faqItems.map((item) => ({
       '@type': 'Question',
       name: item.S,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.C,
-      },
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
     })),
   })} is:inline />
   <script type="application/ld+json" set:html={JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
       { '@type': 'ListItem', position: 2, name: 'Topluluk', item: `${baseUrl}/topluluk` },
     ],
   })} is:inline />

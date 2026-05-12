@@ -18,7 +18,7 @@ export const GET: APIRoute = async () => {
     safeQuery("SELECT slug, updated_at FROM places WHERE status = 'active'"),
     safeQuery("SELECT slug, updated_at FROM blog_posts WHERE status = 'published'"),
     safeQuery("SELECT slug, updated_at FROM events WHERE status = 'published'"),
-    safeQuery("SELECT slug, updated_at FROM historical_sites WHERE status = 'active'"),
+    safeQuery("SELECT slug, updated_at FROM historical_sites WHERE status = 'published'"),
   ]);
 
   const places = placesResult.rows;
@@ -26,7 +26,14 @@ export const GET: APIRoute = async () => {
   const events = eventsResult.rows;
   const historicalSites = historicalSitesResult.rows;
 
-  const urls = [
+  interface SitemapUrl {
+    loc: string;
+    priority: number;
+    changefreq: string;
+    lastmod?: string;
+  }
+
+    const urls = [
     // Static pages
     { loc: '/', priority: 1.0, changefreq: 'daily' },
     { loc: '/mekanlar', priority: 0.9, changefreq: 'daily' },
@@ -46,11 +53,11 @@ export const GET: APIRoute = async () => {
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(url => `  <url>
+${(urls as SitemapUrl[]).map(url => `  <url>
     <loc>${baseUrl}${url.loc}</loc>
     <priority>${url.priority}</priority>
     <changefreq>${url.changefreq}</changefreq>
-    ${(url as any).lastmod ? `<lastmod>${new Date((url as any).lastmod).toISOString()}</lastmod>` : ''}
+    ${url.lastmod ? `<lastmod>${new Date(url.lastmod).toISOString()}</lastmod>` : ''}
   </url>`).join('\n')}
 </urlset>`;
 

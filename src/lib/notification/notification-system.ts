@@ -211,7 +211,9 @@ export class NotificationManager {
     let result = text;
 
     for (const [key, value] of Object.entries(variables)) {
-      result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+      // Escape regex special chars in key to prevent ReDoS via crafted variable names
+      const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      result = result.replace(new RegExp(`\\{${escapedKey}\\}`, 'g'), value);
     }
 
     return result;
@@ -317,8 +319,8 @@ export class NotificationPreferences {
         email: true,
         sms: false
       },
-      enabledTypes: prefs.enabledTypes,
-      quietHours: prefs.quietHours,
+      ...(prefs.enabledTypes ? { enabledTypes: prefs.enabledTypes } : {}),
+      ...(prefs.quietHours ? { quietHours: prefs.quietHours } : {}),
       doNotDisturb: prefs.doNotDisturb || false,
       aggregateNotifications: prefs.aggregateNotifications ?? true,
       aggregationWindow: prefs.aggregationWindow || 5 * 60 * 1000

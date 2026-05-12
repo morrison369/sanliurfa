@@ -1,0 +1,59 @@
+---
+/**
+ * RelatedEvents — Server Island
+ *
+ * "Benzer Etkinlikler" sidebar widget. Used with `server:defer` so the main event
+ * detail content streams without waiting for the related-events query.
+ *
+ * <RelatedEvents category={event.category} excludeId={event.id} server:defer>
+ * <div slot="fallback" class="..." />
+ * </RelatedEvents>
+ */
+import { query } from '../../lib/postgres';
+import PublicRelatedList from '../public/PublicRelatedList.astro';
+import { logger } from '../../lib/logging';
+import { resolveEventImage } from '../../lib/public-image-resolvers';
+
+interface Props {
+ category: string;
+ excludeId: string | number;
+}
+
+const { category, excludeId } = Astro.props;
+
+let relatedEvents: Array<{
+ id: string | number;
+ title: string;
+ slug: string;
+ image_url: string | null;
+ start_date: string;
+ location: string | null;
+}> = [];
+
+try {
+ const result = await query(
+ `SELECT id, title, slug, image_url, start_date, location
+ FROM events
+ WHERE status = 'published' AND category = $1 AND id != $2
+ AND start_date >= CURRENT_DATE
+ LIMIT 3`,
+ [category, excludeId],
+ );
+ relatedEvents = result.rows;
+} catch (e) {
+ logger.error('RelatedEvents query failed', e instanceof Error ? e : new Error(String(e)));
+}
+
+const getEventImage = (ev: typeof relatedEvents[number]) => resolveEventImage(ev, { thumb: true });
+---
+
+<PublicRelatedList
+ title="Benzer Etkinlikler"
+ items={relatedEvents.map((related) => ({
+  href: `/etkinlikler/${related.slug}`,
+  title: related.title,
+  meta: new Date(related.start_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }),
+  imageSrc: getEventImage(related),
+  imageAlt: related.title,
+ }))}
+/>

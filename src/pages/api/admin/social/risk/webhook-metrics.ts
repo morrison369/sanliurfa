@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../../lib/postgres';
 import { getSiteSetting } from '../../../../../lib/site-content';
-import { problemJson } from '../../../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../../../lib/api';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 export const GET: APIRoute = async ({ locals }) => {
@@ -93,7 +93,7 @@ export const GET: APIRoute = async ({ locals }) => {
     return problemJson({
       status: 500,
       title: 'Webhook Metrikleri Alınamadı',
-      detail: error instanceof Error ? error.message : 'admin_social_risk_webhook_metrics_failed',
+      detail: safeErrorDetail(error, 'admin_social_risk_webhook_metrics_failed'),
       type: '/problems/admin-social-risk-webhook-metrics-failed',
       instance: '/api/admin/social/risk/webhook-metrics',
     });

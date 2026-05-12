@@ -114,9 +114,9 @@ export async function checkContent(
 export async function submitForModeration(
   type: 'place' | 'review' | 'comment' | 'user',
   contentId: string,
-  content: string,
+  _content: string,
   reason?: string,
-  reporterId?: string
+  _reporterId?: string
 ): Promise<void> {
   await query(
     `INSERT INTO moderation_queue (content_type, content_id, reason, status, created_at)
@@ -349,9 +349,9 @@ export async function getModerationStats(): Promise<{
   `);
 
   return {
-    pending: parseInt(result.rows[0].pending),
-    approved: parseInt(result.rows[0].approved),
-    rejected: parseInt(result.rows[0].rejected),
+    pending: parseInt(result.rows[0].pending, 10),
+    approved: parseInt(result.rows[0].approved, 10),
+    rejected: parseInt(result.rows[0].rejected, 10),
     avgProcessTime: Math.round(parseFloat(result.rows[0].avg_process_time) / 60) || 0, // minutes
   };
 }
@@ -463,7 +463,7 @@ export async function getUserBanHistory(userId: string): Promise<BanHistory[]> {
     moderatorId: row.moderator_id,
     durationDays: row.duration_days,
     createdAt: new Date(row.created_at),
-    expiresAt: row.expires_at ? new Date(row.expires_at) : undefined,
+    ...(row.expires_at ? { expiresAt: new Date(row.expires_at) } : {}),
     isActive: row.is_active ?? false,
   }));
 }
@@ -497,8 +497,8 @@ export async function isUserBanned(userId: string): Promise<{ banned: boolean; r
 
   return {
     banned: user.is_banned,
-    reason: user.ban_reason,
-    expiresAt: user.ban_expires_at ? new Date(user.ban_expires_at) : undefined,
+    ...(user.ban_reason ? { reason: user.ban_reason } : {}),
+    ...(user.ban_expires_at ? { expiresAt: new Date(user.ban_expires_at) } : {}),
   };
 }
 

@@ -6,7 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { getReports, updateReportStatus } from '../../../../lib/moderation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
@@ -34,12 +34,6 @@ const updateReportSchema: ValidationSchema = {
   }
 };
 
-function toPositiveInt(value: string | null, fallback: number, max?: number): number {
-  const parsed = Number.parseInt(value || '', 10);
-  if (!Number.isFinite(parsed) || parsed < 1) return fallback;
-  return max ? Math.min(parsed, max) : parsed;
-}
-
 function getReportStatus(value: string | null): ReportStatus | 'all' {
   if (value === 'all') return 'all';
   return value && REPORT_STATUSES.has(value as ReportStatus) ? (value as ReportStatus) : 'open';
@@ -65,8 +59,8 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     const status = getReportStatus(url.searchParams.get('status'));
-    const limit = toPositiveInt(url.searchParams.get('limit'), 50, 100);
-    const offset = Math.max(Number.parseInt(url.searchParams.get('offset') || '0', 10) || 0, 0);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
+    const offset = Math.max(safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000) || 0, 0);
     const page = Math.floor(offset / limit) + 1;
 
     const reports = await getReports(status, page, limit);

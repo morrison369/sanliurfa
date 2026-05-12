@@ -1,0 +1,129 @@
+---
+/**
+ * BlogRelatedPlaces — Blog yazısıyla ilgili mekanları gösterir.
+ * Blog kategorisinden mekan kategorisine mapping ile 3 mekan listeler.
+ * server:defer ile blog içeriğinin yüklenmesini bloke etmez.
+ */
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+import { resolvePlaceImage } from '../../lib/public-image-resolvers';
+import Image from '../Image.astro';
+
+interface Props {
+  category: string;
+  limit?: number;
+}
+
+const { category, limit = 3 } = Astro.props;
+
+// Blog kategorisi → places.categories.name eşleşmesi
+const categoryMap: Record<string, string[]> = {
+  'Gastronomi':  ['Restoranlar', 'Kahvaltı Mekanları', 'Tatlıcılar', 'Kahvehaneler'],
+  'Konaklama':   ['Oteller', 'Pansiyonlar', 'Apart Oteller'],
+  'Turizm':      ['Turizm ve Gezilecek Yerler', 'Tarihi Yerler'],
+  'Tarih':       ['Tarihi Yerler', 'Müzeler'],
+  'Kültür':      ['Kültürel Mekanlar', 'Müzeler', 'Tarihi Yerler'],
+  'Alışveriş':   ['Alışveriş Merkezleri', 'Çarşılar', 'Hediyelik Eşya'],
+  'Sağlık':      ['Sağlık Merkezleri', 'Eczaneler'],
+  'Aile':        ['Aile Aktiviteleri', 'Parklar', 'Çocuk Mekanları'],
+  'Arkeoloji':   ['Tarihi Yerler', 'Müzeler'],
+  'Gezi':        ['Turizm ve Gezilecek Yerler', 'Tarihi Yerler'],
+  'Festival':    ['Turizm ve Gezilecek Yerler', 'Kültürel Mekanlar'],
+  'Sanat':       ['Kültürel Mekanlar', 'Müzeler'],
+};
+
+const placeCategories = categoryMap[category] ?? ['Turizm ve Gezilecek Yerler'];
+
+let places: Array<{
+  id: string;
+  name: string;
+  slug: string;
+  image_url: string | null;
+  category_name: string;
+  avg_rating: number | null;
+  short_description: string | null;
+}> = [];
+
+try {
+  const result = await query(
+    `SELECT p.id, p.name, p.slug, p.image_url,
+            c.name AS category_name, p.avg_rating, p.short_description
+     FROM places p
+     JOIN categories c ON c.id = p.category_id
+     WHERE p.status = 'active'
+       AND c.name = ANY($1::text[])
+     ORDER BY p.avg_rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+     LIMIT $2`,
+    [placeCategories, limit],
+  );
+  places = result.rows;
+} catch (e) {
+  logger.error('BlogRelatedPlaces query failed', e instanceof Error ? e : new Error(String(e)));
+}
+
+if (places.length === 0) return;
+
+const getImg = (p: typeof places[number]) =>
+  resolvePlaceImage({ slug: p.slug, image_url: p.image_url }, { thumb: true });
+
+const star = (r: number | null) => r ? `${r.toFixed(1)} ★` : '';
+---
+
+<aside class="brp-wrap">
+  <h3 class="brp-title">İlgili Mekanlar</h3>
+  <ul class="brp-list">
+    {places.map((p) => (
+      <li>
+        <a href={`/isletme/${p.slug}`} class="brp-link">
+          <Image src={getImg(p)} alt={p.name} class="brp-img" loading="lazy" width={64} height={64} />
+          <div class="brp-info">
+            <span class="brp-name">{p.name}</span>
+            <span class="brp-meta">
+              <span class="brp-cat">{p.category_name}</span>
+              {p.avg_rating && <span class="brp-rating">{star(p.avg_rating)}</span>}
+            </span>
+          </div>
+        </a>
+      </li>
+    ))}
+  </ul>
+  <a href="/mekanlar" class="brp-all">Tüm Mekanlar →</a>
+</aside>
+
+<style>
+.brp-wrap {
+  background: var(--bg-card, #fff);
+  border: 1px solid rgba(184,115,51,.13);
+  border-radius: 1rem;
+  padding: 1.25rem 1.1rem;
+  margin-top: 1.5rem;
+}
+.brp-title {
+  font-size: .8rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--urfa-600, #b87333); margin: 0 0 .9rem;
+}
+.brp-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .6rem; }
+.brp-link {
+  display: flex; gap: .75rem; align-items: center; text-decoration: none;
+  padding: .5rem .4rem; border-radius: .6rem; transition: background .15s;
+}
+.brp-link:hover { background: rgba(184,115,51,.07); }
+.brp-img { width: 52px; height: 52px; object-fit: cover; border-radius: .5rem; flex-shrink: 0; }
+.brp-info { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.brp-name {
+  font-size: .85rem; font-weight: 600; color: var(--text-primary, #1a1a1a);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.brp-meta { font-size: .75rem; color: var(--text-muted, #777); display: flex; align-items: center; gap: .5rem; }
+.brp-cat {
+  background: rgba(184,115,51,.1); color: var(--urfa-600, #b87333);
+  font-size: .65rem; font-weight: 700; padding: .1rem .4rem; border-radius: .3rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100px;
+}
+.brp-rating { color: #d49718; font-weight: 700; font-size: .72rem; }
+.brp-all {
+  display: block; text-align: center; margin-top: .9rem;
+  font-size: .78rem; font-weight: 600; color: var(--urfa-600, #b87333); text-decoration: none;
+}
+.brp-all:hover { text-decoration: underline; }
+</style>

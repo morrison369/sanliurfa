@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { getCache, setCache } from '../../../lib/cache';
@@ -18,8 +18,8 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   try {
     // Get query parameters
     const query = (url.searchParams.get('q') || '').trim();
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
     const sortBy = url.searchParams.get('sortBy') || 'relevance'; // relevance, points, level, recent
 
     // Validate query
@@ -65,8 +65,9 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       );
     }
 
-    // Build search query - search by full_name, username, or email (email only if admin/self)
-    const searchTerm = `%${query}%`;
+    // Build search query — FTS for full_name, ILIKE for username/email (identifiers, not prose)
+    const likeTerm = `%${query}%`;
+    const ftsExpr = `to_tsvector('turkish', coalesce(full_name,'')) @@ plainto_tsquery('turkish', $1)`;
     let sql = `
       SELECT
         id,
@@ -79,21 +80,21 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
         created_at,
         (
           CASE
-            WHEN full_name ILIKE $1 THEN 3
-            WHEN username ILIKE $1 THEN 2
+            WHEN ${ftsExpr} THEN 3
+            WHEN username ILIKE $2 THEN 2
             ELSE 1
           END
         ) as relevance_score
       FROM users
       WHERE (
-        full_name ILIKE $1
-        OR username ILIKE $1
-        ${locals.isAdmin || locals.user?.id ? 'OR email ILIKE $1' : ''}
+        ${ftsExpr}
+        OR username ILIKE $2
+        ${locals.isAdmin ? 'OR email ILIKE $2' : ''}
       )
       AND role != 'admin'
     `;
 
-    const params: any[] = [searchTerm];
+    const params: unknown[] = [query, likeTerm];
 
     // Add ordering
     switch (sortBy) {
@@ -119,7 +120,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const result = await queryMany(sql, params);
 
     // Format response (exclude sensitive fields)
-    const users = result.map((row: any) => ({
+    const users = result.map((row) => ({
       id: row.id,
       full_name: row.full_name,
       username: row.username,

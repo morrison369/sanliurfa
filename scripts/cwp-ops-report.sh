@@ -11,6 +11,7 @@ set -euo pipefail
 APP_DIR="${APP_DIR:-$HOME/public_html}"
 PORT="${PORT:-4321}"
 PM2_NAME="${PM2_NAME:-sanliurfa-app}"
+HTTP_MAX_TIME="${HTTP_MAX_TIME:-15}"
 STATE_DIR="$APP_DIR/backups/.ops"
 RELEASE_DIR="$APP_DIR/backups/releases"
 JSON_FILE="$STATE_DIR/report.json"
@@ -24,6 +25,38 @@ BOOTSTRAP_AUDIT_SUMMARY_JSON="$STATE_DIR/bootstrap-audit-summary.json"
 DAILY_OPS_SUMMARY_JSON="$STATE_DIR/daily-ops-summary.json"
 WEEKLY_AUDIT_SUMMARY_JSON="$STATE_DIR/weekly-audit-summary.json"
 RELEASE_READINESS_SUMMARY_JSON="$STATE_DIR/release-readiness-summary.json"
+ACCESS_LOG_PROBE_LATEST_JSON="$STATE_DIR/access-log-probe.latest.json"
+ACCESS_LOG_PROBE_LATEST_ERR="$STATE_DIR/access-log-probe.latest.err"
+
+json_read_field() {
+  local json_file="$1"
+  local field_path="$2"
+  node -e '
+    const fs = require("fs");
+    const file = process.argv[1];
+    const path = process.argv[2].split(".");
+    const data = JSON.parse(fs.readFileSync(file, "utf8"));
+    let current = data;
+    for (const key of path) current = current?.[key];
+    if (current === undefined || current === null) process.stdout.write("");
+    else if (typeof current === "string") process.stdout.write(current);
+    else process.stdout.write(String(current));
+  ' "$json_file" "$field_path"
+}
+
+json_read_string_literal() {
+  local json_file="$1"
+  local field_path="$2"
+  node -e '
+    const fs = require("fs");
+    const file = process.argv[1];
+    const path = process.argv[2].split(".");
+    const data = JSON.parse(fs.readFileSync(file, "utf8"));
+    let current = data;
+    for (const key of path) current = current?.[key];
+    process.stdout.write(JSON.stringify(current ?? ""));
+  ' "$json_file" "$field_path"
+}
 
 mkdir -p "$STATE_DIR" "$RELEASE_DIR"
 
@@ -33,7 +66,7 @@ user_name="$(whoami 2>/dev/null || echo unknown)"
 node_version="$(node -v 2>/dev/null || echo unknown)"
 npm_version="$(npm -v 2>/dev/null || echo unknown)"
 
-health_code="$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${PORT}/api/health" || echo 000)"
+health_code="$(curl -s --max-time "$HTTP_MAX_TIME" -o /dev/null -w "%{http_code}" "http://127.0.0.1:${PORT}/api/health" || echo 000)"
 if [ "$health_code" = "200" ]; then
   health_state="ok"
 else
@@ -49,7 +82,10 @@ release_count="$(ls -1 "$RELEASE_DIR" 2>/dev/null | wc -l | tr -d ' ')"
 latest_release="$(ls -1t "$RELEASE_DIR" 2>/dev/null | head -n1 || true)"
 current_release="$(cat "$STATE_DIR/current_release" 2>/dev/null || true)"
 last_predeploy="$(cat "$STATE_DIR/last_predeploy_release" 2>/dev/null || true)"
-event_count="$(wc -l < "$EVENT_LOG" 2>/dev/null || echo 0)"
+event_count=0
+if [ -f "$EVENT_LOG" ]; then
+  event_count="$(wc -l < "$EVENT_LOG" 2>/dev/null || echo 0)"
+fi
 cron_status="missing"
 if crontab -l 2>/dev/null | grep -q "$CRON_TAG"; then
   cron_status="present"
@@ -143,6 +179,37 @@ if [ -f "$RELEASE_READINESS_SUMMARY_JSON" ]; then
   [ -z "$release_readiness_duration_sec" ] && release_readiness_duration_sec=-1
 fi
 
+access_log_probe_status="missing"
+access_log_probe_exit_code=-1
+access_log_probe_available="false"
+access_log_probe_readable_paths_count=0
+access_log_probe_access_like_paths_count=0
+access_log_probe_blocker=""
+access_log_probe_blocker_json='""'
+rm -f "$ACCESS_LOG_PROBE_LATEST_JSON" "$ACCESS_LOG_PROBE_LATEST_ERR"
+set +e
+node "$APP_DIR/scripts/ops/access-log-probe.mjs" --no-write > "$ACCESS_LOG_PROBE_LATEST_JSON" 2> "$ACCESS_LOG_PROBE_LATEST_ERR"
+access_log_probe_exit_code="$?"
+set -e
+if [ -s "$ACCESS_LOG_PROBE_LATEST_JSON" ]; then
+  access_log_probe_available="$(json_read_field "$ACCESS_LOG_PROBE_LATEST_JSON" "accessLogAvailable" 2>/dev/null || echo false)"
+  access_log_probe_readable_paths_count="$(json_read_field "$ACCESS_LOG_PROBE_LATEST_JSON" "readablePathsCount" 2>/dev/null || echo 0)"
+  access_log_probe_access_like_paths_count="$(json_read_field "$ACCESS_LOG_PROBE_LATEST_JSON" "accessLikePathsCount" 2>/dev/null || echo 0)"
+  access_log_probe_blocker="$(json_read_field "$ACCESS_LOG_PROBE_LATEST_JSON" "blocker" 2>/dev/null || true)"
+  access_log_probe_blocker_json="$(json_read_string_literal "$ACCESS_LOG_PROBE_LATEST_JSON" "blocker" 2>/dev/null || echo '""')"
+  if [ "$access_log_probe_available" = "true" ]; then
+    access_log_probe_status="pass"
+  elif [ "$access_log_probe_exit_code" -eq 2 ]; then
+    access_log_probe_status="fail"
+  else
+    access_log_probe_status="error"
+  fi
+elif [ -s "$ACCESS_LOG_PROBE_LATEST_ERR" ]; then
+  access_log_probe_blocker="$(tr '\n' ' ' < "$ACCESS_LOG_PROBE_LATEST_ERR" | sed 's/[[:space:]]\+/ /g' | sed 's/^ //; s/ $//')"
+  access_log_probe_blocker_json="$(node -e 'process.stdout.write(JSON.stringify(process.argv[1] || ""))' "$access_log_probe_blocker")"
+  access_log_probe_status="error"
+fi
+
 cat > "$JSON_FILE" <<EOF
 {
   "generated_at": "$now_utc",
@@ -210,6 +277,14 @@ cat > "$JSON_FILE" <<EOF
     "exit_code": $release_readiness_exit_code,
     "duration_sec": $release_readiness_duration_sec,
     "ended_at": "${release_readiness_ended_at:-}"
+  },
+  "access_log_probe": {
+    "status": "$access_log_probe_status",
+    "exit_code": $access_log_probe_exit_code,
+    "access_log_available": $access_log_probe_available,
+    "readable_paths_count": $access_log_probe_readable_paths_count,
+    "access_like_paths_count": $access_log_probe_access_like_paths_count,
+    "blocker": $access_log_probe_blocker_json
   }
 }
 EOF
@@ -275,6 +350,16 @@ EOF
   echo "- Exit code: $release_readiness_exit_code"
   echo "- Duration (sec): $release_readiness_duration_sec"
   echo "- Ended at (UTC): ${release_readiness_ended_at:-yok}"
+  echo ""
+  echo "## Access Log Probe"
+  echo "- Status: $access_log_probe_status"
+  echo "- Exit code: $access_log_probe_exit_code"
+  echo "- Access log erişimi: $access_log_probe_available"
+  echo "- Okunabilen yol sayısı: $access_log_probe_readable_paths_count"
+  echo "- Access-like yol sayısı: $access_log_probe_access_like_paths_count"
+  if [ -n "$access_log_probe_blocker" ]; then
+    echo "- Bloker: $access_log_probe_blocker"
+  fi
 } > "$MD_FILE"
 
 echo "Report generated:"

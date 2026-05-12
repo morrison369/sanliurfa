@@ -4,101 +4,91 @@ import ActivityFeed from '../../components/ActivityFeed';
 import UserSuggestionsPanel from '../../components/UserSuggestionsPanel';
 import HashtagExplorer from '../../components/HashtagExplorer';
 
-// Auth check
 const userId = Astro.locals.user?.id;
 if (!userId) {
-  return Astro.redirect('/giris?redirect=/sosyal');
+ return Astro.redirect('/giris?redirect=/sosyal');
 }
 
-// Get initial hashtag from URL params
 const initialTag = Astro.url.searchParams.get('tag') || undefined;
+const hashtagExplorerProps: { initialSlug?: string } = {};
+if (initialTag) {
+ hashtagExplorerProps.initialSlug = initialTag;
+}
 ---
 
 <Layout seo={{ title: "Sosyal - Şanlıurfa", noIndex: true }}>
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-gray-900 mb-2">Sosyal</h1>
-    <p class="text-gray-600 mb-8">Şanlıurfa sosyal akışı, trend konular ve kullanıcı önerileri</p>
+ <style is:inline>
+ .sz-page{background:var(--bg);min-height:100vh}
+ .sz-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,.12);padding:2.5rem 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+ .sz-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#7A6B58}
+ .sz-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2rem);font-weight:700;color:#1F1410;margin:.5rem 0 .25rem}
+ .sz-desc{color:#7A6B58;font-size:.88rem}
+ .sz-body{padding:2rem 0 4rem}
+ .sz-grid{display:grid;gap:1.5rem}
+ @media(min-width:64rem){.sz-grid{grid-template-columns:280px 1fr}}
+ .sz-sidebar-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem}
+ .sz-sidebar-title{font-size:.9rem;font-weight:700;color:#1F1410;margin-bottom:1rem}
+ .sz-tabs{border-bottom:1px solid rgba(184,115,51,.14);margin-bottom:1.5rem;display:flex;gap:.25rem}
+ .sz-tab-btn{padding:.6rem 1rem;font-size:.9rem;font-weight:600;color:#7A6B58;border-bottom:2px solid transparent;border-left:none;border-right:none;border-top:none;background:none;cursor:pointer;transition:color .15s,border-color .15s}
+ .sz-tab-btn--active{color:#1F1410;border-bottom-color:#B87333}
+ .sz-tab-btn:hover:not(.sz-tab-btn--active){color:#B87333}
+ </style>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Left Sidebar */}
-      <div class="space-y-6">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Sizi Tanıyabileceğiniz Kişiler
-          </h2>
-          <UserSuggestionsPanel client:visible={{ rootMargin: '140px' }} />
-        </div>
-      </div>
+ <div class="sz-page">
+ <div class="sz-hero">
+ <div class="sf-container">
+ <p class="sz-label">Şanlıurfa Platformu</p>
+ <h1 class="sz-h1">Sosyal</h1>
+ <p class="sz-desc">Şanlıurfa sosyal akışı, trend konular ve kullanıcı önerileri</p>
+ </div>
+ </div>
 
-      {/* Main Content */}
-      <div class="lg:col-span-2">
-        {/* Tab Bar */}
-        <div class="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-6">
-          <button
-            data-tab-btn="feed"
-            class="px-4 py-2 font-semibold text-gray-900 dark:text-white border-b-2 border-blue-600"
-          >
-            Aktivite Akışı
-          </button>
-          <button
-            data-tab-btn="hashtag"
-            class="px-4 py-2 font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-900 dark:hover:text-white"
-          >
-            Hashtag Keşfet
-          </button>
-        </div>
+ <div class="sz-body">
+ <div class="sf-container">
+ <div class="sz-grid">
+ <div>
+ <div class="sz-sidebar-card">
+ <h2 class="sz-sidebar-title">Sizi Tanıyabileceğiniz Kişiler</h2>
+ <UserSuggestionsPanel client:visible={{ rootMargin: '140px' }} />
+ </div>
+ </div>
 
-        {/* Tab Content */}
-        <div id="tab-feed" class="tab-content space-y-4">
-          <ActivityFeed client:visible={{ rootMargin: '120px' }} userId={userId} />
-        </div>
+ <div>
+ <div class="sz-tabs">
+ <button data-tab-btn="feed" class="sz-tab-btn sz-tab-btn--active">Aktivite Akışı</button>
+ <button data-tab-btn="hashtag" class="sz-tab-btn">Hashtag Keşfet</button>
+ </div>
 
-        <div id="tab-hashtag" class="tab-content hidden">
-          <HashtagExplorer client:idle initialSlug={initialTag} />
-        </div>
-      </div>
-    </div>
-  </div>
+ <div id="tab-feed" class="sz-tab-content">
+ <ActivityFeed client:visible={{ rootMargin: '120px' }} userId={userId} />
+ </div>
 
-  <script is:inline>
-    {
-      // Tab switching logic
-      const tabButtons = document.querySelectorAll('[data-tab-btn]');
+ <div id="tab-hashtag" class="sz-tab-content" style="display:none">
+ <HashtagExplorer client:idle {...hashtagExplorerProps} />
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-      tabButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          const tabName = btn.getAttribute('data-tab-btn');
-
-          // Hide all tabs
-          document.querySelectorAll('.tab-content').forEach(el => {
-            el.classList.add('hidden');
-          });
-
-          // Remove active styles from all buttons
-          tabButtons.forEach(b => {
-            b.classList.remove('border-b-2', 'border-blue-600', 'text-gray-900', 'dark:text-white');
-            b.classList.add('border-b-2', 'border-transparent', 'text-gray-600', 'dark:text-gray-400');
-          });
-
-          // Show selected tab
-          const selectedTab = document.getElementById(`tab-${tabName}`);
-          if (selectedTab) {
-            selectedTab.classList.remove('hidden');
-          }
-
-          // Style selected button
-          btn.classList.remove('border-b-2', 'border-transparent', 'text-gray-600', 'dark:text-gray-400');
-          btn.classList.add('border-b-2', 'border-blue-600', 'text-gray-900', 'dark:text-white');
-        });
-      });
-
-      // If hashtag tab is selected via initialTag, switch to it
-      if (document.location.search.includes('tag=')) {
-        const hashtagBtn = document.querySelector('[data-tab-btn="hashtag"]');
-        if (hashtagBtn) {
-          hashtagBtn.click();
-        }
-      }
-    }
-  </script>
+ <script is:inline>
+ {
+ const tabButtons = document.querySelectorAll('[data-tab-btn]');
+ tabButtons.forEach(btn => {
+ btn.addEventListener('click', () => {
+ const tabName = btn.getAttribute('data-tab-btn');
+ document.querySelectorAll('.sz-tab-content').forEach(el => { el.style.display = 'none'; });
+ tabButtons.forEach(b => b.classList.remove('sz-tab-btn--active'));
+ const selectedTab = document.getElementById('tab-' + tabName);
+ if (selectedTab) selectedTab.style.display = '';
+ btn.classList.add('sz-tab-btn--active');
+ });
+ });
+ if (document.location.search.includes('tag=')) {
+ const hashtagBtn = document.querySelector('[data-tab-btn="hashtag"]');
+ if (hashtagBtn) hashtagBtn.click();
+ }
+ }
+ </script>
 </Layout>

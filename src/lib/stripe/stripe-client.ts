@@ -1,32 +1,29 @@
 /**
  * Stripe Client Library
  * Initialize and manage Stripe API interactions
+ *
+ * Credentials come from `getStripeConfig()` (site_settings → env fallback, 60s cache),
+ * so admin can rotate keys via /admin/integrations without restarting the server.
  */
 
 import Stripe from 'stripe';
 import { logger } from '../logger';
-import { getEnv } from '../env';
+import { getStripeConfig } from './stripe-config';
 
 let stripeClient: Stripe | null = null;
+let stripeClientKey: string | null = null;
 
 /**
- * Get or initialize Stripe client
+ * Get or initialize Stripe client. Re-initializes if the underlying key was rotated.
  */
-export function getStripeClient(): Stripe {
-  if (stripeClient) {
-    return stripeClient;
+export async function getStripeClient(): Promise<Stripe> {
+  const cfg = await getStripeConfig();
+  if (!cfg.secret_key) {
+    throw new Error('STRIPE_SECRET_KEY is not configured (set via /admin/integrations or env)');
   }
-
-  // @ts-expect-error - getEnv signature mismatch
-  const secretKey = getEnv('STRIPE_SECRET_KEY') as any;
-  if (!secretKey) {
-    throw new Error('STRIPE_SECRET_KEY environment variable is not set');
-  }
-
-  stripeClient = new Stripe(secretKey as string, {
-    apiVersion: '2024-06-20',
-  });
-
+  if (stripeClient && stripeClientKey === cfg.secret_key) return stripeClient;
+  stripeClient = new Stripe(cfg.secret_key, { apiVersion: '2026-04-22.dahlia' });
+  stripeClientKey = cfg.secret_key;
   return stripeClient;
 }
 
@@ -44,7 +41,7 @@ export async function createCheckoutSession(params: {
   customerEmail?: string;
 }): Promise<{ id: string; url: string | null }> {
   try {
-    const stripe = getStripeClient();
+    const stripe = await getStripeClient();
 
     // Determine price based on billing cycle
     const isAnnual = params.billingCycle === 'annual';
@@ -110,7 +107,7 @@ export async function createCheckoutSession(params: {
  */
 export async function getCheckoutSession(sessionId: string): Promise<Stripe.Checkout.Session> {
   try {
-    const stripe = getStripeClient();
+    const stripe = await getStripeClient();
     return await stripe.checkout.sessions.retrieve(sessionId);
   } catch (error) {
     logger.error('Failed to get checkout session', error instanceof Error ? error : new Error(String(error)), {} as any);
@@ -123,7 +120,7 @@ export async function getCheckoutSession(sessionId: string): Promise<Stripe.Chec
  */
 export async function getSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
   try {
-    const stripe = getStripeClient();
+    const stripe = await getStripeClient();
     return await stripe.subscriptions.retrieve(subscriptionId);
   } catch (error) {
     logger.error('Failed to get subscription', error instanceof Error ? error : new Error(String(error)), {} as any);
@@ -136,7 +133,7 @@ export async function getSubscription(subscriptionId: string): Promise<Stripe.Su
  */
 export async function cancelSubscription(subscriptionId: string, immediate: boolean = false): Promise<Stripe.Subscription> {
   try {
-    const stripe = getStripeClient();
+    const stripe = await getStripeClient();
     return await stripe.subscriptions.update(subscriptionId, {
       cancel_at_period_end: !immediate,
     });
@@ -151,7 +148,7 @@ export async function cancelSubscription(subscriptionId: string, immediate: bool
  */
 export async function getInvoice(invoiceId: string): Promise<Stripe.Invoice> {
   try {
-    const stripe = getStripeClient();
+    const stripe = await getStripeClient();
     return await stripe.invoices.retrieve(invoiceId);
   } catch (error) {
     logger.error('Failed to get invoice', error instanceof Error ? error : new Error(String(error)), {} as any);
@@ -164,9 +161,9 @@ export async function getInvoice(invoiceId: string): Promise<Stripe.Invoice> {
  */
 export async function verifyStripeWebhookSignature(body: string, signature: string | string[] | undefined): Promise<Stripe.Event> {
   try {
-    const stripe = getStripeClient();
-    // @ts-expect-error - getEnv signature mismatch
-    const webhookSecret = getEnv('STRIPE_WEBHOOK_SECRET') as any;
+    const stripe = await getStripeClient();
+    const cfg = await getStripeConfig();
+    const webhookSecret = cfg.webhook_secret;
 
     if (!webhookSecret) {
       throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
@@ -190,7 +187,7 @@ export async function verifyStripeWebhookSignature(body: string, signature: stri
  */
 export async function getCustomerSubscriptions(customerId: string): Promise<Stripe.Subscription[]> {
   try {
-    const stripe = getStripeClient();
+    const stripe = await getStripeClient();
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       limit: 100,
@@ -208,9 +205,9 @@ export async function getCustomerSubscriptions(customerId: string): Promise<Stri
  */
 export async function getInvoicePdfUrl(invoiceId: string): Promise<string | null> {
   try {
-    const stripe = getStripeClient();
+    const stripe = await getStripeClient();
     const invoice = await stripe.invoices.retrieve(invoiceId);
-    return invoice.invoice_pdf;
+    return invoice.invoice_pdf ?? null;
   } catch (error) {
     logger.error('Failed to get invoice PDF', error instanceof Error ? error : new Error(String(error)), {} as any);
     return null;

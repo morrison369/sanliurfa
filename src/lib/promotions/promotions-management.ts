@@ -3,7 +3,7 @@
  * Handle business promotions, discounts, and coupon validation
  */
 
-import { query, queryOne, queryMany, insert } from '../postgres';
+import { query, queryOne, queryMany } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
 
@@ -43,7 +43,7 @@ export async function getPromotion(promotionId: string): Promise<Promotion | nul
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const result = await queryOne(
@@ -93,7 +93,7 @@ export async function getPlacePromotions(placeId: string): Promise<Promotion[]> 
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(
@@ -251,23 +251,19 @@ export async function searchPromotions(query: string, limit: number = 20): Promi
  */
 export async function redeemPromotion(promotionId: string, userId: string, discountAmount: number): Promise<boolean> {
   try {
-    // Check if user already redeemed this promotion
-    const existing = await queryOne(
-      'SELECT id FROM promotion_redemptions WHERE promotion_id = $1 AND user_id = $2',
-      [promotionId, userId]
+    // Atomic INSERT (HARD RULE #47): SELECT-then-INSERT race-prone — concurrent redemption could double-count
+    const inserted = await queryOne(
+      `INSERT INTO promotion_redemptions (promotion_id, user_id, discount_amount)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (promotion_id, user_id) DO NOTHING
+       RETURNING id`,
+      [promotionId, userId, discountAmount]
     );
 
-    if (existing) {
+    if (!inserted) {
       logger.warn('User already redeemed promotion', Object.assign(new Error('User already redeemed promotion'), { promotionId, userId }));
       return false;
     }
-
-    // Record redemption
-    await insert('promotion_redemptions', {
-      promotion_id: promotionId,
-      user_id: userId,
-      discount_amount: discountAmount
-    });
 
     // Increment usage count
     await query(
@@ -296,7 +292,7 @@ export async function getPromotionStats(placeId: string): Promise<PromotionStats
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const redemptionResult = await queryOne(
@@ -320,10 +316,10 @@ export async function getPromotionStats(placeId: string): Promise<PromotionStats
     );
 
     const stats: PromotionStats = {
-      totalRedemptions: parseInt(redemptionResult?.count || '0'),
+      totalRedemptions: parseInt(redemptionResult?.count || '0', 10),
       totalDiscountGiven: parseFloat(redemptionResult?.total || '0'),
-      activeCount: parseInt(activeResult?.count || '0'),
-      expiredCount: parseInt(expiredResult?.count || '0')
+      activeCount: parseInt(activeResult?.count || '0', 10),
+      expiredCount: parseInt(expiredResult?.count || '0', 10)
     };
 
     await setCache(cacheKey, JSON.stringify(stats), 3600);
@@ -349,7 +345,7 @@ export async function getTrendingPromotions(limit: number = 10): Promise<Promoti
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(

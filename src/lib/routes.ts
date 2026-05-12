@@ -1,11 +1,10 @@
-// @ts-nocheck
 /**
  * Lazy Loading Routes Configuration
  * Code-splitting for better performance
  */
 
 // Route definitions with lazy loading
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export const lazyRoutes: Record<string, () => Promise<any>> = {
   '/admin': () => import('../pages/admin/index.astro'),
   '/admin/dashboard': () => import('../pages/admin/dashboard.astro'),
@@ -18,8 +17,10 @@ export const lazyRoutes: Record<string, () => Promise<any>> = {
   '/admin/moderation': () => import('../pages/admin/moderation.astro'),
   '/admin/verifications': () => import('../pages/admin/verifications.astro'),
   '/admin/webhooks': () => import('../pages/admin/webhooks.astro'),
-  '/isletme': () => import('../pages/isletme/analytics.astro'),
-  '/vendor/dashboard': () => import('../pages/vendor/dashboard.astro'),
+  '/isletme': () => import('../pages/isletme/index.astro'),
+  '/isletme/panel': () => import('../pages/isletme/panel.astro'),
+  '/isletme/analytics': () => import('../pages/isletme/analytics.astro'),
+  '/isletme/pazarlama': () => import('../pages/isletme/pazarlama.astro'),
   '/canli-analitik': () => import('../pages/canli-analitik/index.astro'),
   '/raporlar': () => import('../pages/raporlar/index.astro'),
   '/veri-ambari': () => import('../pages/veri-ambarı/index.astro'),
@@ -42,6 +43,11 @@ export const lazyRoutes: Record<string, () => Promise<any>> = {
   '/tarihi-yerler': () => import('../pages/tarihi-yerler/index.astro'),
 };
 
+export const legacyLazyRoutes: Record<string, () => Promise<any>> = {
+  '/vendor/dashboard': () => import('../pages/vendor/dashboard.astro'),
+  '/vendor/analytics': () => import('../pages/vendor/analytics.astro'),
+};
+
 export const criticalRoutes = [
   '/',
   '/mekanlar',
@@ -53,9 +59,9 @@ export const criticalRoutes = [
 
 export function shouldLazyLoad(path: string): boolean {
   if (path in lazyRoutes) return true;
+  if (path in legacyLazyRoutes) return true;
   if (path.startsWith('/admin/')) return true;
   if (path.startsWith('/isletme/')) return true;
-  if (path.startsWith('/vendor/')) return true;
   if (path.startsWith('/profil/')) return true;
   if (path.startsWith('/kullanici/')) return true;
   if (path.startsWith('/isletme-kayit')) return true;

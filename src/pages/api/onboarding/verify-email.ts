@@ -5,12 +5,13 @@
 import type { APIRoute } from 'astro';
 import { verifyUserEmail, getUserOnboardingStatus } from '../../../lib/user/user-onboarding';
 import { validateWithSchema } from '../../../lib/validation';
+import type { ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { verifyToken } from '../../../lib/auth';
 
-const schema = {
+const schema: ValidationSchema = {
   token: { type: 'string' as const, required: true, minLength: 20 }
 };
 
@@ -21,7 +22,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/onboarding/verify-email', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);

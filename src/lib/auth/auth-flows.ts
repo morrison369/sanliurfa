@@ -2,12 +2,19 @@ import bcrypt from 'bcryptjs';
 
 import { getCache, setCache, deleteCache } from '../cache';
 import { getRedisClient, prefixKey } from '../cache/cache';
-import { createToken, hashPassword, validatePasswordStrength, verifyToken } from '../auth';
+import { createToken, getUserFromToken, hashPassword, validatePasswordStrength } from '../auth';
+import { validateEmail } from '../validation';
+
+// Pre-computed bcrypt hash used for constant-time login defense.
+// When user not found, we still call bcrypt.compare against this dummy hash
+// to equalize timing with valid users (prevents email enumeration via timing oracle).
+const DUMMY_BCRYPT_HASH = '$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 import { logger } from '../logging';
 import { query, queryOne } from '../postgres';
 import { verifyTOTPCode } from '../two-factor';
 
 interface SessionCookieStore {
+  get?: (key: string) => { value: string } | undefined;
   set: (
     key: string,
     value: string,
@@ -117,6 +124,38 @@ function setAuthCookie(cookies: SessionCookieStore, token: string): void {
   });
 }
 
+// Invalidates any pre-existing session before issuing a new one.
+// Prevents stale-session attacks: a previously stolen token would otherwise
+// remain valid for up to SESSION_TIMEOUT seconds after re-login.
+async function invalidateExistingSession(cookies: SessionCookieStore): Promise<void> {
+  try {
+    const existingToken = cookies.get?.('auth-token')?.value;
+    if (!existingToken) return;
+    const redis = await getRedisClient();
+    await redis.del(prefixKey(`session:${existingToken}`));
+  } catch {
+    // Non-fatal — the new session is still created; old one will expire naturally
+  }
+}
+
+/**
+ * OAuth login için standart JWT oturumu oluşturur.
+ * callback.ts'in createUserSession (hex token, user_sessions tablosu) yerine kullanılır —
+ * o token middleware'in verifyToken (JWT) beklentisiyle uyuşmuyor, OAuth login broken kalıyor.
+ */
+export async function runOAuthSessionFlow(
+  userId: string,
+  email: string,
+  role: string,
+  cookies: SessionCookieStore,
+): Promise<void> {
+  await invalidateExistingSession(cookies);
+  const token = createToken({ userId, email, role });
+  await persistAuthSession(token, { id: userId, email, role });
+  setAuthCookie(cookies, token);
+  await query('UPDATE users SET updated_at = NOW() WHERE id = $1', [userId]);
+}
+
 const MAX_FAILED_LOGINS = 5;
 const LOGIN_LOCKOUT_SECONDS = 900; // 15 dakika
 
@@ -139,6 +178,8 @@ export async function runLoginFlow(
   );
 
   if (result.rows.length === 0) {
+    // Constant-time defense: equalize timing with valid-user path
+    await bcrypt.compare(password, DUMMY_BCRYPT_HASH);
     await setCache(failedKey, failedCount + 1, LOGIN_LOCKOUT_SECONDS).catch(() => null);
     throw new Error('E-posta veya şifre hatalı.');
   }
@@ -146,7 +187,9 @@ export async function runLoginFlow(
   const user = result.rows[0];
 
   if (user.status === 'suspended' || user.status === 'deleted') {
-    throw new Error('Hesap aktif değil.');
+    await bcrypt.compare(password, DUMMY_BCRYPT_HASH);
+    await setCache(failedKey, failedCount + 1, LOGIN_LOCKOUT_SECONDS).catch(() => null);
+    throw new Error('E-posta veya şifre hatalı.');
   }
 
   const validPassword = await bcrypt.compare(password, user.password_hash);
@@ -172,6 +215,7 @@ export async function runLoginFlow(
     };
   }
 
+  await invalidateExistingSession(cookies);
   await query('UPDATE users SET updated_at = NOW() WHERE id = $1', [user.id]);
 
   const token = createToken({ userId: user.id, email: user.email, role: user.role });
@@ -198,6 +242,10 @@ export async function runRegisterFlow(
   const fullName = input.fullName.trim();
   const email = input.email.toLowerCase().trim();
   const password = input.password;
+
+  if (!validateEmail(email)) {
+    throw new Error('Geçerli bir e-posta adresi giriniz.');
+  }
 
   const strength = validatePasswordStrength(password);
   if (!strength.valid) {
@@ -238,6 +286,16 @@ export async function runRegisterFlow(
   };
 }
 
+const MAX_2FA_ATTEMPTS = 5;
+
+export class TwoFactorRateLimitError extends Error {
+  constructor() { super('Çok fazla hatalı 2FA denemesi. Lütfen tekrar giriş yapın.'); }
+}
+
+export class TwoFactorCodeError extends Error {
+  constructor() { super('Doğrulama kodu hatalı.'); }
+}
+
 export async function runLoginTwoFactorFlow(
   input: { tempToken: string; code: string },
   cookies: SessionCookieStore,
@@ -249,8 +307,20 @@ export async function runLoginTwoFactorFlow(
     throw new Error('Geçici token geçersiz veya süresi dolmuş.');
   }
 
-  const sessionData = await verifyToken(tempToken);
-  if (!sessionData) {
+  // Rate limit: max 5 failed attempts per 2FA session (same TTL as pending key: 5 min).
+  // On exceeded limit, invalidate the pending key to force full re-login.
+  const attemptKey = `2fa:attempt:${tempToken}`;
+  const attempts = Number(await getCache(attemptKey).catch(() => null)) || 0;
+  if (attempts >= MAX_2FA_ATTEMPTS) {
+    await deleteCache(`2fa:pending:${tempToken}`).catch(() => null);
+    throw new TwoFactorRateLimitError();
+  }
+
+  // 2FA temp tokens intentionally have no Redis session (persistAuthSession was not called).
+  // Use JWT-only decode to avoid the HARD RULE #35 Redis check — the 2fa:pending cache key
+  // above already serves as the authoritative "is this a valid pending 2FA token?" check.
+  const sessionData = getUserFromToken(tempToken);
+  if (!sessionData || sessionData.purpose !== '2fa_pending') {
     throw new Error('Oturum verileri alınamadı.');
   }
 
@@ -265,19 +335,30 @@ export async function runLoginTwoFactorFlow(
 
   const isCodeValid = verifyTOTPCode(user.two_factor_secret, code);
   if (!isCodeValid) {
-    throw new Error('Doğrulama kodu hatalı.');
+    await setCache(attemptKey, attempts + 1, 300).catch(() => null);
+    throw new TwoFactorCodeError();
   }
+
+  // TOTP replay prevention: reject the same code if already used within its validity window.
+  // A network interceptor seeing the code has 90s (3 × 30s TOTP windows) to replay it;
+  // this cache key closes that window. Key scoped to userId to avoid cross-user collisions.
+  const replayKey = `2fa:used:${sessionData.userId}:${code}`;
+  const alreadyUsed = await getCache(replayKey).catch(() => null);
+  if (alreadyUsed) {
+    throw new TwoFactorCodeError();
+  }
+  await setCache(replayKey, '1', 90).catch(() => null);
 
   const authToken = createToken({
     userId: sessionData.userId,
     email: sessionData.email,
-    role: sessionData.role,
+    ...(sessionData.role ? { role: sessionData.role } : {}),
   });
 
   await persistAuthSession(authToken, {
     id: sessionData.userId,
     email: sessionData.email,
-    role: sessionData.role,
+    ...(sessionData.role ? { role: sessionData.role } : {}),
   });
   setAuthCookie(cookies, authToken);
   await deleteCache(`2fa:pending:${tempToken}`);

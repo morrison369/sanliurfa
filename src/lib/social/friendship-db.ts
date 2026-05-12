@@ -133,9 +133,11 @@ export async function followUser(followerId: string, followingId: string): Promi
       };
     }
 
-    // Clear caches
-    await deleteCache(`social:following:${followerId}`);
-    await deleteCache(`social:followers:${followingId}`);
+    // Clear caches (paralel)
+    await Promise.all([
+      deleteCache(`social:following:${followerId}`),
+      deleteCache(`social:followers:${followingId}`),
+    ]);
 
     return friendship;
   });
@@ -168,9 +170,11 @@ export async function unfollowUser(followerId: string, followingId: string): Pro
       [followingId]
     );
 
-    // Clear caches
-    await deleteCache(`social:following:${followerId}`);
-    await deleteCache(`social:followers:${followingId}`);
+    // Clear caches (paralel)
+    await Promise.all([
+      deleteCache(`social:following:${followerId}`),
+      deleteCache(`social:followers:${followingId}`),
+    ]);
 
     return true;
   });

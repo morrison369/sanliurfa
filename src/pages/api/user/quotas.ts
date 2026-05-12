@@ -4,7 +4,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { getUserUsage, getQuotaMessage } from '../../../lib/usage/usage-tracking';
+import { getUserUsage, getQuotaMessage, type QuotaFeature } from '../../../lib/usage/usage-tracking';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
@@ -48,7 +48,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
         percentageUsed,
         resetDate: record.resetDate,
         message: getQuotaMessage(
-          record.featureName as any,
+          record.featureName as QuotaFeature,
           {
             current: record.currentUsage,
             limit: record.limitValue,

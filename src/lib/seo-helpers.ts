@@ -10,7 +10,7 @@ import { SITE } from '../data/site';
 /**
  * Canonical URL olusturur.
  * 
- * @param path - Sayfa yolu (orn: '/places/gobeklitepe')
+ * @param path - Sayfa yolu (orn: '/isletme/gobeklitepe')
  * @returns Tam canonical URL
  */
 export function generateCanonicalUrl(path: string): string {
@@ -183,7 +183,7 @@ export function generateSchemaOrg(params: {
   const canonicalUrl = generateCanonicalUrl(url);
 
   // Temel schema objesi
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const schema: Record<string, any> = {
     '@context': 'https://schema.org',
     '@type': type,

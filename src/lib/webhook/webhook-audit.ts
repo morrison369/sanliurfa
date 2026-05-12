@@ -1,5 +1,6 @@
 import type { Pool } from 'pg';
 import { logger } from '../logging';
+import { safeJsonParse } from '../api';
 
 export interface AuditLog {
   id: string;
@@ -58,31 +59,30 @@ export async function getWebhookAuditHistory(
   offset = 0
 ): Promise<{ logs: AuditLog[]; total: number }> {
   try {
-    // Get total count
-    const countRes = await pool.query(
-      `SELECT COUNT(*) as count FROM webhook_audit_logs
-       WHERE webhook_id = $1 AND user_id = $2`,
-      [webhookId, userId]
-    );
-
-    // Get paginated logs
-    const logsRes = await pool.query(
-      `SELECT id, webhook_id, user_id, action, resource_type, resource_id,
-              changes, metadata, created_at
-       FROM webhook_audit_logs
-       WHERE webhook_id = $1 AND user_id = $2
-       ORDER BY created_at DESC
-       LIMIT $3 OFFSET $4`,
-      [webhookId, userId, limit, offset]
-    );
+    const [countRes, logsRes] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(*) as count FROM webhook_audit_logs
+         WHERE webhook_id = $1 AND user_id = $2`,
+        [webhookId, userId]
+      ),
+      pool.query(
+        `SELECT id, webhook_id, user_id, action, resource_type, resource_id,
+                changes, metadata, created_at
+         FROM webhook_audit_logs
+         WHERE webhook_id = $1 AND user_id = $2
+         ORDER BY created_at DESC
+         LIMIT $3 OFFSET $4`,
+        [webhookId, userId, limit, offset]
+      ),
+    ]);
 
     return {
       logs: logsRes.rows.map((row: any) => ({
         ...row,
-        changes: JSON.parse(row.changes),
-        metadata: JSON.parse(row.metadata)
+        changes: safeJsonParse(row.changes, {}),
+        metadata: safeJsonParse(row.metadata, {})
       })),
-      total: parseInt(countRes.rows[0]?.count || '0')
+      total: parseInt(countRes.rows[0]?.count || '0', 10)
     };
   } catch (error) {
     logger.error('Error getting audit history:', error);
@@ -104,41 +104,41 @@ export async function getUserActivitySummary(
   recentActivity: AuditLog[];
 }> {
   try {
-    const result = await pool.query(
-      `SELECT action, resource_type, COUNT(*) as count
-       FROM webhook_audit_logs
-       WHERE user_id = $1
-       AND created_at > NOW() - INTERVAL '1 hour' * $2
-       GROUP BY action, resource_type`,
-      [userId, hours]
-    );
+    const [result, recentRes] = await Promise.all([
+      pool.query(
+        `SELECT action, resource_type, COUNT(*) as count
+         FROM webhook_audit_logs
+         WHERE user_id = $1
+         AND created_at > NOW() - INTERVAL '1 hour' * $2
+         GROUP BY action, resource_type`,
+        [userId, hours]
+      ),
+      pool.query(
+        `SELECT id, webhook_id, user_id, action, resource_type, resource_id,
+                changes, metadata, created_at
+         FROM webhook_audit_logs
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT 10`,
+        [userId]
+      ),
+    ]);
 
     const byAction: Record<string, number> = {};
     const byResourceType: Record<string, number> = {};
     let totalActions = 0;
 
     for (const row of result.rows) {
-      const count = parseInt(row.count);
+      const count = parseInt(row.count, 10);
       byAction[row.action] = (byAction[row.action] || 0) + count;
       byResourceType[row.resource_type] = (byResourceType[row.resource_type] || 0) + count;
       totalActions += count;
     }
 
-    // Get recent activity
-    const recentRes = await pool.query(
-      `SELECT id, webhook_id, user_id, action, resource_type, resource_id,
-              changes, metadata, created_at
-       FROM webhook_audit_logs
-       WHERE user_id = $1
-       ORDER BY created_at DESC
-       LIMIT 10`,
-      [userId]
-    );
-
     const recentActivity = recentRes.rows.map((row: any) => ({
       ...row,
-      changes: JSON.parse(row.changes),
-      metadata: JSON.parse(row.metadata)
+      changes: safeJsonParse(row.changes, {}),
+      metadata: safeJsonParse(row.metadata, {})
     }));
 
     return {

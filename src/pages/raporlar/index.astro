@@ -2,20 +2,32 @@
 import Layout from '../../layouts/Layout.astro';
 import ReportManager from '../../components/ReportManager';
 
-// Auth check
-const userId = Astro.locals.user?.id;
-if (!userId) {
-  return Astro.redirect('/giris');
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect('/giris?redirect=/raporlar');
 }
 ---
 
 <Layout seo={{ title: "Raporlar | Şanlıurfa", noIndex: true }}>
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 mb-2">Raporlar</h1>
-      <p class="text-gray-600">Raporları çalıştırın, dışa aktarın ve şablonları yönetin</p>
-    </div>
+ <style is:inline>
+ .rp-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:2.5rem 0}
+ .rp-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#4A3828}
+ .rp-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:700;color:#1F1410;margin:.5rem 0 .25rem}
+ .rp-desc{color:#7A6B58;font-size:.9rem}
+ .rp-body{background:var(--bg);padding:2rem 0 4rem}
+ </style>
 
-    <ReportManager client:visible={{ rootMargin: '140px' }} />
-  </div>
+ <div class="rp-hero">
+ <div class="sf-container">
+ <p class="rp-label">Hesabım</p>
+ <h1 class="rp-h1">Raporlar</h1>
+ <p class="rp-desc">Raporları çalıştırın, dışa aktarın ve şablonları yönetin</p>
+ </div>
+ </div>
+
+ <div class="rp-body">
+ <div class="sf-container">
+ <ReportManager client:visible={{ rootMargin: '140px' }} />
+ </div>
+ </div>
 </Layout>

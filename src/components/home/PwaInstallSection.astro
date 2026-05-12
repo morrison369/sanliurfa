@@ -1,0 +1,40 @@
+---
+import type { HomeSectionBaseProps } from './section-contract';
+
+const { enabled, order } = Astro.props as HomeSectionBaseProps;
+if (!enabled) return null;
+---
+
+<section
+ style={`order:${order}`}
+ class="bg-[#0D0A08] text-[#F5EDD6] border-y border-[rgba(184,115,51,0.14)]"
+>
+ <div class="container mx-auto px-4 py-8">
+ <div class="flex items-start justify-between gap-4 flex-wrap">
+ <div>
+ <h2 class="text-2xl font-bold">Uygulama Gibi Kullan</h2>
+ <p class="mt-2 text-sm text-[#c9b190]">
+ Şanlıurfa rehberini ana ekrana ekleyin, hızlı açılışla uygulama deneyimi alın.
+ </p>
+ </div>
+ <p class="rounded-sm border border-[rgba(184,115,51,0.18)] bg-[#1A1008]/70 px-4 py-2 text-xs font-medium text-[#e6d4b2]">
+ Android için tarayıcı menüsündeki <strong class="text-white">Ana ekrana ekle</strong> seçeneğini kullanın.
+ </p>
+ </div>
+
+ <div class="mt-4 grid md:grid-cols-2 gap-4">
+ <article class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[#1A1008]/80 p-4">
+ <h3 class="font-semibold text-white">Android (Chrome)</h3>
+ <p class="mt-2 text-sm text-[#c9b190]">
+ “Uygulamayı Yükle” butonuna tıklayın veya menüden “Ana ekrana ekle”.
+ </p>
+ </article>
+ <article class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[#1A1008]/80 p-4">
+ <h3 class="font-semibold text-white">iOS (Safari)</h3>
+ <p class="mt-2 text-sm text-[#c9b190]">
+ Paylaş menüsünden “Ana Ekrana Ekle” ile uygulama gibi kullanın.
+ </p>
+ </article>
+ </div>
+ </div>
+</section>

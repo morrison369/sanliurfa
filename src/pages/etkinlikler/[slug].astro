@@ -1,384 +1,382 @@
 ---
-
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
-import Breadcrumb from '../../components/Breadcrumb.astro';
-import Image from '../../components/Image.astro';
+import PublicDetailHero from '../../components/public/PublicDetailHero.astro';
+import PublicCollectionHero from '../../components/public/PublicCollectionHero.astro';
+import PublicCollectionBody from '../../components/public/PublicCollectionBody.astro';
+import PublicDetailBody from '../../components/public/PublicDetailBody.astro';
+import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
+import PublicFaqList from '../../components/public/PublicFaqList.astro';
+import PublicInfoGrid from '../../components/public/PublicInfoGrid.astro';
 import { query, queryOne } from '../../lib/postgres';
-import { resolveContentImage } from '../../lib/content-images';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import RelatedEvents from '../../components/events/RelatedEvents.astro';
+import { logger } from '../../lib/logging';
+import { resolveEventImage } from '../../lib/public-image-resolvers';
+const baseUrl = getPublicAppUrl();
 
-// SVG ikonlar
-const icons = {
-  calendar: `<svg class="w-6 h-6 text-urfa-600 dark:text-urfa-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
-  clock: `<svg class="w-6 h-6 text-urfa-600 dark:text-urfa-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-  mapPin: `<svg class="w-6 h-6 text-urfa-600 dark:text-urfa-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
-  arrowLeft: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
-  share2: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
-};
-
-// Kategori (tur) sayfaları — slug bir etkinlik kategorisi ise bu listesi gösterilir
 const ETKINLIK_TURLERI: Record<string, { name: string; icon: string; category?: string; dateFilter?: string }> = {
-  'konserler': { name: 'Konserler', icon: '🎵', category: 'konser' },
-  'sira-geceleri': { name: 'Sıra Geceleri', icon: '🎶', category: 'sira-gecesi' },
-  'festivaller': { name: 'Festivaller', icon: '🎉', category: 'festival' },
-  'sergiler': { name: 'Sergiler', icon: '🖼️', category: 'sergi' },
-  'belediye-etkinlikleri': { name: 'Belediye Etkinlikleri', icon: '🏛️', category: 'belediye' },
-  'bugun': { name: 'Bugünkü Etkinlikler', icon: '📅', dateFilter: 'today' },
-  'hafta-sonu': { name: 'Hafta Sonu Etkinlikleri', icon: '🗓️', dateFilter: 'weekend' },
+ 'konserler': { name: 'Konserler', icon: '🎵', category: 'konser' },
+ 'sira-geceleri': { name: 'Sıra Geceleri', icon: '🎶', category: 'sira-gecesi' },
+ 'festivaller': { name: 'Festivaller', icon: '🎉', category: 'festival' },
+ 'sergiler': { name: 'Sergiler', icon: '🖼️', category: 'sergi' },
+ 'belediye-etkinlikleri': { name: 'Belediye Etkinlikleri', icon: '🏛️', category: 'belediye' },
+ 'bugun': { name: 'Bugünkü Etkinlikler', icon: '📅', dateFilter: 'today' },
+ 'hafta-sonu': { name: 'Hafta Sonu Etkinlikleri', icon: '🗓️', dateFilter: 'weekend' },
 };
 
 const turMeta = ETKINLIK_TURLERI[Astro.params.slug || ''];
 let turEvents: any[] = [];
 
 if (turMeta) {
-  try {
-    let sql = `SELECT * FROM events WHERE status = 'published' AND (end_date IS NULL OR end_date >= CURRENT_DATE)`;
-    const vals: any[] = [];
-    if (turMeta.category) { sql += ` AND category = $${vals.length+1}`; vals.push(turMeta.category); }
-    if (turMeta.dateFilter === 'today') { sql += ` AND start_date::date = CURRENT_DATE`; }
-    else if (turMeta.dateFilter === 'weekend') { sql += ` AND EXTRACT(DOW FROM start_date) IN (0, 6)`; }
-    sql += ` ORDER BY is_featured DESC, start_date ASC LIMIT 20`;
-    const r = await query(sql, vals);
-    turEvents = r.rows;
-  } catch(e) { console.error('tur events error', e); }
+ try {
+ turEvents = await getCachedPublicRouteData(`page:etkinlikler:type:${Astro.params.slug || 'unknown'}`, async () => {
+  let sql = `SELECT * FROM events WHERE status = 'published' AND (end_date IS NULL OR end_date >= CURRENT_DATE)`;
+  const vals: any[] = [];
+  if (turMeta.category) { sql += ` AND category = $${vals.length+1}`; vals.push(turMeta.category); }
+  if (turMeta.dateFilter === 'today') { sql += ` AND start_date::date = CURRENT_DATE`; }
+  else if (turMeta.dateFilter === 'weekend') { sql += ` AND EXTRACT(DOW FROM start_date) IN (0, 6)`; }
+  sql += ` ORDER BY is_featured DESC, start_date ASC LIMIT 20`;
+  const r = await query(sql, vals);
+  return r.rows;
+ });
+ } catch(e) { logger.error('tur events error', e instanceof Error ? e : new Error(String(e))); }
 }
 
 const formatTurDate = (d: string) => new Date(d).toLocaleDateString('tr-TR', { day:'numeric', month:'long', year:'numeric' });
-const getEventImage = (ev: any, thumb = false) =>
-  resolveContentImage({
-    category: 'etkinlikler',
-    slug: ev?.slug,
-    explicit: ev?.image_url,
-    placeholder: '/images/placeholder-event.jpg',
-    thumb,
-  });
+const getEventImage = (ev: any) => resolveEventImage(ev);
 
 let event: any = null;
-let relatedEvents: any[] = [];
 let isPast = false;
-let breadcrumbItems: any[] = [];
 
 const getCategoryLabel = (category: string) => {
-  const labels: Record<string, string> = {
-    'kultur-sanat': 'Kültür & Sanat', 'gastronomi': 'Gastronomi', 'muzik': 'Müzik',
-    'spor': 'Spor', 'egitim': 'Eğitim', 'diger': 'Diğer',
-  };
-  return labels[category] || category;
+ const labels: Record<string, string> = {
+ 'kultur-sanat': 'Kültür & Sanat', 'gastronomi': 'Gastronomi', 'muzik': 'Müzik',
+ 'spor': 'Spor', 'egitim': 'Eğitim', 'diger': 'Diğer',
+ };
+ return labels[category] || category;
 };
 
 try {
-  const { slug } = Astro.params;
+ const { slug } = Astro.params;
 
-  event = await queryOne(
-    `SELECT e.*, u.full_name as creator_name
-     FROM events e
-     LEFT JOIN users u ON e.created_by = u.id
-     WHERE e.slug = $1 AND e.status = 'published'`,
+ if (!turMeta) {
+  event = await getCachedPublicRouteData(`page:etkinlikler:detail:${slug || 'unknown'}`, async () =>
+   queryOne(
+    `SELECT * FROM events WHERE slug = $1 AND status = 'published'`,
     [slug]
+   )
   );
 
   if (!event) {
-    return Astro.redirect('/etkinlikler');
+   return Astro.redirect('/etkinlikler');
   }
 
-  const relatedResult = await query(
-    `SELECT id, title, slug, image_url, start_date, location
-     FROM events
-     WHERE status = 'published' AND category = $1 AND id != $2
-     AND start_date >= CURRENT_DATE
-     LIMIT 3`,
-    [event.category, event.id]
-  );
-  relatedEvents = relatedResult.rows;
-
   isPast = new Date(event.start_date) < new Date();
-
-  breadcrumbItems = [
-    { label: 'Ana Sayfa', href: '/' },
-    { label: 'Etkinlikler', href: '/etkinlikler' },
-    { label: getCategoryLabel(event.category), href: `/etkinlikler?category=${event.category}` },
-    { label: event.title, href: `/etkinlikler/${event.slug}` },
-  ];
+ }
 } catch (e) {
-  console.error('Error loading event detail:', e);
+ logger.error('Error loading event detail:', e instanceof Error ? e : new Error(String(e)));
 }
 
+const eventOgImage = event ? getEventImage(event) : null;
 const seo = turMeta ? {
-  title: `Şanlıurfa ${turMeta.name} | Etkinlikler Rehberi`,
-  description: `Şanlıurfa'daki ${turMeta.name.toLowerCase()}. Güncel program ve konum bilgileri.`,
-  keywords: ['şanlıurfa ' + turMeta.name.toLowerCase(), 'urfa etkinlikler', turMeta.name + ' şanlıurfa'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: `/etkinlikler/${Astro.params.slug}`,
+ title: `Şanlıurfa ${turMeta.name} | Etkinlikler Rehberi`,
+ description: `Şanlıurfa'daki ${turMeta.name.toLowerCase()}. Güncel program ve konum bilgileri.`,
+ keywords: ['şanlıurfa ' + turMeta.name.toLowerCase(), 'urfa etkinlikler', turMeta.name + ' şanlıurfa'],
+ canonical: `/etkinlikler/${Astro.params.slug}`,
 } : {
-  title: event ? `${event.title} - Şanlıurfa Etkinlikleri` : 'Etkinlik - Şanlıurfa',
-  description: event?.description || 'Şanlıurfa etkinlikleri',
-  ogImage: event ? getEventImage(event) : '/images/placeholder-event.jpg',
-  keywords: event ? [event.title, 'şanlıurfa etkinlik', 'urfa ' + (event.event_type || 'etkinlik')] : ['şanlıurfa etkinlikler', 'urfa organizasyon'],
-  canonical: `/etkinlikler/${Astro.params.slug}`,
+ title: event ? `${event.title} - Şanlıurfa Etkinlikleri` : 'Etkinlik - Şanlıurfa',
+ description: event?.description || 'Şanlıurfa etkinlikleri',
+ ...(eventOgImage && !eventOgImage.includes('placeholder') ? { ogImage: eventOgImage } : {}),
+ keywords: event ? [event.title, 'şanlıurfa etkinlik', 'urfa ' + (event.event_type || 'etkinlik')] : ['şanlıurfa etkinlikler', 'urfa organizasyon'],
+ canonical: `/etkinlikler/${Astro.params.slug}`,
 };
-const faqItems = event ? [
-  { S: `${event.title} ne zaman?`, C: event.start_date ? `${event.title} etkinliği ${new Date(event.start_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })} tarihinde gerçekleşmektedir.` : `${event.title} için tarih bilgisini sayfada bulabilirsiniz.` },
-  { S: `${event.title} nerede düzenleniyor?`, C: event.location ? `Etkinlik ${event.location} adresinde düzenlenmektedir.` : 'Etkinlik yeri için sayfamızdaki konum bilgisini inceleyebilirsiniz.' },
-  { S: `${event.title} ücretsiz mi?`, C: event.price_info || 'Etkinlik ücreti ve bilet bilgisi için organizatörle iletişime geçebilirsiniz.' },
-] : [
-  { S: 'Şanlıurfa etkinlikleri nerede listeleniyor?', C: 'Güncel tüm etkinliklere /etkinlikler sayfasından ulaşabilirsiniz.' },
-  { S: 'Şanlıurfa etkinliklerine nasıl katılabilirim?', C: 'Etkinlik sayfasındaki iletişim bilgilerini kullanarak organizatörle iletişime geçebilirsiniz.' },
-  { S: 'Yeni etkinlikleri nasıl takip edebilirim?', C: 'Etkinlikler sayfamızı düzenli ziyaret ederek ya da topluluğumuza katılarak yeni etkinlikleri takip edebilirsiniz.' },
-];
 
+const faqItems = event ? [
+ {
+  S: `${event.title} ne zaman?`,
+  C: event.start_date ? `${event.title} etkinliği ${new Date(event.start_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })} tarihinde gerçekleşmektedir. Program değişikliklerini takip etmek için etkinlik sayfasını düzenli olarak incelemenizi öneririz.` : `${event.title} için tarih ve saat bilgisini sayfanın etkinlik detayları bölümünde bulabilirsiniz.`,
+ },
+ {
+  S: `${event.title} nerede düzenleniyor?`,
+  C: event.location ? `Etkinlik ${event.location} adresinde düzenlenmektedir. Konuma ulaşmak için harita uygulamalarından yol tarifi alabilir, toplu taşıma veya özel araçla gelebilirsiniz.` : 'Etkinlik yeri için sayfamızdaki konum bilgisini inceleyebilirsiniz. Mekan değişikliği durumunda güncel bilgi buraya eklenir.',
+ },
+ {
+  S: `${event.title} ücretsiz mi?`,
+  C: event.price_info ? String(event.price_info) + ' Bilet ve ücret detayları için organizatörle iletişime geçebilir ya da etkinlik sayfasını takip edebilirsiniz.' : 'Etkinlik ücreti ve bilet bilgisi için organizatörle iletişime geçmenizi öneririz. Ücretsiz etkinliklerde erken kayıt gerekebilir, kapasite dolduğunda katılım sınırlandırılabilir.',
+ },
+ {
+  S: 'Şanlıurfa etkinliklerine nasıl katılabilirim?',
+  C: 'Şanlıurfa etkinliklerine katılmak için etkinlik sayfasındaki iletişim veya kayıt bilgilerini kullanabilirsiniz. Ücretli etkinliklerde bilet temini, ücretsizlerde ise ön kayıt gerekebilir. Güncel tüm etkinliklere etkinlikler sayfamızdan ulaşabilirsiniz.',
+ },
+] : [
+ {
+  S: 'Şanlıurfa etkinlikleri nerede listeleniyor?',
+  C: 'Güncel tüm Şanlıurfa etkinliklerine sanliurfa.com etkinlikler sayfasından ulaşabilirsiniz. Konser, festival, sergi, belediye etkinlikleri ve sıra geceleri dahil tüm kategoriler tek sayfada listelenmektedir.',
+ },
+ {
+  S: 'Şanlıurfa etkinliklerine nasıl katılabilirim?',
+  C: 'Etkinlik sayfasındaki iletişim veya kayıt bilgilerini kullanarak organizatörle iletişime geçebilirsiniz. Ücretli etkinliklerde bilet temini, ücretsizlerde ön kayıt gerekebilir. Program değişikliklerini takip etmek için etkinlik sayfasını sık ziyaret ediniz.',
+ },
+ {
+  S: 'Yeni etkinlikleri nasıl takip edebilirim?',
+  C: "Şanlıurfa'daki yeni etkinlikleri takip etmek için sanliurfa.com etkinlikler sayfasını düzenli ziyaret edebilirsiniz. Konserler, festivaller, sergiler ve belediye etkinlikleri kategorilere göre ayrı ayrı görüntülenebilir.",
+ },
+];
+const toAbsoluteImageUrl = (src: string) => (src.startsWith('http') ? src : `${baseUrl}${src}`);
+const eventHeroBadges = event ? [
+ { label: getCategoryLabel(event.category), tone: 'accent' as const },
+ ...(isPast ? [{ label: 'Geçmiş Etkinlik', tone: 'soft' as const }] : []),
+] : [];
 ---
 
 <Layout seo={seo}>
-  {turMeta ? (
-    <div class="min-h-screen bg-gray-50">
-      <div class="bg-white border-b">
-        <div class="container mx-auto px-4 py-3">
-          <nav class="flex items-center gap-2 text-sm text-gray-500">
-            <a href="/" class="hover:text-purple-600">Ana Sayfa</a>
-            <span>/</span>
-            <a href="/etkinlikler" class="hover:text-purple-600">Etkinlikler</a>
-            <span>/</span>
-            <span class="text-gray-900 font-medium">{turMeta.name}</span>
-          </nav>
-        </div>
-      </div>
-      <div class="bg-gradient-to-br from-purple-700 to-indigo-800 text-white py-12">
-        <div class="container mx-auto px-4">
-          <div class="flex items-center gap-4">
-            <span class="text-5xl">{turMeta.icon}</span>
-            <div>
-              <h1 class="text-3xl md:text-4xl font-bold">Şanlıurfa {turMeta.name}</h1>
-              <p class="text-purple-100 mt-1">{turEvents.length} etkinlik bulundu</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="container mx-auto px-4 py-8">
-        {turEvents.length > 0 ? (
-          <div class="space-y-4">
-            {turEvents.map((ev: any) => (
-              <a href={`/etkinlikler/${ev.slug}`} class="block bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all group">
-                <div class="flex items-start gap-4">
-                  <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">{turMeta.icon}</div>
-                  <div class="flex-1">
-                    <h2 class="font-bold text-lg text-gray-900 group-hover:text-purple-600">{ev.title}</h2>
-                    {ev.description && <p class="text-sm text-gray-600 mt-1 line-clamp-2">{ev.description}</p>}
-                    <div class="flex flex-wrap gap-4 mt-2 text-sm text-gray-500">
-                      {ev.start_date && <span>📅 {formatTurDate(ev.start_date)}</span>}
-                      {ev.location && <span>📍 {ev.location}</span>}
-                    </div>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <div class="text-center py-16">
-            <div class="text-6xl mb-4">{turMeta.icon}</div>
-            <p class="text-gray-500 text-lg">Bu kategoride yaklaşan etkinlik bulunmuyor.</p>
-            <a href="/etkinlikler" class="mt-4 inline-block text-purple-600 hover:underline">Tüm Etkinliklere Bak →</a>
-          </div>
-        )}
-      </div>
-    </div>
-  ) : (
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-4">
-        <Breadcrumb items={breadcrumbItems} />
-      </div>
-    </div>
-    
-    <div class="relative h-[400px] lg:h-[500px]">
-      <Image
-        src={getEventImage(event)}
-        alt={event.title}
-        width={1920}
-        height={1080}
-        class="w-full h-full object-cover"
-      />
-      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-      
-      <div class="absolute bottom-0 left-0 right-0">
-        <div class="container-custom py-8">
-          <div class="flex flex-wrap gap-2 mb-4">
-            <span class="inline-block px-3 py-1 bg-urfa-600 text-white text-sm rounded-full">
-              {getCategoryLabel(event.category)}
-            </span>
-            {isPast && (
-              <span class="inline-block px-3 py-1 bg-gray-600 text-white text-sm rounded-full">
-                Geçmiş Etkinlik
-              </span>
-            )}
-          </div>
-          <h1 class="text-3xl lg:text-5xl font-display font-bold text-white max-w-3xl">
-            {event.title}
-          </h1>
-        </div>
-      </div>
-    </div>
-    
-    <div class="container-custom py-8">
-      <div class="grid lg:grid-cols-3 gap-8">
-        <article class="lg:col-span-2">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
-            <div class="grid sm:grid-cols-3 gap-4 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center">
-                  <span set:html={icons.calendar}></span>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Tarih</p>
-                  <p class="font-medium text-gray-900 dark:text-white">
-                    {new Date(event.start_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </p>
-                  {event.end_date && event.end_date !== event.start_date && (
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                      - {new Date(event.end_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
-                    </p>
-                  )}
-                </div>
-              </div>
-              
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center">
-                  <span set:html={icons.clock}></span>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Saat</p>
-                  <p class="font-medium text-gray-900 dark:text-white">
-                    {event.start_time || '10:00'}
-                  </p>
-                </div>
-              </div>
-              
-              <div class="flex items-center gap-3">
-                <div class="w-12 h-12 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center">
-                  <span set:html={icons.mapPin}></span>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-500 dark:text-gray-400">Konum</p>
-                  <p class="font-medium text-gray-900 dark:text-white">{event.location}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div class="prose dark:prose-invert max-w-none">
-              <h2 class="text-2xl font-display font-bold text-gray-900 dark:text-white mb-4">Etkinlik Hakkında</h2>
-              <p class="text-gray-600 dark:text-gray-400 whitespace-pre-line">{event.description}</p>
-            </div>
-            
-            <div class="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <a href="/etkinlikler" class="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
-                <span set:html={icons.arrowLeft}></span>
-                Tüm Etkinlikler
-              </a>
-              <button class="p-2 text-gray-500 dark:text-gray-400 hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors" aria-label="Paylaş">
-                <span set:html={icons.share2}></span>
-              </button>
-            </div>
-          </div>
-        </article>
-        
-        <aside class="space-y-6">
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Etkinlik Bilgileri</h3>
-            <div class="space-y-3 text-sm">
-              <div class="flex justify-between">
-                <span class="text-gray-500 dark:text-gray-400">Durum</span>
-                <span class={`font-medium ${isPast ? 'text-gray-500' : 'text-green-600'}`}>
-                  {isPast ? 'Tamamlandı' : 'Aktif'}
-                </span>
-              </div>
-              <div class="flex justify-between">
-                <span class="text-gray-500 dark:text-gray-400">Kategori</span>
-                <span class="font-medium text-gray-900 dark:text-white">{getCategoryLabel(event.category)}</span>
-              </div>
-              {event.creator_name && (
-                <div class="flex justify-between">
-                  <span class="text-gray-500 dark:text-gray-400">Organizatör</span>
-                  <span class="font-medium text-gray-900 dark:text-white">{event.creator_name}</span>
-                </div>
-              )}
-            </div>
-            
-            {!isPast && (
-              <button class="w-full mt-6 btn-primary">
-                Katılım İçin Bilgi Al
-              </button>
-            )}
-          </div>
-          
-          {relatedEvents && relatedEvents.length > 0 && (
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Benzer Etkinlikler</h3>
-              <div class="space-y-4">
-                {relatedEvents.map((related: any) => (
-                  <a href={`/etkinlikler/${related.slug}`} class="flex gap-3 group">
-                    <Image
-                      src={getEventImage(related, true)}
-                      alt={related.title}
-                      width={320}
-                      height={256}
-                      class="w-20 h-16 rounded-lg object-cover flex-shrink-0"
-                    />
-                    <div>
-                      <span class="text-xs text-urfa-600 dark:text-urfa-400">
-                        {new Date(related.start_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}
-                      </span>
-                      <h4 class="font-medium text-gray-900 dark:text-white text-sm group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors line-clamp-2">
-                        {related.title}
-                      </h4>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">{related.location}</p>
-                    </div>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-        </aside>
-      </div>
-    </div>
-  </div>
-  )}
+ <style is:inline>
+ .es-breadcrumb{background:var(--bg);border-bottom:1px solid rgba(184,115,51,.14);padding:.75rem 0}
+ .es-breadcrumb nav{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--public-muted);flex-wrap:wrap}
+ .es-breadcrumb a{color:var(--public-muted);transition:color .15s}.es-breadcrumb a:hover{color:var(--public-accent)}
+ .es-breadcrumb span:last-child{color:var(--public-accent);font-weight:500}
+ .es-tur-list{display:flex;flex-direction:column;gap:.75rem}
+ .es-tur-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem;display:flex;align-items:flex-start;gap:1rem;transition:border-color .15s}
+ .es-tur-card:hover{border-color:var(--public-accent)}
+ .es-tur-card-icon{width:3.5rem;height:3.5rem;background:rgba(184,115,51,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.5rem}
+ .es-tur-card-body{flex:1}
+ .es-tur-card-title{font-size:.95rem;font-weight:700;color:var(--public-text);margin-bottom:.25rem;transition:color .15s}
+ .es-tur-card:hover .es-tur-card-title{color:var(--public-accent)}
+ .es-tur-card-desc{font-size:.8rem;color:var(--public-muted);margin-bottom:.5rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .es-tur-card-meta{display:flex;flex-wrap:wrap;gap:1rem;font-size:.78rem;color:var(--public-text-soft)}
+ .es-empty{text-align:center;padding:4rem 1rem}
+ .es-empty-icon{font-size:3.5rem;margin-bottom:.75rem}
+ .es-empty-text{font-size:.95rem;color:var(--public-muted)}
+ .es-empty-link{display:inline-block;margin-top:1rem;color:var(--public-accent);font-size:.85rem;transition:color .15s}
+ .es-empty-link:hover{color:var(--public-accent-strong)}
+ .es-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:2rem}
+ .es-prose-h2{font-size:1.2rem;font-weight:700;color:var(--public-text);margin-bottom:1rem}
+ .es-prose-p{color:var(--public-muted);white-space:pre-line;line-height:1.75;font-size:.9rem}
+ .es-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:2rem;padding-top:1.5rem;border-top:1px solid rgba(184,115,51,.14)}
+ .es-back-link{display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:var(--public-muted);transition:color .15s}
+ .es-back-link:hover{color:var(--public-accent)}
+ .es-info-row{display:flex;justify-content:space-between;font-size:.85rem;padding:.35rem 0}
+ .es-info-label{color:var(--public-muted)}
+ .es-info-val{font-weight:600;color:var(--public-text)}
+ .es-status-active{color:#4ade80}
+ .es-status-past{color:var(--public-muted)}
+ .es-cta-btn{display:block;width:100%;margin-top:1.5rem;padding:.85rem;background:var(--public-accent);color:#fff;text-align:center;font-weight:600;font-size:.9rem;letter-spacing:.05em;transition:background .15s}
+ .es-cta-btn:hover{background:var(--public-accent-strong)}
+ .es-badge{display:inline-block;padding:.25rem .75rem;font-size:.75rem}
+ .es-badge-cat{background:var(--public-accent);color:#fff}
+ .es-badge-past{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:var(--public-text)}
+ </style>
 
-  {event && (
-    <script type="application/ld+json" set:html={JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-        { '@type': 'ListItem', position: 2, name: 'Etkinlikler', item: `${baseUrl}/etkinlikler` },
-        { '@type': 'ListItem', position: 3, name: event.title, item: `${baseUrl}/etkinlikler/${event.slug}` },
-      ],
-    })} is:inline />
-    <script type="application/ld+json" set:html={JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'Event',
-      name: event.title,
-      description: event.description,
-      startDate: event.start_date,
-      endDate: event.end_date || event.start_date,
-      location: {
-        '@type': 'Place',
-        name: event.location || 'Şanlıurfa',
-        address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' },
-      },
-      image: event.image_url ? `${baseUrl}${event.image_url}` : `${baseUrl}/images/hero/hero-home.webp`,
-      organizer: { '@type': 'Organization', name: 'Sanliurfa.com', url: `${baseUrl}` },
-      eventStatus: 'https://schema.org/EventScheduled',
-      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      url: `${baseUrl}/etkinlikler/${event.slug}`,
-    })} is:inline />
-  )}
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ {turMeta ? (
+ <div>
+ <div class="es-breadcrumb">
+ <div class="sf-container">
+ <nav>
+ <a href="/">Ana Sayfa</a>
+ <span>/</span>
+ <a href="/etkinlikler">Etkinlikler</a>
+ <span>/</span>
+ <span>{turMeta.name}</span>
+ </nav>
+ </div>
+ </div>
+ <PublicCollectionHero
+ breadcrumbItems={[
+  { href: '/', label: 'Ana Sayfa' },
+  { href: '/etkinlikler', label: 'Etkinlikler' },
+  { label: turMeta.name },
+ ]}
+ eyebrow="Şanlıurfa Etkinlik Rehberi"
+ title={`Şanlıurfa ${turMeta.name}`}
+ description={`Şanlıurfa'daki ${turMeta.name.toLowerCase()} için güncel etkinlik programını, tarih ve konum bilgisini tek ekranda inceleyin.`}
+ imageSrc="/images/places/balikligol.jpg"
+ imageAlt={`Şanlıurfa ${turMeta.name}`}
+ stats={[
+  { label: 'Toplam Etkinlik', value: turEvents.length },
+  { label: 'Görünüm', value: turMeta.name },
+ ]}
+ />
+ <PublicCollectionBody compactSidebar>
+ {turEvents.length > 0 ? (
+ <div class="es-tur-list">
+ {turEvents.map((ev: any) => (
+ <a href={`/etkinlikler/${ev.slug}`} class="es-tur-card">
+ <div class="es-tur-card-icon">{turMeta.icon}</div>
+ <div class="es-tur-card-body">
+ <h2 class="es-tur-card-title">{ev.title}</h2>
+ {ev.description && <p class="es-tur-card-desc">{ev.description}</p>}
+ <div class="es-tur-card-meta">
+ {ev.start_date && <span>📅 {formatTurDate(ev.start_date)}</span>}
+ {ev.location && <span>📍 {ev.location}</span>}
+ </div>
+ </div>
+ </a>
+ ))}
+ </div>
+ ) : (
+ <div class="es-empty">
+ <div class="es-empty-icon">{turMeta.icon}</div>
+ <p class="es-empty-text">Bu kategoride yaklaşan etkinlik bulunmuyor.</p>
+ <a href="/etkinlikler" class="es-empty-link">Tüm Etkinliklere Bak →</a>
+ </div>
+ )}
+ <Fragment slot="sidebar">
+  <PublicSidebarCard title="Hızlı Cevaplar">
+   <PublicFaqList items={faqItems.map((item) => ({ q: item.S, a: item.C }))} />
+  </PublicSidebarCard>
+ </Fragment>
+ </PublicCollectionBody>
+ </div>
+ ) : (
+ <div>
+ <div class="es-breadcrumb">
+ <div class="sf-container">
+ <nav>
+ <a href="/">Ana Sayfa</a>
+ <span>/</span>
+ <a href="/etkinlikler">Etkinlikler</a>
+ {event && (
+ <>
+ <span>/</span>
+ <a href={`/etkinlikler?category=${event.category}`}>{getCategoryLabel(event.category)}</a>
+ <span>/</span>
+ <span>{event.title}</span>
+ </>
+ )}
+ </nav>
+ </div>
+ </div>
+
+ {event && (
+ <div>
+ <PublicDetailHero
+  imageSrc={getEventImage(event)}
+  imageAlt={event.title}
+  title={event.title}
+  subtitle={event.location || event.description || 'Şanlıurfa etkinlik rehberi'}
+  badges={eventHeroBadges}
+  metaItems={[
+   ...(event.start_date ? [{ label: new Date(event.start_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }), icon: 'lucide:calendar' }] : []),
+   ...(event.location ? [{ label: String(event.location), icon: 'lucide:map-pin' }] : []),
+  ]}
+ />
+
+ <PublicDetailBody compactSidebar>
+ <article>
+ <div class="es-card">
+ <PublicInfoGrid
+  items={[
+   {
+    title: 'Tarih',
+    value: `${new Date(event.start_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}${event.end_date && event.end_date !== event.start_date ? ` - ${new Date(event.end_date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' })}` : ''}`,
+   },
+   {
+    title: 'Saat',
+    value: event.start_time || '10:00',
+   },
+   {
+    title: 'Konum',
+    value: event.location || 'Şanlıurfa',
+   },
+  ]}
+ />
+
+ <h2 class="es-prose-h2">Etkinlik Hakkında</h2>
+ <p class="es-prose-p">{event.description}</p>
+
+ <div class="es-card-footer">
+ <a href="/etkinlikler" class="es-back-link">
+ <Icon name="lucide:arrow-left" class="w-4 h-4" />
+ Tüm Etkinlikler
+ </a>
+ <button style="padding:.5rem;color:var(--public-muted);background:none;border:none;cursor:pointer" aria-label="Paylaş">
+ <Icon name="lucide:share-2" class="w-5 h-5" />
+ </button>
+ </div>
+ </div>
+ </article>
+
+ <Fragment slot="sidebar">
+ <PublicSidebarCard title="Etkinlik Bilgileri">
+ <div class="es-info-row">
+ <span class="es-info-label">Durum</span>
+ <span class={isPast ? 'es-status-past' : 'es-status-active'} style="font-weight:600">{isPast ? 'Tamamlandı' : 'Aktif'}</span>
+ </div>
+ <div class="es-info-row">
+ <span class="es-info-label">Kategori</span>
+ <span class="es-info-val">{getCategoryLabel(event.category)}</span>
+ </div>
+ {event.organizer && (
+ <div class="es-info-row">
+ <span class="es-info-label">Organizatör</span>
+ <span class="es-info-val">{event.organizer}</span>
+ </div>
+ )}
+ {!isPast && (
+ <button class="es-cta-btn">Katılım İçin Bilgi Al</button>
+ )}
+ </PublicSidebarCard>
+
+ <RelatedEvents category={event.category} excludeId={event.id} />
+ <PublicSidebarCard title="Sık Sorulanlar">
+  <PublicFaqList items={faqItems.map((item) => ({ q: item.S, a: item.C }))} />
+ </PublicSidebarCard>
+ </Fragment>
+ </PublicDetailBody>
+ </div>
+ )}
+ </div>
+ )}
+
+ {event && (
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Etkinlikler', item: `${baseUrl}/etkinlikler` },
+ { '@type': 'ListItem', position: 3, name: event.title, item: `${baseUrl}/etkinlikler/${event.slug}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'Event',
+ name: event.title,
+ description: event.description,
+ startDate: event.start_date,
+ endDate: event.end_date || event.start_date,
+ location: {
+ '@type': 'Place',
+ name: event.location || 'Şanlıurfa',
+ address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressRegion: 'Şanlıurfa', addressCountry: 'TR' },
+ },
+ image: toAbsoluteImageUrl(getEventImage(event)),
+ organizer: event.organizer
+  ? { '@type': 'Organization', name: event.organizer }
+  : { '@type': 'Organization', name: 'Sanliurfa.com', url: `${baseUrl}` },
+ offers: {
+  '@type': 'Offer',
+  price: event.is_free ? '0' : '',
+  priceCurrency: 'TRY',
+  availability: 'https://schema.org/InStock',
+  ...(event.is_free ? { url: `${baseUrl}/etkinlikler/${event.slug}` } : {}),
+ },
+ eventStatus: 'https://schema.org/EventScheduled',
+ eventAttendanceMode: event.is_online
+  ? 'https://schema.org/OnlineEventAttendanceMode'
+  : 'https://schema.org/OfflineEventAttendanceMode',
+ url: `${baseUrl}/etkinlikler/${event.slug}`,
+ })} is:inline />
+ )}
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

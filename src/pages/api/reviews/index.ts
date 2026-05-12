@@ -7,7 +7,8 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { requireAuth } from '../../../lib/auth';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail, safeIntParam } from '../../../lib/api';
+import { deleteCachePattern } from '../../../lib/cache';
 import {
   submitPlaceReview,
   type ReviewSubmissionResult,
@@ -20,10 +21,12 @@ export const GET: APIRoute = async ({ url }) => {
     const placeId = url.searchParams.get('placeId');
     const userId  = url.searchParams.get('userId');
     const stats   = url.searchParams.get('stats');
-    const sortBy  = url.searchParams.get('sortBy') || 'newest';
+    const VALID_SORT_OPTIONS = new Set(['newest', 'oldest', 'highest', 'lowest', 'helpful']);
+    const rawSortBy = url.searchParams.get('sortBy') || 'newest';
+    const sortBy = VALID_SORT_OPTIONS.has(rawSortBy) ? rawSortBy : 'newest';
     const ratingFilter = url.searchParams.get('rating');
-    const page    = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit   = Math.min(50, parseInt(url.searchParams.get('limit') || '20'));
+    const page    = safeIntParam(url.searchParams.get('page'), 1, 1, 1_000_000);
+    const limit   = safeIntParam(url.searchParams.get('limit'), 20, 1, 50);
     const offset  = (page - 1) * limit;
 
     // Rating breakdown stats for a place
@@ -43,21 +46,19 @@ export const GET: APIRoute = async ({ url }) => {
       let total = 0;
       let sum   = 0;
       for (const row of result.rows) {
-        const r = parseInt(row.rating);
-        const c = parseInt(row.count);
+        const r = parseInt(row.rating, 10);
+        const c = parseInt(row.count, 10);
+        if (!Number.isFinite(r) || !Number.isFinite(c)) continue;
         breakdown[r] = c;
         total += c;
         sum   += r * c;
       }
 
-      return new Response(
-        JSON.stringify({
-          breakdown,
-          total,
-          average: total > 0 ? (sum / total).toFixed(1) : '0',
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return apiResponse({
+        breakdown,
+        total,
+        average: total > 0 ? (sum / total).toFixed(1) : '0',
+      }, HttpStatus.OK);
     }
 
     // Build ORDER BY
@@ -70,7 +71,7 @@ export const GET: APIRoute = async ({ url }) => {
     };
     const orderBy = orderMap[sortBy] || 'r.created_at DESC';
 
-    const params: any[] = [];
+    const params: unknown[] = [];
     let where = `WHERE r.status != 'deleted'`;
     let idx = 1;
 
@@ -83,46 +84,44 @@ export const GET: APIRoute = async ({ url }) => {
     }
 
     if (ratingFilter) {
-      const ratingValue = parseInt(ratingFilter, 10);
-      if (!isNaN(ratingValue) && ratingValue >= 1 && ratingValue <= 5) {
+      const ratingValue = safeIntParam(ratingFilter, 0, 1, 5);
+      if (ratingValue >= 1) {
         where += ` AND r.rating = $${idx++}`;
         params.push(ratingValue);
       }
     }
 
-    const countResult = await query(
-      `SELECT COUNT(*) FROM reviews r ${where}`,
-      params
-    );
-    const total = parseInt(countResult.rows[0].count || '0');
+    const [countResult, dataResult] = await Promise.all([
+      query(`SELECT COUNT(*) FROM reviews r ${where}`, params),
+      query(
+        `SELECT
+           r.id, r.place_id, r.user_id, r.title, r.content, r.rating,
+           r.helpful_count, r.unhelpful_count, r.images, r.visit_type,
+           r.is_verified, r.status, r.created_at, r.updated_at,
+           u.full_name AS user_name, u.avatar_url AS user_avatar
+         FROM reviews r
+         JOIN users u ON u.id = r.user_id
+         ${where}
+         ORDER BY ${orderBy}
+         LIMIT $${idx} OFFSET $${idx + 1}`,
+        [...params, limit, offset]
+      ),
+    ]);
+    const total = parseInt(countResult.rows[0].count || '0', 10);
 
-    const dataResult = await query(
-      `SELECT
-         r.id, r.place_id, r.user_id, r.title, r.content, r.rating,
-         r.helpful_count, r.unhelpful_count, r.images, r.visit_type,
-         r.is_verified, r.status, r.created_at, r.updated_at,
-         u.full_name AS user_name, u.avatar_url AS user_avatar
-       FROM reviews r
-       JOIN users u ON u.id = r.user_id
-       ${where}
-       ORDER BY ${orderBy}
-       LIMIT $${idx} OFFSET $${idx + 1}`,
-      [...params, limit, offset]
-    );
-
-    return new Response(
-      JSON.stringify({
-        reviews: dataResult.rows,
-        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    return apiResponse({
+      reviews: dataResult.rows,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    }, HttpStatus.OK);
   } catch (error) {
     logger.error('Reviews GET error:', error);
-    return new Response(
-      JSON.stringify({ error: 'Failed to get reviews' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return problemJson({
+      status: 500,
+      title: 'Yorumlar Alınamadı',
+      detail: safeErrorDetail(error, 'Yorumlar alınamadı'),
+      type: '/problems/reviews-get-failed',
+      instance: '/api/reviews',
+    });
   }
 };
 
@@ -158,6 +157,9 @@ export const POST: APIRoute = async ({ request }) => {
 
     // CREATE
     if (action === 'create') {
+      if (!Array.isArray(images) || images.length > 20) {
+        return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'images dizisi en fazla 20 öğe içerebilir', type: '/problems/review-images-invalid', instance: '/api/reviews' });
+      }
       let result: ReviewSubmissionResult;
       try {
         result = await submitPlaceReview(
@@ -178,20 +180,26 @@ export const POST: APIRoute = async ({ request }) => {
         return problemJson({
           status: 400,
           title: 'Yorum Gönderilemedi',
-          detail: error instanceof Error && error.message ? error.message : 'Yorum gönderilemedi.',
+          detail: safeErrorDetail(error, 'Yorum gönderilemedi.'),
           type: '/problems/review-create-validation',
           instance: '/api/reviews',
         });
       }
 
-      return new Response(JSON.stringify(result), {
-        status: 201,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return apiResponse(result, HttpStatus.CREATED);
     }
 
     // UPDATE
     if (action === 'update' && reviewId) {
+      if (rating !== undefined) {
+        const ratingNum = parseFloat(String(rating));
+        if (!Number.isFinite(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+          return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Puan 1-5 arasında olmalıdır', type: '/problems/review-update-rating-invalid', instance: '/api/reviews' });
+        }
+      }
+      if (title !== undefined && title !== null && (typeof title !== 'string' || title.length > 200)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Başlık 200 karakterden uzun olamaz', type: '/problems/review-update-title-too-long', instance: '/api/reviews' });
+      if (content !== undefined && content !== null && (typeof content !== 'string' || content.length > 5000)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Yorum 5000 karakterden uzun olamaz', type: '/problems/review-update-content-too-long', instance: '/api/reviews' });
+
       const result = await query(
         `UPDATE reviews
          SET rating = COALESCE($1, rating),
@@ -204,7 +212,7 @@ export const POST: APIRoute = async ({ request }) => {
         [rating, title, content, images?.length ? images : null, reviewId, auth.user.id]
       );
       if (!result.rows[0]) {
-        return new Response(JSON.stringify({ error: 'Yorum bulunamadı' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+        return apiResponse({ error: 'Yorum bulunamadı' }, HttpStatus.NOT_FOUND);
       }
 
       const pid = result.rows[0].place_id;
@@ -212,20 +220,26 @@ export const POST: APIRoute = async ({ request }) => {
         `UPDATE places SET rating = (SELECT AVG(rating) FROM reviews WHERE place_id = $1 AND status != 'deleted'), updated_at = NOW() WHERE id = $1`,
         [pid]
       );
+      await deleteCachePattern('places:detail:*').catch(() => null);
 
-      return new Response(
-        JSON.stringify({ success: true, review: result.rows[0] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return apiResponse({ success: true, review: result.rows[0] }, HttpStatus.OK);
     }
 
     // DELETE (soft)
     if (action === 'delete' && reviewId) {
-      await query(
-        `UPDATE reviews SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND user_id = $2`,
+      const deleted = await query(
+        `UPDATE reviews SET status = 'deleted', updated_at = NOW() WHERE id = $1 AND user_id = $2 RETURNING place_id`,
         [reviewId, auth.user.id]
       );
-      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      const placeId = deleted.rows[0]?.place_id;
+      if (placeId) {
+        await query(
+          `UPDATE places SET rating = (SELECT AVG(rating) FROM reviews WHERE place_id = $1 AND status != 'deleted'), updated_at = NOW() WHERE id = $1`,
+          [placeId]
+        );
+        await deleteCachePattern('places:detail:*').catch(() => null);
+      }
+      return apiResponse({ success: true }, HttpStatus.OK);
     }
 
     // HELPFUL VOTE
@@ -246,12 +260,18 @@ export const POST: APIRoute = async ({ request }) => {
          WHERE id = $1`,
         [reviewId]
       );
-      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      return apiResponse({ success: true }, HttpStatus.OK);
     }
 
-    return new Response(JSON.stringify({ error: 'Geçersiz action' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
+    return apiResponse({ error: 'Geçersiz action' }, HttpStatus.BAD_REQUEST);
   } catch (error) {
     logger.error('Reviews POST error:', error);
-    return new Response(JSON.stringify({ error: 'Yorum işlemi başarısız' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    return problemJson({
+      status: 500,
+      title: 'Yorum İşlemi Başarısız',
+      detail: safeErrorDetail(error, 'Yorum işlemi başarısız'),
+      type: '/problems/reviews-post-failed',
+      instance: '/api/reviews',
+    });
   }
 };

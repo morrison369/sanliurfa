@@ -1,22 +1,20 @@
 import type { APIRoute } from 'astro';
+import { apiResponse, safeErrorDetail } from '../../../../../lib/api';
 import { rollbackSiteSetting } from '../../../../../lib/site-content';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!isAdmin(locals)) return json({ error: 'Unauthorized' }, 401);
 
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
@@ -37,6 +35,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
     return json({ success: true, key, versionNo });
   } catch (error) {
-    return json({ success: false, error: error instanceof Error ? error.message : 'rollback failed' }, 500);
+    return json({ success: false, error: safeErrorDetail(error, 'rollback failed') }, 500);
   }
 };

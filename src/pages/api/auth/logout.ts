@@ -2,7 +2,7 @@
 import type { APIRoute } from 'astro';
 import { signOut } from '../../../lib/auth';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../lib/api';
 
 export const POST: APIRoute = async ({ cookies }) => {
   try {
@@ -27,7 +27,7 @@ export const POST: APIRoute = async ({ cookies }) => {
     return problemJson({
       status: 500,
       title: 'Çıkış Yapılamadı',
-      detail: err instanceof Error ? err.message : 'Çıkış işlemi sırasında bir hata oluştu',
+      detail: safeErrorDetail(err, 'Çıkış işlemi sırasında bir hata oluştu'),
       type: '/problems/auth-logout-failed',
       instance: '/api/auth/logout',
     });

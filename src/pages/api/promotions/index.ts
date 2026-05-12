@@ -2,7 +2,8 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
+import { deleteCachePattern } from '../../../lib/cache';
 
 // List promotions
 export const GET: APIRoute = async (context) => {
@@ -12,13 +13,24 @@ export const GET: APIRoute = async (context) => {
     const status = url.searchParams.get('status') || 'active';
     const featured = url.searchParams.get('featured');
 
+    const VALID_PROMOTION_STATUSES = new Set(['active', 'draft', 'paused', 'expired', 'scheduled']);
+    if (!VALID_PROMOTION_STATUSES.has(status)) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Geçersiz promosyon durumu',
+        type: '/problems/promotions-status-invalid',
+        instance: '/api/promotions',
+      });
+    }
+
     let sql = `
       SELECT p.*, pl.name as place_name, pl.slug as place_slug
       FROM promotions p
       JOIN places pl ON p.place_id = pl.id
       WHERE 1=1
     `;
-    const params: any[] = [];
+    const params: unknown[] = [];
     let paramIndex = 1;
 
     if (placeId) {
@@ -41,13 +53,10 @@ export const GET: APIRoute = async (context) => {
 
     const result = await query(sql, params);
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       promotions: result.rows
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('List promotions error:', error);
@@ -102,8 +111,10 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    // Yetki kontrolu
-    if (auth.user.role === 'vendor') {
+    // Yetki: admin > vendor (sahip olduğu mekan) > diğer (yasak)
+    if (auth.user.role === 'admin') {
+      // admin her mekan için promosyon oluşturabilir
+    } else if (auth.user.role === 'vendor') {
       const placeCheck = await query(
         'SELECT id FROM places WHERE id = $1 AND owner_id = $2',
         [placeId, auth.user.id]
@@ -117,6 +128,14 @@ export const POST: APIRoute = async (context) => {
           instance: '/api/promotions',
         });
       }
+    } else {
+      return problemJson({
+        status: 403,
+        title: 'Forbidden',
+        detail: 'Sadece mekan sahibi veya admin promosyon oluşturabilir',
+        type: '/problems/promotions-create-forbidden',
+        instance: '/api/promotions',
+      });
     }
 
     const result = await query(
@@ -135,13 +154,12 @@ export const POST: APIRoute = async (context) => {
       ]
     );
 
-    return new Response(JSON.stringify({
+    await deleteCachePattern('promotions:*').catch(() => null);
+
+    return apiResponse({
       success: true,
       promotion: result.rows[0]
-    }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.CREATED);
 
   } catch (error) {
     logger.error('Create promotion error:', error);

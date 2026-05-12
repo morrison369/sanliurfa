@@ -7,7 +7,8 @@
 import type { APIRoute } from 'astro';
 import { requireRole } from '../../../../lib/auth';
 import { getPosts, createPost } from '../../../../lib/blog/db';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, HttpStatus, problemJson, safeErrorDetail } from '../../../../lib/api';
+import { deleteCachePattern } from '../../../../lib/cache/cache';
 
 type BlogStatus = 'draft' | 'published' | 'scheduled' | 'archived';
 
@@ -47,26 +48,26 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
 
     const searchParams = url.searchParams;
+    const status = searchParams.get('status');
+    const category = searchParams.get('category');
+    const search = searchParams.get('search');
     const filters = {
-      status: searchParams.get('status') || undefined,
-      category: searchParams.get('category') || undefined,
-      search: searchParams.get('search') || undefined,
-      featured: searchParams.get('featured') === 'true' ? true : undefined,
+      ...(status ? { status } : {}),
+      ...(category ? { category } : {}),
+      ...(search ? { search } : {}),
+      ...(searchParams.get('featured') === 'true' ? { featured: true } : {}),
       limit: toPositiveInt(searchParams.get('limit'), 20),
       offset: toPositiveInt(searchParams.get('offset'), 0),
     };
 
     const result = await getPosts(filters);
     
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse(result, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Yazılar Alınamadı',
-      detail: error instanceof Error ? error.message : 'Yazılar alınamadı',
+      detail: safeErrorDetail(error, 'Yazılar alınamadı'),
       type: '/problems/admin-blog-get-failed',
       instance: '/api/admin/blog',
     });
@@ -99,37 +100,54 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    const VALID_BLOG_STATUSES = new Set<BlogStatus>(['draft', 'published', 'scheduled', 'archived']);
+    if (body.status !== undefined && body.status !== null && (typeof body.status !== 'string' || !VALID_BLOG_STATUSES.has(body.status))) {
+      return problemJson({
+        status: 422,
+        title: 'Geçersiz Durum',
+        detail: 'Geçersiz yazı durumu',
+        type: '/problems/admin-blog-validation',
+        instance: '/api/admin/blog',
+      });
+    }
+
+    if (body.title !== undefined && body.title !== null && (typeof body.title !== 'string' || body.title.length > 200)) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'Başlık 200 karakterden uzun olamaz', type: '/problems/admin-blog-validation', instance: '/api/admin/blog' });
+    if (body.slug !== undefined && body.slug !== null && (typeof body.slug !== 'string' || body.slug.length > 200)) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'Slug 200 karakterden uzun olamaz', type: '/problems/admin-blog-validation', instance: '/api/admin/blog' });
+    if (body.excerpt !== undefined && body.excerpt !== null && (typeof body.excerpt !== 'string' || body.excerpt.length > 1000)) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'Özet 1000 karakterden uzun olamaz', type: '/problems/admin-blog-validation', instance: '/api/admin/blog' });
+    if (body.content !== undefined && body.content !== null && (typeof body.content !== 'string' || body.content.length > 100000)) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'İçerik 100.000 karakterden uzun olamaz', type: '/problems/admin-blog-validation', instance: '/api/admin/blog' });
+    if (body.meta_title !== undefined && body.meta_title !== null && (typeof body.meta_title !== 'string' || body.meta_title.length > 200)) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'Meta başlık 200 karakterden uzun olamaz', type: '/problems/admin-blog-validation', instance: '/api/admin/blog' });
+    if (body.meta_description !== undefined && body.meta_description !== null && (typeof body.meta_description !== 'string' || body.meta_description.length > 500)) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'Meta açıklama 500 karakterden uzun olamaz', type: '/problems/admin-blog-validation', instance: '/api/admin/blog' });
+    if (body.tag_ids && (!Array.isArray(body.tag_ids) || body.tag_ids.length > 50)) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'tag_ids dizisi geçersiz veya 50 etiket sınırını aşıyor', type: '/problems/admin-blog-tag-ids-invalid', instance: '/api/admin/blog' });
+
     const post = await createPost({
       title: body.title,
       slug: body.slug,
       excerpt: body.excerpt || body.content.substring(0, 200) + '...',
       content: body.content,
-      content_html: body.content_html,
-      category_id: body.category_id,
+      ...(body.content_html ? { content_html: body.content_html } : {}),
+      ...(body.category_id ? { category_id: body.category_id } : {}),
       author_id: auth.user.id,
       author_name: auth.user.full_name || auth.user.email || 'Admin',
-      featured_image: body.featured_image,
+      ...(body.featured_image ? { featured_image: body.featured_image } : {}),
       status: body.status || 'draft',
-      published_at: body.published_at ? new Date(body.published_at) : undefined,
-      meta_title: body.meta_title,
-      meta_description: body.meta_description,
+      ...(body.published_at ? { published_at: new Date(body.published_at) } : {}),
+      ...(body.meta_title ? { meta_title: body.meta_title } : {}),
+      ...(body.meta_description ? { meta_description: body.meta_description } : {}),
       is_featured: body.is_featured || false,
       is_pinned: body.is_pinned || false,
-      tag_ids: body.tag_ids,
+      ...(body.tag_ids ? { tag_ids: body.tag_ids } : {}),
     });
 
-    return new Response(JSON.stringify({ success: true, post }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    await deleteCachePattern('page:blog:index:*').catch(() => null);
+
+    return apiResponse({ success: true, post }, HttpStatus.CREATED);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Yazı Oluşturulamadı',
-      detail: error instanceof Error ? error.message : 'Yazı oluşturulamadı',
+      detail: safeErrorDetail(error, 'Yazı oluşturulamadı'),
       type: '/problems/admin-blog-create-failed',
       instance: '/api/admin/blog',
     });
   }
 };
-

@@ -1,121 +1,125 @@
+/**
+ * Unit Tests — CSV parser/generator
+ *
+ * Pure helpers — no mock needed. Round-trip tests + edge cases.
+ */
+
 import { describe, it, expect } from 'vitest';
-import {
-  exportToCSV,
-  parseCSV,
-  generateCSVTemplate,
-} from '../import-export/csv-excel';
+import { parseCSV, generateCSV } from '../csv-excel';
 
-describe('CSV Import/Export', () => {
-  describe('exportToCSV', () => {
-    it('should export data to CSV', () => {
-      const data = [
-        { name: 'John', age: 30, city: 'NYC' },
-        { name: 'Jane', age: 25, city: 'LA' },
-      ];
-      const csv = exportToCSV(data);
-      
-      expect(csv).toContain('name,age,city');
-      expect(csv).toContain('John,30,NYC');
-      expect(csv).toContain('Jane,25,LA');
-    });
-
-    it('should handle empty data', () => {
-      const csv = exportToCSV([]);
-      expect(csv).toBe('');
-    });
-
-    it('should escape special characters', () => {
-      const data = [{ name: 'John, Jr.', description: 'Line 1\nLine 2' }];
-      const csv = exportToCSV(data);
-      
-      expect(csv).toContain('"John, Jr."');
-    });
-
-    it('should use custom delimiter', () => {
-      const data = [{ name: 'John', age: 30 }];
-      const csv = exportToCSV(data, { delimiter: ';' });
-      
-      expect(csv).toContain('name;age');
-    });
-
-    it('should exclude headers when requested', () => {
-      const data = [{ name: 'John', age: 30 }];
-      const csv = exportToCSV(data, { includeHeaders: false });
-      
-      expect(csv).not.toContain('name,age');
-      expect(csv).toContain('John,30');
-    });
-
-    it('should export only specified columns', () => {
-      const data = [{ name: 'John', age: 30, city: 'NYC' }];
-      const csv = exportToCSV(data, { columns: ['name', 'city'] });
-      
-      expect(csv).toContain('name,city');
-      expect(csv).toContain('John,NYC');
-      expect(csv).not.toContain('30');
-    });
+describe('parseCSV', () => {
+  it('parses simple CSV with header', async () => {
+    const csv = 'name,age\nAlice,30\nBob,25';
+    const result = await parseCSV(csv);
+    expect(result).toEqual([
+      { name: 'Alice', age: '30' },
+      { name: 'Bob', age: '25' },
+    ]);
   });
 
-  describe('parseCSV', () => {
-    it('should parse CSV string', () => {
-      const csv = 'name,age\nJohn,30\nJane,25';
-      const data = parseCSV(csv);
-      
-      expect(data).toHaveLength(2);
-      expect(data[0]).toEqual({ name: 'John', age: '30' });
-      expect(data[1]).toEqual({ name: 'Jane', age: '25' });
-    });
-
-    it('should handle quoted values', () => {
-      const csv = 'name,description\n"John, Jr.","Line 1\nLine 2"';
-      const data = parseCSV(csv);
-      
-      expect(data[0].name).toBe('John, Jr.');
-    });
-
-    it('should skip empty lines', () => {
-      const csv = 'name,age\nJohn,30\n\nJane,25\n';
-      const data = parseCSV(csv);
-      
-      expect(data).toHaveLength(2);
-    });
-
-    it('should use custom delimiter', () => {
-      const csv = 'name;age\nJohn;30';
-      const data = parseCSV(csv, { delimiter: ';' });
-      
-      expect(data[0]).toEqual({ name: 'John', age: '30' });
-    });
-
-    it('should handle data without headers', () => {
-      const csv = 'John,30\nJane,25';
-      const data = parseCSV(csv, { hasHeaders: false });
-      
-      expect(data[0]).toHaveProperty('column_0');
-      expect(data[0]).toHaveProperty('column_1');
-    });
+  it('returns empty array for empty input', async () => {
+    expect(await parseCSV('')).toEqual([]);
   });
 
-  describe('generateCSVTemplate', () => {
-    it('should generate places template', () => {
-      const template = generateCSVTemplate('places');
-      
-      expect(template).toContain('name,category,description');
-      expect(template).toContain('Örnek Mekan');
-    });
+  it('returns empty array for header-only CSV', async () => {
+    expect(await parseCSV('name,age')).toEqual([]);
+  });
 
-    it('should generate users template', () => {
-      const template = generateCSVTemplate('users');
-      
-      expect(template).toContain('name,email,role');
-      expect(template).toContain('Ahmet Yılmaz');
-    });
+  it('handles trailing newlines', async () => {
+    const csv = 'name\nAlice\n\n';
+    const result = await parseCSV(csv);
+    expect(result).toEqual([{ name: 'Alice' }]);
+  });
 
-    it('should generate events template', () => {
-      const template = generateCSVTemplate('events');
-      
-      expect(template).toContain('title,description');
-      expect(template).toContain('Şanlıurfa Festivali');
-    });
+  it('handles CRLF line endings (Windows)', async () => {
+    const csv = 'name,age\r\nAlice,30\r\nBob,25';
+    const result = await parseCSV(csv);
+    expect(result).toEqual([
+      { name: 'Alice', age: '30' },
+      { name: 'Bob', age: '25' },
+    ]);
+  });
+
+  it('trims whitespace from headers and values', async () => {
+    const csv = ' name , age \n  Alice , 30 ';
+    const result = await parseCSV(csv);
+    expect(result[0]).toEqual({ name: 'Alice', age: '30' });
+  });
+
+  it('uses empty string for missing values', async () => {
+    const csv = 'name,age,city\nAlice,30';
+    const result = await parseCSV(csv);
+    expect(result[0]).toEqual({ name: 'Alice', age: '30', city: '' });
+  });
+
+  it('parses single-column CSV', async () => {
+    const csv = 'email\nuser1@test.co\nuser2@test.co';
+    const result = await parseCSV(csv);
+    expect(result).toEqual([
+      { email: 'user1@test.co' },
+      { email: 'user2@test.co' },
+    ]);
+  });
+});
+
+describe('generateCSV', () => {
+  it('generates CSV with header from first row keys', () => {
+    const csv = generateCSV([
+      { name: 'Alice', age: 30 },
+      { name: 'Bob', age: 25 },
+    ]);
+    expect(csv).toBe('name,age\nAlice,30\nBob,25');
+  });
+
+  it('returns empty string for empty array', () => {
+    expect(generateCSV([])).toBe('');
+  });
+
+  it('handles null/undefined values as empty string', () => {
+    const csv = generateCSV([{ name: 'X', age: null, city: undefined }]);
+    expect(csv).toBe('name,age,city\nX,,');
+  });
+
+  it('replaces commas in values with spaces (basic CSV injection prevention)', () => {
+    const csv = generateCSV([{ name: 'Alice, Bob', city: 'NYC' }]);
+    // Commas in values become spaces — caller alternative: full quote escaping
+    expect(csv).toContain('Alice  Bob'); // ", " → "  " (2 spaces)
+  });
+
+  it('coerces numbers / booleans to string', () => {
+    const csv = generateCSV([{ active: true, count: 42, ratio: 3.14 }]);
+    expect(csv).toBe('active,count,ratio\ntrue,42,3.14');
+  });
+
+  it('uses first row keys as headers (subsequent rows align by key)', () => {
+    const csv = generateCSV([
+      { a: 1, b: 2 },
+      { a: 3, b: 4, c: 5 }, // 'c' ignored — not in first row
+    ]);
+    expect(csv).toBe('a,b\n1,2\n3,4');
+  });
+
+  it('preserves key order from first row', () => {
+    const csv = generateCSV([{ z: 'last', a: 'first' }]);
+    expect(csv).toMatch(/^z,a\n/);
+  });
+});
+
+describe('parseCSV ↔ generateCSV round-trip', () => {
+  it('round-trips simple data', async () => {
+    const original = [
+      { name: 'Alice', age: '30' },
+      { name: 'Bob', age: '25' },
+    ];
+    const csv = generateCSV(original);
+    const parsed = await parseCSV(csv);
+    expect(parsed).toEqual(original);
+  });
+
+  it('round-trips single column', async () => {
+    const original = [{ email: 'a@b.co' }, { email: 'c@d.co' }];
+    const csv = generateCSV(original);
+    const parsed = await parseCSV(csv);
+    expect(parsed).toEqual(original);
   });
 });

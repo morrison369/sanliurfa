@@ -18,7 +18,7 @@ export class UsageTracker {
       userId,
       feature,
       timestamp: new Date(),
-      metadata
+      ...(metadata ? { metadata } : {}),
     });
   }
 

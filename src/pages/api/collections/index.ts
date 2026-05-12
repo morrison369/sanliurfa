@@ -6,7 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { getUserCollections, createCollection, getPublicCollections } from '../../../lib/collections';
-import { apiResponse, apiError, HttpStatus } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async (context) => {
@@ -15,7 +15,7 @@ export const GET: APIRoute = async (context) => {
 
     // If userId parameter, get that user's collections
     if (userId) {
-      const result = await getUserCollections(userId, { limit: limit ? parseInt(limit) : 50 });
+      const result = await getUserCollections(userId, { limit: safeIntParam(limit, 50, 1, 200) });
       return apiResponse({
         success: true,
         data: result.collections,
@@ -25,7 +25,7 @@ export const GET: APIRoute = async (context) => {
 
     // If public flag, get public collections
     if (isPublic === 'true') {
-      const result = await getPublicCollections(limit ? parseInt(limit) : 20, offset ? parseInt(offset) : 0);
+      const result = await getPublicCollections(safeIntParam(limit, 20, 1, 200), safeIntParam(offset, 0, 0, 1_000_000));
       return apiResponse({
         success: true,
         data: result.collections,
@@ -45,7 +45,7 @@ export const GET: APIRoute = async (context) => {
 
     return apiError('UNAUTHORIZED', 'Authentication required', HttpStatus.UNAUTHORIZED);
   } catch (error) {
-    logger.error('Failed to get collections', error instanceof Error ? error : new Error(String(error)) as any);
+    logger.error('Failed to get collections', error instanceof Error ? error : new Error(String(error)));
     return apiError('INTERNAL_ERROR', 'Failed to get collections', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
@@ -53,17 +53,23 @@ export const GET: APIRoute = async (context) => {
 export const POST: APIRoute = async (context) => {
   try {
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError('UNAUTHORIZED', 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const body = await context.request.json();
 
     if (!body.name || typeof body.name !== 'string') {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Collection name is required');
+      return apiError('VALIDATION_ERROR', 'Collection name is required', HttpStatus.BAD_REQUEST);
     }
 
     if (body.name.length > 100) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Name is too long (max 100 characters)');
+      return apiError('VALIDATION_ERROR', 'Name is too long (max 100 characters)', HttpStatus.BAD_REQUEST);
+    }
+    if (body.description !== undefined && body.description !== null && (typeof body.description !== 'string' || body.description.length > 1000)) {
+      return apiError('VALIDATION_ERROR', 'Açıklama 1000 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+    if (body.icon !== undefined && body.icon !== null && (typeof body.icon !== 'string' || body.icon.length > 500)) {
+      return apiError('VALIDATION_ERROR', 'Icon 500 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
     const collection = await createCollection(
@@ -82,7 +88,7 @@ export const POST: APIRoute = async (context) => {
       data: collection
     }, HttpStatus.CREATED);
   } catch (error) {
-    logger.error('Failed to create collection', error instanceof Error ? error : new Error(String(error)) as any);
+    logger.error('Failed to create collection', error instanceof Error ? error : new Error(String(error)));
     return apiError('INTERNAL_ERROR', 'Failed to create collection', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

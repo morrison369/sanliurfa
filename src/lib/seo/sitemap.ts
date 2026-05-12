@@ -39,9 +39,11 @@ export async function generateSitemap(): Promise<string> {
     for (const place of places) {
       entries.push({
         loc: `/mekanlar/${place.slug || place.id}`,
-        lastmod: place.updated_at ? new Date(place.updated_at).toISOString().split('T')[0] : undefined,
         changefreq: 'weekly' as const,
-        priority: 0.8
+        priority: 0.8,
+        ...(place.updated_at
+          ? { lastmod: new Date(place.updated_at).toISOString().split('T')[0] }
+          : {})
       });
     }
 
@@ -80,9 +82,11 @@ export async function generateSitemap(): Promise<string> {
     for (const post of posts) {
       entries.push({
         loc: `/blog/${post.slug || post.id}`,
-        lastmod: post.updated_at ? new Date(post.updated_at).toISOString().split('T')[0] : undefined,
         changefreq: 'weekly' as const,
-        priority: 0.8
+        priority: 0.8,
+        ...(post.updated_at
+          ? { lastmod: new Date(post.updated_at).toISOString().split('T')[0] }
+          : {})
       });
     }
 

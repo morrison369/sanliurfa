@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ request, params }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Get responses failed', error instanceof Error ? error : new Error(String(error)), {} as any);
+    logger.error('Get responses failed', error instanceof Error ? error : new Error(String(error)), {});
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get responses', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
@@ -72,6 +72,11 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'place_id and response_text required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
+    if (response_text.length > 2000) {
+      recordRequest('POST', '/api/reviews/[id]/responses', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yanıt metni 2000 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+
     const response = await addReviewResponse(reviewId, place_id, locals.user.id, response_text);
 
     const duration = Date.now() - startTime;
@@ -85,7 +90,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Add response failed', error instanceof Error ? error : new Error(String(error)), {} as any);
+    logger.error('Add response failed', error instanceof Error ? error : new Error(String(error)), {});
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to add response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
@@ -109,6 +114,11 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'response_id and response_text required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
+    if (response_text.length > 2000) {
+      recordRequest('PUT', '/api/reviews/[id]/responses', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yanıt metni 2000 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+
     const updated = await updateReviewResponse(response_id, locals.user.id, response_text);
 
     const duration = Date.now() - startTime;
@@ -122,7 +132,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Update response failed', error instanceof Error ? error : new Error(String(error)), {} as any);
+    logger.error('Update response failed', error instanceof Error ? error : new Error(String(error)), {});
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to update response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
@@ -164,7 +174,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
-    logger.error('Delete response failed', error instanceof Error ? error : new Error(String(error)), {} as any);
+    logger.error('Delete response failed', error instanceof Error ? error : new Error(String(error)), {});
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };

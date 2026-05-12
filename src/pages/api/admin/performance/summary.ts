@@ -9,8 +9,23 @@ import { apiResponse, apiError, HttpStatus, ErrorCode } from '../../../../lib/ap
 import { logger } from '../../../../lib/logging';
 
 interface PerformanceStatsRow {
+  total_metrics?: number | string | null;
   avg_ttfb: number | string | null;
+  avg_fcp?: number | string | null;
   avg_lcp: number | string | null;
+  avg_dcl?: number | string | null;
+  avg_cls?: number | string | null;
+  avg_inp?: number | string | null;
+  p95_ttfb?: number | string | null;
+  p95_fcp?: number | string | null;
+  p95_lcp?: number | string | null;
+  p75_cls?: number | string | null;
+  p75_inp?: number | string | null;
+  lcp_fails?: number | string | null;
+  ttfb_fails?: number | string | null;
+  dcl_fails?: number | string | null;
+  cls_fails?: number | string | null;
+  inp_fails?: number | string | null;
 }
 
 interface PagePerformanceRow {
@@ -44,7 +59,7 @@ export const GET: APIRoute = async ({ locals }) => {
       );
     }
 
-    // Get client performance metrics stats
+    // Get client performance metrics stats — Core Web Vitals 2024 standard (Migration 168 CLS+INP cols)
     const performanceStats = await queryOne<PerformanceStatsRow>(`
       SELECT
         COUNT(*) as total_metrics,
@@ -52,12 +67,18 @@ export const GET: APIRoute = async ({ locals }) => {
         AVG(fcp) as avg_fcp,
         AVG(lcp) as avg_lcp,
         AVG(dcl) as avg_dcl,
+        AVG(cls) as avg_cls,
+        AVG(inp) as avg_inp,
         PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY ttfb) as p95_ttfb,
         PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY fcp) as p95_fcp,
         PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY lcp) as p95_lcp,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY cls) as p75_cls,
+        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY inp) as p75_inp,
         COUNT(CASE WHEN lcp > 2500 THEN 1 END) as lcp_fails,
         COUNT(CASE WHEN ttfb > 600 THEN 1 END) as ttfb_fails,
-        COUNT(CASE WHEN dcl > 3000 THEN 1 END) as dcl_fails
+        COUNT(CASE WHEN dcl > 3000 THEN 1 END) as dcl_fails,
+        COUNT(CASE WHEN cls > 0.25 THEN 1 END) as cls_fails,
+        COUNT(CASE WHEN inp > 500 THEN 1 END) as inp_fails
       FROM client_performance_metrics
       WHERE created_at > NOW() - INTERVAL '24 hours'
     `).catch(() => null);
@@ -109,11 +130,25 @@ export const GET: APIRoute = async ({ locals }) => {
       cacheHitRatio = total > 0 ? (cacheHits / total) * 100 : 0;
     }
 
-    // Generate recommendations
+    // Generate recommendations — Google Web Vitals threshold-based (p75/p95)
     const recommendations: string[] = [];
 
-    if (performanceStats?.avg_lcp && toNumber(performanceStats.avg_lcp) > 2500) {
-      recommendations.push('LCP iyileştirilmeli: görsel optimizasyonu ve lazy loading kontrol edilmeli');
+    if (performanceStats?.p95_lcp && toNumber(performanceStats.p95_lcp) > 4000) {
+      recommendations.push('LCP zayıf (p95 > 4s): görsel optimizasyonu, lazy loading, CDN kontrol edilmeli');
+    } else if (performanceStats?.avg_lcp && toNumber(performanceStats.avg_lcp) > 2500) {
+      recommendations.push('LCP iyileştirilmeli (avg > 2.5s): görsel optimizasyonu ve lazy loading kontrol edilmeli');
+    }
+
+    if (performanceStats?.p75_inp && toNumber(performanceStats.p75_inp) > 500) {
+      recommendations.push('INP zayıf (p75 > 500ms): JavaScript main thread blocking, event handler optimizasyonu gerekli');
+    } else if (performanceStats?.p75_inp && toNumber(performanceStats.p75_inp) > 200) {
+      recommendations.push('INP iyileştirilmeli (p75 > 200ms): user interaction responsiveness kontrol edilmeli');
+    }
+
+    if (performanceStats?.p75_cls && toNumber(performanceStats.p75_cls) > 0.25) {
+      recommendations.push("CLS zayıf (p75 > 0.25): layout shift'ler — image/iframe boyut belirtilmesi, font preload kontrol edilmeli");
+    } else if (performanceStats?.p75_cls && toNumber(performanceStats.p75_cls) > 0.1) {
+      recommendations.push("CLS iyileştirilmeli (p75 > 0.1): visual stability — reserve space for dynamic content");
     }
 
     if (performanceStats?.avg_ttfb && toNumber(performanceStats.avg_ttfb) > 600) {

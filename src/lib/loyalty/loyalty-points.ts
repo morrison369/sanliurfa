@@ -2,7 +2,7 @@
  * Loyalty Points Library
  * Points earning, spending, and transaction management
  */
-import { queryOne, queryMany, insert, update } from '../postgres';
+import { query, queryOne, queryMany, insert } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
 
@@ -14,12 +14,14 @@ export async function getUserPoints(userId: string): Promise<any> {
     const cached = await getCache(cacheKey);
     if (cached) return cached;
 
-    let points = await queryOne('SELECT * FROM loyalty_points WHERE user_id = $1', [userId]);
-
-    if (!points) {
-      await insert('loyalty_points', { user_id: userId });
-      points = await queryOne('SELECT * FROM loyalty_points WHERE user_id = $1', [userId]);
-    }
+    // Atomic upsert — avoids SELECT+INSERT race when two requests hit simultaneously (HARD RULE #47)
+    const points = await queryOne(
+      `INSERT INTO loyalty_points (user_id)
+       VALUES ($1)
+       ON CONFLICT (user_id) DO UPDATE SET user_id = EXCLUDED.user_id
+       RETURNING *`,
+      [userId]
+    );
 
     const result = {
       currentBalance: points.current_balance,
@@ -40,13 +42,26 @@ export async function getUserPoints(userId: string): Promise<any> {
 
 export async function awardPoints(userId: string, points: number, reason: string, relatedEntityType?: string, relatedEntityId?: string, expiryDays?: number): Promise<boolean> {
   try {
-    const userPoints = await queryOne('SELECT current_balance FROM loyalty_points WHERE user_id = $1', [userId]);
-    if (!userPoints) {
-      await insert('loyalty_points', { user_id: userId });
-    }
-
-    const newBalance = (userPoints?.current_balance || 0) + points;
     const expiresAt = expiryDays ? new Date(Date.now() + (expiryDays * 24 * 60 * 60 * 1000)) : null;
+
+    // Atomic upsert: INSERT for new users, UPDATE for existing.
+    // ON CONFLICT serializes concurrent awards via PostgreSQL row-level lock.
+    const result = await queryOne<{ current_balance: number; balance_before: number }>(
+      `INSERT INTO loyalty_points (user_id, current_balance, lifetime_earned, last_earned_at, updated_at)
+       VALUES ($1, $2, $2, NOW(), NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+         current_balance = loyalty_points.current_balance + $2,
+         lifetime_earned = loyalty_points.lifetime_earned + $2,
+         last_earned_at  = NOW(),
+         updated_at      = NOW()
+       RETURNING current_balance, (current_balance - $2) AS balance_before`,
+      [userId, points]
+    );
+
+    if (!result) {
+      logger.warn('awardPoints: upsert returned no row', Object.assign(new Error('no row'), { userId, points }));
+      return false;
+    }
 
     await insert('loyalty_transactions', {
       user_id: userId,
@@ -55,16 +70,9 @@ export async function awardPoints(userId: string, points: number, reason: string
       transaction_reason: reason,
       related_entity_type: relatedEntityType,
       related_entity_id: relatedEntityId,
-      balance_before: userPoints?.current_balance || 0,
-      balance_after: newBalance,
+      balance_before: result.balance_before,
+      balance_after: result.current_balance,
       expires_at: expiresAt
-    });
-
-    await update('loyalty_points', { user_id: userId }, {
-      current_balance: newBalance,
-      lifetime_earned: (userPoints?.lifetime_earned || 0) + points,
-      last_earned_at: new Date(),
-      updated_at: new Date()
     });
 
     // Invalidate cache
@@ -80,18 +88,23 @@ export async function awardPoints(userId: string, points: number, reason: string
 
 export async function spendPoints(userId: string, points: number, reason: string, relatedEntityId?: string): Promise<boolean> {
   try {
-    const userPoints = await queryOne('SELECT current_balance FROM loyalty_points WHERE user_id = $1', [userId]);
-    if (!userPoints) {
-      logger.warn('User has no points account', Object.assign(new Error('User has no points account'), { userId }));
+    // Atomic check-and-deduct: WHERE current_balance >= $1 prevents negative balance race condition.
+    // PostgreSQL row-level lock serializes concurrent spend requests for the same user.
+    const result = await queryOne<{ current_balance: number; balance_before: number }>(
+      `UPDATE loyalty_points
+       SET current_balance  = current_balance  - $1,
+           lifetime_spent   = COALESCE(lifetime_spent, 0) + $1,
+           last_spent_at    = NOW(),
+           updated_at       = NOW()
+       WHERE user_id = $2 AND current_balance >= $1
+       RETURNING current_balance, (current_balance + $1) AS balance_before`,
+      [points, userId]
+    );
+
+    if (!result) {
+      logger.warn('Insufficient points or no account', Object.assign(new Error('Insufficient points or no account'), { userId, required: points }));
       return false;
     }
-
-    if (userPoints.current_balance < points) {
-      logger.warn('Insufficient points', Object.assign(new Error('Insufficient points'), { userId, available: userPoints.current_balance, required: points }));
-      return false;
-    }
-
-    const newBalance = userPoints.current_balance - points;
 
     await insert('loyalty_transactions', {
       user_id: userId,
@@ -99,15 +112,8 @@ export async function spendPoints(userId: string, points: number, reason: string
       points_amount: points,
       transaction_reason: reason,
       related_entity_id: relatedEntityId,
-      balance_before: userPoints.current_balance,
-      balance_after: newBalance
-    });
-
-    await update('loyalty_points', { user_id: userId }, {
-      current_balance: newBalance,
-      lifetime_spent: (userPoints.lifetime_spent || 0) + points,
-      last_spent_at: new Date(),
-      updated_at: new Date()
+      balance_before: result.balance_before,
+      balance_after: result.current_balance,
     });
 
     // Invalidate cache
@@ -160,14 +166,14 @@ export async function getEarningRules(): Promise<any[]> {
 
 export async function expirePoints(): Promise<number> {
   try {
-    const result = await queryOne(`
-      UPDATE loyalty_transactions
-      SET is_expired = true
-      WHERE expires_at < NOW() AND is_expired = false
-      RETURNING COUNT(*) as count
-    `);
+    // rowCount: RETURNING COUNT(*) is invalid SQL in PostgreSQL — aggregate not allowed in RETURNING
+    const result = await query(
+      `UPDATE loyalty_transactions
+       SET is_expired = true
+       WHERE expires_at < NOW() AND is_expired = false`
+    );
 
-    const count = parseInt(result?.count || '0');
+    const count = result.rowCount || 0;
     if (count > 0) {
       logger.info('Expired points', { count });
     }

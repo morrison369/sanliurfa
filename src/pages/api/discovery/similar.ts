@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getSimilarPlaces } from '../../../lib/recommendation/recommendations';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'placeId required', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
-    const limit = parseInt(url.searchParams.get('limit') || '5', 10);
+    const limit = safeIntParam(url.searchParams.get('limit'), 5, 0, 1_000_000);
     const similar = await getSimilarPlaces(placeId, limit);
 
     const duration = Date.now() - startTime;

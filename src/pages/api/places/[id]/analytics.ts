@@ -6,7 +6,7 @@
 import type { APIRoute } from 'astro';
 import { getPlaceAnalytics } from '../../../../lib/analytics';
 import { queryOne } from '../../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
@@ -18,6 +18,10 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
   try {
     const user = locals.user;
     const { id: placeId } = params;
+    if (!placeId) {
+      recordRequest('GET', '/api/places/{id}/analytics', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan kimliği gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     const place = await queryOne('SELECT id, user_id FROM places WHERE id = $1', [placeId]);
     if (!place) {
@@ -34,7 +38,7 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
     }
 
     const url = new URL(request.url);
-    const days = Math.min(parseInt(url.searchParams.get('days') || '30'), 365);
+    const days = safeIntParam(url.searchParams.get('days'), 30, 1, 365);
     const analytics = await getPlaceAnalytics(placeId);
 
     const duration = Date.now() - startTime;
@@ -43,7 +47,7 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
     return apiResponse({ success: true, data: analytics, period: days }, HttpStatus.OK, requestId);
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('GET', `/api/places/${params.id}/analytics`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    recordRequest('GET', `/api/places/${params.id ?? '{id}'}/analytics`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get place analytics failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(ErrorCode.INTERNAL_ERROR, 'Analitikler alınırken bir hata oluştu', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }

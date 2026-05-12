@@ -52,31 +52,18 @@ export async function subscribe(
   preferences?: Partial<NewsletterPreferences>
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Check if already subscribed
-    const existing = await query(
-      'SELECT id FROM newsletter_subscribers WHERE email = $1',
-      [email.toLowerCase()]
+    // Atomic upsert (HARD RULE #47): SELECT-then-UPDATE/INSERT race-prone
+    const prefs = JSON.stringify({ ...DEFAULT_PREFERENCES, ...preferences });
+    await query(
+      `INSERT INTO newsletter_subscribers (email, name, preferences, status, subscribed_at)
+       VALUES ($1, $2, $3::jsonb, 'active', NOW())
+       ON CONFLICT (email) DO UPDATE SET
+         status = 'active',
+         name = COALESCE(EXCLUDED.name, newsletter_subscribers.name),
+         preferences = newsletter_subscribers.preferences || EXCLUDED.preferences,
+         updated_at = NOW()`,
+      [email.toLowerCase(), name, prefs]
     );
-
-    if (existing.rows.length > 0) {
-      // Update existing subscription
-      await query(
-        `UPDATE newsletter_subscribers 
-         SET status = 'active', 
-             name = COALESCE($2, name),
-             preferences = preferences || $3::jsonb,
-             updated_at = NOW()
-         WHERE email = $1`,
-        [email.toLowerCase(), name, JSON.stringify({ ...DEFAULT_PREFERENCES, ...preferences })]
-      );
-    } else {
-      // Create new subscription
-      await query(
-        `INSERT INTO newsletter_subscribers (email, name, preferences, status, subscribed_at)
-         VALUES ($1, $2, $3, 'active', NOW())`,
-        [email.toLowerCase(), name, JSON.stringify({ ...DEFAULT_PREFERENCES, ...preferences })]
-      );
-    }
 
     // Send welcome email
     await sendWelcomeEmail(email, name);
@@ -145,7 +132,7 @@ export async function getSubscribers(options: {
       preferences: row.preferences,
       subscribed_at: new Date(row.subscribed_at),
     })),
-    total: parseInt(countResult.rows[0].total),
+    total: parseInt(countResult.rows[0].total, 10),
   };
 }
 
@@ -201,28 +188,21 @@ export async function sendCampaign(campaignId: string): Promise<{ sent: number; 
     "SELECT email, name FROM newsletter_subscribers WHERE status = 'active'"
   );
 
-  let sent = 0;
-  let failed = 0;
-
   // Queue emails
-  for (const subscriber of subscribersResult.rows) {
-    try {
-      // Personalize content
+  const queueResults = await Promise.allSettled(
+    subscribersResult.rows.map(async (subscriber) => {
       const html = campaign.content_html.replace(/{{name}}/g, subscriber.name || 'Değerli Üyemiz');
       const text = campaign.content_text.replace(/{{name}}/g, subscriber.name || 'Değerli Üyemiz');
-
       await queueEmail({
         to: subscriber.email,
         subject: campaign.subject,
         html,
         text,
       });
-
-      sent++;
-    } catch {
-      failed++;
-    }
-  }
+    })
+  );
+  const sent = queueResults.filter((r) => r.status === 'fulfilled').length;
+  const failed = queueResults.filter((r) => r.status === 'rejected').length;
 
   // Update campaign
   await query(

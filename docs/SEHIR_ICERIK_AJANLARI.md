@@ -1,6 +1,6 @@
 # Şehir İçerik Ajanları
 
-Bu proje ürün/mağaza karşılaştırma yerine Şanlıurfa odaklı şehir içerikleri çeker, zenginleştirir ve admin onayından sonra yayınlar.
+Bu proje Şanlıurfa odaklı şehir rehberi içerikleri çeker, zenginleştirir ve admin onayından sonra yayınlar.
 
 ## Kalıcı Kurallar
 

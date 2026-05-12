@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import type { Pool } from 'pg';
 import { pool as postgresPool } from '../../../lib/postgres';
 import {
   createWebhookTemplate,
@@ -27,8 +28,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const popular = url.searchParams.get('popular') === 'true';
 
     const data = popular
-      ? await getPopularTemplates(postgresPool as any)
-      : await getUserTemplates(postgresPool as any, locals.user.id);
+      ? await getPopularTemplates(postgresPool as unknown as Pool)
+      : await getUserTemplates(postgresPool as unknown as Pool, locals.user.id);
 
     return apiResponse(
       { success: true, data, count: data.length },
@@ -60,10 +61,22 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!name || !event) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Name and event required', HttpStatus.BAD_REQUEST);
     }
+    if (typeof name !== 'string' || name.length > 255) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'name 255 karakterden uzun olamaz', HttpStatus.BAD_REQUEST);
+    }
+    if (typeof event !== 'string' || event.length > 100 || !/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(event)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'event formatı geçersiz (örn: place.created)', HttpStatus.BAD_REQUEST);
+    }
+    if (description !== undefined && description !== null && (typeof description !== 'string' || description.length > 1000)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'description 1000 karakterden uzun olamaz', HttpStatus.BAD_REQUEST);
+    }
+    if (settings !== undefined && JSON.stringify(settings).length > 100000) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'settings 100000 karakterden uzun olamaz', HttpStatus.BAD_REQUEST);
+    }
 
     // Create template
     const template = await createWebhookTemplate(
-      postgresPool as any,
+      postgresPool as unknown as Pool,
       locals.user.id,
       name,
       event,
@@ -75,7 +88,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let webhookId = null;
     if (applyTo && applyTo.webhookUrl) {
       webhookId = await applyTemplate(
-        postgresPool as any,
+        postgresPool as unknown as Pool,
         locals.user.id,
         template.id,
         applyTo.webhookUrl,
@@ -119,7 +132,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Template ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const deleted = await deleteTemplate(postgresPool as any, id, locals.user.id);
+    const deleted = await deleteTemplate(postgresPool as unknown as Pool, id, locals.user.id);
 
     if (!deleted) {
       return apiError(ErrorCode.NOT_FOUND, 'Template not found', HttpStatus.NOT_FOUND);

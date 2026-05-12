@@ -17,9 +17,14 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
 
   try {
     const user = locals.user;
+    const commentId = params.id;
     if (!user) {
       recordRequest('PUT', `/api/comments/${params.id}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
+    if (!commentId) {
+      recordRequest('PUT', '/api/comments/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const body = await request.json();
@@ -30,11 +35,11 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum içeriği gereklidir', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
-    const comment = await updateComment(params.id, user.id, content.trim());
+    const comment = await updateComment(commentId, user.id, content.trim());
 
     const duration = Date.now() - startTime;
     recordRequest('PUT', `/api/comments/${params.id}`, HttpStatus.OK, duration);
-    logger.logMutation('update', 'comments', params.id, user.id);
+    logger.logMutation('update', 'comments', commentId, user.id);
 
     return apiResponse({ success: true, data: comment }, HttpStatus.OK, requestId);
   } catch (error) {
@@ -62,16 +67,21 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
 
   try {
     const user = locals.user;
+    const commentId = params.id;
     if (!user) {
       recordRequest('DELETE', `/api/comments/${params.id}`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
       return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
+    if (!commentId) {
+      recordRequest('DELETE', '/api/comments/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Yorum ID gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
-    await deleteComment(params.id, user.id);
+    await deleteComment(commentId, user.id);
 
     const duration = Date.now() - startTime;
     recordRequest('DELETE', `/api/comments/${params.id}`, HttpStatus.OK, duration);
-    logger.logMutation('delete', 'comments', params.id, user.id);
+    logger.logMutation('delete', 'comments', commentId, user.id);
 
     return apiResponse({ success: true, message: 'Yorum silindi' }, HttpStatus.OK, requestId);
   } catch (error) {

@@ -1,0 +1,127 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { query } from '../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || user.role !== 'admin') return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+
+const statusFilter = Astro.url.searchParams.get('status') || 'pending';
+const VALID_STATUS = ['pending', 'approved', 'rejected', 'all'];
+const safeStatus = VALID_STATUS.includes(statusFilter) ? statusFilter : 'pending';
+
+const statusWhere = safeStatus === 'all' ? '' : `AND pc.status = '${safeStatus}'`;
+const claims = await query(
+ `SELECT pc.id, pc.status, pc.contact_name, pc.contact_phone, pc.contact_email,
+         pc.message, pc.admin_note, pc.created_at,
+         p.id as place_id, p.name as place_name, p.slug as place_slug,
+         u.full_name as user_name, u.email as user_email
+  FROM place_claims pc
+  JOIN places p ON p.id = pc.place_id
+  JOIN users u ON u.id = pc.user_id
+  WHERE 1=1 ${statusWhere}
+  ORDER BY pc.created_at DESC
+  LIMIT 100`,
+).then(r => r.rows);
+
+const statusLabel: Record<string, string> = { pending: 'Bekleyen', approved: 'Onaylı', rejected: 'Reddedilen', all: 'Tümü' };
+const statusColor: Record<string, string> = { pending: '#D49718', approved: '#2C7A52', rejected: '#C0571F' };
+---
+
+<AdminLayout
+ title="Sahiplik Talepleri"
+ subtitle="İşletme sahiplik taleplerine ait başvuruları inceleyin"
+ seo={{ title: 'Sahiplik Talepleri - Yönetim Paneli', noIndex: true }}
+>
+ <style is:inline>
+  .cl-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+  .cl-tab{padding:.4rem .85rem;border-radius:5px;font-size:.82rem;font-weight:600;text-decoration:none;border:1px solid rgba(192,87,31,.2);color:var(--text-2)}
+  .cl-tab.active,.cl-tab:hover{background:#C0571F;color:#fff;border-color:#C0571F}
+  .cl-card{background:#fff;border:1px solid rgba(192,87,31,.1);border-radius:8px;padding:1rem 1.25rem;margin-bottom:.75rem}
+  .cl-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.5rem}
+  .cl-name{font-weight:700;font-size:.95rem;color:#1F1410}
+  .cl-badge{font-size:.72rem;font-weight:700;padding:.2rem .55rem;border-radius:999px;color:#fff}
+  .cl-meta{font-size:.82rem;color:#7A6448;display:flex;flex-direction:column;gap:.2rem}
+  .cl-actions{display:flex;gap:.5rem;margin-top:.75rem}
+  .cl-btn{padding:.4rem .85rem;font-size:.82rem;font-weight:600;border:none;border-radius:5px;cursor:pointer}
+  .cl-btn-approve{background:#2C7A52;color:#fff}
+  .cl-btn-reject{background:#C0571F;color:#fff}
+  .cl-note{width:100%;margin-top:.5rem;padding:.4rem .6rem;border:1px solid rgba(192,87,31,.2);border-radius:4px;font-size:.83rem;font-family:inherit}
+ </style>
+
+ <div class="sf-container py-8 max-w-4xl">
+  <div class="mb-4">
+   <a href="/admin" style="font-size:.85rem;color:#7A6448">← Admin Paneli</a>
+  </div>
+
+  <div class="cl-tabs">
+   {VALID_STATUS.map(s => (
+    <a href={`/admin/claims?status=${s}`} class={`cl-tab${safeStatus === s ? ' active' : ''}`}>
+     {statusLabel[s]}
+    </a>
+   ))}
+  </div>
+
+  {claims.length === 0 && (
+   <p style="color:#7A6448;text-align:center;padding:3rem">Bu durumda talep bulunmuyor.</p>
+  )}
+
+  {claims.map((c: any) => (
+   <div class="cl-card" id={`claim-${c.id}`}>
+    <div class="cl-head">
+     <div>
+      <p class="cl-name">
+       <a href={`/isletme/${c.place_slug}`} target="_blank" rel="noopener" style="color:#C0571F;text-decoration:none">
+        {c.place_name}
+       </a>
+      </p>
+      <p style="font-size:.8rem;color:#7A6448;margin:.15rem 0 0">Talep eden: {c.user_name} ({c.user_email})</p>
+     </div>
+     <span class="cl-badge" style={`background:${statusColor[c.status] || '#7A6448'}`}>{statusLabel[c.status] || c.status}</span>
+    </div>
+    <div class="cl-meta">
+     <span>İletişim: {c.contact_name} — {c.contact_phone || 'telefon yok'} — {c.contact_email || 'e-posta yok'}</span>
+     {c.message && <span>Mesaj: {c.message}</span>}
+     {c.admin_note && <span style="color:var(--text-2)">Admin notu: {c.admin_note}</span>}
+     <span>Tarih: {new Date(c.created_at).toLocaleDateString('tr-TR')}</span>
+    </div>
+    {c.status === 'pending' && (
+     <div class="cl-actions">
+      <textarea class="cl-note" placeholder="Admin notu (opsiyonel)" rows="1" id={`note-${c.id}`}></textarea>
+      <button class="cl-btn cl-btn-approve" onclick={`reviewClaim('${c.id}', 'approve')`}>Onayla</button>
+      <button class="cl-btn cl-btn-reject" onclick={`reviewClaim('${c.id}', 'reject')`}>Reddet</button>
+     </div>
+    )}
+   </div>
+  ))}
+ </div>
+
+ <script is:inline>
+  async function reviewClaim(id, action) {
+   const noteEl = document.getElementById('note-' + id);
+   const note = noteEl ? noteEl.value.trim() : '';
+   const card = document.getElementById('claim-' + id);
+   const btns = card.querySelectorAll('button');
+   btns.forEach(b => b.disabled = true);
+   try {
+    const res = await fetch('/api/admin/claims/' + id, {
+     method: 'PUT',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ action, admin_note: note }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+     card.style.opacity = '.5';
+     card.querySelector('.cl-badge').textContent = action === 'approve' ? 'Onaylandı' : 'Reddedildi';
+     card.querySelector('.cl-badge').style.background = action === 'approve' ? '#2C7A52' : '#C0571F';
+     card.querySelector('.cl-actions').remove();
+    } else {
+     alert(data?.error || 'İşlem başarısız.');
+     btns.forEach(b => b.disabled = false);
+    }
+   } catch {
+    alert('Bağlantı hatası.');
+    btns.forEach(b => b.disabled = false);
+   }
+  }
+ </script>
+</AdminLayout>

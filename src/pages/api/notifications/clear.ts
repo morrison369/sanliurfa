@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
 
 // Tüm bildirimleri sil
 export const DELETE: APIRoute = async ({ locals }) => {
@@ -22,16 +22,13 @@ export const DELETE: APIRoute = async ({ locals }) => {
       [user.id]
     );
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error: any) {
+    return apiResponse({ success: true }, HttpStatus.OK);
+  } catch (error) {
     logger.error('Clear notifications error:', error);
     return problemJson({
       status: 500,
       title: 'Bildirimler Temizlenemedi',
-      detail: error instanceof Error ? error.message : 'server_error',
+      detail: safeErrorDetail(error, 'server_error'),
       type: '/problems/notifications-clear-failed',
       instance: '/api/notifications/clear',
     });

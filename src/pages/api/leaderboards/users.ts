@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { getCache, setCache } from '../../../lib/cache';
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   try {
     // Get query parameters
     const sortBy = url.searchParams.get('sortBy') || 'points'; // points, level, activity, recent
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
 
     // Validate sortBy
     if (!['points', 'level', 'activity', 'recent'].includes(sortBy)) {
@@ -93,7 +93,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     const result = await queryMany(sql, [limit]);
 
     // Format response with ranks
-    const leaderboard = result.map((row: any, index: number) => ({
+    const leaderboard = result.map((row, index: number) => ({
       rank: index + 1,
       id: row.id,
       full_name: row.full_name,
@@ -102,10 +102,10 @@ export const GET: APIRoute = async ({ request, url }) => {
       points: row.points,
       level: row.level,
       created_at: row.created_at,
-      activity_count: parseInt(row.activity_count || '0'),
-      badge_count: parseInt(row.badge_count || '0'),
-      review_count: parseInt(row.review_count || '0'),
-      favorite_count: parseInt(row.favorite_count || '0')
+      activity_count: parseInt(row.activity_count || '0', 10),
+      badge_count: parseInt(row.badge_count || '0', 10),
+      review_count: parseInt(row.review_count || '0', 10),
+      favorite_count: parseInt(row.favorite_count || '0', 10)
     }));
 
     // Cache for 10 minutes

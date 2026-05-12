@@ -273,6 +273,66 @@ export interface BlogComment {
   updated_at?: Date;
 }
 
+type DbRow = Record<string, any>;
+
+function withOptional<K extends string, V>(key: K, value: V | null | undefined): { [P in K]?: V } {
+  if (value === null || value === undefined) {
+    return {} as { [P in K]?: V };
+  }
+  return { [key]: value } as { [P in K]?: V };
+}
+
+function toOptionalDate(value: unknown): Date | undefined {
+  return value ? new Date(String(value)) : undefined;
+}
+
+function mapBlogCommentRow(row: DbRow): BlogComment {
+  return {
+    id: row.id,
+    post_id: row.post_id,
+    author_name: row.author_name,
+    author_email: row.author_email,
+    content: row.content,
+    status: row.status,
+    created_at: new Date(row.created_at),
+    ...withOptional('user_id', row.user_id ?? undefined),
+    ...withOptional('parent_id', row.parent_id ?? undefined),
+    ...withOptional('updated_at', toOptionalDate(row.updated_at)),
+  };
+}
+
+function mapBlogRevisionRow(row: DbRow): BlogPostRevision {
+  return {
+    id: row.id,
+    post_id: row.post_id,
+    title: row.title,
+    content: row.content,
+    editor_id: row.editor_id,
+    editor_name: row.editor_name,
+    created_at: new Date(row.created_at),
+    ...withOptional('excerpt', row.excerpt ?? undefined),
+    ...withOptional('change_summary', row.change_summary ?? undefined),
+  };
+}
+
+function mapDBBlogPostRow(row: DbRow): DBBlogPost {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    excerpt: row.excerpt,
+    content: row.content,
+    category: row.category,
+    tags: row.tags || [],
+    author_id: row.author_id,
+    status: row.status,
+    created_at: new Date(row.created_at),
+    updated_at: new Date(row.updated_at),
+    ...withOptional('cover_image', row.cover_image ?? undefined),
+    ...withOptional('published_at', toOptionalDate(row.published_at)),
+  };
+}
+
 /**
  * Get blog comments for a post
  */
@@ -290,18 +350,7 @@ export async function getBlogComments(
     [postId, limit, offset]
   );
   
-  return result.rows.map(row => ({
-    id: row.id,
-    post_id: row.post_id,
-    user_id: row.user_id,
-    author_name: row.author_name,
-    author_email: row.author_email,
-    content: row.content,
-    parent_id: row.parent_id,
-    status: row.status,
-    created_at: new Date(row.created_at),
-    updated_at: row.updated_at ? new Date(row.updated_at) : undefined,
-  }));
+  return result.rows.map(mapBlogCommentRow);
 }
 
 /**
@@ -323,18 +372,7 @@ export async function addBlogComment(data: {
   );
   
   const row = result.rows[0];
-  return {
-    id: row.id,
-    post_id: row.post_id,
-    user_id: row.user_id,
-    author_name: row.author_name,
-    author_email: row.author_email,
-    content: row.content,
-    parent_id: row.parent_id,
-    status: row.status,
-    created_at: new Date(row.created_at),
-    updated_at: row.updated_at ? new Date(row.updated_at) : undefined,
-  };
+  return mapBlogCommentRow(row);
 }
 
 /**
@@ -379,18 +417,7 @@ export async function getPendingComments(limit = 20): Promise<BlogComment[]> {
     [limit]
   );
   
-  return result.rows.map(row => ({
-    id: row.id,
-    post_id: row.post_id,
-    user_id: row.user_id,
-    author_name: row.author_name,
-    author_email: row.author_email,
-    content: row.content,
-    parent_id: row.parent_id,
-    status: row.status,
-    created_at: new Date(row.created_at),
-    updated_at: row.updated_at ? new Date(row.updated_at) : undefined,
-  }));
+  return result.rows.map(mapBlogCommentRow);
 }
 
 
@@ -420,17 +447,7 @@ export async function getBlogPostRevisions(postId: string): Promise<BlogPostRevi
     [postId]
   );
   
-  return result.rows.map(row => ({
-    id: row.id,
-    post_id: row.post_id,
-    title: row.title,
-    content: row.content,
-    excerpt: row.excerpt,
-    editor_id: row.editor_id,
-    editor_name: row.editor_name,
-    change_summary: row.change_summary,
-    created_at: new Date(row.created_at),
-  }));
+  return result.rows.map(mapBlogRevisionRow);
 }
 
 /**
@@ -453,15 +470,7 @@ export async function createBlogPostRevision(data: {
   
   const row = result.rows[0];
   return {
-    id: row.id,
-    post_id: row.post_id,
-    title: row.title,
-    content: row.content,
-    excerpt: row.excerpt,
-    editor_id: row.editor_id,
-    editor_name: '', // Will be populated by caller if needed
-    change_summary: row.change_summary,
-    created_at: new Date(row.created_at),
+    ...mapBlogRevisionRow({ ...row, editor_name: '' }),
   };
 }
 
@@ -537,21 +546,7 @@ export async function getBlogPostBySlug(slug: string): Promise<DBBlogPost | null
   if (result.rows.length === 0) return null;
   
   const row = result.rows[0];
-  return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    content: row.content,
-    category: row.category,
-    tags: row.tags || [],
-    author_id: row.author_id,
-    status: row.status,
-    cover_image: row.cover_image,
-    published_at: row.published_at ? new Date(row.published_at) : undefined,
-    created_at: new Date(row.created_at),
-    updated_at: new Date(row.updated_at),
-  };
+  return mapDBBlogPostRow(row);
 }
 
 /**
@@ -576,21 +571,7 @@ export async function createBlogPost(data: {
   );
   
   const row = result.rows[0];
-  return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    content: row.content,
-    category: row.category,
-    tags: row.tags || [],
-    author_id: row.author_id,
-    status: row.status,
-    cover_image: row.cover_image,
-    published_at: row.published_at ? new Date(row.published_at) : undefined,
-    created_at: new Date(row.created_at),
-    updated_at: new Date(row.updated_at),
-  };
+  return mapDBBlogPostRow(row);
 }
 
 /**
@@ -610,7 +591,7 @@ export async function updateBlogPost(
 ): Promise<DBBlogPost | null> {
   // Build dynamic update query
   const updates: string[] = [];
-  const values: any[] = [];
+  const values: unknown[] = [];
   let paramCount = 1;
   
   if (data.title !== undefined) {
@@ -656,21 +637,7 @@ export async function updateBlogPost(
   if (result.rows.length === 0) return null;
   
   const row = result.rows[0];
-  return {
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    content: row.content,
-    category: row.category,
-    tags: row.tags || [],
-    author_id: row.author_id,
-    status: row.status,
-    cover_image: row.cover_image,
-    published_at: row.published_at ? new Date(row.published_at) : undefined,
-    created_at: new Date(row.created_at),
-    updated_at: new Date(row.updated_at),
-  };
+  return mapDBBlogPostRow(row);
 }
 
 /**
@@ -695,7 +662,7 @@ export async function getAllDBPosts(options: {
   const { status = 'published', limit = 20, offset = 0, category } = options;
   
   let sql = `SELECT * FROM blog_posts WHERE 1=1`;
-  const params: any[] = [];
+  const params: unknown[] = [];
   let paramCount = 1;
   
   if (status !== 'all') {
@@ -713,21 +680,7 @@ export async function getAllDBPosts(options: {
   
   const result = await dbQuery(sql, params);
   
-  return result.rows.map(row => ({
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    content: row.content,
-    category: row.category,
-    tags: row.tags || [],
-    author_id: row.author_id,
-    status: row.status,
-    cover_image: row.cover_image,
-    published_at: row.published_at ? new Date(row.published_at) : undefined,
-    created_at: new Date(row.created_at),
-    updated_at: new Date(row.updated_at),
-  }));
+  return result.rows.map(mapDBBlogPostRow);
 }
 
 /**
@@ -757,8 +710,8 @@ export async function getBlogPosts(options: {
   
   let sql = `SELECT * FROM blog_posts WHERE 1=1`;
   let countSql = `SELECT COUNT(*) as total FROM blog_posts WHERE 1=1`;
-  const params: any[] = [];
-  const countParams: any[] = [];
+  const params: unknown[] = [];
+  const countParams: unknown[] = [];
   let paramCount = 1;
   
   if (status !== 'all') {
@@ -795,7 +748,7 @@ export async function getBlogPosts(options: {
   
   // Get total count
   const countResult = await dbQuery(countSql, countParams);
-  const total = parseInt(countResult.rows[0].total);
+  const total = parseInt(countResult.rows[0].total, 10);
   
   // Add ordering and pagination
   sql += ` ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
@@ -803,21 +756,7 @@ export async function getBlogPosts(options: {
   
   const result = await dbQuery(sql, params);
   
-  let posts = result.rows.map(row => ({
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    content: row.content,
-    category: row.category,
-    tags: row.tags || [],
-    author_id: row.author_id,
-    status: row.status,
-    cover_image: row.cover_image,
-    published_at: row.published_at ? new Date(row.published_at) : undefined,
-    created_at: new Date(row.created_at),
-    updated_at: new Date(row.updated_at),
-  }));
+  let posts = result.rows.map(mapDBBlogPostRow);
   
   // Filter by tag in memory if needed (since tags is an array)
   if (tag) {
@@ -851,21 +790,7 @@ export async function getRelatedDBPosts(postId: string, limit = 3): Promise<DBBl
     [postId, category, tags || [], limit]
   );
   
-  return result.rows.map(row => ({
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    content: row.content,
-    category: row.category,
-    tags: row.tags || [],
-    author_id: row.author_id,
-    status: row.status,
-    cover_image: row.cover_image,
-    published_at: row.published_at ? new Date(row.published_at) : undefined,
-    created_at: new Date(row.created_at),
-    updated_at: new Date(row.updated_at),
-  }));
+  return result.rows.map(mapDBBlogPostRow);
 }
 
 /**
@@ -897,7 +822,7 @@ export async function searchBlogPosts(query: string, options: {
     [searchTerm]
   );
   
-  const total = parseInt(countResult.rows[0].total);
+  const total = parseInt(countResult.rows[0].total, 10);
   
   // Get posts
   const result = await dbQuery(
@@ -911,21 +836,7 @@ export async function searchBlogPosts(query: string, options: {
     [searchTerm, limit, offset]
   );
   
-  const posts = result.rows.map(row => ({
-    id: row.id,
-    slug: row.slug,
-    title: row.title,
-    excerpt: row.excerpt,
-    content: row.content,
-    category: row.category,
-    tags: row.tags || [],
-    author_id: row.author_id,
-    status: row.status,
-    cover_image: row.cover_image,
-    published_at: row.published_at ? new Date(row.published_at) : undefined,
-    created_at: new Date(row.created_at),
-    updated_at: new Date(row.updated_at),
-  }));
+  const posts = result.rows.map(mapDBBlogPostRow);
   
   return { posts, total };
 }

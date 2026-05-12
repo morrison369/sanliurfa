@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { authenticateUser } from '../../../../lib/auth/middleware';
 import { logger } from '../../../../lib/logging';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../../lib/api';
 
 export const GET: APIRoute = async (context) => {
   try {
@@ -46,14 +46,11 @@ export const GET: APIRoute = async (context) => {
       [id]
     );
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       ticket: result.rows[0],
       responses: responses.rows
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Get ticket error:', error);
@@ -83,21 +80,29 @@ export const PUT: APIRoute = async (context) => {
     const { id } = context.params;
     const body = await context.request.json();
 
+    const VALID_TICKET_STATUSES = new Set(['open', 'in_progress', 'resolved', 'closed']);
+    if (body.status !== undefined && body.status !== null && (typeof body.status !== 'string' || !VALID_TICKET_STATUSES.has(body.status))) {
+      return problemJson({
+        status: 422,
+        title: 'Geçersiz Durum',
+        detail: 'Geçersiz talep durumu',
+        type: '/problems/contact-ticket-invalid-status',
+        instance: `/api/contact/${id}`,
+      });
+    }
+
     const result = await query(
-      `UPDATE support_tickets 
+      `UPDATE support_tickets
        SET status = $1, updated_at = NOW(), assigned_to = $2
        WHERE id = $3
        RETURNING *`,
       [body.status, auth.user.id, id]
     );
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       ticket: result.rows[0]
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Update ticket error:', error);
@@ -127,6 +132,36 @@ export const POST: APIRoute = async (context) => {
     const { id } = context.params;
     const body = await context.request.json();
 
+    if (!body.message || typeof body.message !== 'string' || !body.message.trim()) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'message alanı zorunludur',
+        type: '/problems/contact-ticket-message-required',
+        instance: `/api/contact/${id}`,
+      });
+    }
+    if (body.message.length > 5000) {
+      return problemJson({
+        status: 422,
+        title: 'Çok Uzun',
+        detail: 'Yanıt mesajı 5000 karakteri aşamaz',
+        type: '/problems/contact-ticket-message-too-long',
+        instance: `/api/contact/${id}`,
+      });
+    }
+
+    const VALID_TICKET_STATUSES = new Set(['open', 'in_progress', 'resolved', 'closed']);
+    if (body.status !== undefined && body.status !== null && (typeof body.status !== 'string' || !VALID_TICKET_STATUSES.has(body.status))) {
+      return problemJson({
+        status: 422,
+        title: 'Geçersiz Durum',
+        detail: 'Geçersiz talep durumu',
+        type: '/problems/contact-ticket-invalid-status',
+        instance: `/api/contact/${id}`,
+      });
+    }
+
     await query(
       `INSERT INTO ticket_responses (ticket_id, responder_id, message)
        VALUES ($1, $2, $3)`,
@@ -135,20 +170,17 @@ export const POST: APIRoute = async (context) => {
 
     if (body.status) {
       await query(
-        `UPDATE support_tickets 
+        `UPDATE support_tickets
          SET status = $1, updated_at = NOW()
          WHERE id = $2`,
         [body.status, id]
       );
     }
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       message: 'Reply added'
-    }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.CREATED);
 
   } catch (error) {
     logger.error('Add reply error:', error);

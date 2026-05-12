@@ -7,7 +7,7 @@
 
 import type { APIRoute } from 'astro';
 import { requireAuth } from '../../../lib/auth';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeErrorDetail, safeIntParam } from '../../../lib/api';
 import {
   getUserNotifications,
   markAsRead,
@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     const searchParams = new URL(url).searchParams;
     const unreadOnly = searchParams.get('unreadOnly') === 'true';
-    const limit = parseInt(searchParams.get('limit') || '20');
+    const limit = safeIntParam(searchParams.get('limit'), 20, 0, 1_000_000);
 
     const [notifications, unreadCount] = await Promise.all([
       getUserNotifications(auth.user.id, { limit, unreadOnly }),
@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     return problemJson({
       status: 500,
       title: 'Bildirimler Alınamadı',
-      detail: error instanceof Error ? error.message : 'Failed to get notifications',
+      detail: safeErrorDetail(error, 'Failed to get notifications'),
       type: '/problems/notifications-fetch-failed',
       instance: '/api/notifications',
     });
@@ -93,7 +93,7 @@ export const POST: APIRoute = async ({ request }) => {
     return problemJson({
       status: 500,
       title: 'Bildirim Güncellenemedi',
-      detail: error instanceof Error ? error.message : 'Failed to mark as read',
+      detail: safeErrorDetail(error, 'Failed to mark as read'),
       type: '/problems/notifications-mark-failed',
       instance: '/api/notifications',
     });

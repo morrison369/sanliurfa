@@ -7,9 +7,10 @@
 import type { APIRoute } from 'astro';
 import { getBlogComments, addBlogComment } from '../../../lib/blog';
 import { validateWithSchema, type ValidationSchema } from '../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeErrorDetail, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
+import { invalidateComment } from '../../../lib/cache/invalidation';
 
 type BlogCommentInput = {
   postId: number;
@@ -37,9 +38,8 @@ export const GET: APIRoute = async ({ request, url }) => {
       );
     }
 
-    const postId = parseInt(postIdParam);
-
-    if (isNaN(postId)) {
+    const postId = safeIntParam(postIdParam, 0, 1, Number.MAX_SAFE_INTEGER);
+    if (postId === 0) {
       return apiError(
         ErrorCode.VALIDATION_ERROR,
         'postId geçerli bir sayı olmalıdır',
@@ -69,7 +69,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/blog/comments', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog yorum işlemi başarısız')
     });
     logger.error('Blog yorumları alınamadı', err instanceof Error ? err : new Error(String(err)));
 
@@ -122,7 +122,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       post_id: String(data.postId),
       author_name: data.authorName,
       author_email: data.authorEmail || '',
-      user_id: userId,
+      ...(userId ? { user_id: userId } : {}),
       content: data.content,
     });
 
@@ -133,6 +133,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/blog/comments', HttpStatus.CREATED, duration);
     logger.logMutation('create', 'blog_comments', comment.id, userId);
+
+    // Cache invalidation: yeni blog yorumu blog:* + ilgili post detail cache'ini etkiler
+    await invalidateComment('blog', String(data.postId));
 
     return apiResponse(
       {
@@ -146,7 +149,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/blog/comments', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog yorum işlemi başarısız')
     });
     logger.error('Blog yorumu eklenemedi', err instanceof Error ? err : new Error(String(err)));
 

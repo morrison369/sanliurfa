@@ -1,274 +1,174 @@
 /**
- * Advanced Reporting
- * Handles reporting, analytics exports, and scheduled reports
+ * Reporting helpers for /admin/reports — count-based snapshots over a date range.
+ *
+ * Each generator returns a flat object of metric → number/string so the same shape can be
+ * serialized to CSV (one row per metric) or JSON. Queries are deliberately simple — these
+ * power the admin dashboard, not high-cardinality analytics.
  */
 
-import { queryMany } from '../postgres';
-import { logger } from '../logger';
+import { queryOne } from '../postgres';
 
-export interface Report {
-  id: string;
-  name: string;
-  type: 'users' | 'places' | 'reviews' | 'revenue' | 'engagement' | 'custom';
-  period: 'daily' | 'weekly' | 'monthly';
-  filters?: Record<string, any>;
-  generatedAt: string;
-  data: any[];
-}
-
-/**
- * Generate user analytics report
- */
-export async function generateUserReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
+async function safeCount(sql: string, params: unknown[] = []): Promise<number> {
   try {
-    const days = period === 'daily' ? 30 : 365;
-    const truncUnit = period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month';
-    const data = await queryMany(`
-      SELECT
-        DATE_TRUNC('${truncUnit}', created_at) as period,
-        COUNT(*) as new_users,
-        COUNT(CASE WHEN email_verified THEN 1 END) as verified_users,
-        COUNT(CASE WHEN is_vendor THEN 1 END) as vendor_users
-      FROM users
-      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
-      GROUP BY DATE_TRUNC('${truncUnit}', created_at)
-      ORDER BY period DESC
-    `, [days]);
-
-    return {
-      id: `user_${Date.now()}`,
-      name: 'User Analytics Report',
-      type: 'users',
-      period,
-      generatedAt: new Date().toISOString(),
-      data
-    };
-  } catch (error) {
-    logger.error('Generate user report failed', error instanceof Error ? error : new Error(String(error)));
-    return null;
+    const row = await queryOne<{ c: string | number }>(sql, params);
+    return Number(row?.c ?? 0);
+  } catch {
+    return 0;
   }
 }
 
-/**
- * Generate places analytics report
- */
-export async function generatePlacesReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
-  try {
-    const days = period === 'daily' ? 30 : 365;
-    const data = await queryMany(`
-      SELECT
-        p.id, p.name, p.category_id,
-        COUNT(DISTINCT r.id) as review_count,
-        AVG(r.rating) as avg_rating,
-        COUNT(DISTINCT f.id) as favorite_count,
-        COUNT(DISTINCT v.id) as view_count
-      FROM places p
-      LEFT JOIN reviews r ON p.id = r.place_id
-      LEFT JOIN favorites f ON p.id = f.place_id
-      LEFT JOIN analytics v ON p.id = v.place_id AND v.action_type = 'view'
-      WHERE p.created_at >= NOW() - ($1 * INTERVAL '1 day')
-      GROUP BY p.id, p.name, p.category_id
-      ORDER BY review_count DESC
-      LIMIT 100
-    `, [days]);
-
-    return {
-      id: `places_${Date.now()}`,
-      name: 'Places Analytics Report',
-      type: 'places',
-      period,
-      generatedAt: new Date().toISOString(),
-      data
-    };
-  } catch (error) {
-    logger.error('Generate places report failed', error instanceof Error ? error : new Error(String(error)));
-    return null;
-  }
+export interface UserReport {
+  period_start: string;
+  period_end: string;
+  new_users: number;
+  active_users: number;
+  banned_users: number;
 }
 
-/**
- * Generate reviews analytics report
- */
-export async function generateReviewsReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
-  try {
-    const days = period === 'daily' ? 30 : 365;
-    const truncUnit = period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month';
-    const data = await queryMany(`
-      SELECT
-        DATE_TRUNC('${truncUnit}', created_at) as period,
-        COUNT(*) as total_reviews,
-        AVG(rating) as avg_rating,
-        SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) as positive_reviews,
-        SUM(CASE WHEN rating <= 2 THEN 1 ELSE 0 END) as negative_reviews
-      FROM reviews
-      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
-      GROUP BY DATE_TRUNC('${truncUnit}', created_at)
-      ORDER BY period DESC
-    `, [days]);
-
-    return {
-      id: `reviews_${Date.now()}`,
-      name: 'Reviews Analytics Report',
-      type: 'reviews',
-      period,
-      generatedAt: new Date().toISOString(),
-      data
-    };
-  } catch (error) {
-    logger.error('Generate reviews report failed', error instanceof Error ? error : new Error(String(error)));
-    return null;
-  }
-}
-
-/**
- * Generate revenue report (for premium members)
- */
-export async function generateRevenueReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
-  try {
-    const days = period === 'daily' ? 30 : 365;
-    const truncUnit = period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month';
-    const data = await queryMany(`
-      SELECT
-        DATE_TRUNC('${truncUnit}', created_at) as period,
-        tier,
-        COUNT(*) as subscription_count,
-        COUNT(CASE WHEN status = 'active' THEN 1 END) as active_subscriptions,
-        ROUND(SUM(CASE WHEN tier = 'premium' THEN 2.99 WHEN tier = 'pro' THEN 5.99 ELSE 0 END)::numeric, 2) as monthly_revenue
-      FROM memberships
-      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
-      GROUP BY DATE_TRUNC('${truncUnit}', created_at), tier
-      ORDER BY period DESC
-    `, [days]);
-
-    return {
-      id: `revenue_${Date.now()}`,
-      name: 'Revenue Report',
-      type: 'revenue',
-      period,
-      generatedAt: new Date().toISOString(),
-      data
-    };
-  } catch (error) {
-    logger.error('Generate revenue report failed', error instanceof Error ? error : new Error(String(error)));
-    return null;
-  }
-}
-
-/**
- * Generate engagement report
- */
-export async function generateEngagementReport(period: 'daily' | 'weekly' | 'monthly'): Promise<Report | null> {
-  try {
-    const days = period === 'daily' ? 30 : 365;
-    const truncUnit = period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month';
-    const data = await queryMany(`
-      SELECT
-        DATE_TRUNC('${truncUnit}', created_at) as period,
-        COUNT(DISTINCT action_type) as action_types,
-        COUNT(DISTINCT user_id) as unique_users,
-        COUNT(*) as total_actions
-      FROM analytics
-      WHERE created_at >= NOW() - ($1 * INTERVAL '1 day')
-      GROUP BY DATE_TRUNC('${truncUnit}', created_at)
-      ORDER BY period DESC
-    `, [days]);
-
-    return {
-      id: `engagement_${Date.now()}`,
-      name: 'Engagement Report',
-      type: 'engagement',
-      period,
-      generatedAt: new Date().toISOString(),
-      data
-    };
-  } catch (error) {
-    logger.error('Generate engagement report failed', error instanceof Error ? error : new Error(String(error)));
-    return null;
-  }
-}
-
-/**
- * Convert report to CSV
- */
-export function reportToCSV(report: Report): string {
-  if (report.data.length === 0) {
-    return '';
-  }
-
-  // Get column names from first row
-  const columns = Object.keys(report.data[0]);
-  const header = columns.join(',');
-
-  // Convert rows
-  const rows = report.data.map(row => {
-    return columns.map(col => {
-      const value = row[col];
-
-      // Handle special cases
-      if (value === null || value === undefined) {
-        return '';
-      }
-      if (typeof value === 'string' && value.includes(',')) {
-        return `"${value}"`;
-      }
-      return value;
-    }).join(',');
-  });
-
-  return [header, ...rows].join('\n');
-}
-
-/**
- * Convert report to JSON
- */
-export function reportToJSON(report: Report): string {
-  return JSON.stringify(report, null, 2);
-}
-
-/**
- * Get summary statistics from report
- */
-export function getSummaryStats(report: Report): Record<string, any> {
-  const stats: Record<string, any> = {
-    reportType: report.type,
-    period: report.period,
-    generatedAt: report.generatedAt,
-    dataPoints: report.data.length
+export async function generateUserReport(startDate: string, endDate: string): Promise<UserReport> {
+  return {
+    period_start: startDate,
+    period_end: endDate,
+    new_users: await safeCount(
+      'SELECT COUNT(*)::int AS c FROM users WHERE created_at BETWEEN $1 AND $2',
+      [startDate, endDate],
+    ),
+    active_users: await safeCount(
+      "SELECT COUNT(*)::int AS c FROM users WHERE status = 'active'",
+    ),
+    banned_users: await safeCount(
+      "SELECT COUNT(*)::int AS c FROM users WHERE status = 'banned'",
+    ),
   };
-
-  if (report.data.length === 0) {
-    return stats;
-  }
-
-  // Calculate summary based on report type
-  switch (report.type) {
-    case 'reviews':
-      stats.totalReviews = report.data.reduce((sum, r) => sum + (r.total_reviews || 0), 0);
-      stats.avgRating = report.data.reduce((sum, r) => sum + (r.avg_rating || 0), 0) / report.data.length;
-      break;
-
-    case 'revenue':
-      stats.totalRevenue = report.data.reduce((sum, r) => sum + (r.monthly_revenue || 0), 0);
-      stats.activeSubscriptions = report.data.reduce((sum, r) => sum + (r.active_subscriptions || 0), 0);
-      break;
-
-    case 'engagement':
-      stats.totalActions = report.data.reduce((sum, r) => sum + (r.total_actions || 0), 0);
-      stats.uniqueUsers = report.data.reduce((sum, r) => sum + (r.unique_users || 0), 0);
-      break;
-
-    case 'users':
-      stats.totalNewUsers = report.data.reduce((sum, r) => sum + (r.new_users || 0), 0);
-      stats.verifiedUsers = report.data.reduce((sum, r) => sum + (r.verified_users || 0), 0);
-      break;
-
-    case 'places':
-      stats.totalPlaces = report.data.length;
-      stats.avgRating = report.data.reduce((sum, p) => sum + (p.avg_rating || 0), 0) / report.data.length;
-      break;
-  }
-
-  return stats;
 }
 
+export interface PlacesReport {
+  period_start: string;
+  period_end: string;
+  new_places: number;
+  active_places: number;
+  pending_places: number;
+}
 
+export async function generatePlacesReport(startDate: string, endDate: string): Promise<PlacesReport> {
+  return {
+    period_start: startDate,
+    period_end: endDate,
+    new_places: await safeCount(
+      'SELECT COUNT(*)::int AS c FROM places WHERE created_at BETWEEN $1 AND $2',
+      [startDate, endDate],
+    ),
+    active_places: await safeCount(
+      "SELECT COUNT(*)::int AS c FROM places WHERE status = 'active'",
+    ),
+    pending_places: await safeCount(
+      "SELECT COUNT(*)::int AS c FROM places WHERE status = 'pending'",
+    ),
+  };
+}
+
+export interface ReviewsReport {
+  period_start: string;
+  period_end: string;
+  new_reviews: number;
+  total_reviews: number;
+}
+
+export async function generateReviewsReport(startDate: string, endDate: string): Promise<ReviewsReport> {
+  return {
+    period_start: startDate,
+    period_end: endDate,
+    new_reviews: await safeCount(
+      'SELECT COUNT(*)::int AS c FROM reviews WHERE created_at BETWEEN $1 AND $2',
+      [startDate, endDate],
+    ),
+    total_reviews: await safeCount('SELECT COUNT(*)::int AS c FROM reviews'),
+  };
+}
+
+export interface RevenueReport {
+  period_start: string;
+  period_end: string;
+  payment_count: number;
+  gross_revenue: number;
+}
+
+export async function generateRevenueReport(startDate: string, endDate: string): Promise<RevenueReport> {
+  let grossRevenue = 0;
+  try {
+    const row = await queryOne<{ s: string | number | null }>(
+      "SELECT COALESCE(SUM(amount), 0)::float AS s FROM payments WHERE status = 'completed' AND created_at BETWEEN $1 AND $2",
+      [startDate, endDate],
+    );
+    grossRevenue = Number(row?.s ?? 0);
+  } catch { /* table may not exist in some envs */ }
+
+  return {
+    period_start: startDate,
+    period_end: endDate,
+    payment_count: await safeCount(
+      "SELECT COUNT(*)::int AS c FROM payments WHERE status = 'completed' AND created_at BETWEEN $1 AND $2",
+      [startDate, endDate],
+    ),
+    gross_revenue: grossRevenue,
+  };
+}
+
+export interface EngagementReport {
+  period_start: string;
+  period_end: string;
+  reviews_added: number;
+  follows_added: number;
+  messages_sent: number;
+}
+
+export async function generateEngagementReport(startDate: string, endDate: string): Promise<EngagementReport> {
+  return {
+    period_start: startDate,
+    period_end: endDate,
+    reviews_added: await safeCount(
+      'SELECT COUNT(*)::int AS c FROM reviews WHERE created_at BETWEEN $1 AND $2',
+      [startDate, endDate],
+    ),
+    follows_added: await safeCount(
+      'SELECT COUNT(*)::int AS c FROM user_follows WHERE created_at BETWEEN $1 AND $2',
+      [startDate, endDate],
+    ),
+    messages_sent: await safeCount(
+      'SELECT COUNT(*)::int AS c FROM messages WHERE created_at BETWEEN $1 AND $2',
+      [startDate, endDate],
+    ),
+  };
+}
+
+export interface SummaryStats {
+  total_users: number;
+  total_places: number;
+  total_reviews: number;
+  total_payments: number;
+}
+
+export async function getSummaryStats(): Promise<SummaryStats> {
+  return {
+    total_users: await safeCount('SELECT COUNT(*)::int AS c FROM users'),
+    total_places: await safeCount('SELECT COUNT(*)::int AS c FROM places'),
+    total_reviews: await safeCount('SELECT COUNT(*)::int AS c FROM reviews'),
+    total_payments: await safeCount("SELECT COUNT(*)::int AS c FROM payments WHERE status = 'completed'"),
+  };
+}
+
+export function reportToCSV(rows: Record<string, unknown>[]): string {
+  if (rows.length === 0) return '';
+  const headers = Object.keys(rows[0]);
+  const escape = (v: unknown): string => {
+    const s = v == null ? '' : String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const lines = [headers.join(',')];
+  for (const row of rows) lines.push(headers.map(h => escape(row[h])).join(','));
+  return lines.join('\n');
+}
+
+export function reportToJSON(data: unknown): string {
+  return JSON.stringify(data, null, 2);
+}

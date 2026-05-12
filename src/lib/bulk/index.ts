@@ -3,8 +3,10 @@
  * Perform actions on multiple entities at once
  */
 
+import { randomBytes } from 'node:crypto';
 import { query } from '../postgres';
 import { logAudit } from '../audit/index';
+import { safeErrorDetail } from '../api';
 
 export type BulkOperationType =
   | 'delete'
@@ -20,6 +22,15 @@ export type BulkOperationType =
   | 'merge';
 
 export type BulkEntityType = 'users' | 'places' | 'reviews' | 'comments' | 'collections';
+
+// HARD RULE #51: Column allowlist per entity — prevents SQL column injection via bulkUpdate
+const ALLOWED_UPDATE_COLUMNS: Record<BulkEntityType, Set<string>> = {
+  users:       new Set(['status', 'role', 'is_verified', 'is_banned', 'is_active']),
+  places:      new Set(['status', 'is_approved', 'is_featured', 'is_verified', 'category_id']),
+  reviews:     new Set(['status', 'is_approved', 'is_featured']),
+  comments:    new Set(['status', 'is_approved']),
+  collections: new Set(['status', 'is_public', 'name', 'description']),
+};
 
 export interface BulkOperation {
   id: string;
@@ -58,10 +69,8 @@ export async function bulkDelete(
   };
 
   const table = tableMap[entityType];
-  const results: BulkOperationResult = { success: 0, failed: 0, errors: [] };
-
-  for (const id of entityIds) {
-    try {
+  const settled = await Promise.allSettled(
+    entityIds.map(async (id) => {
       if (soft) {
         await query(
           `UPDATE ${table} SET status = 'deleted', deleted_at = NOW(), deleted_reason = $1 WHERE id = $2`,
@@ -70,19 +79,23 @@ export async function bulkDelete(
       } else {
         await query(`DELETE FROM ${table} WHERE id = $1`, [id]);
       }
-
       await logAudit('delete', entityType.slice(0, -1) as any, {
         userId,
         entityId: id,
         metadata: { bulk: true, reason },
       });
+    })
+  );
 
+  const results: BulkOperationResult = { success: 0, failed: 0, errors: [] };
+  settled.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
       results.success++;
-    } catch (error: any) {
+    } else {
       results.failed++;
-      results.errors.push({ entityId: id, error: error.message });
+      results.errors.push({ entityId: entityIds[i], error: safeErrorDetail(result.reason, 'Silme işlemi başarısız') });
     }
-  }
+  });
 
   return results;
 }
@@ -104,26 +117,31 @@ export async function bulkUpdate(
   const table = tableMap[entityType];
   const results: BulkOperationResult = { success: 0, failed: 0, errors: [] };
 
+  const allowedColumns = ALLOWED_UPDATE_COLUMNS[entityType];
+  const allowedEntries = Object.entries(updates).filter(([key]) => allowedColumns.has(key));
+
+  if (allowedEntries.length === 0) {
+    return { success: 0, failed: entityIds.length, errors: [{ entityId: '*', error: 'No valid update fields' }] };
+  }
+
   const sets: string[] = [];
   const values: any[] = [];
 
-  Object.entries(updates).forEach(([key, value], index) => {
+  allowedEntries.forEach(([key, value], index) => {
     sets.push(`${key} = $${index + 1}`);
     values.push(value);
   });
 
   const setClause = sets.join(', ');
 
-  for (const id of entityIds) {
-    try {
+  const settled = await Promise.allSettled(
+    entityIds.map(async (id) => {
       const oldResult = await query(`SELECT * FROM ${table} WHERE id = $1`, [id]);
       const oldValue = oldResult.rows[0];
-
       await query(
         `UPDATE ${table} SET ${setClause}, updated_at = NOW() WHERE id = $${values.length + 1}`,
         [...values, id]
       );
-
       await logAudit('update', entityType.slice(0, -1) as any, {
         userId,
         entityId: id,
@@ -131,13 +149,17 @@ export async function bulkUpdate(
         newValue: { ...oldValue, ...updates },
         metadata: { bulk: true },
       });
+    })
+  );
 
+  settled.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
       results.success++;
-    } catch (error: any) {
+    } else {
       results.failed++;
-      results.errors.push({ entityId: id, error: error.message });
+      results.errors.push({ entityId: entityIds[i], error: safeErrorDetail(result.reason, 'Güncelleme işlemi başarısız') });
     }
-  }
+  });
 
   return results;
 }
@@ -160,25 +182,28 @@ export async function bulkModerate(
   const table = tableMap[entityType];
   const results: BulkOperationResult = { success: 0, failed: 0, errors: [] };
 
-  for (const id of entityIds) {
-    try {
+  const settled = await Promise.allSettled(
+    entityIds.map(async (id) => {
       await query(
         `UPDATE ${table} SET status = $1, moderated_by = $2, moderated_at = NOW(), moderation_reason = $3 WHERE id = $4`,
         [action === 'approve' ? 'active' : 'rejected', userId, reason, id]
       );
-
       await logAudit(action === 'approve' ? 'approve' : 'reject', entityType.slice(0, -1) as any, {
         userId,
         entityId: id,
         metadata: { bulk: true, reason },
       });
+    })
+  );
 
+  settled.forEach((result, i) => {
+    if (result.status === 'fulfilled') {
       results.success++;
-    } catch (error: any) {
+    } else {
       results.failed++;
-      results.errors.push({ entityId: id, error: error.message });
+      results.errors.push({ entityId: entityIds[i], error: safeErrorDetail(result.reason, 'Moderasyon işlemi başarısız') });
     }
-  }
+  });
 
   return results;
 }
@@ -231,7 +256,7 @@ export async function bulkExport(
 export async function executeBulkOperation(
   operation: Omit<BulkOperation, 'id' | 'startedAt' | 'completedAt'>
 ): Promise<BulkOperation> {
-  const id = `bulk_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  const id = `bulk_${Date.now()}_${randomBytes(6).toString('hex')}`;
 
   const bulkOp: BulkOperation = {
     ...operation,
@@ -269,7 +294,7 @@ export async function executeBulkOperation(
     bulkOp.status = results.failed === 0 ? 'completed' : results.success === 0 ? 'failed' : 'partial';
   } catch (error: any) {
     bulkOp.status = 'failed';
-    bulkOp.errorMessage = error.message;
+    bulkOp.errorMessage = safeErrorDetail(error, 'Toplu işlem başarısız');
   }
 
   bulkOp.completedAt = new Date();

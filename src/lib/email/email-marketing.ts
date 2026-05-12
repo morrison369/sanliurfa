@@ -285,16 +285,16 @@ export async function addCampaignSubscribers(
   subscribers: Array<{ email: string; userId?: string }>,
 ): Promise<number> {
   try {
-    let added = 0;
-
-    for (const subscriber of subscribers) {
-      await insert('campaign_subscribers', {
-        campaign_id: campaignId,
-        user_id: subscriber.userId || null,
-        email: subscriber.email.toLowerCase(),
-      });
-      added++;
-    }
+    const results = await Promise.allSettled(
+      subscribers.map((subscriber) =>
+        insert('campaign_subscribers', {
+          campaign_id: campaignId,
+          user_id: subscriber.userId || null,
+          email: subscriber.email.toLowerCase(),
+        })
+      )
+    );
+    const added = results.filter((r) => r.status === 'fulfilled').length;
 
     logger.info('Subscribers added to campaign', { campaignId, count: added });
     return added;

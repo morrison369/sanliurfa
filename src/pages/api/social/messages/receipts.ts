@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../../lib/api';
 import { requireAuth } from '../../../../lib/auth';
 import { getConversationReadReceipts } from '../../../../lib/social/messaging-db';
 
@@ -40,7 +40,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     return problemJson({
       status: 400,
       title: 'Read Receipt Alınamadı',
-      detail: error instanceof Error ? error.message : 'receipt_fetch_failed',
+      detail: safeErrorDetail(error, 'receipt_fetch_failed'),
       type: '/problems/social-message-receipts-failed',
       instance: '/api/social/messages/receipts',
     });

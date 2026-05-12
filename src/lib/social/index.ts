@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { logger } from '../logging';
 
 export type SharePlatform = 'facebook' | 'twitter' | 'whatsapp' | 'telegram' | 'email' | 'copy';
 
@@ -96,8 +97,8 @@ export async function getShareCounts(
   let total = 0;
 
   result.rows.forEach(row => {
-    byPlatform[row.platform] = parseInt(row.count);
-    total += parseInt(row.count);
+    byPlatform[row.platform] = parseInt(row.count, 10);
+    total += parseInt(row.count, 10);
   });
 
   return { contentType, contentId, total, byPlatform };
@@ -118,7 +119,7 @@ export async function getPopularContent(
 
   return result.rows.map(row => ({
     contentId: row.content_id,
-    shares: parseInt(row.shares),
+    shares: parseInt(row.shares, 10),
   }));
 }
 
@@ -167,8 +168,8 @@ export async function getUserShareStats(userId: string): Promise<{
   let totalShares = 0;
 
   result.rows.forEach(row => {
-    byPlatform[row.platform] = parseInt(row.count);
-    totalShares += parseInt(row.count);
+    byPlatform[row.platform] = parseInt(row.count, 10);
+    totalShares += parseInt(row.count, 10);
   });
 
   return { totalShares, byPlatform };
@@ -216,7 +217,7 @@ export async function shareContent(
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contentType, contentId, platform }),
-    }).catch(console.error);
+    }).catch((err) => logger.error('Social share tracking failed', err));
     return true;
   }
 

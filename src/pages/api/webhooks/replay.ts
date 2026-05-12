@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import type { Pool } from 'pg';
 import { pool } from '../../../lib/postgres';
 import { requestEventReplay, getReplayHistory, cancelReplay } from '../../../lib/webhook/webhook-replay';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
@@ -24,7 +25,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Webhook ID and Event ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const replayRequest = await requestEventReplay(pool as any, webhookId, eventId, locals.user.id);
+    const replayRequest = await requestEventReplay(pool as unknown as Pool, webhookId, eventId, locals.user.id);
 
     logger.info('Event replay requested', {
       webhookId,
@@ -42,7 +43,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to request event replay', error instanceof Error ? error : new Error(String(error)), {} as any);
+    logger.error('Failed to request event replay', error instanceof Error ? error : new Error(String(error)), {});
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to request replay', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
@@ -79,7 +80,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to get replay history', error instanceof Error ? error : new Error(String(error)), {} as any);
+    logger.error('Failed to get replay history', error instanceof Error ? error : new Error(String(error)), {});
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to get history', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };
@@ -117,7 +118,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
       requestId
     );
   } catch (error) {
-    logger.error('Failed to cancel replay', error instanceof Error ? error : new Error(String(error)), {} as any);
+    logger.error('Failed to cancel replay', error instanceof Error ? error : new Error(String(error)), {});
     return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to cancel replay', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

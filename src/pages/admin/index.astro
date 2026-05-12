@@ -1,421 +1,556 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-
-const seo = {
-  title: 'Yönetim Paneli - Sanliurfa.com',
-  description: 'Yönetim paneli',
-  noIndex: true,
-};
+import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
-    <div class="container mx-auto px-4">
-      {/* Header */}
-      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Yönetim Paneli</h1>
-        <p class="text-gray-500 mt-1">Platform genel görünümü</p>
-      </div>
+<AdminLayout
+ title="Yönetim Paneli"
+ subtitle="Platform genel görünümü"
+ seo={{ title: 'Yönetim Paneli - Sanliurfa.com', description: 'Yönetim paneli', noIndex: true }}
+>
+ <div class="sf-container py-8">
+ {/* Stats Grid */}
+ <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="statsGrid">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+ <div class="flex items-center justify-between">
+ <div>
+ <p class="text-sm text-[#7A6B58]">Toplam Kullanıcı</p>
+ <p class="text-2xl font-bold text-[#1F1410] mt-1" id="totalUsers">-</p>
+ </div>
+ <div class="w-12 h-12 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center text-2xl">
+ 👥
+ </div>
+ </div>
+ <p class="text-xs text-[#7A6B58] mt-2">+<span id="newUsers">-</span> bu ay</p>
+ </div>
 
-      {/* Stats Grid */}
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="statsGrid">
-        <div class="bg-white rounded-xl shadow-sm p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">Toplam Kullanıcı</p>
-              <p class="text-2xl font-bold text-gray-900 mt-1" id="totalUsers">-</p>
-            </div>
-            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-2xl">
-              👥
-            </div>
-          </div>
-          <p class="text-xs text-green-600 mt-2">+<span id="newUsers">-</span> bu ay</p>
-        </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+ <div class="flex items-center justify-between">
+ <div>
+ <p class="text-sm text-[#7A6B58]">İşletmeler</p>
+ <p class="text-2xl font-bold text-[#1F1410] mt-1" id="totalPlaces">-</p>
+ </div>
+ <div class="w-12 h-12 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center text-2xl">
+ 🏪
+ </div>
+ </div>
+ <p class="text-xs text-[#7A6B58] mt-2"><span id="pendingPlaces">-</span> onay bekliyor</p>
+ </div>
 
-        <div class="bg-white rounded-xl shadow-sm p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">İşletmeler</p>
-              <p class="text-2xl font-bold text-gray-900 mt-1" id="totalPlaces">-</p>
-            </div>
-            <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">
-              🏪
-            </div>
-          </div>
-          <p class="text-xs text-amber-600 mt-2"><span id="pendingPlaces">-</span> onay bekliyor</p>
-        </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+ <div class="flex items-center justify-between">
+ <div>
+ <p class="text-sm text-[#7A6B58]">Yorumlar</p>
+ <p class="text-2xl font-bold text-[#1F1410] mt-1" id="totalReviews">-</p>
+ </div>
+ <div class="w-12 h-12 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center text-2xl">
+ ⭐
+ </div>
+ </div>
+ <p class="text-xs text-[#7A6B58] mt-2"><span id="pendingReviews">-</span> onay bekliyor</p>
+ </div>
 
-        <div class="bg-white rounded-xl shadow-sm p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">Yorumlar</p>
-              <p class="text-2xl font-bold text-gray-900 mt-1" id="totalReviews">-</p>
-            </div>
-            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl">
-              ⭐
-            </div>
-          </div>
-          <p class="text-xs text-gray-500 mt-2"><span id="pendingReviews">-</span> onay bekliyor</p>
-        </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+ <div class="flex items-center justify-between">
+ <div>
+ <p class="text-sm text-[#7A6B58]">Açık Ticketlar</p>
+ <p class="text-2xl font-bold text-[#1F1410] mt-1" id="openTickets">-</p>
+ </div>
+ <div class="w-12 h-12 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center text-2xl">
+ 🎫
+ </div>
+ </div>
+ <p class="text-xs text-[#7A6B58] mt-2">+<span id="newTickets">-</span> son 24 saat</p>
+ </div>
+ </div>
 
-        <div class="bg-white rounded-xl shadow-sm p-5">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-gray-500">Açık Ticketlar</p>
-              <p class="text-2xl font-bold text-gray-900 mt-1" id="openTickets">-</p>
-            </div>
-            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-2xl">
-              🎫
-            </div>
-          </div>
-          <p class="text-xs text-blue-600 mt-2">+<span id="newTickets">-</span> son 24 saat</p>
-        </div>
-      </div>
+ <div class="grid lg:grid-cols-3 gap-6">
+ {/* Daily Chart */}
+ <div class="lg:col-span-2 bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-lg font-bold text-[#1F1410] mb-4">Son 14 Gün Aktivitesi</h2>
+ <div id="chartContainer" class="h-64 flex items-end justify-between gap-2">
+ <p class="text-[#7A6B58] w-full text-center">Yükleniyor...</p>
+ </div>
+ </div>
 
-      <div class="grid lg:grid-cols-3 gap-6">
-        {/* Daily Chart */}
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm p-6">
-          <h2 class="text-lg font-bold text-gray-900 mb-4">Son 14 Gün Aktivitesi</h2>
-          <div id="chartContainer" class="h-64 flex items-end justify-between gap-2">
-            <p class="text-gray-400 w-full text-center">Yükleniyor...</p>
-          </div>
-        </div>
+ {/* Quick Actions */}
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-lg font-bold text-[#1F1410] mb-4">Hızlı İşlemler</h2>
+ <div class="space-y-3">
+ <a href="/admin/users" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">👥</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Kullanıcılar</div>
+ <div class="text-sm text-[#7A6B58]">Tüm kullanıcıları yönet</div>
+ </div>
+ </a>
+ <a href="/admin/places" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🏪</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">İşletmeler</div>
+ <div class="text-sm text-[#7A6B58]">Onay ve düzenleme</div>
+ </div>
+ </a>
+ <a href="/admin/blog" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">📝</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Blog</div>
+ <div class="text-sm text-[#7A6B58]">İçerik yönetimi</div>
+ </div>
+ </a>
+ <a href="/admin/site-content" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🎛️</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Site İçerik Yönetimi</div>
+ <div class="text-sm text-[#7A6B58]">Hero ve landing alanlarını DB'den yönet</div>
+ </div>
+ </a>
+ <a href="/admin/integrations" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🔌</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Entegrasyonlar</div>
+ <div class="text-sm text-[#7A6B58]">Resend, SMTP, Stripe, GA, Image, OAuth — DB'den yönet</div>
+ </div>
+ </a>
+ <a href="/admin/site-audit" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🧾</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Site Denetim Zaman Çizelgesi</div>
+ <div class="text-sm text-[#7A6B58]">İçerik ve sosyal abuse loglarını izle</div>
+ </div>
+ </a>
+ <a href="/admin/social-policies" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🛡️</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Sosyal Policy</div>
+ <div class="text-sm text-[#7A6B58]">Tenant bazlı abuse/rate limit yönetimi</div>
+ </div>
+ </a>
+ <a href="/admin/social-events" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">📡</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Sosyal Olaylar</div>
+ <div class="text-sm text-[#7A6B58]">Canlı social event timeline</div>
+ </div>
+ </a>
+ <a href="/admin/social-risk" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">📈</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Sosyal Risk</div>
+ <div class="text-sm text-[#7A6B58]">Trend ve anomali paneli</div>
+ </div>
+ </a>
+ <a href="/admin/export-tokens" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🔐</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Dışa Aktarma Tokenları</div>
+ <div class="text-sm text-[#7A6B58]">Token listeleme ve iptal</div>
+ </div>
+ </a>
+ <a href="/admin/places/lifecycle" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🧭</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Mekan Yaşam Döngüsü</div>
+ <div class="text-sm text-[#7A6B58]">Geçiş zaman akışı ve SLA paneli</div>
+ </div>
+ </a>
+ <a href="/admin/tickets" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🎫</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Destek Talepleri</div>
+ <div class="text-sm text-[#7A6B58]">Destek kayıtlarını yönet</div>
+ </div>
+ </a>
+ <a href="/admin/ulasim" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.06)] hover:bg-[rgba(184,115,51,0.1)] transition-colors border border-[rgba(184,115,51,0.2)]">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🚌</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Otobüs Hatları</div>
+ <div class="text-sm text-[#7A6B58]">Hat ve sefer saati yönetimi</div>
+ </div>
+ </a>
+ <a href="/admin/pharmacies" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.06)] hover:bg-[rgba(184,115,51,0.1)] transition-colors border border-[rgba(184,115,51,0.2)]">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">💊</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Nöbetçi Eczaneler</div>
+ <div class="text-sm text-[#7A6B58]">Günlük nöbet atama ve eczane yönetimi</div>
+ </div>
+ </a>
+ <a href="/admin/events" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🎉</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Etkinlikler</div>
+ <div class="text-sm text-[#7A6B58]">Etkinlik oluştur ve yönet</div>
+ </div>
+ </a>
+ <a href="/admin/historical-sites" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🏛️</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Tarihi Yerler</div>
+ <div class="text-sm text-[#7A6B58]">Tarihi yer ekle ve düzenle</div>
+ </div>
+ </a>
+ <a href="/admin/reservations" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">📅</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Rezervasyonlar</div>
+ <div class="text-sm text-[#7A6B58]">Onay ve iptal yönetimi</div>
+ </div>
+ </a>
+ <a href="/admin/vendor-approval" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🏪</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Vendor Onayları</div>
+ <div class="text-sm text-[#7A6B58]">Bekleyen vendor başvuruları</div>
+ </div>
+ </a>
+ <a href="/admin/feature-flags" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🚩</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Feature Flags</div>
+ <div class="text-sm text-[#7A6B58]">Özellikleri canlıda aç/kapat</div>
+ </div>
+ </a>
+ <a href="/admin/quotas" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">📊</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Kota Yönetimi</div>
+ <div class="text-sm text-[#7A6B58]">Kullanıcı kota kullanımı ve sıfırlama</div>
+ </div>
+ </a>
+ <a href="/admin/user-deletions" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🗑️</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Hesap Silme Talepleri</div>
+ <div class="text-sm text-[#7A6B58]">30 günlük silme kuyruğu</div>
+ </div>
+ </a>
+ <a href="/admin/recipes" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.06)] hover:bg-[rgba(184,115,51,0.1)] transition-colors border border-[rgba(184,115,51,0.2)]">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🍽️</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Yemek Tarifleri</div>
+ <div class="text-sm text-[#7A6B58]">Yöresel tarifleri yönet</div>
+ </div>
+ </a>
+ <a href="/admin/integrations" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.06)] hover:bg-[rgba(184,115,51,0.1)] transition-colors border border-[rgba(184,115,51,0.2)]">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🔑</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Entegrasyon Ayarları</div>
+ <div class="text-sm text-[#7A6B58]">Resend API key, Google Analytics ID</div>
+ </div>
+ </a>
+ <a href="/admin/reviews" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">⭐</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Yorumlar</div>
+ <div class="text-sm text-[#7A6B58]">Yorum onay ve moderasyon</div>
+ </div>
+ </a>
+ <a href="/admin/moderation" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🚨</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Moderasyon</div>
+ <div class="text-sm text-[#7A6B58]">İçerik şikâyetleri ve raporlar</div>
+ </div>
+ </a>
+ <a href="/admin/analytics" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">📊</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Analitik</div>
+ <div class="text-sm text-[#7A6B58]">Trafik ve kullanım istatistikleri</div>
+ </div>
+ </a>
+ <a href="/admin/release-readiness" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🧪</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Release Readiness</div>
+ <div class="text-sm text-[#7A6B58]">Frontend gate ve checklist durumu</div>
+ </div>
+ </a>
+ <a href="/admin/revenue" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">💰</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Gelir</div>
+ <div class="text-sm text-[#7A6B58]">Abonelik ve ödeme raporları</div>
+ </div>
+ </a>
+ <a href="/admin/subscriptions" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">💳</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Abonelikler</div>
+ <div class="text-sm text-[#7A6B58]">Premium üye yönetimi</div>
+ </div>
+ </a>
+ <a href="/admin/loyalty" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🏆</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Sadakat & Ödüller</div>
+ <div class="text-sm text-[#7A6B58]">Puan, rozet ve ödül yönetimi</div>
+ </div>
+ </a>
+ <a href="/admin/monitoring" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🖥️</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Sistem İzleme</div>
+ <div class="text-sm text-[#7A6B58]">Sunucu sağlığı ve performans</div>
+ </div>
+ </a>
+ <a href="/admin/performance" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">⚡</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Performans İzleme</div>
+ <div class="text-sm text-[#7A6B58]">SSR yavaş render metrikleri (>800ms)</div>
+ </div>
+ </a>
+ <a href="/admin/webhooks" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">🔗</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Webhooklar</div>
+ <div class="text-sm text-[#7A6B58]">Webhook abonelikleri ve loglar</div>
+ </div>
+ </a>
+ <a href="/admin/verifications" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">✅</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Doğrulama Talepleri</div>
+ <div class="text-sm text-[#7A6B58]">İşletme doğrulama onayları</div>
+ </div>
+ </a>
+ <a href="/admin/audit-logs" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">📋</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Denetim Logları</div>
+ <div class="text-sm text-[#7A6B58]">Admin işlem geçmişi</div>
+ </div>
+ </a>
+ <a href="/admin/import" class="flex items-center gap-3 p-3 rounded-sm bg-[rgba(184,115,51,0.04)] hover:bg-[rgba(184,115,51,0.08)] transition-colors">
+ <span class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center">📥</span>
+ <div>
+ <div class="font-medium text-[#1F1410]">Veri Aktarımı</div>
+ <div class="text-sm text-[#7A6B58]">CSV/JSON toplu veri yükleme</div>
+ </div>
+ </a>
+ </div>
+ </div>
+ </div>
 
-        {/* Quick Actions */}
-        <div class="bg-white rounded-xl shadow-sm p-6">
-          <h2 class="text-lg font-bold text-gray-900 mb-4">Hızlı İşlemler</h2>
-          <div class="space-y-3">
-            <a href="/admin/users" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">👥</span>
-              <div>
-                <div class="font-medium text-gray-900">Kullanıcılar</div>
-                <div class="text-sm text-gray-500">Tüm kullanıcıları yönet</div>
-              </div>
-            </a>
-            <a href="/admin/places" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">🏪</span>
-              <div>
-                <div class="font-medium text-gray-900">İşletmeler</div>
-                <div class="text-sm text-gray-500">Onay ve düzenleme</div>
-              </div>
-            </a>
-            <a href="/admin/blog" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">📝</span>
-              <div>
-                <div class="font-medium text-gray-900">Blog</div>
-                <div class="text-sm text-gray-500">İçerik yönetimi</div>
-              </div>
-            </a>
-            <a href="/admin/site-content" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">🎛️</span>
-              <div>
-                <div class="font-medium text-gray-900">Site İçerik Yönetimi</div>
-                <div class="text-sm text-gray-500">Hero ve landing alanlarını DB'den yönet</div>
-              </div>
-            </a>
-            <a href="/admin/site-audit" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">🧾</span>
-              <div>
-                <div class="font-medium text-gray-900">Site Denetim Zaman Çizelgesi</div>
-                <div class="text-sm text-gray-500">İçerik ve sosyal abuse loglarını izle</div>
-              </div>
-            </a>
-            <a href="/admin/social-policies" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center">🛡️</span>
-              <div>
-                <div class="font-medium text-gray-900">Sosyal Policy</div>
-                <div class="text-sm text-gray-500">Tenant bazlı abuse/rate limit yönetimi</div>
-              </div>
-            </a>
-            <a href="/admin/social-events" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">📡</span>
-              <div>
-                <div class="font-medium text-gray-900">Sosyal Olaylar</div>
-                <div class="text-sm text-gray-500">Canlı social event timeline</div>
-              </div>
-            </a>
-            <a href="/admin/social-risk" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center">📈</span>
-              <div>
-                <div class="font-medium text-gray-900">Sosyal Risk</div>
-                <div class="text-sm text-gray-500">Trend ve anomali paneli</div>
-              </div>
-            </a>
-            <a href="/admin/export-tokens" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-cyan-100 rounded-lg flex items-center justify-center">🔐</span>
-              <div>
-                <div class="font-medium text-gray-900">Dışa Aktarma Tokenları</div>
-                <div class="text-sm text-gray-500">Token listeleme ve iptal</div>
-              </div>
-            </a>
-            <a href="/admin/places/lifecycle" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">🧭</span>
-              <div>
-                <div class="font-medium text-gray-900">Mekan Yaşam Döngüsü</div>
-                <div class="text-sm text-gray-500">Geçiş zaman akışı ve SLA paneli</div>
-              </div>
-            </a>
-            <a href="/admin/tickets" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">🎫</span>
-              <div>
-                <div class="font-medium text-gray-900">Destek Talepleri</div>
-                <div class="text-sm text-gray-500">Destek kayıtlarını yönet</div>
-              </div>
-            </a>
-            <a href="/admin/ulasim" class="flex items-center gap-3 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors border border-blue-200">
-              <span class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">🚌</span>
-              <div>
-                <div class="font-medium text-gray-900">Otobüs Hatları</div>
-                <div class="text-sm text-gray-500">Hat ve sefer saati yönetimi</div>
-              </div>
-            </a>
-            <a href="/admin/pharmacies" class="flex items-center gap-3 p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors border border-green-200">
-              <span class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">💊</span>
-              <div>
-                <div class="font-medium text-gray-900">Nöbetçi Eczaneler</div>
-                <div class="text-sm text-gray-500">Günlük nöbet atama ve eczane yönetimi</div>
-              </div>
-            </a>
-            <a href="/admin/events" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">🎉</span>
-              <div>
-                <div class="font-medium text-gray-900">Etkinlikler</div>
-                <div class="text-sm text-gray-500">Etkinlik oluştur ve yönet</div>
-              </div>
-            </a>
-            <a href="/admin/historical-sites" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-stone-100 rounded-lg flex items-center justify-center">🏛️</span>
-              <div>
-                <div class="font-medium text-gray-900">Tarihi Yerler</div>
-                <div class="text-sm text-gray-500">Tarihi yer ekle ve düzenle</div>
-              </div>
-            </a>
-            <a href="/admin/recipes" class="flex items-center gap-3 p-3 rounded-lg bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-200">
-              <span class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">🍽️</span>
-              <div>
-                <div class="font-medium text-gray-900">Yemek Tarifleri</div>
-                <div class="text-sm text-gray-500">Yöresel tarifleri yönet</div>
-              </div>
-            </a>
-            <a href="/admin/integrations" class="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 hover:bg-yellow-100 transition-colors border border-yellow-200">
-              <span class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">🔑</span>
-              <div>
-                <div class="font-medium text-gray-900">Entegrasyon Ayarları</div>
-                <div class="text-sm text-gray-500">Resend API key, Google Analytics ID</div>
-              </div>
-            </a>
-            <a href="/admin/reviews" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">⭐</span>
-              <div>
-                <div class="font-medium text-gray-900">Yorumlar</div>
-                <div class="text-sm text-gray-500">Yorum onay ve moderasyon</div>
-              </div>
-            </a>
-            <a href="/admin/moderation" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">🚨</span>
-              <div>
-                <div class="font-medium text-gray-900">Moderasyon</div>
-                <div class="text-sm text-gray-500">İçerik şikâyetleri ve raporlar</div>
-              </div>
-            </a>
-            <a href="/admin/analytics" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">📊</span>
-              <div>
-                <div class="font-medium text-gray-900">Analitik</div>
-                <div class="text-sm text-gray-500">Trafik ve kullanım istatistikleri</div>
-              </div>
-            </a>
-            <a href="/admin/revenue" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">💰</span>
-              <div>
-                <div class="font-medium text-gray-900">Gelir</div>
-                <div class="text-sm text-gray-500">Abonelik ve ödeme raporları</div>
-              </div>
-            </a>
-            <a href="/admin/subscriptions" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">💳</span>
-              <div>
-                <div class="font-medium text-gray-900">Abonelikler</div>
-                <div class="text-sm text-gray-500">Premium üye yönetimi</div>
-              </div>
-            </a>
-            <a href="/admin/loyalty" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">🏆</span>
-              <div>
-                <div class="font-medium text-gray-900">Sadakat & Ödüller</div>
-                <div class="text-sm text-gray-500">Puan, rozet ve ödül yönetimi</div>
-              </div>
-            </a>
-            <a href="/admin/monitoring" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">🖥️</span>
-              <div>
-                <div class="font-medium text-gray-900">Sistem İzleme</div>
-                <div class="text-sm text-gray-500">Sunucu sağlığı ve performans</div>
-              </div>
-            </a>
-            <a href="/admin/webhooks" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">🔗</span>
-              <div>
-                <div class="font-medium text-gray-900">Webhooklar</div>
-                <div class="text-sm text-gray-500">Webhook abonelikleri ve loglar</div>
-              </div>
-            </a>
-            <a href="/admin/verifications" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">✅</span>
-              <div>
-                <div class="font-medium text-gray-900">Doğrulama Talepleri</div>
-                <div class="text-sm text-gray-500">İşletme doğrulama onayları</div>
-              </div>
-            </a>
-            <a href="/admin/audit-logs" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">📋</span>
-              <div>
-                <div class="font-medium text-gray-900">Denetim Logları</div>
-                <div class="text-sm text-gray-500">Admin işlem geçmişi</div>
-              </div>
-            </a>
-            <a href="/admin/import" class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
-              <span class="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">📥</span>
-              <div>
-                <div class="font-medium text-gray-900">Veri Aktarımı</div>
-                <div class="text-sm text-gray-500">CSV/JSON toplu veri yükleme</div>
-              </div>
-            </a>
-          </div>
-        </div>
-      </div>
+ {/* Recent Activity */}
+ <div class="grid md:grid-cols-2 gap-6 mt-6">
+ {/* Recent Users */}
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-lg font-bold text-[#1F1410] mb-4">Son Kayıt Olanlar</h2>
+ <div id="recentUsers" class="space-y-3">
+ <p class="text-[#7A6B58] text-center py-4">Yükleniyor...</p>
+ </div>
+ </div>
 
-      {/* Recent Activity */}
-      <div class="grid md:grid-cols-2 gap-6 mt-6">
-        {/* Recent Users */}
-        <div class="bg-white rounded-xl shadow-sm p-6">
-          <h2 class="text-lg font-bold text-gray-900 mb-4">Son Kayıt Olanlar</h2>
-          <div id="recentUsers" class="space-y-3">
-            <p class="text-gray-400 text-center py-4">Yükleniyor...</p>
-          </div>
-        </div>
+ {/* Recent Places */}
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-lg font-bold text-[#1F1410] mb-4">Son Eklenen İşletmeler</h2>
+ <div id="recentPlaces" class="space-y-3">
+ <p class="text-[#7A6B58] text-center py-4">Yükleniyor...</p>
+ </div>
+ </div>
+ </div>
 
-        {/* Recent Places */}
-        <div class="bg-white rounded-xl shadow-sm p-6">
-          <h2 class="text-lg font-bold text-gray-900 mb-4">Son Eklenen İşletmeler</h2>
-          <div id="recentPlaces" class="space-y-3">
-            <p class="text-gray-400 text-center py-4">Yükleniyor...</p>
-          </div>
-        </div>
-      </div>
+ {/* Top Places */}
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 mt-6">
+ <h2 class="text-lg font-bold text-[#1F1410] mb-4">En Çok Görüntülenen İşletmeler (Son 30 Gün)</h2>
+ <div id="topPlaces" class="grid md:grid-cols-5 gap-4">
+ <p class="text-[#7A6B58] col-span-5 text-center py-4">Yükleniyor...</p>
+ </div>
+ </div>
+ </div>
 
-      {/* Top Places */}
-      <div class="bg-white rounded-xl shadow-sm p-6 mt-6">
-        <h2 class="text-lg font-bold text-gray-900 mb-4">En Çok Görüntülenen İşletmeler (Son 30 Gün)</h2>
-        <div id="topPlaces" class="grid md:grid-cols-5 gap-4">
-          <p class="text-gray-400 col-span-5 text-center py-4">Yükleniyor...</p>
-        </div>
-      </div>
-    </div>
-  </div>
+ <script>
+ async function loadDashboard() {
+ try {
+ const response = await fetch('/api/admin/dashboard');
+ const data = await response.json();
 
-  <script>
-    async function loadDashboard() {
-      try {
-        const response = await fetch('/api/admin/dashboard');
-        const data = await response.json();
+ if (data.success) {
+ updateStats(data.stats);
+ renderChart(data.dailyStats);
+ renderRecent(data.recent);
+ renderTopPlaces(data.topPlaces);
+ }
+ } catch (err) {
+ console.error('Dashboard load error:', err);
+ }
+ }
 
-        if (data.success) {
-          updateStats(data.stats);
-          renderChart(data.dailyStats);
-          renderRecent(data.recent);
-          renderTopPlaces(data.topPlaces);
-        }
-      } catch (err) {
-        console.error('Dashboard load error:', err);
-      }
-    }
+ function updateStats(stats: any) {
+ document.getElementById('totalUsers')!.textContent = stats.users.total;
+ document.getElementById('newUsers')!.textContent = stats.users.new_this_month;
+ document.getElementById('totalPlaces')!.textContent = stats.places.total;
+ document.getElementById('pendingPlaces')!.textContent = stats.places.pending;
+ document.getElementById('totalReviews')!.textContent = stats.reviews.total;
+ document.getElementById('pendingReviews')!.textContent = stats.reviews.pending;
+ document.getElementById('openTickets')!.textContent = stats.tickets.open;
+ document.getElementById('newTickets')!.textContent = stats.tickets.new_today;
+ }
 
-    function updateStats(stats: any) {
-      document.getElementById('totalUsers').textContent = stats.users.total;
-      document.getElementById('newUsers').textContent = stats.users.new_this_month;
-      document.getElementById('totalPlaces').textContent = stats.places.total;
-      document.getElementById('pendingPlaces').textContent = stats.places.pending;
-      document.getElementById('totalReviews').textContent = stats.reviews.total;
-      document.getElementById('pendingReviews').textContent = stats.reviews.pending;
-      document.getElementById('openTickets').textContent = stats.tickets.open;
-      document.getElementById('newTickets').textContent = stats.tickets.new_today;
-    }
+ function renderChart(dailyStats: any[]) {
+ if (!dailyStats || dailyStats.length === 0) return;
+ const container = document.getElementById('chartContainer')!;
+ container.innerHTML = '';
 
-    function renderChart(dailyStats: any[]) {
-      if (!dailyStats || dailyStats.length === 0) return;
+ const max = Math.max(...dailyStats.map((d: any) => parseInt(d.views) || 0), 1);
 
-      const max = Math.max(...dailyStats.map((d: any) => parseInt(d.views) || 0), 1);
-      
-      const chartHtml = dailyStats.map((day: any) => {
-        const height = ((parseInt(day.views) || 0) / max) * 100;
-        const date = new Date(day.date);
-        const label = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
-        
-        return `
-          <div class="flex-1 flex flex-col items-center group relative">
-            <div class="w-full bg-red-500 rounded-t hover:bg-red-600 transition-colors" 
-                 style="height: ${Math.max(height, 4)}%"></div>
-            <span class="text-xs text-gray-400 mt-1 rotate-45 origin-left">${label}</span>
-            <div class="absolute bottom-full mb-2 hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-              ${day.views || 0} görüntülenme
-            </div>
-          </div>
-        `;
-      }).join('');
+ dailyStats.forEach((day: any) => {
+ const height = ((parseInt(day.views) || 0) / max) * 100;
+ const date = new Date(day.date);
+ const label = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+ const views = parseInt(day.views) || 0;
 
-      document.getElementById('chartContainer').innerHTML = chartHtml;
-    }
+ const wrapper = document.createElement('div');
+ wrapper.className = 'flex-1 flex flex-col items-center group relative';
 
-    function renderRecent(recent: any) {
-      const usersHtml = recent.users.map((user: any) => `
-        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-          <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-medium text-gray-600">
-            ${user.name ? user.name.charAt(0).toUpperCase() : '?'}
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="font-medium text-gray-900 truncate">${user.name || 'İsimsiz'}</div>
-            <div class="text-sm text-gray-500">${user.email}</div>
-          </div>
-          <span class="text-xs px-2 py-1 rounded-full ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : user.role === 'vendor' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}">
-            ${user.role}
-          </span>
-        </div>
-      `).join('');
-      document.getElementById('recentUsers').innerHTML = usersHtml || '<p class="text-gray-400 text-center">Kullanıcı yok</p>';
+ const bar = document.createElement('div');
+ bar.className = 'w-full bg-urfa-600 rounded-t hover:bg-urfa-700 transition-colors';
+ bar.style.height = `${Math.max(height, 4)}%`;
 
-      const placesHtml = recent.places.map((place: any) => `
-        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-          <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-xl">
-            🏪
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="font-medium text-gray-900 truncate">${place.name}</div>
-            <div class="text-sm text-gray-500">${place.owner_name || 'Sahipsiz'}</div>
-          </div>
-          <span class="text-xs px-2 py-1 rounded-full ${place.status === 'active' ? 'bg-green-100 text-green-700' : place.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'}">
-            ${place.status}
-          </span>
-        </div>
-      `).join('');
-      document.getElementById('recentPlaces').innerHTML = placesHtml || '<p class="text-gray-400 text-center">İşletme yok</p>';
-    }
+ const lbl = document.createElement('span');
+ lbl.className = 'text-xs text-[#7A6B58] mt-1 rotate-45 origin-left';
+ lbl.textContent = label;
 
-    function renderTopPlaces(places: any[]) {
-      const html = places.map((place: any, i: number) => `
-        <div class="bg-gray-50 rounded-xl p-4 text-center">
-          <div class="text-2xl mb-2">${i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</div>
-          ${place.image_url ? 
-            `<img src="${place.image_url}" alt="" class="w-16 h-16 rounded-lg object-cover mx-auto mb-2" />` :
-            `<div class="w-16 h-16 bg-gray-200 rounded-lg mx-auto mb-2 flex items-center justify-center text-2xl">🏪</div>`
-          }
-          <div class="font-medium text-gray-900 text-sm truncate">${place.name}</div>
-          <div class="text-red-600 font-bold">${place.total_views} gör.</div>
-        </div>
-      `).join('');
-      document.getElementById('topPlaces').innerHTML = html || '<p class="text-gray-400 col-span-5 text-center">Veri yok</p>';
-    }
+ const tooltip = document.createElement('div');
+ tooltip.className = 'absolute bottom-full mb-2 hidden group-hover:block bg-[#0D0A08] text-white text-xs rounded-sm px-2 py-1 whitespace-nowrap z-10';
+ tooltip.textContent = `${views} görüntülenme`;
 
-    loadDashboard();
-  </script>
-</Layout>
+ wrapper.appendChild(bar);
+ wrapper.appendChild(lbl);
+ wrapper.appendChild(tooltip);
+ container.appendChild(wrapper);
+ });
+ }
+
+ function renderRecent(recent: any) {
+ const usersContainer = document.getElementById('recentUsers')!;
+ usersContainer.innerHTML = '';
+
+ if (!recent.users.length) {
+ usersContainer.textContent = 'Kullanıcı yok';
+ return;
+ }
+
+ recent.users.forEach((user: any) => {
+ const row = document.createElement('div');
+ row.className = 'flex items-center gap-3 p-3 bg-[rgba(184,115,51,0.04)] rounded-sm';
+
+ const avatar = document.createElement('div');
+ avatar.className = 'w-10 h-10 bg-[rgba(184,115,51,0.12)] rounded-full flex items-center justify-center font-medium text-[#7A6B58]';
+ avatar.textContent = user.name ? user.name.charAt(0).toUpperCase() : '?';
+
+ const info = document.createElement('div');
+ info.className = 'flex-1 min-w-0';
+ const name = document.createElement('div');
+ name.className = 'font-medium text-[#1F1410] truncate';
+ name.textContent = user.name || 'İsimsiz';
+ const email = document.createElement('div');
+ email.className = 'text-sm text-[#7A6B58]';
+ email.textContent = user.email;
+ info.appendChild(name);
+ info.appendChild(email);
+
+ const badge = document.createElement('span');
+ badge.className = 'text-xs px-2 py-1 rounded-sm bg-[rgba(184,115,51,0.06)] text-[#7A6B58]';
+ badge.textContent = user.role;
+
+ row.appendChild(avatar);
+ row.appendChild(info);
+ row.appendChild(badge);
+ usersContainer.appendChild(row);
+ });
+
+ const placesContainer = document.getElementById('recentPlaces')!;
+ placesContainer.innerHTML = '';
+
+ if (!recent.places.length) {
+ placesContainer.textContent = 'İşletme yok';
+ return;
+ }
+
+ recent.places.forEach((place: any) => {
+ const row = document.createElement('div');
+ row.className = 'flex items-center gap-3 p-3 bg-[rgba(184,115,51,0.04)] rounded-sm';
+
+ const icon = document.createElement('div');
+ icon.className = 'w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center text-xl';
+ icon.textContent = '🏪';
+
+ const info = document.createElement('div');
+ info.className = 'flex-1 min-w-0';
+ const pname = document.createElement('div');
+ pname.className = 'font-medium text-[#1F1410] truncate';
+ pname.textContent = place.name;
+ const owner = document.createElement('div');
+ owner.className = 'text-sm text-[#7A6B58]';
+ owner.textContent = place.owner_name || 'Sahipsiz';
+ info.appendChild(pname);
+ info.appendChild(owner);
+
+ const badge = document.createElement('span');
+ badge.className = 'text-xs px-2 py-1 rounded-sm bg-[rgba(184,115,51,0.06)] text-[#7A6B58]';
+ badge.textContent = place.status;
+
+ row.appendChild(icon);
+ row.appendChild(info);
+ row.appendChild(badge);
+ placesContainer.appendChild(row);
+ });
+ }
+
+ function renderTopPlaces(places: any[]) {
+ const container = document.getElementById('topPlaces')!;
+ container.innerHTML = '';
+
+ if (!places.length) {
+ const empty = document.createElement('p');
+ empty.className = 'text-[#7A6B58] col-span-5 text-center';
+ empty.textContent = 'Veri yok';
+ container.appendChild(empty);
+ return;
+ }
+
+ const medals = ['🥇', '🥈', '🥉'];
+
+ places.forEach((place: any, i: number) => {
+ const card = document.createElement('div');
+ card.className = 'bg-[rgba(184,115,51,0.04)] rounded-sm border border-[rgba(184,115,51,0.14)] p-4 text-center';
+
+ const medal = document.createElement('div');
+ medal.className = 'text-2xl mb-2';
+ medal.textContent = medals[i] ?? `${i + 1}.`;
+
+ let imgEl: HTMLElement;
+ if (place.image_url) {
+ const img = document.createElement('img');
+ img.src = place.image_url;
+ img.alt = '';
+ img.className = 'w-16 h-16 rounded-sm object-cover mx-auto mb-2';
+ imgEl = img;
+ } else {
+ const placeholder = document.createElement('div');
+ placeholder.className = 'w-16 h-16 bg-[rgba(184,115,51,0.1)] rounded-sm mx-auto mb-2 flex items-center justify-center text-2xl';
+ placeholder.textContent = '🏪';
+ imgEl = placeholder;
+ }
+
+ const pname = document.createElement('div');
+ pname.className = 'font-medium text-[#1F1410] text-sm truncate';
+ pname.textContent = place.name;
+
+ const views = document.createElement('div');
+ views.className = 'text-urfa-600 font-bold';
+ views.textContent = `${place.total_views} gör.`;
+
+ card.appendChild(medal);
+ card.appendChild(imgEl);
+ card.appendChild(pname);
+ card.appendChild(views);
+ container.appendChild(card);
+ });
+ }
+
+ loadDashboard();
+ </script>
+</AdminLayout>

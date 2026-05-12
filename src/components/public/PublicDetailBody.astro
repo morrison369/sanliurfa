@@ -1,0 +1,51 @@
+---
+interface Props {
+ compactSidebar?: boolean;
+}
+
+const { compactSidebar = false } = Astro.props;
+---
+
+<section class={`pdb ${compactSidebar ? 'pdb--compact-sidebar' : ''}`}>
+  <div class="sf-container">
+    <div class="pdb-grid">
+      <div class="pdb-main">
+        <slot />
+      </div>
+      <aside class="pdb-aside">
+        <slot name="sidebar" />
+      </aside>
+    </div>
+  </div>
+</section>
+
+<style>
+  .pdb {
+    background: var(--bg);
+    padding: 2.75rem 0 5rem;
+  }
+
+  .pdb-grid {
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  .pdb-main,
+  .pdb-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+  }
+
+  @media (min-width: 1024px) {
+    .pdb-grid {
+      grid-template-columns: minmax(0, 1fr) 20rem;
+      align-items: start;
+    }
+
+    .pdb--compact-sidebar .pdb-grid {
+      grid-template-columns: minmax(0, 1fr) 18rem;
+    }
+  }
+</style>

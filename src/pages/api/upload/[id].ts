@@ -2,22 +2,22 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { unlink } from 'fs/promises';
-import { join } from 'path';
+import { join, resolve as resolvePath, sep as pathSep } from 'path';
 import { logger } from '../../../lib/logging';
 import { resolveContentImage } from '../../../lib/content-images';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
 
-function normalizePlacePhotoUrls(photo: any, placeSlug?: string | null) {
+function normalizePlacePhotoUrls(photo: { file_path?: string } | null, placeSlug?: string | null) {
   const image_url = resolveContentImage({
     category: 'places',
-    slug: placeSlug,
-    explicit: photo?.file_path,
+    slug: placeSlug ?? null,
+    explicit: photo?.file_path ?? null,
     placeholder: '/images/placeholder-place.jpg',
   });
   const thumbnail_url = resolveContentImage({
     category: 'places',
-    slug: placeSlug,
-    explicit: photo?.file_path,
+    slug: placeSlug ?? null,
+    explicit: photo?.file_path ?? null,
     placeholder: '/images/placeholder-place.jpg',
     thumb: true,
   });
@@ -39,6 +39,15 @@ export const DELETE: APIRoute = async (context) => {
     }
 
     const { id } = context.params;
+    if (!id) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Fotoğraf kimliği eksik',
+        type: '/problems/upload-id-required',
+        instance: '/api/upload/{id}',
+      });
+    }
 
     // Get photo info
     const photoResult = await query(
@@ -61,8 +70,10 @@ export const DELETE: APIRoute = async (context) => {
 
     const photo = photoResult.rows[0];
 
-    // Yetki kontrolu
-    if (auth.user.role === 'vendor') {
+    // Yetki kontrolü: admin > vendor (sahip olduğu mekan) > diğer (yasak)
+    if (auth.user.role === 'admin') {
+      // admin tüm fotoğrafları silebilir
+    } else if (auth.user.role === 'vendor') {
       const placeCheck = await query(
         'SELECT id FROM places WHERE id = $1 AND owner_id = $2',
         [photo.place_id, auth.user.id]
@@ -76,33 +87,45 @@ export const DELETE: APIRoute = async (context) => {
           instance: '/api/upload/{id}',
         });
       }
+    } else {
+      return problemJson({
+        status: 403,
+        title: 'Forbidden',
+        detail: 'Sadece mekan sahibi veya admin fotoğraf silebilir',
+        type: '/problems/upload-forbidden',
+        instance: '/api/upload/{id}',
+      });
     }
 
     // Delete record
     await query('DELETE FROM place_photos WHERE id = $1', [id]);
 
-    // Try to delete physical file (don't fail if file doesn't exist)
+    // Try to delete physical file (don't fail if file doesn't exist).
+    // Path traversal koruması: photo.file_path DB'den geliyor — `/uploads/...` ile başlamalı.
+    // Eski/poison record'lar için absolute path resolve sonrası `public/uploads/` prefix'i doğrula.
     try {
-      const filePath = join(process.cwd(), 'public', photo.file_path);
-      await unlink(filePath);
+      const publicUploadsRoot = resolvePath(join(process.cwd(), 'public', 'uploads'));
+      const resolvedPath = resolvePath(join(process.cwd(), 'public', photo.file_path));
+      if (resolvedPath.startsWith(publicUploadsRoot + pathSep)) {
+        await unlink(resolvedPath);
+      } else {
+        logger.warn('Photo unlink rejected — path outside uploads', { photoId: id, filePath: photo.file_path });
+      }
     } catch (e) {
       // File might not exist, ignore
     }
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       message: 'Photo deleted'
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Delete photo error:', error);
     return problemJson({
       status: 500,
       title: 'Fotoğraf Silinemedi',
-      detail: error instanceof Error ? error.message : 'server_error',
+      detail: safeErrorDetail(error, 'server_error'),
       type: '/problems/upload-delete-failed',
       instance: '/api/upload/{id}',
     });
@@ -124,6 +147,15 @@ export const PUT: APIRoute = async (context) => {
     }
 
     const { id } = context.params;
+    if (!id) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Fotoğraf kimliği eksik',
+        type: '/problems/upload-id-required',
+        instance: '/api/upload/{id}',
+      });
+    }
     const body = await context.request.json();
 
     // Get photo info
@@ -147,8 +179,10 @@ export const PUT: APIRoute = async (context) => {
 
     const photo = photoResult.rows[0];
 
-    // Yetki kontrolu
-    if (auth.user.role === 'vendor') {
+    // Yetki kontrolü: admin > vendor (sahip olduğu mekan) > diğer (yasak)
+    if (auth.user.role === 'admin') {
+      // admin tüm fotoğrafları güncelleyebilir
+    } else if (auth.user.role === 'vendor') {
       const placeCheck = await query(
         'SELECT id FROM places WHERE id = $1 AND owner_id = $2',
         [photo.place_id, auth.user.id]
@@ -162,10 +196,18 @@ export const PUT: APIRoute = async (context) => {
           instance: '/api/upload/{id}',
         });
       }
+    } else {
+      return problemJson({
+        status: 403,
+        title: 'Forbidden',
+        detail: 'Sadece mekan sahibi veya admin fotoğraf güncelleyebilir',
+        type: '/problems/upload-forbidden',
+        instance: '/api/upload/{id}',
+      });
     }
 
     const updates: string[] = [];
-    const params: any[] = [];
+    const params: unknown[] = [];
     let paramIndex = 1;
 
     if (body.caption !== undefined) {
@@ -216,7 +258,7 @@ export const PUT: APIRoute = async (context) => {
     const updatedPhoto = result.rows[0];
     const normalizedUpdated = normalizePlacePhotoUrls(updatedPhoto, photo.place_slug);
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       photo: {
         ...updatedPhoto,
@@ -224,17 +266,14 @@ export const PUT: APIRoute = async (context) => {
         thumbnail_url: normalizedUpdated.thumbnail_url,
         image_url: normalizedUpdated.image_url,
       }
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Update photo error:', error);
     return problemJson({
       status: 500,
       title: 'Fotoğraf Güncellenemedi',
-      detail: error instanceof Error ? error.message : 'server_error',
+      detail: safeErrorDetail(error, 'server_error'),
       type: '/problems/upload-update-failed',
       instance: '/api/upload/{id}',
     });

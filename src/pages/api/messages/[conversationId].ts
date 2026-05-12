@@ -9,7 +9,7 @@ import type { APIRoute } from 'astro';
 import { getMessages, sendMessage, markConversationRead } from '../../../lib/message/messages';
 import { queryOne } from '../../../lib/postgres';
 import { isUserBlocked } from '../../../lib/block/blocking';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
@@ -53,7 +53,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
 
     // Get URL parameters
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
 
     // Get messages (includes access control check)
     const messages = await getMessages(conversationId, user.id, limit);

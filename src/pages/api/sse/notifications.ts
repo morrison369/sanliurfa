@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { registerSSE, unregisterSSE, getNotifications, markAsRead, markAllAsRead, deleteNotification } from '../../../lib/notifications/realtime-notifications';
+import { registerSSE, unregisterSSE, markAsRead, markAllAsRead, deleteNotification } from '../../../lib/notifications/realtime-notifications';
 import { problemJson } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ request, locals }) => {

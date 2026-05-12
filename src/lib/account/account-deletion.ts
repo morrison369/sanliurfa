@@ -134,94 +134,41 @@ export async function executeAccountDeletion(userId: string): Promise<void> {
     const ANONYMIZED_NAME = 'Silinen Kullanıcı';
     const ANONYMIZED_EMAIL = `deleted_${userId.substring(0, 8)}@deleted.local`;
 
-    // Anonymize user personal data
-    await query(
-      `UPDATE users
-       SET
-         full_name = $1,
-         email = $2,
-         username = NULL,
-         avatar_url = NULL,
-         bio = NULL,
-         email_verified = false,
-         two_factor_enabled = false,
-         two_factor_secret = NULL,
-         notification_preferences = '{"email": false, "push": false, "in_app": false, "digest": "weekly"}'::jsonb,
-         privacy_settings = '{"profile_public": false, "show_email": false, "allow_messages": false}'::jsonb,
-         password_hash = NULL,
-         last_login_at = NULL,
-         points = 0,
-         level = 0,
-         deleted_at = NOW()
-       WHERE id = $1`,
-      [userId, ANONYMIZED_NAME, ANONYMIZED_EMAIL]
-    );
+    // 10 anonymize/delete işlemi paralel — birbirine bağımlı değiller (farklı tablo, idempotent)
+    await Promise.all([
+      query(
+        `UPDATE users
+         SET
+           full_name = $2,
+           email = $3,
+           username = NULL,
+           avatar_url = NULL,
+           bio = NULL,
+           email_verified = false,
+           two_factor_enabled = false,
+           two_factor_secret = NULL,
+           notification_preferences = '{"email": false, "push": false, "in_app": false, "digest": "weekly"}'::jsonb,
+           privacy_settings = '{"profile_public": false, "show_email": false, "allow_messages": false}'::jsonb,
+           password_hash = NULL,
+           last_login_at = NULL,
+           points = 0,
+           level = 0,
+           deleted_at = NOW()
+         WHERE id = $1`,
+        [userId, ANONYMIZED_NAME, ANONYMIZED_EMAIL]
+      ),
+      query(`UPDATE reviews SET user_id = NULL, reviewer_name = 'Silinen Kullanıcı' WHERE user_id = $1`, [userId]),
+      query(`UPDATE comments SET user_id = NULL, author_name = 'Silinen Kullanıcı' WHERE user_id = $1`, [userId]),
+      query(`DELETE FROM direct_messages WHERE sender_id = $1`, [userId]),
+      query(`DELETE FROM conversations WHERE participant_a = $1 OR participant_b = $1`, [userId]),
+      query(`DELETE FROM favorites WHERE user_id = $1`, [userId]),
+      query(`DELETE FROM notifications WHERE user_id = $1`, [userId]),
+      query(`DELETE FROM followers WHERE follower_id = $1 OR following_id = $1`, [userId]),
+      query(`DELETE FROM user_blocks WHERE blocker_id = $1 OR blocked_id = $1`, [userId]),
+      query(`DELETE FROM user_mutes WHERE muter_id = $1 OR muted_id = $1`, [userId]),
+    ]);
 
-    // Anonymize reviews
-    await query(
-      `UPDATE reviews
-       SET user_id = NULL, reviewer_name = 'Silinen Kullanıcı'
-       WHERE user_id = $1`,
-      [userId]
-    );
-
-    // Anonymize comments
-    await query(
-      `UPDATE comments
-       SET user_id = NULL, author_name = 'Silinen Kullanıcı'
-       WHERE user_id = $1`,
-      [userId]
-    );
-
-    // Delete direct messages
-    await query(
-      `DELETE FROM direct_messages
-       WHERE sender_id = $1`,
-      [userId]
-    );
-
-    // Delete conversations
-    await query(
-      `DELETE FROM conversations
-       WHERE participant_a = $1 OR participant_b = $1`,
-      [userId]
-    );
-
-    // Delete favorites
-    await query(
-      `DELETE FROM favorites
-       WHERE user_id = $1`,
-      [userId]
-    );
-
-    // Delete notifications
-    await query(
-      `DELETE FROM notifications
-       WHERE user_id = $1`,
-      [userId]
-    );
-
-    // Delete followers/following relationships
-    await query(
-      `DELETE FROM followers
-       WHERE follower_id = $1 OR following_id = $1`,
-      [userId]
-    );
-
-    // Delete blocks/mutes
-    await query(
-      `DELETE FROM user_blocks
-       WHERE blocker_id = $1 OR blocked_id = $1`,
-      [userId]
-    );
-
-    await query(
-      `DELETE FROM user_mutes
-       WHERE muter_id = $1 OR muted_id = $1`,
-      [userId]
-    );
-
-    // Update deletion request status
+    // Update deletion request status (yukarıdaki tümü tamamlandıktan sonra)
     await query(
       `UPDATE account_deletions
        SET status = 'completed', completed_at = NOW()
@@ -229,10 +176,12 @@ export async function executeAccountDeletion(userId: string): Promise<void> {
       [userId]
     );
 
-    // Clear all user caches
-    await deleteCache(`user:profile:${userId}`);
-    await deleteCachePattern(`user:*:${userId}`);
-    await deleteCachePattern(`*:${userId}`);
+    // Clear all user caches (paralel)
+    await Promise.all([
+      deleteCache(`user:profile:${userId}`),
+      deleteCachePattern(`user:*:${userId}`),
+      deleteCachePattern(`*:${userId}`),
+    ]);
 
     logger.info('Account successfully deleted and anonymized', { userId });
   } catch (error) {
@@ -257,7 +206,7 @@ export async function processExpiredDeletionRequests(): Promise<number> {
       []
     );
 
-    const count = parseInt(expiredRequests?.count || '0');
+    const count = parseInt(expiredRequests?.count || '0', 10);
 
     if (count > 0) {
       // Get all expired deletion requests
@@ -269,9 +218,7 @@ export async function processExpiredDeletionRequests(): Promise<number> {
 
       // Execute deletion for each
       if (Array.isArray(requests)) {
-        for (const req of requests) {
-          await executeAccountDeletion(req.user_id);
-        }
+        await Promise.allSettled(requests.map((req) => executeAccountDeletion(req.user_id)));
       } else if (requests?.user_id) {
         await executeAccountDeletion(requests.user_id);
       }

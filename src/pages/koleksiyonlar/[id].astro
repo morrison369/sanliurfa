@@ -1,23 +1,54 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import CollectionDetail from '../../components/CollectionDetail';
+import PublicPageIntro from '../../components/public/PublicPageIntro.astro';
 
 const { id } = Astro.params;
 const user = Astro.locals.user;
+const collectionDetailProps: { collectionId: string; currentUserId?: string; isAdmin: boolean } = {
+ collectionId: id ?? '',
+ isAdmin: user?.role === 'admin',
+};
+if (user?.id) {
+ collectionDetailProps.currentUserId = user.id;
+}
 
-// If no id, redirect to collections page
 if (!id) {
-  return Astro.redirect('/koleksiyonlar');
+ return Astro.redirect('/koleksiyonlar');
 }
 ---
 
-<Layout title="Koleksiyon - Şanlıurfa">
-  <div class="container mx-auto px-4 py-8 max-w-6xl">
-    <CollectionDetail
-      client:visible={{ rootMargin: '140px' }}
-      collectionId={id}
-      currentUserId={user?.id}
-      isAdmin={user?.role === 'admin'}
-    />
-  </div>
+<Layout seo={{ title: "Koleksiyon - Şanlıurfa", noIndex: true }}>
+ <div class="kd-page">
+ <PublicPageIntro
+ eyebrow="Koleksiyonlarım"
+ title="Koleksiyon"
+ description="Kaydettiğin mekanları, notları ve şehir planını bu koleksiyon üzerinden takip et."
+ quickAnswerTitle="Hızlı cevap"
+ quickAnswerText="Koleksiyon detayında kayıtlı mekanlar ve liste bilgileri tek ekranda gösterilir."
+ actions={[
+ { href: '/koleksiyonlar', label: 'Koleksiyonlarım' },
+ { href: '/mekanlar', label: 'Mekan Ekle' },
+ ]}
+ />
+ <div class="kd-body">
+ <div class="sf-container">
+ <CollectionDetail
+ client:visible={{ rootMargin: '140px' }}
+ {...collectionDetailProps}
+ />
+ </div>
+ </div>
+ </div>
 </Layout>
+
+<style>
+ .kd-page {
+ background: var(--public-bg);
+ min-height: 100vh;
+ }
+
+ .kd-body {
+ padding: 2rem 0 4rem;
+ }
+</style>

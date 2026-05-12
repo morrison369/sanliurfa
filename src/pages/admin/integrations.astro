@@ -1,27 +1,21 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
 import IntegrationsSettings from '../../components/admin/IntegrationsSettings';
-
-if (!Astro.locals.isAdmin && Astro.locals.user?.role !== 'admin') {
-  return Astro.redirect('/giris?redirect=/admin/integrations');
-}
-
-const seo = {
-  title: 'Entegrasyon Ayarları - Admin',
-  description: 'E-posta ve Analytics API ayarları',
-  noIndex: true,
-};
 ---
 
-<Layout seo={seo}>
-  <div class="bg-gray-50 min-h-screen pt-24 pb-10">
-    <div class="container mx-auto px-4 max-w-2xl">
-      <div class="mb-6">
-        <a href="/admin" class="text-sm text-gray-500 hover:text-gray-700">← Admin Paneli</a>
-        <h1 class="text-3xl font-bold text-gray-900 mt-2">Entegrasyon Ayarları</h1>
-        <p class="mt-1 text-gray-500">E-posta (Resend) ve Google Analytics API bilgilerini girin. Değişiklikler rebuild gerektirmeden hemen aktif olur.</p>
-      </div>
-      <IntegrationsSettings client:idle />
-    </div>
-  </div>
-</Layout>
+<AdminLayout
+ title="Entegrasyon Ayarları"
+ subtitle="Resend, SMTP, Analytics, Stripe, resim sağlayıcıları ve sosyal giriş yönetimi"
+>
+ <div class="sf-container py-8 max-w-4xl">
+ <div class="mb-6">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ </div>
+
+ <div class="bg-[rgba(184,115,51,0.06)] border border-[rgba(184,115,51,0.2)] rounded-sm p-4 mb-6 text-sm text-[#7A6B58]">
+ 6 servis tek panelden: Resend (e-posta) → SMTP (yedek), Google Analytics, Stripe ödeme, resim sağlayıcıları (Unsplash/Pexels) ve sosyal giriş (Google/Facebook/Twitter). Değişiklikler rebuild gerektirmeden aktif olur.
+ </div>
+
+ <IntegrationsSettings client:idle />
+ </div>
+</AdminLayout>

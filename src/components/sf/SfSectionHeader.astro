@@ -1,0 +1,24 @@
+---
+export interface Props {
+ title: string;
+ description?: string;
+ ctaHref?: string;
+ ctaLabel?: string;
+ class?: string;
+}
+
+const { title, description, ctaHref, ctaLabel, class: className = '' } = Astro.props;
+---
+
+<div class={`flex items-end justify-between gap-4 ${className}`.trim()}>
+ <div>
+ <h2 class="text-2xl md:text-3xl font-bold text-[#1a1008]">{title}</h2>
+ {description && <p class="mt-1 text-sm text-[#5f4935]">{description}</p>}
+ </div>
+ {ctaHref && ctaLabel && (
+ <a href={ctaHref} class="sf-cta-chip">
+ {ctaLabel}
+ </a>
+ )}
+</div>
+

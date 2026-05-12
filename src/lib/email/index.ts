@@ -1,12 +1,20 @@
 /**
  * Email Service
- * Transactional email handling with templates via SMTP (nodemailer)
+ *
+ * Three-tier transactional email delivery:
+ *   1. Resend API (preferred — credentials from /admin/integrations DB, env fallback)
+ *   2. SMTP via nodemailer (env-only fallback when Resend isn't configured)
+ *   3. Dev log (no real send when neither is configured)
+ *
+ * Resend config is cached for 60s; admin saves take effect within that window.
  */
 
 import nodemailer from 'nodemailer';
 import { getCache, setCache } from '../cache';
-import { query } from '../postgres';
+import { query, queryOne } from '../postgres';
 import { logger } from '../logging';
+import { getPublicAppUrl } from '../public-app-url';
+import { safeErrorDetail } from '../api';
 
 export interface EmailData {
   to: string;
@@ -22,61 +30,230 @@ export interface EmailData {
   }>;
 }
 
-const FROM_ADDRESS = process.env.SMTP_FROM || 'noreply@sanliurfa.com';
+const FROM_ADDRESS_FALLBACK = process.env.SMTP_FROM || 'noreply@sanliurfa.com';
 const FROM_NAME = process.env.SMTP_FROM_NAME || 'Sanliurfa.com';
 
-function createTransport() {
-  if (
-    process.env.SMTP_HOST &&
-    process.env.SMTP_USER &&
-    process.env.SMTP_PASS
-  ) {
-    return nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+// Resend config cache (60s) — admin saves invalidate naturally via TTL.
+interface ResendConfig {
+  api_key: string;
+  from_email: string;
+  /** Per-recipient daily send limit. 0 disables rate limiting. Default 10. */
+  daily_limit_per_recipient: number;
+}
+let _resendCache: ResendConfig | null = null;
+let _resendCacheAt = 0;
+const RESEND_CACHE_TTL_MS = 60_000;
+
+async function getResendConfig(): Promise<ResendConfig> {
+  const now = Date.now();
+  if (_resendCache && now - _resendCacheAt < RESEND_CACHE_TTL_MS) return _resendCache;
+  let dbValue: { api_key?: string; from_email?: string; daily_limit_per_recipient?: number } = {};
+  try {
+    const row = await queryOne<{
+      setting_value: { api_key?: string; from_email?: string; daily_limit_per_recipient?: number };
+    }>(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.email'`,
+      [],
+    );
+    dbValue = row?.setting_value || {};
+  } catch {
+    dbValue = {};
   }
-  // Dev fallback: log to console, no actual send
-  return null;
+  // Treat undefined → default 10; negative numbers clamped to 0 (disabled).
+  const limitRaw = dbValue.daily_limit_per_recipient;
+  const dailyLimit = typeof limitRaw === 'number' && limitRaw >= 0 ? limitRaw : 10;
+  _resendCache = {
+    api_key: dbValue.api_key || process.env.RESEND_API_KEY || '',
+    from_email: dbValue.from_email || FROM_ADDRESS_FALLBACK,
+    daily_limit_per_recipient: dailyLimit,
+  };
+  _resendCacheAt = now;
+  return _resendCache;
+}
+
+// SMTP config — DB-managed via /admin/integrations, env fallback. Cached for 60s.
+interface SmtpConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+  from_email: string;
+}
+let _smtpCache: SmtpConfig | null = null;
+let _smtpCacheAt = 0;
+
+async function getSmtpConfig(): Promise<SmtpConfig> {
+  const now = Date.now();
+  if (_smtpCache && now - _smtpCacheAt < RESEND_CACHE_TTL_MS) return _smtpCache;
+  let dbValue: Partial<SmtpConfig> = {};
+  try {
+    const row = await queryOne<{ setting_value: Partial<SmtpConfig> }>(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'integrations.smtp'`,
+      [],
+    );
+    dbValue = row?.setting_value || {};
+  } catch {
+    dbValue = {};
+  }
+  _smtpCache = {
+    host: dbValue.host || process.env.SMTP_HOST || '',
+    port: Number(dbValue.port ?? process.env.SMTP_PORT ?? 587),
+    secure: typeof dbValue.secure === 'boolean' ? dbValue.secure : process.env.SMTP_SECURE === 'true',
+    user: dbValue.user || process.env.SMTP_USER || '',
+    pass: dbValue.pass || process.env.SMTP_PASS || '',
+    from_email: dbValue.from_email || FROM_ADDRESS_FALLBACK,
+  };
+  _smtpCacheAt = now;
+  return _smtpCache;
+}
+
+async function createSmtpTransport() {
+  const cfg = await getSmtpConfig();
+  if (!cfg.host || !cfg.user || !cfg.pass) return null;
+  return nodemailer.createTransport({
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.secure,
+    auth: { user: cfg.user, pass: cfg.pass },
+  });
+}
+
+async function sendViaResend(
+  data: EmailData,
+  config: { api_key: string; from_email: string },
+): Promise<{ success: boolean; error?: string }> {
+  // Resend API: dev/test/dummy keys trigger 401, fall through to next tier.
+  if (config.api_key.includes('dummy') || config.api_key.length < 10) {
+    return { success: false, error: 'Resend api_key looks like a dev placeholder' };
+  }
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.api_key}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: `${FROM_NAME} <${config.from_email}>`,
+        to: data.to,
+        subject: data.subject,
+        html: data.html,
+        text: data.text,
+      }),
+    });
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      return { success: false, error: `Resend ${response.status}: ${body.slice(0, 200)}` };
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Resend network error' };
+  }
+}
+
+export type EmailTier = 'resend' | 'smtp' | 'dev-log';
+export interface SendEmailResult {
+  success: boolean;
+  error?: string;
+  /** Which delivery tier was actually used. Useful for the admin "Test Et" button so
+   *  the operator can see whether Resend or the SMTP fallback handled the message. */
+  tier?: EmailTier;
 }
 
 /**
- * Send email via SMTP
+ * Send email — tries Resend first, falls back to SMTP, then dev log.
+ * The rate limit applies once per call regardless of tier used.
+ *
+ * The per-recipient daily limit is read from `integrations.email.daily_limit_per_recipient`
+ * (admin-managed, default 10). Set to 0 to disable rate limiting (e.g. for transactional
+ * burst scenarios where the sender controls volume separately).
  */
-export async function sendEmail(data: EmailData): Promise<{ success: boolean; error?: string }> {
+export async function sendEmail(data: EmailData): Promise<SendEmailResult> {
   try {
-    // Rate limiting: max 10 emails/day per recipient
+    const resendCfg = await getResendConfig();
     const rateKey = `email:${data.to}`;
     const sentToday = await getCache<number>(rateKey) || 0;
-    if (sentToday >= 10) {
-      return { success: false, error: 'Email rate limit exceeded' };
+
+    // Rate limit: 0 means disabled.
+    if (resendCfg.daily_limit_per_recipient > 0 && sentToday >= resendCfg.daily_limit_per_recipient) {
+      return {
+        success: false,
+        error: `Email rate limit exceeded (${resendCfg.daily_limit_per_recipient}/day per recipient)`,
+      };
     }
 
-    const transport = createTransport();
+    // Tier 1: Resend (admin-managed via /admin/integrations or env)
+    if (resendCfg.api_key) {
+      const result = await sendViaResend(data, resendCfg);
+      if (result.success) {
+        await setCache(rateKey, sentToday + 1, 86400);
+        logger.info('Email sent via Resend', { to: data.to });
+        return { ...result, tier: 'resend' };
+      }
+      logger.warn(`Resend tier failed: ${result.error}; trying SMTP fallback`);
+    }
+
+    // Tier 2: SMTP fallback (DB-managed via /admin/integrations or env)
+    const transport = await createSmtpTransport();
     if (transport) {
+      const smtpCfg = await getSmtpConfig();
       await transport.sendMail({
-        from: `"${FROM_NAME}" <${FROM_ADDRESS}>`,
+        from: `"${FROM_NAME}" <${smtpCfg.from_email || resendCfg.from_email || FROM_ADDRESS_FALLBACK}>`,
         to: data.to,
         subject: data.subject,
         html: data.html,
         text: data.text,
         attachments: data.attachments,
       });
-    } else {
-      logger.info(`📧 [DEV] Email to: ${data.to} | Subject: ${data.subject}`);
+      await setCache(rateKey, sentToday + 1, 86400);
+      logger.info('Email sent via SMTP', { to: data.to });
+      return { success: true, tier: 'smtp' };
     }
 
-    await setCache(rateKey, sentToday + 1, 86400);
-    return { success: true };
+    // Tier 3: Dev log only
+    logger.info(`📧 [DEV — no email backend] to=${data.to} subject="${data.subject}"`);
+    return { success: true, tier: 'dev-log' };
   } catch (error) {
     logger.error('Email send error:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+    return { success: false, error: safeErrorDetail(error, 'E-posta gönderilemedi') };
   }
+}
+
+/**
+ * Probe SMTP transport without sending an email. Used by the admin "Test Et" button.
+ * Calls nodemailer's verify() which opens a TCP connection, runs HELO/EHLO + AUTH, then closes.
+ * Returns `{ ok }` on success or `{ ok: false, error }` on connect/auth failure.
+ */
+export async function verifySmtpConnection(): Promise<{ ok: boolean; error?: string; host?: string }> {
+  const cfg = await getSmtpConfig();
+  if (!cfg.host || !cfg.user || !cfg.pass) {
+    return { ok: false, error: 'SMTP host/user/pass yapılandırılmamış' };
+  }
+  try {
+    const transport = nodemailer.createTransport({
+      host: cfg.host,
+      port: cfg.port,
+      secure: cfg.secure,
+      auth: { user: cfg.user, pass: cfg.pass },
+    });
+    await transport.verify();
+    return { ok: true, host: cfg.host };
+  } catch (error) {
+    return {
+      ok: false,
+      host: cfg.host,
+      error: safeErrorDetail(error, 'SMTP bağlantısı doğrulanamadı'),
+    };
+  }
+}
+
+/** Force-clear both Resend and SMTP config caches (called by /admin/integrations on save). */
+export function invalidateEmailConfigCache(): void {
+  _smtpCache = null;
+  _smtpCacheAt = 0;
+  _resendCache = null;
+  _resendCacheAt = 0;
 }
 
 /**
@@ -102,7 +279,7 @@ export async function sendPasswordResetEmail(
   name: string,
   resetToken: string
 ): Promise<void> {
-  const resetUrl = `${process.env.PUBLIC_APP_URL}/sifre-sifirla?token=${resetToken}`;
+  const resetUrl = `${getPublicAppUrl()}/sifre-sifirla?token=${resetToken}`;
   const html = passwordResetTemplate(name, resetUrl);
   
   await sendEmail({
@@ -121,7 +298,7 @@ export async function sendVerificationEmail(
   name: string,
   verifyToken: string
 ): Promise<void> {
-  const verifyUrl = `${process.env.PUBLIC_APP_URL}/email-dogrula?token=${verifyToken}`;
+  const verifyUrl = `${getPublicAppUrl()}/email-dogrula?token=${verifyToken}`;
   const html = verificationTemplate(name, verifyUrl);
   
   await sendEmail({
@@ -152,113 +329,112 @@ export async function sendNotificationEmail(
   });
 }
 
-// Templates
-function welcomeTemplate(name: string): string {
-  return `
-<!DOCTYPE html>
-<html>
+// ─── Harran Scripts Email Theme ──────────────────────────────────────────────
+// Obsidian bg, copper accent, Cormorant Garamond display / Jost body fallbacks.
+// Table-based layout for broad email client compatibility.
+const EM = {
+  bg: '#0D0A08',
+  card: '#1C1410',
+  border: '#2E2018',
+  heading: '#EDE0C6',
+  body: '#C4A882',
+  muted: '#7A6B58',
+  copper: '#B87333',
+  copperHover: '#CE8E38',
+  danger: '#C73A47',
+  success: '#2A9D8F',
+  displayFont: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
+  bodyFont: "'Jost', 'Gill Sans', Helvetica, Arial, sans-serif",
+};
+
+function emailShell(content: string, year = new Date().getFullYear()): string {
+  const appUrl = getPublicAppUrl();
+  return `<!DOCTYPE html>
+<html lang="tr">
 <head>
   <meta charset="utf-8">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #0d9488; color: white; padding: 20px; text-align: center; }
-    .content { background: #f9fafb; padding: 30px; }
-    .button { display: inline-block; background: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; }
-    .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
-  </style>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Şanlıurfa.com</title>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Sanliurfa.com'a Hoşgeldiniz!</h1>
-    </div>
-    <div class="content">
-      <p>Merhaba <strong>${escapeHtml(name)}</strong>,</p>
-      <p>Sanliurfa.com'a üye olduğunuz için teşekkür ederiz. Şimdi şehrimizin tarihi yerlerini, lezzetli yemeklerini ve daha fazlasını keşfedebilirsiniz.</p>
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.PUBLIC_APP_URL}/kesfet" class="button">Keşfetmeye Başla</a>
-      </p>
-      <p>Yardıma ihtiyacınız olursa bizimle iletişime geçmekten çekinmeyin.</p>
-    </div>
-    <div class="footer">
-      <p>© ${new Date().getFullYear()} Sanliurfa.com - Tüm hakları saklıdır.</p>
-    </div>
-  </div>
+<body style="margin:0;padding:0;background:${EM.bg};font-family:${EM.bodyFont};color:${EM.body};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="600" style="max-width:600px;width:100%;background:${EM.card};border:1px solid ${EM.border};border-radius:4px;overflow:hidden;">
+
+        <!-- Brand header -->
+        <tr><td style="padding:28px 40px 20px;border-bottom:1px solid ${EM.border};text-align:center;">
+          <a href="${appUrl}" style="text-decoration:none;display:inline-block;">
+            <span style="font-family:${EM.displayFont};font-size:26px;font-weight:300;font-style:italic;color:${EM.heading};letter-spacing:-0.02em;">Şanlıurfa</span><span style="font-family:${EM.bodyFont};font-size:13px;font-weight:700;color:${EM.copper};letter-spacing:0.08em;">.com</span>
+          </a>
+        </td></tr>
+
+        <!-- Content -->
+        <tr><td style="padding:36px 40px;">${content}</td></tr>
+
+        <!-- Footer -->
+        <tr><td style="padding:20px 40px 28px;border-top:1px solid ${EM.border};text-align:center;">
+          <p style="margin:0 0 8px;font-size:12px;color:${EM.muted};">© ${year} Şanlıurfa.com · Tüm hakları saklıdır.</p>
+          <p style="margin:0;font-size:11px;color:${EM.muted};">Bu e-postayı almak istemiyorsanız <a href="${appUrl}/ayarlar/bildirimler" style="color:${EM.copper};text-decoration:none;">aboneliğinizi yönetin</a>.</p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
 </body>
-</html>
+</html>`;
+}
+
+function emailButton(label: string, href: string, color = EM.copper): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px auto;">
+    <tr><td style="border-radius:3px;background:${color};">
+      <a href="${href}" style="display:inline-block;padding:13px 32px;font-family:${EM.bodyFont};font-size:14px;font-weight:600;color:#0D0A08;text-decoration:none;letter-spacing:0.03em;">${label}</a>
+    </td></tr>
+  </table>`;
+}
+
+function emailDivider(): string {
+  return `<hr style="border:none;border-top:1px solid ${EM.border};margin:24px 0;">`;
+}
+
+// Templates
+function welcomeTemplate(name: string): string {
+  const content = `
+    <h2 style="margin:0 0 20px;font-family:${EM.displayFont};font-size:28px;font-weight:400;font-style:italic;color:${EM.heading};letter-spacing:-0.01em;">Hoş Geldiniz, ${escapeHtml(name)}!</h2>
+    <p style="margin:0 0 16px;line-height:1.7;color:${EM.body};">Şanlıurfa.com topluluğuna katıldığınız için teşekkürler. Şehrimizin tarihi dokusunu, eşsiz lezzetlerini ve kültürel zenginliğini birlikte keşfedelim.</p>
+    <p style="margin:0 0 24px;line-height:1.7;color:${EM.body};">Tarihi mekanlar, yöresel tarifler, etkinlikler ve daha fazlası sizi bekliyor.</p>
+    ${emailButton('Keşfetmeye Başla', `${getPublicAppUrl()}/kesfet`)}
+    ${emailDivider()}
+    <p style="margin:0;font-size:13px;color:${EM.muted};line-height:1.6;">Sorularınız için <a href="mailto:iletisim@sanliurfa.com" style="color:${EM.copper};text-decoration:none;">iletisim@sanliurfa.com</a> adresine yazabilirsiniz.</p>
   `;
+  return emailShell(content);
 }
 
 function passwordResetTemplate(name: string, resetUrl: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #dc2626; color: white; padding: 20px; text-align: center; }
-    .content { background: #f9fafb; padding: 30px; }
-    .button { display: inline-block; background: #dc2626; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; }
-    .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Şifre Sıfırlama</h1>
+  const content = `
+    <h2 style="margin:0 0 20px;font-family:${EM.displayFont};font-size:28px;font-weight:400;font-style:italic;color:${EM.heading};">Şifre Sıfırlama</h2>
+    <p style="margin:0 0 16px;line-height:1.7;color:${EM.body};">Merhaba <strong style="color:${EM.heading};">${escapeHtml(name)}</strong>,</p>
+    <p style="margin:0 0 8px;line-height:1.7;color:${EM.body};">Hesabınız için şifre sıfırlama talebinde bulundunuz. Aşağıdaki butona tıklayarak yeni şifrenizi oluşturabilirsiniz.</p>
+    ${emailButton('Şifremi Sıfırla', resetUrl, EM.danger)}
+    <div style="background:rgba(199,58,71,0.08);border-left:3px solid ${EM.danger};padding:14px 18px;border-radius:0 3px 3px 0;margin-bottom:20px;">
+      <p style="margin:0;font-size:13px;color:#E08090;line-height:1.6;"><strong>Güvenlik Notu:</strong> Bu talebi siz yapmadıysanız bu e-postayı dikkate almayın — hesabınız güvendedir. Link 24 saat geçerlidir.</p>
     </div>
-    <div class="content">
-      <p>Merhaba <strong>${escapeHtml(name)}</strong>,</p>
-      <p>Şifre sıfırlama talebinde bulundunuz. Aşağıdaki butona tıklayarak yeni şifrenizi oluşturabilirsiniz:</p>
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="${resetUrl}" class="button">Şifremi Sıfırla</a>
-      </p>
-      <div class="warning">
-        <strong>⚠️ Güvenlik Uyarısı:</strong>
-        <p>Bu talebi siz yapmadıysanız, bu e-postayı dikkate almayın. Hesabınız güvendedir.</p>
-      </div>
-      <p>Bu link 24 saat geçerlidir.</p>
-    </div>
-  </div>
-</body>
-</html>
+    ${emailDivider()}
+    <p style="margin:0;font-size:12px;color:${EM.muted};word-break:break-all;">Buton çalışmıyorsa bu adresi tarayıcınıza yapıştırın:<br><a href="${resetUrl}" style="color:${EM.copper};text-decoration:none;">${resetUrl}</a></p>
   `;
+  return emailShell(content);
 }
 
 function verificationTemplate(name: string, verifyUrl: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #0d9488; color: white; padding: 20px; text-align: center; }
-    .content { background: #f9fafb; padding: 30px; }
-    .button { display: inline-block; background: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>E-posta Doğrulama</h1>
-    </div>
-    <div class="content">
-      <p>Merhaba <strong>${escapeHtml(name)}</strong>,</p>
-      <p>Hesabınızı aktifleştirmek için e-posta adresinizi doğrulamanız gerekiyor:</p>
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="${verifyUrl}" class="button">E-postamı Doğrula</a>
-      </p>
-      <p>Veya bu linki tarayıcınızda açın: ${verifyUrl}</p>
-    </div>
-  </div>
-</body>
-</html>
+  const content = `
+    <h2 style="margin:0 0 20px;font-family:${EM.displayFont};font-size:28px;font-weight:400;font-style:italic;color:${EM.heading};">E-posta Doğrulama</h2>
+    <p style="margin:0 0 16px;line-height:1.7;color:${EM.body};">Merhaba <strong style="color:${EM.heading};">${escapeHtml(name)}</strong>,</p>
+    <p style="margin:0 0 8px;line-height:1.7;color:${EM.body};">Hesabınızı aktifleştirmek için e-posta adresinizi doğrulamanız gerekiyor. Aşağıdaki butona tıklayın:</p>
+    ${emailButton('E-postamı Doğrula', verifyUrl, EM.success)}
+    ${emailDivider()}
+    <p style="margin:0;font-size:12px;color:${EM.muted};word-break:break-all;">Buton çalışmıyorsa bu adresi tarayıcınıza yapıştırın:<br><a href="${verifyUrl}" style="color:${EM.copper};text-decoration:none;">${verifyUrl}</a></p>
   `;
+  return emailShell(content);
 }
 
 function notificationTemplate(
@@ -267,36 +443,15 @@ function notificationTemplate(
   actionUrl?: string,
   actionText?: string
 ): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #4b5563; color: white; padding: 20px; text-align: center; }
-    .content { background: #f9fafb; padding: 30px; }
-    .button { display: inline-block; background: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>${escapeHtml(title)}</h1>
-    </div>
-    <div class="content">
-      <p>${escapeHtml(message)}</p>
-      ${actionUrl ? `<p style="text-align: center; margin: 30px 0;"><a href="${actionUrl}" class="button">${escapeHtml(actionText || 'Görüntüle')}</a></p>` : ''}
-    </div>
-  </div>
-</body>
-</html>
+  const content = `
+    <h2 style="margin:0 0 20px;font-family:${EM.displayFont};font-size:28px;font-weight:400;font-style:italic;color:${EM.heading};">${escapeHtml(title)}</h2>
+    <p style="margin:0 0 24px;line-height:1.7;color:${EM.body};">${escapeHtml(message)}</p>
+    ${actionUrl ? emailButton(escapeHtml(actionText || 'Görüntüle'), actionUrl) : ''}
   `;
+  return emailShell(content);
 }
 
 function escapeHtml(text: string): string {
-  const div = { toString: () => text };
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -332,36 +487,16 @@ export function getVerificationEmailHTML(name: string, verifyUrl: string): strin
  * Get review response email HTML
  */
 export function getReviewResponseEmailHTML(userName: string, placeName: string, responseText: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #0d9488; color: white; padding: 20px; text-align: center; }
-    .content { background: #f9fafb; padding: 30px; }
-    .response-box { background: white; border-left: 4px solid #0d9488; padding: 15px; margin: 20px 0; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Yorumunuza Yanıt</h1>
+  const content = `
+    <h2 style="margin:0 0 20px;font-family:${EM.displayFont};font-size:28px;font-weight:400;font-style:italic;color:${EM.heading};">Yorumunuza Yanıt</h2>
+    <p style="margin:0 0 12px;line-height:1.7;color:${EM.body};">Merhaba <strong style="color:${EM.heading};">${escapeHtml(userName)}</strong>,</p>
+    <p style="margin:0 0 20px;line-height:1.7;color:${EM.body};"><strong style="color:${EM.heading};">${escapeHtml(placeName)}</strong> hakkında yaptığınız yoruma bir yanıt geldi:</p>
+    <div style="background:rgba(184,115,51,0.08);border-left:3px solid ${EM.copper};padding:16px 20px;border-radius:0 3px 3px 0;margin-bottom:24px;">
+      <p style="margin:0;line-height:1.7;color:${EM.body};font-style:italic;">${escapeHtml(responseText)}</p>
     </div>
-    <div class="content">
-      <p>Merhaba <strong>${escapeHtml(userName)}</strong>,</p>
-      <p><strong>${escapeHtml(placeName)}</strong> hakkında yaptığınız yoruma bir yanıt geldi:</p>
-      <div class="response-box">
-        ${escapeHtml(responseText)}
-      </div>
-      <p>Bizi tercih ettiğiniz için teşekkür ederiz.</p>
-    </div>
-  </div>
-</body>
-</html>
+    <p style="margin:0;font-size:13px;color:${EM.muted};">Bizi tercih ettiğiniz için teşekkür ederiz.</p>
   `;
+  return emailShell(content);
 }
 
 /**
@@ -388,36 +523,13 @@ export async function sendReviewResponseEmail(
  * Get subscription confirmation email HTML
  */
 export function getSubscriptionEmailHTML(newsletterName: string): string {
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #0d9488; color: white; padding: 20px; text-align: center; }
-    .content { background: #f9fafb; padding: 30px; }
-    .button { display: inline-block; background: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Aboneliğiniz Başladı!</h1>
-    </div>
-    <div class="content">
-      <p>Merhaba,</p>
-      <p><strong>${escapeHtml(newsletterName)}</strong> bültenine abone oldunuz.</p>
-      <p>En güncel Şanlıurfa haberleri ve fırsatları için göz atmayı unutmayın.</p>
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="${process.env.PUBLIC_APP_URL}/blog" class="button">Blog'a Git</a>
-      </p>
-    </div>
-  </div>
-</body>
-</html>
+  const content = `
+    <h2 style="margin:0 0 20px;font-family:${EM.displayFont};font-size:28px;font-weight:400;font-style:italic;color:${EM.heading};">Aboneliğiniz Başladı!</h2>
+    <p style="margin:0 0 16px;line-height:1.7;color:${EM.body};"><strong style="color:${EM.heading};">${escapeHtml(newsletterName)}</strong> bültenine başarıyla abone oldunuz.</p>
+    <p style="margin:0 0 24px;line-height:1.7;color:${EM.body};">Şanlıurfa'nın en güncel haberleri, etkinlikleri ve fırsatları artık size ulaşacak.</p>
+    ${emailButton("Blog'a Git", `${getPublicAppUrl()}/blog`)}
   `;
+  return emailShell(content);
 }
 
 /**
@@ -532,19 +644,18 @@ export async function sendEmailViaService(data: EmailData): Promise<{ success: b
  * Creates a verification token and queues the email
  */
 export async function requestEmailVerification(userId: string, email: string, name: string): Promise<void> {
-  // Generate verification token
   const crypto = await import('crypto');
   const token = crypto.randomBytes(32).toString('hex');
-  
-  // Store token in database
+  // Store hash only — DB breach cannot be used to verify emails directly (HARD RULE #46 scope).
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
   await query(
     `INSERT INTO email_verifications (user_id, token, expires_at, created_at)
      VALUES ($1, $2, NOW() + INTERVAL '24 hours', NOW())`,
-    [userId, token]
+    [userId, tokenHash]
   );
-  
-  // Create verification URL
-  const verifyUrl = `${process.env.PUBLIC_APP_URL}/email-dogrula?token=${token}`;
+
+  const verifyUrl = `${getPublicAppUrl()}/email-dogrula?token=${token}`;
   
   // Queue verification email
   const html = getVerificationEmailHTML(name, verifyUrl);
@@ -573,10 +684,13 @@ export async function isEmailVerified(userId: string): Promise<boolean> {
  * Verify email with token
  */
 export async function verifyEmail(token: string): Promise<boolean> {
+  const crypto = await import('crypto');
+  const tokenHash = crypto.createHash('sha256').update(token.trim()).digest('hex');
+
   const result = await query(
-    `SELECT user_id FROM email_verifications 
+    `SELECT user_id FROM email_verifications
      WHERE token = $1 AND used = false AND expires_at > NOW()`,
-    [token]
+    [tokenHash]
   );
   
   if (result.rows.length === 0) return false;

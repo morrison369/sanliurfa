@@ -1,0 +1,170 @@
+---
+import Layout from '../layouts/Layout.astro';
+import RankedPlaceCard from '../components/landing/RankedPlaceCard.astro';
+import { query } from '../lib/postgres';
+import { getCachedPublicRouteData } from '../lib/public-route-cache';
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
+import {
+  buildItemListSchema,
+  buildBreadcrumbSchema,
+  buildFAQSchema,
+  type LandingPlace,
+} from '../lib/landing/landing-schema';
+const baseUrl = getPublicAppUrl();
+
+let kahvaltilar: LandingPlace[] = [];
+try {
+  kahvaltilar = await getCachedPublicRouteData('page:guide:en-iyi-kahvalti', async () => {
+    const result = await query(`
+      SELECT p.id, p.slug, p.name, p.address, p.avg_rating AS rating, p.review_count, p.image_url, p.images,
+             p.short_description, c.name AS category_name
+      FROM places p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.status = 'active'
+        AND (c.name ILIKE '%kahvaltı%' OR c.name ILIKE '%brunch%'
+             OR p.name ILIKE '%kahvaltı%' OR p.name ILIKE '%serpme%')
+      ORDER BY p.avg_rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+      LIMIT 20
+    `);
+    return result.rows;
+  });
+} catch (e) {
+  logger.error('Kahvaltı mekanları yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: "Şanlıurfa En İyi Kahvaltı Mekanları 2026 | Serpme Kahvaltı",
+  description: "Şanlıurfa'nın en iyi kahvaltı mekanları. Zengin serpme kahvaltı, Urfa peyniri ve geleneksel Türk kahvaltısı sunan restoranlar.",
+  keywords: ["şanlıurfa kahvaltı", "urfa kahvaltı", "şanlıurfa serpme kahvaltı", "şanlıurfa kahvaltı mekanlari", "urfa sabah kahvaltı"],
+  canonical: '/en-iyi-kahvalti-mekanlari',
+};
+
+const faqItems = [
+  {
+    S: "Şanlıurfa'da en iyi kahvaltı nerede yapılır?",
+    C: "Şanlıurfa'da şehir merkezi ve Balıklıgöl çevresindeki kahvaltı mekanları zengin serpme kahvaltı kültürüyle öne çıkar. Urfa peyniri, simit, zeytin ve yerel ürünler geleneksel kahvaltının vazgeçilmezleridir.",
+  },
+  {
+    S: "Şanlıurfa kahvaltısında ne bulunur?",
+    C: "Şanlıurfa kahvaltısında tel peyniri (Urfa peyniri), bazlama, katmer, simit, zeytin, domates, salatalık, bal, kaymak ve çeşitli reçeller bulunur. Çay eşliğinde servis edilir.",
+  },
+  {
+    S: "Şanlıurfa'da erken açık kahvaltı yeri var mı?",
+    C: "Şanlıurfa'da birçok kahvaltı mekanı sabah 07:00-08:00 gibi açılır. Özellikle şehir merkezindeki ve tarihi bölgedeki mekanlar erken saatlerden itibaren hizmet vermektedir.",
+  },
+];
+---
+
+<Layout seo={seo}>
+  <style is:inline>
+  .ek-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(184,115,51,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+  .ek-hero-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-text-soft)}
+  .ek-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.7rem,4vw,2.6rem);font-weight:700;color:var(--public-text);margin:.75rem 0 .25rem}
+  .ek-hero-desc{color:var(--public-muted);font-size:.9rem;max-width:40rem}
+  .ek-body{background:var(--bg);padding:2rem 0 4rem}
+  .ek-info{background:rgba(212,151,24,.06);border:1px solid rgba(212,151,24,.2);padding:1.25rem;margin-bottom:1.75rem}
+  .ek-info-h2{font-size:.9rem;font-weight:700;color:var(--public-text);margin-bottom:.25rem}
+  .ek-info-p{font-size:.8rem;line-height:1.7;color:var(--public-muted)}
+  .ek-grid{display:grid;gap:1rem}
+  @media(min-width:48rem){.ek-grid{grid-template-columns:1fr 1fr}}
+  .ek-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);display:flex;overflow:hidden;transition:border-color .15s}
+  .ek-card:hover{border-color:var(--public-accent)}
+  .ek-card-rank{width:6rem;height:6rem;background:rgba(212,151,24,.12);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;color:#d49718;flex-shrink:0}
+  .ek-card-body{padding:1rem;flex:1;min-width:0}
+  .ek-card-name{font-size:.9rem;font-weight:700;color:var(--public-text);transition:color .15s}
+  .ek-card:hover .ek-card-name{color:var(--public-accent)}
+  .ek-card-cat{font-size:.72rem;color:var(--public-muted);margin-top:.15rem}
+  .ek-card-addr{font-size:.78rem;color:var(--public-muted);margin-top:.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ek-card-meta{display:flex;align-items:center;gap:.75rem;margin-top:.5rem;font-size:.8rem}
+  .ek-rating{color:var(--public-accent);font-weight:600}
+  .ek-reviews{color:var(--public-text-soft)}
+  .ek-empty{text-align:center;padding:4rem 1rem;background:var(--bg-card);border:1px solid rgba(184,115,51,.14)}
+  .ek-empty-icon{font-size:2.5rem;margin-bottom:.75rem}
+  .ek-empty-txt{font-size:.9rem;color:var(--public-muted)}
+  .ek-cta{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:2.5rem}
+  .ek-btn-primary{background:var(--public-accent);color:#fff;font-size:.85rem;font-weight:600;padding:.65rem 1.25rem;transition:background .15s}
+  .ek-btn-outline{border:1px solid rgba(184,115,51,.25);color:var(--public-accent);font-size:.85rem;font-weight:500;padding:.65rem 1.25rem}
+  details summary{list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details[open] .faq-arrow{transform:rotate(180deg)}
+  </style>
+
+  <div class="ek-hero">
+    <div class="sf-container">
+      <p class="ek-hero-label">Şanlıurfa Gastronomi Rehberi</p>
+      <h1 class="ek-h1">Şanlıurfa'nın En İyi Kahvaltı Mekanları</h1>
+      <p class="ek-hero-desc">Zengin serpme kahvaltı, Urfa peyniri ve geleneksel sabah sofrası sunan en sevilen mekanlar.</p>
+    </div>
+  </div>
+
+  <div class="ek-body">
+    <div class="sf-container">
+      <div class="ek-info">
+        <h2 class="ek-info-h2">Şanlıurfa Kahvaltı Kültürü</h2>
+        <p class="ek-info-p">Şanlıurfa'nın kahvaltı kültürü zengin yerel peynirler, taze ekmekler ve bölgeye özgü tatlarla öne çıkar. Tel peyniri (Urfa peyniri), katmer ve bazlama geleneksel kahvaltının vazgeçilmezleri arasındadır. Balıklıgöl çevresi ve tarihi merkezdeki mekanlar hem kültürel deneyim hem de lezzet sunar.</p>
+      </div>
+
+      {kahvaltilar.length > 0 ? (
+        <div class="ek-grid">
+          {kahvaltilar.map((place, i) => (
+            <RankedPlaceCard place={place} rank={i + 1} variant="restaurant" />
+          ))}
+        </div>
+      ) : (
+        <div class="ek-empty">
+          <div class="ek-empty-icon">🍳</div>
+          <p class="ek-empty-txt">Kahvaltı mekanı bilgileri yakında eklenecek.</p>
+        </div>
+      )}
+
+      <div class="ek-cta">
+        <a href="/sanliurfa-kahvalti-mekanlari" class="ek-btn-primary">Kahvaltı Rehberi</a>
+        <a href="/en-iyi-kebapcilar" class="ek-btn-outline">En İyi Kebapçılar</a>
+        <a href="/gastronomi" class="ek-btn-outline">Gastronomi →</a>
+      </div>
+    </div>
+  </div>
+
+  {faqItems.length > 0 && (
+    <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+      <div class="sf-container">
+        <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          {faqItems.map((item) => (
+            <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+              <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+                {item.S}
+                <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+              </summary>
+              <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+                {item.C}
+              </div>
+            </details>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+
+  <script type="application/ld+json" set:html={JSON.stringify(buildItemListSchema({
+    places: kahvaltilar,
+    pageName: 'Şanlıurfa En İyi Kahvaltı Mekanları',
+    pagePath: '/en-iyi-kahvalti-mekanlari',
+    baseUrl,
+    type: 'Restaurant',
+    description: "Şanlıurfa'nın en iyi kahvaltı ve brunch mekanları — serpme kahvaltı ve geleneksel Türk kahvaltısı için adresler.",
+  }))} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify(buildBreadcrumbSchema({
+    baseUrl,
+    crumbs: [
+      { name: 'Ana Sayfa', href: '/' },
+      { name: 'Yeme İçme', href: '/yeme-icme' },
+      { name: 'En İyi Kahvaltı Mekanları', href: '/en-iyi-kahvalti-mekanlari' },
+    ],
+  }))} is:inline />
+  {(() => {
+    const faqJson = buildFAQSchema(faqItems);
+    return faqJson ? <script type="application/ld+json" set:html={JSON.stringify(faqJson)} is:inline /> : null;
+  })()}
+</Layout>

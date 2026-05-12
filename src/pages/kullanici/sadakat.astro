@@ -2,78 +2,104 @@
 import Layout from '../../layouts/Layout.astro';
 import LoyaltyDashboard from '../../components/LoyaltyDashboard';
 
-// Check if user is authenticated
-if (!Astro.locals.user) {
-  return Astro.redirect('/giris');
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect('/giris?redirect=/kullanici/sadakat');
 }
 
 const seo = {
-  title: 'Sadakat Programı',
-  description: 'Puan kazanın ve özel ödüller açın',
-  noIndex: true
+ title: 'Sadakat Programı',
+ description: 'Puan kazanın ve özel ödüller açın',
+ noIndex: true
 };
 ---
 
 <Layout seo={seo}>
-  <div class="bg-gray-50 dark:bg-gray-900 min-h-screen pt-20 pb-12">
-    <div class="max-w-4xl mx-auto px-4">
-      <LoyaltyDashboard client:visible={{ rootMargin: '140px' }} />
+ <style is:inline>
+ .ks-page{background:var(--bg);min-height:100vh}
+ .ks-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:2.5rem 0}
+ .ks-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#4A3828}
+ .ks-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:700;color:#1F1410;margin:.5rem 0 .25rem}
+ .ks-hero-desc{color:#7A6B58;font-size:.9rem}
+ .ks-body{padding:2rem 0 4rem}
+ .ks-inner{max-width:56rem;margin:0 auto}
+ .ks-info-grid{display:grid;gap:1.25rem;margin-top:3rem}
+ @media(min-width:48rem){.ks-info-grid{grid-template-columns:repeat(3,1fr)}}
+ .ks-info-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem}
+ .ks-info-title{font-size:.9rem;font-weight:700;color:#1F1410;margin-bottom:.75rem}
+ .ks-info-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.4rem}
+ .ks-info-list li{font-size:.82rem;color:#7A6B58}
+ .ks-faq{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.75rem;margin-top:3rem}
+ .ks-faq-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:700;color:#1F1410;margin-bottom:1.5rem}
+ .ks-faq-item{margin-bottom:1.5rem}
+ .ks-faq-item:last-child{margin-bottom:0}
+ .ks-faq-q{font-weight:600;color:#4A3828;margin-bottom:.4rem;font-size:.9rem}
+ .ks-faq-a{color:#7A6B58;font-size:.85rem;line-height:1.65}
+ </style>
 
-      {/* Info Section */}
-      <div class="mt-12 grid md:grid-cols-3 gap-6">
-        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-          <h3 class="font-semibold text-blue-900 dark:text-blue-100 mb-2">Nasıl Kazanabilirsiniz?</h3>
-          <ul class="text-sm text-blue-800 dark:text-blue-200 space-y-2">
-            <li>Yorum yazın: 10 puan</li>
-            <li>Fotoğraf ekleyin: 5 puan</li>
-            <li>Favori ekleyin: 2 puan</li>
-            <li>Etkinliğe katılın: 15 puan</li>
-          </ul>
-        </div>
-        <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
-          <h3 class="font-semibold text-green-900 dark:text-green-100 mb-2">Ödülleri Nasıl Kullanabilirsiniz?</h3>
-          <ul class="text-sm text-green-800 dark:text-green-200 space-y-2">
-            <li>İndirim kuponları</li>
-            <li>Özel rozetler</li>
-            <li>Premium özellikler</li>
-            <li>Hediye kartları</li>
-          </ul>
-        </div>
-        <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-6">
-          <h3 class="font-semibold text-purple-900 dark:text-purple-100 mb-2">Seviye Avantajları</h3>
-          <ul class="text-sm text-purple-800 dark:text-purple-200 space-y-2">
-            <li>Bonus puan kazancı</li>
-            <li>Özel ödüller</li>
-            <li>Erken erişim</li>
-            <li>VIP desteği</li>
-          </ul>
-        </div>
-      </div>
+ <div class="ks-page">
+ <div class="ks-hero">
+ <div class="sf-container">
+ <div class="ks-inner">
+ <p class="ks-label">Hesabım</p>
+ <h1 class="ks-h1">Sadakat Programı</h1>
+ <p class="ks-hero-desc">Puan kazanın ve özel ödüller açın</p>
+ </div>
+ </div>
+ </div>
 
-      {/* FAQ Section */}
-      <div class="mt-12 bg-white dark:bg-gray-800 rounded-lg shadow p-8">
-        <h2 class="text-2xl font-bold mb-6">Sıkça Sorulan Sorular</h2>
-        <div class="space-y-6">
-          <div>
-            <h3 class="font-semibold mb-2">Puanlarım ne zaman sona erer?</h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              Puanlarınız asla sona ermez! Kazandığınız tüm puanlar hesabınızda saklanır.
-            </p>
-          </div>
-          <div>
-            <h3 class="font-semibold mb-2">Puanlarımı nasıl kullanabilirim?</h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              Ödüller sayfasına giderek puanlarınızı harika ödüllere dönüştürebilirsiniz. İndirim kuponlarından premium özelliklere kadar birçok seçeneğiniz vardır.
-            </p>
-          </div>
-          <div>
-            <h3 class="font-semibold mb-2">Seviyemi nasıl yükseltebilirim?</h3>
-            <p class="text-gray-600 dark:text-gray-400">
-              Yalnızca puan kazanın! Belirli bir puan eşiğine ulaştığınızda otomatik olarak bir sonraki seviyeye yükseleceksiniz.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+ <div class="ks-body">
+ <div class="sf-container">
+ <div class="ks-inner">
+ <LoyaltyDashboard client:visible={{ rootMargin: '140px' }} />
+
+ <div class="ks-info-grid">
+ <div class="ks-info-card">
+ <h3 class="ks-info-title">Nasıl Kazanabilirsiniz?</h3>
+ <ul class="ks-info-list">
+ <li>Yorum yazın: 10 puan</li>
+ <li>Fotoğraf ekleyin: 5 puan</li>
+ <li>Favori ekleyin: 2 puan</li>
+ <li>Etkinliğe katılın: 15 puan</li>
+ </ul>
+ </div>
+ <div class="ks-info-card">
+ <h3 class="ks-info-title">Ödülleri Nasıl Kullanabilirsiniz?</h3>
+ <ul class="ks-info-list">
+ <li>İndirim kuponları</li>
+ <li>Özel rozetler</li>
+ <li>Premium özellikler</li>
+ <li>Hediye kartları</li>
+ </ul>
+ </div>
+ <div class="ks-info-card">
+ <h3 class="ks-info-title">Seviye Avantajları</h3>
+ <ul class="ks-info-list">
+ <li>Bonus puan kazancı</li>
+ <li>Özel ödüller</li>
+ <li>Erken erişim</li>
+ <li>VIP desteği</li>
+ </ul>
+ </div>
+ </div>
+
+ <div class="ks-faq">
+ <h2 class="ks-faq-title">Sıkça Sorulan Sorular</h2>
+ <div class="ks-faq-item">
+ <p class="ks-faq-q">Puanlarım ne zaman sona erer?</p>
+ <p class="ks-faq-a">Puanlarınız asla sona ermez! Kazandığınız tüm puanlar hesabınızda saklanır.</p>
+ </div>
+ <div class="ks-faq-item">
+ <p class="ks-faq-q">Puanlarımı nasıl kullanabilirim?</p>
+ <p class="ks-faq-a">Ödüller sayfasına giderek puanlarınızı harika ödüllere dönüştürebilirsiniz. İndirim kuponlarından premium özelliklere kadar birçok seçeneğiniz vardır.</p>
+ </div>
+ <div class="ks-faq-item">
+ <p class="ks-faq-q">Seviyemi nasıl yükseltebilirim?</p>
+ <p class="ks-faq-a">Yalnızca puan kazanın! Belirli bir puan eşiğine ulaştığınızda otomatik olarak bir sonraki seviyeye yükseleceksiniz.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 </Layout>

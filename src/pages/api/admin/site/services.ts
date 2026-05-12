@@ -4,14 +4,14 @@ import {
   listSiteServiceEntries,
   upsertSiteServiceEntry,
 } from '../../../../lib/site-platform';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, HttpStatus, problemJson, safeErrorDetail } from '../../../../lib/api';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
-function auditCtx(request: Request, locals: any) {
+function auditCtx(request: Request, locals: App.Locals) {
   return {
     userId: locals?.user?.id ? String(locals.user.id) : null,
     actorEmail: locals?.user?.email ? String(locals.user.email) : null,
@@ -34,14 +34,12 @@ export const GET: APIRoute = async ({ url, locals }) => {
   try {
     const group = url.searchParams.get('group') || undefined;
     const items = await listSiteServiceEntries(group);
-    return new Response(JSON.stringify({ success: true, items }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, items }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Servis Kayıtları Okunamadı',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-site-services-read-failed',
       instance: '/api/admin/site/services',
     });
@@ -69,17 +67,20 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       instance: '/api/admin/site/services',
     });
   }
+  if (typeof body.service_key !== 'string' || body.service_key.length > 100) return problemJson({ status: 400, title: 'Validation Failed', detail: 'service_key 100 karakterden uzun olamaz', type: '/problems/admin-site-services-validation', instance: '/api/admin/site/services' });
+  if (typeof body.service_group !== 'string' || body.service_group.length > 100) return problemJson({ status: 400, title: 'Validation Failed', detail: 'service_group 100 karakterden uzun olamaz', type: '/problems/admin-site-services-validation', instance: '/api/admin/site/services' });
+  if (typeof body.title !== 'string' || body.title.length > 200) return problemJson({ status: 400, title: 'Validation Failed', detail: 'title 200 karakterden uzun olamaz', type: '/problems/admin-site-services-validation', instance: '/api/admin/site/services' });
+  if (typeof body.slug !== 'string' || body.slug.length > 200) return problemJson({ status: 400, title: 'Validation Failed', detail: 'slug 200 karakterden uzun olamaz', type: '/problems/admin-site-services-validation', instance: '/api/admin/site/services' });
+  if (typeof body.href !== 'string' || body.href.length > 500) return problemJson({ status: 400, title: 'Validation Failed', detail: 'href 500 karakterden uzun olamaz', type: '/problems/admin-site-services-validation', instance: '/api/admin/site/services' });
 
   try {
     const item = await upsertSiteServiceEntry(body, auditCtx(request, locals));
-    return new Response(JSON.stringify({ success: true, item }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, item }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Servis Kaydı Yazılamadı',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-site-services-write-failed',
       instance: '/api/admin/site/services',
     });
@@ -111,14 +112,12 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
 
   try {
     await deleteSiteServiceEntry(serviceKey, auditCtx(request, locals));
-    return new Response(JSON.stringify({ success: true, serviceKey }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, serviceKey }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Servis Kaydı Silinemedi',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-site-services-delete-failed',
       instance: '/api/admin/site/services',
     });

@@ -3,7 +3,7 @@
  * Track user achievements and unlock badges
  */
 
-import { query, queryOne, queryMany, insert } from '../postgres';
+import { query, queryOne, queryMany } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { awardPoints } from '../loyalty/loyalty-system';
 import { createNotification } from '../notification/notifications-queue';
@@ -77,22 +77,17 @@ export async function unlockAchievementIfEarned(
       return { unlocked: false };
     }
 
-    // Check if already unlocked
-    const existing = await queryOne(
-      'SELECT id FROM user_achievements WHERE user_id = $1 AND achievement_id = $2',
+    const inserted = await queryOne<{ id: string }>(
+      `INSERT INTO user_achievements (user_id, achievement_id, unlocked_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id, achievement_id) DO NOTHING
+       RETURNING id`,
       [userId, achievement.id]
     );
 
-    if (existing) {
+    if (!inserted) {
       return { unlocked: false, achievement };
     }
-
-    // Unlock achievement
-    await insert('user_achievements', {
-      user_id: userId,
-      achievement_id: achievement.id,
-      unlocked_at: new Date()
-    });
 
     // Award points
     if (achievement.points_reward > 0) {
@@ -214,8 +209,8 @@ export async function getAchievementStats(userId: string): Promise<{
       GROUP BY a.category
     `, [userId]);
 
-    const total = parseInt(totalAchievements?.count || '0');
-    const unlocked = parseInt(userAchievements?.count || '0');
+    const total = parseInt(totalAchievements?.count || '0', 10);
+    const unlocked = parseInt(userAchievements?.count || '0', 10);
 
     return {
       total_unlocked: unlocked,
@@ -223,8 +218,8 @@ export async function getAchievementStats(userId: string): Promise<{
       unlock_percentage: total > 0 ? Math.round((unlocked / total) * 100) : 0,
       by_category: byCategory.reduce((acc: any, row: any) => {
         acc[row.category] = {
-          unlocked: parseInt(row.unlocked_count || '0'),
-          total: parseInt(row.total_count || '0')
+          unlocked: parseInt(row.unlocked_count || '0', 10),
+          total: parseInt(row.total_count || '0', 10)
         };
         return acc;
       }, {})
@@ -270,8 +265,8 @@ export async function checkCommonAchievements(userId: string): Promise<void> {
       [userId]
     );
 
-    const reviewCount = parseInt(stats?.review_count || '0');
-    const favoriteCount = parseInt(stats?.favorite_count || '0');
+    const reviewCount = parseInt(stats?.review_count || '0', 10);
+    const favoriteCount = parseInt(stats?.favorite_count || '0', 10);
 
     // Check review milestones
     if (reviewCount === 1) {

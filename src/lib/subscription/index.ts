@@ -3,7 +3,8 @@
  * Recurring billing and subscription handling
  */
 
-import { query } from '../postgres';
+import { randomBytes } from 'node:crypto';
+import { query, queryOne } from '../postgres';
 
 export type SubscriptionPlan = 'free' | 'basic' | 'premium' | 'enterprise';
 export type SubscriptionStatus = 'active' | 'cancelled' | 'expired' | 'pending' | 'suspended';
@@ -100,7 +101,7 @@ export async function createSubscription(
   }
 
   const subscription: Subscription = {
-    id: `sub_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+    id: `sub_${Date.now()}_${randomBytes(6).toString('hex')}`,
     userId,
     plan,
     status: 'pending',
@@ -110,8 +111,8 @@ export async function createSubscription(
     startDate: now,
     endDate,
     nextBillingDate: endDate,
-    paymentMethod,
     autoRenew: true,
+    ...(paymentMethod ? { paymentMethod } : {}),
   };
 
   await query(
@@ -184,28 +185,21 @@ export async function cancelSubscription(
  * Renew subscription
  */
 export async function renewSubscription(subscriptionId: string): Promise<void> {
-  const subResult = await query('SELECT * FROM subscriptions WHERE id = $1', [subscriptionId]);
-  const sub = subResult.rows[0];
-  
-  if (!sub || !sub.auto_renew) return;
-
-  // Calculate new dates
-  const newEndDate = new Date(sub.end_date);
-  if (sub.billing_cycle === 'monthly') {
-    newEndDate.setMonth(newEndDate.getMonth() + 1);
-  } else {
-    newEndDate.setFullYear(newEndDate.getFullYear() + 1);
-  }
-
-  await query(
-    `UPDATE subscriptions 
-     SET end_date = $1, next_billing_date = $2, renewed_at = NOW()
-     WHERE id = $3`,
-    [newEndDate, newEndDate, subscriptionId]
+  // HARD RULE #47: atomic UPDATE — idempotency guard (renewed_at < 23h) prevents double-billing on concurrent calls
+  const result = await queryOne<{ price: number }>(
+    `UPDATE subscriptions
+     SET end_date = end_date + (CASE WHEN billing_cycle = 'monthly' THEN INTERVAL '1 month' ELSE INTERVAL '1 year' END),
+         next_billing_date = end_date + (CASE WHEN billing_cycle = 'monthly' THEN INTERVAL '1 month' ELSE INTERVAL '1 year' END),
+         renewed_at = NOW()
+     WHERE id = $1
+       AND auto_renew = true
+       AND (renewed_at IS NULL OR renewed_at < NOW() - INTERVAL '23 hours')
+     RETURNING price`,
+    [subscriptionId]
   );
 
-  // Create invoice
-  await createInvoice(subscriptionId, sub.price);
+  if (!result) return;
+  await createInvoice(subscriptionId, result.price);
 }
 
 /**
@@ -251,10 +245,10 @@ export async function getUserSubscription(userId: string): Promise<Subscription 
     startDate: new Date(row.start_date),
     endDate: new Date(row.end_date),
     nextBillingDate: new Date(row.next_billing_date),
-    paymentMethod: row.payment_method,
     autoRenew: row.auto_renew,
-    cancelledAt: row.cancelled_at,
-    metadata: row.metadata,
+    ...(row.payment_method ? { paymentMethod: row.payment_method } : {}),
+    ...(row.cancelled_at ? { cancelledAt: row.cancelled_at } : {}),
+    ...(row.metadata ? { metadata: row.metadata } : {}),
   };
 }
 
@@ -274,15 +268,15 @@ export async function hasFeatureAccess(
   switch (feature) {
     case 'maxPlaces':
       const placesResult = await query('SELECT COUNT(*) FROM places WHERE created_by = $1', [userId]);
-      current = parseInt(placesResult.rows[0].count);
+      current = parseInt(placesResult.rows[0].count, 10);
       break;
     case 'maxReviews':
       const reviewsResult = await query('SELECT COUNT(*) FROM reviews WHERE user_id = $1', [userId]);
-      current = parseInt(reviewsResult.rows[0].count);
+      current = parseInt(reviewsResult.rows[0].count, 10);
       break;
     case 'maxTeamMembers':
       const teamResult = await query('SELECT COUNT(*) FROM tenant_members WHERE user_id = $1', [userId]);
-      current = parseInt(teamResult.rows[0].count);
+      current = parseInt(teamResult.rows[0].count, 10);
       break;
   }
 
@@ -298,14 +292,18 @@ export async function getSubscriptionUsage(userId: string): Promise<Record<strin
 
   const usage: Record<string, { current: number; limit: number; percentage: number }> = {};
 
-  for (const [feature, limit] of Object.entries(plan.limits)) {
-    const { current } = await hasFeatureAccess(userId, feature as any);
+  const entries = Object.entries(plan.limits);
+  const results = await Promise.all(
+    entries.map(([feature]) => hasFeatureAccess(userId, feature as any))
+  );
+  entries.forEach(([feature, limit], i) => {
+    const current = results[i].current;
     usage[feature] = {
       current,
       limit,
       percentage: Math.round((current / limit) * 100),
     };
-  }
+  });
 
   return usage;
 }
@@ -331,27 +329,26 @@ export async function processExpiringSubscriptions(): Promise<{
   );
 
   let renewed = 0;
-  let expired = 0;
   let notified = 0;
 
-  for (const sub of expiringResult.rows) {
-    try {
-      // Attempt to renew
-      await renewSubscription(sub.id);
+  const renewSettled = await Promise.allSettled(
+    expiringResult.rows.map((sub: any) => renewSubscription(sub.id))
+  );
+  renewSettled.forEach((result) => {
+    if (result.status === 'fulfilled') {
       renewed++;
-    } catch {
-      // Notify user of failed renewal
+    } else {
       notified++;
     }
-  }
+  });
 
   // Expire subscriptions past end date
   const expiredResult = await query(
-    `UPDATE subscriptions SET status = 'expired' 
+    `UPDATE subscriptions SET status = 'expired'
     WHERE status = 'active' AND end_date < NOW() AND auto_renew = false
     RETURNING id`
   );
-  expired = expiredResult.rows.length;
+  const expired = expiredResult.rows.length;
 
   return { renewed, expired, notified };
 }

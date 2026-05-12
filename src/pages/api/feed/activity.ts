@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { getCache, setCache } from '../../../lib/cache';
@@ -58,10 +58,14 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     }
 
     // Get query parameters
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
-    const filter = url.searchParams.get('filter') || 'all'; // all, reviews, favorites, comments, badges
-    const sortBy = url.searchParams.get('sortBy') || 'recent'; // recent, popular
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
+    const VALID_FILTERS = new Set(['all', 'reviews', 'favorites', 'comments', 'badges']);
+    const rawFilter = url.searchParams.get('filter') || 'all';
+    const filter = VALID_FILTERS.has(rawFilter) ? rawFilter : 'all';
+    const VALID_SORT_BY = new Set(['recent', 'popular']);
+    const rawSortBy = url.searchParams.get('sortBy') || 'recent';
+    const sortBy = VALID_SORT_BY.has(rawSortBy) ? rawSortBy : 'recent';
 
     // Check cache
     const cacheKey = `feed:${user.id}:${filter}:${sortBy}`;
@@ -107,12 +111,15 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     const params: Array<string | number> = [user.id];
 
     // Apply filter
-    if (filter !== 'all') {
+    const filterActionMap: Record<string, string> = {
+      reviews: 'review_created',
+      favorites: 'favorite_added',
+      comments: 'comment_posted',
+      badges: 'badge_earned',
+    };
+    if (filter !== 'all' && filterActionMap[filter]) {
       sql += ` AND ua.action_type = $${params.length + 1}`;
-      params.push(filter === 'reviews' ? 'review_created' :
-                 filter === 'favorites' ? 'favorite_added' :
-                 filter === 'comments' ? 'comment_posted' :
-                 filter === 'badges' ? 'badge_earned' : filter);
+      params.push(filterActionMap[filter]);
     }
 
     // Apply sorting

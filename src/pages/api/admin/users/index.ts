@@ -7,7 +7,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { logger } from '../../../../lib/logging';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeIntParam } from '../../../../lib/api';
 import {
   type AdminUserStatusAction,
   normalizeAdminUserStatusAction,
@@ -27,21 +27,27 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     const url = new URL(request.url);
-    const page   = Math.max(1, parseInt(url.searchParams.get('page')  || '1'));
-    const limit  = Math.min(50, parseInt(url.searchParams.get('limit') || '20'));
+    const page   = safeIntParam(url.searchParams.get('page'), 1, 1, 1_000_000);
+    const limit  = safeIntParam(url.searchParams.get('limit'), 20, 1, 50);
     const offset = (page - 1) * limit;
     const search = url.searchParams.get('search') || '';
     const role   = url.searchParams.get('role')   || '';
     const status = url.searchParams.get('status') || '';
 
-    const params: any[] = [];
+    if (search.length > 200) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'search 200 karakterden uzun olamaz', type: '/problems/admin-users-search-too-long', instance: '/api/admin/users' });
+    const VALID_USER_ROLES    = new Set(['user', 'admin', 'moderator', 'vendor']);
+    const VALID_USER_STATUSES = new Set(['active', 'banned', 'suspended', 'deleted', 'inactive']);
+    if (role !== undefined && role !== null && (typeof role !== 'string' || !VALID_USER_ROLES.has(role)))       return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Geçersiz rol', type: '/problems/admin-users-role-invalid', instance: '/api/admin/users' });
+    if (status !== undefined && status !== null && (typeof status !== 'string' || !VALID_USER_STATUSES.has(status)))  return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Geçersiz durum', type: '/problems/admin-users-status-invalid', instance: '/api/admin/users' });
+
+    const params: unknown[] = [];
     let where = `WHERE u.status != 'deleted'`;
     let idx = 1;
 
     if (search) {
-      where += ` AND (u.full_name ILIKE $${idx} OR u.email ILIKE $${idx})`;
-      params.push(`%${search}%`);
-      idx++;
+      where += ` AND (to_tsvector('turkish', coalesce(u.full_name,'')) @@ plainto_tsquery('turkish', $${idx}) OR u.email ILIKE $${idx + 1})`;
+      params.push(search, `%${search}%`);
+      idx += 2;
     }
     if (role) {
       where += ` AND u.role = $${idx}`;
@@ -54,36 +60,34 @@ export const GET: APIRoute = async ({ request, locals }) => {
       idx++;
     }
 
-    const countResult = await query(
-      `SELECT COUNT(*) FROM users u ${where}`,
-      params
-    );
-    const total = parseInt(countResult.rows[0].count || '0');
+    const [countResult, dataResult] = await Promise.all([
+      query(`SELECT COUNT(*) FROM users u ${where}`, params),
+      query(
+        `SELECT
+           u.id, u.full_name AS name, u.email, u.role, u.status, u.created_at,
+           u.is_banned, u.ban_reason, u.ban_expires_at, u.is_suspended, u.suspension_reason,
+           COUNT(DISTINCT r.id) AS review_count,
+           COUNT(DISTINCT p.id) AS place_count
+         FROM users u
+         LEFT JOIN reviews r  ON r.user_id  = u.id
+         LEFT JOIN places  p  ON p.owner_id = u.id AND p.status != 'deleted'
+         ${where}
+         GROUP BY u.id
+         ORDER BY u.created_at DESC
+         LIMIT $${idx} OFFSET $${idx + 1}`,
+        [...params, limit, offset]
+      ),
+    ]);
+    const total = parseInt(countResult.rows[0].count || '0', 10);
 
-    const dataResult = await query(
-      `SELECT
-         u.id, u.full_name AS name, u.email, u.role, u.status, u.created_at,
-         u.is_banned, u.ban_reason, u.ban_expires_at, u.is_suspended, u.suspension_reason,
-         COUNT(DISTINCT r.id) AS review_count,
-         COUNT(DISTINCT p.id) AS place_count
-       FROM users u
-       LEFT JOIN reviews r  ON r.user_id  = u.id
-       LEFT JOIN places  p  ON p.owner_id = u.id AND p.status != 'deleted'
-       ${where}
-       GROUP BY u.id
-       ORDER BY u.created_at DESC
-       LIMIT $${idx} OFFSET $${idx + 1}`,
-      [...params, limit, offset]
-    );
-
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       users: dataResult.rows,
       pagination: {
         page, limit, total,
         totalPages: Math.ceil(total / limit),
       },
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Admin users GET error:', error);
@@ -137,9 +141,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 
     const result = await updateAdminUsersStatusBulk(userIds, locals.user.id, normalizedAction);
 
-    return new Response(JSON.stringify(result), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse(result, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Admin users PUT error:', error);

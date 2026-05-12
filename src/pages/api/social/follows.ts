@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { followUser, unfollowUser, getFollowers, getFollowing } from '../../../lib/social/social-features';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -45,7 +45,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     const userId = url.searchParams.get('user_id');
     const type = url.searchParams.get('type') || 'followers';
-    const limit = parseInt(url.searchParams.get('limit') || '50');
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 0, 1_000_000);
 
     if (!userId) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'User ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);

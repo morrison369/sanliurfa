@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { requireRole } from '../../../lib/auth';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, safeErrorDetail } from '../../../lib/api';
 import {
   CITY_CONTENT_AGENTS,
   CityContentAgentError,
@@ -15,10 +15,7 @@ import {
 } from '../../../lib/city-content-agents';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8' },
-  });
+  return apiResponse(data, status);
 }
 
 async function requireAdmin(request: Request) {
@@ -66,7 +63,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     return problemJson({
       status: 500,
       title: 'Şehir İçerik Ajanları Okunamadı',
-      detail: error instanceof Error ? error.message : 'Ajan verileri alınamadı',
+      detail: safeErrorDetail(error, 'Ajan verileri alınamadı'),
       type: '/problems/admin-city-content-agents-get-failed',
       instance: '/api/admin/city-content-agents',
     });
@@ -76,8 +73,9 @@ export const GET: APIRoute = async ({ request, url }) => {
 export const POST: APIRoute = async ({ request }) => {
   const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
+  const adminUser = auth.user!;
 
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
@@ -112,18 +110,26 @@ export const POST: APIRoute = async ({ request }) => {
       const result = await runCityContentAgent({
         agentKey,
         sourceKey,
-        userId: auth.user.id,
+        userId: adminUser.id,
       });
       return json({ success: true, ...result }, 201);
     }
 
     if (action === 'approve-draft') {
-      const draft = await approveCityContentDraft(String(body?.draftId || ''), auth.user.id);
+      const draft = await approveCityContentDraft(String(body?.draftId || ''), adminUser.id);
       return json({ success: true, draft });
     }
 
     if (action === 'reject-draft') {
-      const draft = await rejectCityContentDraft(String(body?.draftId || ''), body?.note ? String(body.note) : null);
+      const note = body?.note ? String(body.note) : null;
+      if (note !== undefined && note !== null && (typeof note !== 'string' || note.length > 1000)) return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Not 1000 karakterden uzun olamaz',
+        type: '/problems/admin-city-content-agents-note-too-long',
+        instance: '/api/admin/city-content-agents',
+      });
+      const draft = await rejectCityContentDraft(String(body?.draftId || ''), note);
       return json({ success: true, draft });
     }
 
@@ -139,7 +145,7 @@ export const POST: APIRoute = async ({ request }) => {
       return problemJson({
         status: error.status,
         title: 'Şehir İçerik Ajanı İşlemi Reddedildi',
-        detail: error.message,
+        detail: safeErrorDetail(error, 'Ajan işlemi reddedildi'),
         type: `/problems/admin-city-content-agents-${error.code}`,
         instance: '/api/admin/city-content-agents',
       });
@@ -148,7 +154,7 @@ export const POST: APIRoute = async ({ request }) => {
     return problemJson({
       status: 500,
       title: 'Şehir İçerik Ajanı Çalıştırılamadı',
-      detail: error instanceof Error ? error.message : 'Ajan işlemi başarısız oldu',
+      detail: safeErrorDetail(error, 'Ajan işlemi başarısız oldu'),
       type: '/problems/admin-city-content-agents-post-failed',
       instance: '/api/admin/city-content-agents',
     });

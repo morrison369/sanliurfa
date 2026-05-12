@@ -1,19 +1,17 @@
 import type { APIRoute } from 'astro';
+import { apiResponse, safeErrorDetail } from '../../../../../../lib/api';
 import { getSiteSetting } from '../../../../../../lib/site-content';
 import { findSitePresetById } from '../../../../../../lib/site-content-presets';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  return locals?.user?.role === 'admin';
 }
 
-function flatten(value: any, prefix = ''): Record<string, string> {
+function flatten(value: unknown, prefix = ''): Record<string, string> {
   if (value === null || value === undefined) {
     return { [prefix || '$']: String(value) };
   }
@@ -31,7 +29,7 @@ function flatten(value: any, prefix = ''): Record<string, string> {
   return out;
 }
 
-function computeDiff(prev: Record<string, any>, next: Record<string, any>) {
+function computeDiff(prev: Record<string, unknown>, next: Record<string, unknown>) {
   const a = flatten(prev);
   const b = flatten(next);
   const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
@@ -54,34 +52,37 @@ export const GET: APIRoute = async ({ locals, url }) => {
   const preset = findSitePresetById(presetId);
   if (!preset) return json({ error: 'Preset bulunamadi' }, 404);
 
-  const keyDiffs: Array<{
-    key: string;
-    summary: { added: number; removed: number; changed: number };
-    samples: { changed: string[]; added: string[]; removed: string[] };
-  }> = [];
+  try {
+    const entries = Object.entries(preset.settings);
 
-  for (const [key, value] of Object.entries(preset.settings)) {
-    const current = await getSiteSetting(key, {});
-    const diff = computeDiff(current || {}, value || {});
-    keyDiffs.push({
-      key,
-      summary: {
-        added: diff.added.length,
-        removed: diff.removed.length,
-        changed: diff.changed.length,
-      },
-      samples: {
-        changed: diff.changed.slice(0, 20),
-        added: diff.added.slice(0, 20),
-        removed: diff.removed.slice(0, 20),
-      },
+    // Parallel fetch — avoids N sequential getSiteSetting queries
+    const currentValues = await Promise.all(entries.map(([key]) => getSiteSetting(key, {})));
+
+    const keyDiffs = entries.map(([key, value], i) => {
+      const current = currentValues[i];
+      const diff = computeDiff(current || {}, value || {});
+      return {
+        key,
+        summary: {
+          added: diff.added.length,
+          removed: diff.removed.length,
+          changed: diff.changed.length,
+        },
+        samples: {
+          changed: diff.changed.slice(0, 20),
+          added: diff.added.slice(0, 20),
+          removed: diff.removed.slice(0, 20),
+        },
+      };
     });
-  }
 
-  return json({
-    success: true,
-    presetId,
-    presetLabel: preset.label,
-    keyDiffs,
-  });
+    return json({
+      success: true,
+      presetId,
+      presetLabel: preset.label,
+      keyDiffs,
+    });
+  } catch (error) {
+    return json({ success: false, error: safeErrorDetail(error, 'Preset önizleme alınamadı') }, 500);
+  }
 };

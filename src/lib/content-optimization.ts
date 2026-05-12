@@ -82,7 +82,7 @@ class ContentScorer {
 }
 
 class ContentRecommender {
-  recommend(userId: string, userSegments: string[], contentScores: ContentScore[], limit: number): ContentScore[] {
+  recommend(userId: string, _userSegments: string[], contentScores: ContentScore[], limit: number): ContentScore[] {
     // Boost scores for content matching user segments — simplified collaborative filter
     const boosted = contentScores.map(cs => ({
       ...cs,
@@ -208,4 +208,4 @@ export const contentRecommender = new ContentRecommender();
 export const contentPerformanceTracker = new ContentPerformanceTracker();
 export const contentOptimizationSuggester = new ContentOptimizationSuggester();
 
-export {ContentScore, ContentPerformance, OptimizationSuggestion};
+export type {ContentScore, ContentPerformance, OptimizationSuggestion};

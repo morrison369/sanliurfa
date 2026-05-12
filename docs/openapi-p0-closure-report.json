@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-04-21T12:27:47.218Z",
-  "baselineGeneratedAt": "2026-04-18T15:29:54.038Z",
-  "documentedPaths": 454,
-  "fileRoutes": 454,
+  "generatedAt": "2026-04-28T18:23:13.286Z",
+  "baselineGeneratedAt": "2026-04-28T15:11:59.710Z",
+  "documentedPaths": 457,
+  "fileRoutes": 457,
   "totalMissing": 0,
-  "resolvedFromBaseline": 227,
+  "resolvedFromBaseline": 0,
   "newlyMissingVsBaseline": 0,
   "byCluster": {},
   "topPriority": []

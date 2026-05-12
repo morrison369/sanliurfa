@@ -138,15 +138,16 @@ export async function getUserActivityFeed(
     params.push(types);
   }
 
-  const countResult = await query(
-    `SELECT COUNT(*) FROM user_activities WHERE user_id = ANY($1)${types ? ' AND type = ANY($2)' : ''}`,
-    params
-  );
+  const countParams = [...params];
+  const countSql = `SELECT COUNT(*) FROM user_activities WHERE user_id = ANY($1)${types ? ' AND type = ANY($2)' : ''}`;
 
   sql += ` ORDER BY a.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
   params.push(limit, offset);
 
-  const result = await query(sql, params);
+  const [countResult, result] = await Promise.all([
+    query(countSql, countParams),
+    query(sql, params),
+  ]);
 
   const activities = result.rows.map(row => ({
     id: row.id,
@@ -166,7 +167,7 @@ export async function getUserActivityFeed(
 
   return {
     activities,
-    total: parseInt(countResult.rows[0].count),
+    total: parseInt(countResult.rows[0].count, 10),
   };
 }
 
@@ -190,7 +191,7 @@ export async function getUserActivitySummary(
 
   const summary: Record<string, number> = {};
   result.rows.forEach(row => {
-    summary[row.type] = parseInt(row.count);
+    summary[row.type] = parseInt(row.count, 10);
   });
 
   return summary;
@@ -233,7 +234,7 @@ export async function getTrendingActivities(
 
   return result.rows.map(row => ({
     type: row.type,
-    count: parseInt(row.count),
+    count: parseInt(row.count, 10),
   }));
 }
 
@@ -288,8 +289,8 @@ export async function getActivityStreak(userId: string): Promise<{
 
   const row = result.rows[0];
   return {
-    currentStreak: parseInt(row.current_streak) || 0,
-    longestStreak: parseInt(row.longest_streak) || 0,
+    currentStreak: parseInt(row.current_streak, 10) || 0,
+    longestStreak: parseInt(row.longest_streak, 10) || 0,
     lastActiveDate: row.last_active_date ? new Date(row.last_active_date) : null,
   };
 }

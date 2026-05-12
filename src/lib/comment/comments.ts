@@ -166,30 +166,26 @@ export async function voteOnComment(
       throw new Error('Comment not found');
     }
 
-    // Insert or update vote
-    const result = await insert('comment_votes', {
-      comment_id: commentId,
-      user_id: userId,
-      vote_type: voteType,
-      created_at: new Date().toISOString()
-    });
+    // Atomic INSERT ON CONFLICT — prevents race condition on concurrent votes from same user
+    const result = await queryOne<{ id: string }>(
+      `INSERT INTO comment_votes (comment_id, user_id, vote_type, created_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (comment_id, user_id) DO NOTHING
+       RETURNING id`,
+      [commentId, userId, voteType]
+    );
 
     if (result) {
-      // Update comment helpful/unhelpful count
+      // Counter incremented only when INSERT actually succeeded (not a duplicate)
       const columnName = voteType === 'helpful' ? 'helpful_count' : 'unhelpful_count';
       await query(
         `UPDATE comments SET ${columnName} = ${columnName} + 1 WHERE id = $1`,
         [commentId]
       );
 
-      // Clear cache
       await deleteCache(`comments:${comment.target_type}:${comment.target_id}`);
     }
   } catch (error) {
-    // Duplicate vote - ignore (user already voted)
-    if (error instanceof Error && error.message.includes('duplicate')) {
-      return;
-    }
     logger.error('Failed to vote on comment', error instanceof Error ? error : new Error(String(error)), {
       commentId,
       userId,

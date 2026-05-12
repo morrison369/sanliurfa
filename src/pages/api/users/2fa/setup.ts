@@ -6,6 +6,8 @@
 
 import type { APIRoute } from 'astro';
 import { setupTwoFactor } from '../../../../lib/two-factor';
+import { verifyPassword } from '../../../../lib/auth';
+import { queryOne } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { setCache } from '../../../../lib/cache';
@@ -22,6 +24,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const userId = locals.user.id;
+
+    // HARD RULE #42: Re-verify password before sensitive operation
+    const body = await request.json();
+    const { password } = body || {};
+    if (!password || typeof password !== 'string') {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Şifre gerekli', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    const userRecord = await queryOne<{ password_hash: string }>('SELECT password_hash FROM users WHERE id = $1', [userId]);
+    if (!userRecord || !(await verifyPassword(password, userRecord.password_hash))) {
+      return apiError(ErrorCode.AUTH_FAILED, 'Şifre hatalı', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
 
     // Generate 2FA secret
     const setupResult = await setupTwoFactor(userId);

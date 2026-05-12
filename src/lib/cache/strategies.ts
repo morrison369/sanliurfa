@@ -145,7 +145,7 @@ export async function cacheFirst(
 export async function networkFirst(
   request: Request,
   cacheName: string,
-  maxAge?: number
+  _maxAge?: number
 ): Promise<Response> {
   const cache = await caches.open(cacheName);
 
@@ -427,7 +427,7 @@ export async function sendToSW<T = any>(message: any): Promise<T | null> {
  * Request background cache
  */
 export async function requestCache(urls: string[]): Promise<{ cached: string[] }> {
-  return sendToSW({ type: SW_MESSAGES.CACHE_URLS, urls }) || { cached: [] };
+  return (await sendToSW({ type: SW_MESSAGES.CACHE_URLS, urls })) || { cached: [] };
 }
 
 /**
@@ -455,7 +455,7 @@ export async function getSWStatus(): Promise<{
   return {
     supported: true,
     registered: !!registration,
-    state: registration?.active?.state,
+    ...(registration?.active?.state ? { state: registration.active.state } : {}),
   };
 }
 

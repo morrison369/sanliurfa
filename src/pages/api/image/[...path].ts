@@ -58,7 +58,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     // Parse options from query params
     const width = parseNumber(url.searchParams.get('w'));
     const height = parseNumber(url.searchParams.get('h'));
-    const size = url.searchParams.get('size') || undefined;
+    const size = url.searchParams.get('size');
     const quality = parseNumber(url.searchParams.get('q')) || DEFAULT_IMAGE_QUALITY;
     const fit = parseImageFit(url.searchParams.get('fit'));
     
@@ -80,17 +80,17 @@ export const GET: APIRoute = async ({ request, params }) => {
     
     // Generate cache key
     const cacheKey = generateCacheKey(imagePath, {
-      width: targetWidth,
-      height: targetHeight,
       format,
       quality,
-      fit,
+      ...(targetWidth !== undefined ? { width: targetWidth } : {}),
+      ...(targetHeight !== undefined ? { height: targetHeight } : {}),
+      ...(fit ? { fit } : {}),
     });
     
     // Check cache
     const cached = getFromCache(cacheKey);
     if (cached) {
-      return new Response(cached.buffer as any, {
+      return new Response(cached.buffer as BodyInit, {
         headers: {
           'Content-Type': cached.contentType,
           'Cache-Control': 'public, max-age=31536000, immutable',
@@ -101,12 +101,18 @@ export const GET: APIRoute = async ({ request, params }) => {
     
     // Read image from local disk (public/uploads/photos/...)
     const { readFileSync, existsSync } = await import('fs');
-    const { join } = await import('path');
+    const { join, resolve, sep } = await import('path');
 
     // imagePath is something like "photos/places/some-file.jpg"
     // Serve from public/ directory
     const safePath = imagePath.replace(/\.\./g, '').replace(/^\//, '');
-    const diskPath = join(process.cwd(), 'public', safePath);
+    const publicRoot = resolve(join(process.cwd(), 'public'));
+    const diskPath = resolve(join(publicRoot, safePath));
+
+    // HARD RULE #3 defense-in-depth: containment check after resolve()
+    if (!diskPath.startsWith(publicRoot + sep) && diskPath !== publicRoot) {
+      return new Response('Invalid image path', { status: 400 });
+    }
 
     if (!existsSync(diskPath)) {
       return new Response('Image not found', { status: 404 });
@@ -132,7 +138,7 @@ export const GET: APIRoute = async ({ request, params }) => {
       height: dimensions.height,
       format,
       quality,
-      fit,
+      ...(fit ? { fit } : {}),
     });
     
     // Store in cache
@@ -145,7 +151,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     });
     
     // Return optimized image
-    return new Response(optimizedBuffer as any, {
+    return new Response(optimizedBuffer as BodyInit, {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': `public, max-age=${IMAGE_CACHE_TTL_SECONDS}, immutable`,

@@ -3,7 +3,7 @@
  * Manage user follows for places
  */
 
-import { query, queryOne, queryMany, insert } from '../postgres';
+import { query, queryOne, queryMany } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
 import { resolveContentImage } from '../content-images';
@@ -13,21 +13,20 @@ import { resolveContentImage } from '../content-images';
  */
 export async function followPlace(userId: string, placeId: string): Promise<boolean> {
   try {
-    // Insert follow record
-    await insert('place_followers', {
-      user_id: userId,
-      place_id: placeId
-    });
-
-    // Update follower count on places table
-    await query(
-      `UPDATE places SET follower_count = (SELECT COUNT(*) FROM place_followers WHERE place_id = $1) WHERE id = $1`,
-      [placeId]
+    const inserted = await queryOne<{ id: string }>(
+      `INSERT INTO place_followers (user_id, place_id) VALUES ($1, $2)
+       ON CONFLICT (user_id, place_id) DO NOTHING
+       RETURNING id`,
+      [userId, placeId]
     );
+    if (!inserted) return false;
 
-    // Invalidate caches
-    await deleteCache(`place:followers:${placeId}`);
-    await deleteCache(`user:following:places:${userId}`);
+    await query('UPDATE places SET follower_count = follower_count + 1 WHERE id = $1', [placeId]);
+
+    await Promise.all([
+      deleteCache(`place:followers:${placeId}`),
+      deleteCache(`user:following:places:${userId}`),
+    ]);
 
     logger.info('Place followed', { userId, placeId });
     return true;
@@ -48,15 +47,12 @@ export async function unfollowPlace(userId: string, placeId: string): Promise<bo
       [userId, placeId]
     );
 
-    // Update follower count on places table
-    await query(
-      `UPDATE places SET follower_count = (SELECT COUNT(*) FROM place_followers WHERE place_id = $1) WHERE id = $1`,
-      [placeId]
-    );
+    await query('UPDATE places SET follower_count = GREATEST(0, follower_count - 1) WHERE id = $1', [placeId]);
 
-    // Invalidate caches
-    await deleteCache(`place:followers:${placeId}`);
-    await deleteCache(`user:following:places:${userId}`);
+    await Promise.all([
+      deleteCache(`place:followers:${placeId}`),
+      deleteCache(`user:following:places:${userId}`),
+    ]);
 
     logger.info('Place unfollowed', { userId, placeId });
     return true;
@@ -91,7 +87,7 @@ export async function getUserFollowedPlaces(userId: string, limit: number = 50):
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(
@@ -145,7 +141,7 @@ export async function getPlaceFollowers(placeId: string, limit: number = 20): Pr
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(
@@ -201,7 +197,7 @@ export async function getTrendingPlacesByFollowers(limit: number = 20): Promise<
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(

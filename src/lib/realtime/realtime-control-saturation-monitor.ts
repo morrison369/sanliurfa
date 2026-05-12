@@ -48,10 +48,9 @@ export const saturationRatioCalculator = new SaturationRatioCalculator();
 export const saturationThresholdGuard = new SaturationThresholdGuard();
 export const saturationAlertPublisher = new SaturationAlertPublisher();
 
-export {
+export type {
   SaturationTelemetryBuffer,
   SaturationRatioCalculator,
   SaturationThresholdGuard,
   SaturationAlertPublisher
 };
-

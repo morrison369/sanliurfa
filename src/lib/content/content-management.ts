@@ -2,7 +2,7 @@
  * Content Management Library
  * Content creation, management, and publishing
  */
-import { queryOne, queryMany, insert, update } from '../postgres';
+import { query, queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache, deleteCache } from '../cache';
 
@@ -133,8 +133,10 @@ export async function publishContent(contentId: string, userId: string): Promise
       changes: { published: true }
     });
 
-    await deleteCache(`content:${contentId}`);
-    await deleteCache('content:*');
+    await Promise.all([
+      deleteCache(`content:${contentId}`),
+      deleteCache('content:*'),
+    ]);
     logger.info('Content published', { contentId, userId });
     return true;
   } catch (error) {
@@ -216,33 +218,17 @@ export async function getPublishedContent(category?: string, limit: number = 20)
 
 export async function recordContentView(contentId: string, _userId?: string): Promise<void> {
   try {
-    await update('content_items', { id: contentId }, {
-      view_count: queryOne('SELECT view_count FROM content_items WHERE id = $1', [contentId])
-        .then((c: any) => (c?.view_count || 0) + 1)
-    });
+    // HARD RULE #47: atomic increment — eliminates Promise-as-value bug + SELECT+UPDATE race
+    await query('UPDATE content_items SET view_count = view_count + 1 WHERE id = $1', [contentId]);
 
-    // Record analytics
     const today = new Date().toISOString().split('T')[0];
-    const existing = await queryOne(
-      'SELECT id FROM content_analytics WHERE content_id = $1 AND view_date = $2',
+    await query(
+      `INSERT INTO content_analytics (content_id, view_date, view_count)
+       VALUES ($1, $2, 1)
+       ON CONFLICT (content_id, view_date)
+       DO UPDATE SET view_count = content_analytics.view_count + 1`,
       [contentId, today]
     );
-
-    if (existing) {
-      await update(
-        'content_analytics',
-        { content_id: contentId, view_date: today },
-        { view_count: queryOne('SELECT view_count FROM content_analytics WHERE content_id = $1 AND view_date = $2', [contentId, today])
-          .then((c: any) => (c?.view_count || 0) + 1)
-        }
-      );
-    } else {
-      await insert('content_analytics', {
-        content_id: contentId,
-        view_date: today,
-        view_count: 1
-      });
-    }
 
     await deleteCache(`content:${contentId}`);
   } catch (error) {
@@ -292,12 +278,10 @@ export async function getContentAuditTrail(contentId: string, limit: number = 50
 
 export async function addContentTags(contentId: string, tags: string[]): Promise<void> {
   try {
-    for (const tag of tags) {
-      await insert('content_tags', {
-        content_id: contentId,
-        tag_name: tag
-      });
-    }
+    await Promise.all(tags.map((tag) => insert('content_tags', {
+      content_id: contentId,
+      tag_name: tag
+    })));
     await deleteCache(`content:${contentId}`);
   } catch (error) {
     logger.error('Failed to add tags', error instanceof Error ? error : new Error(String(error)));

@@ -377,24 +377,25 @@ export async function generatePlacesReport(startDate: string, endDate: string): 
   new: number;
   byCategory: Array<{ category: string; count: number }>;
 }> {
-  const totalResult = await query(
-    `SELECT 
-      COUNT(*)::int as total,
-      COUNT(*) FILTER (WHERE created_at BETWEEN $1 AND $2)::int as new
-     FROM places`,
-    [startDate, endDate]
-  );
-  
-  const categoryResult = await query(
-    `SELECT 
-      category,
-      COUNT(*)::int as count
-     FROM places
-     GROUP BY category
-     ORDER BY count DESC`,
-    []
-  );
-  
+  const [totalResult, categoryResult] = await Promise.all([
+    query(
+      `SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE created_at BETWEEN $1 AND $2)::int as new
+       FROM places`,
+      [startDate, endDate]
+    ),
+    query(
+      `SELECT
+        category,
+        COUNT(*)::int as count
+       FROM places
+       GROUP BY category
+       ORDER BY count DESC`,
+      []
+    ),
+  ]);
+
   return {
     ...totalResult.rows[0],
     byCategory: categoryResult.rows,
@@ -423,27 +424,28 @@ export async function generateTrafficReport(startDate: string, endDate: string):
   uniqueVisitors: number;
   topPages: Array<{ path: string; views: number }>;
 }> {
-  const viewsResult = await query(
-    `SELECT 
-      COUNT(*)::int as totalViews,
-      COUNT(DISTINCT user_id)::int as uniqueVisitors
-     FROM page_views
-     WHERE created_at BETWEEN $1 AND $2`,
-    [startDate, endDate]
-  );
-  
-  const pagesResult = await query(
-    `SELECT 
-      path,
-      COUNT(*)::int as views
-     FROM page_views
-     WHERE created_at BETWEEN $1 AND $2
-     GROUP BY path
-     ORDER BY views DESC
-     LIMIT 10`,
-    [startDate, endDate]
-  );
-  
+  const [viewsResult, pagesResult] = await Promise.all([
+    query(
+      `SELECT
+        COUNT(*)::int as totalViews,
+        COUNT(DISTINCT user_id)::int as uniqueVisitors
+       FROM page_views
+       WHERE created_at BETWEEN $1 AND $2`,
+      [startDate, endDate]
+    ),
+    query(
+      `SELECT
+        path,
+        COUNT(*)::int as views
+       FROM page_views
+       WHERE created_at BETWEEN $1 AND $2
+       GROUP BY path
+       ORDER BY views DESC
+       LIMIT 10`,
+      [startDate, endDate]
+    ),
+  ]);
+
   return {
     ...viewsResult.rows[0],
     topPages: pagesResult.rows,
@@ -493,33 +495,32 @@ export async function getSummaryStats(): Promise<{
   reviews: { total: number; pending: number };
   views: { today: number; week: number };
 }> {
-  const users = await query(
-    `SELECT 
-      COUNT(*)::int as total,
-      COUNT(*) FILTER (WHERE created_at > CURRENT_DATE)::int as new
-     FROM users`
-  );
-  
-  const places = await query(
-    `SELECT 
-      COUNT(*)::int as total,
-      COUNT(*) FILTER (WHERE status = 'pending')::int as pending
-     FROM places`
-  );
-  
-  const reviews = await query(
-    `SELECT 
-      COUNT(*)::int as total,
-      COUNT(*) FILTER (WHERE status = 'pending')::int as pending
-     FROM reviews`
-  );
-  
-  const views = await query(
-    `SELECT 
-      COUNT(*) FILTER (WHERE created_at > CURRENT_DATE)::int as today,
-      COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')::int as week
-     FROM page_views`
-  );
+  const [users, places, reviews, views] = await Promise.all([
+    query(
+      `SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE created_at > CURRENT_DATE)::int as new
+       FROM users`
+    ),
+    query(
+      `SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE status = 'pending')::int as pending
+       FROM places`
+    ),
+    query(
+      `SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE status = 'pending')::int as pending
+       FROM reviews`
+    ),
+    query(
+      `SELECT
+        COUNT(*) FILTER (WHERE created_at > CURRENT_DATE)::int as today,
+        COUNT(*) FILTER (WHERE created_at > NOW() - INTERVAL '7 days')::int as week
+       FROM page_views`
+    ),
+  ]);
   
   return {
     users: users.rows[0],

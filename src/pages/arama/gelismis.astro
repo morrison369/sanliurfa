@@ -1,67 +1,96 @@
 ---
-
 import Layout from '../../layouts/Layout.astro';
 import { AdvancedSearchPanel } from '../../components/AdvancedSearchPanel';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../../lib/public-app-url';
+
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'Gelişmiş Arama - Şanlıurfa Rehberi',
-  description: 'AI destekli gelişmiş arama ile Şanlıurfa\'da mükemmel mekanları filtreleyin.',
-  keywords: ['şanlıurfa gelişmiş arama', 'urfa mekan filtrele', 'şanlıurfa mekan arama'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/arama/gelismis',
+ title: 'Gelişmiş Arama — Şanlıurfa Rehberi',
+ description: 'AI destekli gelişmiş arama ile Şanlıurfa\'da mükemmel mekanları filtreleyin.',
+ keywords: ['şanlıurfa gelişmiş arama', 'urfa mekan filtrele', 'şanlıurfa mekan arama'],
+ canonical: '/arama/gelismis',
 };
-const faqItems = [
-  { S: 'Gelişmiş arama ile ne yapabilirim?', C: "Mesafe, kategori, puan aralığı ve açık olma durumu gibi filtrelerle Şanlıurfa'daki mekanları hassas biçimde arayabilirsiniz." },
-  { S: 'Gelişmiş arama ücretsiz mi?', C: 'Evet, gelişmiş arama özelliği tüm kullanıcılara ücretsiz sunulmaktadır.' },
-  { S: 'Arama sonuçlarını haritada görebilir miyim?', C: 'Harita görünümüne geçerek sonuçları konum bazlı olarak inceleyebilirsiniz.' },
-];
 
+const faqItems = [
+ { S: 'Gelişmiş arama ile ne yapabilirim?', C: "Mesafe, kategori, puan aralığı ve açık olma durumu gibi filtrelerle Şanlıurfa'daki mekanları hassas biçimde arayabilirsiniz." },
+ { S: 'Gelişmiş arama ücretsiz mi?', C: 'Evet, gelişmiş arama özelliği tüm kullanıcılara ücretsiz sunulmaktadır.' },
+ { S: 'Arama sonuçlarını haritada görebilir miyim?', C: 'Harita görünümüne geçerek sonuçları konum bazlı olarak inceleyebilirsiniz.' },
+];
 ---
 
 <Layout seo={seo}>
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold mb-2">Gelişmiş Arama</h1>
-      <p class="text-gray-600">AI-destekli arama ile Şanlıurfa’da mükemmel mekanları bulun</p>
-    </div>
+ <style is:inline>
+ .gl-crumb{padding:.55rem 0;border-bottom:1px solid rgba(184,115,51,.08)}
+ .gl-crumb-nav{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:#4A3828}
+ .gl-crumb-nav a{color:#7A6B58;transition:color .15s}.gl-crumb-nav a:hover{color:#B87333}
+ .gl-crumb-sep{opacity:.4;font-size:.7rem}
+ .gl-hero{padding:4rem 0 3rem;border-bottom:1px solid rgba(184,115,51,.1)}
+ .gl-eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#B87333;margin-bottom:.75rem}
+ .gl-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:600;color:#1F1410;line-height:1.15;margin-bottom:.75rem}
+ .gl-sub{font-size:.9rem;color:#7A6B58;line-height:1.7;max-width:500px}
+ .gl-body{padding:2.5rem 0 5rem}
+ .gl-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:2.5rem}
+ .gl-feat{background:rgba(184,115,51,.05);border:1px solid rgba(184,115,51,.14);padding:1.25rem 1.5rem}
+ .gl-feat-title{font-size:.82rem;font-weight:700;color:#4A3828;margin-bottom:.35rem;letter-spacing:.02em}
+ .gl-feat-desc{font-size:.8rem;color:#7A6B58;line-height:1.6}
+ </style>
 
-    <AdvancedSearchPanel client:visible={{ rootMargin: '150px' }} />
+ <!-- Breadcrumb -->
+ <div class="gl-crumb">
+ <div class="sf-container">
+ <nav class="gl-crumb-nav" aria-label="Breadcrumb">
+ <a href="/">Ana Sayfa</a>
+ <span class="gl-crumb-sep">/</span>
+ <a href="/arama">Arama</a>
+ <span class="gl-crumb-sep">/</span>
+ <span style="color:#1F1410">Gelişmiş Arama</span>
+ </nav>
+ </div>
+ </div>
 
-    <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-blue-50 rounded-lg p-6 border border-blue-200">
-        <h3 class="font-semibold mb-2 text-blue-900">Yapay Zeka Destekli</h3>
-        <p class="text-sm text-gray-700">Akıllı sıralama algoritması en alakalı sonuçları sunun.</p>
-      </div>
+ <!-- Hero -->
+ <div class="gl-hero">
+ <div class="sf-container">
+ <p class="gl-eyebrow">Şanlıurfa Rehberi</p>
+ <h1 class="gl-h1">Gelişmiş Arama</h1>
+ <p class="gl-sub">AI destekli filtrelerle Şanlıurfa'da aradığınız mekanı hassas biçimde bulun.</p>
+ </div>
+ </div>
 
-      <div class="bg-green-50 rounded-lg p-6 border border-green-200">
-        <h3 class="font-semibold mb-2 text-green-900">Kişiselleştirilmiş</h3>
-        <p class="text-sm text-gray-700">Tercihlerinize göre özelleştirilmiş öneriler alın.</p>
-      </div>
+ <!-- Panel + Features -->
+ <div class="sf-container gl-body">
+ <AdvancedSearchPanel client:visible={{ rootMargin: '150px' }} />
 
-      <div class="bg-purple-50 rounded-lg p-6 border border-purple-200">
-        <h3 class="font-semibold mb-2 text-purple-900">⚡ Anlık Öneriler</h3>
-        <p class="text-sm text-gray-700">Yazarken gerçek zamanlı arama önerileri alın.</p>
-      </div>
-    </div>
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Arama', item: `${baseUrl}/arama` },
-      { '@type': 'ListItem', position: 3, name: 'Gelişmiş Arama', item: `${baseUrl}/arama/gelismis` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <div class="gl-features">
+ <div class="gl-feat">
+ <p class="gl-feat-title">Yapay Zeka Destekli</p>
+ <p class="gl-feat-desc">Akıllı sıralama algoritması en alakalı sonuçları sunar.</p>
+ </div>
+ <div class="gl-feat">
+ <p class="gl-feat-title">Kişiselleştirilmiş</p>
+ <p class="gl-feat-desc">Tercihlerinize göre özelleştirilmiş öneriler alın.</p>
+ </div>
+ <div class="gl-feat">
+ <p class="gl-feat-title">Anlık Öneriler</p>
+ <p class="gl-feat-desc">Yazarken gerçek zamanlı arama önerileri alın.</p>
+ </div>
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Arama', item: `${baseUrl}/arama` },
+ { '@type': 'ListItem', position: 3, name: 'Gelişmiş Arama', item: `${baseUrl}/arama/gelismis` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'FAQPage',
+ mainEntity: faqItems.map(item => ({
+ '@type': 'Question', name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

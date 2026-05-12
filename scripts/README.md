@@ -1,214 +1,97 @@
-# Şanlıurfa.com İçerik Çekme Scriptleri
+# Scripts Guide
 
-Bu klasör, Şanlıurfa.com için otomatik içerik çekme scriptlerini içerir. **API kullanmadan** çalışır, tamamen ücretsizdir.
+Bu klasör artık tek bir scraping klasörü değildir. Kanonik kullanım Node tabanlı ürün ve ops
+scriptleridir.
 
-## 📁 Scriptler
+## Kategoriler
 
-| Script | Açıklama | Çalışma Şekli |
-|--------|----------|---------------|
-| `scraping-agent.py` | Ana içerik çekme agent'ı | Wikipedia + DuckDuckGo |
-| `fetch-all-images.py` | Görsel çekme agent'ı | Wikimedia + Commons + DuckDuckGo |
-| `import-to-supabase.py` | Supabase'e aktarım | SQL/Python |
-| `run-all.bat` | Tüm işlemleri otomatik çalıştır | Windows Batch |
+### Runtime ve Geliştirme
 
-## 🚀 Hızlı Başlangıç
+- `scripts/runtime/*`
+- isolated dev, Redis daemon, sağlık raporu ve cleanup araçları
 
-### Windows'ta Tek Tıkla Çalıştırma:
+### Production Operasyonları
 
-```bash
-# 1. scripts klasörüne gir
-cd scripts
+- `scripts/prod-cwp-ops.sh`
+- `scripts/prod-sync.mjs`
+- `scripts/cwp-cron-*.sh`
 
-# 2. Sadece çift tıkla:
-run-all.bat
-```
-
-### Manuel Çalıştırma:
+Kanonik production hattı:
 
 ```bash
-# 1. Sanal ortam oluştur (ilk sefer)
-python -m venv .venv
-
-# 2. Sanal ortamı aktifleştir
-.venv\Scripts\activate.bat
-
-# 3. Bağımlılıkları yükle
-pip install -r requirements.txt
-
-# 4. İçerikleri çek
-python scripts/scraping-agent.py
-
-# 5. Görselleri çek
-python scripts/fetch-all-images.py
-
-# 6. Supabase'e aktar (opsiyonel)
-python scripts/import-to-supabase.py
+npm run ops:cwp:status
+npm run ops:cwp:oneshot
 ```
 
-## 📊 Çekilen Veriler
+Parçalı kullanım:
 
-### Kategoriler (kategoriler.txt'den)
-
-1. **Tarihi Yerler** (8 mekan)
-   - Göbeklitepe
-   - Balıklıgöl
-   - Harran
-   - Halfeti
-   - Şanlıurfa Kalesi
-   - Rızvaniye Camii
-   - Mevlid-i Halil Camii
-   - Eyyüp Peygamber Makamı
-
-2. **Restoranlar** (4 mekan)
-   - Ciğerci Aziz
-   - Meşhur Çiğköfteci
-   - Zahter Kahvaltı
-   - Cevahir Konak
-
-3. **Oteller** (3 mekan)
-   - Hotel Manço
-   - El Ruha Hotel
-   - Nevali Hotel
-
-4. **Gastronomi** (3 yemek)
-   - Urfa Kebabı
-   - Çiğ Köfte
-   - Şıllık Tatlısı
-
-## 🔧 Veri Kaynakları
-
-### 1. Wikipedia (tr.wikipedia.org)
-- Makale içerikleri
-- Koordinatlar (enlem/boylam)
-- Açıklamalar
-- Infobox verileri
-
-### 2. Wikimedia Commons
-- Yüksek çözünürlüklü görseller
-- Tarihi fotoğraflar
-- Public domain/CC lisanslı içerikler
-
-### 3. DuckDuckGo
-- Arama sonuçları
-- Alternatif bilgiler
-- Görsel arama
-
-## 📁 Çıktı Yapısı
-
-```
-scripts/
-├── data/
-│   ├── tarihi_yerler.json      # Tarihi yerler verisi
-│   ├── restoranlar.json        # Restoranlar verisi
-│   ├── oteller.json            # Oteller verisi
-│   ├── gastronomi.json         # Yemekler verisi
-│   ├── supabase_inserts.sql    # SQL insert ifadeleri
-│   └── image_mapping.json      # Görsel eşleştirmeleri
-└── images/                     # İndirilen görseller
-
-public/images/
-├── historical/                 # Tarihi yer görselleri
-│   ├── gobeklitepe.jpg
-│   ├── balikligol.jpg
-│   └── ...
-├── places/                     # Mekan görselleri
-│   └── ...
-└── foods/                      # Yemek görselleri
-    └── ...
-```
-
-## ⚙️ JSON Veri Yapısı
-
-### Tarihi Yer Örneği:
-
-```json
-{
-  "id": "uuid...",
-  "slug": "gobeklitepe",
-  "name": "Göbeklitepe",
-  "category": "tarihi_yerler",
-  "wikipedia": {
-    "title": "Göbeklitepe",
-    "content": "Dünyanın bilinen en eski tapınak kompleksi...",
-    "url": "https://tr.wikipedia.org/wiki/G%C3%B6beklitepe",
-    "coordinates": {
-      "lat": 37.2231,
-      "lon": 38.9223
-    },
-    "image": "https://..."
-  },
-  "generated_description": "Göbeklitepe, Şanlıurfa'nın en popüler mekanlarından...",
-  "coordinates": {
-    "lat": 37.2231,
-    "lon": 38.9223
-  },
-  "fetched_at": "2025-01-01T12:00:00"
-}
-```
-
-## 🎯 Özelleştirme
-
-### Yeni Kategori Ekleme:
-
-`scraping-agent.py` içinde `self.search_queries` sözlüğüne ekleme yapın:
-
-```python
-'shoping': [
-    {'name': 'Bakırcılar Çarşısı', 'slug': 'bakircilar', 'search': 'Bakırcılar Çarşısı Şanlıurfa'},
-]
-```
-
-### Yeni Görsel Kaynağı:
-
-`fetch-all-images.py` içinde `fetch_image_for_place` metoduna yeni kaynak ekle:
-
-```python
-def get_new_source_image(self, search_term: str) -> str:
-    # Yeni kaynak kodu
-    pass
-```
-
-## ⚠️ Önemli Notlar
-
-1. **Rate Limiting**: Scriptler arasında bekleme süreleri vardır (0.3-1 saniye)
-2. **Robots.txt**: Wikipedia ve diğer sitelerin robots.txt kurallarına uyulur
-3. **User-Agent**: Gerçekçi User-Agent kullanılır
-4. **Placeholder**: Görsel bulunamazsa otomatik placeholder oluşturulur
-
-## 🔒 Lisans Uyumluluğu
-
-- **Wikipedia**: CC BY-SA lisanslı, atıf gerektirir
-- **Wikimedia Commons**: Çeşitli açık lisanslar
-- **Placeholder**: MIT lisanslı (placehold.co)
-
-## 🐛 Hata Ayıklama
-
-### Sık Karşılaşılan Hatalar:
-
-**1. "Python bulunamadı"**
 ```bash
-# Çözüm: Python'u kurun
-https://python.org/downloads
+npm run ops:cwp:preflight
+npm run ops:cwp:predeploy-checks
+npm run ops:cwp:smoke
+npm run ops:cwp:deploy
+npm run ops:cwp:release-readiness
 ```
 
-**2. "Module not found"**
+Anlamı:
+
+- `ops:cwp:preflight`: hızlı runtime ve zorunlu dosya kontrolü
+- `ops:cwp:predeploy-checks`: ağır deploy öncesi gate zinciri
+- `ops:cwp:release-readiness`: hafif readiness özeti; ağır gate zincirini tekrar çalıştırmaz
+
+### CI ve Gate Scriptleri
+
+- `scripts/ci/*`
+- route ownership, frontend quality, release readiness, security ve workflow gate'leri
+
+Script yüzeyi envanteri ve küçültme planı:
+
 ```bash
-# Çözüm: Bağımlılıkları yeniden yükleyin
-pip install -r requirements.txt
+npm run scripts:surface:report
 ```
 
-**3. "Connection timeout"**
+- çıktı: `docs/script-surface-report.md`
+- karar planı: `docs/SCRIPT_SURFACE_REDUCTION_PLAN.md`
+
+### Smoke ve Job Scriptleri
+
+- `scripts/smoke/*`
+- `scripts/jobs/*`
+
+Şehir servisleri için tipik örnekler:
+
 ```bash
-# Çözüm: İnternet bağlantınızı kontrol edin
-# Veya timeout sürelerini artırın (script içinden)
+npm run jobs:weather:refresh
+npm run jobs:pharmacy:refresh
+npm run jobs:transit:refresh
+npm run smoke:pages:critical
+npm run smoke:images:critical
+npm run smoke:admin:surface
 ```
 
-## 📞 Destek
+### Veritabanı ve OpenAPI
 
-Sorularınız için:
-- GitHub Issues: [repo-url]/issues
-- E-posta: info@sanliurfa.com
+- `scripts/migrate.ts`
+- `scripts/openapi/*`
 
----
+```bash
+npm run db:migrate
+npm run db:migrate:status
+npm run sdk:generate
+```
 
-**Not:** Bu scriptler eğitim ve araştırma amaçlıdır. Ticari kullanımda veri kaynaklarının kullanım şartlarına uyun.
+## Legacy Alanlar
+
+Repoda Python tabanlı scraping veya tek seferlik yardımcı scriptler bulunabilir. Bunlar:
+
+- ürün runtime'ının merkezi değildir
+- README seviyesi kanonik akış yerine geçmez
+- kullanılacaksa önce ilgili dosyanın gerçekten çağrıldığını doğrula
+
+Özellikle eski Supabase, toplu scraping veya tek kullanımlık fix scriptleri ikincil kabul edilir.
+
+## Kural
+
+- Yeni operasyon scripti önce `package.json` script yüzeyine bağlanır
+- Script değişikliği varsa ilgili kanonik doküman da güncellenir
+- Production komutları CWP + PM2 modeliyle çelişemez

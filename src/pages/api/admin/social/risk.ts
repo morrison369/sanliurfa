@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeErrorDetail, safeIntParam } from '../../../../lib/api';
 import { getSiteSetting } from '../../../../lib/site-content';
 import { triggerWebhook } from '../../../../lib/webhooks/index';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 function mean(values: number[]): number {
@@ -95,8 +95,7 @@ export const GET: APIRoute = async ({ locals, request }) => {
 
   try {
     const url = new URL(request.url);
-    const hoursRaw = Number(url.searchParams.get('hours') || 24);
-    const hours = Number.isFinite(hoursRaw) ? Math.max(6, Math.min(168, hoursRaw)) : 24;
+    const hours = safeIntParam(url.searchParams.get('hours'), 24, 6, 168);
     const thresholds = await getSiteSetting<SocialRiskThresholds>('social.risk.thresholds', {
       scoreAlert: 70,
       zScoreAlert: 2.0,
@@ -234,34 +233,37 @@ export const GET: APIRoute = async ({ locals, request }) => {
 
     if (webhook.enabled && alertCandidates.length > 0) {
       const now = Date.now();
-      const cooldownMs = Math.max(
-        60_000,
-        Math.min(24 * 60 * 60 * 1000, Number(webhook.cooldownMinutes || 30) * 60_000),
+      // cooldownMinutes user-input — safeIntParam ile NaN guard + range clamp (1 dk - 24 saat)
+      const cooldownMinutes = safeIntParam(webhook.cooldownMinutes, 30, 1, 1440);
+      const cooldownMs = cooldownMinutes * 60_000;
+      const eligibleWebhookItems = alertCandidates.filter((item) => {
+        const lastDispatchedAt = dispatchState.tenants?.[item.tenantId]
+          ? new Date(dispatchState.tenants[item.tenantId]).getTime()
+          : 0;
+        return !lastDispatchedAt || now - lastDispatchedAt >= cooldownMs;
+      });
+      await Promise.all(
+        eligibleWebhookItems.map((item) =>
+          triggerWebhook(
+            webhook.eventName || 'admin.social_risk.alert',
+            {
+              tenantId: item.tenantId,
+              score: item.score,
+              anomaly: item.anomaly,
+              zScore: item.zScore,
+              lastHour: item.lastHour,
+              total: item.total,
+              reasons: item.reasons,
+              effectiveThresholds: item.effectiveThresholds,
+              generatedAt: new Date().toISOString(),
+              windowHours: hours,
+            },
+            webhook.userId ? String(webhook.userId) : undefined,
+          ).catch(() => null)
+        )
       );
-      for (const item of alertCandidates) {
-        const lastDispatchedIso = dispatchState.tenants?.[item.tenantId];
-        const lastDispatchedAt = lastDispatchedIso ? new Date(lastDispatchedIso).getTime() : 0;
-        if (lastDispatchedAt && now - lastDispatchedAt < cooldownMs) {
-          continue;
-        }
-
-        await triggerWebhook(
-          webhook.eventName || 'admin.social_risk.alert',
-          {
-            tenantId: item.tenantId,
-            score: item.score,
-            anomaly: item.anomaly,
-            zScore: item.zScore,
-            lastHour: item.lastHour,
-            total: item.total,
-            reasons: item.reasons,
-            effectiveThresholds: item.effectiveThresholds,
-            generatedAt: new Date().toISOString(),
-            windowHours: hours,
-          },
-          webhook.userId ? String(webhook.userId) : undefined,
-        );
-        alertedTenantIds.push(item.tenantId);
+      alertedTenantIds.push(...eligibleWebhookItems.map((i) => i.tenantId));
+      for (const item of eligibleWebhookItems) {
         dispatchState.tenants[item.tenantId] = new Date(now).toISOString();
       }
 
@@ -276,46 +278,51 @@ export const GET: APIRoute = async ({ locals, request }) => {
 
     if (autoActions.enabled && alertCandidates.length > 0) {
       const now = Date.now();
-      const cooldownMs = Math.max(
-        60_000,
-        Math.min(24 * 60 * 60 * 1000, Number(autoActions.cooldownMinutes || 60) * 60_000),
+      const cooldownMinutes = safeIntParam(autoActions.cooldownMinutes, 60, 1, 1440);
+      const cooldownMs = cooldownMinutes * 60_000;
+      const eligibleAutoItems = alertCandidates.filter((item) => {
+        const lastActionAt = dispatchState.tenants?.[`auto:${item.tenantId}`]
+          ? new Date(dispatchState.tenants[`auto:${item.tenantId}`]).getTime()
+          : 0;
+        return !lastActionAt || now - lastActionAt >= cooldownMs;
+      });
+      await Promise.all(
+        eligibleAutoItems.map((item) =>
+          query(
+            `INSERT INTO tenant_social_policies (
+               tenant_id,
+               swipe_limit, swipe_window_seconds,
+               follow_limit, follow_window_seconds,
+               message_write_limit, message_write_window_seconds,
+               is_active, note, updated_by, updated_at
+             )
+             VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,NULL,NOW())
+             ON CONFLICT (tenant_id)
+             DO UPDATE SET
+               swipe_limit = EXCLUDED.swipe_limit,
+               swipe_window_seconds = EXCLUDED.swipe_window_seconds,
+               follow_limit = EXCLUDED.follow_limit,
+               follow_window_seconds = EXCLUDED.follow_window_seconds,
+               message_write_limit = EXCLUDED.message_write_limit,
+               message_write_window_seconds = EXCLUDED.message_write_window_seconds,
+               is_active = true,
+               note = EXCLUDED.note,
+               updated_at = NOW()`,
+            [
+              item.tenantId,
+              Number(autoActions.profile.swipeLimit || 60),
+              Number(autoActions.profile.swipeWindowSeconds || 60),
+              Number(autoActions.profile.followLimit || 30),
+              Number(autoActions.profile.followWindowSeconds || 60),
+              Number(autoActions.profile.messageWriteLimit || 40),
+              Number(autoActions.profile.messageWriteWindowSeconds || 60),
+              `${String(autoActions.note || 'social_risk_auto_action')} @ ${new Date(now).toISOString()}`,
+            ],
+          )
+        )
       );
-      for (const item of alertCandidates) {
-        const lastActionIso = dispatchState.tenants?.[`auto:${item.tenantId}`];
-        const lastActionAt = lastActionIso ? new Date(lastActionIso).getTime() : 0;
-        if (lastActionAt && now - lastActionAt < cooldownMs) continue;
-        await query(
-          `INSERT INTO tenant_social_policies (
-             tenant_id,
-             swipe_limit, swipe_window_seconds,
-             follow_limit, follow_window_seconds,
-             message_write_limit, message_write_window_seconds,
-             is_active, note, updated_by, updated_at
-           )
-           VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8,NULL,NOW())
-           ON CONFLICT (tenant_id)
-           DO UPDATE SET
-             swipe_limit = EXCLUDED.swipe_limit,
-             swipe_window_seconds = EXCLUDED.swipe_window_seconds,
-             follow_limit = EXCLUDED.follow_limit,
-             follow_window_seconds = EXCLUDED.follow_window_seconds,
-             message_write_limit = EXCLUDED.message_write_limit,
-             message_write_window_seconds = EXCLUDED.message_write_window_seconds,
-             is_active = true,
-             note = EXCLUDED.note,
-             updated_at = NOW()`,
-          [
-            item.tenantId,
-            Number(autoActions.profile.swipeLimit || 60),
-            Number(autoActions.profile.swipeWindowSeconds || 60),
-            Number(autoActions.profile.followLimit || 30),
-            Number(autoActions.profile.followWindowSeconds || 60),
-            Number(autoActions.profile.messageWriteLimit || 40),
-            Number(autoActions.profile.messageWriteWindowSeconds || 60),
-            `${String(autoActions.note || 'social_risk_auto_action')} @ ${new Date(now).toISOString()}`,
-          ],
-        );
-        autoActionTenantIds.push(item.tenantId);
+      autoActionTenantIds.push(...eligibleAutoItems.map((i) => i.tenantId));
+      for (const item of eligibleAutoItems) {
         dispatchState.tenants[`auto:${item.tenantId}`] = new Date(now).toISOString();
       }
       if (autoActionTenantIds.length > 0) {
@@ -337,7 +344,7 @@ export const GET: APIRoute = async ({ locals, request }) => {
         [`${String(autoActions.note || 'social_risk_auto_action')}%`],
       );
       const toRollback = autoPolicyRows.rows
-        .map((x: any) => String(x.tenant_id))
+        .map((x) => String(x.tenant_id))
         .filter((tenantId: string) => !alertTenantSet.has(tenantId));
       if (toRollback.length > 0) {
         await query(
@@ -381,7 +388,7 @@ export const GET: APIRoute = async ({ locals, request }) => {
     return problemJson({
       status: 500,
       title: 'Social Risk Dashboard Alınamadı',
-      detail: error instanceof Error ? error.message : 'admin_social_risk_failed',
+      detail: safeErrorDetail(error, 'admin_social_risk_failed'),
       type: '/problems/admin-social-risk-failed',
       instance: '/api/admin/social/risk',
     });

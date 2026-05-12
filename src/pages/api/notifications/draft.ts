@@ -19,9 +19,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const body = await request.json();
     const { title, message, url, target, segment } = body;
 
-    if (!title || !message) {
+    if (!title || !message || typeof title !== 'string' || typeof message !== 'string') {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Başlık ve mesaj zorunludur', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
+    if (title.length > 255) return apiError(ErrorCode.VALIDATION_ERROR, 'Başlık 255 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    if (message.length > 10000) return apiError(ErrorCode.VALIDATION_ERROR, 'Mesaj 10000 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    if (url !== undefined && url !== null && (typeof url !== 'string' || url.length > 500)) return apiError(ErrorCode.VALIDATION_ERROR, 'URL 500 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    if (segment !== undefined && segment !== null && (typeof segment !== 'string' || segment.length > 100)) return apiError(ErrorCode.VALIDATION_ERROR, 'Segment 100 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    const VALID_TARGETS = new Set(['all', 'premium', 'new', 'active', 'inactive']);
+    if (target !== undefined && target !== null && (typeof target !== 'string' || !VALID_TARGETS.has(target))) return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz hedef grubu', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
 
     const id = crypto.randomUUID();
     await query(

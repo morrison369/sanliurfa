@@ -3,9 +3,11 @@
  * Ensures reliable webhook delivery with exponential backoff
  */
 
+import { randomBytes } from 'node:crypto';
 import { pool } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache } from '../cache';
+import { safeJsonParse } from '../api';
 
 export interface WebhookDeliveryJob {
   id: string;
@@ -86,9 +88,7 @@ export class WebhookQueue {
       );
 
       const rows = (result as any).rows || [];
-      for (const job of rows) {
-        await this.processJob(job);
-      }
+      await Promise.allSettled(rows.map((job: any) => this.processJob(job)));
     } catch (error) {
       logger.error('Error processing webhook queue', error instanceof Error ? error : new Error(String(error)));
     }
@@ -99,8 +99,22 @@ export class WebhookQueue {
    */
   async processJob(job: any): Promise<void> {
     try {
-      const payload = typeof job.payload === 'string' ? JSON.parse(job.payload) : job.payload;
-      const headers = typeof job.headers === 'string' ? JSON.parse(job.headers) : (job.headers || {});
+      const payload = safeJsonParse<Record<string, any>>(job.payload, {}) || {};
+      const headers = safeJsonParse<Record<string, any>>(job.headers, {}) || {};
+
+      // Defense-in-depth SSRF check at fetch time — DB row may have predated
+      // registration-time validation.
+      const { validateExternalUrl } = await import('../security/safe-url');
+      const urlCheck = validateExternalUrl(job.url);
+      if (!urlCheck.ok) {
+        await pool.query(
+          `UPDATE webhook_delivery_queue
+           SET status = 'failed', last_error = $1
+           WHERE id = $2`,
+          [`unsafe_url:${urlCheck.reason}`, job.id]
+        );
+        return;
+      }
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
@@ -287,7 +301,7 @@ export class WebhookQueue {
       const cached = await getCache(cacheKey);
 
       if (cached) {
-        return JSON.parse(cached as string);
+        return cached as any;
       }
 
       const result = await pool.query(
@@ -301,10 +315,10 @@ export class WebhookQueue {
 
       const row = (result as any).rows?.[0] || {};
       const stats = {
-        pending: parseInt(row.pending || '0'),
-        dlq: parseInt(row.dlq || '0'),
-        delivered: parseInt(row.delivered || '0'),
-        avgRetries: parseInt(row.avg_retries || '0')
+        pending: parseInt(row.pending || '0', 10),
+        dlq: parseInt(row.dlq || '0', 10),
+        delivered: parseInt(row.delivered || '0', 10),
+        avgRetries: parseInt(row.avg_retries || '0', 10)
       };
 
       await setCache(cacheKey, JSON.stringify(stats), 300); // Cache for 5 min
@@ -320,7 +334,7 @@ export class WebhookQueue {
    * Generate unique ID
    */
   private generateId(): string {
-    return `wh_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+    return `wh_${Date.now()}_${randomBytes(6).toString('hex')}`;
   }
 }
 

@@ -1,13 +1,14 @@
 // API: Event delete (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../../lib/api';
 import { deleteAdminEvent } from '../../../../lib/admin/events-admin';
+import { invalidateEvent } from '../../../../lib/cache/invalidation';
 
 export const POST: APIRoute = async ({ params, locals }) => {
   try {
     const { id } = params;
     
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       return problemJson({
         status: 403,
         title: 'Unauthorized',
@@ -19,10 +20,10 @@ export const POST: APIRoute = async ({ params, locals }) => {
 
     await deleteAdminEvent(id || '');
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    // Cache invalidation: etkinlik silme events:* + detail cache'ini etkiler
+    await invalidateEvent(id || null);
+
+    return apiResponse({ success: true }, HttpStatus.OK);
   } catch (err) {
     return problemJson({
       status: 500,

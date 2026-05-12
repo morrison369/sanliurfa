@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeIntParam } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
       });
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 50);
 
     const recommendations = await queryMany(
       `SELECT u.id, u.full_name, u.avatar_url, u.level, u.points,
@@ -29,10 +29,10 @@ export const GET: APIRoute = async ({ locals, url }) => {
       [locals.user.id, limit]
     );
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       data: recommendations || []
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }, HttpStatus.OK);
   } catch (error) {
     logger.error('Recommendations error', error);
     return problemJson({

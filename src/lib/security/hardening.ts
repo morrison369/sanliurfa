@@ -106,6 +106,7 @@ export function buildCSPHeader(csp: ContentSecurityPolicy): string {
   if (csp.connectSrc?.length) directives.push(`connect-src ${csp.connectSrc.join(' ')}`);
   if (csp.frameSrc?.length) directives.push(`frame-src ${csp.frameSrc.join(' ')}`);
   if (csp.upgradeInsecureRequests) directives.push('upgrade-insecure-requests');
+  directives.push('report-uri /api/security/csp-report');
 
   return directives.join('; ');
 }

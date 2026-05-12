@@ -1,11 +1,20 @@
 # API Documentation
 
+> ⚠️ **Bu doküman güncel değil.** Canonical (single-source-of-truth) API spec
+> `/api/docs/openapi.json` endpoint'inden alınır — auto-generated OpenAPI 3.1
+> spec, codebase'den türetilir ve tüm 460+ endpoint'i kapsar. Browser'da
+> görmek için `/api/docs` UI'ını ziyaret edin. Bu Markdown sadece tarihsel
+> referans için tutulur, deploy edilmiş gerçek API ile çelişebilir.
+
 ## Base URL
 
 ```
-Production: https://api.sanliurfa.com
-Staging: https://api-staging.sanliurfa.com
+Production: https://sanliurfa.com/api
+Local dev:  http://localhost:4321/api
 ```
+
+> Eskiden `api.sanliurfa.com` ayrı subdomain değildi — tüm API endpoint'leri ana
+> domain'in `/api/*` path'i altında.
 
 ## Authentication
 

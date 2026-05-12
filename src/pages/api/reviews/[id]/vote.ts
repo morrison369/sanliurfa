@@ -55,50 +55,48 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
       );
     }
 
-    // Try to insert vote
-    try {
-      await query(
-        `INSERT INTO review_votes (review_id, user_id, helpful)
-         VALUES ($1, $2, $3)`,
-        [params.id, user.id, voteType === 'helpful']
-      );
+    // Atomic INSERT — ON CONFLICT eliminates SELECT→INSERT race (HARD RULE #47)
+    const voteInsert = await query(
+      `INSERT INTO review_votes (review_id, user_id, helpful)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (review_id, user_id) DO NOTHING
+       RETURNING id`,
+      [params.id, user.id, voteType === 'helpful']
+    );
 
-      // Update helpful/unhelpful count
-      const columnName = voteType === 'helpful' ? 'helpful_count' : 'unhelpful_count';
-      await query(
-        `UPDATE reviews SET ${columnName} = ${columnName} + 1 WHERE id = $1`,
-        [params.id]
-      );
-
-      // Clear cache
-      await deleteCache(`rating-dist:${review.place_id}`);
-
-      const duration = Date.now() - startTime;
-      recordRequest('POST', `/api/reviews/${params.id}/vote`, HttpStatus.OK, duration);
-      logger.logMutation('create', 'review_votes', `${params.id}-${user.id}`, user.id, { voteType });
-
-      return apiResponse(
-        {
-          success: true,
-          message: `İnceleme ${voteType === 'helpful' ? 'faydalı' : 'faydasız'} olarak işaretlendi`
-        },
-        HttpStatus.OK,
+    if (voteInsert.rows.length === 0) {
+      recordRequest('POST', `/api/reviews/${params.id}/vote`, HttpStatus.CONFLICT, Date.now() - startTime);
+      return apiError(
+        ErrorCode.CONFLICT,
+        'Bu inceleme üzerinde zaten bir oy kullandınız',
+        HttpStatus.CONFLICT,
+        undefined,
         requestId
       );
-    } catch (err: any) {
-      // Duplicate vote
-      if (err.message?.includes('duplicate')) {
-        recordRequest('POST', `/api/reviews/${params.id}/vote`, HttpStatus.CONFLICT, Date.now() - startTime);
-        return apiError(
-          ErrorCode.CONFLICT,
-          'Bu inceleme üzerinde zaten bir oy kullandınız',
-          HttpStatus.CONFLICT,
-          undefined,
-          requestId
-        );
-      }
-      throw err;
     }
+
+    // Update helpful/unhelpful count
+    const columnName = voteType === 'helpful' ? 'helpful_count' : 'unhelpful_count';
+    await query(
+      `UPDATE reviews SET ${columnName} = ${columnName} + 1 WHERE id = $1`,
+      [params.id]
+    );
+
+    // Clear cache
+    await deleteCache(`rating-dist:${review.place_id}`);
+
+    const duration = Date.now() - startTime;
+    recordRequest('POST', `/api/reviews/${params.id}/vote`, HttpStatus.OK, duration);
+    logger.logMutation('create', 'review_votes', `${params.id}-${user.id}`, user.id, { voteType });
+
+    return apiResponse(
+      {
+        success: true,
+        message: `İnceleme ${voteType === 'helpful' ? 'faydalı' : 'faydasız'} olarak işaretlendi`
+      },
+      HttpStatus.OK,
+      requestId
+    );
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('POST', `/api/reviews/${params.id}/vote`, HttpStatus.INTERNAL_SERVER_ERROR, duration);

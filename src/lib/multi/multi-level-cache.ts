@@ -70,7 +70,7 @@ export class MultiLevelCache {
    * Delete from L1 cache by pattern (simple wildcard)
    */
   private deleteL1Pattern(pattern: string): void {
-    const regex = new RegExp(pattern.replace('*', '.*'));
+    const regex = new RegExp('^' + pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$');
     for (const key of this.l1Cache.keys()) {
       if (regex.test(key)) {
         this.l1Cache.delete(key);
@@ -214,10 +214,12 @@ export async function invalidateDependents(
 ): Promise<void> {
   const dependentCaches = cacheDependencies.getDependents(table);
 
-  for (const cacheKey of dependentCaches) {
-    await multiLevelCache.delete(cacheKey);
-    logger.debug('Invalidated dependent cache', { cacheKey, table });
-  }
+  await Promise.all(
+    Array.from(dependentCaches).map(async (cacheKey: string) => {
+      await multiLevelCache.delete(cacheKey);
+      logger.debug('Invalidated dependent cache', { cacheKey, table });
+    })
+  );
 }
 
 // ==================== CACHE WARMING ====================
@@ -255,7 +257,7 @@ export async function warmCache(
 export function scheduleRecurringWarm(
   config: CacheWarmingConfig,
   multiLevelCache: MultiLevelCache
-): NodeJS.Timer {
+): ReturnType<typeof setInterval> {
   // Warm immediately
   warmCache(config, multiLevelCache);
 

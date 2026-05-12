@@ -82,32 +82,32 @@ export async function processPendingReplays(
     );
 
     const pendingRows = (pendingRes as any).rows || [];
-    let processedCount = 0;
 
-    for (const replay of pendingRows) {
-      try {
-        // Trigger the event
-        await triggerWebhook(replay.event_type, replay.event_data, '');
+    // Per-replay isolation: Promise.allSettled — biri fail olsa diğerleri devam etsin
+    const results = await Promise.allSettled(
+      pendingRows.map(async (replay: any) => {
+        try {
+          await triggerWebhook(replay.event_type, replay.event_data, '');
+          await pool.query(
+            `UPDATE webhook_replays
+             SET status = 'completed', completed_at = NOW()
+             WHERE id = $1`,
+            [replay.id]
+          );
+          return true;
+        } catch (error) {
+          await pool.query(
+            `UPDATE webhook_replays
+             SET status = 'failed', error_message = $1, completed_at = NOW()
+             WHERE id = $2`,
+            [String(error), replay.id]
+          ).catch(() => null);
+          return false;
+        }
+      })
+    );
 
-        // Mark as completed
-        await pool.query(
-          `UPDATE webhook_replays
-           SET status = 'completed', completed_at = NOW()
-           WHERE id = $1`,
-          [replay.id]
-        );
-
-        processedCount++;
-      } catch (error) {
-        // Mark as failed
-        await pool.query(
-          `UPDATE webhook_replays
-           SET status = 'failed', error_message = $1, completed_at = NOW()
-           WHERE id = $2`,
-          [String(error), replay.id]
-        );
-      }
-    }
+    const processedCount = results.filter((r) => r.status === 'fulfilled' && r.value === true).length;
 
     return processedCount;
   } catch (error) {

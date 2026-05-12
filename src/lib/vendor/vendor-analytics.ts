@@ -4,6 +4,7 @@
  */
 
 import { logger } from '../logger';
+import { randomBytes } from 'node:crypto';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -186,7 +187,7 @@ export class ReportGenerator {
    * Generate report
    */
   generateReport(vendorId: string, type: 'sales' | 'performance' | 'financial'): Report {
-    const reportId = 'report-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+    const reportId = 'report-' + Date.now() + '-' + randomBytes(6).toString('hex');
 
     const report: Report = {
       vendorId,
@@ -205,7 +206,7 @@ export class ReportGenerator {
    * Schedule recurring report
    */
   scheduleReport(vendorId: string, type: string, frequency: string): string {
-    const scheduleId = 'schedule-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+    const scheduleId = 'schedule-' + Date.now() + '-' + randomBytes(6).toString('hex');
 
     this.reportSchedules.set(scheduleId, {
       type,

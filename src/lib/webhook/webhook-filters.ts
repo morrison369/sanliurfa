@@ -200,7 +200,7 @@ export async function getWebhookSettings(
     const cacheKey = `webhook:settings:${webhookId}`;
     const cached = await getCache(cacheKey);
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const result = await pool.query(

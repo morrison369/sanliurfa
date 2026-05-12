@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 import { logger } from '../../../../lib/logging';
 import { problemJson } from '../../../../lib/api';
 import { updateAdminHistoricalSite } from '../../../../lib/admin/historical-sites-admin';
+import { invalidateHistoricalSite } from '../../../../lib/cache/invalidation';
 
 export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
   try {
@@ -53,6 +54,9 @@ export const POST: APIRoute = async ({ params, request, redirect, locals }) => {
       isFeatured: isFeatured || null,
       status,
     });
+
+    // Cache invalidation: tarihi yer güncellemesi list + detail cache'lerini etkiler
+    await invalidateHistoricalSite(id || null);
 
     return redirect('/admin/historical-sites?success=updated');
   } catch (err) {

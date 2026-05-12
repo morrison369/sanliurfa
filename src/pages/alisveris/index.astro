@@ -1,145 +1,179 @@
 ---
-
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+const baseUrl = getPublicAppUrl();
 
 let featuredPlaces: any[] = [];
 
 const alisverisCategories = [
-  { slug: 'avmler', name: 'Alışveriş Merkezleri', icon: '🏬', desc: 'Kapalı AVM\'ler' },
-  { slug: 'hediyelik-esya', name: 'Hediyelik Eşya', icon: '🎁', desc: 'Urfa hediyelikleri' },
-  { slug: 'yoresel-urunler', name: 'Yöresel Ürünler', icon: '🫙', desc: 'İsot, fıstık ve yerel ürünler' },
-  { slug: 'kuyumcular', name: 'Kuyumcular', icon: '💍', desc: 'Altın ve takı mağazaları' },
-  { slug: 'giyim-magazalari', name: 'Giyim Mağazaları', icon: '👗', desc: 'Moda ve giyim' },
+ { slug: 'avmler', name: 'Alışveriş Merkezleri', icon: '🏬', desc: "Kapalı AVM'ler" },
+ { slug: 'hediyelik-esya', name: 'Hediyelik Eşya', icon: '🎁', desc: 'Urfa hediyelikleri' },
+ { slug: 'yoresel-urunler', name: 'Yöresel Ürünler', icon: '🫙', desc: 'İsot, fıstık ve yerel ürünler' },
+ { slug: 'kuyumcular', name: 'Kuyumcular', icon: '💍', desc: 'Altın ve takı mağazaları' },
+ { slug: 'giyim-magazalari', name: 'Giyim Mağazaları', icon: '👗', desc: 'Moda ve giyim' },
+];
+
+const yoreselUrunler = [
+ { name: 'İsot (Kırmızı Biber)', icon: '🌶️' },
+ { name: 'Antep Fıstığı', icon: '🫘' },
+ { name: 'Bakır Eşyalar', icon: '🪔' },
+ { name: 'Urfa Boncuğu', icon: '📿' },
 ];
 
 try {
+ featuredPlaces = await getCachedPublicRouteData('page:alisveris:index', async () => {
   const placesResult = await query(
-    `SELECT p.*, c.name as category_name FROM places p
-     LEFT JOIN categories c ON p.category_id = c.id
-     WHERE c.slug IN ('avmler','hediyelik-esya','yoresel-urunler','kuyumcular','giyim-magazalari')
-     AND p.status = 'active'
-     ORDER BY p.rating DESC LIMIT 6`
+   `SELECT p.*, c.name as category_name FROM places p
+ LEFT JOIN categories c ON p.category_id = c.id
+ WHERE c.slug IN ('avmler','hediyelik-esya','yoresel-urunler','kuyumcular','giyim-magazalari')
+ AND p.status = 'active'
+ ORDER BY p.rating DESC LIMIT 6`
   );
-  featuredPlaces = placesResult.rows;
+  return placesResult.rows;
+ });
 } catch (e) {
-  console.error('Error loading alisveris:', e);
+ logger.error('Error loading alisveris:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const seo = {
-  title: 'Şanlıurfa Alışveriş Rehberi | Çarşılar, AVM\'ler ve Mağazalar',
-  description: 'Şanlıurfa\'da alışveriş: AVM\'ler, kapalı çarşı, hediyelik eşya, yöresel ürünler, kuyumcular ve giyim mağazaları.',
-  keywords: ['şanlıurfa alışveriş', 'urfa kapalı çarşı', 'şanlıurfa avm', 'urfa hediyelik eşya', 'şanlıurfa yöresel ürünler', 'urfa kuyumcular', 'şanlıurfa çarşı'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/alisveris',
+ title: "Şanlıurfa Alışveriş Rehberi | Çarşılar, AVM'ler ve Mağazalar",
+ description: "Şanlıurfa'da alışveriş: AVM'ler, kapalı çarşı, hediyelik eşya, yöresel ürünler, kuyumcular ve giyim mağazaları.",
+ keywords: ['şanlıurfa alışveriş', 'urfa kapalı çarşı', 'şanlıurfa avm', 'urfa hediyelik eşya', 'şanlıurfa yöresel ürünler', 'urfa kuyumcular', 'şanlıurfa çarşı'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/alisveris',
 };
 
 const faqItems = [
-  { S: 'Şanlıurfa\'da AVM var mı?', C: 'Evet, Şanlıurfa\'da birden fazla alışveriş merkezi bulunmaktadır. Kentsel büyüme ile birlikte modern AVM\'lerin sayısı artmıştır.' },
-  { S: 'Urfa\'da nerede yöresel ürün alınır?', C: 'Şanlıurfa\'nın tarihi kapalı çarşısı ve Gümrük Hanı çevresinde isot, fıstık ezmesi, şıllık malzemeleri gibi yöresel ürünler satan dükkânlar yoğunlaşmaktadır.' },
-  { S: 'Şanlıurfa\'da hediyelik eşya nereden alınır?', C: 'Balıklıgöl çevresi ve tarihi çarşı içindeki hediyelik eşya dükkanları, el yapımı ürünler, bakır işlemeler ve yöresel bibloları bulmak için en iyi adreslerdir.' },
+ { S: "Şanlıurfa'da AVM var mı?", C: "Evet, Şanlıurfa'da birden fazla alışveriş merkezi bulunmaktadır. Kentsel büyüme ile birlikte modern AVM'lerin sayısı artmıştır." },
+ { S: "Urfa'da nerede yöresel ürün alınır?", C: "Şanlıurfa'nın tarihi kapalı çarşısı ve Gümrük Hanı çevresinde isot, fıstık ezmesi, şıllık malzemeleri gibi yöresel ürünler satan dükkânlar yoğunlaşmaktadır." },
+ { S: "Şanlıurfa'da hediyelik eşya nereden alınır?", C: 'Balıklıgöl çevresi ve tarihi çarşı içindeki hediyelik eşya dükkanları, el yapımı ürünler, bakır işlemeler ve yöresel bibloları bulmak için en iyi adreslerdir.' },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-gradient-to-br from-purple-700 to-pink-700 text-white py-16">
-      <div class="container mx-auto px-4">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Alışveriş Rehberi</h1>
-        <p class="text-xl text-purple-100 max-w-2xl">
-          Kapalı çarşıdan AVM'lere, isot pazarından kuyumculara Şanlıurfa’da alışveriş
-        </p>
-      </div>
-    </div>
+ <style is:inline>
+ .al-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+ .al-hero-inner{max-width:50rem;margin:0 auto}
+ .al-eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--public-muted);margin-bottom:.5rem}
+ .al-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,4vw,3rem);font-weight:600;color:var(--public-text);margin-bottom:.5rem}
+ .al-sub{font-size:.9rem;color:var(--public-muted);max-width:38rem;line-height:1.75}
+ .al-body{background:var(--bg);padding:2.5rem 0 5rem}
+ .al-info-box{background:rgba(184,115,51,.05);border:1px solid rgba(184,115,51,.18);padding:1.25rem 1.5rem;margin-bottom:2rem}
+ .al-info-title{font-size:1rem;font-weight:700;color:var(--public-text);margin-bottom:.4rem}
+ .al-info-text{font-size:.82rem;color:var(--public-muted);line-height:1.7;margin-bottom:.5rem}
+ .al-info-link{font-size:.82rem;color:var(--public-accent);font-weight:600;transition:color .15s}
+ .al-info-link:hover{color:var(--public-accent-strong)}
+ .al-section-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:var(--public-text);margin-bottom:1.1rem}
+ .al-cat-grid{display:grid;gap:.85rem;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));margin-bottom:2.5rem}
+ .al-cat-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.25rem;text-align:center;transition:border-color .15s,transform .15s}
+ .al-cat-card:hover{border-color:var(--public-accent);transform:translateY(-2px)}
+ .al-cat-icon{font-size:1.75rem;margin-bottom:.5rem}
+ .al-cat-name{font-size:.8rem;font-weight:700;color:var(--public-text);margin-bottom:.15rem;transition:color .15s}
+ .al-cat-card:hover .al-cat-name{color:var(--public-accent)}
+ .al-cat-desc{font-size:.68rem;color:var(--public-muted)}
+ .al-yoresel-box{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem 1.75rem;margin-bottom:2.5rem}
+ .al-yoresel-grid{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-top:.85rem}
+ .al-yoresel-item{background:rgba(184,115,51,.05);border:1px solid rgba(184,115,51,.12);padding:.85rem;text-align:center}
+ .al-yoresel-icon{font-size:1.5rem;margin-bottom:.35rem}
+ .al-yoresel-name{font-size:.75rem;font-weight:600;color:var(--public-accent)}
+ .al-feat-grid{display:grid;gap:.85rem;grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+ .al-feat-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1rem;transition:border-color .15s}
+ .al-feat-card:hover{border-color:var(--public-accent)}
+ .al-feat-name{font-size:.88rem;font-weight:700;color:var(--public-text);margin-bottom:.15rem;transition:color .15s}
+ .al-feat-card:hover .al-feat-name{color:var(--public-accent)}
+ .al-feat-cat{font-size:.7rem;color:var(--public-accent);font-weight:600;margin-bottom:.3rem}
+ .al-feat-addr{font-size:.72rem;color:var(--public-text-soft)}
+ </style>
 
-    <div class="container mx-auto px-4 py-12">
-      <!-- Öne Çıkan: Kapalı Çarşı -->
-      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 mb-10">
-        <h2 class="text-xl font-bold text-amber-800 mb-2">🛍️ Kapalı Çarşı & Bedesten</h2>
-        <p class="text-amber-700">Şanlıurfa’nın tarihi çarşıları — Gümrük Hanı, Sipahioğlu Çarşısı ve Zincirli Bedesten. Bakır eşyalar, isot, yöresel ürünler.</p>
-        <a href="/isletme/kapali-carsi" class="mt-3 inline-block text-amber-700 font-medium hover:underline">Çarşıları Keşfet →</a>
-      </div>
+ <div class="al-hero">
+ <div class="sf-container">
+ <div class="al-hero-inner">
+ <p class="al-eyebrow">Alışveriş Rehberi</p>
+ <h1 class="al-h1">Alışveriş Rehberi</h1>
+ <p class="al-sub">Kapalı çarşıdan AVM'lere, isot pazarından kuyumculara Şanlıurfa'da alışveriş</p>
+ </div>
+ </div>
+ </div>
 
-      <!-- Kategoriler -->
-      <h2 class="text-2xl font-bold text-gray-900 mb-6">Alışveriş Kategorileri</h2>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
-        {alisverisCategories.map((cat) => (
-          <a
-            href={`/alisveris/${cat.slug}`}
-            class="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 border border-gray-100 group text-center"
-          >
-            <div class="text-3xl mb-3">{cat.icon}</div>
-            <h3 class="font-bold text-gray-900 group-hover:text-purple-600 transition-colors text-sm">{cat.name}</h3>
-            <p class="text-xs text-gray-500 mt-1">{cat.desc}</p>
-          </a>
-        ))}
-      </div>
+ <div class="al-body">
+ <div class="sf-container">
+ <div class="al-info-box">
+ <p class="al-info-title">🛍️ Kapalı Çarşı & Bedesten</p>
+ <p class="al-info-text">Şanlıurfa'nın tarihi çarşıları — Gümrük Hanı, Sipahioğlu Çarşısı ve Zincirli Bedesten. Bakır eşyalar, isot, yöresel ürünler.</p>
+ <a href="/isletme/kapali-carsi" class="al-info-link">Çarşıları Keşfet →</a>
+ </div>
 
-      <!-- Popüler Yöresel Ürünler -->
-      <div class="bg-white rounded-2xl p-8 shadow-sm mb-10">
-        <h2 class="text-2xl font-bold text-gray-900 mb-4">Şanlıurfa Yöresel Ürünleri</h2>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { name: 'İsot (Kırmızı Biber)', icon: '🌶️' },
-            { name: 'Antep Fıstığı', icon: '🫘' },
-            { name: 'Bakır Eşyalar', icon: '🪔' },
-            { name: 'Urfa Boncuğu', icon: '📿' },
-          ].map(item => (
-            <div class="text-center p-4 bg-purple-50 rounded-xl">
-              <div class="text-3xl mb-2">{item.icon}</div>
-              <p class="text-sm font-medium text-gray-700">{item.name}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+ <h2 class="al-section-title">Alışveriş Kategorileri</h2>
+ <div class="al-cat-grid">
+ {alisverisCategories.map((cat) => (
+ <a href={`/alisveris/${cat.slug}`} class="al-cat-card">
+ <div class="al-cat-icon">{cat.icon}</div>
+ <p class="al-cat-name">{cat.name}</p>
+ <p class="al-cat-desc">{cat.desc}</p>
+ </a>
+ ))}
+ </div>
 
-      {featuredPlaces.length > 0 && (
-        <div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Öne Çıkan Mağazalar</h2>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {featuredPlaces.map((place) => (
-              <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
-                <h3 class="font-bold text-gray-900 group-hover:text-purple-600">{place.name}</h3>
-                <span class="text-xs text-purple-600">{place.category_name}</span>
-                {place.address && <p class="text-xs text-gray-500 mt-2">📍 {place.address}</p>}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
+ <div class="al-yoresel-box">
+ <p class="al-section-title" style="margin-bottom:.25rem">Şanlıurfa Yöresel Ürünleri</p>
+ <div class="al-yoresel-grid">
+ {yoreselUrunler.map(item => (
+ <div class="al-yoresel-item">
+ <div class="al-yoresel-icon">{item.icon}</div>
+ <p class="al-yoresel-name">{item.name}</p>
+ </div>
+ ))}
+ </div>
+ </div>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: 'Şanlıurfa Alışveriş Rehberi',
-    description: 'Şanlıurfa\'daki çarşılar, AVM\'ler, mağazalar ve alışveriş noktaları.',
-    url: `${baseUrl}/alisveris`,
-    about: { '@type': 'City', name: 'Şanlıurfa' },
-    itemListElement: featuredPlaces.slice(0, 10).map((p: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: { '@type': 'Store', name: p.name, url: `${baseUrl}/isletme/${p.slug}` },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Alışveriş', item: `${baseUrl}/alisveris` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ {featuredPlaces.length > 0 && (
+ <div>
+ <h2 class="al-section-title">Öne Çıkan Mağazalar</h2>
+ <div class="al-feat-grid">
+ {featuredPlaces.map((place) => (
+ <a href={`/isletme/${place.slug}`} class="al-feat-card">
+ <p class="al-feat-name">{place.name}</p>
+ <p class="al-feat-cat">{place.category_name}</p>
+ {place.address && <p class="al-feat-addr">📍 {place.address}</p>}
+ </a>
+ ))}
+ </div>
+ </div>
+ )}
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'CollectionPage',
+ name: 'Şanlıurfa Alışveriş Rehberi',
+ description: "Şanlıurfa'daki çarşılar, AVM'ler, mağazalar ve alışveriş noktaları.",
+ url: `${baseUrl}/alisveris`,
+ about: { '@type': 'City', name: 'Şanlıurfa' },
+ itemListElement: featuredPlaces.slice(0, 10).map((p: any, i: number) => ({
+ '@type': 'ListItem',
+ position: i + 1,
+ item: { '@type': 'Store', name: p.name, url: `${baseUrl}/isletme/${p.slug}` },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Alışveriş', item: `${baseUrl}/alisveris` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

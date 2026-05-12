@@ -5,69 +5,100 @@
  */
 
 interface Props {
-  fallback?: string;
+ fallback?: string;
 }
 
 const { fallback = 'Bir hata oluştu. Lütfen sayfayı yenileyin.' } = Astro.props;
 ---
 
 <error-boundary class="error-boundary" data-fallback={fallback}>
-  <slot />
+ <slot />
 </error-boundary>
 
 <script>
-  import * as Sentry from '@sentry/browser';
+ // Errors that we log but DO NOT show fallback for — noise from PWA / partytown /
+ // browser extensions / network / cross-origin scripts. Replacing working content
+ // with an error banner for these is worse UX than the underlying issue.
+ const IGNORED_ERROR_PATTERNS = [
+ 'Failed to fetch', 'Load failed', 'NetworkError', 'ERR_FAILED', 'ERR_SSL_PROTOCOL_ERROR',
+ 'ResizeObserver loop', 'Non-Error promise rejection', 'Script error',
+ 'NotAllowedError', 'AbortError', 'cancelled', 'beforeinstallprompt',
+ 'partytown', 'PWA',
+ ];
 
-  class ErrorBoundary extends HTMLElement {
-    connectedCallback() {
-      const fallback = this.dataset.fallback || 'Bir hata oluştu.';
-      
-      window.addEventListener('error', (event) => {
-        // Log to Sentry
-        Sentry.captureException(event.error);
-        
-        // Show fallback UI
-        this.showError(fallback);
-      });
-      
-      window.addEventListener('unhandledrejection', (event) => {
-        Sentry.captureException(event.reason);
-        this.showError(fallback);
-      });
-    }
-    
-      showError(message: string) {
-        this.innerHTML = `
-          <div class="error-fallback p-6 bg-red-50 border border-red-200 rounded-lg text-center">
-          <svg class="w-12 h-12 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          <h3 class="text-lg font-semibold text-red-800 mb-2">Hata Oluştu</h3>
-          <p class="text-red-600 mb-4">${message}</p>
-          <button onclick="window.location.reload()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors">
-            Sayfayı Yenile
-          </button>
-        </div>
-      `;
-    }
-  }
+ function shouldShowFallback(reason: unknown): boolean {
+ if (reason === null || reason === undefined) return false;
+ const message = reason instanceof Error
+ ? reason.message
+ : typeof reason === 'string' ? reason : String(reason || '');
+ if (!message || message === 'undefined' || message === 'null') return false;
+ return !IGNORED_ERROR_PATTERNS.some((p) => message.includes(p));
+ }
 
-  if (!customElements.get('error-boundary')) {
-    customElements.define('error-boundary', ErrorBoundary);
-  }
+ class ErrorBoundary extends HTMLElement {
+ connectedCallback() {
+ const fallback = this.dataset.fallback || 'Bir hata oluştu.';
+
+ window.addEventListener('error', (event) => {
+ console.error('[ErrorBoundary] window error:', event.error);
+ if (shouldShowFallback(event.error || event.message)) {
+ this.showError(fallback);
+ }
+ });
+
+ window.addEventListener('unhandledrejection', (event) => {
+ console.error('[ErrorBoundary] unhandled rejection:', event.reason);
+ if (shouldShowFallback(event.reason)) {
+ this.showError(fallback);
+ }
+ });
+ }
+ 
+ showError(message: string) {
+ const wrapper = document.createElement('div');
+ wrapper.className = 'error-fallback p-6 bg-[rgba(239,68,68,0.1)] border border-[rgba(239,68,68,0.25)] rounded-sm text-center';
+ const ns = 'http://www.w3.org/2000/svg';
+ const svg = document.createElementNS(ns, 'svg');
+ svg.setAttribute('class', 'w-12 h-12 mx-auto mb-4 text-red-500');
+ svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'currentColor');
+ svg.setAttribute('viewBox', '0 0 24 24');
+ const path = document.createElementNS(ns, 'path');
+ path.setAttribute('stroke-linecap', 'round'); path.setAttribute('stroke-linejoin', 'round');
+ path.setAttribute('stroke-width', '2');
+ path.setAttribute('d', 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z');
+ svg.appendChild(path);
+ const h3 = document.createElement('h3');
+ h3.className = 'text-lg font-semibold text-red-400 mb-2';
+ h3.textContent = 'Hata Oluştu';
+ const p = document.createElement('p');
+ p.className = 'text-red-600 mb-4';
+ p.textContent = message;
+ const btn = document.createElement('button');
+ btn.className = 'px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors';
+ btn.textContent = 'Sayfayı Yenile';
+ btn.addEventListener('click', () => window.location.reload());
+ wrapper.appendChild(svg); wrapper.appendChild(h3);
+ wrapper.appendChild(p); wrapper.appendChild(btn);
+ this.replaceChildren(wrapper);
+ }
+ }
+
+ if (!customElements.get('error-boundary')) {
+ customElements.define('error-boundary', ErrorBoundary);
+ }
 </script>
 
 <style>
-  .error-boundary {
-    display: contents;
-  }
-  
-  .error-fallback {
-    animation: fadeIn 0.3s ease-in;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+ .error-boundary {
+ display: contents;
+ }
+ 
+ .error-fallback {
+ animation: fadeIn 0.3s ease-in;
+ }
+ 
+ @keyframes fadeIn {
+ from { opacity: 0; transform: translateY(-10px); }
+ to { opacity: 1; transform: translateY(0); }
+ }
 </style>

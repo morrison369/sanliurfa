@@ -113,12 +113,12 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
       stats: {
         followers: stats.followers_count,
         following: stats.following_count,
-        mutual: (stats as any).mutual_friends_count
+        mutual: stats.mutual_friends_count
       },
       is_following: isFollowingUser,
       is_own_profile: isOwnProfile,
       allow_messages: userProfile.privacy_settings?.allow_messages !== false,
-      recent_activity: recentActivity.map((row: any) => ({
+      recent_activity: recentActivity.map((row) => ({
         type: row.type,
         id: row.id,
         content: row.content.substring(0, 100) + (row.content.length > 100 ? '...' : ''),

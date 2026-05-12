@@ -71,6 +71,13 @@ export interface ConnectionInfo {
   saveData?: boolean;
 }
 
+function withOptional<K extends string, V>(key: K, value: V | null | undefined): { [P in K]?: V } {
+  if (value === null || value === undefined) {
+    return {} as { [P in K]?: V };
+  }
+  return { [key]: value } as { [P in K]?: V };
+}
+
 /**
  * Metrik eşik değerleri (Web Vitals standartları)
  */
@@ -121,7 +128,9 @@ export function getMetricUnit(name: MetricType): string {
  * Benzersiz ID üretir
  */
 function generateId(): string {
-  return `metric-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  const bytes = new Uint8Array(4);
+  globalThis.crypto.getRandomValues(bytes);
+  return `metric-${Date.now()}-${Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')}`;
 }
 
 /**
@@ -185,10 +194,10 @@ export function getConnectionInfo(): ConnectionInfo | undefined {
   if (!nav.connection) return undefined;
 
   return {
-    effectiveType: nav.connection.effectiveType,
-    downlink: nav.connection.downlink,
-    rtt: nav.connection.rtt,
-    saveData: nav.connection.saveData,
+    ...withOptional('effectiveType', nav.connection.effectiveType),
+    ...withOptional('downlink', nav.connection.downlink),
+    ...withOptional('rtt', nav.connection.rtt),
+    ...withOptional('saveData', nav.connection.saveData),
   };
 }
 
@@ -209,7 +218,7 @@ export function generatePerformanceReport(): PerformanceReport {
     resourceTiming: getResourceTiming(),
     timestamp: new Date().toISOString(),
     url: typeof window !== 'undefined' ? window.location.href : '',
-    connectionInfo: getConnectionInfo(),
+    ...withOptional('connectionInfo', getConnectionInfo()),
   };
 }
 
@@ -527,7 +536,6 @@ export function initPerformanceTracking(
   // Web Vitals observer başlat
   const cleanupObserver = observeWebVitals((metric) => {
     if (logToConsole) {
-      const color = getMetricColor(metric.rating);
       const unit = getMetricUnit(metric.name);
       logger.info(
         `[Performans] ${metric.name}: ${metric.value.toFixed(metric.name === 'CLS' ? 3 : 0)}${unit} (${metric.rating})`,

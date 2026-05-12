@@ -1,24 +1,26 @@
 ---
-
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { safeIntParam } from '../../lib/api';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+const baseUrl = getPublicAppUrl();
 
 const { kategori } = Astro.params;
 
 const categoryMeta: Record<string, { name: string; icon: string; desc: string }> = {
-  'kahvalti': { name: 'Kahvaltı Mekanları', icon: '🍳', desc: 'Serpme kahvaltı ve sabah mekanları' },
-  'brunch': { name: 'Brunch', icon: '🥐', desc: 'Öğle saatlerine kadar kahvaltı' },
-  'gece-acik-mekanlar': { name: 'Gece Açık Mekanlar', icon: '🌙', desc: 'Gece geç saatlere kadar açık' },
-  'paket-servis': { name: 'Paket Servis', icon: '📦', desc: 'Eve ve ofise teslimat' },
-  'aile-mekanlari': { name: 'Aile Mekanları', icon: '👨‍👩‍👧', desc: 'Çocuk dostu aile mekanları' },
-  'uygun-fiyatli-mekanlar': { name: 'Uygun Fiyatlı Mekanlar', icon: '💰', desc: 'Bütçe dostu seçenekler' },
+ 'kahvalti': { name: 'Kahvaltı Mekanları', icon: '🍳', desc: 'Serpme kahvaltı ve sabah mekanları' },
+ 'brunch': { name: 'Brunch', icon: '🥐', desc: 'Öğle saatlerine kadar kahvaltı' },
+ 'gece-acik-mekanlar': { name: 'Gece Açık Mekanlar', icon: '🌙', desc: 'Gece geç saatlere kadar açık' },
+ 'paket-servis': { name: 'Paket Servis', icon: '📦', desc: 'Eve ve ofise teslimat' },
+ 'aile-mekanlari': { name: 'Aile Mekanları', icon: '👨‍👩‍👧', desc: 'Çocuk dostu aile mekanları' },
+ 'uygun-fiyatli-mekanlar': { name: 'Uygun Fiyatlı Mekanlar', icon: '💰', desc: 'Bütçe dostu seçenekler' },
 };
 
 const meta = categoryMeta[kategori || ''] || { name: kategori || '', icon: '🍽️', desc: '' };
 
-const page = parseInt(Astro.url.searchParams.get('sayfa') || '1');
+const page = safeIntParam(Astro.url.searchParams.get('sayfa'), 1, 1, 1_000_000);
 const limit = 12;
 const offset = (page - 1) * limit;
 
@@ -26,11 +28,11 @@ let places: any[] = [];
 let totalCount = 0;
 
 try {
-  // Features tabanlı filtreleme: gece mekanları, paket servis, aile mekanları
+ const data = await getCachedPublicRouteData(`page:yeme-icme:${kategori || 'unknown'}:${page}`, async () => {
   const featureMap: Record<string, string> = {
-    'gece-acik-mekanlar': 'gece_acik',
-    'paket-servis': 'paket_servis',
-    'aile-mekanlari': 'cocuk_oyun_alani',
+  'gece-acik-mekanlar': 'gece_acik',
+  'paket-servis': 'paket_servis',
+  'aile-mekanlari': 'cocuk_oyun_alani',
   };
 
   const feature = featureMap[kategori || ''];
@@ -39,159 +41,198 @@ try {
   let queryParams: any[] = [];
 
   if (kategori === 'kahvalti' || kategori === 'brunch') {
-    whereClause += ` AND c.slug = 'kahvalti-mekanlari'`;
+  whereClause += ` AND c.slug = 'kahvalti-mekanlari'`;
   } else if (feature) {
-    whereClause += ` AND $1 = ANY(p.features)`;
-    queryParams.push(feature);
+  whereClause += ` AND $1 = ANY(p.features)`;
+  queryParams.push(feature);
   } else if (kategori === 'uygun-fiyatli-mekanlar') {
-    whereClause += ` AND p.price_range = '₺'`;
+  whereClause += ` AND p.price_range = '₺'`;
   }
 
-  const countResult = await query(
-    `SELECT COUNT(*) FROM places p LEFT JOIN categories c ON p.category_id = c.id WHERE ${whereClause}`,
-    queryParams
-  );
-  totalCount = parseInt(countResult.rows[0]?.count || '0');
-
-  const placesResult = await query(
-    `SELECT p.*, c.name as category_name, d.name as district_name
-     FROM places p
-     LEFT JOIN categories c ON p.category_id = c.id
-     LEFT JOIN districts d ON p.district_id = d.id
-     WHERE ${whereClause}
-     ORDER BY p.rating DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`,
-    [...queryParams, limit, offset]
-  );
-  places = placesResult.rows;
+  const [countResult, placesResult] = await Promise.all([
+  query(
+  `SELECT COUNT(*) FROM places p LEFT JOIN categories c ON p.category_id = c.id WHERE ${whereClause}`,
+  queryParams
+  ),
+  query(
+  `SELECT p.*, c.name as category_name, d.name as district_name
+  FROM places p
+  LEFT JOIN categories c ON p.category_id = c.id
+  LEFT JOIN districts d ON p.district_id = d.id
+  WHERE ${whereClause}
+  ORDER BY p.rating DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`,
+  [...queryParams, limit, offset]
+  ),
+  ]);
+  return {
+   totalCount: parseInt(countResult.rows[0]?.count || '0'),
+   places: placesResult.rows,
+  };
+ });
+ totalCount = data.totalCount;
+ places = data.places;
 } catch (e) {
-  console.error('Error loading yeme-icme kategori:', e);
+ logger.error('Error loading yeme-icme kategori:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const totalPages = Math.ceil(totalCount / limit);
 
 const seo = {
-  title: `Şanlıurfa ${meta.name} | Yeme İçme Rehberi`,
-  description: `Şanlıurfa'da ${meta.desc || meta.name.toLowerCase()}. En iyi mekanlar, adresler ve bilgiler.`,
-  keywords: ['şanlıurfa ' + meta.name.toLowerCase(), 'urfa ' + meta.name.toLowerCase(), meta.name + ' şanlıurfa', 'şanlıurfa yeme içme'],
-  ogImage: '/images/hero/hero-food.webp',
-  canonical: `/yeme-icme/${kategori}`,
+ title: `Şanlıurfa ${meta.name} | Yeme İçme Rehberi`,
+ description: `Şanlıurfa'da ${meta.desc || meta.name.toLowerCase()}. En iyi mekanlar, adresler ve bilgiler.`,
+ keywords: ['şanlıurfa ' + meta.name.toLowerCase(), 'urfa ' + meta.name.toLowerCase(), meta.name + ' şanlıurfa', 'şanlıurfa yeme içme'],
+ ogImage: '/images/hero/hero-food.webp',
+ canonical: `/yeme-icme/${kategori}`,
 };
 const faqItems = [
-  { S: `Şanlıurfa'da ${meta.name.toLowerCase()} seçenekleri nelerdir?`, C: `Şanlıurfa'da ${meta.name.toLowerCase()} için güncel liste ve değerlendirmeler rehberimizde yer almaktadır.` },
-  { S: `${meta.name} için hangi ilçeler öne çıkıyor?`, C: `Eyyübiye, Haliliye ve Karaköprü ilçeleri hizmet yoğunluğu açısından öne çıkan bölgeler arasındadır.` },
-  { S: `${meta.name} bilgilerini nasıl güncelleyebilirim?`, C: `Mekan sayfasına giriş yaparak güncelleme talebinde bulunabilir veya iletişim formu üzerinden bildirimde bulunabilirsiniz.` },
+ { S: `Şanlıurfa'da ${meta.name.toLowerCase()} seçenekleri nelerdir?`, C: `Şanlıurfa'da ${meta.name.toLowerCase()} için güncel liste ve değerlendirmeler rehberimizde yer almaktadır.` },
+ { S: `${meta.name} için hangi ilçeler öne çıkıyor?`, C: `Eyyübiye, Haliliye ve Karaköprü ilçeleri hizmet yoğunluğu açısından öne çıkan bölgeler arasındadır.` },
+ { S: `${meta.name} bilgilerini nasıl güncelleyebilirim?`, C: `Mekan sayfasına giriş yaparak güncelleme talebinde bulunabilir veya iletişim formu üzerinden bildirimde bulunabilirsiniz.` },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-white border-b">
-      <div class="container mx-auto px-4 py-3">
-        <nav class="flex items-center gap-2 text-sm text-gray-500">
-          <a href="/" class="hover:text-orange-600">Ana Sayfa</a>
-          <span>/</span>
-          <a href="/yeme-icme" class="hover:text-orange-600">Yeme İçme</a>
-          <span>/</span>
-          <span class="text-gray-900 font-medium">{meta.name}</span>
-        </nav>
-      </div>
-    </div>
+ <style>
+ .yk-breadcrumb{background:var(--public-bg);border-bottom:1px solid var(--public-border);padding:.75rem 0}
+ .yk-breadcrumb nav{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--public-muted)}
+ .yk-breadcrumb a{color:var(--public-muted);transition:color .15s}.yk-breadcrumb a:hover{color:var(--public-accent)}
+ .yk-breadcrumb span:last-child{color:var(--public-accent);font-weight:500}
+ .yk-hero{background:var(--public-bg);border-bottom:1px solid var(--public-border);padding:3rem 0}
+ .yk-hero-inner{display:flex;align-items:center;gap:1rem}
+ .yk-hero-icon{font-size:3rem;line-height:1}
+ .yk-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,4vw,2.5rem);font-weight:600;color:var(--public-text)}
+ .yk-count{font-size:.85rem;color:var(--public-muted);margin-top:.25rem}
+ .yk-body{background:var(--public-bg);padding:2rem 0 4rem}
+ .yk-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+ .yk-card{background:var(--public-surface);border:1px solid var(--public-border);overflow:hidden;transition:border-color .15s}
+ .yk-card:hover{border-color:var(--public-accent)}
+ .yk-thumb{height:11rem;background:var(--public-accent-soft);display:flex;align-items:center;justify-content:center;font-size:3rem;opacity:.75}
+ .yk-card-body{padding:1rem}
+ .yk-card-name{font-size:.92rem;font-weight:700;color:var(--public-text);margin-bottom:.2rem;transition:color .15s}
+ .yk-card:hover .yk-card-name{color:var(--public-accent)}
+ .yk-card-cat{font-size:.72rem;color:var(--public-accent);font-weight:600;margin-bottom:.35rem}
+ .yk-card-desc{font-size:.78rem;color:var(--public-muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .yk-card-meta{display:flex;align-items:center;justify-content:space-between;margin-top:.6rem}
+ .yk-rating{display:flex;align-items:center;gap:.25rem;font-size:.78rem;color:var(--public-text);font-weight:600}
+ .yk-rating-star{color:var(--public-accent)}
+ .yk-rating-count{color:var(--public-text-soft);font-weight:400}
+ .yk-district{font-size:.72rem;color:var(--public-text-soft)}
+ .yk-empty{text-align:center;padding:4rem 1rem;color:var(--public-muted)}
+ .yk-empty-icon{font-size:3.5rem;margin-bottom:.75rem}
+ .yk-empty-link{display:inline-block;margin-top:.75rem;color:var(--public-accent);font-size:.85rem;transition:color .15s}
+ .yk-empty-link:hover{color:var(--public-accent-strong)}
+ .yk-pagination{display:flex;justify-content:center;gap:.5rem;margin-top:2.5rem;flex-wrap:wrap}
+ .yk-page-btn{padding:.45rem 1rem;background:var(--public-surface);border:1px solid var(--public-border);color:var(--public-muted);font-size:.8rem;transition:border-color .15s,color .15s}
+ .yk-page-btn:hover{border-color:var(--public-accent);color:var(--public-accent)}
+ .yk-page-btn.active{background:var(--public-accent);border-color:var(--public-accent);color:white}
+ </style>
 
-    <div class="bg-gradient-to-br from-orange-600 to-red-700 text-white py-12">
-      <div class="container mx-auto px-4">
-        <div class="flex items-center gap-4">
-          <span class="text-5xl">{meta.icon}</span>
-          <div>
-            <h1 class="text-3xl md:text-4xl font-bold">Şanlıurfa {meta.name}</h1>
-            <p class="text-orange-100 mt-1">{totalCount} mekan bulundu</p>
-          </div>
-        </div>
-      </div>
-    </div>
+ <div class="yk-breadcrumb">
+ <div class="sf-container">
+ <nav>
+ <a href="/">Ana Sayfa</a>
+ <span>/</span>
+ <a href="/yeme-icme">Yeme İçme</a>
+ <span>/</span>
+ <span>{meta.name}</span>
+ </nav>
+ </div>
+ </div>
 
-    <div class="container mx-auto px-4 py-8">
-      {places.length > 0 ? (
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {places.map((place) => (
-            <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all group">
-              <div class="h-44 bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
-                <span class="text-5xl opacity-40">🍽️</span>
-              </div>
-              <div class="p-5">
-                <h2 class="font-bold text-lg text-gray-900 group-hover:text-orange-600">{place.name}</h2>
-                {place.category_name && <span class="text-xs text-orange-500">{place.category_name}</span>}
-                {place.short_description && <p class="text-sm text-gray-500 mt-2 line-clamp-2">{place.short_description}</p>}
-                <div class="flex items-center justify-between mt-3">
-                  {place.rating && (
-                    <div class="flex items-center gap-1">
-                      <span class="text-yellow-500">★</span>
-                      <span class="font-medium">{place.rating}</span>
-                      <span class="text-gray-400 text-xs">({place.review_count || 0})</span>
-                    </div>
-                  )}
-                  {place.district_name && <span class="text-xs text-gray-400">📍 {place.district_name}</span>}
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
-      ) : (
-        <div class="text-center py-16">
-          <div class="text-6xl mb-4">{meta.icon}</div>
-          <p class="text-gray-500 text-lg">Bu kategoride henüz mekan bulunmuyor.</p>
-          <a href="/yeme-icme" class="mt-4 inline-block text-orange-600 hover:underline">Yeme İçme Rehberine Dön →</a>
-        </div>
-      )}
+ <div class="yk-hero">
+ <div class="sf-container">
+ <div class="yk-hero-inner">
+ <span class="yk-hero-icon">{meta.icon}</span>
+ <div>
+ <h1 class="yk-h1">Şanlıurfa {meta.name}</h1>
+ <p class="yk-count">{totalCount} mekan bulundu</p>
+ </div>
+ </div>
+ </div>
+ </div>
 
-      {totalPages > 1 && (
-        <div class="flex justify-center gap-2 mt-10">
-          {page > 1 && <a href={`/yeme-icme/${kategori}?sayfa=${page - 1}`} class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50">← Önceki</a>}
-          {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((p) => (
-            <a
-              href={`/yeme-icme/${kategori}?sayfa=${p}`}
-              class={`px-4 py-2 rounded-lg ${p === page ? 'bg-orange-600 text-white' : 'bg-white border hover:bg-gray-50'}`}
-            >{p}</a>
-          ))}
-          {page < totalPages && <a href={`/yeme-icme/${kategori}?sayfa=${page + 1}`} class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50">Sonraki →</a>}
-        </div>
-      )}
-    </div>
-  </div>
+ <div class="yk-body">
+ <div class="sf-container">
+ {places.length > 0 ? (
+ <div class="yk-grid">
+ {places.map((place) => (
+ <a href={`/isletme/${place.slug}`} class="yk-card">
+ <div class="yk-thumb">🍽️</div>
+ <div class="yk-card-body">
+ <p class="yk-card-name">{place.name}</p>
+ {place.category_name && <p class="yk-card-cat">{place.category_name}</p>}
+ {place.short_description && <p class="yk-card-desc">{place.short_description}</p>}
+ <div class="yk-card-meta">
+ {place.rating && (
+ <div class="yk-rating">
+ <span class="yk-rating-star">★</span>
+ {place.rating}
+ <span class="yk-rating-count">({place.review_count || 0})</span>
+ </div>
+ )}
+ {place.district_name && <span class="yk-district">📍 {place.district_name}</span>}
+ </div>
+ </div>
+ </a>
+ ))}
+ </div>
+ ) : (
+ <div class="yk-empty">
+ <div class="yk-empty-icon">{meta.icon}</div>
+ <p>Bu kategoride henüz mekan bulunmuyor.</p>
+ <a href="/yeme-icme" class="yk-empty-link">Yeme İçme Rehberine Dön →</a>
+ </div>
+ )}
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: `Şanlıurfa ${meta.name}`,
-    description: `Şanlıurfa’da ${meta.desc || meta.name.toLowerCase()}. En iyi mekanlar, adresler ve bilgiler.`,
-    url: `${baseUrl}/yeme-icme/${kategori}`,
-    about: { '@type': 'City', name: 'Şanlıurfa' },
-    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'FoodEstablishment',
-        name: p.name,
-        url: `${baseUrl}/isletme/${p.slug}`,
-        ...(p.address ? { address: p.address } : {}),
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Yeme İçme', item: `${baseUrl}/yeme-icme` },
-      { '@type': 'ListItem', position: 3, name: meta.name, item: `${baseUrl}/yeme-icme/${kategori}` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ {totalPages > 1 && (
+ <div class="yk-pagination">
+ {page > 1 && <a href={`/yeme-icme/${kategori}?sayfa=${page - 1}`} class="yk-page-btn">← Önceki</a>}
+ {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map((p) => (
+ <a
+ href={`/yeme-icme/${kategori}?sayfa=${p}`}
+ class={`yk-page-btn${p === page ? ' active' : ''}`}
+ >{p}</a>
+ ))}
+ {page < totalPages && <a href={`/yeme-icme/${kategori}?sayfa=${page + 1}`} class="yk-page-btn">Sonraki →</a>}
+ </div>
+ )}
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'CollectionPage',
+ name: `Şanlıurfa ${meta.name}`,
+ description: `Şanlıurfa'da ${meta.desc || meta.name.toLowerCase()}. En iyi mekanlar, adresler ve bilgiler.`,
+ url: `${baseUrl}/yeme-icme/${kategori}`,
+ about: { '@type': 'City', name: 'Şanlıurfa' },
+ itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+ '@type': 'ListItem',
+ position: i + 1,
+ item: {
+ '@type': 'FoodEstablishment',
+ name: p.name,
+ url: `${baseUrl}/isletme/${p.slug}`,
+ ...(p.address ? { address: p.address } : {}),
+ },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Yeme İçme', item: `${baseUrl}/yeme-icme` },
+ { '@type': 'ListItem', position: 3, name: meta.name, item: `${baseUrl}/yeme-icme/${kategori}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

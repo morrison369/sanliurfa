@@ -83,6 +83,13 @@ interface TrendAlertRecord {
   generatedAt: number;
 }
 
+function withOptional<K extends string, V>(key: K, value: V | null | undefined): { [P in K]?: V } {
+  if (value === null || value === undefined) {
+    return {} as { [P in K]?: V };
+  }
+  return { [key]: value } as { [P in K]?: V };
+}
+
 class KPIManager {
   private kpis: Map<string, KPIRecord> = new Map();
   private counter = 0;
@@ -188,12 +195,13 @@ class BoardReportGenerator {
       revenueVsTargetPct: revenueTarget > 0 ? Math.round((revenue / revenueTarget) * 100 * 10) / 10 : 0,
       revenueYoyGrowthPct: previousRevenue > 0 ? Math.round(((revenue - previousRevenue) / previousRevenue) * 100 * 10) / 10 : 0,
       ebitdaUSD: ebitda, ebitdaMarginPct: revenue > 0 ? Math.round((ebitda / revenue) * 100 * 10) / 10 : 0,
-      cashPositionUSD: cash, burnRateMonths: burnRate,
+      cashPositionUSD: cash,
       customerCount: customers, nrrPct: nrr, churnRatePct: churn, npsScore: nps,
       headcount, headcountVsLastPeriod: headcount - prevHeadcount,
       strategicInitiativesOnTrack: initiativesOnTrack, strategicInitiativesTotal: initiativesTotal,
       topRisks: risks, topDecisionsRequired: decisions, generatedAt: Date.now()
     };
+    Object.assign(record, withOptional('burnRateMonths', burnRate));
     this.reports.push(record);
     logger.debug('Board report generated', { period, revenue, ebitdaMargin: record.ebitdaMarginPct });
     return record;
@@ -212,7 +220,7 @@ class TrendAlertEngine {
   private alerts: TrendAlertRecord[] = [];
   private counter = 0;
 
-  evaluate(kpis: KPIRecord[], consecutiveMissThreshold = 3): TrendAlertRecord[] {
+  evaluate(kpis: KPIRecord[], _consecutiveMissThreshold = 3): TrendAlertRecord[] {
     const newAlerts: TrendAlertRecord[] = [];
 
     kpis.forEach(k => {
@@ -272,4 +280,4 @@ export const executiveScorecardGenerator = new ExecutiveScorecardGenerator();
 export const boardReportGenerator = new BoardReportGenerator();
 export const trendAlertEngine = new TrendAlertEngine();
 
-export {KPIRecord, ExecutiveScorecardRecord, BoardReportRecord, TrendAlertRecord};
+export type {KPIRecord, ExecutiveScorecardRecord, BoardReportRecord, TrendAlertRecord};

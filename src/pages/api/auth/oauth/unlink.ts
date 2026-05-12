@@ -65,7 +65,7 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
 
     // Unlink the provider
     const columnName = `${provider}_id`;
-    const updateData: any = {};
+    const updateData: Record<string, null> = {};
     updateData[columnName] = null;
 
     await updateDb('users', locals.user.id, updateData);

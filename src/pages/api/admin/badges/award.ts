@@ -10,6 +10,7 @@ import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
 import { queryOne } from '../../../../lib/postgres';
+import { invalidateGamification } from '../../../../lib/cache/invalidation';
 
 type AwardBadgeBody = {
   placeId: string;
@@ -50,7 +51,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     // Admin auth required
-    if (!locals.user || !locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/admin/badges/award', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
@@ -105,6 +106,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
     recordRequest('POST', '/api/admin/badges/award', HttpStatus.CREATED, Date.now() - startTime);
 
     logger.logMutation('award', 'place_badges', badge.id, locals.user.id);
+
+    // Cache invalidation: rozet kazanımı place + user cache'lerini etkiler — stale data önler
+    await invalidateGamification(locals.user.id, placeId);
 
     return apiResponse({
       success: true,

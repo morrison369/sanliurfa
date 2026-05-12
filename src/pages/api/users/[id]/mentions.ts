@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany, query } from '../../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { getCache, setCache } from '../../../../lib/cache';
 import { logger } from '../../../../lib/logging';
@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
     }
 
     // Parse query params
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 50);
     const unreadOnly = url.searchParams.get('unread_only') === 'true';
 
     // Check cache
@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
     if (cached) {
       const duration = Date.now() - startTime;
       recordRequest('GET', `/api/users/${userId}/mentions`, HttpStatus.OK, duration);
-      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
+      return apiResponse(cached as any, HttpStatus.OK, requestId);
     }
 
     // Build query
@@ -63,25 +63,24 @@ export const GET: APIRoute = async ({ request, params, url, locals }) => {
       whereClause += ` AND um.is_read = false`;
     }
 
-    // Fetch mentions
-    const mentions = await queryMany(
-      `SELECT um.id, um.mentioned_by_user_id, um.content_type, um.content_id,
-              um.context_text, um.is_read, um.created_at,
-              u.full_name as by_user_name, u.username as by_username, u.avatar_url as by_avatar
-       FROM user_mentions um
-       INNER JOIN users u ON um.mentioned_by_user_id = u.id
-       ${whereClause}
-       ORDER BY um.is_read ASC, um.created_at DESC
-       LIMIT $${params_arr.length + 1}`,
-      [...params_arr, limit]
-    );
-
-    // Count unread mentions
-    const unreadCountResult = await queryMany(
-      `SELECT COUNT(*) as count FROM user_mentions WHERE mentioned_user_id = $1 AND is_read = false`,
-      [userId]
-    );
-    const unreadCount = parseInt(unreadCountResult[0]?.count || '0');
+    const [mentions, unreadCountResult] = await Promise.all([
+      queryMany(
+        `SELECT um.id, um.mentioned_by_user_id, um.content_type, um.content_id,
+                um.context_text, um.is_read, um.created_at,
+                u.full_name as by_user_name, u.username as by_username, u.avatar_url as by_avatar
+         FROM user_mentions um
+         INNER JOIN users u ON um.mentioned_by_user_id = u.id
+         ${whereClause}
+         ORDER BY um.is_read ASC, um.created_at DESC
+         LIMIT $${params_arr.length + 1}`,
+        [...params_arr, limit]
+      ),
+      queryMany(
+        `SELECT COUNT(*) as count FROM user_mentions WHERE mentioned_user_id = $1 AND is_read = false`,
+        [userId]
+      ),
+    ]);
+    const unreadCount = parseInt(unreadCountResult[0]?.count || '0', 10);
 
     // Fire-and-forget: mark returned mentions as read (only if owner is requesting)
     if (userId === locals.user.id) {

@@ -1,25 +1,33 @@
 ---
-/**
- * Activity Feed Page
- * Show personalized feed of activity from followed users
- */
-
 import Layout from '../layouts/Layout.astro';
 import ActivityFeed from '../components/ActivityFeed';
 
-// Require authentication
-if (!Astro.locals.user) {
-  return Astro.redirect('/giris?redirect=/akis');
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect('/giris?redirect=/akis');
 }
 ---
 
 <Layout seo={{ title: "Aktivite Akışı - Sanliurfa.com", noIndex: true }}>
-  <div class="container-custom py-8">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Aktivite Akışı</h1>
-      <p class="text-gray-600 dark:text-gray-400 mt-2">Takip ettiğin kullanıcıların aktivitelerini gör</p>
-    </div>
+ <style is:inline>
+ .ak-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:2.5rem 0}
+ .ak-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-text-soft)}
+ .ak-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:700;color:var(--public-text);margin:.5rem 0 .25rem}
+ .ak-desc{color:var(--public-muted);font-size:.9rem}
+ .ak-body{background:var(--bg);padding:2rem 0 4rem}
+ </style>
 
-    <ActivityFeed client:visible={{ rootMargin: '130px' }} userId={Astro.locals.user.id} />
-  </div>
+ <div class="ak-hero">
+ <div class="sf-container">
+ <p class="ak-label">Hesabım</p>
+ <h1 class="ak-h1">Aktivite Akışı</h1>
+ <p class="ak-desc">Takip ettiğin kullanıcıların aktivitelerini gör</p>
+ </div>
+ </div>
+
+ <div class="ak-body">
+ <div class="sf-container">
+ <ActivityFeed client:visible={{ rootMargin: '130px' }} userId={user.id} />
+ </div>
+ </div>
 </Layout>

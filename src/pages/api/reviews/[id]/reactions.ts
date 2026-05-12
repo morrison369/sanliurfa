@@ -4,7 +4,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
-export const GET: APIRoute = async ({ request, locals, params }) => {
+export const GET: APIRoute = async ({ request, params }) => {
   const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
@@ -51,7 +51,17 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
     if (!reaction_type) {
       recordRequest('POST', '/api/reviews/[id]/reactions', HttpStatus.BAD_REQUEST, Date.now() - startTime);
-      return apiError(ErrorCode.VALIDATION_ERROR, 'reaction_type required', HttpStatus.BAD_REQUEST, undefined, requestId);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'reaction_type zorunludur', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const VALID_REACTION_TYPES = new Set(['like', 'helpful', 'unhelpful', 'love', 'funny']);
+    if (!VALID_REACTION_TYPES.has(reaction_type)) {
+      recordRequest('POST', '/api/reviews/[id]/reactions', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz tepki tipi', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const VALID_ACTIONS = new Set(['add', 'remove']);
+    if (action !== undefined && action !== null && (typeof action !== 'string' || !VALID_ACTIONS.has(action))) {
+      recordRequest('POST', '/api/reviews/[id]/reactions', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz action değeri', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     let success = false;

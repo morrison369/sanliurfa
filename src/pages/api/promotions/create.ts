@@ -10,9 +10,10 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { validateWithSchema } from '../../../lib/validation';
+import type { ValidationSchema } from '../../../lib/validation';
 import { deleteCache } from '../../../lib/cache';
 
-const createPromotionSchema = {
+const createPromotionSchema: ValidationSchema = {
   placeId: {
     type: 'string' as const,
     required: true,
@@ -51,7 +52,7 @@ const createPromotionSchema = {
     required: false,
     maxLength: 500,
   },
-} as any;
+};
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId(request);
@@ -120,24 +121,39 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    // Create promotion
-    const promotion = await insert('promotions', {
-      place_id: placeId,
-      coupon_code: couponCode.toUpperCase(),
-      discount_type: discountType,
-      discount_value: discountValue,
-      max_uses: maxUses || null,
-      expires_at: expiresAt || null,
-      description,
-      is_active: true,
-      created_at: new Date().toISOString(),
-    });
+    // Create promotion — try/catch on 23505 handles concurrent same coupon_code (HARD RULE #47)
+    let promotion: Record<string, unknown> | null = null;
+    try {
+      promotion = await insert('promotions', {
+        place_id: placeId,
+        coupon_code: couponCode.toUpperCase(),
+        discount_type: discountType,
+        discount_value: discountValue,
+        max_uses: maxUses || null,
+        expires_at: expiresAt || null,
+        description,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      });
+    } catch (insertErr: unknown) {
+      if (insertErr instanceof Error && 'code' in insertErr && insertErr.code === '23505') {
+        recordRequest('POST', '/api/promotions/create', HttpStatus.CONFLICT, Date.now() - startTime);
+        return apiError(
+          ErrorCode.CONFLICT,
+          'Bu kupon kodu zaten kullanılmaktadır',
+          HttpStatus.CONFLICT,
+          undefined,
+          requestId
+        );
+      }
+      throw insertErr;
+    }
 
     // Invalidate cache
     await deleteCache(`places:${placeId}:promotions`);
 
     recordRequest('POST', '/api/promotions/create', HttpStatus.CREATED, Date.now() - startTime);
-    logger.logMutation('create', 'promotions', promotion.id, locals.user.id);
+    logger.logMutation('create', 'promotions', typeof promotion?.id === 'string' ? promotion.id : placeId, locals.user.id);
 
     return apiResponse(
       {

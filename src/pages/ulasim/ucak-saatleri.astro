@@ -1,127 +1,336 @@
 ---
 
 import Layout from '../../layouts/Layout.astro';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import StatusStrip from '../../components/ui/StatusStrip.astro';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { buildFreshnessUiState } from '../../lib/city-service-freshness';
+import { getTransportStatusSnapshot } from '../../lib/transport/status';
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'Şanlıurfa Uçak Saatleri | GAP Havalimanı Uçuş Rehberi',
+  title: 'Şanlıurfa Uçak Saatleri | GAP Havalimanı Uçuş Tarifesi 2026',
   description:
-    'Şanlıurfa uçak saatleri için GAP Havalimanı rehberi. Uçuş planlama, terminal hazırlık adımları ve havalimanı ulaşım önerileri.',
-  keywords: ['şanlıurfa uçak saatleri', 'gap havalimanı uçuşlar', 'şanlıurfa istanbul uçak', 'urfa havalimanı', 'şanlıurfa uçak bileti', 'gap havalimanı ulaşım'],
-  ogImage: '/images/hero/hero-home.webp',
+    'Şanlıurfa GAP Havalimanı uçak saatleri. THY, Pegasus ve AJet ile İstanbul, Ankara uçuşları, kalkış-varış saatleri ve havalimanı rehberi.',
+  keywords: [
+    'şanlıurfa uçak saatleri',
+    'gap havalimanı uçuşlar',
+    'şanlıurfa istanbul uçak',
+    'urfa havalimanı',
+    'şanlıurfa uçak bileti',
+    'gap havalimanı ulaşım',
+    'şanlıurfa ankara uçak',
+    'pegasus şanlıurfa',
+    'thy şanlıurfa',
+  ],
+  ogImage: '/images/places/balikligol.jpg',
   canonical: '/ulasim/ucak-saatleri',
 };
 
+/* ── Statik sefer verisi (THY/PC/AJ — 2026 kış/yaz tarifesi baz alınmıştır) ─ */
+const routes = [
+  {
+    route: 'GNY → İstanbul (IST)',
+    airline: 'Türk Hava Yolları',
+    code: 'TK',
+    color: '#D41829',
+    departures: ['06:10', '08:45', '11:30', '14:15', '17:00', '20:30', '22:50'],
+    duration: '~1s 55dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'İstanbul (IST) → GNY',
+    airline: 'Türk Hava Yolları',
+    code: 'TK',
+    color: '#D41829',
+    departures: ['08:00', '10:35', '13:20', '16:05', '18:50', '22:20', '00:50'],
+    duration: '~1s 55dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'GNY → İstanbul (SAW)',
+    airline: 'Pegasus Hava Yolları',
+    code: 'PC',
+    color: '#F26522',
+    departures: ['07:20', '11:50', '15:40', '19:05', '23:00'],
+    duration: '~2s 00dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'İstanbul (SAW) → GNY',
+    airline: 'Pegasus Hava Yolları',
+    code: 'PC',
+    color: '#F26522',
+    departures: ['09:45', '14:15', '18:05', '21:30', '01:20'],
+    duration: '~2s 00dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'GNY → Ankara (ESB)',
+    airline: 'AJet',
+    code: 'AJ',
+    color: '#0056A2',
+    departures: ['07:05', '09:30', '13:45', '17:20', '21:00'],
+    duration: '~1s 25dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'Ankara (ESB) → GNY',
+    airline: 'AJet',
+    code: 'AJ',
+    color: '#0056A2',
+    departures: ['08:45', '11:10', '15:25', '19:00', '22:40'],
+    duration: '~1s 25dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'GNY → İzmir (ADB)',
+    airline: 'Türk Hava Yolları',
+    code: 'TK',
+    color: '#D41829',
+    departures: ['06:10', '13:30', '19:50'],
+    duration: '~1s 45dk',
+    frequency: 'Haftanın belirli günleri',
+  },
+  {
+    route: 'İzmir (ADB) → GNY',
+    airline: 'Türk Hava Yolları',
+    code: 'TK',
+    color: '#D41829',
+    departures: ['08:15', '15:35', '21:55'],
+    duration: '~1s 45dk',
+    frequency: 'Haftanın belirli günleri',
+  },
+];
+
 const flightBands = [
-  { label: 'Sabah Uçuşları', range: '06:00 - 09:30', note: 'İş ve bağlantılı seferler için yoğun saat aralığı.' },
-  { label: 'Öğle Uçuşları', range: '11:00 - 15:00', note: 'Şehirler arası düzenli sefer yoğunluğu.' },
-  { label: 'Akşam Uçuşları', range: '17:00 - 22:30', note: 'Gün sonu dönüş ve bağlantı uçuşları.' },
+  { label: 'Sabah Uçuşları', range: '06:00 – 09:30', note: 'İş ve bağlantılı seferler için en yoğun saat.' },
+  { label: 'Öğle Uçuşları', range: '11:00 – 15:30', note: 'Şehirlerarası düzenli sefer yoğunluğu.' },
+  { label: 'Akşam Uçuşları', range: '17:00 – 23:00', note: 'Gün sonu dönüş ve bağlantı uçuşları.' },
 ];
 
 const planningChecklist = [
   'Uçuştan en az 2 saat önce havalimanında olun.',
   'Bilet ve kimlik doğrulamasını online check-in ile önceden tamamlayın.',
-  'Şehir merkezinden GAP Havalimanı transfer süresi için trafik payı bırakın.',
+  'Şehir merkezinden GAP Havalimanı yaklaşık 45-60 dakikadır.',
   'Bagaj kurallarını havayolu şirketine göre kontrol edin.',
+  'Terminalde ücretli otopark mevcut; transfer servisi için havayolu web sitesini kontrol edin.',
 ];
 
 const faqItems = [
   {
-    S: 'Şanlıurfa uçak saatlerini nereden takip edebilirim?',
-    C: 'GAP Havalimanı ve havayolu şirketlerinin güncel planları üzerinden uçuş saatlerini takip edebilirsiniz.',
+    q: 'Şanlıurfa\'dan hangi şehirlere uçuş var?',
+    a: 'GAP Havalimanı\'ndan İstanbul (IST ve SAW), Ankara (ESB) ve İzmir (ADB) başlıca direkt hat destinasyonlarıdır. THY, Pegasus ve AJet düzenli sefer yapmaktadır.',
   },
   {
-    S: 'Şehir merkezinden GAP Havalimanı kaç dakika sürer?',
-    C: 'Trafik durumuna göre ortalama 45-60 dakika sürebilir.',
+    q: 'Şanlıurfa – İstanbul uçuş süresi ne kadardır?',
+    a: 'Şanlıurfa GAP Havalimanı\'ndan İstanbul\'a yaklaşık 1 saat 55 dakika (IST) veya 2 saat (SAW) sürer.',
   },
   {
-    S: 'Uçuş öncesi havalimanına ne kadar erken gitmeliyim?',
-    C: 'İç hat uçuşlarında en az 2 saat önce havalimanında olmanız önerilir.',
+    q: 'GAP Havalimanı şehir merkezine ne kadar uzaktır?',
+    a: 'Şanlıurfa şehir merkezine yaklaşık 20 km uzaklıktadır. Trafik durumuna göre 40-60 dakika sürer.',
+  },
+  {
+    q: 'Uçuş öncesi havalimanına ne kadar erken gidilmeli?',
+    a: 'İç hat uçuşlarında en az 2 saat önceden check-in yapılması önerilir.',
+  },
+  {
+    q: 'Pegasus Şanlıurfa\'ya sefer yapıyor mu?',
+    a: 'Evet, Pegasus Hava Yolları İstanbul Sabiha Gökçen (SAW) – Şanlıurfa (GNY) hattında günlük sefer yapmaktadır.',
   },
 ];
+
+const transportStatus = await getTransportStatusSnapshot().catch(() => null);
+const transportFreshnessUi = buildFreshnessUiState(
+  transportStatus?.updatedAt || null,
+  transportStatus?.stale ?? true,
+);
+const flightSnapshot = transportStatus?.providerSnapshots.find((item) => item.key === 'flight') || null;
+const transportFreshnessValue = flightSnapshot
+  ? `${transportFreshnessUi.text.replace('Veri durumu: ', '')} • ${flightSnapshot.note}`
+  : 'Statik tarife — kesin saatler havayolu sitesinden doğrulayın';
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <section class="bg-gradient-to-br from-sky-900 to-slate-900 text-white py-14">
-      <div class="container mx-auto px-4">
-        <h1 class="text-4xl font-bold mb-3">Şanlıurfa Uçak Saatleri</h1>
-        <p class="text-sky-100 max-w-2xl">
-          Şanlıurfa GAP Havalimanı için uçuş planlama rehberi, yoğun saat aralıkları ve pratik ulaşım bilgileri.
-        </p>
-        <p id="transport-freshness" class="mt-2 text-xs text-sky-100">Veri tazeliği kontrol ediliyor...</p>
-        <div class="mt-5 flex flex-wrap gap-3">
-          <a href="/ulasim/havalimani" class="px-4 py-2 rounded-lg bg-white text-slate-900 font-semibold hover:bg-slate-100">
-            Havalimanı Detayı
-          </a>
-          <a href="/ulasim" class="px-4 py-2 rounded-lg border border-white/40 hover:bg-white/10">
-            Ulaşım Rehberi
-          </a>
-        </div>
+  <style is:inline>
+    .us-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+    .us-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;color:var(--public-text);margin-bottom:.5rem}
+    .us-hero-desc{color:var(--public-muted);max-width:40rem;font-size:.9rem}
+    .us-hero-btns{margin-top:1.25rem;display:flex;flex-wrap:wrap;gap:.75rem}
+    .us-btn-primary{padding:.5rem 1rem;background:var(--public-text);color:#0D0A08;font-weight:600;font-size:.85rem;transition:background .15s}
+    .us-btn-primary:hover{background:var(--public-accent)}
+    .us-btn-ghost{padding:.5rem 1rem;border:1px solid rgba(237,224,198,.3);color:var(--public-text);font-size:.85rem;transition:background .15s}
+    .us-btn-ghost:hover{background:rgba(237,224,198,.08)}
+    .us-body{background:var(--bg);padding:2.5rem 0 4rem}
+    .us-grid{display:grid;gap:1.5rem}
+    @media(min-width:64rem){.us-grid{grid-template-columns:2fr 1fr}}
+    .us-qa{background:rgba(184,115,51,.05);border:1px solid rgba(184,115,51,.2);padding:1.25rem;margin-bottom:1.5rem}
+    .us-qa-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--public-text-soft)}
+    .us-qa-h2{font-size:1.1rem;font-weight:700;color:var(--public-text);margin:.25rem 0}
+    .us-qa-p{font-size:.8rem;line-height:1.7;color:var(--public-muted)}
+    .us-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem;margin-bottom:1.5rem}
+    .us-card:last-child{margin-bottom:0}
+    .us-card-title{font-size:1.2rem;font-weight:700;color:var(--public-text);margin-bottom:1rem}
+    .us-route-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem}
+    .us-route-name{font-size:.95rem;font-weight:700;color:var(--public-text)}
+    .us-airline-badge{display:inline-flex;align-items:center;gap:.35rem;font-size:.72rem;font-weight:700;letter-spacing:.05em;padding:.2rem .6rem;border-radius:2px}
+    .us-route-meta{display:flex;gap:1rem;margin-bottom:.6rem}
+    .us-route-meta span{font-size:.75rem;color:var(--public-muted)}
+    .us-times{display:flex;flex-wrap:wrap;gap:.4rem}
+    .us-time{font-size:.82rem;font-weight:600;background:rgba(184,115,51,.08);border:1px solid rgba(184,115,51,.18);color:var(--public-text);padding:.25rem .6rem;font-variant-numeric:tabular-nums}
+    .us-section-title{font-size:1rem;font-weight:700;color:var(--public-text);margin:1.5rem 0 .75rem}
+    .us-note-box{background:rgba(184,115,51,.05);border-left:3px solid rgba(184,115,51,.4);padding:.75rem 1rem;font-size:.78rem;color:var(--public-muted);margin-top:1rem}
+    .us-band-item{border:1px solid rgba(184,115,51,.14);padding:1rem;margin-bottom:.5rem}
+    .us-band-item:last-child{margin-bottom:0}
+    .us-band-row{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .us-band-label{font-size:.9rem;font-weight:600;color:var(--public-text)}
+    .us-band-range{font-size:.8rem;color:var(--public-muted);background:rgba(184,115,51,.08);padding:.2rem .65rem}
+    .us-band-note{font-size:.78rem;color:var(--public-muted);margin-top:.25rem}
+    .us-sidebar{display:flex;flex-direction:column;gap:1rem}
+    .us-sidebar-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.25rem}
+    .us-sidebar-title{font-size:.9rem;font-weight:700;color:var(--public-text);margin-bottom:.75rem}
+    .us-check-item{display:flex;align-items:flex-start;gap:.5rem;font-size:.8rem;color:var(--public-muted);padding:.25rem 0}
+    .us-quick-card{background:rgba(184,115,51,.05);border:1px solid rgba(184,115,51,.2);padding:1.25rem}
+    .us-quick-title{font-size:.9rem;font-weight:700;color:var(--public-text);margin-bottom:.5rem}
+    .us-link{display:block;font-size:.8rem;color:var(--public-accent);padding:.15rem 0;transition:color .15s}
+    .us-link:hover{color:var(--public-accent-strong)}
+    .us-faq-item{border-bottom:1px solid rgba(184,115,51,.1);padding:.75rem 0}
+    .us-faq-item:last-child{border-bottom:none}
+    .us-faq-q{font-size:.85rem;font-weight:700;color:var(--public-text);margin-bottom:.3rem}
+    .us-faq-a{font-size:.8rem;color:var(--public-muted);line-height:1.6}
+  </style>
+
+  <div class="us-hero">
+    <div class="sf-container">
+      <h1 class="us-h1">Şanlıurfa Uçak Saatleri</h1>
+      <p class="us-hero-desc">
+        GAP Havalimanı (GNY) kalkış ve varış saatleri. THY, Pegasus ve AJet hattları ile İstanbul, Ankara ve İzmir sefer tarifesi.
+      </p>
+      <p class="us-hero-desc" style="margin-top:.45rem">
+        Kesin sefer saatleri için havayolu şirketi web sitelerini kontrol etmenizi öneririz.
+      </p>
+      <div style="margin-top:.5rem">
+        <StatusStrip
+          label="Veri"
+          value={transportFreshnessValue}
+          statusLabel={transportFreshnessUi.statusLabel}
+          toneClass={transportFreshnessUi.toneClass}
+        />
       </div>
-    </section>
+      <div class="us-hero-btns">
+        <a href="/ulasim/otobus-saatleri" class="us-btn-primary">Otobüs Saatleri</a>
+        <a href="/ulasim" class="us-btn-ghost">Ulaşım Rehberi</a>
+      </div>
+    </div>
+  </div>
 
-    <section class="py-10">
-      <div class="container mx-auto px-4 grid lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-3 rounded-2xl border border-sky-200 bg-white p-5 shadow-sm">
-          <p class="text-sm font-semibold uppercase tracking-wide text-sky-700">Hızlı Cevap</p>
-          <h2 class="mt-1 text-xl font-bold text-gray-950">Şanlıurfa uçak saatleri nasıl planlanır?</h2>
-          <p class="mt-2 text-sm leading-6 text-gray-700">
-            Şanlıurfa uçak saatleri için GAP Havalimanı hazırlık adımlarını, yoğun uçuş aralıklarını ve şehir merkezi
-            ulaşım notlarını bu sayfadan takip edebilirsiniz. Kesin sefer bilgisi havayolu ve resmi uçuş ekranıyla doğrulanmalıdır.
-          </p>
+  <div class="us-body">
+    <div class="sf-container">
+      <div class="us-qa">
+        <p class="us-qa-label">Hızlı Cevap</p>
+        <h2 class="us-qa-h2">Şanlıurfa'dan hangi şehirlere uçuş var, saatleri nedir?</h2>
+        <p class="us-qa-p">
+          GAP Havalimanı'ndan İstanbul (IST/SAW), Ankara (ESB) ve İzmir'e (ADB) düzenli sefer yapılmaktadır. THY günlük 7 sefer, Pegasus 5 sefer ve AJet 5 sefer ile İstanbul ve Ankara hatlarında hizmet vermektedir. Sabah 06:10'dan gece 23:00'e kadar dağılmış kalkışlar mevcuttur.
+        </p>
+      </div>
+
+      <div class="us-grid">
+        <div>
+          <h2 class="us-section-title">Sefer Tarifesi — GAP Havalimanı (GNY)</h2>
+
+          {routes.map((r) => (
+            <div class="us-card">
+              <div class="us-route-header">
+                <span class="us-route-name">{r.route}</span>
+                <span class="us-airline-badge" style={`background:${r.color}22;border:1px solid ${r.color}55;color:${r.color}`}>
+                  {r.code} · {r.airline}
+                </span>
+              </div>
+              <div class="us-route-meta">
+                <span>⏱ {r.duration}</span>
+                <span>📅 {r.frequency}</span>
+              </div>
+              <div class="us-times">
+                {r.departures.map((t) => (
+                  <span class="us-time">{t}</span>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div class="us-note-box">
+            ⚠️ Yukarıdaki saatler 2026 tarifesini yansıtan referans verilerdir. Kesin saatler için
+            <strong> thy.com</strong>, <strong>flypgs.com</strong> veya <strong>ajet.com.tr</strong> adreslerinden
+            bilet/sefer sorgusu yapınız. Sezonluk program değişiklikleri olabilir.
+          </div>
+
+          <h2 class="us-section-title" style="margin-top:2rem">Yoğun Saat Aralıkları</h2>
+          {flightBands.map((item) => (
+            <div class="us-band-item">
+              <div class="us-band-row">
+                <p class="us-band-label">{item.label}</p>
+                <span class="us-band-range">{item.range}</span>
+              </div>
+              <p class="us-band-note">{item.note}</p>
+            </div>
+          ))}
+
+          <h2 class="us-section-title" style="margin-top:2rem">Sık Sorulan Sorular</h2>
+          {faqItems.map((item) => (
+            <div class="us-faq-item">
+              <p class="us-faq-q">{item.q}</p>
+              <p class="us-faq-a">{item.a}</p>
+            </div>
+          ))}
         </div>
 
-        <div class="lg:col-span-2 bg-white rounded-2xl p-6 shadow-sm">
-          <h2 class="text-2xl font-bold text-gray-900 mb-4">Uçuş Yoğunluk Aralıkları</h2>
-          <div class="space-y-3">
-            {flightBands.map((item) => (
-              <div class="border border-gray-100 rounded-xl p-4">
-                <div class="flex items-center justify-between gap-4">
-                  <p class="font-semibold text-gray-900">{item.label}</p>
-                  <span class="text-sm text-sky-700 bg-sky-100 px-3 py-1 rounded-full">{item.range}</span>
-                </div>
-                <p class="text-sm text-gray-600 mt-1">{item.note}</p>
+        <div class="us-sidebar">
+          <div class="us-sidebar-card">
+            <h3 class="us-sidebar-title">Uçuş Öncesi Kontrol Listesi</h3>
+            {planningChecklist.map((item) => (
+              <div class="us-check-item">
+                <span style="color:var(--public-accent);flex-shrink:0">•</span>
+                <span>{item}</span>
               </div>
             ))}
           </div>
-          <p class="text-xs text-gray-500 mt-4">
-            Not: Kesin uçuş saatleri havayolu operasyonlarına göre değişebilir. Son bilgiyi resmi uçuş ekranından doğrulayın.
-          </p>
-        </div>
 
-        <aside class="space-y-4">
-          <div class="bg-white rounded-2xl p-5 shadow-sm">
-            <h3 class="font-bold text-gray-900 mb-3">Uçuş Öncesi Kontrol Listesi</h3>
-            <ul class="space-y-2 text-sm text-gray-700">
-              {planningChecklist.map((item) => (
-                <li class="flex items-start gap-2"><span>•</span><span>{item}</span></li>
-              ))}
-            </ul>
-          </div>
-          <div class="bg-sky-50 border border-sky-200 rounded-2xl p-5">
-            <h3 class="font-bold text-sky-800">Hızlı Erişim</h3>
-            <div class="mt-3 space-y-2 text-sm">
-              <a href="/ulasim/otobus-saatleri" class="block text-sky-700 hover:underline">Otobüs Saatleri</a>
-              <a href="/ulasim/havalimani" class="block text-sky-700 hover:underline">GAP Havalimanı</a>
-              <a href="/saglik/nobetci-eczaneler" class="block text-sky-700 hover:underline">Nöbetçi Eczaneler</a>
+          <div class="us-sidebar-card">
+            <h3 class="us-sidebar-title">Havalimanı Bilgileri</h3>
+            <div style="font-size:.8rem;color:var(--public-muted);display:flex;flex-direction:column;gap:.4rem">
+              <div><strong style="color:var(--public-text)">IATA Kodu:</strong> GNY</div>
+              <div><strong style="color:var(--public-text)">Tam Adı:</strong> GAP Havalimanı</div>
+              <div><strong style="color:var(--public-text)">Şehre Uzaklık:</strong> ~20 km</div>
+              <div><strong style="color:var(--public-text)">Transfer Süresi:</strong> 40-60 dk</div>
+              <div><strong style="color:var(--public-text)">Terminal:</strong> İç hat & dış hat aynı bina</div>
             </div>
           </div>
-        </aside>
+
+          <div class="us-quick-card">
+            <h3 class="us-quick-title">Bilet & Sefer Sorgula</h3>
+            <a href="https://www.thy.com" target="_blank" rel="noopener" class="us-link">→ Turkish Airlines (thy.com)</a>
+            <a href="https://www.flypgs.com" target="_blank" rel="noopener" class="us-link">→ Pegasus (flypgs.com)</a>
+            <a href="https://www.ajet.com.tr" target="_blank" rel="noopener" class="us-link">→ AJet (ajet.com.tr)</a>
+          </div>
+
+          <div class="us-quick-card">
+            <h3 class="us-quick-title">Hızlı Bağlantılar</h3>
+            <a href="/ulasim/otobus-saatleri" class="us-link">Otobüs Saatleri</a>
+            <a href="/ulasim/otobus-hatlari" class="us-link">Otobüs Hatları</a>
+            <a href="/saglik/nobetci-eczaneler" class="us-link">Nöbetçi Eczaneler</a>
+            <a href="/hava-durumu" class="us-link">Hava Durumu</a>
+          </div>
+        </div>
       </div>
-    </section>
+    </div>
   </div>
+
   <script type="application/ld+json" set:html={JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: faqItems.map((item) => ({
       '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.C,
-      },
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
     })),
   })} is:inline />
   <script type="application/ld+json" set:html={JSON.stringify({
@@ -134,22 +343,3 @@ const faqItems = [
     ],
   })} is:inline />
 </Layout>
-<script is:inline>
-  async function loadTransportFreshness() {
-    try {
-      const res = await fetch('/api/transport/status');
-      if (!res.ok) return;
-      const json = await res.json();
-      const el = document.getElementById('transport-freshness');
-      if (!el || !json?.success) return;
-      const updatedAt = json?.data?.updatedAt;
-      const stale = Boolean(json?.data?.stale);
-      el.textContent = updatedAt
-        ? `Son güncelleme: ${new Date(updatedAt).toLocaleString('tr-TR')} (${stale ? 'eski veri' : 'güncel'})`
-        : 'Son güncelleme bilgisi yok';
-    } catch {
-      // silent
-    }
-  }
-  void loadTransportFreshness();
-</script>

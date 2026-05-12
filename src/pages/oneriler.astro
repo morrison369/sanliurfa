@@ -1,196 +1,212 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Image from '../components/Image.astro';
+import PublicPageIntro from '../components/public/PublicPageIntro.astro';
 import { queryMany } from '../lib/postgres';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
+import { resolvePlaceImage } from '../lib/public-image-resolvers';
+const baseUrl = getPublicAppUrl();
 
 interface RecommendedPlace {
-  id: string;
-  slug: string;
-  name: string;
-  category: string;
-  short_description: string | null;
-  cover_image: string | null;
-  rating: number;
-  rating_count: number;
-  view_count: number;
+ id: string;
+ slug: string;
+ name: string;
+ category: string;
+ short_description: string | null;
+ cover_image: string | null;
+ rating: number;
+ rating_count: number;
+ view_count: number;
 }
 
-// Check if user is authenticated
 const token = Astro.cookies.get('token')?.value;
 let recommendations: RecommendedPlace[] = [];
 let isPersonalized = false;
 
 try {
-  recommendations = await queryMany<RecommendedPlace>(
-    `SELECT
-       p.id::text,
-       p.slug,
-       p.name,
-       COALESCE(c.name, p.category, 'Mekan') as category,
-       COALESCE(p.short_description, p.description) as short_description,
-       COALESCE(p.thumbnail_url, p.images[1]) as cover_image,
-       COALESCE(p.rating, 0)::float as rating,
-       COALESCE(p.rating_count, p.review_count, 0)::int as rating_count,
-       COALESCE(p.view_count, 0)::int as view_count
-     FROM places p
-     LEFT JOIN categories c ON c.id = p.category_id
-     WHERE p.status = 'active'
-     ORDER BY COALESCE(p.review_count, 0) DESC, COALESCE(p.rating, 0) DESC, p.created_at DESC
-     LIMIT 12`
-  );
+ recommendations = await queryMany<RecommendedPlace>(
+ `SELECT
+ p.id::text,
+ p.slug,
+ p.name,
+ COALESCE(c.name, p.category, 'Mekan') as category,
+ COALESCE(p.short_description, p.description) as short_description,
+ COALESCE(p.thumbnail_url, p.images[1]) as cover_image,
+ COALESCE(p.rating, 0)::float as rating,
+ COALESCE(p.rating_count, p.review_count, 0)::int as rating_count,
+ COALESCE(p.view_count, 0)::int as view_count
+ FROM places p
+ LEFT JOIN categories c ON c.id = p.category_id
+ WHERE p.status = 'active'
+ ORDER BY COALESCE(p.review_count, 0) DESC, COALESCE(p.rating, 0) DESC, p.created_at DESC
+ LIMIT 12`
+ );
 } catch (e) {
-  console.error('Öneriler sayfası query hatası:', e);
+ logger.error('Öneriler sayfası query hatası:', e instanceof Error ? e : new Error(String(e)));
 }
 isPersonalized = Boolean(token);
 
 const seo = {
-  title: isPersonalized ? 'Sana Özel Öneriler - Sanliurfa.com' : 'Popüler Mekan Önerileri - Sanliurfa.com',
-  description: "Şanlıurfa mekanları arasından popüler ve yüksek puanlı önerileri keşfedin.",
-  keywords: ['şanlıurfa mekan önerileri', 'popüler mekanlar', 'kişiselleştirilmiş öneriler', 'şanlıurfa gezilecek yerler'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/oneriler',
+ title: isPersonalized ? 'Sana Özel Öneriler - Sanliurfa.com' : 'Popüler Mekan Önerileri - Sanliurfa.com',
+ description: "Şanlıurfa mekanları arasından popüler ve yüksek puanlı önerileri keşfedin.",
+ keywords: ['şanlıurfa mekan önerileri', 'popüler mekanlar', 'kişiselleştirilmiş öneriler', 'şanlıurfa gezilecek yerler'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/oneriler',
 };
 
 const faqItems = [
-  { S: "Öneriler nasıl belirleniyor?", C: "Öneriler, kullanıcı puanları, yorum sayısı ve görüntülenme verisi baz alınarak akıllı sıralama algoritması tarafından belirlenir." },
-  { S: "Kişiselleştirilmiş öneriler nasıl alabilirim?", C: "Hesabınıza giriş yaparak ilgi alanlarınıza göre kişiselleştirilmiş mekan önerileri alabilirsiniz." },
-  { S: "Önerilen mekanlar ne sıklıkla güncelleniyor?", C: "Öneriler her gün kullanıcı aktivitelerine göre otomatik güncellenir." },
+ { S: "Öneriler nasıl belirleniyor?", C: "Öneriler, kullanıcı puanları, yorum sayısı ve görüntülenme verisi baz alınarak akıllı sıralama algoritması tarafından belirlenir." },
+ { S: "Kişiselleştirilmiş öneriler nasıl alabilirim?", C: "Hesabınıza giriş yaparak ilgi alanlarınıza göre kişiselleştirilmiş mekan önerileri alabilirsiniz." },
+ { S: "Önerilen mekanlar ne sıklıkla güncelleniyor?", C: "Öneriler her gün kullanıcı aktivitelerine göre otomatik güncellenir." },
 ];
+const resolveRecommendationImage = (place: RecommendedPlace) =>
+ resolvePlaceImage({
+  slug: place.slug,
+  cover_image: place.cover_image,
+ });
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
-    <div class="container max-w-6xl mx-auto">
-      <!-- Header -->
-      <div class="mb-12">
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-          {isPersonalized ? 'Sana Özel Öneriler' : 'En Popüler Yerler'}
-        </h1>
-        <p class="text-lg text-gray-600 dark:text-gray-300">
-          {isPersonalized
-            ? 'Sana uygun, senin beğendiğin yerlere benzer mekanları keşfet.'
-            : 'Şanlıurfa\'da en çok ziyaret edilen ve beğenilen yerleri gözden geçir.'}
-        </p>
-      </div>
+ <style>
+ .on-page{background:var(--public-bg);min-height:100vh}
+ .on-body{padding:3rem 0 5rem}
+ .on-container{max-width:72rem;margin:0 auto}
+ .on-grid{display:grid;gap:1.5rem;grid-template-columns:1fr}
+ @media(min-width:48rem){.on-grid{grid-template-columns:repeat(2,1fr)}}
+ @media(min-width:64rem){.on-grid{grid-template-columns:repeat(3,1fr)}}
+ .on-card{display:block;border:1px solid var(--public-border);background:var(--public-surface);overflow:hidden;transition:border-color .15s,transform .15s;text-decoration:none}
+ .on-card:hover{border-color:var(--public-accent);transform:translateY(-2px)}
+ .on-img-wrap{position:relative;width:100%;height:12rem;overflow:hidden;background:var(--public-accent-soft)}
+ .on-img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+ .on-card:hover .on-img{transform:scale(1.05)}
+ .on-card-body{padding:1rem}
+ .on-badge{display:inline-block;padding:.2rem .75rem;font-size:.72rem;font-weight:600;background:var(--public-accent-soft);color:var(--public-accent-strong);margin-bottom:.75rem;letter-spacing:.04em}
+ .on-title{font-size:1rem;font-weight:700;color:var(--public-text);margin-bottom:.5rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .on-card:hover .on-title{color:var(--public-accent-strong)}
+ .on-short-desc{font-size:.82rem;color:var(--public-muted);margin-bottom:.75rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .on-stars{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem}
+ .on-star{color:var(--public-border)}
+ .on-star-active{color:var(--public-accent)}
+ .on-rating-val{font-size:.82rem;color:var(--public-muted)}
+ .on-views{font-size:.75rem;color:var(--public-text-soft)}
+ .on-empty{grid-column:1/-1;text-align:center;padding:3rem 0}
+ .on-empty-text{color:var(--public-muted);font-size:1rem}
+ .on-cta{margin-top:4rem;background:var(--public-surface);border:1px solid var(--public-border);padding:2.5rem;text-align:center}
+ .on-cta-h2{font-family:'Cormorant Garamond',serif;font-size:1.75rem;font-weight:700;color:var(--public-text);margin-bottom:.75rem}
+ .on-cta-desc{color:var(--public-text-soft);margin-bottom:1.5rem;font-size:.9rem}
+ .on-cta-btn{display:inline-block;padding:.75rem 2rem;background:var(--public-accent);color:white;font-weight:700;font-size:.9rem;transition:background .15s;text-decoration:none}
+ .on-cta-btn:hover{background:var(--public-accent-strong)}
+ </style>
 
-      <!-- Recommendations Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recommendations.length === 0 ? (
-          <div class="col-span-full text-center py-12">
-            <p class="text-gray-500 dark:text-gray-400 text-lg">
-              Henüz yeterli veri yok. Lütfen daha sonra tekrar kontrol et.
-            </p>
-          </div>
-        ) : (
-          recommendations.map((place) => (
-            <a
-              href={`/isletme/${place.slug}`}
-              class="group bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
-            >
-              <!-- Image -->
-              {place.cover_image ? (
-                <div class="relative w-full h-48 overflow-hidden bg-gray-200">
-                  <img
-                    src={place.cover_image}
-                    alt={place.name}
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-              ) : (
-                <div class="w-full h-48 bg-gradient-to-br from-orange-200 to-red-200 flex items-center justify-center">
-                  <span class="text-5xl" aria-hidden="true">📍</span>
-                </div>
-              )}
+ <div class="on-page">
+ <PublicPageIntro
+ eyebrow="Şanlıurfa Mekan Rehberi"
+ title={isPersonalized ? 'Sana Özel Öneriler' : 'En Popüler Yerler'}
+ description={isPersonalized
+  ? 'İlgi alanına yakın, senin beğendiğin yerlere benzeyen mekanları tek ekranda keşfet.'
+  : "Şanlıurfa'da en çok ziyaret edilen, en çok puanlanan ve en çok konuşulan mekanları gözden geçir."}
+ quickAnswerTitle="Hızlı cevap"
+ quickAnswerText={isPersonalized
+  ? 'Giriş yaptığında öneriler kullanıcı davranışı ve ilgi alanı sinyalleriyle daha kişisel hale gelir.'
+  : 'Liste puan, yorum ve görüntülenme verisine göre günlük olarak yeniden sıralanır.'}
+ actions={[
+  { href: '/mekanlar', label: 'Tüm Mekanlar' },
+  { href: '/gezilecek-yerler', label: 'Gezilecek Yerler' },
+  { href: '/isletme', label: 'İşletmeler' },
+  { href: '/giris', label: 'Giriş Yap' },
+ ]}
+ />
 
-              <!-- Content -->
-              <div class="p-4">
-                <!-- Category Badge -->
-                <span class="inline-block px-3 py-1 text-xs font-medium text-orange-700 bg-orange-100 dark:bg-orange-900 dark:text-orange-200 rounded-full mb-3">
-                  {place.category}
-                </span>
+ <div class="on-body">
+ <div class="sf-container on-container">
+ <div class="on-grid">
+ {recommendations.length === 0 ? (
+ <div class="on-empty">
+ <p class="on-empty-text">Henüz yeterli veri yok. Lütfen daha sonra tekrar kontrol et.</p>
+ </div>
+ ) : (
+ recommendations.map((place) => (
+ <a href={`/isletme/${place.slug}`} class="on-card">
+ <div class="on-img-wrap">
+ <Image src={resolveRecommendationImage(place)} alt={place.name} class="on-img" width={600} height={192} loading="lazy" />
+ </div>
+ <div class="on-card-body">
+ <span class="on-badge">{place.category}</span>
+ <h3 class="on-title">{place.name}</h3>
+ {place.short_description && (
+ <p class="on-short-desc">{place.short_description}</p>
+ )}
+ {place.rating ? (
+ <div class="on-stars">
+ <div>
+ {[...Array(5)].map((_, i) => (
+ <span class:list={['on-star', { 'on-star-active': i < Math.floor(place.rating) }]}>★</span>
+ ))}
+ </div>
+ <span class="on-rating-val">{place.rating.toFixed(1)} ({place.rating_count || 0})</span>
+ </div>
+ ) : null}
+ {place.view_count ? (
+ <div class="on-views">{place.view_count.toLocaleString('tr-TR')} görüntüleme</div>
+ ) : null}
+ </div>
+ </a>
+ ))
+ )}
+ </div>
 
-                <!-- Title -->
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                  {place.name}
-                </h3>
+ {!isPersonalized && (
+ <div class="on-cta">
+ <h2 class="on-cta-h2">Kişiselleştirilmiş Öneriler Al</h2>
+ <p class="on-cta-desc">Giriş yap ve senin ilgi alanlarına göre özel öneriler al.</p>
+ <a href="/giris" class="on-cta-btn">Giriş Yap</a>
+ </div>
+ )}
+ </div>
+ </div>
+ </div>
 
-                <!-- Description -->
-                {place.short_description && (
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                    {place.short_description}
-                  </p>
-                )}
-
-                <!-- Rating -->
-                {place.rating && (
-                  <div class="flex items-center gap-2 mb-4">
-                    <div class="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <span class={i < Math.floor(place.rating) ? 'text-yellow-400' : 'text-gray-300'}>
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                    <span class="text-sm text-gray-600 dark:text-gray-400">
-                      {place.rating.toFixed(1)} ({place.rating_count || 0})
-                    </span>
-                  </div>
-                )}
-
-                <!-- View Count (if available) -->
-                {place.view_count && (
-                  <div class="text-xs text-gray-500 dark:text-gray-400">
-                    {place.view_count.toLocaleString('tr-TR')} görüntüleme
-                  </div>
-                )}
-              </div>
-
-              <!-- Hover Overlay -->
-              <div class="hidden group-hover:block absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center transition-all">
-                <button class="px-6 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600">
-                  Detayları Gör →
-                </button>
-              </div>
-            </a>
-          ))
-        )}
-      </div>
-
-      <!-- Call to Action -->
-      {!isPersonalized && (
-        <div class="mt-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg shadow-lg p-8 text-center">
-          <h2 class="text-2xl font-bold text-white mb-4">Kişiselleştirilmiş Öneriler Al</h2>
-          <p class="text-orange-50 mb-6">
-            Giriş yap ve senin ilgi alanlarına göre özel öneriler al.
-          </p>
-          <a
-            href="/giris"
-            class="inline-block px-8 py-3 bg-white text-orange-600 font-bold rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            Giriş Yap
-          </a>
-        </div>
-      )}
-    </div>
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Öneriler', item: `${baseUrl}/oneriler` },
-    ],
-  })} is:inline />
+ <style is:inline>
+ details summary{list-style:none}
+ details summary::-webkit-details-marker{display:none}
+ details[open] .faq-arrow{transform:rotate(180deg)}
+ </style>
+ {faqItems.length > 0 && (
+ <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+ <div class="sf-container">
+ <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+ <div style="display:flex;flex-direction:column;gap:.75rem">
+ {faqItems.map((item) => (
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ {item.S}
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ {item.C}
+ </div>
+ </details>
+ ))}
+ </div>
+ </div>
+ </div>
+ )}
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Öneriler', item: `${baseUrl}/oneriler` },
+ ],
+ })} is:inline />
 </Layout>
-
-

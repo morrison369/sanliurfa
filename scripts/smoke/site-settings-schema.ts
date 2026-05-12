@@ -1,17 +1,57 @@
 #!/usr/bin/env node
-import { pool, query } from '../../src/lib/postgres';
-import { validateSiteSetting } from '../../src/lib/site-settings-schema';
-import { validateSiteSettingWithZod } from '../../src/lib/site-settings-zod';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 
 type SiteSettingRow = {
   setting_key: string;
   setting_value: Record<string, unknown> | null;
 };
 
+const ROOT = process.cwd();
+
+function loadEnvFile(filePath: string) {
+  if (!existsSync(filePath)) return;
+  const content = readFileSync(filePath, 'utf8');
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#') || !line.includes('=')) continue;
+    const idx = line.indexOf('=');
+    const key = line.slice(0, idx).trim();
+    let value = line.slice(idx + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"'))
+      || (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+
+function loadRuntimeEnv() {
+  const candidates = [
+    path.join(ROOT, '.env.production'),
+    path.join(ROOT, '.env.local'),
+    path.join(ROOT, '.env'),
+  ];
+  for (const candidate of candidates) loadEnvFile(candidate);
+}
+
 async function main() {
+  loadRuntimeEnv();
+
+  const [{ pool, query }, { validateSiteSetting }, { validateSiteSettingWithZod }] = await Promise.all([
+    import('../../src/lib/postgres'),
+    import('../../src/lib/site-settings-schema'),
+    import('../../src/lib/site-settings-zod'),
+  ]);
+
   const requiredKeys = [
     'homepage.hero',
     'homepage.mainCta',
+    'homepage.cta',
+    'homepage.sectionOrder',
+    'homepage.theme',
     'header.utilityLinks',
     'homepage.primaryActions',
     'homepage.mvpQuickStart',
@@ -61,13 +101,12 @@ async function main() {
     process.exit(1);
   }
   console.log('OK: site settings schema valid');
+
+  await pool.end();
 }
 
 main()
   .catch((error) => {
     console.error(`FAILED: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
-  })
-  .finally(async () => {
-    await pool.end();
   });

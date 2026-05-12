@@ -22,11 +22,13 @@ async function main() {
     language: 'typescript',
     outputPath: outDir,
     packageName: '@sanliurfa/sdk',
+    spec,
   });
   const jsClient = generator.generate({
     language: 'javascript',
     outputPath: outDir,
     packageName: '@sanliurfa/sdk',
+    spec,
   });
 
   writeFileSync(join(outDir, 'client.ts'), tsClient, 'utf8');
@@ -51,4 +53,3 @@ main().catch((error) => {
   console.error(`sdk generation failed: ${error instanceof Error ? error.message : String(error)}`);
   process.exit(1);
 });
-

@@ -25,6 +25,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const url = new URL(request.url);
     const view = url.searchParams.get('view') || 'all';
+    const VALID_VIEWS = new Set(['all', 'unviewed', 'stats']);
+    if (!VALID_VIEWS.has(view)) {
+      recordRequest('GET', '/api/loyalty/achievements', 400, Date.now() - startTime);
+      return apiError('VALIDATION_ERROR', 'Geçersiz view parametresi', 400, undefined, requestId);
+    }
     const userId = locals.user.id;
 
     const data =
@@ -71,7 +76,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const { userAchievementId } = body;
 
     // Validation
-    if (!userAchievementId || typeof userAchievementId !== 'string') {
+    if (!userAchievementId || typeof userAchievementId !== 'string' || userAchievementId.length > 36) {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/loyalty/achievements', 422, duration);
       return apiError('VALIDATION_ERROR', 'userAchievementId is required', 422, undefined, requestId);

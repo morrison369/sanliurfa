@@ -5,17 +5,17 @@
 
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logger';
 import { resolveContentImage } from '../../../lib/content-images';
 
-function normalizeRecommendationImage(rows: any[]) {
-  return rows.map((row: any) => ({
+function normalizeRecommendationImage(rows: { slug?: string; image_url?: string; [key: string]: unknown }[]) {
+  return rows.map((row) => ({
     ...row,
     image_url: resolveContentImage({
       category: 'places',
-      slug: row.slug,
-      explicit: row.image_url,
+      slug: row.slug ?? null,
+      explicit: row.image_url ?? null,
       placeholder: '/images/placeholder-place.jpg',
     }),
   }));
@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
   try {
     const type = url.searchParams.get('type') || 'hybrid';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 50);
 
     // For trending type (no auth required), return top-rated places
     if (type === 'trending' || !locals.user?.id) {

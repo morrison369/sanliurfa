@@ -97,24 +97,24 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 
   return {
     users: {
-      total: parseInt(usersResult.rows[0].total),
-      newToday: parseInt(usersResult.rows[0].new_today),
-      activeToday: parseInt(usersResult.rows[0].active_today),
+      total: parseInt(usersResult.rows[0].total, 10),
+      newToday: parseInt(usersResult.rows[0].new_today, 10),
+      activeToday: parseInt(usersResult.rows[0].active_today, 10),
     },
     places: {
-      total: parseInt(placesResult.rows[0].total),
-      pending: parseInt(placesResult.rows[0].pending),
-      featured: parseInt(placesResult.rows[0].featured),
+      total: parseInt(placesResult.rows[0].total, 10),
+      pending: parseInt(placesResult.rows[0].pending, 10),
+      featured: parseInt(placesResult.rows[0].featured, 10),
     },
     reviews: {
-      total: parseInt(reviewsResult.rows[0].total),
-      pending: parseInt(reviewsResult.rows[0].pending),
+      total: parseInt(reviewsResult.rows[0].total, 10),
+      pending: parseInt(reviewsResult.rows[0].pending, 10),
       avgRating: Math.round(parseFloat(reviewsResult.rows[0].avg_rating) * 10) / 10,
     },
     blog: {
-      total: parseInt(blogResult.rows[0].total),
-      published: parseInt(blogResult.rows[0].published),
-      views: parseInt(blogResult.rows[0].views),
+      total: parseInt(blogResult.rows[0].total, 10),
+      published: parseInt(blogResult.rows[0].published, 10),
+      views: parseInt(blogResult.rows[0].views, 10),
     },
   };
 }
@@ -221,12 +221,12 @@ export async function getTrafficChart(days = 7): Promise<ChartData> {
     datasets: [
       {
         label: 'Sayfa Görüntüleme',
-        data: result.rows.map(r => parseInt(r.page_views)),
+        data: result.rows.map(r => parseInt(r.page_views, 10)),
         color: '#0d9488',
       },
       {
         label: 'Benzersiz Kullanıcı',
-        data: result.rows.map(r => parseInt(r.unique_users)),
+        data: result.rows.map(r => parseInt(r.unique_users, 10)),
         color: '#6366f1',
       },
     ],
@@ -252,7 +252,7 @@ export async function getTopPlacesChart(limit = 5): Promise<ChartData> {
     datasets: [
       {
         label: 'Değerlendirme Sayısı',
-        data: result.rows.map(r => parseInt(r.review_count)),
+        data: result.rows.map(r => parseInt(r.review_count, 10)),
         color: '#0d9488',
       },
     ],
@@ -282,7 +282,7 @@ export async function getUserGrowthChart(months = 6): Promise<ChartData> {
     datasets: [
       {
         label: 'Yeni Kullanıcılar',
-        data: result.rows.map(r => parseInt(r.new_users)),
+        data: result.rows.map(r => parseInt(r.new_users, 10)),
         color: '#8b5cf6',
       },
     ],
@@ -307,10 +307,10 @@ export async function getModerationStats(): Promise<{
   `);
 
   return {
-    pendingPlaces: parseInt(result.rows[0].pending_places),
-    pendingReviews: parseInt(result.rows[0].pending_reviews),
-    pendingComments: parseInt(result.rows[0].pending_comments),
-    reportedContent: parseInt(result.rows[0].reported_content),
+    pendingPlaces: parseInt(result.rows[0].pending_places, 10),
+    pendingReviews: parseInt(result.rows[0].pending_reviews, 10),
+    pendingComments: parseInt(result.rows[0].pending_comments, 10),
+    reportedContent: parseInt(result.rows[0].reported_content, 10),
   };
 }
 
@@ -354,9 +354,9 @@ export async function getSystemHealth(): Promise<{
     database,
     cache,
     disk: 'healthy', // Assume healthy
-    lastBackup: backupResult.rows[0]?.created_at 
-      ? new Date(backupResult.rows[0].created_at) 
-      : undefined,
+    ...(backupResult.rows[0]?.created_at
+      ? { lastBackup: new Date(backupResult.rows[0].created_at) }
+      : {}),
   };
 }
 

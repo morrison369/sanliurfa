@@ -1,0 +1,53 @@
+---
+/**
+ * ProfileStats — Server Island
+ *
+ * "İstatistikler" 3-card grid on /profil. Used with `server:defer` so the main
+ * profile info renders without waiting on the COUNT(*) queries.
+ *
+ * <ProfileStats userId={user.id} initialPoints={profile?.points || 0} server:defer>
+ * <div slot="fallback" class="..." />
+ * </ProfileStats>
+ *
+ * Points is passed as a prop from the parent (it's already loaded with the profile
+ * row), so this component only needs the two COUNT queries.
+ */
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+interface Props {
+ userId: string;
+ initialPoints: number;
+}
+
+const { userId, initialPoints } = Astro.props;
+
+let reviewsCount = 0;
+let favoritesCount = 0;
+
+try {
+ const [r, f] = await Promise.all([
+ query('SELECT COUNT(*) FROM reviews WHERE user_id = $1', [userId]),
+ query('SELECT COUNT(*) FROM favorites WHERE user_id = $1', [userId]),
+ ]);
+ reviewsCount = parseInt(r.rows[0]?.count || '0', 10);
+ favoritesCount = parseInt(f.rows[0]?.count || '0', 10);
+} catch (e) {
+ logger.error('ProfileStats query failed', e instanceof Error ? e : new Error(String(e)));
+}
+---
+
+<div class="grid grid-cols-3 gap-4">
+ <div class="bg-[rgba(184,115,51,0.08)] rounded-sm p-4 text-center">
+ <div class="text-2xl font-bold text-[#B87333]">{reviewsCount}</div>
+ <div class="text-sm text-[#7A6B58]">Yorum</div>
+ </div>
+ <div class="bg-[rgba(184,115,51,0.08)] rounded-sm p-4 text-center">
+ <div class="text-2xl font-bold text-[#B87333]">{favoritesCount}</div>
+ <div class="text-sm text-[#7A6B58]">Favori</div>
+ </div>
+ <div class="bg-[rgba(184,115,51,0.08)] rounded-sm p-4 text-center">
+ <div class="text-2xl font-bold text-[#B87333]">{initialPoints}</div>
+ <div class="text-sm text-[#7A6B58]">Puan</div>
+ </div>
+</div>

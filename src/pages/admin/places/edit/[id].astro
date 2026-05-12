@@ -1,306 +1,269 @@
 ---
-import Layout from '../../../../layouts/Layout.astro';
-
-const icons = {
-  mapPin: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
-  upload: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>`,
-  clock: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-  phone: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
-  globe: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
-  mail: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
-  save: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`,
-  arrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
-};
-
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
 import { query } from '../../../../lib/postgres';
+import { logger } from '../../../../lib/logging';
 
 const { id } = Astro.params;
-
-if (!Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin');
-}
 
 let place: any = null;
 let categories: any[] = [];
 
 try {
-  const [placeResult, catResult] = await Promise.all([
-    query(
-      `SELECT p.*, c.name as category_name, d.name as district_name
-       FROM places p
-       LEFT JOIN categories c ON c.id = p.category_id
-       LEFT JOIN districts d ON d.id = p.district_id
-       WHERE p.id = $1`,
-      [id]
-    ),
-    query(
-      `SELECT id, name, slug FROM categories WHERE parent_id IS NOT NULL AND is_active = true ORDER BY sort_order`,
-      []
-    ),
-  ]);
-  place = placeResult.rows[0] || null;
-  categories = catResult.rows;
+ const [placeResult, catResult] = await Promise.all([
+ query(
+ `SELECT p.*, c.name as category_name, d.name as district_name
+ FROM places p
+ LEFT JOIN categories c ON c.id = p.category_id
+ LEFT JOIN districts d ON d.id = p.district_id
+ WHERE p.id = $1`,
+ [id]
+ ),
+ query(
+ `SELECT id, name, slug FROM categories WHERE parent_id IS NOT NULL AND is_active = true ORDER BY sort_order`,
+ []
+ ),
+ ]);
+ place = placeResult.rows[0] || null;
+ categories = catResult.rows;
 } catch (e) {
-  console.error('Edit place load error:', e);
+ logger.error('Edit place load error', e instanceof Error ? e : new Error(String(e)));
 }
 
 if (!place) {
-  return Astro.redirect('/admin/places?error=not_found');
+ return Astro.redirect('/admin/places?error=not_found');
 }
 
-const seo = {
-  title: `Mekan Düzenle: ${place.name} - Yönetim Paneli`,
-  description: 'Mekan düzenleme',
-  noIndex: true,
-};
-
 const amenitiesList = [
-  'Otopark', 'Wifi', 'Klima', 'Bahçe', 'Teras', 'Engelli Erişimi',
-  'Paket Servis', 'Rezervasyon', 'Canlı Müzik', 'Çocuk Oyun Alanı',
-  'Evcil Hayvan Dostu', 'Sigara İçilebilir Alan'
+ 'Otopark', 'Wifi', 'Klima', 'Bahçe', 'Teras', 'Engelli Erişimi',
+ 'Paket Servis', 'Rezervasyon', 'Canlı Müzik', 'Çocuk Oyun Alanı',
+ 'Evcil Hayvan Dostu', 'Sigara İçilebilir Alan'
 ];
 
 const days = [
-  { id: 'monday', label: 'Pazartesi' },
-  { id: 'tuesday', label: 'Salı' },
-  { id: 'wednesday', label: 'Çarşamba' },
-  { id: 'thursday', label: 'Perşembe' },
-  { id: 'friday', label: 'Cuma' },
-  { id: 'saturday', label: 'Cumartesi' },
-  { id: 'sunday', label: 'Pazar' },
+ { id: 'monday', label: 'Pazartesi' },
+ { id: 'tuesday', label: 'Salı' },
+ { id: 'wednesday', label: 'Çarşamba' },
+ { id: 'thursday', label: 'Perşembe' },
+ { id: 'friday', label: 'Cuma' },
+ { id: 'saturday', label: 'Cumartesi' },
+ { id: 'sunday', label: 'Pazar' },
 ];
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Admin Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <a href="/admin" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              <span set:html={icons.arrowLeft}></span>
-            </a>
-            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Mekan Düzenle</h1>
-          </div>
-          <span class="text-gray-500 dark:text-gray-400">ID: {id}</span>
-        </div>
-      </div>
-    </div>
-    
-    <div class="container-custom py-8">
-      <form action={`/api/places/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8" enctype="multipart/form-data">
-        <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-6">
-          <!-- Basic Info -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
-            <div class="space-y-4">
-              <div>
-                <label for="name" class="label dark:text-gray-300">Mekan Adı *</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name" 
-                  required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  value={place.name}
-                />
-              </div>
-              
-              <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label for="category" class="label dark:text-gray-300">Kategori *</label>
-                  <select id="category_id" name="category_id" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <option value="">Kategori seçin</option>
-                    {categories.map(cat => (
-                      <option value={cat.id} selected={cat.id === place.category_id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label for="price_range" class="label dark:text-gray-300">Fiyat Aralığı</label>
-                  <select id="price_range" name="price_range" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <option value="1" selected={place.price_range === 1}>₺ - Ucuz</option>
-                    <option value="2" selected={place.price_range === 2}>₺₺ - Orta</option>
-                    <option value="3" selected={place.price_range === 3}>₺₺₺ - Pahalı</option>
-                    <option value="4" selected={place.price_range === 4}>₺₺₺₺ - Lüks</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div>
-                <label for="description" class="label dark:text-gray-300">Açıklama *</label>
-                <textarea 
-                  id="description" 
-                  name="description" 
-                  rows="4" 
-                  required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
-                >{place.description}</textarea>
-              </div>
-              
-              <div>
-                <label for="short_description" class="label dark:text-gray-300">Kısa Açıklama</label>
-                <input 
-                  type="text" 
-                  id="short_description" 
-                  name="short_description"
-                  maxlength="150"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  value={place.short_description}
-                />
-              </div>
-            </div>
-          </div>
-          
-          <!-- Contact Info -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">İletişim Bilgileri</h2>
-            <div class="space-y-4">
-              <div>
-                <label for="address" class="label dark:text-gray-300">Adres *</label>
-                <div class="relative">
-                  <span set:html={icons.mapPin} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    required
-                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    value={place.address}
-                  />
-                </div>
-              </div>
-              
-              <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label for="phone" class="label dark:text-gray-300">Telefon</label>
-                  <div class="relative">
-                    <span set:html={icons.phone} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      value={place.phone}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label for="email" class="label dark:text-gray-300">E-posta</label>
-                  <div class="relative">
-                    <span set:html={icons.mail} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      value={place.email}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label for="website" class="label dark:text-gray-300">Web Sitesi</label>
-                <div class="relative">
-                  <span set:html={icons.globe} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                  <input
-                    type="url"
-                    id="website"
-                    name="website"
-                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    value={place.website}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Opening Hours -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Çalışma Saatleri</h2>
-            <div class="space-y-3">
-              {days.map(day => (
-                <div class="flex items-center gap-4">
-                  <span class="w-24 text-sm text-gray-600 dark:text-gray-400">{day.label}</span>
-                  <input 
-                    type="text" 
-                    name={`opening_hours_${day.id}`}
-                    class="input flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    value={place.opening_hours?.[day.id] || ''}
-                    placeholder="08:00 - 22:00 veya Kapalı"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        
-        <!-- Sidebar -->
-        <aside class="space-y-6">
-          <!-- Publish -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
-            <div class="space-y-3">
-              <label class="flex items-center gap-2">
-                <input type="checkbox" name="is_featured" checked={place.is_featured} class="rounded border-gray-300 text-urfa-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan mekan</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input type="checkbox" name="is_verified" checked={place.is_verified} class="rounded border-gray-300 text-urfa-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Doğrulanmış mekan</span>
-              </label>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <label for="status" class="label dark:text-gray-300">Durum</label>
-              <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
-                <option value="active" selected={place.status === 'active'}>Aktif</option>
-                <option value="pending" selected={place.status === 'pending'}>Beklemede</option>
-                <option value="inactive" selected={place.status === 'inactive'}>Pasif</option>
-              </select>
-            </div>
-            <div class="flex gap-2 mt-4">
-              <button type="submit" class="btn-primary flex-1 flex items-center justify-center gap-2">
-                <span set:html={icons.save}></span>
-                Kaydet
-              </button>
-            </div>
-          </div>
-          
-          <!-- Amenities -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Olanaklar</h3>
-            <div class="space-y-2 max-h-64 overflow-y-auto">
-              {amenitiesList.map(amenity => (
-                <label class="flex items-center gap-2">
-                  <input 
-                    type="checkbox" 
-                    name="amenities" 
-                    value={amenity}
-                    checked={place.amenities?.includes(amenity)}
-                    class="rounded border-gray-300 text-urfa-600"
-                  />
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{amenity}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          
-          <!-- Tags -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Etiketler</h3>
-            <input 
-              type="text" 
-              name="tags"
-              class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              value={place.tags?.join(', ')}
-              placeholder="Etiketleri virgülle ayırın"
-            />
-          </div>
-        </aside>
-      </form>
-    </div>
-  </div>
-</Layout>
+<AdminLayout
+ title="Mekan Düzenle"
+ subtitle={`${place.name} — ID: ${id}`}
+ seo={{ title: `Mekan Düzenle: ${place.name} - Yönetim Paneli`, noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-6xl">
+ <div class="mb-6">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ </div>
+
+ <form action={`/api/places/${id}/update`} method="POST" class="grid lg:grid-cols-3 gap-8" enctype="multipart/form-data">
+ <div class="lg:col-span-2 space-y-5">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-lg font-semibold text-[#1F1410] mb-4">Temel Bilgiler</h2>
+ <div class="space-y-4">
+ <div>
+ <label for="name" class="block text-sm font-medium text-[#7A6B58] mb-1">Mekan Adı *</label>
+ <input
+ type="text"
+ id="name"
+ name="name"
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ value={place.name}
+ />
+ </div>
+
+ <div class="grid sm:grid-cols-2 gap-4">
+ <div>
+ <label for="category_id" class="block text-sm font-medium text-[#7A6B58] mb-1">Kategori *</label>
+ <select id="category_id" name="category_id" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option value="">Kategori seçin</option>
+ {categories.map(cat => (
+ <option value={cat.id} selected={cat.id === place.category_id}>{cat.name}</option>
+ ))}
+ </select>
+ </div>
+ <div>
+ <label for="price_range" class="block text-sm font-medium text-[#7A6B58] mb-1">Fiyat Aralığı</label>
+ <select id="price_range" name="price_range" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option value="1" selected={place.price_range === 1}>₺ - Ucuz</option>
+ <option value="2" selected={place.price_range === 2}>₺₺ - Orta</option>
+ <option value="3" selected={place.price_range === 3}>₺₺₺ - Pahalı</option>
+ <option value="4" selected={place.price_range === 4}>₺₺₺₺ - Lüks</option>
+ </select>
+ </div>
+ </div>
+
+ <div>
+ <label for="description" class="block text-sm font-medium text-[#7A6B58] mb-1">Açıklama *</label>
+ <textarea
+ id="description"
+ name="description"
+ rows="4"
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 resize-none"
+ >{place.description}</textarea>
+ </div>
+
+ <div>
+ <label for="short_description" class="block text-sm font-medium text-[#7A6B58] mb-1">Kısa Açıklama</label>
+ <input
+ type="text"
+ id="short_description"
+ name="short_description"
+ maxlength="150"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ value={place.short_description}
+ />
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-lg font-semibold text-[#1F1410] mb-4">İletişim Bilgileri</h2>
+ <div class="space-y-4">
+ <div>
+ <label for="address" class="block text-sm font-medium text-[#7A6B58] mb-1">Adres *</label>
+ <div class="relative">
+ <Icon name="lucide:map-pin" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="text"
+ id="address"
+ name="address"
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ value={place.address}
+ />
+ </div>
+ </div>
+
+ <div class="grid sm:grid-cols-2 gap-4">
+ <div>
+ <label for="phone" class="block text-sm font-medium text-[#7A6B58] mb-1">Telefon</label>
+ <div class="relative">
+ <Icon name="lucide:phone" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="tel"
+ id="phone"
+ name="phone"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ value={place.phone}
+ />
+ </div>
+ </div>
+ <div>
+ <label for="email" class="block text-sm font-medium text-[#7A6B58] mb-1">E-posta</label>
+ <div class="relative">
+ <Icon name="lucide:mail" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="email"
+ id="email"
+ name="email"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ value={place.email}
+ />
+ </div>
+ </div>
+ </div>
+
+ <div>
+ <label for="website" class="block text-sm font-medium text-[#7A6B58] mb-1">Web Sitesi</label>
+ <div class="relative">
+ <Icon name="lucide:globe" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="url"
+ id="website"
+ name="website"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ value={place.website}
+ />
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-lg font-semibold text-[#1F1410] mb-4">Çalışma Saatleri</h2>
+ <div class="space-y-3">
+ {days.map(day => (
+ <div class="flex items-center gap-4">
+ <span class="w-24 text-sm text-[#7A6B58]">{day.label}</span>
+ <input
+ type="text"
+ name={`opening_hours_${day.id}`}
+ class="flex-1 rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ value={place.opening_hours?.[day.id] || ''}
+ placeholder="08:00 - 22:00 veya Kapalı"
+ />
+ </div>
+ ))}
+ </div>
+ </div>
+ </div>
+
+ <aside class="space-y-5">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#1F1410] mb-4">Yayınla</h3>
+ <div class="space-y-3">
+ <label class="flex items-center gap-2">
+ <input type="checkbox" name="is_featured" checked={place.is_featured} class="rounded border-[rgba(184,115,51,0.3)] text-urfa-600" />
+ <span class="text-sm text-[#7A6B58]">Öne çıkan mekan</span>
+ </label>
+ <label class="flex items-center gap-2">
+ <input type="checkbox" name="is_verified" checked={place.is_verified} class="rounded border-[rgba(184,115,51,0.3)] text-urfa-600" />
+ <span class="text-sm text-[#7A6B58]">Doğrulanmış mekan</span>
+ </label>
+ </div>
+ <div class="mt-4 pt-4 border-t border-[rgba(184,115,51,0.14)]">
+ <label for="status" class="block text-sm font-medium text-[#7A6B58] mb-1">Durum</label>
+ <select id="status" name="status" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option value="active" selected={place.status === 'active'}>Aktif</option>
+ <option value="pending" selected={place.status === 'pending'}>Beklemede</option>
+ <option value="inactive" selected={place.status === 'inactive'}>Pasif</option>
+ </select>
+ </div>
+ <div class="flex gap-2 mt-4">
+ <button type="submit" class="rounded-sm bg-urfa-600 flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+ <Icon name="lucide:save" class="w-4 h-4" />
+ Kaydet
+ </button>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#1F1410] mb-4">Olanaklar</h3>
+ <div class="space-y-2 max-h-64 overflow-y-auto">
+ {amenitiesList.map(amenity => (
+ <label class="flex items-center gap-2">
+ <input
+ type="checkbox"
+ name="amenities"
+ value={amenity}
+ checked={place.amenities?.includes(amenity)}
+ class="rounded border-[rgba(184,115,51,0.3)] text-urfa-600"
+ />
+ <span class="text-sm text-[#7A6B58]">{amenity}</span>
+ </label>
+ ))}
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#1F1410] mb-4">Etiketler</h3>
+ <input
+ type="text"
+ name="tags"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ value={place.tags?.join(', ')}
+ placeholder="Etiketleri virgülle ayırın"
+ />
+ </div>
+ </aside>
+ </form>
+ </div>
+</AdminLayout>

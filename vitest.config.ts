@@ -1,7 +1,7 @@
-import { defineConfig } from 'vitest/config';
+import { getViteConfig } from 'astro/config';
 import path from 'path';
 
-export default defineConfig({
+export default getViteConfig({
   test: {
     globals: true,
     environment: 'node',

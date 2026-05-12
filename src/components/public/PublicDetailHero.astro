@@ -1,0 +1,225 @@
+---
+import { Icon } from 'astro-icon/components';
+import Image from '../Image.astro';
+
+type Badge = {
+  label: string;
+  tone?: 'dark' | 'accent' | 'strong' | 'soft';
+  icon?: string;
+};
+
+type MetaItem = {
+  label: string;
+  icon?: string;
+};
+
+interface Props {
+  imageSrc: string;
+  imageAlt: string;
+  title: string;
+  subtitle?: string;
+  backHref?: string;
+  backLabel?: string;
+  badges?: Badge[];
+  metaItems?: MetaItem[];
+  compact?: boolean;
+}
+
+const {
+  imageSrc,
+  imageAlt,
+  title,
+  subtitle,
+  backHref,
+  backLabel,
+  badges = [],
+  metaItems = [],
+  compact = false,
+} = Astro.props;
+---
+
+<section class={`pdh ${compact ? 'pdh--compact' : ''}`}>
+  <div class="pdh-media">
+    <Image src={imageSrc} alt={imageAlt} width={1920} height={1080} class="pdh-image" loading="eager" fetchpriority="high" />
+    <div class="pdh-overlay" aria-hidden="true"></div>
+  </div>
+
+  <div class="pdh-content">
+    <div class="sf-container">
+      {backHref && backLabel && (
+        <a href={backHref} class="pdh-back">
+          {backLabel}
+        </a>
+      )}
+
+      {badges.length > 0 && (
+        <div class="pdh-badges">
+          {badges.map((badge) => (
+            <span class={`pdh-badge pdh-badge--${badge.tone || 'dark'}`}>
+              {badge.icon && <Icon name={badge.icon} class="pdh-badge-icon" aria-hidden="true" />}
+              {badge.label}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <h1 class="pdh-title">{title}</h1>
+      {subtitle && <p class="pdh-sub">{subtitle}</p>}
+
+      {metaItems.length > 0 && (
+        <div class="pdh-meta">
+          {metaItems.map((item) => (
+            <span class="pdh-meta-item">
+              {item.icon && <Icon name={item.icon} class="pdh-meta-icon" aria-hidden="true" />}
+              {item.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .pdh {
+    position: relative;
+    min-height: clamp(19rem, 48vw, 31rem);
+    overflow: hidden;
+  }
+
+  .pdh--compact {
+    min-height: clamp(16rem, 40vw, 24rem);
+  }
+
+  .pdh-media,
+  .pdh-image,
+  .pdh-overlay {
+    position: absolute;
+    inset: 0;
+  }
+
+  .pdh-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .pdh-overlay {
+    background:
+      linear-gradient(to top, rgba(15, 12, 9, 0.88) 0%, rgba(15, 12, 9, 0.38) 52%, rgba(15, 12, 9, 0.1) 100%),
+      radial-gradient(circle at top left, rgba(184, 101, 43, 0.18), transparent 30%);
+  }
+
+  .pdh-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: end;
+    min-height: inherit;
+    padding: clamp(1.25rem, 4vw, 2rem) 0;
+  }
+
+  .pdh-back {
+    display: inline-flex;
+    margin-bottom: 0.85rem;
+    color: #d4c6b3;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.18s ease;
+  }
+
+  .pdh-back:hover {
+    color: var(--public-on-deep);
+  }
+
+  .pdh-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .pdh-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.28rem 0.78rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .pdh-badge--dark {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: var(--public-on-deep);
+  }
+
+  .pdh-badge--accent {
+    background: rgba(184, 101, 43, 0.92);
+    color: #fff;
+  }
+
+  .pdh-badge--strong {
+    background: #1d4ed8;
+    color: #fff;
+  }
+
+  .pdh-badge--soft {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+  }
+
+  .pdh-badge-icon,
+  .pdh-meta-icon {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  .pdh-title {
+    max-width: 18ch;
+    margin: 0;
+    color: var(--public-on-deep);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(1.8rem, 4.5vw, 3.8rem);
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .pdh-sub {
+    max-width: 42rem;
+    margin: 0.7rem 0 0;
+    color: #d2b18e;
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .pdh-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    color: var(--public-on-deep);
+    font-size: 0.9rem;
+  }
+
+  .pdh-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  @media (max-width: 767px) {
+    .pdh-title,
+    .pdh-sub {
+      max-width: none;
+    }
+
+    .pdh-meta {
+      gap: 0.75rem;
+      font-size: 0.84rem;
+    }
+  }
+</style>

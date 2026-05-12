@@ -41,7 +41,7 @@ export async function getOAuthProvider(providerKey: string): Promise<OAuthProvid
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const provider = await queryOne(
@@ -66,7 +66,7 @@ export async function listOAuthProviders(): Promise<OAuthProvider[]> {
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const providers = await queryMany(
@@ -96,7 +96,7 @@ export async function generateOAuthState(providerKey: string, redirectUri: strin
       expires_at: expiresAt
     });
 
-    logger.info('OAuth state generated', { provider: providerKey, stateToken: stateToken.substring(0, 8) });
+    logger.info('OAuth state generated', { provider: providerKey });
     return stateToken;
   } catch (error) {
     logger.error('Failed to generate OAuth state', error instanceof Error ? error : new Error(String(error)));
@@ -154,7 +154,7 @@ export async function getUserOAuthAccounts(userId: string): Promise<OAuthAccount
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const accounts = await queryMany(

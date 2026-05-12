@@ -8,6 +8,7 @@ import { changePassword } from '../../../lib/user';
 import { queryOne } from '../../../lib/postgres';
 import { verifyPassword } from '../../../lib/auth';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { deleteCache } from '../../../lib/cache';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { validateWithSchema } from '../../../lib/validation';
@@ -31,7 +32,7 @@ const changePasswordSchema = {
   }
 };
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
@@ -130,6 +131,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    // HARD RULE #50: Revoke current session after credential change
+    const authToken = cookies.get('auth-token')?.value;
+    if (authToken) {
+      await deleteCache(`session:${authToken}`).catch(() => null);
+    }
+
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/users/password', HttpStatus.OK, duration);
     logger.logMutation('update', 'users', user.id, user.id, { action: 'change_password' });
@@ -137,7 +144,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiResponse(
       {
         success: true,
-        message: 'Şifre başarıyla değiştirildi'
+        message: 'Şifre başarıyla değiştirildi. Güvenlik için tekrar giriş yapmanız gerekiyor.'
       },
       HttpStatus.OK,
       requestId

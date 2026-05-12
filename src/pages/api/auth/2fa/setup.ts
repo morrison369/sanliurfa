@@ -1,10 +1,14 @@
 /**
  * 2FA Setup Endpoint
- * Initialize two-factor authentication method
+ * POST /api/auth/2fa
+ * Body: { method_type: 'totp'|'email'|'sms', method_identifier?: string, password: string }
+ * Password re-confirmation required — prevents session-theft attacker from enrolling their own authenticator.
  */
 
 import type { APIRoute } from 'astro';
+import bcrypt from 'bcryptjs';
 import { create2FAMethod } from '../../../../lib/two-factor-auth';
+import { queryOne } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 
@@ -12,6 +16,7 @@ type TwoFactorMethodType = 'totp' | 'email' | 'sms';
 type SetupBody = {
   method_type?: unknown;
   method_identifier?: unknown;
+  password?: unknown;
 };
 
 type SetupResponse = {
@@ -34,13 +39,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Auth check
     if (!locals.user) {
       return apiError(ErrorCode.UNAUTHORIZED, 'Oturum gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
     const body = (await request.json()) as SetupBody;
-    const { method_type, method_identifier } = body;
+    const { method_type, method_identifier, password } = body;
+
+    if (!password || typeof password !== 'string') {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Şifre gerekli', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
 
     if (!isTwoFactorMethodType(method_type)) {
       return apiError(ErrorCode.VALIDATION_ERROR, '2FA yöntemi geçersiz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
@@ -50,11 +58,24 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, `${method_type} tanımlayıcısı gerekli`, HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
 
-    // Create 2FA method
+    const userRecord = await queryOne<{ password_hash: string }>(
+      'SELECT password_hash FROM users WHERE id = $1',
+      [locals.user.id],
+    );
+
+    if (!userRecord) {
+      return apiError(ErrorCode.UNAUTHORIZED, 'Kullanıcı bulunamadı', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, userRecord.password_hash);
+    if (!isPasswordValid) {
+      return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Şifre hatalı', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
+
     const method = await create2FAMethod(
       locals.user.id,
       method_type,
-      typeof method_identifier === 'string' ? method_identifier : ''
+      typeof method_identifier === 'string' ? method_identifier : '',
     );
 
     if (!method) {
@@ -72,7 +93,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
       },
     };
 
-    // For TOTP, include QR code data
     if (method_type === 'totp') {
       response.data.totp_uri = `otpauth://totp/Sanliurfa:${locals.user.email}?secret=${method.secret_key}&issuer=Sanliurfa`;
       response.data.secret_key = method.secret_key;

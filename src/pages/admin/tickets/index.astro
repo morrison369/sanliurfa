@@ -1,96 +1,140 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
-const seo = { title: 'Destek Talepleri - Admin', description: 'Ticket yönetimi', noIndex: true };
+import AdminLayout from '../../../layouts/AdminLayout.astro';
 ---
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
-    <div class="container mx-auto px-4">
-      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900">Destek Talepleri</h1>
-            <p class="text-gray-500 mt-1">Müşteri destek taleplerini yönetin</p>
-          </div>
-          <div class="flex gap-3">
-            <div class="bg-green-100 text-green-800 px-4 py-2 rounded-lg"><span class="font-bold" id="openCount">0</span> Açık</div>
-            <div class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg"><span class="font-bold" id="inProgressCount">0</span> İşlemde</div>
-          </div>
-        </div>
-      </div>
 
-      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-gray-50 border-b">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Ticket</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Gönderen</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Konu</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Durum</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">Tarih</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500">İşlem</th>
-            </tr>
-          </thead>
-          <tbody id="ticketsTable" class="divide-y">
-            <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yükleniyor...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+<AdminLayout
+ title="Destek Talepleri"
+ subtitle="Müşteri destek taleplerini yönetin"
+ seo={{ title: 'Destek Talepleri - Admin', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-6xl space-y-5">
+ <div class="mb-2 flex items-center justify-between">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ <div class="flex gap-3">
+ <div class="bg-[rgba(184,115,51,0.1)] text-[#7A6B58] px-4 py-2 rounded-sm text-sm"><span class="font-bold" id="openCount">0</span> Açık</div>
+ <div class="bg-[rgba(184,115,51,0.06)] text-[#7A6B58] px-4 py-2 rounded-sm text-sm"><span class="font-bold" id="inProgressCount">0</span> İşlemde</div>
+ </div>
+ </div>
 
-  <script>
-    const statusLabels = {
-      open: { text: 'Açık', class: 'bg-green-100 text-green-700' },
-      in_progress: { text: 'İşlemde', class: 'bg-yellow-100 text-yellow-700' },
-      resolved: { text: 'Çözüldü', class: 'bg-blue-100 text-blue-700' },
-      closed: { text: 'Kapandı', class: 'bg-gray-100 text-gray-600' },
-    };
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <div class="overflow-x-auto">
+ <table class="w-full text-sm">
+ <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <tr>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">Ticket</th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">Gönderen</th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">Konu</th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">Durum</th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">Tarih</th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">İşlem</th>
+ </tr>
+ </thead>
+ <tbody id="ticketsTable" class="divide-y divide-[rgba(184,115,51,0.08)]">
+ <tr><td colspan="6" class="px-6 py-12 text-center text-[#7A6B58]">Yükleniyor...</td></tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </div>
 
-    async function loadTickets() {
-      try {
-        const response = await fetch('/api/contact?status=open');
-        const data = await response.json();
-        
-        if (data.success) {
-          const tbody = document.getElementById('ticketsTable');
-          tbody.innerHTML = data.tickets.map((t: any) => `
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-3 font-mono text-sm text-gray-600">${t.ticket_number}</td>
-              <td class="px-4 py-3">
-                <div class="font-medium">${t.name}</div>
-                <div class="text-sm text-gray-500">${t.email}</div>
-              </td>
-              <td class="px-4 py-3">${t.subject}</td>
-              <td class="px-4 py-3">
-                <span class="px-2 py-1 rounded-full text-xs font-medium ${statusLabels[t.status]?.class || 'bg-gray-100'}">
-                  ${statusLabels[t.status]?.text || t.status}
-                </span>
-              </td>
-              <td class="px-4 py-3 text-sm text-gray-500">${new Date(t.created_at).toLocaleDateString('tr-TR')}</td>
-              <td class="px-4 py-3">
-                <button onclick="updateStatus('${t.id}', 'in_progress')" class="text-blue-600 text-sm hover:underline">İşleme Al</button>
-              </td>
-            </tr>
-          `).join('');
-          
-          document.getElementById('openCount').textContent = data.tickets.filter((t: any) => t.status === 'open').length;
-          document.getElementById('inProgressCount').textContent = data.tickets.filter((t: any) => t.status === 'in_progress').length;
-        }
-      } catch (err) {
-        console.error('Error:', err);
-      }
-    }
+ <script>
+ const statusLabels: Record<string, { text: string; class: string }> = {
+ open: { text: 'Açık', class: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
+ in_progress: { text: 'İşlemde', class: 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]' },
+ resolved: { text: 'Çözüldü', class: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' },
+ closed: { text: 'Kapandı', class: 'bg-[rgba(184,115,51,0.04)] text-[#7A6B58]' },
+ };
 
-    async function updateStatus(id: string, status: string) {
-      await fetch(`/api/contact/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-      loadTickets();
-    }
+ function buildTicketRow(t: any) {
+ const tr = document.createElement('tr');
+ tr.className = 'hover:bg-[rgba(184,115,51,0.04)]';
 
-    (window as any).updateStatus = updateStatus;
-    loadTickets();
-  </script>
-</Layout>
+ const td1 = document.createElement('td');
+ td1.className = 'px-4 py-3 font-mono text-sm text-[#7A6B58]';
+ td1.textContent = t.ticket_number;
+
+ const td2 = document.createElement('td');
+ td2.className = 'px-4 py-3';
+ const nameDiv = document.createElement('div');
+ nameDiv.className = 'font-medium text-[#1F1410]';
+ nameDiv.textContent = t.name;
+ const emailDiv = document.createElement('div');
+ emailDiv.className = 'text-sm text-[#7A6B58]';
+ emailDiv.textContent = t.email;
+ td2.appendChild(nameDiv);
+ td2.appendChild(emailDiv);
+
+ const td3 = document.createElement('td');
+ td3.className = 'px-4 py-3 text-sm text-[#7A6B58]';
+ td3.textContent = t.subject;
+
+ const td4 = document.createElement('td');
+ td4.className = 'px-4 py-3';
+ const badge = document.createElement('span');
+ badge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (statusLabels[t.status]?.class || 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]');
+ badge.textContent = statusLabels[t.status]?.text || t.status;
+ td4.appendChild(badge);
+
+ const td5 = document.createElement('td');
+ td5.className = 'px-4 py-3 text-sm text-[#7A6B58]';
+ td5.textContent = new Date(t.created_at).toLocaleDateString('tr-TR');
+
+ const td6 = document.createElement('td');
+ td6.className = 'px-4 py-3';
+ const actionBtn = document.createElement('button');
+ actionBtn.className = 'text-[#7A6B58] hover:text-urfa-600 text-sm';
+ actionBtn.textContent = 'İşleme Al';
+ actionBtn.addEventListener('click', () => updateStatus(t.id, 'in_progress'));
+ td6.appendChild(actionBtn);
+
+ tr.appendChild(td1);
+ tr.appendChild(td2);
+ tr.appendChild(td3);
+ tr.appendChild(td4);
+ tr.appendChild(td5);
+ tr.appendChild(td6);
+ return tr;
+ }
+
+ async function loadTickets() {
+ try {
+ const response = await fetch('/api/contact?status=open');
+ const data = await response.json();
+
+ if (data.success) {
+ const tbody = document.getElementById('ticketsTable') as HTMLElement;
+ if (data.tickets.length === 0) {
+ const tr = document.createElement('tr');
+ const td = document.createElement('td');
+ td.colSpan = 6;
+ td.className = 'px-6 py-12 text-center text-[#7A6B58]';
+ td.textContent = 'Destek talebi bulunamadı.';
+ tr.appendChild(td);
+ tbody.replaceChildren(tr);
+ } else {
+ tbody.replaceChildren(...data.tickets.map(buildTicketRow));
+ }
+
+ const openEl = document.getElementById('openCount');
+ const inProgressEl = document.getElementById('inProgressCount');
+ if (openEl) openEl.textContent = data.tickets.filter((t: any) => t.status === 'open').length;
+ if (inProgressEl) inProgressEl.textContent = data.tickets.filter((t: any) => t.status === 'in_progress').length;
+ }
+ } catch (err) {
+ console.error('Tickets load error:', err);
+ }
+ }
+
+ async function updateStatus(id: string, status: string) {
+ await fetch(`/api/contact/${id}`, {
+ method: 'PUT',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ status })
+ });
+ loadTickets();
+ }
+
+ (window as any).updateStatus = updateStatus;
+ loadTickets();
+ </script>
+</AdminLayout>

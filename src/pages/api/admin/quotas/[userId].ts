@@ -34,8 +34,8 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Check admin access
-    if (!locals.isAdmin) {
+    // Check admin access (HARD RULE #52 — quota reset is high-impact, moderator must not access)
+    if (locals.user?.role !== 'admin') {
       recordRequest('GET', '/api/admin/quotas/[userId]', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
@@ -106,8 +106,8 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   logger.setRequestId(requestId);
 
   try {
-    // Check admin access
-    if (!locals.isAdmin) {
+    // Check admin access (HARD RULE #52 — quota reset is high-impact, moderator must not access)
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/admin/quotas/[userId]', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
@@ -176,11 +176,10 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
 
       const quotaFeatures = features.filter(isQuotaFeature);
 
-      for (const feature of quotaFeatures) {
-        try {
-          await resetUsage(userId, feature);
-        } catch (err) {
-          logger.warn('Failed to reset feature', Object.assign(new Error('Failed to reset feature'), { userId, feature, error: err }));
+      const results = await Promise.allSettled(quotaFeatures.map((feature) => resetUsage(userId, feature)));
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].status === 'rejected') {
+          logger.warn('Failed to reset feature', Object.assign(new Error('Failed to reset feature'), { userId, feature: quotaFeatures[i], error: (results[i] as PromiseRejectedResult).reason }));
         }
       }
 

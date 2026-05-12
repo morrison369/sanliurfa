@@ -14,6 +14,7 @@
 #   bash scripts/prod-cwp-ops.sh env-check
 #   bash scripts/prod-cwp-ops.sh report
 #   bash scripts/prod-cwp-ops.sh preflight
+#   bash scripts/prod-cwp-ops.sh predeploy-checks
 #   bash scripts/prod-cwp-ops.sh cron-doctor
 #   bash scripts/prod-cwp-ops.sh unlock
 #   bash scripts/prod-cwp-ops.sh pipeline
@@ -39,6 +40,7 @@ APP_DIR="${APP_DIR:-$HOME/public_html}"
 PORT="${PORT:-4321}"
 PM2_NAME="${PM2_NAME:-sanliurfa-app}"
 RETAIN_RELEASES="${RETAIN_RELEASES:-20}"
+HTTP_MAX_TIME="${HTTP_MAX_TIME:-15}"
 
 RELEASE_DIR="$APP_DIR/backups/releases"
 STATE_DIR="$APP_DIR/backups/.ops"
@@ -114,11 +116,12 @@ preflight() {
     fi
   done
 
-  local node_major npm_major
-  node_major="$(node -v | sed -E 's/^v([0-9]+).*/\1/')"
+  local node_version npm_major required_node
+  node_version="$(node -v 2>/dev/null | sed -E 's/^v//')"
   npm_major="$(npm -v | sed -E 's/^([0-9]+).*/\1/')"
-  if [ -z "$node_major" ] || [ "$node_major" -lt 20 ]; then
-    err "Node.js sürümü yetersiz. Gereken: >=20, mevcut: $(node -v 2>/dev/null || echo unknown)"
+  required_node="22.13.0"
+  if [ -z "$node_version" ] || ! printf '%s\n%s\n' "$required_node" "$node_version" | sort -C -V; then
+    err "Node.js sürümü yetersiz. Gereken: >=$required_node, mevcut: $(node -v 2>/dev/null || echo unknown)"
     exit 1
   fi
   if [ -z "$npm_major" ] || [ "$npm_major" -lt 10 ]; then
@@ -253,6 +256,10 @@ release_readiness_flow() {
 }
 
 predeploy_checks() {
+  log "Predeploy checks: release candidate gate"
+  (cd "$APP_DIR" && npm run release:candidate)
+  log "Predeploy checks: frontend release gate"
+  (cd "$APP_DIR" && npm run frontend:release:ready:gate)
   log "Predeploy checks: env-check"
   env_check_flow
   log "Predeploy checks: doctor"
@@ -261,6 +268,14 @@ predeploy_checks() {
   smoke_flow
   log "Predeploy checks: report"
   report_flow
+}
+
+predeploy_checks_flow() {
+  require_user_mode
+  ensure_dirs
+  preflight
+  cd "$APP_DIR"
+  predeploy_checks
 }
 
 acquire_lock() {
@@ -309,7 +324,7 @@ unlock_flow() {
 
 health_check() {
   local code
-  code="$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${PORT}/api/health" || true)"
+  code="$(curl -s --max-time "$HTTP_MAX_TIME" -o /dev/null -w "%{http_code}" "http://127.0.0.1:${PORT}/api/health" || true)"
   if [ "$code" = "200" ]; then
     log "Health OK (HTTP 200)"
     return 0
@@ -389,6 +404,7 @@ restore_release() {
 }
 
 deploy_flow() {
+  local skip_prechecks="${1:-0}"
   require_user_mode
   ensure_dirs
   preflight
@@ -409,6 +425,9 @@ deploy_flow() {
 
   event "info" "deploy" "deploy start"
   log "Deploy başlatılıyor"
+  if [ "$skip_prechecks" != "1" ]; then
+    predeploy_checks
+  fi
   if ! bash "$APP_DIR/scripts/deploy-cwp.sh"; then
     err "Deploy script başarısız."
     event "error" "deploy" "deploy script failed"
@@ -458,11 +477,8 @@ deploy_flow() {
 }
 
 safe_deploy_flow() {
-  require_user_mode
-  ensure_dirs
-  preflight
-  predeploy_checks
-  deploy_flow
+  predeploy_checks_flow
+  deploy_flow 1
 }
 
 pipeline_flow() {
@@ -633,6 +649,7 @@ Kullanım:
   bash scripts/prod-cwp-ops.sh env-check
   bash scripts/prod-cwp-ops.sh report
   bash scripts/prod-cwp-ops.sh preflight
+  bash scripts/prod-cwp-ops.sh predeploy-checks
   bash scripts/prod-cwp-ops.sh cron-doctor
   bash scripts/prod-cwp-ops.sh unlock
   bash scripts/prod-cwp-ops.sh pipeline
@@ -788,7 +805,10 @@ case "$cmd" in
     report_flow
     ;;
   preflight)
-    predeploy_checks
+    preflight
+    ;;
+  predeploy-checks)
+    predeploy_checks_flow
     ;;
   cron-doctor)
     cron_doctor_flow

@@ -1,0 +1,240 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PlaceManager from '../../components/vendor/PlaceManager';
+import ReviewManager from '../../components/vendor/ReviewManager';
+import ReservationManager from '../../components/vendor/ReservationManager';
+import PromotionManager from '../../components/vendor/PromotionManager';
+import PhotoUpload from '../../components/PhotoUpload';
+
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+const seo = {
+ title: 'İşletme Paneli - Sanliurfa.com',
+ description: 'İşletme bilgilerinizi yönetin, yorumları yanıtlayın ve performansınızı takip edin.',
+ canonical: '/isletme/panel',
+ noIndex: true,
+};
+
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect('/giris?redirect=/isletme/panel');
+}
+
+const userId = user.id;
+
+let placesResult: any = { rows: [] };
+let subResult: any = { rows: [] };
+try {
+ [placesResult, subResult] = await Promise.all([
+ query(
+ `SELECT id, slug, name FROM places WHERE owner_id = $1 AND status != 'deleted' ORDER BY created_at DESC`,
+ [userId]
+ ),
+ query(
+ `SELECT st.name as plan FROM subscriptions s
+ JOIN subscription_tiers st ON st.id = s.tier_id
+ WHERE s.user_id = $1 AND s.status = 'active'
+ ORDER BY s.created_at DESC LIMIT 1`,
+ [userId]
+ ),
+ ]);
+} catch (e) {
+ logger.error('Business panel query failed:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const vendor = {
+ id: userId,
+ name: user.fullName || 'İşletme Sahibi',
+ email: user.email,
+ plan: subResult.rows[0]?.plan || 'free',
+ places: placesResult.rows.map((p: any) => p.id),
+ firstPlace: placesResult.rows[0] || null,
+};
+---
+
+<Layout seo={seo}>
+ <style is:inline>
+ .vd-page{background:var(--bg);min-height:100vh;padding-bottom:3rem}
+ .vd-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:3rem 0}
+ .vd-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-text-soft);margin-bottom:.5rem}
+ .vd-hero-top{display:flex;flex-direction:column;gap:1rem}
+ @media(min-width:48rem){.vd-hero-top{flex-direction:row;align-items:center;justify-content:space-between}}
+ .vd-h1{font-size:1.75rem;font-weight:700;color:var(--public-text)}
+ .vd-subdesc{color:var(--public-muted);margin-top:.25rem}
+ .vd-plan-badge{padding:.25rem .75rem;background:rgba(184,115,51,.12);color:var(--public-accent);font-size:.875rem;font-weight:500;border:1px solid rgba(184,115,51,.2)}
+ .vd-view-btn{padding:.5rem 1rem;background:var(--public-accent);color:#fff;font-size:.875rem;text-decoration:none;transition:background .15s;flex-shrink:0}
+ .vd-view-btn:hover{background:var(--public-accent-strong)}
+ .vd-hero-actions{display:flex;align-items:center;gap:.75rem}
+ .vd-body{padding:2rem 0 4rem}
+ .vd-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem}
+ @media(min-width:48rem){.vd-stats{grid-template-columns:repeat(4,1fr)}}
+ .vd-stat{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1rem}
+ .vd-stat-num{font-size:1.5rem;font-weight:700;color:var(--public-text)}
+ .vd-stat-label{font-size:.875rem;color:var(--public-muted);margin-top:.25rem}
+ .vd-stat-growth{font-size:.75rem;color:var(--public-accent);margin-top:.25rem}
+ .vd-stat-growth--neutral{color:var(--public-muted)}
+ .vd-main{display:grid;grid-template-columns:1fr;gap:1.5rem}
+ @media(min-width:64rem){.vd-main{grid-template-columns:2fr 1fr}}
+ .vd-col-left{display:flex;flex-direction:column;gap:1.5rem}
+ .vd-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem}
+ .vd-card-title{font-size:1.125rem;font-weight:600;color:var(--public-text);margin-bottom:1rem}
+ .vd-empty{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:3rem;text-align:center;color:var(--public-muted)}
+ .vd-empty-title{font-size:1.125rem;font-weight:500;color:var(--public-text);margin-bottom:.5rem}
+ .vd-empty-btn{display:inline-block;padding:.5rem 1.5rem;background:var(--public-accent);color:#fff;text-decoration:none;margin-top:1rem;transition:background .15s}
+ .vd-empty-btn:hover{background:var(--public-accent-strong)}
+ .vd-col-right{display:flex;flex-direction:column;gap:1.5rem}
+ .vd-plan-title{font-weight:700;color:var(--public-text);margin-bottom:1rem}
+ .vd-plan-row{display:flex;align-items:center;justify-content:space-between}
+ .vd-plan-label{color:var(--public-muted)}
+ .vd-plan-val{font-weight:500;color:var(--public-accent)}
+ .vd-plan-price{font-weight:500;color:var(--public-text)}
+ .vd-divider{border:none;border-top:1px solid rgba(184,115,51,.14);margin:1rem 0}
+ .vd-feat-title{font-weight:500;color:var(--public-text);margin-bottom:.5rem;font-size:.9rem}
+ .vd-feat-list{display:flex;flex-direction:column;gap:.5rem;font-size:.875rem;color:var(--public-muted)}
+ .vd-feat-item{display:flex;align-items:center;gap:.5rem}
+ .vd-feat-check{color:var(--public-accent)}
+ .vd-qa-title{font-weight:700;color:var(--public-text);margin-bottom:1rem}
+ .vd-qa-btn{width:100%;text-align:left;padding:.75rem 1rem;display:flex;align-items:center;gap:.75rem;background:transparent;border:none;cursor:pointer;transition:background .15s;color:inherit}
+ .vd-qa-btn:hover{background:rgba(184,115,51,.04)}
+ .vd-qa-icon{width:2rem;height:2rem;background:rgba(184,115,51,.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.125rem}
+ .vd-qa-text{color:var(--public-text)}
+ .vd-support{background:rgba(184,115,51,.05);border:1px solid rgba(184,115,51,.2);padding:1.5rem}
+ .vd-support-title{font-weight:700;color:var(--public-text);margin-bottom:.5rem}
+ .vd-support-desc{color:var(--public-accent);font-size:.875rem;margin-bottom:1rem}
+ .vd-support-btn{display:inline-block;padding:.5rem 1rem;background:var(--public-accent);color:#fff;font-weight:500;text-decoration:none;transition:background .15s}
+ .vd-support-btn:hover{background:var(--public-accent-strong)}
+ </style>
+
+ <div class="vd-page">
+ <div class="vd-hero">
+ <div class="sf-container">
+ <p class="vd-label">İşletme Paneli</p>
+ <div class="vd-hero-top">
+ <div>
+ <h1 class="vd-h1">İşletme Paneli</h1>
+ <p class="vd-subdesc">Hoş geldiniz, {vendor.name}</p>
+ </div>
+ <div class="vd-hero-actions">
+ <span class="vd-plan-badge">
+ {vendor.plan !== 'free' ? `${vendor.plan} Plan` : 'Ücretsiz Plan'}
+ </span>
+ {vendor.firstPlace && (
+ <a
+ href={`/isletme/${vendor.firstPlace.slug}`}
+ target="_blank"
+ rel="noopener"
+ class="vd-view-btn"
+ >
+ Sayfayı Görüntüle →
+ </a>
+ )}
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="vd-body">
+ <div class="sf-container">
+ <div class="vd-stats">
+ <div class="vd-stat">
+ <div class="vd-stat-num">2,847</div>
+ <div class="vd-stat-label">Bu Ay Görüntülenme</div>
+ <div class="vd-stat-growth">↑ %15 artış</div>
+ </div>
+ <div class="vd-stat">
+ <div class="vd-stat-num">89</div>
+ <div class="vd-stat-label">Telefon Tıklaması</div>
+ <div class="vd-stat-growth">↑ %8 artış</div>
+ </div>
+ <div class="vd-stat">
+ <div class="vd-stat-num">4.8</div>
+ <div class="vd-stat-label">Ortalama Puan</div>
+ <div class="vd-stat-growth vd-stat-growth--neutral">1,247 yorum</div>
+ </div>
+ <div class="vd-stat">
+ <div class="vd-stat-num">156</div>
+ <div class="vd-stat-label">Yol Tarifi</div>
+ <div class="vd-stat-growth">↑ %22 artış</div>
+ </div>
+ </div>
+
+ <div class="vd-main">
+ <div class="vd-col-left">
+ {vendor.firstPlace ? (
+ <>
+ <PlaceManager placeId={vendor.firstPlace.id} client:visible />
+ <div class="vd-card">
+ <h2 class="vd-card-title">Fotoğraflar</h2>
+ <PhotoUpload placeId={vendor.firstPlace.id} photos={[]} client:visible />
+ </div>
+ <ReservationManager placeId={vendor.firstPlace.id} client:visible />
+ <PromotionManager placeId={vendor.firstPlace.id} client:visible />
+ <ReviewManager placeId={vendor.firstPlace.id} client:visible />
+ </>
+ ) : (
+ <div class="vd-empty">
+ <div style="font-size:2.5rem;margin-bottom:1rem">🏪</div>
+ <p class="vd-empty-title">Henüz işletmeniz yok</p>
+ <p style="font-size:.875rem">İşletmenizi ekleyerek paneli kullanmaya başlayın.</p>
+ <a href="/isletme-kayit" class="vd-empty-btn">İşletme Ekle</a>
+ </div>
+ )}
+ </div>
+
+ <div class="vd-col-right">
+ <div class="vd-card">
+ <h3 class="vd-plan-title">Mevcut Planınız</h3>
+ <div style="display:flex;flex-direction:column;gap:.75rem">
+ <div class="vd-plan-row">
+ <span class="vd-plan-label">Plan</span>
+ <span class="vd-plan-val">Premium</span>
+ </div>
+ <div class="vd-plan-row">
+ <span class="vd-plan-label">Aylık Ücret</span>
+ <span class="vd-plan-price">₺500</span>
+ </div>
+ <div class="vd-plan-row">
+ <span class="vd-plan-label">Yenileme Tarihi</span>
+ <span class="vd-plan-price">15 Mayıs 2026</span>
+ </div>
+ </div>
+ <hr class="vd-divider" />
+ <h4 class="vd-feat-title">Premium Avantajları</h4>
+ <ul class="vd-feat-list">
+ <li class="vd-feat-item"><span class="vd-feat-check">✓</span>Öne çıkan listeleme</li>
+ <li class="vd-feat-item"><span class="vd-feat-check">✓</span>Sosyal medya tanıtımı</li>
+ <li class="vd-feat-item"><span class="vd-feat-check">✓</span>Detaylı analitik raporları</li>
+ <li class="vd-feat-item"><span class="vd-feat-check">✓</span>Öncelikli destek</li>
+ </ul>
+ </div>
+
+ <div class="vd-card">
+ <h3 class="vd-qa-title">Hızlı İşlemler</h3>
+ <div>
+ <button class="vd-qa-btn">
+ <span class="vd-qa-icon">📸</span>
+ <span class="vd-qa-text">Fotoğraf Ekle</span>
+ </button>
+ <button class="vd-qa-btn">
+ <span class="vd-qa-icon">🏷️</span>
+ <span class="vd-qa-text">Kampanya Oluştur</span>
+ </button>
+ <a href="/isletme/analytics" class="vd-qa-btn">
+ <span class="vd-qa-icon">📊</span>
+ <span class="vd-qa-text">Detaylı Rapor İndir</span>
+ </a>
+ </div>
+ </div>
+
+ <div class="vd-support">
+ <h3 class="vd-support-title">Yardıma mı ihtiyacınız var?</h3>
+ <p class="vd-support-desc">Premium üyelere 7/24 öncelikli destek</p>
+ <a href="mailto:support@sanliurfa.com" class="vd-support-btn">Destek Al</a>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+</Layout>

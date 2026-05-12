@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../../lib/postgres';
-import { problemJson } from '../../../../../lib/api';
+import { problemJson, safeErrorDetail, safeIntParam } from '../../../../../lib/api';
 import { consumeExportToken } from '../../../../../lib/admin/export-tokens';
 import { auditSiteChange } from '../../../../../lib/site-content';
 
-function isAdmin(locals: any) {
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  return locals?.user?.role === 'admin';
 }
 
 function csvEscape(value: unknown): string {
@@ -16,7 +16,7 @@ function csvEscape(value: unknown): string {
   return str;
 }
 
-export const GET: APIRoute = async ({ url, locals, request }) => {
+export const GET: APIRoute = async ({ url, locals, request, clientAddress }) => {
   const signedToken = String(url.searchParams.get('token') || '').trim();
   const admin = isAdmin(locals);
   let tokenPayload: Record<string, unknown> = {};
@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
       resourceKey: 'admin.social.events.export',
       requestIp:
         request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-        (locals as any)?.clientAddress ||
+        clientAddress ||
         null,
       userAgent: request.headers.get('user-agent') || null,
       requestCountry:
@@ -51,8 +51,7 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
   const actorUserId = String(url.searchParams.get('actorUserId') || tokenPayload.actorUserId || '').trim();
   const targetUserId = String(url.searchParams.get('targetUserId') || tokenPayload.targetUserId || '').trim();
   const tenantId = String(url.searchParams.get('tenantId') || tokenPayload.tenantId || '').trim();
-  const limitRaw = Number(url.searchParams.get('limit') || 5000);
-  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(10000, limitRaw)) : 5000;
+  const limit = safeIntParam(url.searchParams.get('limit'), 5000, 1, 10000);
 
   const where: string[] = [];
   const params: unknown[] = [];
@@ -82,7 +81,7 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
        ${whereSql}
        ORDER BY created_at DESC
        LIMIT $${params.length}`,
-      params as any[],
+      params,
     );
 
     if (admin) {
@@ -141,7 +140,7 @@ export const GET: APIRoute = async ({ url, locals, request }) => {
     return problemJson({
       status: 500,
       title: 'Sosyal Event Export Başarısız',
-      detail: error instanceof Error ? error.message : 'admin_social_events_export_failed',
+      detail: safeErrorDetail(error, 'admin_social_events_export_failed'),
       type: '/problems/admin-social-events-export-failed',
       instance: '/api/admin/social/events/export',
     });

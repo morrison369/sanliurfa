@@ -6,19 +6,20 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { logger } from '../../../../lib/logging';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeIntParam, safeFloatParam } from '../../../../lib/api';
 
 export const GET: APIRoute = async ({ url }) => {
   try {
     const searchParams = url.searchParams;
     
     // Mobile-optimized parameters
-    const lat = searchParams.get('lat');
-    const lng = searchParams.get('lng');
-    const radius = parseInt(searchParams.get('radius') || '5000');
+    const latNum = safeFloatParam(searchParams.get('lat'), NaN, -90, 90);
+    const lngNum = safeFloatParam(searchParams.get('lng'), NaN, -180, 180);
+    const hasGeo = Number.isFinite(latNum) && Number.isFinite(lngNum);
+    const radius = safeIntParam(searchParams.get('radius'), 5000, 0, 1_000_000);
     const category = searchParams.get('category');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 50);
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const limit = safeIntParam(searchParams.get('limit'), 20, 1, 50);
+    const offset = safeIntParam(searchParams.get('offset'), 0, 0, 1_000_000);
 
     let sql = `
       SELECT
@@ -26,7 +27,7 @@ export const GET: APIRoute = async ({ url }) => {
         p.rating, p.review_count, p.price_range,
         p.latitude, p.longitude, p.phone, p.website,
         c.name as category_name, c.icon as category_icon,
-        ${lat && lng ? `
+        ${hasGeo ? `
           ROUND((6371 * acos(
             cos(radians($1)) * cos(radians(p.latitude)) *
             cos(radians(p.longitude) - radians($2)) +
@@ -45,11 +46,11 @@ export const GET: APIRoute = async ({ url }) => {
       WHERE p.status = 'active'
     `;
 
-    const params: any[] = [];
+    const params: unknown[] = [];
     let paramIndex = 1;
     
-    if (lat && lng) {
-      params.push(parseFloat(lat), parseFloat(lng));
+    if (hasGeo) {
+      params.push(latNum, lngNum);
       paramIndex = 3;
     }
 
@@ -58,13 +59,13 @@ export const GET: APIRoute = async ({ url }) => {
       params.push(category);
     }
 
-    sql += ` ORDER BY ${lat && lng ? 'distance_km ASC,' : ''} p.rating DESC NULLS LAST`;
+    sql += ` ORDER BY ${hasGeo ? 'distance_km ASC,' : ''} p.rating DESC NULLS LAST`;
     sql += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
     params.push(limit, offset);
 
     const result = await query(sql, params);
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       data: result.rows.map(place => ({
         ...place,
@@ -73,13 +74,7 @@ export const GET: APIRoute = async ({ url }) => {
       })),
       pagination: { limit, offset, has_more: result.rows.length === limit },
       meta: { version: '2.0', api: 'mobile', radius }
-    }), {
-      status: 200,
-      headers: { 
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=300'
-      }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('API v2 places error:', error);

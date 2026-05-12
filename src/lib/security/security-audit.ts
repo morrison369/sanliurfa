@@ -93,7 +93,7 @@ async function checkDatabaseConnections(): Promise<SecurityCheckResult> {
       status: hasSSL ? 'pass' : 'warning',
       severity: 'high',
       message: hasSSL ? 'Database connections use SSL' : 'Database SSL is not enforced',
-      remediation: hasSSL ? undefined : 'Add "?sslmode=require" to DATABASE_URL'
+      ...(hasSSL ? {} : { remediation: 'Add "?sslmode=require" to DATABASE_URL' })
     };
   } catch (error) {
     return {
@@ -120,7 +120,7 @@ async function checkSSLCertificates(): Promise<SecurityCheckResult> {
       status: useHTTPS ? 'pass' : 'warning',
       severity: 'critical',
       message: useHTTPS ? 'HTTPS is enforced' : 'HTTPS might not be enforced in development',
-      remediation: useHTTPS ? undefined : 'Enforce HTTPS in production'
+      ...(useHTTPS ? {} : { remediation: 'Enforce HTTPS in production' })
     };
   } catch (error) {
     return {
@@ -147,7 +147,7 @@ async function checkPasswordHashing(): Promise<SecurityCheckResult> {
       status: useBcrypt ? 'pass' : 'fail',
       severity: 'critical',
       message: useBcrypt ? 'Bcrypt password hashing is implemented' : 'Bcrypt not properly configured',
-      remediation: useBcrypt ? undefined : 'Ensure bcryptjs is used for password hashing'
+      ...(useBcrypt ? {} : { remediation: 'Ensure bcryptjs is used for password hashing' })
     };
   } catch (error) {
     return {
@@ -173,7 +173,7 @@ async function checkUserPermissions(): Promise<SecurityCheckResult> {
       status: result && result.rows && result.rows.length > 0 ? 'pass' : 'warning',
       severity: 'high',
       message: result && result.rows && result.rows.length > 0 ? 'RBAC is configured' : 'RBAC not fully configured',
-      remediation: result && result.rows && result.rows.length > 0 ? undefined : 'Configure role permissions'
+      ...(result && result.rows && result.rows.length > 0 ? {} : { remediation: 'Configure role permissions' })
     };
   } catch (error) {
     return {
@@ -198,8 +198,7 @@ async function checkAuditLogging(): Promise<SecurityCheckResult> {
       category: 'Monitoring',
       status: 'pass',
       severity: 'medium',
-      message: 'Audit logging is active',
-      remediation: undefined
+      message: 'Audit logging is active'
     };
   } catch (error) {
     return {
@@ -225,7 +224,9 @@ function checkEnvironmentVariables(): SecurityCheckResult {
     status: missing.length === 0 ? 'pass' : 'fail',
     severity: 'critical',
     message: missing.length === 0 ? 'All required environment variables are set' : `Missing: ${missing.join(', ')}`,
-    remediation: missing.length === 0 ? undefined : `Set these environment variables: ${missing.join(', ')}`
+    ...(missing.length === 0
+      ? {}
+      : { remediation: `Set these environment variables: ${missing.join(', ')}` })
   };
 }
 
@@ -252,8 +253,7 @@ function checkSecurityHeaders(): SecurityCheckResult {
     category: 'Network',
     status: 'pass',
     severity: 'high',
-    message: 'Security headers are configured in middleware',
-    remediation: undefined
+    message: 'Security headers are configured in middleware'
   };
 }
 
@@ -268,8 +268,7 @@ function checkRateLimiting(): SecurityCheckResult {
     category: 'DDoS Protection',
     status: 'pass',
     severity: 'high',
-    message: `Rate limiting is enabled (${rateLimit}s window)`,
-    remediation: undefined
+    message: `Rate limiting is enabled (${rateLimit}s window)`
   };
 }
 
@@ -286,7 +285,7 @@ function checkCORS(): SecurityCheckResult {
     status: isWildcard ? 'fail' : 'pass',
     severity: 'high',
     message: isWildcard ? 'CORS allows all origins (wildcard)' : 'CORS is properly restricted',
-    remediation: isWildcard ? 'Remove wildcard from CORS_ORIGINS' : undefined
+    ...(isWildcard ? { remediation: 'Remove wildcard from CORS_ORIGINS' } : {})
   };
 }
 

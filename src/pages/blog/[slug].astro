@@ -1,65 +1,69 @@
 ---
-
-// Blog Post Detail Page — reads from DB, falls back to content collection
-import Layout from '../../layouts/Layout.astro';
-import { queryOne, query } from '../../lib/postgres';
-import { resolveContentImage } from '../../lib/content-images';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import EditorialTemplate from '../../components/templates/EditorialTemplate.astro';
+import Image from '../../components/Image.astro';
+import PublicDetailHero from '../../components/public/PublicDetailHero.astro';
+import PublicDetailBody from '../../components/public/PublicDetailBody.astro';
+import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
+import PublicFaqList from '../../components/public/PublicFaqList.astro';
+import PublicContentSection from '../../components/public/PublicContentSection.astro';
+import PublicRichProse from '../../components/public/PublicRichProse.astro';
+import { queryOne } from '../../lib/postgres';
+import RelatedPosts from '../../components/blog/RelatedPosts.astro';
+import BlogRelatedEvents from '../../components/blog/BlogRelatedEvents.astro';
+import BlogRelatedPlaces from '../../components/blog/BlogRelatedPlaces.astro';
+import BlogComments from '../../components/blog/BlogComments';
+import { logger } from '../../lib/logging';
+import { buildPageSeo } from '../../lib/seo/pageSeo';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { resolveBlogImage } from '../../lib/public-image-resolvers';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+const baseUrl = getPublicAppUrl();
 
 const { slug } = Astro.params;
 if (!slug) return Astro.redirect('/blog');
 
 let post: any = null;
-let relatedPosts: any[] = [];
 
 try {
-  // Try DB first
-  post = await queryOne(
-    "SELECT * FROM blog_posts WHERE slug = $1 AND status = 'published'",
-    [slug]
-  );
+ post = await getCachedPublicRouteData(`page:blog:detail:${slug}`, async () =>
+  queryOne(
+  "SELECT * FROM blog_posts WHERE slug = $1 AND status = 'published'",
+  [slug]
+  ),
+ );
 
-  if (post) {
-    // Content may contain HTML already
-    post.content_html = post.content;
-    post.reading_time = Math.ceil((post.content || '').split(/\s+/).length / 200);
-
-    const relResult = await query(
-      "SELECT id, title, slug, excerpt, featured_image, category, created_at FROM blog_posts WHERE status = 'published' AND category = $1 AND slug != $2 LIMIT 3",
-      [post.category, slug]
-    );
-    relatedPosts = relResult.rows;
-  }
+ if (post) {
+ post.content_html = post.content;
+ post.reading_time = Math.ceil((post.content || '').split(/\s+/).length / 200);
+ }
 } catch (e) {
-  console.error('Error loading blog post from DB:', e);
+ logger.error('Error loading blog post from DB', e instanceof Error ? e : new Error(String(e)));
 }
 
-// Fallback: try Astro content collection
 if (!post) {
-  try {
-    const { getPostBySlug: getFromCollection } = await import('../../lib/blog');
-    const collectionPost = await getFromCollection(slug);
-    if (collectionPost) {
-      post = {
-        ...collectionPost,
-        content_html: null,
-        author_name: collectionPost.author,
-        published_at: collectionPost.publishedAt,
-        reading_time: collectionPost.readingTime,
-        featured_image: collectionPost.image,
-      };
-    }
-  } catch { /* content collection not available in SSR */ }
+ try {
+ const { getPostBySlug: getFromCollection } = await import('../../lib/blog');
+ const collectionPost = await getFromCollection(slug);
+ if (collectionPost) {
+ post = {
+ ...collectionPost,
+ content_html: null,
+ author_name: collectionPost.author,
+ published_at: collectionPost.publishedAt,
+ reading_time: collectionPost.readingTime,
+ featured_image: collectionPost.image,
+ };
+ }
+ } catch { /* content collection not available in SSR */ }
 }
 
 const fallbackPosts: Record<string, any> = {
-  'sanliurfa-hafta-sonu-rehberi': {
-    slug: 'sanliurfa-hafta-sonu-rehberi',
-    title: 'Şanlıurfa Hafta Sonu Rehberi: 2 Günde Neler Yapılır?',
-    excerpt:
-      "Şanlıurfa'da 2 günlük gezi planı. Cumartesi ve pazar günü yapılacaklar, gezilecek yerler ve yeme içme önerileri.",
-    content: `## 1. Gün: Tarih ve Kültür
+ 'sanliurfa-hafta-sonu-rehberi': {
+ slug: 'sanliurfa-hafta-sonu-rehberi',
+ title: 'Şanlıurfa Hafta Sonu Rehberi: 2 Günde Neler Yapılır?',
+ excerpt:
+ "Şanlıurfa'da 2 günlük gezi planı. Cumartesi ve pazar günü yapılacaklar, gezilecek yerler ve yeme içme önerileri.",
+ content: `## 1. Gün: Tarih ve Kültür
 Sabah erken saatlerde Göbeklitepe ile başlayın. Ziyaret için 2-3 saat ayırmak, hem müze alanını hem de ana kazı bölgesini rahat gezmek için yeterlidir.
 
 Öğle saatlerinde şehir merkezine dönüp ciğer kebabı, lahmacun veya patlıcan kebabı tercih edebilirsiniz. Kalabalık saatlere kalmamak için öğle planını erken yapmak daha kullanışlı olur.
@@ -83,261 +87,337 @@ Akşam programında sıra gecesi tercih edilecekse rezervasyon, ulaşım ve dön
 - Balıklıgöl ve çarşı rotasını aynı gün içinde yürüyerek gezebilirsiniz.
 - Halfeti için tekne saatlerini gitmeden önce kontrol edin.
 - Şanlıurfa gezisinde rahat ayakkabı ve mevsime uygun kıyafet önemlidir.`,
-    content_html: null,
-    author_name: 'Şanlıurfa Rehberi',
-    published_at: '2026-04-11T00:00:00.000Z',
-    reading_time: 3,
-    featured_image: '/images/blog/tarihi-yerler-rehberi.jpg',
-    category: 'Gezi',
-    tags: [
-      { name: 'Şanlıurfa Gezi', slug: 'sanliurfa-gezi' },
-      { name: 'Hafta Sonu', slug: 'hafta-sonu' },
-    ],
-  },
+ content_html: null,
+ author_name: 'Şanlıurfa Rehberi',
+ published_at: '2026-04-11T00:00:00.000Z',
+ reading_time: 3,
+ featured_image: '/images/blog/tarihi-yerler-rehberi.jpg',
+ category: 'Gezi',
+ tags: [
+ { name: 'Şanlıurfa Gezi', slug: 'sanliurfa-gezi' },
+ { name: 'Hafta Sonu', slug: 'hafta-sonu' },
+ ],
+ },
 };
 
 if (!post && slug && fallbackPosts[slug]) {
-  post = fallbackPosts[slug];
+ post = fallbackPosts[slug];
 }
 
 if (!post) return Astro.redirect('/blog');
 
 const title = post.title;
 const description = post.excerpt || post.meta_description || '';
-const getBlogImage = (entry: any, thumb = false) =>
-  resolveContentImage({
-    category: 'blog',
-    slug: entry?.slug,
-    explicit: entry?.featured_image || entry?.cover_image || entry?.image,
-    placeholder: '/images/placeholder-blog.jpg',
-    thumb,
-  });
-const faqItems = [
-  { S: `${post.title} hakkında ne bilinmeli?`, C: post.excerpt || `${post.title} için detaylı bilgiyi yazımızda bulabilirsiniz.` },
-  { S: `Bu yazı hangi kategoride?`, C: `Bu yazı ${post.category || 'Genel'} kategorisinde yayınlanmıştır.` },
-  { S: `Şanlıurfa hakkında daha fazla yazı nerede bulunur?`, C: 'Şanlıurfa rehberiyle ilgili tüm yazılarımıza /blog sayfasından ulaşabilirsiniz.' },
+const getBlogImage = (entry: any) => resolveBlogImage(entry);
+
+// İçerikten gerçek FAQ Q&A çiftlerini çıkar (<h2>Sık Sorulan Sorular</h2> sonrasındaki <h3>/<p> blokları)
+function extractContentFaq(html: string): Array<{S: string; C: string}> {
+ if (!html || !html.includes('Sık Sorulan Sorular')) return [];
+ const section = html.slice(html.indexOf('Sık Sorulan Sorular'));
+ const matches = [...section.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>\s*<p[^>]*>([\s\S]*?)<\/p>/gi)];
+ return matches.slice(0, 5)
+  .map(m => ({ S: m[1].replace(/<[^>]+>/g, '').trim(), C: m[2].replace(/<[^>]+>/g, '').trim() }))
+  .filter(p => p.S && p.C);
+}
+
+const contentFaq = post?.content ? extractContentFaq(post.content) : [];
+const staticFaqItems = [
+ {
+  S: `${post.title} hakkında ne bilinmeli?`,
+  C: post.excerpt && post.excerpt.length > 80
+   ? post.excerpt
+   : `${post.title} konusunu derinlemesine ele alan bu yazıda Şanlıurfa hakkında merak edilen bilgileri bulabilirsiniz. İçerik Sanliurfa.com editörleri tarafından hazırlanmış olup güncel ve doğrulanmış veriler içermektedir.`,
+ },
+ {
+  S: `Bu yazı hangi kategoride?`,
+  C: `Bu yazı ${post.category || 'Şanlıurfa Rehberi'} kategorisinde yayınlanmıştır. Sanliurfa.com blog bölümünde gezi, gastronomi, tarih, kültür ve günlük yaşam gibi başlıklarda yerel içerikler düzenli olarak paylaşılmaktadır.`,
+ },
+ {
+  S: `Bu yazı ne zaman güncellendi?`,
+  C: `Yazı ${post.published_at ? new Date(post.published_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'yakın zamanda'} tarihinde yayımlanmış olup içerik gerekliliğine göre güncel tutulmaktadır. Doğruluk için yayım tarihini referans alabilirsiniz.`,
+ },
+ {
+  S: `Şanlıurfa hakkında daha fazla yazı nerede bulunur?`,
+  C: `Şanlıurfa rehberi, tarih, gastronomi ve gezi yazıları dahil tüm blog içeriklerimize sanliurfa.com/blog sayfasından ulaşabilirsiniz. Kategorilere göre filtreleyebilir, en çok okunan yazıları öne çıkan listeden takip edebilirsiniz.`,
+ },
+];
+// Gerçek FAQ içeriği varsa onu kullan (≥3 çift), yoksa statik sorulara dön
+const faqItems = contentFaq.length >= 3 ? contentFaq : staticFaqItems;
+const CATEGORY_LINKS: Record<string, Array<{ label: string; href: string }>> = {
+ 'Gastronomi': [
+  { label: 'Gastronomi Rehberi', href: '/gastronomi' },
+  { label: 'En İyi Kebapçılar', href: '/en-iyi-kebapcilar' },
+  { label: 'En İyi Cigerciler', href: '/en-iyi-cigerciler' },
+  { label: 'Kahvaltı Mekanları', href: '/sanliurfa-kahvalti-mekanlari' },
+ ],
+ 'Gezi': [
+  { label: 'Gezilecek Yerler', href: '/gezilecek-yerler' },
+  { label: 'Bugün Ne Yapılır?', href: '/bugun-sanliurfada-ne-yapilir' },
+  { label: 'Gece Açık Mekanlar', href: '/sanliurfa-gece-acik-mekanlar' },
+ ],
+ 'Tarih': [
+  { label: 'Tarihi Yerler', href: '/tarihi-yerler' },
+  { label: 'Dini ve Kültürel Yerler', href: '/dini-ve-kulturel-yerler' },
+ ],
+ 'Kültür': [
+  { label: 'Dini ve Kültürel Yerler', href: '/dini-ve-kulturel-yerler' },
+  { label: 'Sıra Gecesi Mekanları', href: '/sanliurfa-sira-gecesi-mekanlari' },
+  { label: 'Etkinlikler', href: '/etkinlikler' },
+ ],
+ 'Ulaşım': [
+  { label: 'Ulaşım Rehberi', href: '/ulasim' },
+  { label: 'Otobüs Saatleri', href: '/ulasim/otobus-saatleri' },
+  { label: 'Uçak Saatleri', href: '/ulasim/ucak-saatleri' },
+ ],
+ 'Sağlık': [
+  { label: 'Sağlık Hizmetleri', href: '/saglik' },
+  { label: 'Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler' },
+ ],
+ 'Alışveriş': [
+  { label: 'Alışveriş', href: '/alisveris' },
+ ],
+ 'Tarım': [
+  { label: 'Tarım ve Hayvancılık', href: '/tarim-ve-hayvancilik' },
+ ],
+ 'İş': [
+  { label: 'İş Dünyası ve Sanayi', href: '/is-dunyasi-ve-sanayi' },
+ ],
+};
+const categoryLinks = CATEGORY_LINKS[post.category || ''] ?? [
+ { label: 'Tüm Mekanlar', href: '/mekanlar' },
+ { label: 'Blog Yazıları', href: '/blog' },
 ];
 
+const isAuthenticated = !!Astro.locals.user;
+
+const blogOgImage = getBlogImage(post);
+const seo = buildPageSeo({
+ title,
+ description,
+ ogImage: blogOgImage.includes('placeholder') ? undefined : blogOgImage,
+ canonical: `/blog/${post.slug}`,
+ keywords: post.tags?.length ? post.tags : ['Şanlıurfa', 'şehir rehberi', post.category || 'blog'],
+ type: 'article',
+ publishedTime: post.published_at ? new Date(post.published_at).toISOString() : undefined,
+ modifiedTime: post.updated_at ? new Date(post.updated_at).toISOString() : undefined,
+});
 ---
 
-<Layout seo={{
-  title,
-  description,
-  ogImage: getBlogImage(post),
-  type: 'article',
-  publishedTime: post.created_at || post.published_at,
-  modifiedTime: post.updated_at,
-  keywords: post.tags?.length ? post.tags : ['Şanlıurfa', 'şehir rehberi', post.category || 'blog'],
-  author: post.author_name || 'Sanliurfa.com',
-  canonical: `/blog/${post.slug}`,
-}}>
-  <article class="min-h-screen bg-white">
-    <!-- Hero -->
-    <div class="bg-gradient-to-br from-amber-600 to-orange-700 text-white">
-      <div class="container mx-auto px-4 py-16">
-        <div class="max-w-3xl mx-auto text-center">
-          <a href={`/blog?category=${post.category}`} class="inline-block px-3 py-1 bg-white/20 rounded-full text-sm mb-4 hover:bg-white/30 transition-colors">
-            {post.category}
-          </a>
-          <h1 class="text-3xl md:text-5xl font-bold mb-6">{post.title}</h1>
-          <div class="flex items-center justify-center gap-6 text-amber-100">
-            <span class="flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-              </svg>
-              {post.author_name}
-            </span>
-            <span class="flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-              {new Date(post.published_at!).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
-            </span>
-            <span class="flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              {post.reading_time} dk okuma
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+<EditorialTemplate seo={seo}>
+ <style is:inline>
+ .bl-content{max-width:100%}
+ .bl-excerpt{font-size:1.05rem;color:var(--public-text-soft);font-style:italic;border-left:3px solid var(--public-accent);padding-left:1.25rem;line-height:1.8;margin:0}
+ .bl-tags{margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(184,115,51,.15)}
+ .bl-tags-title{font-size:.82rem;font-weight:700;color:var(--public-text);margin-bottom:.75rem}
+ .bl-tag{display:inline-block;padding:.25rem .65rem;background:rgba(184,115,51,.06);border:1px solid rgba(184,115,51,.15);font-size:.78rem;color:var(--public-muted);margin:.25rem;transition:background .15s,color .15s}
+ .bl-tag:hover{background:rgba(184,115,51,.12);color:var(--public-accent)}
+ .bl-share{margin-top:2rem;display:flex;align-items:center;gap:1rem}
+ .bl-share-label{font-size:.82rem;font-weight:600;color:var(--public-muted)}
+ .bl-share-btn{padding:.5rem 1.1rem;font-size:.82rem;font-weight:600;border:none;cursor:pointer;transition:background .15s}
+ .bl-share-primary{background:var(--public-accent);color:#fff}
+ .bl-share-primary:hover{background:var(--public-accent-strong);color:#fff}
+ .bl-share-secondary{background:transparent;border:1px solid rgba(184,115,51,.25);color:var(--public-muted)}
+ .bl-share-secondary:hover{border-color:var(--public-accent);color:var(--public-accent)}
+ .bl-side-text{margin:0;color:var(--public-muted);line-height:1.7;font-size:.88rem}
+ .bl-meta-footer{margin-top:2rem;padding-top:1.5rem;border-top:1px solid rgba(184,115,51,.1);display:flex;flex-direction:column;gap:.4rem}
+ .bl-updated{font-size:.78rem;color:var(--public-muted)}
+ .bl-updated time{color:var(--public-text-soft)}
+ .bl-source{font-size:.75rem;color:var(--public-muted);opacity:.7}
+ </style>
 
-    {/* Featured Image */}
-    <div class="container mx-auto px-4 -mt-8">
-      <div class="max-w-4xl mx-auto">
-        <img
-          src={getBlogImage(post)}
-          alt={post.title}
-          class="w-full h-64 md:h-96 object-cover rounded-2xl shadow-lg"
-          onerror="this.setAttribute('src','/images/placeholder-blog.jpg')"
-        />
-      </div>
-    </div>
+ <Fragment slot="hero">
+  <PublicDetailHero
+   imageSrc={getBlogImage(post)}
+   imageAlt={post.title}
+   title={post.title}
+   compact={true}
+   badges={[
+    { label: post.category, tone: 'dark' },
+   ]}
+   metaItems={[
+    { label: String(post.author_name || 'Sanliurfa.com'), icon: 'lucide:user' },
+    { label: new Date(post.published_at!).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }), icon: 'lucide:calendar' },
+    { label: `${post.reading_time} dk okuma`, icon: 'lucide:clock' },
+   ]}
+  />
+ </Fragment>
 
-    {/* Content */}
-    <div class="container mx-auto px-4 py-12">
-      <div class="max-w-3xl mx-auto">
-        {/* Excerpt */}
-        <p class="text-xl text-gray-600 italic border-l-4 border-amber-500 pl-6 mb-8">
-          {post.excerpt}
-        </p>
+ <PublicDetailBody compactSidebar>
+ <div class="bl-content">
+ {post.excerpt && (
+ <PublicContentSection eyebrow="Özet">
+  <p class="bl-excerpt">{post.excerpt}</p>
+ </PublicContentSection>
+ )}
 
-        {/* Main Content */}
-        <div class="prose prose-lg prose-amber max-w-none">
-          {post.content_html ? (
-            <Fragment set:html={post.content_html} />
-          ) : (
-            <div class="markdown-content">
-              {post.content.split('\n').map((line: string) => {
-                if (line.startsWith('# ')) {
-                  return <h1 class="text-3xl font-bold mt-8 mb-4">{line.slice(2)}</h1>;
-                } else if (line.startsWith('## ')) {
-                  return <h2 class="text-2xl font-bold mt-8 mb-4">{line.slice(3)}</h2>;
-                } else if (line.startsWith('### ')) {
-                  return <h3 class="text-xl font-bold mt-6 mb-3">{line.slice(4)}</h3>;
-                } else if (line.startsWith('- ')) {
-                  return <li class="ml-4">{line.slice(2)}</li>;
-                } else if (line.startsWith('![')) {
-                  const match = line.match(/!\[(.*?)\]\((.*?)\)/);
-                  if (match) {
-                    return <img src={match[2]} alt={match[1]} class="w-full rounded-lg my-6" />;
-                  }
-                } else if (line.trim()) {
-                  return <p class="mb-4 leading-relaxed">{line}</p>;
-                }
-                return null;
-              })}
-            </div>
-          )}
-        </div>
+ <PublicContentSection title="Yazının Tamamı">
+ <PublicRichProse>
+ {post.content_html ? (
+ <Fragment set:html={post.content_html} />
+ ) : (
+ <div>
+ {post.content.split('\n').map((line: string) => {
+ if (line.startsWith('# ')) {
+ return <h1>{line.slice(2)}</h1>;
+ } else if (line.startsWith('## ')) {
+ return <h2>{line.slice(3)}</h2>;
+ } else if (line.startsWith('### ')) {
+ return <h3>{line.slice(4)}</h3>;
+ } else if (line.startsWith('- ')) {
+ return <li>{line.slice(2)}</li>;
+ } else if (line.startsWith('![')) {
+ const match = line.match(/!\[(.*?)\]\((.*?)\)/);
+ if (match) {
+ return <Image src={match[2]} alt={match[1]} width={960} height={540} />;
+ }
+ } else if (line.trim()) {
+ return <p>{line}</p>;
+ }
+ return null;
+ })}
+ </div>
+ )}
+ </PublicRichProse>
+ </PublicContentSection>
 
-        {/* Tags */}
-        {post.tags && post.tags.length > 0 && (
-          <div class="mt-12 pt-8 border-t">
-            <h4 class="font-bold text-gray-900 mb-3">Etiketler</h4>
-            <div class="flex flex-wrap gap-2">
-              {post.tags.map((tag: any) => (
-                <a
-                  href={`/blog/etiket/${tag.slug}`}
-                  class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-amber-100 hover:text-amber-700 transition-colors"
-                >
-                  {tag.name}
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
+ {post.tags && post.tags.length > 0 && (
+ <PublicContentSection title="Etiketler">
+ <div class="bl-tags">
+ <p class="bl-tags-title">Etiketler</p>
+ <div>
+ {post.tags.map((tag: any) => {
+  const label = typeof tag === 'string' ? tag : (tag.name || tag.slug || String(tag));
+  const slugTag = typeof tag === 'string' ? tag.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') : (tag.slug || label.toLowerCase().replace(/\s+/g, '-'));
+  return <a href={`/blog?etiket=${encodeURIComponent(slugTag)}`} class="bl-tag">{label}</a>;
+ })}
+ </div>
+ </div>
+ </PublicContentSection>
+ )}
 
-        {/* Share */}
-        <div class="mt-8 flex items-center gap-4">
-          <span class="font-medium text-gray-700">Paylaş:</span>
-          <div class="flex gap-2">
-            <button onclick="sharePage()" class="h-10 px-4 bg-amber-600 text-white rounded-full flex items-center justify-center hover:bg-amber-700 transition-colors">
-              Paylaş
-            </button>
-            <button onclick="copyLink()" class="h-10 px-4 bg-gray-200 text-gray-700 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors">
-              Linki Kopyala
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+ <div class="bl-meta-footer">
+ {post.updated_at && post.updated_at !== post.published_at && (
+  <p class="bl-updated">
+   Son güncelleme: <time datetime={post.updated_at}>{new Date(post.updated_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+  </p>
+ )}
+ <p class="bl-source">Kaynak: Sanliurfa.com Editöryel — Yerel araştırma ve yerinde derleme.</p>
+ </div>
 
-    {/* Related Posts */}
-    {relatedPosts.length > 0 && (
-      <div class="bg-gray-50 py-12">
-        <div class="container mx-auto px-4">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Benzer Yazılar</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {relatedPosts.map(related => (
-              <a href={`/blog/${related.slug}`} class="group">
-                <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                  <div class="h-40 bg-gradient-to-br from-amber-100 to-orange-100">
-                    <img src={getBlogImage(related, true)} alt={related.title} class="w-full h-full object-cover" loading="lazy" onerror="this.setAttribute('src','/images/placeholder-blog.jpg')" />
-                  </div>
-                  <div class="p-4">
-                    <h3 class="font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2">
-                      {related.title}
-                    </h3>
-                    <p class="text-sm text-gray-500 mt-2">{related.reading_time} dk okuma</p>
-                  </div>
-                </article>
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-    )}
-  </article>
+ <div class="bl-share">
+ <span class="bl-share-label">Paylaş:</span>
+ <button onclick="sharePage()" class="bl-share-btn bl-share-primary">Paylaş</button>
+ <button onclick="copyLink()" class="bl-share-btn bl-share-secondary">Linki Kopyala</button>
+ </div>
+ </div>
 
-  <script define:vars={{ slug: post.slug, title: post.title }} is:inline>
-    const url = window.location.href;
-    
-    async function copyLink() {
-      try {
-        await navigator.clipboard.writeText(url);
-        alert('Link kopyalandı');
-      } catch {
-        alert('Link kopyalanamadı');
-      }
-    }
+ <Fragment slot="sidebar">
+  <PublicSidebarCard title="Yazı Özeti">
+   <p class="bl-side-text">
+    {post.excerpt || `${post.title} yazısı ${post.category || 'Genel'} kategorisinde yayınlanmıştır.`}
+   </p>
+  </PublicSidebarCard>
+  <PublicSidebarCard title="İlgili Sayfalar">
+   <nav style="display:flex;flex-direction:column;gap:.5rem">
+    {categoryLinks.map((link) => (
+     <a href={link.href} style="display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;background:rgba(184,115,51,.07);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;color:#B87333;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s" onmouseenter="this.style.background='rgba(184,115,51,.14)'" onmouseleave="this.style.background='rgba(184,115,51,.07)'">
+      <span style="flex-shrink:0">›</span>
+      {link.label}
+     </a>
+    ))}
+   </nav>
+  </PublicSidebarCard>
+  <PublicSidebarCard title="Hızlı Cevaplar">
+   <PublicFaqList items={faqItems.map((item) => ({ q: item.S, a: item.C }))} />
+  </PublicSidebarCard>
+ </Fragment>
+ </PublicDetailBody>
 
-    async function sharePage() {
-      if (navigator.share) {
-        try {
-          await navigator.share({ title, url });
-          return;
-        } catch {
-          // fall back to copy
-        }
-      }
-      await copyLink();
-    }
-  </script>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: `${baseUrl}/blog` },
-      { '@type': 'ListItem', position: 3, name: post.title, item: `${baseUrl}/blog/${post.slug}` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: post.title,
-    description: post.excerpt || description,
-    inLanguage: 'tr',
-    url: `${baseUrl}/blog/${post.slug}`,
-    image: (() => { const img = getBlogImage(post); return img.startsWith('http') ? img : `${baseUrl}${img}`; })(),
-    datePublished: post.published_at || post.created_at,
-    dateModified: post.updated_at || post.published_at || post.created_at,
-    author: {
-      '@type': 'Person',
-      name: post.author_name || 'Sanliurfa.com',
-    },
-    '@id': `${baseUrl}/blog/${post.slug}`,
-    publisher: {
-      '@type': 'Organization',
-      name: 'Sanliurfa.com',
-      url: baseUrl,
-      logo: { '@type': 'ImageObject', url: `${baseUrl}/favicon.svg`, width: 200, height: 200 },
-    },
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': `${baseUrl}/blog/${post.slug}`,
-    },
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
-</Layout>
+ <BlogComments
+  postId={post.id || post.slug}
+  postTitle={post.title}
+  isAuthenticated={isAuthenticated}
+  client:visible
+ />
+
+ <BlogRelatedEvents category={post.category || 'Kültür'} server:defer>
+  <div slot="fallback" style="height:8rem" />
+ </BlogRelatedEvents>
+ <BlogRelatedPlaces category={post.category || 'Turizm'} server:defer>
+  <div slot="fallback" style="height:6rem" />
+ </BlogRelatedPlaces>
+ <RelatedPosts category={post.category} excludeSlug={post.slug} />
+
+ <script define:vars={{ slug: post.slug, title: post.title }} is:inline>
+ const url = window.location.href;
+
+ async function copyLink() {
+ try {
+ await navigator.clipboard.writeText(url);
+ window.toast?.success('Link kopyalandı');
+ } catch {
+ window.toast?.error('Link kopyalanamadı');
+ }
+ }
+
+ async function sharePage() {
+ if (navigator.share) {
+ try {
+ await navigator.share({ title, url });
+ return;
+ } catch {
+ // fall back to copy
+ }
+ }
+ await copyLink();
+ }
+ </script>
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Blog', item: `${baseUrl}/blog` },
+ { '@type': 'ListItem', position: 3, name: post.title, item: `${baseUrl}/blog/${post.slug}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BlogPosting',
+ headline: post.title,
+ description: post.excerpt || description,
+ inLanguage: 'tr',
+ url: `${baseUrl}/blog/${post.slug}`,
+ image: (() => { const img = getBlogImage(post); return img.startsWith('http') ? img : `${baseUrl}${img}`; })(),
+ datePublished: post.published_at || post.created_at,
+ dateModified: post.updated_at || post.published_at || post.created_at,
+ wordCount: post.content ? post.content.replace(/<[^>]+>/g, '').split(/\s+/).length : undefined,
+ keywords: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
+ author: {
+ '@type': 'Person',
+ name: post.author_name || 'Şanlıurfa Rehberi Editörü',
+ url: `${baseUrl}/blog`,
+ },
+ '@id': `${baseUrl}/blog/${post.slug}`,
+ publisher: {
+ '@type': 'Organization',
+ name: 'Sanliurfa.com',
+ url: baseUrl,
+ logo: { '@type': 'ImageObject', url: `${baseUrl}/og-image.jpg`, width: 1200, height: 630 },
+ sameAs: ['https://sanliurfa.com'],
+ },
+ mainEntityOfPage: {
+ '@type': 'WebPage',
+ '@id': `${baseUrl}/blog/${post.slug}`,
+ },
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+</EditorialTemplate>

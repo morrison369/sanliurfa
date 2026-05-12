@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
 import { getSitePlatformSummary } from '../../../../lib/site-platform';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, HttpStatus, problemJson, safeErrorDetail } from '../../../../lib/api';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 export const GET: APIRoute = async ({ locals }) => {
@@ -20,14 +20,12 @@ export const GET: APIRoute = async ({ locals }) => {
 
   try {
     const summary = await getSitePlatformSummary();
-    return new Response(JSON.stringify({ success: true, ...summary }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, ...summary }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Platform Özeti Alınamadı',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-site-platform-read-failed',
       instance: '/api/admin/site/platform',
     });

@@ -3,6 +3,8 @@
  * Stub for data validation and quality checks
  */
 
+import { randomBytes } from 'node:crypto';
+
 export interface QualityRule {
   id: string;
   field: string;
@@ -23,7 +25,7 @@ export class DataQualityEngine {
   addRule(rule: Omit<QualityRule, 'id'>): QualityRule {
     const newRule: QualityRule = {
       ...rule,
-      id: Math.random().toString(36).substring(7)
+      id: randomBytes(6).toString('hex')
     };
     this.rules.push(newRule);
     return newRule;

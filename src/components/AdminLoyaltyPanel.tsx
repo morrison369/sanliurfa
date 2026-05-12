@@ -1,70 +1,70 @@
-import {  useState, useEffect  } from 'react';
+import { useState, useEffect } from 'react';
 interface Reward {
-  id: string;
-  reward_name: string;
-  category: string;
-  points_cost: number;
+ id: string;
+ reward_name: string;
+ category: string;
+ points_cost: number;
 }
 
 export default function AdminLoyaltyPanel() {
-  const [activeTab, setActiveTab] = useState("rewards");
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [error, setError] = useState<string | null>(null);
+ const [activeTab, setActiveTab] = useState("rewards");
+ const [rewards, setRewards] = useState<Reward[]>([]);
+ const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadRewards();
-  }, []);
+ useEffect(() => {
+ loadRewards();
+ }, []);
 
-  const loadRewards = async () => {
-    try {
-      const response = await fetch("/api/admin/loyalty/rewards");
-      if (!response.ok) throw new Error("Sadakat ödülleri yüklenemedi.");
-      const data = await response.json();
-      setRewards(data.data || []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Hata oluştu.");
-    }
-  };
+ const loadRewards = async () => {
+ try {
+ const response = await fetch("/api/admin/loyalty/rewards");
+ if (!response.ok) throw new Error("Sadakat ödülleri yüklenemedi.");
+ const data = await response.json();
+ setRewards(data.data || []);
+ } catch (err) {
+ setError(err instanceof Error ? err.message : "Hata oluştu.");
+ }
+ };
 
-  return (
-    <div className="w-full space-y-4">
-      <div className="flex space-x-2 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab("rewards")}
-          className="px-4 py-2 font-medium border-b-2"
-        >
-          Ödüller
-        </button>
-      </div>
+ return (
+ <div className="w-full space-y-4">
+ <div className="flex space-x-2 border-b border-[rgba(184,115,51,0.14)]">
+ <button
+ onClick={() => setActiveTab("rewards")}
+ className="px-4 py-2 font-medium border-b-2"
+ >
+ Ödüller
+ </button>
+ </div>
 
-      {error && <div className="text-red-600">{error}</div>}
+ {error && <div className="text-red-600">{error}</div>}
 
-      {activeTab === "rewards" && (
-        <div className="space-y-4">
-          {rewards.length > 0 ? (
-            <table className="w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="text-left px-4 py-2">Ad</th>
-                  <th className="text-left px-4 py-2">Kategori</th>
-                  <th className="text-right px-4 py-2">Puan</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rewards.map((reward) => (
-                  <tr key={reward.id}>
-                    <td className="px-4 py-2">{reward.reward_name}</td>
-                    <td className="px-4 py-2">{reward.category}</td>
-                    <td className="text-right px-4 py-2">{reward.points_cost}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="text-gray-600 text-sm">Ödül bulunamadı.</p>
-          )}
-        </div>
-      )}
-    </div>
-  );
+ {activeTab === "rewards" && (
+ <div className="space-y-4">
+ {rewards.length > 0 ? (
+ <table className="w-full text-sm">
+ <thead>
+ <tr>
+ <th className="text-left px-4 py-2">Ad</th>
+ <th className="text-left px-4 py-2">Kategori</th>
+ <th className="text-right px-4 py-2">Puan</th>
+ </tr>
+ </thead>
+ <tbody>
+ {rewards.map((reward) => (
+ <tr key={reward.id}>
+ <td className="px-4 py-2">{reward.reward_name}</td>
+ <td className="px-4 py-2">{reward.category}</td>
+ <td className="text-right px-4 py-2">{reward.points_cost}</td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ ) : (
+ <p className="text-[#7A6B58] text-sm">Ödül bulunamadı.</p>
+ )}
+ </div>
+ )}
+ </div>
+ );
 }

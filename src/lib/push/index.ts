@@ -5,6 +5,7 @@
 
 import { query } from '../postgres';
 import { logger } from '../logging';
+import { safeJsonParse } from '../api';
 
 // Web Push requires these imports in Node environment
 let webPush: any;
@@ -144,11 +145,16 @@ export async function sendToUser(
   let sent = 0;
   let failed = 0;
 
-  for (const sub of subscriptions) {
-    const success = await sendNotification(sub, notification);
-    if (success) sent++;
-    else failed++;
-  }
+  const settled = await Promise.allSettled(
+    subscriptions.map((sub) => sendNotification(sub, notification))
+  );
+  settled.forEach((result) => {
+    if (result.status === 'fulfilled' && result.value) {
+      sent++;
+    } else {
+      failed++;
+    }
+  });
 
   return { sent, failed };
 }
@@ -160,11 +166,17 @@ export async function sendToMultipleUsers(
   let sent = 0;
   let failed = 0;
 
-  for (const userId of userIds) {
-    const result = await sendToUser(userId, notification);
-    sent += result.sent;
-    failed += result.failed;
-  }
+  const settled = await Promise.allSettled(
+    userIds.map((userId) => sendToUser(userId, notification))
+  );
+  settled.forEach((result) => {
+    if (result.status === 'fulfilled') {
+      sent += result.value.sent;
+      failed += result.value.failed;
+    } else {
+      failed++;
+    }
+  });
 
   return { sent, failed };
 }
@@ -304,23 +316,34 @@ export async function processScheduledNotifications(): Promise<number> {
 
   let processed = 0;
 
-  for (const row of result.rows) {
-    try {
-      const notification: PushNotification = JSON.parse(row.notification);
-      await sendToUser(row.user_id, notification);
-      
-      await query(
-        `UPDATE scheduled_notifications SET status = 'sent', sent_at = NOW() WHERE id = $1`,
-        [row.id]
-      );
-      processed++;
-    } catch (error) {
-      await query(
-        `UPDATE scheduled_notifications SET status = 'failed', error = $2 WHERE id = $1`,
-        [row.id, String(error)]
-      );
-    }
-  }
+  // Per-row isolation: bir notification fail olsa diğerleri devam etsin
+  const settled = await Promise.allSettled(
+    result.rows.map(async (row: any) => {
+      const notification = safeJsonParse<PushNotification>(row.notification);
+      if (!notification) {
+        await query(
+          `UPDATE scheduled_notifications SET status = 'failed', error = $2 WHERE id = $1`,
+          [row.id, 'Malformed notification payload']
+        ).catch(() => null);
+        return false;
+      }
+      try {
+        await sendToUser(row.user_id, notification);
+        await query(
+          `UPDATE scheduled_notifications SET status = 'sent', sent_at = NOW() WHERE id = $1`,
+          [row.id]
+        );
+        return true;
+      } catch (error) {
+        await query(
+          `UPDATE scheduled_notifications SET status = 'failed', error = $2 WHERE id = $1`,
+          [row.id, String(error)]
+        ).catch(() => null);
+        return false;
+      }
+    })
+  );
+  processed = settled.filter((r) => r.status === 'fulfilled' && r.value === true).length;
 
   return processed;
 }

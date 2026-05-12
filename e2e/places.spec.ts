@@ -2,12 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Places Listing', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/places');
+    await page.goto('/mekanlar');
   });
 
   test('places listing page loads successfully', async ({ page }) => {
     await expect(page).toHaveTitle(/Mekanlar|Places|Şanlıurfa/);
-    await expect(page).toHaveURL(/places/);
+    await expect(page).toHaveURL(/mekanlar|places/);
   });
 
   test('page heading is visible', async ({ page }) => {
@@ -17,13 +17,13 @@ test.describe('Places Listing', () => {
   });
 
   test('places list is displayed', async ({ page }) => {
-    const placeCards = page.locator('[data-testid="place-card"], article, .place-card, .card');
+    const placeCards = page.locator('[data-testid="place-card"], article, .place-card, .card, a[href^="/isletme/"]');
     const count = await placeCards.count();
     expect(count).toBeGreaterThan(0);
   });
 
   test('each place card has essential information', async ({ page }) => {
-    const firstCard = page.locator('[data-testid="place-card"], article, .place-card').first();
+    const firstCard = page.locator('[data-testid="place-card"], article, .place-card, a[href^="/isletme/"]').first();
     await expect(firstCard).toBeVisible();
 
     const title = firstCard.locator('h2, h3, a, [class*="title"], [class*="name"]').first();
@@ -31,7 +31,7 @@ test.describe('Places Listing', () => {
   });
 
   test('place cards have images', async ({ page }) => {
-    const images = page.locator('[data-testid="place-card"] img, article img, .place-card img, .card img');
+    const images = page.locator('[data-testid="place-card"] img, article img, .place-card img, .card img, a[href^="/isletme/"] img');
     const count = await images.count();
     expect(count).toBeGreaterThan(0);
   });
@@ -39,7 +39,7 @@ test.describe('Places Listing', () => {
 
 test.describe('Places - Category Filtering', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/places');
+    await page.goto('/mekanlar');
   });
 
   test('category filters are visible', async ({ page }) => {
@@ -71,7 +71,7 @@ test.describe('Places - Category Filtering', () => {
   });
 
   test('category filter via URL parameter works', async ({ page }) => {
-    await page.goto('/places?category=tarihi-yerler');
+    await page.goto('/mekanlar?kategori=tarihi-yerler');
 
     await expect(page).toHaveURL(/category=tarihi-yerler|kategori=tarihi-yerler/);
 
@@ -92,14 +92,14 @@ test.describe('Places - Category Filtering', () => {
       await page.waitForLoadState('networkidle');
 
       const currentUrl = page.url();
-      expect(currentUrl).toMatch(/kategori|category|places/);
+      expect(currentUrl).toMatch(/kategori|category|places|mekanlar/);
     }
   });
 });
 
 test.describe('Places - Search Functionality', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/places');
+    await page.goto('/mekanlar');
   });
 
   test('search input is visible', async ({ page }) => {
@@ -139,7 +139,7 @@ test.describe('Places - Search Functionality', () => {
 
     await page.waitForLoadState('networkidle');
 
-    const results = page.locator('[data-testid="place-card"], article, .place-card');
+    const results = page.locator('[data-testid="place-card"], article, .place-card, a[href^="/isletme/"]');
     const count = await results.count();
 
     if (count > 0) {
@@ -151,14 +151,14 @@ test.describe('Places - Search Functionality', () => {
 
 test.describe('Place Detail Page', () => {
   test('place detail page loads successfully', async ({ page }) => {
-    await page.goto('/places/gobeklitepe');
+    await page.goto('/isletme/gobeklitepe');
 
-    await expect(page).toHaveURL(/places\/.+/);
+    await expect(page).toHaveURL(/(places|isletme)\/.+/);
     await expect(page.locator('h1')).toBeVisible();
   });
 
   test('place detail shows name and description', async ({ page }) => {
-    await page.goto('/places/gobeklitepe');
+    await page.goto('/isletme/gobeklitepe');
 
     const title = page.locator('h1');
     await expect(title).toBeVisible();
@@ -168,14 +168,14 @@ test.describe('Place Detail Page', () => {
   });
 
   test('place detail shows rating information', async ({ page }) => {
-    await page.goto('/places/gobeklitepe');
+    await page.goto('/isletme/gobeklitepe');
 
     const rating = page.locator('[data-testid="place-rating"], .rating, [class*="rating"], [class*="puan"]').first();
     await expect(rating).toBeVisible();
   });
 
   test('place detail shows images or gallery', async ({ page }) => {
-    await page.goto('/places/gobeklitepe');
+    await page.goto('/isletme/gobeklitepe');
 
     const images = page.locator('img');
     const count = await images.count();
@@ -183,14 +183,14 @@ test.describe('Place Detail Page', () => {
   });
 
   test('place detail shows location information', async ({ page }) => {
-    await page.goto('/places/gobeklitepe');
+    await page.goto('/isletme/gobeklitepe');
 
     const locationInfo = page.locator('[data-testid="location"], .location, [class*="address"], [class*="konum"]').first();
     await expect(locationInfo).toBeVisible();
   });
 
   test('place detail shows contact information', async ({ page }) => {
-    await page.goto('/places/gobeklitepe');
+    await page.goto('/isletme/gobeklitepe');
 
     const contactInfo = page.locator('[data-testid="contact"], .contact, [class*="iletisim"], [class*="phone"]').first();
     const isVisible = await contactInfo.isVisible().catch(() => false);
@@ -198,14 +198,14 @@ test.describe('Place Detail Page', () => {
   });
 
   test('place detail has working back or navigation link', async ({ page }) => {
-    await page.goto('/places/gobeklitepe');
+    await page.goto('/isletme/gobeklitepe');
 
-    const backLink = page.locator('a[href*="places"], a:has-text("Mekanlar"), a:has-text("Geri")').first();
+    const backLink = page.locator('a[href*="places"], a[href*="mekanlar"], a:has-text("Mekanlar"), a:has-text("Geri")').first();
     await expect(backLink).toBeVisible();
   });
 
   test('place detail shows operating hours', async ({ page }) => {
-    await page.goto('/places/gobeklitepe');
+    await page.goto('/isletme/gobeklitepe');
 
     const hoursSection = page.locator('[data-testid="hours"], .hours, [class*="saat"], [class*="çalışma"]').first();
     const isVisible = await hoursSection.isVisible().catch(() => false);
@@ -215,7 +215,7 @@ test.describe('Place Detail Page', () => {
 
 test.describe('Places - Sorting and Pagination', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/places');
+    await page.goto('/mekanlar');
   });
 
   test('sort options are available', async ({ page }) => {

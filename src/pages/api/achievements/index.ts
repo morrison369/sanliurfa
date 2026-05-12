@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const unviewed = url.searchParams.get('unviewed') === 'true';
     const stats = url.searchParams.get('stats') === 'true';
 
-    const data: any = {};
+    const data: Record<string, unknown> = {};
 
     if (!locals.user?.id && !all) {
       recordRequest('GET', '/api/achievements', HttpStatus.UNAUTHORIZED, Date.now() - startTime);

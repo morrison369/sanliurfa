@@ -1,0 +1,197 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Image from '../../components/Image.astro';
+import { Icon } from 'astro-icon/components';
+import { query } from '../../lib/postgres';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+
+const baseUrl = getPublicAppUrl();
+const isAuthenticated = Boolean(Astro.locals.user);
+
+let photos: any[] = [];
+let totalCount = 0;
+
+try {
+  const [photosResult, countResult] = await Promise.all([
+    query(
+      `SELECT cp.*, u.full_name, u.username, u.avatar_url
+       FROM community_photos cp
+       JOIN users u ON u.id = cp.user_id
+       WHERE cp.status = 'approved'
+       ORDER BY cp.created_at DESC
+       LIMIT 24`,
+      []
+    ),
+    query("SELECT COUNT(*)::int AS count FROM community_photos WHERE status = 'approved'", []),
+  ]);
+  photos = photosResult.rows;
+  totalCount = parseInt(countResult.rows[0]?.count || '0');
+} catch (e) {
+  logger.error('Community photos load error:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: 'Şanlıurfa Topluluk Fotoğrafları',
+  description: `Şanlıurfa topluluğundan ${totalCount}+ fotoğraf. Üyelerimiz tarafından çekilen en güzel Şanlıurfa anları.`,
+  keywords: ['şanlıurfa fotoğraflar', 'urfa topluluk', 'şanlıurfa anlar', 'urfa gezileri', 'şanlıurfa doğa'],
+  canonical: '/topluluk/fotolar',
+  ogImage: photos[0]?.file_path || '/images/places/balikligol.jpg',
+};
+---
+
+<Layout seo={seo}>
+  <style is:inline>
+  .cf-page{background:var(--public-bg);min-height:100vh;padding-bottom:4rem}
+  .cf-hero{background:linear-gradient(135deg,#fff8ec 0%,#f3e4cc 100%);border-bottom:1px solid #eadcc4;padding:2.5rem 0 2rem}
+  .cf-hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.75rem,4vw,2.5rem);font-weight:700;color:var(--public-text);margin-bottom:.5rem}
+  .cf-hero-sub{font-size:.88rem;color:var(--public-muted);margin-bottom:1.5rem}
+  .cf-hero-btns{display:flex;gap:.75rem;flex-wrap:wrap}
+  .cf-btn-primary{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.25rem;background:#78331d;color:white;font-size:.85rem;font-weight:700;border-radius:.375rem;transition:background .15s}
+  .cf-btn-primary:hover{background:#652918}
+  .cf-btn-ghost{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.25rem;border:1px solid #c99b6d;background:rgba(255,255,255,.75);color:#7c3b24;font-size:.85rem;font-weight:700;border-radius:.375rem;transition:background .15s}
+  .cf-btn-ghost:hover{background:white}
+  .cf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;padding:2rem 0}
+  .cf-card{border-radius:.75rem;overflow:hidden;border:1px solid #eadcc4;background:white;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:box-shadow .2s,transform .2s;cursor:pointer}
+  .cf-card:hover{box-shadow:0 8px 24px rgba(120,51,29,.12);transform:translateY(-2px)}
+  .cf-img-wrap{position:relative;aspect-ratio:4/3;overflow:hidden;background:#f3e4cc}
+  .cf-img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+  .cf-card:hover .cf-img{transform:scale(1.05)}
+  .cf-body{padding:.75rem 1rem}
+  .cf-user{display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem}
+  .cf-avatar{width:1.75rem;height:1.75rem;border-radius:50%;background:#f3e4cc;overflow:hidden;flex-shrink:0}
+  .cf-avatar-img{width:100%;height:100%;object-fit:cover}
+  .cf-username{font-size:.78rem;font-weight:600;color:#78331d}
+  .cf-caption{font-size:.82rem;color:var(--public-muted);line-height:1.5;margin-bottom:.4rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .cf-meta{display:flex;align-items:center;gap:.75rem;font-size:.75rem;color:var(--public-muted)}
+  .cf-empty{text-align:center;padding:4rem 1rem;color:var(--public-muted)}
+  .cf-empty-title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--public-text);margin-bottom:.5rem}
+  .cf-like-btn{background:none;border:none;display:flex;align-items:center;gap:.25rem;cursor:pointer;color:var(--public-muted);font-size:.75rem;padding:0;transition:color .15s}
+  .cf-like-btn:hover{color:#e05263}
+  </style>
+
+  <div class="cf-page">
+    <div class="cf-hero">
+      <div class="sf-container">
+        <h1 class="cf-hero-title">Topluluk Fotoğrafları</h1>
+        <p class="cf-hero-sub">{totalCount} üye fotoğrafı · Şanlıurfa'nın en güzel anları</p>
+        <div class="cf-hero-btns">
+          {isAuthenticated ? (
+            <a href="/profil/fotolar" class="cf-btn-primary">
+              <Icon name="lucide:upload" style="width:1rem;height:1rem" />
+              Fotoğraf Yükle
+            </a>
+          ) : (
+            <a href="/kayit?redirect=/profil/fotolar" class="cf-btn-primary">
+              <Icon name="lucide:upload" style="width:1rem;height:1rem" />
+              Fotoğraf Paylaş
+            </a>
+          )}
+          <a href="/topluluk" class="cf-btn-ghost">Topluluk</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="sf-container">
+      {photos.length === 0 ? (
+        <div class="cf-empty">
+          <Icon name="lucide:image" style="width:3rem;height:3rem;margin:0 auto .75rem;color:var(--public-accent)" />
+          <p class="cf-empty-title">Henüz fotoğraf yok</p>
+          <p>İlk fotoğrafı paylaşan sen ol!</p>
+        </div>
+      ) : (
+        <div class="cf-grid">
+          {photos.map((photo) => (
+            <article class="cf-card" data-photo-id={photo.id}>
+              <div class="cf-img-wrap">
+                <Image
+                  src={photo.file_path}
+                  alt={photo.caption || `${photo.full_name} tarafından Şanlıurfa fotoğrafı`}
+                  class="cf-img"
+                  width={480}
+                  height={360}
+                  loading="lazy"
+                />
+              </div>
+              <div class="cf-body">
+                <div class="cf-user">
+                  <div class="cf-avatar">
+                    {photo.avatar_url ? (
+                      <Image src={photo.avatar_url} alt={photo.full_name} class="cf-avatar-img" width={28} height={28} loading="lazy" />
+                    ) : (
+                      <Icon name="lucide:user" style="width:100%;height:100%;padding:.25rem;color:var(--public-muted)" />
+                    )}
+                  </div>
+                  <span class="cf-username">{photo.full_name || photo.username || 'Üye'}</span>
+                </div>
+                {photo.caption && <p class="cf-caption">{photo.caption}</p>}
+                <div class="cf-meta">
+                  <button class="cf-like-btn" data-photo-id={photo.id} onclick={`toggleLike(this,'${photo.id}')`}>
+                    <Icon name="lucide:heart" style="width:.9rem;height:.9rem" />
+                    <span class="like-count">{photo.like_count || 0}</span>
+                  </button>
+                  <span>
+                    <Icon name="lucide:eye" style="width:.85rem;height:.85rem;vertical-align:middle" />
+                    {photo.view_count || 0}
+                  </span>
+                  {photo.location && (
+                    <span>
+                      <Icon name="lucide:map-pin" style="width:.85rem;height:.85rem;vertical-align:middle" />
+                      {photo.location}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+
+  <script is:inline>
+  async function toggleLike(btn, photoId) {
+    if (!btn || !photoId) return;
+    try {
+      const res = await fetch(`/api/community/photos/${photoId}?action=like`, { method: 'POST' });
+      if (res.status === 401) { window.location.href = '/giris?redirect=/topluluk/fotolar'; return; }
+      if (!res.ok) return;
+      const data = await res.json();
+      const count = btn.querySelector('.like-count');
+      if (count) count.textContent = data.data?.likeCount ?? 0;
+      const icon = btn.querySelector('svg');
+      if (icon) icon.style.color = data.data?.liked ? '#e05263' : '';
+    } catch {}
+  }
+  // Track views on scroll
+  if ('IntersectionObserver' in window) {
+    const seen = new Set();
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const id = e.target.dataset.photoId;
+          if (id && !seen.has(id)) { seen.add(id); fetch(`/api/community/photos/${id}?action=view`, { method: 'POST' }).catch(() => null); }
+        }
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('[data-photo-id]').forEach(el => obs.observe(el));
+  }
+  </script>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Şanlıurfa Topluluk Fotoğrafları',
+    description: `Şanlıurfa topluluğundan ${totalCount}+ üye fotoğrafı`,
+    url: `${baseUrl}/topluluk/fotolar`,
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Topluluk', item: `${baseUrl}/topluluk` },
+      { '@type': 'ListItem', position: 3, name: 'Fotoğraflar', item: `${baseUrl}/topluluk/fotolar` },
+    ],
+  })} is:inline />
+</Layout>

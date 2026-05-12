@@ -213,4 +213,4 @@ export const goalAlignmentAnalyzer = new GoalAlignmentAnalyzer();
 export const performancePredictionEngine = new PerformancePredictionEngine();
 export const teamPerformanceAnalyzer = new TeamPerformanceAnalyzer();
 
-export {PerformanceReview, Goal, PerformancePrediction, TeamPerformanceSummary};
+export type {PerformanceReview, Goal, PerformancePrediction, TeamPerformanceSummary};

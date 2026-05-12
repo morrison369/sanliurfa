@@ -405,12 +405,12 @@ export async function getModerationStats(): Promise<any> {
     );
 
     return {
-      pending_reports: parseInt(stats.pending_reports || '0'),
-      in_review_reports: parseInt(stats.in_review_reports || '0'),
-      resolved_reports: parseInt(stats.resolved_reports || '0'),
-      active_bans: parseInt(stats.active_bans || '0'),
-      total_warnings: parseInt(stats.total_warnings || '0'),
-      queue_items: parseInt(stats.queue_items || '0')
+      pending_reports: parseInt(stats.pending_reports || '0', 10),
+      in_review_reports: parseInt(stats.in_review_reports || '0', 10),
+      resolved_reports: parseInt(stats.resolved_reports || '0', 10),
+      active_bans: parseInt(stats.active_bans || '0', 10),
+      total_warnings: parseInt(stats.total_warnings || '0', 10),
+      queue_items: parseInt(stats.queue_items || '0', 10)
     };
   } catch (error) {
     logger.error('Failed to get moderation stats', error instanceof Error ? error : new Error(String(error)), {} as any);

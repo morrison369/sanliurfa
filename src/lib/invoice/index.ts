@@ -80,7 +80,7 @@ export async function createInvoice(data: {
   const invoice: Invoice = {
     id: `inv_${Date.now()}`,
     userId: data.userId,
-    subscriptionId: data.subscriptionId,
+    ...(data.subscriptionId ? { subscriptionId: data.subscriptionId } : {}),
     invoiceNumber,
     issueDate: new Date(),
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
@@ -93,7 +93,7 @@ export async function createInvoice(data: {
     items: data.items,
     companyInfo: defaultCompanyInfo,
     customerInfo: data.customerInfo,
-    notes: data.notes,
+    ...(data.notes ? { notes: data.notes } : {}),
   };
 
   await query(
@@ -136,7 +136,7 @@ async function generateInvoiceNumber(): Promise<string> {
     [year]
   );
   
-  const count = parseInt(result.rows[0].count) + 1;
+  const count = parseInt(result.rows[0].count, 10) + 1;
   return `INV-${year}${month}-${String(count).padStart(6, '0')}`;
 }
 
@@ -168,15 +168,18 @@ export async function getUserInvoices(
     sql += ` AND status = $${params.length}`;
   }
   
-  const countResult = await query(`SELECT COUNT(*) FROM (${sql}) AS count_query`, params);
-  
+  const countSql = `SELECT COUNT(*) FROM (${sql}) AS count_query`;
+  const countParams = [...params];
   sql += ` ORDER BY issue_date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-  
-  const result = await query(sql, [...params, limit, offset]);
+
+  const [countResult, result] = await Promise.all([
+    query(countSql, countParams),
+    query(sql, [...params, limit, offset]),
+  ]);
   
   return {
     invoices: result.rows.map(mapInvoiceRow),
-    total: parseInt(countResult.rows[0].count),
+    total: parseInt(countResult.rows[0].count, 10),
   };
 }
 
@@ -393,7 +396,7 @@ export async function getInvoiceStats(
     totalInvoiced: parseFloat(result.rows[0].total_invoiced) || 0,
     totalPaid: parseFloat(result.rows[0].total_paid) || 0,
     totalOverdue: parseFloat(result.rows[0].total_overdue) || 0,
-    invoiceCount: parseInt(result.rows[0].invoice_count) || 0,
+    invoiceCount: parseInt(result.rows[0].invoice_count, 10) || 0,
   };
 }
 
@@ -401,11 +404,11 @@ function mapInvoiceRow(row: any): Invoice {
   return {
     id: row.id,
     userId: row.user_id,
-    subscriptionId: row.subscription_id,
+    ...(row.subscription_id ? { subscriptionId: row.subscription_id } : {}),
     invoiceNumber: row.invoice_number,
     issueDate: new Date(row.issue_date),
     dueDate: new Date(row.due_date),
-    paidDate: row.paid_date ? new Date(row.paid_date) : undefined,
+    ...(row.paid_date ? { paidDate: new Date(row.paid_date) } : {}),
     amount: parseFloat(row.amount),
     taxRate: row.tax_rate,
     taxAmount: parseFloat(row.tax_amount),

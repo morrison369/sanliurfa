@@ -60,11 +60,9 @@ export const postureStreamPublisher = new PostureStreamPublisher();
 export const postureThresholdEvaluator = new PostureThresholdEvaluator();
 export const postureApiSerializer = new PostureAPISerializer();
 
-export {
+export type {
   PostureAggregator,
   PostureStreamPublisher,
   PostureThresholdEvaluator,
   PostureAPISerializer
 };
-
-

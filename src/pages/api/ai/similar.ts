@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getSimilarItems } from '../../../lib/ai/recommendations';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -11,7 +11,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   try {
     const itemId = url.searchParams.get('id');
     const itemType = url.searchParams.get('type') as 'place' | 'blog' | 'event' || 'place';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '5'), 20);
+    const limit = safeIntParam(url.searchParams.get('limit'), 5, 1, 20);
 
     if (!itemId) {
       recordRequest('GET', '/api/ai/similar', HttpStatus.BAD_REQUEST, Date.now() - startTime);

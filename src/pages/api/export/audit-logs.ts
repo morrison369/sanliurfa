@@ -1,22 +1,21 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { convertToCSV, convertToJSON, getContentType, getFileExtension, getFormattedDate } from '../../../lib/export/export';
-import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId(request);
-  const startTime = Date.now();
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       return apiError(ErrorCode.FORBIDDEN, 'Admin işlemi gerekli', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const url = new URL(request.url);
     const format = (url.searchParams.get('format') || 'json') as 'csv' | 'json';
-    const days = Math.max(1, Math.min(90, parseInt(url.searchParams.get('days') || '7') || 7));
+    const days = safeIntParam(url.searchParams.get('days'), 7, 1, 90);
 
     const result = await pool.query(
       `SELECT id, user_id, action, resource_type, resource_id, ip_address, created_at
@@ -26,7 +25,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       [days]
     );
 
-    const logs = result.rows.map((row: any) => ({
+    const logs = result.rows.map((row) => ({
       id: row.id,
       userId: row.user_id,
       action: row.action,

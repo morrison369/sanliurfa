@@ -1,98 +1,130 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { requireAuth } from '../lib/auth';
+import Icon from '../components/Icon.astro';
+import Image from '../components/Image.astro';
 import SwipeMatchExperience from '../components/SwipeMatchExperience';
-import { getSiteBranding } from '../lib/site-branding';
+import { requireAuth } from '../lib/auth';
+import { getPublicAppUrl } from '../lib/public-app-url';
 
 const auth = await requireAuth(Astro.request);
 const isAuthenticated = Boolean(auth.user);
-const { baseUrl } = await getSiteBranding();
+const baseUrl = getPublicAppUrl();
+
+const seo = {
+  title: 'Şanlıurfa Eşleşme | Swipe, Profil ve Mesajlaşma',
+  description: 'Şanlıurfa topluluğunda profil oluştur, üyeleri kaydır, karşılıklı beğenide eşleş ve mesajlaşmaya başla.',
+  canonical: '/eslesme',
+  ogImage: '/images/places/balikligol.jpg',
+  keywords: ['Şanlıurfa eşleşme', 'Şanlıurfa topluluk', 'Urfa sosyal ağ', 'Şanlıurfa mesajlaşma'],
+};
+
+const steps = [
+  ['Profilini Tamamla', '4 fotoğrafa kadar görsel ekle, kısa tanıtımını yaz ve şehir içi sosyal keşfe hazır ol.'],
+  ['Kaydır ve Seç', 'Sağa beğen, sola geç; akış güvenlik limitleriyle sade ve kontrollü ilerler.'],
+  ['Eşleş ve Yazış', 'Karşılıklı beğeni oluştuğunda mesajlaşma akışına geçip sohbeti başlat.'],
+];
 
 const faqItems = [
-  {
-    S: 'Şanlıurfa eşleşme özelliği ücretsiz mi?',
-    C: 'Evet. İlk aşamada eşleşme, profil görüntüleme ve mesajlaşma başlangıcı ücretsiz olarak açık tutulur.',
-  },
-  {
-    S: 'Eşleşme profilinde kaç fotoğraf olabilir?',
-    C: 'Kullanıcılar eşleşme profiline en fazla 4 fotoğraf ekleyebilir.',
-  },
-  {
-    S: 'Eşleşme sonrası mesajlaşma yapılabilir mi?',
-    C: 'Karşılıklı eşleşme sonrası üyeler mesajlaşma akışına geçebilir.',
-  },
+  { S: 'Şanlıurfa eşleşme özelliği ücretsiz mi?', C: 'Evet. İlk aşamada eşleşme, profil görüntüleme ve mesajlaşma başlangıcı ücretsiz olarak açık tutulur.' },
+  { S: 'Eşleşme profilinde kaç fotoğraf olabilir?', C: 'Kullanıcılar eşleşme profiline en fazla 4 fotoğraf ekleyebilir.' },
+  { S: 'Eşleşme sonrası mesajlaşma yapılabilir mi?', C: 'Karşılıklı eşleşme sonrası üyeler mesajlaşma akışına geçebilir.' },
 ];
 ---
 
-<Layout
-  title="Eşleşme - Şanlıurfa"
-  seo={{
-    title: 'Şanlıurfa Eşleşme | Tinder Benzeri Swipe',
-    description: 'Profiline en fazla 4 fotoğraf ekle, üyeleri sağa/sola kaydırarak eşleş ve mesajlaş.',
-    ogImage: '/images/hero/hero-home.webp',
-    canonical: '/eslesme',
-  }}
->
-  {isAuthenticated ? (
-    <SwipeMatchExperience client:idle />
-  ) : (
-    <section class="min-h-screen bg-slate-950 px-4 py-24 text-white">
-      <div class="container mx-auto max-w-5xl">
-        <div class="rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-2xl shadow-black/30">
-          <p class="text-sm font-semibold uppercase tracking-[0.24em] text-amber-300">Eşleşme ücretsiz açık</p>
-          <h1 class="mt-4 text-4xl font-extrabold md:text-6xl">Şanlıurfa topluluğunda kaydır, eşleş, mesajlaş</h1>
-          <p class="mt-5 max-w-3xl text-lg text-slate-300">
-            Profiline en fazla 4 fotoğraf ekleyebilir, üyeleri sağa/sola kaydırarak eşleşebilir ve eşleşme sonrası
-            mesajlaşmaya başlayabilirsin. Özellik ilk aşamada ücretsizdir; kötüye kullanım için sadece güvenlik
-            limitleri uygulanır.
-          </p>
-          <div class="mt-6 rounded-2xl border border-amber-300/30 bg-amber-300/10 p-5">
-            <p class="text-sm font-semibold uppercase tracking-wide text-amber-200">Hızlı Cevap</p>
-            <h2 class="mt-1 text-2xl font-bold text-white">Şanlıurfa eşleşme modülünde nasıl başlanır?</h2>
-            <p class="mt-2 text-sm leading-6 text-amber-50">
-              Ücretsiz hesap açtıktan sonra 4 fotoğraflı profilini tamamlayabilir, Şanlıurfa topluluğundaki üyeleri
-              sağa/sola kaydırarak değerlendirebilir ve eşleşme sonrası mesajlaşmaya başlayabilirsin.
-            </p>
+<Layout seo={seo}>
+  <section class="bg-[radial-gradient(circle_at_top_left,#f0d8b7_0,#fff8ec_36%,#f8eddb_100%)] text-[#201711]">
+    <div class="mx-auto grid min-h-[calc(100svh-4rem)] w-full max-w-7xl items-center gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
+      <div>
+        <p class="inline-flex rounded-full border border-[#e1c59d] bg-white/75 px-4 py-2 text-sm font-black text-[#8a3d22]">
+          Şanlıurfa sosyal keşif
+        </p>
+        <h1 class="mt-5 font-display text-4xl font-semibold leading-[1.08] text-[#201711] sm:text-5xl lg:text-6xl">
+          Şanlıurfa’da Eşleş, Kaydır ve Mesajlaş
+        </h1>
+        <p class="mt-5 max-w-2xl text-lg leading-8 text-[#5e4a38]">
+          Şehir rehberi içindeki topluluk deneyimiyle profilini oluştur, Şanlıurfa’daki üyeleri kaydır, karşılıklı beğenide eşleş ve sohbeti başlat.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          {isAuthenticated ? (
+            <a href="#swipe-deneyimi" class="inline-flex min-h-12 items-center justify-center rounded-full bg-[#78331d] px-6 text-sm font-black text-white shadow-lg shadow-[#78331d]/20 hover:bg-[#652918]">
+              Eşleşme Akışını Aç
+            </a>
+          ) : (
+            <>
+              <a href="/kayit?redirect=/eslesme" class="inline-flex min-h-12 items-center justify-center rounded-full bg-[#78331d] px-6 text-sm font-black text-white shadow-lg shadow-[#78331d]/20 hover:bg-[#652918]">
+                Ücretsiz Profil Oluştur
+              </a>
+              <a href="/giris?redirect=/eslesme" class="inline-flex min-h-12 items-center justify-center rounded-full border border-[#c99b6d] bg-white/75 px-6 text-sm font-black text-[#7c3b24] hover:bg-white">
+                Giriş Yap
+              </a>
+            </>
+          )}
+          <a href="/topluluk" class="inline-flex min-h-12 items-center justify-center rounded-full border border-[#c99b6d] bg-white/75 px-6 text-sm font-black text-[#7c3b24] hover:bg-white">
+            Topluluğu Gör
+          </a>
+        </div>
+      </div>
+
+      <div class="relative">
+        <div class="grid grid-cols-2 gap-4">
+          <div class="overflow-hidden rounded-3xl border border-white/80 bg-white shadow-2xl shadow-[#78331d]/12">
+            <Image src="/images/places/balikligol.jpg" alt="Şanlıurfa topluluk ve Balıklıgöl çevresi" width={520} height={640} loading="eager" class="h-72 w-full object-cover" />
+            <div class="p-4">
+              <p class="text-xs font-black uppercase tracking-[0.14em] text-[#8a3d22]">Profil</p>
+              <p class="mt-1 text-lg font-black text-[#201711]">4 fotoğraflı tanıtım</p>
+            </div>
           </div>
-          <div class="mt-8 grid gap-4 md:grid-cols-3">
-            <div class="rounded-2xl border border-white/10 bg-slate-900 p-5">
-              <div class="text-3xl font-black text-amber-300">4</div>
-              <p class="mt-1 text-sm text-slate-300">Fotoğraflı profil</p>
+          <div class="mt-10 overflow-hidden rounded-3xl border border-white/80 bg-white shadow-2xl shadow-[#155344]/12">
+            <Image src="/images/foods/homepage/urfa-kebabi-card.png" alt="Şanlıurfa sosyal buluşma ve Urfa kebabı" width={520} height={640} loading="eager" class="h-72 w-full object-cover" />
+            <div class="p-4">
+              <p class="text-xs font-black uppercase tracking-[0.14em] text-[#155344]">Eşleşme</p>
+              <p class="mt-1 text-lg font-black text-[#201711]">Karşılıklı beğeni</p>
             </div>
-            <div class="rounded-2xl border border-white/10 bg-slate-900 p-5">
-              <div class="text-3xl font-black text-emerald-300">Swipe</div>
-              <p class="mt-1 text-sm text-slate-300">Sağa beğen, sola geç</p>
-            </div>
-            <div class="rounded-2xl border border-white/10 bg-slate-900 p-5">
-              <div class="text-3xl font-black text-sky-300">Mesaj</div>
-              <p class="mt-1 text-sm text-slate-300">Eşleşme sonrası sohbet</p>
-            </div>
-          </div>
-          <div class="mt-8 flex flex-wrap gap-3">
-            <a href="/kayit?redirect=/eslesme" class="rounded-xl bg-amber-400 px-5 py-3 font-bold text-slate-950 hover:bg-amber-300">
-              Ücretsiz Hesap Aç
-            </a>
-            <a href="/giris?redirect=/eslesme" class="rounded-xl border border-white/20 px-5 py-3 font-bold text-white hover:bg-white/10">
-              Giriş Yap
-            </a>
-            <a href="/topluluk" class="rounded-xl border border-white/20 px-5 py-3 font-bold text-white hover:bg-white/10">
-              Topluluk Sayfası
-            </a>
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section class="bg-[#fff8ec] px-4 py-14 sm:px-6 lg:px-8">
+    <div class="mx-auto grid max-w-7xl gap-5 md:grid-cols-3">
+      {steps.map(([title, desc], index) => (
+        <article class="rounded-2xl border border-[#eadcc4] bg-white p-6 shadow-sm">
+          <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f3e4cc] text-[#78331d]">
+            <Icon name={index === 0 ? 'image-plus' : index === 1 ? 'move-horizontal' : 'message-circle'} size={22} />
+          </span>
+          <h2 class="mt-4 font-display text-2xl font-semibold text-[#201711]">{title}</h2>
+          <p class="mt-2 text-sm leading-6 text-[#66513d]">{desc}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section class="bg-[#f6ead6] px-4 py-14 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl rounded-[1.75rem] border border-[#e2c79d] bg-white p-6 shadow-xl shadow-[#78331d]/8 sm:p-8">
+      <p class="text-sm font-black uppercase tracking-[0.14em] text-[#8a3d22]">Hızlı Cevap</p>
+      <h2 class="mt-3 font-display text-3xl font-semibold text-[#201711]">Şanlıurfa eşleşme modülünde nasıl başlanır?</h2>
+      <p class="mt-3 max-w-3xl text-base leading-7 text-[#66513d]">
+        Ücretsiz hesap açtıktan sonra profilini tamamlayabilir, Şanlıurfa topluluğundaki üyeleri sağa veya sola kaydırarak değerlendirebilir ve karşılıklı eşleşme sonrası mesajlaşmaya başlayabilirsin.
+      </p>
+    </div>
+  </section>
+
+  {isAuthenticated && (
+    <section id="swipe-deneyimi" class="bg-[#fffdf7] px-4 py-14 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl">
+        <SwipeMatchExperience client:idle />
+      </div>
     </section>
   )}
+
   <script type="application/ld+json" set:html={JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: faqItems.map((item) => ({
       '@type': 'Question',
       name: item.S,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.C,
-      },
+      acceptedAnswer: { '@type': 'Answer', text: item.C },
     })),
   })} is:inline />
   <script type="application/ld+json" set:html={JSON.stringify({
@@ -100,13 +132,13 @@ const faqItems = [
     '@type': 'WebPage',
     name: 'Şanlıurfa Eşleşme',
     url: `${baseUrl}/eslesme`,
-    description: 'Şanlıurfa topluluğu için ücretsiz swipe, eşleşme ve mesajlaşma başlangıç sayfası.',
+    description: seo.description,
   })} is:inline />
   <script type="application/ld+json" set:html={JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
       { '@type': 'ListItem', position: 2, name: 'Eşleşme', item: `${baseUrl}/eslesme` },
     ],
   })} is:inline />

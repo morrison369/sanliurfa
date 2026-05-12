@@ -1,134 +1,168 @@
 ---
 
 import Layout from '../layouts/Layout.astro';
+import RankedPlaceCard from '../components/landing/RankedPlaceCard.astro';
 import { query } from '../lib/postgres';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getCachedPublicRouteData } from '../lib/public-route-cache';
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
+import {
+  buildItemListSchema,
+  buildBreadcrumbSchema,
+  buildFAQSchema,
+  type LandingPlace,
+} from '../lib/landing/landing-schema';
+const baseUrl = getPublicAppUrl();
 
-let geceMekanlari: any[] = [];
+let geceMekanlari: LandingPlace[] = [];
 try {
+ geceMekanlari = await getCachedPublicRouteData('page:guide:sanliurfa-gece-acik-mekanlar', async () => {
   const result = await query(`
-    SELECT p.slug, p.name, p.address, p.rating, p.review_count, c.name AS category_name
-    FROM places p
-    LEFT JOIN categories c ON p.category_id = c.id
-    WHERE p.status = 'active'
-      AND (
-        c.slug IN ('kafeterya', 'cafe', 'eglence', 'bar')
-        OR p.name ILIKE '%24%'
-        OR p.name ILIKE '%gece%'
-      )
-    ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
-    LIMIT 20
-  `);
-  geceMekanlari = result.rows;
+ SELECT p.slug, p.name, p.address, p.rating, p.review_count, p.image_url, p.images, p.short_description, c.name AS category_name
+ FROM places p
+ LEFT JOIN categories c ON p.category_id = c.id
+ WHERE p.status = 'active'
+ AND (
+ c.slug IN ('kafeterya', 'cafe', 'eglence', 'bar')
+ OR p.name ILIKE '%24%'
+ OR p.name ILIKE '%gece%'
+ )
+ ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+ LIMIT 20
+ `);
+  return result.rows;
+ });
 } catch (e) {
-  console.error('Gece açık mekanlar yüklenemedi:', e);
+ logger.error('Gece açık mekanlar yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const seo = {
-  title: 'Şanlıurfa Gece Açık Mekanlar | Gece Hayatı Rehberi',
-  description: 'Şanlıurfa\'da gece açık olan mekanlar; kafeler, çay ocakları ve eğlence yerleri. Geç saate kadar açık adresler.',
-  keywords: ['şanlıurfa gece açık', 'urfa gece mekanları', 'şanlıurfa geç saate kadar', 'urfa gece kafeler', 'şanlıurfa gece hayatı'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/sanliurfa-gece-acik-mekanlar',
+ title: 'Şanlıurfa Gece Açık Mekanlar | Gece Hayatı Rehberi',
+ description: "Şanlıurfa'da gece açık olan mekanlar; kafeler, çay ocakları ve eğlence yerleri. Geç saate kadar açık adresler.",
+ keywords: ['şanlıurfa gece açık', 'urfa gece mekanları', 'şanlıurfa geç saate kadar', 'urfa gece kafeler', 'şanlıurfa gece hayatı'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/sanliurfa-gece-acik-mekanlar',
 };
 
 const faqItems = [
-  {
-    S: 'Şanlıurfa\'da gece açık mekanlar nerede?',
-    C: 'Şanlıurfa\'da gece açık kafeler, çay ocakları ve bazı restoranlar genellikle şehir merkezinde, Balıklıgöl çevresi ve ana caddelerde yoğunlaşmaktadır.',
-  },
-  {
-    S: 'Şanlıurfa gece geç saate kadar açık yerler var mı?',
-    C: 'Evet. Özellikle Ramazan ayında gece boyunca açık birçok mekan bulunur. Çay bahçeleri ve bazı kafeler geç saatlere kadar müşteri ağırlar.',
-  },
-  {
-    S: 'Şanlıurfa\'da gece eğlence imkanları neler?',
-    C: 'Şanlıurfa\'da gece sıra gecesi, canlı müzik mekanları ve geleneksel çay bahçesi kültürü öne çıkar. Modern kafe ve restoranlar da alternatif sunar.',
-  },
+ {
+ S: "Şanlıurfa'da gece açık mekanlar nerede?",
+ C: "Şanlıurfa'da gece açık kafeler ve çay ocakları genellikle şehir merkezinde, Balıklıgöl çevresi ve ana caddelerde yoğunlaşmaktadır.",
+ },
+ {
+ S: "Şanlıurfa gece geç saate kadar açık yerler var mı?",
+ C: "Evet. Özellikle Ramazan ayında gece boyunca açık birçok mekan bulunur. Çay bahçeleri ve bazı kafeler geç saatlere kadar müşteri ağırlar.",
+ },
+ {
+ S: "Şanlıurfa'da gece eğlence imkanları neler?",
+ C: "Şanlıurfa'da gece sıra gecesi, canlı müzik mekanları ve geleneksel çay bahçesi kültürü öne çıkar.",
+ },
 ];
 ---
 
-
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-gradient-to-br from-slate-800 to-blue-900 text-white py-16">
-      <div class="container mx-auto px-4 max-w-5xl">
-        <p class="text-slate-300 font-medium mb-2">Şanlıurfa Gece Hayatı</p>
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Gece Açık Mekanlar</h1>
-        <p class="text-slate-200 text-lg max-w-2xl">
-          Geç saatlerde bile canlı olan Şanlıurfa’nın gece mekanları. Çay bahçelerinden kafelere, eğlence mekanlarına kadar tüm seçenekler.
-        </p>
-      </div>
-    </div>
+ <style is:inline>
+ .gm-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+ .gm-hero-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#4A3828}
+ .gm-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.7rem,4vw,2.6rem);font-weight:700;color:#1F1410;margin:.75rem 0 .25rem}
+ .gm-hero-desc{color:#7A6B58;font-size:.9rem;max-width:40rem}
+ .gm-body{background:var(--bg);padding:2rem 0 4rem}
+ .gm-grid{display:grid;gap:1rem}
+ @media(min-width:48rem){.gm-grid{grid-template-columns:1fr 1fr}}
+ .gm-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);display:flex;overflow:hidden;transition:border-color .15s}
+ .gm-card:hover{border-color:#B87333}
+ .gm-card-icon{width:6rem;height:6rem;background:rgba(184,115,51,.1);display:flex;align-items:center;justify-content:center;font-size:1.75rem;flex-shrink:0}
+ .gm-card-body{padding:1rem;flex:1;min-width:0}
+ .gm-card-name{font-size:.9rem;font-weight:700;color:#1F1410;transition:color .15s}
+ .gm-card:hover .gm-card-name{color:#B87333}
+ .gm-card-cat{font-size:.72rem;color:#7A6B58;margin-top:.15rem}
+ .gm-card-addr{font-size:.78rem;color:#7A6B58;margin-top:.4rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .gm-card-meta{display:flex;align-items:center;gap:.75rem;margin-top:.5rem;font-size:.8rem}
+ .gm-rating{color:#B87333;font-weight:600}
+ .gm-reviews{color:#4A3828}
+ .gm-empty{text-align:center;padding:4rem 1rem;background:var(--bg-card);border:1px solid rgba(184,115,51,.14)}
+ .gm-empty-icon{font-size:2.5rem;margin-bottom:.75rem}
+ .gm-empty-txt{font-size:.9rem;color:#7A6B58}
+ .gm-cta{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:2.5rem}
+ .gm-btn-primary{background:#B87333;color:#EDE0C6;font-size:.85rem;font-weight:600;padding:.65rem 1.25rem;transition:background .15s}
+ .gm-btn-primary:hover{background:#9D5F1A}
+ .gm-btn-outline{border:1px solid rgba(184,115,51,.25);color:#B87333;font-size:.85rem;font-weight:500;padding:.65rem 1.25rem;transition:border-color .15s,color .15s}
+ .gm-btn-outline:hover{border-color:#B87333;color:#1F1410}
+ details summary{list-style:none}
+ details summary::-webkit-details-marker{display:none}
+ details[open] .faq-arrow{transform:rotate(180deg)}
+ </style>
 
-    <div class="container mx-auto px-4 max-w-5xl py-12">
-      {geceMekanlari.length > 0 ? (
-        <div class="grid md:grid-cols-2 gap-5">
-          {geceMekanlari.map((place) => (
-            <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm border hover:shadow-lg transition-all group flex">
-              <div class="w-24 h-24 bg-slate-100 shrink-0 flex items-center justify-center text-3xl">🌙</div>
-              <div class="p-4 flex-1">
-                <h3 class="font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{place.name}</h3>
-                <p class="text-xs text-gray-500 mt-0.5">{place.category_name || 'Mekan'}</p>
-                {place.address && <p class="text-sm text-gray-600 mt-1 line-clamp-1">{place.address}</p>}
-                <div class="flex items-center gap-3 mt-2 text-sm">
-                  {place.rating && <span class="text-yellow-600 font-semibold">★ {place.rating}</span>}
-                  {place.review_count > 0 && <span class="text-gray-400">{place.review_count} yorum</span>}
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
-      ) : (
-        <div class="text-center py-16 text-gray-400">
-          <p class="text-4xl mb-4">🌙</p>
-          <p>Gece mekanları yakında eklenecek.</p>
-        </div>
-      )}
+ <div class="gm-hero">
+ <div class="sf-container">
+ <p class="gm-hero-label">Şanlıurfa Gece Hayatı</p>
+ <h1 class="gm-h1">Gece Açık Mekanlar</h1>
+ <p class="gm-hero-desc">Geç saatlerde bile canlı olan Şanlıurfa'nın gece mekanları.</p>
+ </div>
+ </div>
 
-      <div class="mt-10 flex flex-wrap gap-3">
-        <a href="/mekanlar" class="px-5 py-2.5 rounded-full bg-slate-700 text-white hover:bg-slate-800 transition-colors font-medium">Tüm Mekanlar</a>
-        <a href="/sanliurfa-sira-gecesi-mekanlari" class="px-5 py-2.5 rounded-full border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors">Sıra Gecesi Mekanları →</a>
-        <a href="/bugun-sanliurfada-ne-yapilir" class="px-5 py-2.5 rounded-full border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">Bugün Ne Yapılır? →</a>
-      </div>
-    </div>
-  </div>
+ <div class="gm-body">
+ <div class="sf-container">
+ {geceMekanlari.length > 0 ? (
+ <div class="gm-grid">
+ {geceMekanlari.map((place, i) => (
+ <RankedPlaceCard place={place} rank={i + 1} variant="restaurant" />
+ ))}
+ </div>
+ ) : (
+ <div class="gm-empty">
+ <div class="gm-empty-icon">🌙</div>
+ <p class="gm-empty-txt">Gece mekanları yakında eklenecek.</p>
+ </div>
+ )}
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: 'Şanlıurfa Gece Açık Mekanlar',
-    description: 'Şanlıurfa\'da geç saate kadar açık olan mekanlar',
-    url: `${baseUrl}/sanliurfa-gece-acik-mekanlar`,
-    itemListElement: geceMekanlari.slice(0, 10).map((p: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'LocalBusiness',
-        '@id': `${baseUrl}/isletme/${p.slug}`,
-        name: p.name,
-        url: `${baseUrl}/isletme/${p.slug}`,
-        address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' },
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Yeme İçme', item: `${baseUrl}/yeme-icme` },
-      { '@type': 'ListItem', position: 3, name: 'Gece Açık Mekanlar', item: `${baseUrl}/sanliurfa-gece-acik-mekanlar` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <div class="gm-cta">
+ <a href="/mekanlar" class="gm-btn-primary">Tüm Mekanlar</a>
+ <a href="/sanliurfa-sira-gecesi-mekanlari" class="gm-btn-outline">Sıra Gecesi Mekanları →</a>
+ <a href="/bugun-sanliurfada-ne-yapilir" class="gm-btn-outline">Bugün Ne Yapılır? →</a>
+ </div>
+ </div>
+ </div>
+
+ {faqItems.length > 0 && (
+ <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+ <div class="sf-container">
+ <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+ <div style="display:flex;flex-direction:column;gap:.75rem">
+ {faqItems.map((item) => (
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ {item.S}
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ {item.C}
+ </div>
+ </details>
+ ))}
+ </div>
+ </div>
+ </div>
+ )}
+
+ <script type="application/ld+json" set:html={JSON.stringify(buildItemListSchema({
+ places: geceMekanlari,
+ pageName: 'Şanlıurfa Gece Açık Mekanlar',
+ pagePath: '/sanliurfa-gece-acik-mekanlar',
+ baseUrl,
+ type: 'LocalBusiness',
+ description: "Şanlıurfa'da geç saate kadar açık olan kafeler, çay ocakları ve eğlence mekanları.",
+ }))} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify(buildBreadcrumbSchema({
+ baseUrl,
+ crumbs: [
+   { name: 'Ana Sayfa', href: '/' },
+   { name: 'Yeme İçme', href: '/yeme-icme' },
+   { name: 'Gece Açık Mekanlar', href: '/sanliurfa-gece-acik-mekanlar' },
+ ],
+ }))} is:inline />
+ {(() => {
+   const faqJson = buildFAQSchema(faqItems);
+   return faqJson ? <script type="application/ld+json" set:html={JSON.stringify(faqJson)} is:inline /> : null;
+ })()}
 </Layout>

@@ -227,14 +227,18 @@ export async function resetRateLimit(
   
   if (ruleKey) {
     const rule = RULES[ruleKey];
-    await deleteCache(`${rule.keyPrefix}:${identifier}`);
-    await deleteCache(`${rule.keyPrefix}:user:${identifier}`);
+    await Promise.all([
+      deleteCache(`${rule.keyPrefix}:${identifier}`),
+      deleteCache(`${rule.keyPrefix}:user:${identifier}`),
+    ]);
   } else {
-    // Reset all rules for identifier
-    for (const rule of Object.values(RULES)) {
-      await deleteCache(`${rule.keyPrefix}:${identifier}`);
-      await deleteCache(`${rule.keyPrefix}:user:${identifier}`);
-    }
+    // Reset all rules for identifier (paralel)
+    await Promise.all(
+      Object.values(RULES).flatMap((rule) => [
+        deleteCache(`${rule.keyPrefix}:${identifier}`),
+        deleteCache(`${rule.keyPrefix}:user:${identifier}`),
+      ])
+    );
   }
 }
 

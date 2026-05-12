@@ -1,0 +1,241 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Image from '../../components/Image.astro';
+import ProfileSidebar from '../../components/profile/ProfileSidebar.astro';
+import { Icon } from 'astro-icon/components';
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+const user = Astro.locals.user;
+if (!user) return Astro.redirect('/giris?redirect=/profil/fotolar');
+
+let photos: any[] = [];
+const seo = {
+  title: 'Fotoğraflarım - Şanlıurfa.com',
+  description: 'Şanlıurfa topluluk fotoğraflarınızı yönetin.',
+  noIndex: true,
+};
+
+try {
+  const result = await query(
+    `SELECT * FROM community_photos WHERE user_id = $1 ORDER BY created_at DESC`,
+    [user.id]
+  );
+  photos = result.rows;
+} catch (e) {
+  logger.error('Error loading user photos:', e instanceof Error ? e : new Error(String(e)));
+}
+---
+
+<Layout seo={seo}>
+  <style is:inline>
+  .pf-page{background:var(--public-bg);min-height:100vh;padding:2rem 0 4rem}
+  .pf-grid{display:grid;grid-template-columns:240px 1fr;gap:2rem;max-width:1100px;margin:0 auto;padding:0 1rem}
+  @media(max-width:768px){.pf-grid{grid-template-columns:1fr}}
+  .pf-main{}
+  .pf-hero{background:linear-gradient(135deg,#fff8ec 0%,#f3e4cc 100%);border-bottom:1px solid #eadcc4;padding:2rem 0 1.5rem;margin-bottom:2rem}
+  .pf-hero-inner{max-width:1100px;margin:0 auto;padding:0 1rem}
+  .pf-hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3vw,2rem);font-weight:700;color:var(--public-text);margin-bottom:.3rem}
+  .pf-hero-sub{font-size:.85rem;color:var(--public-muted)}
+  .upload-box{background:white;border:2px dashed #c99b6d;border-radius:.75rem;padding:2rem;text-align:center;margin-bottom:1.5rem;cursor:pointer;transition:border-color .15s,background .15s}
+  .upload-box:hover,.upload-box.drag-over{border-color:#78331d;background:#fff8ec}
+  .upload-box-icon{color:#c99b6d;margin-bottom:.75rem}
+  .upload-box-title{font-size:.95rem;font-weight:600;color:var(--public-text);margin-bottom:.25rem}
+  .upload-box-sub{font-size:.8rem;color:var(--public-muted)}
+  .upload-form{display:none}
+  .upload-form.visible{display:block}
+  .form-group{margin-bottom:1rem}
+  .form-label{display:block;font-size:.8rem;font-weight:600;color:var(--public-text);margin-bottom:.3rem}
+  .form-input{width:100%;padding:.5rem .75rem;border:1px solid #eadcc4;border-radius:.375rem;font-size:.85rem;color:var(--public-text);background:white;outline:none;transition:border-color .15s}
+  .form-input:focus{border-color:#78331d}
+  .btn-upload{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.25rem;background:#78331d;color:white;font-size:.85rem;font-weight:700;border-radius:.375rem;border:none;cursor:pointer;transition:background .15s}
+  .btn-upload:hover{background:#652918}
+  .btn-upload:disabled{opacity:.6;cursor:not-allowed}
+  .btn-cancel{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1rem;border:1px solid #c99b6d;background:transparent;color:#7c3b24;font-size:.85rem;border-radius:.375rem;cursor:pointer;margin-left:.5rem;transition:background .15s}
+  .btn-cancel:hover{background:#fff8ec}
+  .upload-progress{display:none;margin-top:.75rem;font-size:.82rem;color:var(--public-muted)}
+  .upload-progress.visible{display:block}
+  .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem}
+  .photo-card{border-radius:.75rem;overflow:hidden;border:1px solid #eadcc4;background:white;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .photo-img-wrap{position:relative;aspect-ratio:4/3;overflow:hidden;background:#f3e4cc}
+  .photo-img{width:100%;height:100%;object-fit:cover}
+  .photo-status{position:absolute;top:.5rem;left:.5rem;font-size:.7rem;font-weight:700;padding:.2rem .45rem;border-radius:.25rem}
+  .status-pending{background:#fef9c3;color:#854d0e}
+  .status-approved{background:#dcfce7;color:#166534}
+  .status-rejected{background:#fee2e2;color:#991b1b}
+  .photo-body{padding:.6rem .75rem}
+  .photo-caption{font-size:.8rem;color:var(--public-muted);line-height:1.4;margin-bottom:.4rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .photo-meta{font-size:.72rem;color:var(--public-muted);margin-bottom:.5rem}
+  .photo-actions{display:flex;justify-content:flex-end}
+  /* WCAG AA touch target: min 44x44px (özellikle mobile için kritik) */
+  .btn-delete{display:inline-flex;align-items:center;justify-content:center;gap:.4rem;font-size:.8rem;min-height:2.75rem;padding:.6rem 1rem;border:1px solid #fca5a5;background:#fee2e2;color:#991b1b;border-radius:.25rem;cursor:pointer;transition:background .15s}
+  .btn-delete:hover{background:#fecaca}
+  .empty-state{text-align:center;padding:3rem 1rem;color:var(--public-muted)}
+  .empty-title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:var(--public-text);margin-bottom:.5rem}
+  .alert{padding:.75rem 1rem;border-radius:.375rem;font-size:.85rem;margin-bottom:1rem;display:none}
+  .alert.visible{display:block}
+  .alert-success{background:#dcfce7;color:#166534;border:1px solid #86efac}
+  .alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+  </style>
+
+  <div class="pf-hero">
+    <div class="pf-hero-inner">
+      <h1 class="pf-hero-title">Fotoğraflarım</h1>
+      <p class="pf-hero-sub">Şanlıurfa fotoğraflarınızı toplulukla paylaşın</p>
+    </div>
+  </div>
+
+  <div class="pf-page">
+    <div class="pf-grid">
+      <ProfileSidebar activeKey="fotolar" />
+
+      <div class="pf-main">
+        <div id="alert" class="alert" role="alert"></div>
+
+        <!-- Upload box -->
+        <div class="upload-box" id="upload-trigger" onclick="document.getElementById('upload-form').classList.toggle('visible')">
+          <div class="upload-box-icon">
+            <Icon name="lucide:image-plus" style="width:2.5rem;height:2.5rem" />
+          </div>
+          <p class="upload-box-title">Fotoğraf Yükle</p>
+          <p class="upload-box-sub">JPEG, PNG, WebP veya GIF · Max 10MB · Admin onayından sonra yayınlanır</p>
+        </div>
+
+        <div class="upload-form" id="upload-form">
+          <div class="form-group">
+            <label class="form-label" for="photo-file">Fotoğraf seç</label>
+            <input type="file" id="photo-file" accept="image/jpeg,image/png,image/webp,image/gif" class="form-input" style="padding:.35rem" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="photo-caption">Açıklama (isteğe bağlı)</label>
+            <input type="text" id="photo-caption" class="form-input" placeholder="Fotoğraf hakkında kısa bir açıklama..." maxlength="500" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="photo-location">Konum (isteğe bağlı)</label>
+            <input type="text" id="photo-location" class="form-input" placeholder="Ör: Balıklıgöl, Şanlıurfa" maxlength="100" />
+          </div>
+          <div>
+            <button class="btn-upload" id="upload-btn" onclick="uploadPhoto()">
+              <Icon name="lucide:upload" style="width:.9rem;height:.9rem" />
+              Yükle ve Onayla
+            </button>
+            <button class="btn-cancel" onclick="document.getElementById('upload-form').classList.remove('visible')">İptal</button>
+          </div>
+          <div class="upload-progress" id="upload-progress">Yükleniyor...</div>
+        </div>
+
+        <!-- Photo grid -->
+        {photos.length === 0 ? (
+          <div class="empty-state">
+            <Icon name="lucide:image" style="width:3rem;height:3rem;margin:0 auto .75rem;color:var(--public-accent)" />
+            <p class="empty-title">Henüz fotoğraf yok</p>
+            <p>İlk fotoğrafınızı yükleyin. Admin onayı sonrası topluluk galerisinde görünecek.</p>
+          </div>
+        ) : (
+          <div class="photo-grid" id="photo-grid">
+            {photos.map((photo) => (
+              <div class="photo-card" id={`photo-${photo.id}`}>
+                <div class="photo-img-wrap">
+                  <Image
+                    src={photo.file_path}
+                    alt={photo.caption || 'Fotoğraf'}
+                    class="photo-img"
+                    width={400}
+                    height={300}
+                    loading="lazy"
+                  />
+                  <span class={`photo-status status-${photo.status}`}>
+                    {photo.status === 'pending' ? 'Bekliyor' : photo.status === 'approved' ? 'Onaylandı' : 'Reddedildi'}
+                  </span>
+                </div>
+                <div class="photo-body">
+                  {photo.caption && <p class="photo-caption">{photo.caption}</p>}
+                  {photo.location && <p class="photo-meta"><Icon name="lucide:map-pin" style="width:.75rem;height:.75rem;vertical-align:middle" /> {photo.location}</p>}
+                  {photo.status === 'rejected' && photo.rejection_reason && (
+                    <p class="photo-meta" style="color:#991b1b">Ret sebebi: {photo.rejection_reason}</p>
+                  )}
+                  <div class="photo-actions">
+                    <button class="btn-delete" onclick={`deletePhoto('${photo.id}')`}>
+                      <Icon name="lucide:trash-2" style="width:.75rem;height:.75rem" />
+                      Sil
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p style="font-size:.78rem;color:var(--public-muted);margin-top:1.5rem">
+          <Icon name="lucide:info" style="width:.8rem;height:.8rem;vertical-align:middle" />
+          Fotoğraflar admin onayından sonra <a href="/topluluk/fotolar" style="color:#78331d">topluluk galerisinde</a> görünür. Toplam {photos.length} fotoğraf.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+  function showAlert(msg, type) {
+    const el = document.getElementById('alert');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = `alert visible alert-${type}`;
+    setTimeout(() => el.classList.remove('visible'), 5000);
+  }
+
+  async function uploadPhoto() {
+    const fileInput = document.getElementById('photo-file');
+    const captionInput = document.getElementById('photo-caption');
+    const locationInput = document.getElementById('photo-location');
+    const btn = document.getElementById('upload-btn');
+    const progress = document.getElementById('upload-progress');
+
+    const file = fileInput?.files?.[0];
+    if (!file) { showAlert('Lütfen bir fotoğraf seçin.', 'error'); return; }
+
+    const formData = new FormData();
+    formData.append('photo', file);
+    if (captionInput?.value) formData.append('caption', captionInput.value);
+    if (locationInput?.value) formData.append('location', locationInput.value);
+
+    if (btn) btn.disabled = true;
+    if (progress) progress.classList.add('visible');
+
+    try {
+      const res = await fetch('/api/community/photos', { method: 'POST', body: formData });
+      if (res.status === 401) { window.location.href = '/giris?redirect=/profil/fotolar'; return; }
+      const data = await res.json();
+      if (!res.ok) {
+        showAlert(data?.error || 'Yükleme başarısız.', 'error');
+        return;
+      }
+      showAlert('Fotoğraf yüklendi. Admin onayı bekleniyor.', 'success');
+      document.getElementById('upload-form')?.classList.remove('visible');
+      if (fileInput) fileInput.value = '';
+      if (captionInput) captionInput.value = '';
+      if (locationInput) locationInput.value = '';
+      // Reload after 1.5s to show the new photo
+      setTimeout(() => window.location.reload(), 1500);
+    } catch {
+      showAlert('Bağlantı hatası. Lütfen tekrar deneyin.', 'error');
+    } finally {
+      if (btn) btn.disabled = false;
+      if (progress) progress.classList.remove('visible');
+    }
+  }
+
+  async function deletePhoto(photoId) {
+    if (!confirm('Bu fotoğrafı silmek istediğinize emin misiniz?')) return;
+    try {
+      const res = await fetch(`/api/community/photos/${photoId}`, { method: 'DELETE' });
+      if (res.status === 401) { window.location.href = '/giris?redirect=/profil/fotolar'; return; }
+      if (!res.ok) { showAlert('Fotoğraf silinemedi.', 'error'); return; }
+      const card = document.getElementById(`photo-${photoId}`);
+      if (card) card.remove();
+      showAlert('Fotoğraf silindi.', 'success');
+    } catch {
+      showAlert('Bağlantı hatası.', 'error');
+    }
+  }
+  </script>
+</Layout>

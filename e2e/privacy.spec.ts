@@ -25,7 +25,7 @@ test.describe('Privacy & Data Management', () => {
     });
     expect(primaryResponse.ok()).toBeTruthy();
     const primaryData = await primaryResponse.json();
-    authToken = primaryData?.data?.token ?? primaryData?.token ?? '';
+    authToken = primaryResponse.headers()['set-cookie']?.split(';')[0] ?? '';
     userId = primaryData?.data?.userId ?? primaryData?.data?.user?.id ?? primaryData?.user?.id ?? '';
     expect(authToken).toBeTruthy();
     expect(userId).toBeTruthy();
@@ -45,7 +45,7 @@ test.describe('Privacy & Data Management', () => {
 
   test('should get default privacy settings', async ({ page }) => {
     const response = await page.request.get(`${BASE_URL}/api/users/privacy`, {
-      headers: { 'Cookie': `auth-token=${authToken}` }
+      headers: { Cookie: authToken }
     });
     expect(response.ok()).toBeTruthy();
 
@@ -57,7 +57,7 @@ test.describe('Privacy & Data Management', () => {
 
   test('should update privacy settings', async ({ page }) => {
     const response = await page.request.put(`${BASE_URL}/api/users/privacy`, {
-      headers: { 'Cookie': `auth-token=${authToken}` },
+      headers: { Cookie: authToken },
       data: {
         profile_public: false,
         show_activity: false,
@@ -75,7 +75,7 @@ test.describe('Privacy & Data Management', () => {
   test('should block and unblock users', async ({ page }) => {
     // Block a user
     const blockResponse = await page.request.post(`${BASE_URL}/api/users/privacy/block`, {
-      headers: { 'Cookie': `auth-token=${authToken}` },
+      headers: { Cookie: authToken },
       data: {
         blockedUserId: testUserId,
         reason: 'Test blocking'
@@ -85,7 +85,7 @@ test.describe('Privacy & Data Management', () => {
 
     // Get blocked users list
     const listResponse = await page.request.get(`${BASE_URL}/api/users/privacy/block`, {
-      headers: { 'Cookie': `auth-token=${authToken}` }
+      headers: { Cookie: authToken }
     });
     expect(listResponse.ok()).toBeTruthy();
     const data = unwrapData<any[]>(await listResponse.json());
@@ -94,7 +94,7 @@ test.describe('Privacy & Data Management', () => {
     // Unblock user
     const unblockResponse = await page.request.delete(
       `${BASE_URL}/api/users/privacy/block?blockedUserId=${testUserId}`,
-      { headers: { 'Cookie': `auth-token=${authToken}` } }
+      { headers: { Cookie: authToken } }
     );
     expect(unblockResponse.ok()).toBeTruthy();
   });
@@ -102,7 +102,7 @@ test.describe('Privacy & Data Management', () => {
   test('should mute and unmute user notifications', async ({ page }) => {
     // Mute user
     const muteResponse = await page.request.post(`${BASE_URL}/api/users/privacy/mute`, {
-      headers: { 'Cookie': `auth-token=${authToken}` },
+      headers: { Cookie: authToken },
       data: { mutedUserId: testUserId }
     });
     expect(muteResponse.ok()).toBeTruthy();
@@ -110,14 +110,14 @@ test.describe('Privacy & Data Management', () => {
     // Unmute user
     const unmuteResponse = await page.request.delete(
       `${BASE_URL}/api/users/privacy/mute?mutedUserId=${testUserId}`,
-      { headers: { 'Cookie': `auth-token=${authToken}` } }
+      { headers: { Cookie: authToken } }
     );
     expect(unmuteResponse.ok()).toBeTruthy();
   });
 
   test('should request account deletion with 30-day grace period', async ({ page }) => {
     const response = await page.request.post(`${BASE_URL}/api/users/privacy/delete-account`, {
-      headers: { 'Cookie': `auth-token=${authToken}` },
+      headers: { Cookie: authToken },
       data: { reason: 'Testing deletion request' }
     });
     expect(response.ok()).toBeTruthy();
@@ -137,20 +137,20 @@ test.describe('Privacy & Data Management', () => {
   test('should cancel deletion request', async ({ page }) => {
     // Request deletion
     await page.request.post(`${BASE_URL}/api/users/privacy/delete-account`, {
-      headers: { 'Cookie': `auth-token=${authToken}` },
+      headers: { Cookie: authToken },
       data: { reason: 'Cancellation test' }
     });
 
     // Cancel deletion
     const cancelResponse = await page.request.delete(
       `${BASE_URL}/api/users/privacy/delete-account`,
-      { headers: { 'Cookie': `auth-token=${authToken}` } }
+      { headers: { Cookie: authToken } }
     );
     expect(cancelResponse.ok()).toBeTruthy();
 
     // Verify deletion is cancelled
     const statusResponse = await page.request.get(`${BASE_URL}/api/users/privacy/delete-account`, {
-      headers: { 'Cookie': `auth-token=${authToken}` }
+      headers: { Cookie: authToken }
     });
     const data = unwrapData<Record<string, any> | undefined>(await statusResponse.json());
     expect(data?.status).not.toBe('scheduled');
@@ -158,7 +158,7 @@ test.describe('Privacy & Data Management', () => {
 
   test('should prevent self-blocking', async ({ page }) => {
     const response = await page.request.post('http://localhost:4321/api/users/privacy/block', {
-      headers: { 'Cookie': `auth-token=${authToken}` },
+      headers: { Cookie: authToken },
       data: { blockedUserId: userId }
     });
     expect(response.status()).toBe(422);

@@ -22,7 +22,7 @@ describe('places rating distribution api', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns cached distribution when cache hit', async () => {
-    getCacheMock.mockResolvedValueOnce(JSON.stringify({ total_reviews: 12, average_rating: 4.6 }));
+    getCacheMock.mockResolvedValueOnce({ total_reviews: 12, average_rating: 4.6 });
     const response = await GET(
       createApiContext({
         url: 'http://localhost/api/places/1/rating-distribution',

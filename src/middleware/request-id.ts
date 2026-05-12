@@ -86,10 +86,12 @@ class RequestContextManager {
       requestId: customRequestId || this.generateRequestId(),
       traceId: existingContext?.traceId || this.generateTraceId(),
       spanId: this.generateSpanId(),
-      parentSpanId: existingContext?.parentSpanId,
       startTime: now,
-      userAgent: headers.get('user-agent') || undefined,
-      ip: headers.get('x-forwarded-for') || headers.get('x-real-ip') || undefined,
+      ...(existingContext?.parentSpanId ? { parentSpanId: existingContext.parentSpanId } : {}),
+      ...(headers.get('user-agent') ? { userAgent: headers.get('user-agent')! } : {}),
+      ...((headers.get('x-forwarded-for') || headers.get('x-real-ip'))
+        ? { ip: headers.get('x-forwarded-for') || headers.get('x-real-ip')! }
+        : {}),
     };
   }
 

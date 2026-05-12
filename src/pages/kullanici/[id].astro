@@ -1,64 +1,79 @@
 ---
-
-/**
- * Public User Profile Page
- * Display user profile with stats, follower info, and activity
- */
-
 import Layout from '../../layouts/Layout.astro';
 import UserPublicProfile from '../../components/UserPublicProfile';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../../lib/public-app-url';
+const baseUrl = getPublicAppUrl();
 
-// Get user ID from URL
 const { id } = Astro.params;
 
 if (!id) {
-  return Astro.redirect('/');
+ return Astro.redirect('/');
 }
 
 const seo = {
-  title: 'Kullanıcı Profili - Sanliurfa.com',
-  description: 'Şanlıurfa.com kullanıcı profili. Yorumlar, koleksiyonlar ve aktivite bilgileri.',
-  keywords: ['şanlıurfa.com kullanıcı profili', 'sanliurfa.com üye', 'profil'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: `/kullanici/${id}`,
+ title: 'Kullanıcı Profili - Sanliurfa.com',
+ description: 'Şanlıurfa.com kullanıcı profili. Yorumlar, koleksiyonlar ve aktivite bilgileri.',
+ keywords: ['şanlıurfa.com kullanıcı profili', 'sanliurfa.com üye', 'profil'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: `/kullanici/${id}`,
 };
 const faqItems = [
-  { S: 'Bu kullanıcı hakkında nasıl bilgi edinebilirim?', C: 'Kullanıcının yaptığı yorumlar ve koleksiyonlar profil sayfasında listelenmektedir.' },
-  { S: 'Kullanıcıyı takip edebilir miyim?', C: 'Evet, profil sayfasındaki takip et butonunu kullanarak bu kullanıcıyı takip edebilirsiniz.' },
-  { S: 'Kullanıcıya mesaj gönderebilir miyim?', C: 'Üye iseniz profil sayfası üzerinden mesaj gönderme talebinde bulunabilirsiniz.' },
+ { S: 'Bu kullanıcı hakkında nasıl bilgi edinebilirim?', C: 'Kullanıcının yaptığı yorumlar ve koleksiyonlar profil sayfasında listelenmektedir.' },
+ { S: 'Kullanıcıyı takip edebilir miyim?', C: 'Evet, profil sayfasındaki takip et butonunu kullanarak bu kullanıcıyı takip edebilirsiniz.' },
+ { S: 'Kullanıcıya mesaj gönderebilir miyim?', C: 'Üye iseniz profil sayfası üzerinden mesaj gönderme talebinde bulunabilirsiniz.' },
 ];
-
+const publicProfileProps: { userId: string; currentUserId?: string } = { userId: id };
+if (Astro.locals.user?.id) {
+ publicProfileProps.currentUserId = Astro.locals.user.id;
+}
 ---
 
 <Layout seo={seo}>
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <a href="/" class="text-blue-600 dark:text-blue-400 hover:underline mb-4 inline-block">
-      ← Ana sayfaya dön
-    </a>
+ <style is:inline>
+ .ku-page{background:var(--bg);min-height:100vh}
+ .ku-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,.12);padding:2rem 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+ .ku-inner{max-width:56rem;margin:0 auto}
+ .ku-back{font-size:.82rem;color:#7A6B58;transition:color .15s;display:inline-block}
+ .ku-back:hover{color:#B87333}
+ .ku-body{padding:2rem 0 4rem}
+ </style>
 
-    <UserPublicProfile
-      client:visible={{ rootMargin: '140px' }}
-      userId={id}
-      currentUserId={Astro.locals.user?.id}
-    />
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Kullanıcı Profili', item: `${baseUrl}/kullanıcı/${id}` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <div class="ku-page">
+ <div class="ku-hero">
+ <div class="sf-container">
+ <div class="ku-inner">
+ <a href="/" class="ku-back">← Ana sayfaya dön</a>
+ </div>
+ </div>
+ </div>
+
+ <div class="ku-body">
+ <div class="sf-container">
+ <div class="ku-inner">
+ <UserPublicProfile
+ client:visible={{ rootMargin: '140px' }}
+ {...publicProfileProps}
+ />
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Kullanıcı Profili', item: `${baseUrl}/kullanici/${id}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, safeErrorDetail, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { pool } from '../../../lib/postgres';
 import { getRedisClient } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
@@ -69,7 +69,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     } catch (error) {
       logger.error('Database health check failed:', error);
       dbStatus = 'down';
-      dbError = error instanceof Error ? error.message : String(error);
+      dbError = safeErrorDetail(error, 'DB sağlık kontrolü başarısız');
     }
 
     // Check Redis
@@ -82,7 +82,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     } catch (error) {
       logger.error('Redis health check failed:', error);
       redisStatus = 'down';
-      redisError = error instanceof Error ? error.message : String(error);
+      redisError = safeErrorDetail(error, 'Redis sağlık kontrolü başarısız');
     }
 
     // Get memory usage

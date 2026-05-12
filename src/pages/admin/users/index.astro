@@ -1,409 +1,359 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { query } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 interface UserStats {
-  total: number;
-  active: number;
-  vendors: number;
-  pending: number;
-  newToday: number;
+ total: number;
+ active: number;
+ vendors: number;
+ pending: number;
+ newToday: number;
 }
 
 interface UserStatsRow {
-  total?: string | number;
-  active?: string | number;
-  vendors?: string | number;
-  pending?: string | number;
-  new_today?: string | number;
+ total?: string | number;
+ active?: string | number;
+ vendors?: string | number;
+ pending?: string | number;
+ new_today?: string | number;
 }
 
 function parseStat(value: string | number | undefined): number {
-  return Number.parseInt(String(value || '0'), 10);
-}
-
-const seo = {
-  title: 'Kullanıcı Yönetimi - Yönetim Paneli',
-  description: 'Kullanıcıları yönetin',
-  noIndex: true,
-};
-
-if (!Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin/users');
+ return Number.parseInt(String(value || '0'), 10);
 }
 
 let stats: UserStats = { total: 0, active: 0, vendors: 0, pending: 0, newToday: 0 };
 try {
-  const result = await query<UserStatsRow>(`
-    SELECT
-      COUNT(*)                                                      AS total,
-      COUNT(*) FILTER (WHERE status = 'active')                    AS active,
-      COUNT(*) FILTER (WHERE role = 'vendor')                      AS vendors,
-      COUNT(*) FILTER (WHERE status = 'pending')                   AS pending,
-      COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE)      AS new_today
-    FROM users WHERE status != 'deleted'
-  `);
-  const r = result.rows[0];
-  stats = {
-    total: parseStat(r?.total),
-    active: parseStat(r?.active),
-    vendors: parseStat(r?.vendors),
-    pending: parseStat(r?.pending),
-    newToday: parseStat(r?.new_today),
-  };
+ const result = await query<UserStatsRow>(`
+ SELECT
+ COUNT(*) AS total,
+ COUNT(*) FILTER (WHERE status = 'active') AS active,
+ COUNT(*) FILTER (WHERE role = 'vendor') AS vendors,
+ COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+ COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE) AS new_today
+ FROM users WHERE status != 'deleted'
+ `);
+ const r = result.rows[0];
+ stats = {
+ total: parseStat(r?.total),
+ active: parseStat(r?.active),
+ vendors: parseStat(r?.vendors),
+ pending: parseStat(r?.pending),
+ newToday: parseStat(r?.new_today),
+ };
 } catch (e) {
-  console.error('Users stats error:', e);
+ logger.error('Users stats error', e instanceof Error ? e : new Error(String(e)));
 }
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
-    <div class="container mx-auto px-4">
-      {/* Header */}
-      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900">Kullanıcı Yönetimi</h1>
-            <p class="text-gray-500 mt-1">Tüm kullanıcıları görüntüleyin ve yönetin</p>
-          </div>
-          <div class="flex gap-3">
-            <button class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-              + Yeni Kullanıcı
-            </button>
-          </div>
-        </div>
-      </div>
+<AdminLayout
+ title="Kullanıcı Yönetimi"
+ subtitle="Tüm kullanıcıları görüntüleyin ve yönetin"
+ seo={{ title: 'Kullanıcı Yönetimi - Yönetim Paneli', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-6xl space-y-5">
+ <div class="mb-2 flex items-center justify-between">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ </div>
 
-      {/* Stats */}
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <div class="text-2xl font-bold text-gray-900">{stats.total}</div>
-          <div class="text-sm text-gray-500">Toplam Kullanıcı</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <div class="text-2xl font-bold text-green-600">{stats.active}</div>
-          <div class="text-sm text-gray-500">Aktif</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <div class="text-2xl font-bold text-blue-600">{stats.vendors}</div>
-          <div class="text-sm text-gray-500">İşletme</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <div class="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-          <div class="text-sm text-gray-500">Onay Bekleyen</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <div class="text-2xl font-bold text-purple-600">{stats.newToday}</div>
-          <div class="text-sm text-gray-500">Bugün Yeni</div>
-        </div>
-      </div>
+ <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="text-2xl font-bold text-[#1F1410]">{stats.total}</div>
+ <div class="text-sm text-[#7A6B58]">Toplam Kullanıcı</div>
+ </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="text-2xl font-bold text-[#7A6B58]">{stats.active}</div>
+ <div class="text-sm text-[#7A6B58]">Aktif</div>
+ </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="text-2xl font-bold text-[#7A6B58]">{stats.vendors}</div>
+ <div class="text-sm text-[#7A6B58]">İşletme</div>
+ </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="text-2xl font-bold text-[#7A6B58]">{stats.pending}</div>
+ <div class="text-sm text-[#7A6B58]">Onay Bekleyen</div>
+ </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="text-2xl font-bold text-[#7A6B58]">{stats.newToday}</div>
+ <div class="text-sm text-[#7A6B58]">Bugün Yeni</div>
+ </div>
+ </div>
 
-      {/* Filters */}
-      <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-        <div class="flex flex-wrap gap-4">
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="İsim veya email ara..."
-            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-          />
-          <select id="roleFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-            <option value="">Tüm Roller</option>
-            <option value="user">Kullanıcı</option>
-            <option value="vendor">İşletme</option>
-            <option value="admin">Admin</option>
-          </select>
-          <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-            <option value="">Tüm Durumlar</option>
-            <option value="active">Aktif</option>
-            <option value="pending">Onay Bekleyen</option>
-            <option value="suspended">Askıya Alınmış</option>
-          </select>
-          <button id="searchBtn" class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900">
-            Ara
-          </button>
-        </div>
-      </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="flex flex-wrap gap-4">
+ <input
+ type="text"
+ id="searchInput"
+ placeholder="İsim veya email ara..."
+ class="px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400"
+ />
+ <select id="roleFilter" class="px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400">
+ <option value="">Tüm Roller</option>
+ <option value="user">Kullanıcı</option>
+ <option value="vendor">İşletme</option>
+ <option value="admin">Admin</option>
+ </select>
+ <select id="statusFilter" class="px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400">
+ <option value="">Tüm Durumlar</option>
+ <option value="active">Aktif</option>
+ <option value="pending">Onay Bekleyen</option>
+ <option value="suspended">Askıya Alınmış</option>
+ </select>
+ <button id="searchBtn" class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5c4839]">
+ Ara
+ </button>
+ </div>
+ </div>
 
-      {/* Users Table */}
-      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th class="px-6 py-3 text-left">
-                  <input type="checkbox" id="selectAll" class="rounded border-gray-300" />
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kullanıcı</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rol</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kayıt Tarihi</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İstatistikler</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
-              </tr>
-            </thead>
-            <tbody id="usersTableBody" class="divide-y divide-gray-100">
-              <tr>
-                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                  Yükleniyor...
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        {/* Pagination */}
-        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <div class="text-sm text-gray-500">
-            <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
-          </div>
-          <div class="flex gap-2" id="pagination">
-            <!-- Pagination buttons will be inserted here -->
-          </div>
-        </div>
-      </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <div class="overflow-x-auto">
+ <table class="w-full text-sm">
+ <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <tr>
+ <th class="px-6 py-3 text-left">
+ <input type="checkbox" id="selectAll" class="rounded border-[rgba(184,115,51,0.3)]" />
+ </th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Kullanıcı</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Rol</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Durum</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Kayıt Tarihi</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İstatistikler</th>
+ <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İşlemler</th>
+ </tr>
+ </thead>
+ <tbody id="usersTableBody" class="divide-y divide-[rgba(184,115,51,0.08)]">
+ <tr>
+ <td colspan="7" class="px-6 py-12 text-center text-[#7A6B58]">
+ Yükleniyor...
+ </td>
+ </tr>
+ </tbody>
+ </table>
+ </div>
 
-      {/* Bulk Actions */}
-      <div id="bulkActions" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg hidden">
-        <span id="selectedCount">0</span> kullanıcı seçildi
-        <div class="inline-flex gap-2 ml-4">
-          <button onclick="bulkAction('activate')" class="px-3 py-1 bg-green-600 rounded hover:bg-green-700 text-sm">Aktifleştir</button>
-          <button onclick="bulkAction('suspend')" class="px-3 py-1 bg-yellow-600 rounded hover:bg-yellow-700 text-sm">Askıya Al</button>
-          <button onclick="bulkAction('delete')" class="px-3 py-1 bg-red-600 rounded hover:bg-red-700 text-sm">Sil</button>
-        </div>
-      </div>
-    </div>
-  </div>
+ <div class="px-6 py-4 border-t border-[rgba(184,115,51,0.14)] flex items-center justify-between">
+ <div class="text-sm text-[#7A6B58]">
+ <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
+ </div>
+ <div class="flex gap-2" id="pagination">
+ <!-- Pagination buttons will be inserted here -->
+ </div>
+ </div>
+ </div>
 
-  <script is:inline>
-    let currentPage = 1;
-    let selectedUsers = new Set();
-    let allUsers = [];
+ <div id="bulkActions" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#0D0A08] text-white px-6 py-3 rounded-sm shadow-lg hidden">
+ <span id="selectedCount">0</span> kullanıcı seçildi
+ <div class="inline-flex gap-2 ml-4">
+ <button onclick="bulkAction('activate')" class="px-3 py-1 bg-[rgba(184,115,51,0.3)] rounded-sm hover:bg-[rgba(184,115,51,0.4)] text-sm text-white">Aktifleştir</button>
+ <button onclick="bulkAction('suspend')" class="px-3 py-1 bg-[rgba(184,115,51,0.15)] rounded-sm hover:bg-[rgba(184,115,51,0.25)] text-sm text-[#7A6B58]">Askıya Al</button>
+ <button onclick="bulkAction('delete')" class="px-3 py-1 bg-[rgba(184,115,51,0.08)] rounded-sm hover:bg-[rgba(184,115,51,0.15)] text-sm text-[#7A6B58]">Sil</button>
+ </div>
+ </div>
+ </div>
 
-    const roleLabels = {
-      user: { text: 'Kullanıcı', class: 'bg-gray-100 text-gray-700' },
-      vendor: { text: 'İşletme', class: 'bg-blue-100 text-blue-700' },
-      admin: { text: 'Admin', class: 'bg-purple-100 text-purple-700' },
-    };
+ <script is:inline>
+ let currentPage = 1;
+ let selectedUsers = new Set();
+ let allUsers = [];
 
-    const statusLabels = {
-      active: { text: 'Aktif', class: 'bg-green-100 text-green-700' },
-      pending: { text: 'Bekliyor', class: 'bg-yellow-100 text-yellow-700' },
-      suspended: { text: 'Askıya Alındı', class: 'bg-red-100 text-red-700' },
-      deleted: { text: 'Silindi', class: 'bg-gray-100 text-gray-500' },
-    };
+ const roleLabels = {
+ user: { text: 'Kullanıcı', class: 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' },
+ vendor: { text: 'İşletme', class: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
+ admin: { text: 'Admin', class: 'bg-[rgba(184,115,51,0.2)] text-[#7A6B58]' },
+ };
 
-    async function loadUsers() {
-      const tbody = document.getElementById('usersTableBody');
-      tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-gray-500">Yükleniyor...</td></tr>';
+ const statusLabels = {
+ active: { text: 'Aktif', class: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
+ pending: { text: 'Bekliyor', class: 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' },
+ suspended: { text: 'Askıya Alındı', class: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' },
+ deleted: { text: 'Silindi', class: 'bg-[rgba(184,115,51,0.04)] text-[#7A6B58]' },
+ };
 
-      const params = new URLSearchParams({ page: currentPage.toString() });
-      
-      const search = document.getElementById('searchInput').value;
-      const role = document.getElementById('roleFilter').value;
-      const status = document.getElementById('statusFilter').value;
+ async function loadUsers() {
+ const tbody = document.getElementById('usersTableBody');
+ function setTbodyMsg(colSpan, text, cls) {
+ const tr = document.createElement('tr');
+ const td = document.createElement('td'); td.colSpan = colSpan; td.className = cls; td.textContent = text;
+ tr.appendChild(td); tbody.replaceChildren(tr);
+ }
+ setTbodyMsg(7, 'Yükleniyor...', 'px-6 py-12 text-center text-[#7A6B58]');
 
-      if (search) params.append('search', search);
-      if (role) params.append('role', role);
-      if (status) params.append('status', status);
+ const params = new URLSearchParams({ page: currentPage.toString() });
+ const search = document.getElementById('searchInput').value;
+ const role = document.getElementById('roleFilter').value;
+ const status = document.getElementById('statusFilter').value;
 
-      try {
-        const response = await fetch(`/api/admin/users?${params}`);
-        const data = await response.json();
+ if (search) params.append('search', search);
+ if (role) params.append('role', role);
+ if (status) params.append('status', status);
 
-        if (data.success) {
-          allUsers = data.users;
-          renderUsers(data.users);
-          updatePagination(data.pagination);
-        }
-      } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-red-500">Hata oluştu</td></tr>';
-      }
-    }
+ try {
+ const response = await fetch(`/api/admin/users?${params}`);
+ const data = await response.json();
 
-    function renderUsers(users) {
-      const tbody = document.getElementById('usersTableBody');
-      
-      if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-gray-500">Kullanıcı bulunamadı</td></tr>';
-        return;
-      }
+ if (data.success) {
+ allUsers = data.users;
+ renderUsers(data.users);
+ updatePagination(data.pagination);
+ }
+ } catch (err) {
+ setTbodyMsg(7, 'Hata oluştu', 'px-6 py-12 text-center text-[#7A6B58]');
+ }
+ }
 
-      tbody.innerHTML = users.map(user => `
-        <tr class="hover:bg-gray-50">
-          <td class="px-6 py-4">
-            <input type="checkbox" value="${user.id}" 
-              ${selectedUsers.has(user.id) ? 'checked' : ''}
-              onchange="toggleSelection('${user.id}')"
-              class="rounded border-gray-300 user-checkbox" />
-          </td>
-          <td class="px-6 py-4">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-medium">
-                ${user.name ? user.name.charAt(0).toUpperCase() : '?'}
-              </div>
-              <div>
-                <div class="font-medium text-gray-900">${user.name || 'İsimsiz'}</div>
-                <div class="text-sm text-gray-500">${user.email}</div>
-              </div>
-            </div>
-          </td>
-          <td class="px-6 py-4">
-            <span class="px-2 py-1 rounded-full text-xs font-medium ${roleLabels[user.role]?.class || 'bg-gray-100'}">
-              ${roleLabels[user.role]?.text || user.role}
-            </span>
-          </td>
-          <td class="px-6 py-4">
-            <span class="px-2 py-1 rounded-full text-xs font-medium ${statusLabels[user.status]?.class || 'bg-gray-100'}">
-              ${statusLabels[user.status]?.text || user.status}
-            </span>
-          </td>
-          <td class="px-6 py-4 text-sm text-gray-500">
-            ${new Date(user.created_at).toLocaleDateString('tr-TR')}
-          </td>
-          <td class="px-6 py-4 text-sm">
-            <div class="text-gray-600">
-              ${user.review_count || 0} yorum
-            </div>
-            ${user.place_count > 0 ? `<div class="text-gray-500">${user.place_count} işletme</div>` : ''}
-          </td>
-          <td class="px-6 py-4">
-            <div class="flex gap-2">
-              <a href="/admin/users/${user.id}" class="text-blue-600 hover:text-blue-800 text-sm">Detay</a>
-              ${user.status !== 'suspended' 
-                ? `<button onclick="suspendUser('${user.id}')" class="text-yellow-600 hover:text-yellow-800 text-sm">Askıya Al</button>`
-                : `<button onclick="activateUser('${user.id}')" class="text-green-600 hover:text-green-800 text-sm">Aktifleştir</button>`
-              }
-            </div>
-          </td>
-        </tr>
-      `).join('');
-    }
+ function renderUsers(users) {
+ const tbody = document.getElementById('usersTableBody');
+ function setTbodyMsg(colSpan, text, cls) {
+ const tr = document.createElement('tr');
+ const td = document.createElement('td'); td.colSpan = colSpan; td.className = cls; td.textContent = text;
+ tr.appendChild(td); tbody.replaceChildren(tr);
+ }
+ if (users.length === 0) {
+ setTbodyMsg(7, 'Kullanıcı bulunamadı', 'px-6 py-12 text-center text-[#7A6B58]');
+ return;
+ }
 
-    function updatePagination(pagination) {
-      document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
-      document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
-      document.getElementById('totalCount').textContent = pagination.total;
+ function buildUserRow(user) {
+ const tr = document.createElement('tr'); tr.className = 'hover:bg-[rgba(184,115,51,0.04)]';
+ const td1 = document.createElement('td'); td1.className = 'px-6 py-4';
+ const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = user.id;
+ if (selectedUsers.has(user.id)) cb.checked = true;
+ cb.className = 'rounded border-[rgba(184,115,51,0.3)] user-checkbox';
+ cb.addEventListener('change', () => toggleSelection(user.id));
+ td1.appendChild(cb);
+ const td2 = document.createElement('td'); td2.className = 'px-6 py-4';
+ const flex = document.createElement('div'); flex.className = 'flex items-center gap-3';
+ const avatar = document.createElement('div');
+ avatar.className = 'w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-full flex items-center justify-center text-[#7A6B58] font-medium';
+ avatar.textContent = user.name ? user.name.charAt(0).toUpperCase() : '?';
+ const nameDiv = document.createElement('div');
+ const nameEl = document.createElement('div'); nameEl.className = 'font-medium text-[#1F1410]'; nameEl.textContent = user.name || 'İsimsiz';
+ const emailEl = document.createElement('div'); emailEl.className = 'text-sm text-[#7A6B58]'; emailEl.textContent = user.email;
+ nameDiv.appendChild(nameEl); nameDiv.appendChild(emailEl);
+ flex.appendChild(avatar); flex.appendChild(nameDiv); td2.appendChild(flex);
+ const td3 = document.createElement('td'); td3.className = 'px-6 py-4';
+ const roleBadge = document.createElement('span');
+ roleBadge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (roleLabels[user.role]?.class || 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]');
+ roleBadge.textContent = roleLabels[user.role]?.text || user.role;
+ td3.appendChild(roleBadge);
+ const td4 = document.createElement('td'); td4.className = 'px-6 py-4';
+ const statusBadge = document.createElement('span');
+ statusBadge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (statusLabels[user.status]?.class || 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]');
+ statusBadge.textContent = statusLabels[user.status]?.text || user.status;
+ td4.appendChild(statusBadge);
+ const td5 = document.createElement('td'); td5.className = 'px-6 py-4 text-sm text-[#7A6B58]';
+ td5.textContent = new Date(user.created_at).toLocaleDateString('tr-TR');
+ const td6 = document.createElement('td'); td6.className = 'px-6 py-4 text-sm';
+ const reviewsEl = document.createElement('div'); reviewsEl.className = 'text-[#7A6B58]'; reviewsEl.textContent = (user.review_count || 0) + ' yorum';
+ td6.appendChild(reviewsEl);
+ if (user.place_count > 0) {
+ const placesEl = document.createElement('div'); placesEl.className = 'text-[#7A6B58]'; placesEl.textContent = user.place_count + ' işletme';
+ td6.appendChild(placesEl);
+ }
+ const td7 = document.createElement('td'); td7.className = 'px-6 py-4';
+ const actDiv = document.createElement('div'); actDiv.className = 'flex gap-2';
+ const detailA = document.createElement('a');
+ detailA.href = '/admin/users/' + user.id;
+ detailA.className = 'text-[#7A6B58] hover:text-urfa-600 text-sm'; detailA.textContent = 'Detay';
+ actDiv.appendChild(detailA);
+ const actionBtn = document.createElement('button');
+ if (user.status !== 'suspended') {
+ actionBtn.className = 'text-[#7A6B58] hover:text-[#7A6B58] text-sm'; actionBtn.textContent = 'Askıya Al';
+ actionBtn.addEventListener('click', () => suspendUser(user.id));
+ } else {
+ actionBtn.className = 'text-[#7A6B58] hover:text-urfa-600 text-sm'; actionBtn.textContent = 'Aktifleştir';
+ actionBtn.addEventListener('click', () => activateUser(user.id));
+ }
+ actDiv.appendChild(actionBtn); td7.appendChild(actDiv);
+ tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+ tr.appendChild(td4); tr.appendChild(td5); tr.appendChild(td6); tr.appendChild(td7);
+ return tr;
+ }
+ tbody.replaceChildren(...users.map(buildUserRow));
+ }
 
-      const pages = [];
-      for (let i = 1; i <= pagination.totalPages; i++) {
-        if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
-          pages.push(`
-            <button onclick="goToPage(${i})" 
-              class="px-3 py-1 rounded ${i === pagination.page ? 'bg-red-600 text-white' : 'bg-gray-100 hover:bg-gray-200'}">
-              ${i}
-            </button>
-          `);
-        } else if (i === pagination.page - 3 || i === pagination.page + 3) {
-          pages.push('<span class="px-2">...</span>');
-        }
-      }
-      document.getElementById('pagination').innerHTML = pages.join('');
-    }
+ function updatePagination(pagination) {
+ document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
+ document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
+ document.getElementById('totalCount').textContent = pagination.total;
 
-    function goToPage(page) {
-      currentPage = page;
-      loadUsers();
-    }
+ const pagEl = document.getElementById('pagination');
+ const nodes = [];
+ for (let i = 1; i <= pagination.totalPages; i++) {
+ if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+ const btn = document.createElement('button');
+ btn.className = 'px-3 py-1 rounded-sm text-sm ' + (i === pagination.page ? 'bg-urfa-600 text-white' : 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.15)]');
+ btn.textContent = String(i);
+ btn.addEventListener('click', () => goToPage(i));
+ nodes.push(btn);
+ } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+ const span = document.createElement('span'); span.className = 'px-2 text-[#7A6B58]'; span.textContent = '...';
+ nodes.push(span);
+ }
+ }
+ pagEl.replaceChildren(...nodes);
+ }
 
-    function toggleSelection(userId) {
-      if (selectedUsers.has(userId)) {
-        selectedUsers.delete(userId);
-      } else {
-        selectedUsers.add(userId);
-      }
-      updateBulkActions();
-    }
+ function goToPage(page) { currentPage = page; loadUsers(); }
 
-    function updateBulkActions() {
-      const bulkActions = document.getElementById('bulkActions');
-      const selectedCount = document.getElementById('selectedCount');
-      
-      selectedCount.textContent = selectedUsers.size;
-      bulkActions.classList.toggle('hidden', selectedUsers.size === 0);
-    }
+ function toggleSelection(userId) {
+ if (selectedUsers.has(userId)) { selectedUsers.delete(userId); } else { selectedUsers.add(userId); }
+ updateBulkActions();
+ }
 
-    function toggleSelectAll() {
-      const selectAll = document.getElementById('selectAll');
-      const checkboxes = document.querySelectorAll('.user-checkbox');
-      
-      if (selectAll.checked) {
-        allUsers.forEach(u => selectedUsers.add(u.id));
-      } else {
-        selectedUsers.clear();
-      }
-      
-      checkboxes.forEach(cb => cb.checked = selectAll.checked);
-      updateBulkActions();
-    }
+ function updateBulkActions() {
+ const bulkActions = document.getElementById('bulkActions');
+ const selectedCount = document.getElementById('selectedCount');
+ selectedCount.textContent = selectedUsers.size;
+ bulkActions.classList.toggle('hidden', selectedUsers.size === 0);
+ }
 
-    async function bulkAction(action) {
-      if (!confirm(`${selectedUsers.size} kullanıcı için bu işlemi yapmak istediğinize emin misiniz?`)) return;
+ function toggleSelectAll() {
+ const selectAll = document.getElementById('selectAll');
+ const checkboxes = document.querySelectorAll('.user-checkbox');
+ if (selectAll.checked) { allUsers.forEach(u => selectedUsers.add(u.id)); } else { selectedUsers.clear(); }
+ checkboxes.forEach(cb => cb.checked = selectAll.checked);
+ updateBulkActions();
+ }
 
-      try {
-        const response = await fetch('/api/admin/users', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userIds: Array.from(selectedUsers),
-            action
-          })
-        });
+ async function bulkAction(action) {
+ if (!await window.showConfirm(`${selectedUsers.size} kullanıcı için bu işlemi yapmak istediğinize emin misiniz?`)) return;
+ try {
+ const response = await fetch('/api/admin/users', {
+ method: 'PUT',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ userIds: Array.from(selectedUsers), action })
+ });
+ if (response.ok) { selectedUsers.clear(); updateBulkActions(); loadUsers(); }
+ } catch (err) { window.toast?.error('İşlem başarısız'); }
+ }
 
-        if (response.ok) {
-          selectedUsers.clear();
-          updateBulkActions();
-          loadUsers();
-        }
-      } catch (err) {
-        alert('İşlem başarısız');
-      }
-    }
+ async function suspendUser(userId) {
+ if (!await window.showConfirm('Bu kullanıcıyı askıya almak istediğinize emin misiniz?')) return;
+ try {
+ const res = await fetch(`/api/admin/users/${userId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'suspend' }) });
+ if (res.ok) loadUsers(); else window.toast?.error('İşlem başarısız');
+ } catch { window.toast?.error('Bağlantı hatası'); }
+ }
 
-    async function suspendUser(userId) {
-      if (!confirm('Bu kullanıcıyı askıya almak istediğinize emin misiniz?')) return;
-      try {
-        const res = await fetch(`/api/admin/users/${userId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'suspend' }),
-        });
-        if (res.ok) loadUsers();
-        else alert('İşlem başarısız');
-      } catch { alert('Bağlantı hatası'); }
-    }
+ async function activateUser(userId) {
+ if (!await window.showConfirm('Bu kullanıcıyı aktifleştirmek istediğinize emin misiniz?')) return;
+ try {
+ const res = await fetch(`/api/admin/users/${userId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'activate' }) });
+ if (res.ok) loadUsers(); else window.toast?.error('İşlem başarısız');
+ } catch { window.toast?.error('Bağlantı hatası'); }
+ }
 
-    async function activateUser(userId) {
-      if (!confirm('Bu kullanıcıyı aktifleştirmek istediğinize emin misiniz?')) return;
-      try {
-        const res = await fetch(`/api/admin/users/${userId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'activate' }),
-        });
-        if (res.ok) loadUsers();
-        else alert('İşlem başarısız');
-      } catch { alert('Bağlantı hatası'); }
-    }
+ document.getElementById('searchBtn').addEventListener('click', () => { currentPage = 1; loadUsers(); });
+ document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
 
-    // Event listeners
-    document.getElementById('searchBtn').addEventListener('click', () => {
-      currentPage = 1;
-      loadUsers();
-    });
+ window['goToPage'] = goToPage;
+ window['toggleSelection'] = toggleSelection;
+ window['bulkAction'] = bulkAction;
+ window['suspendUser'] = suspendUser;
+ window['activateUser'] = activateUser;
 
-    document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
-
-    window['goToPage'] = goToPage;
-    window['toggleSelection'] = toggleSelection;
-    window['bulkAction'] = bulkAction;
-    window['suspendUser'] = suspendUser;
-    window['activateUser'] = activateUser;
-
-    // Initial load
-    loadUsers();
-  </script>
-</Layout>
-
-
-
+ loadUsers();
+ </script>
+</AdminLayout>

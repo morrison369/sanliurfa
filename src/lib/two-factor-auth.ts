@@ -169,7 +169,7 @@ export async function get2FAMethods(userId: string): Promise<TwoFAMethod[]> {
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const methods = await queryMany(
@@ -330,9 +330,11 @@ async function verify2FAVerificationCode(userId: string, code: string): Promise<
   const stored = await getCache(cacheKey);
   if (!stored) return false;
 
-  const matches = stored === code;
+  const storedStr = String(stored);
+  const matches =
+    storedStr.length === code.length &&
+    crypto.timingSafeEqual(Buffer.from(storedStr), Buffer.from(code));
   if (matches) {
-    // Consume the code — one-time use
     await deleteCache(cacheKey);
   }
   return matches;
@@ -384,14 +386,15 @@ export async function generateRecoveryCodes(methodId: string): Promise<string[]>
       user_id: method.user_id
     }));
 
-    // Insert recovery codes
-    for (const codeData of codeHashes) {
-      await insert('two_fa_recovery_codes', {
-        ...codeData,
-        is_used: false,
-        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-      });
-    }
+    await Promise.all(
+      codeHashes.map((codeData) =>
+        insert('two_fa_recovery_codes', {
+          ...codeData,
+          is_used: false,
+          expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+        })
+      )
+    );
 
     logger.info('Recovery codes generated', { methodId });
     return codes;

@@ -14,6 +14,14 @@ export const GET: APIRoute = async () => {
     '/sifre-sifirla',
     '/hesabim',
     '/mesajlar',
+    '/profil',
+    '/ayarlar',
+    '/bildirimler',
+    '/akis',
+    '/aktivitelerim',
+    '/koleksiyonlar',
+    '/favoriler',
+    '/vendor/',
     '/_astro/',
     '/private/',
   ];
@@ -25,7 +33,6 @@ Allow: /
 ${disallowedPaths.map(path => `Disallow: ${path}`).join('\n')}
 
 # Sitemap
-Sitemap: ${baseUrl}/sitemap-index.xml
 Sitemap: ${baseUrl}/sitemap.xml
 Sitemap: ${baseUrl}/sitemap-dynamic.xml
 

@@ -1,5 +1,5 @@
 import type { Pool } from 'pg';
-import { getCache, setCache } from '../cache';
+import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logging';
 
 export interface WebhookMetrics {
@@ -39,36 +39,72 @@ export async function getWebhookMetrics(pool: Pool, userId?: string): Promise<We
   // Check cache first (5 min TTL)
   const cached = await getCache(cacheKey);
   if (cached) {
-    return JSON.parse(cached as string);
+    return cached as any;
   }
 
   try {
     const whereClause = userId ? 'WHERE w.user_id = $1' : '';
     const params = userId ? [userId] : [];
 
-    // Get basic webhook count
-    const webhookCountRes = await pool.query(
-      `SELECT COUNT(*) as count FROM webhooks ${whereClause}`,
-      params
-    );
-    const totalWebhooks = parseInt((webhookCountRes as any).rows?.[0]?.count || '0');
+    const [webhookCountRes, eventStatsRes, lastHourRes, topFailedRes, avgDeliveryTimeRes] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(*) as count FROM webhooks ${whereClause}`,
+        params
+      ),
+      pool.query(
+        `SELECT
+          event,
+          COUNT(*) as total,
+          SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as delivered,
+          SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
+          SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending
+        FROM webhook_events we
+        JOIN webhooks w ON we.webhook_id = w.id
+        ${whereClause}
+        GROUP BY event`,
+        params
+      ),
+      pool.query(
+        `SELECT
+          DATE_TRUNC('minute', created_at) as time,
+          COUNT(*) as total,
+          SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as delivered,
+          SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed
+        FROM webhook_events we
+        JOIN webhooks w ON we.webhook_id = w.id
+        WHERE created_at > NOW() - INTERVAL '1 hour'
+        ${userId ? 'AND w.user_id = $1' : ''}
+        GROUP BY DATE_TRUNC('minute', created_at)
+        ORDER BY time DESC
+        LIMIT 60`,
+        params
+      ),
+      pool.query(
+        `SELECT
+          event,
+          COUNT(*) as failed_count,
+          SUM(attempts) as total_attempts
+        FROM webhook_events we
+        JOIN webhooks w ON we.webhook_id = w.id
+        WHERE status = 'failed'
+        ${userId ? 'AND w.user_id = $1' : ''}
+        GROUP BY event
+        ORDER BY failed_count DESC
+        LIMIT 5`,
+        params
+      ),
+      pool.query(
+        `SELECT AVG(delivery_time_ms) as avg_ms
+         FROM webhook_events we
+         JOIN webhooks w ON we.webhook_id = w.id
+         WHERE we.status = 'delivered' AND we.delivery_time_ms IS NOT NULL
+         ${userId ? 'AND w.user_id = $1' : ''}`,
+        params
+      ),
+    ]);
 
-    // Get event statistics
-    const eventStatsRes = await pool.query(
-      `SELECT
-        event,
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as delivered,
-        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
-        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending
-      FROM webhook_events we
-      JOIN webhooks w ON we.webhook_id = w.id
-      ${whereClause}
-      GROUP BY event`,
-      params
-    );
+    const totalWebhooks = parseInt((webhookCountRes as any).rows?.[0]?.count || '0', 10);
 
-    // Calculate aggregated metrics
     let totalEvents = 0;
     let deliveredEvents = 0;
     let failedEvents = 0;
@@ -77,10 +113,10 @@ export async function getWebhookMetrics(pool: Pool, userId?: string): Promise<We
 
     const eventRows = (eventStatsRes as any).rows || [];
     eventRows.forEach((row: any) => {
-      const total = parseInt(row.total);
-      const delivered = parseInt(row.delivered);
-      const failed = parseInt(row.failed);
-      const pending = parseInt(row.pending);
+      const total = parseInt(row.total, 10);
+      const delivered = parseInt(row.delivered, 10);
+      const failed = parseInt(row.failed, 10);
+      const pending = parseInt(row.pending, 10);
       const successRate = total > 0 ? (delivered / total) * 100 : 0;
 
       totalEvents += total;
@@ -97,66 +133,25 @@ export async function getWebhookMetrics(pool: Pool, userId?: string): Promise<We
       };
     });
 
-    // Get last hour activity
-    const lastHourRes = await pool.query(
-      `SELECT
-        DATE_TRUNC('minute', created_at) as time,
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'delivered' THEN 1 ELSE 0 END) as delivered,
-        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed
-      FROM webhook_events we
-      JOIN webhooks w ON we.webhook_id = w.id
-      WHERE created_at > NOW() - INTERVAL '1 hour'
-      ${userId ? 'AND w.user_id = $1' : ''}
-      GROUP BY DATE_TRUNC('minute', created_at)
-      ORDER BY time DESC
-      LIMIT 60`,
-      params
-    );
-
     const lastHourRows = (lastHourRes as any).rows || [];
     const lastHourActivity = lastHourRows.map((row: any) => ({
       time: new Date(row.time).toISOString(),
-      sent: parseInt(row.total),
-      delivered: parseInt(row.delivered),
-      failed: parseInt(row.failed)
+      sent: parseInt(row.total, 10),
+      delivered: parseInt(row.delivered, 10),
+      failed: parseInt(row.failed, 10)
     }));
-
-    // Get top failed events
-    const topFailedRes = await pool.query(
-      `SELECT
-        event,
-        COUNT(*) as failed_count,
-        SUM(attempts) as total_attempts
-      FROM webhook_events we
-      JOIN webhooks w ON we.webhook_id = w.id
-      WHERE status = 'failed'
-      ${userId ? 'AND w.user_id = $1' : ''}
-      GROUP BY event
-      ORDER BY failed_count DESC
-      LIMIT 5`,
-      params
-    );
 
     const topFailedRows = (topFailedRes as any).rows || [];
     const topFailedEvents = topFailedRows.map((row: any) => ({
       event: row.event,
-      failedCount: parseInt(row.failed_count),
-      attempts: parseInt(row.total_attempts)
+      failedCount: parseInt(row.failed_count, 10),
+      attempts: parseInt(row.total_attempts, 10)
     }));
 
     const successRate = totalEvents > 0
       ? Math.round((deliveredEvents / totalEvents) * 100 * 100) / 100
       : 0;
 
-    const avgDeliveryTimeRes = await pool.query(
-      `SELECT AVG(delivery_time_ms) as avg_ms
-       FROM webhook_events we
-       JOIN webhooks w ON we.webhook_id = w.id
-       WHERE we.status = 'delivered' AND we.delivery_time_ms IS NOT NULL
-       ${userId ? 'AND w.user_id = $1' : ''}`,
-      params
-    );
     const avgDeliveryTime = deliveredEvents > 0
       ? Math.round(parseFloat((avgDeliveryTimeRes as any).rows[0]?.avg_ms || '0'))
       : 0;
@@ -207,13 +202,9 @@ export async function retryFailedWebhooks(
     const result = await pool.query(query, params);
 
     // Invalidate cache
-    await Promise.all([
-      getCache(`webhook:metrics:${userId}`).then(c => {
-        if (c) return setCache(`webhook:metrics:${userId}`, '', 1);
-      }),
-      getCache('webhook:metrics:global').then(c => {
-        if (c) return setCache('webhook:metrics:global', '', 1);
-      })
+    await Promise.allSettled([
+      deleteCache(`webhook:metrics:${userId}`),
+      deleteCache('webhook:metrics:global'),
     ]);
 
     return result.rowCount || 0;

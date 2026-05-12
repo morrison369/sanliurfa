@@ -1,0 +1,53 @@
+---
+interface Item {
+  title: string;
+  value: string;
+}
+
+interface Props {
+  items: Item[];
+}
+
+const { items = [] } = Astro.props;
+---
+
+{items.length > 0 && (
+  <div class="pig">
+    {items.map((item) => (
+      <div class="pig-card">
+        <h3 class="pig-title">{item.title}</h3>
+        <p class="pig-value">{item.value}</p>
+      </div>
+    ))}
+  </div>
+)}
+
+<style>
+  .pig {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-bottom: 2.5rem;
+  }
+
+  .pig-card {
+    background: var(--public-surface);
+    border: 1px solid var(--public-border);
+    border-radius: var(--public-radius);
+    padding: 1.25rem;
+  }
+
+  .pig-title {
+    margin: 0 0 0.5rem;
+    color: var(--public-text);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .pig-value {
+    margin: 0;
+    color: var(--public-muted);
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+</style>

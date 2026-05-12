@@ -93,25 +93,26 @@ export async function getUserCollections(
 ): Promise<{ collections: Collection[]; total: number }> {
   const { includePrivate = true, limit = 20, offset = 0 } = options;
 
-  const countResult = await query(
-    `SELECT COUNT(*) FROM collections WHERE user_id = $1 ${!includePrivate ? 'AND is_public = true' : ''}`,
-    [userId]
-  );
-
-  const result = await query(
-    `SELECT c.*, 
-      (SELECT COUNT(*) FROM collection_places WHERE collection_id = c.id) as place_count,
-      (SELECT COUNT(*) FROM collection_followers WHERE collection_id = c.id) as followers
-     FROM collections c
-     WHERE c.user_id = $1 ${!includePrivate ? 'AND c.is_public = true' : ''}
-     ORDER BY c.updated_at DESC
-     LIMIT $2 OFFSET $3`,
-    [userId, limit, offset]
-  );
+  const [countResult, result] = await Promise.all([
+    query(
+      `SELECT COUNT(*) FROM collections WHERE user_id = $1 ${!includePrivate ? 'AND is_public = true' : ''}`,
+      [userId]
+    ),
+    query(
+      `SELECT c.*,
+        (SELECT COUNT(*) FROM collection_places WHERE collection_id = c.id) as place_count,
+        (SELECT COUNT(*) FROM collection_followers WHERE collection_id = c.id) as followers
+       FROM collections c
+       WHERE c.user_id = $1 ${!includePrivate ? 'AND c.is_public = true' : ''}
+       ORDER BY c.updated_at DESC
+       LIMIT $2 OFFSET $3`,
+      [userId, limit, offset]
+    ),
+  ]);
 
   return {
     collections: result.rows.map(mapCollectionRow),
-    total: parseInt(countResult.rows[0].count),
+    total: parseInt(countResult.rows[0].count, 10),
   };
 }
 
@@ -240,18 +241,19 @@ export async function getCollectionPlaces(
     throw new Error('Collection not found or private');
   }
 
-  const countResult = await query(
-    'SELECT COUNT(*) FROM collection_places WHERE collection_id = $1',
-    [collectionId]
-  );
-
-  const result = await query(
-    `SELECT * FROM collection_places 
-     WHERE collection_id = $1 
-     ORDER BY added_at DESC
-     LIMIT $2 OFFSET $3`,
-    [collectionId, limit, offset]
-  );
+  const [countResult, result] = await Promise.all([
+    query(
+      'SELECT COUNT(*) FROM collection_places WHERE collection_id = $1',
+      [collectionId]
+    ),
+    query(
+      `SELECT * FROM collection_places
+       WHERE collection_id = $1
+       ORDER BY added_at DESC
+       LIMIT $2 OFFSET $3`,
+      [collectionId, limit, offset]
+    ),
+  ]);
 
   return {
     places: result.rows.map(row => ({
@@ -262,7 +264,7 @@ export async function getCollectionPlaces(
       note: row.note,
       addedAt: new Date(row.added_at),
     })),
-    total: parseInt(countResult.rows[0].count),
+    total: parseInt(countResult.rows[0].count, 10),
   };
 }
 
@@ -291,25 +293,23 @@ export async function isFollowingCollection(collectionId: string, userId: string
 }
 
 export async function getPublicCollections(limit = 20, offset = 0): Promise<{ collections: Collection[]; total: number }> {
-  const countResult = await query(
-    `SELECT COUNT(*) FROM collections WHERE is_public = true`,
-    []
-  );
-
-  const result = await query(
-    `SELECT c.*, 
-      (SELECT COUNT(*) FROM collection_places WHERE collection_id = c.id) as place_count,
-      (SELECT COUNT(*) FROM collection_followers WHERE collection_id = c.id) as followers
-     FROM collections c
-     WHERE c.is_public = true
-     ORDER BY c.updated_at DESC
-     LIMIT $1 OFFSET $2`,
-    [limit, offset]
-  );
+  const [countResult, result] = await Promise.all([
+    query(`SELECT COUNT(*) FROM collections WHERE is_public = true`, []),
+    query(
+      `SELECT c.*,
+        (SELECT COUNT(*) FROM collection_places WHERE collection_id = c.id) as place_count,
+        (SELECT COUNT(*) FROM collection_followers WHERE collection_id = c.id) as followers
+       FROM collections c
+       WHERE c.is_public = true
+       ORDER BY c.updated_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    ),
+  ]);
 
   return {
     collections: result.rows.map(mapCollectionRow),
-    total: parseInt(countResult.rows[0].count),
+    total: parseInt(countResult.rows[0].count, 10),
   };
 }
 
@@ -352,8 +352,8 @@ function mapCollectionRow(row: any): Collection {
     description: row.description,
     isPublic: row.is_public,
     coverImage: row.cover_image,
-    placeCount: parseInt(row.place_count || '0'),
-    followers: parseInt(row.followers || '0'),
+    placeCount: parseInt(row.place_count || '0', 10),
+    followers: parseInt(row.followers || '0', 10),
     tags: row.tags || [],
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),

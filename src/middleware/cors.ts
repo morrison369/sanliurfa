@@ -46,9 +46,9 @@ class CorsMiddleware {
   constructor(options: CorsOptions = {}) {
     this.options = { ...defaultOptions, ...options };
     
-    // Parse allowed origins from env if not provided
+    // Parse allowed origins from canonical env if not provided.
     if (this.options.allowedOrigins?.length === 0) {
-      const envOrigins = process.env.ALLOWED_ORIGINS;
+      const envOrigins = process.env.CORS_ORIGINS;
       if (envOrigins && envOrigins !== '*') {
         this.options.allowedOrigins = envOrigins.split(',').map(o => o.trim());
       }
@@ -141,10 +141,12 @@ class CorsMiddleware {
     // Add Vary header
     headers.set('Vary', 'Origin');
     
-    return new Response(null, {
-      status: this.options.optionsSuccessStatus,
-      headers,
-    });
+    return new Response(
+      null,
+      this.options.optionsSuccessStatus !== undefined
+        ? { status: this.options.optionsSuccessStatus, headers }
+        : { headers },
+    );
   }
 
   /**
@@ -204,7 +206,7 @@ export function createCors(options?: CorsOptions): CorsMiddleware {
 export const cors = createCors();
 
 export const strictCors = createCors({
-  allowedOrigins: getAllowedOriginsFromEnv(process.env.ALLOWED_ORIGINS || process.env.CORS_ORIGINS),
+  allowedOrigins: getAllowedOriginsFromEnv(process.env.CORS_ORIGINS),
   credentials: true,
 });
 

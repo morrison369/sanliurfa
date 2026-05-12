@@ -3,7 +3,7 @@
  * Production-ready caching with Redis
  */
 
-import { getRedisClient, deleteCachePattern as realDeletePattern } from './cache';
+import { getRedisClient, deleteCachePattern as realDeletePattern, redisToString } from './cache';
 
 // Cache TTL values (in seconds)
 export const CACHE_TTL = {
@@ -102,7 +102,7 @@ export async function setCache<T>(
 export async function getCache<T>(key: string): Promise<T | null> {
   try {
     const redis = await getRedisClient();
-    const value = await redis.get(key);
+    const value = redisToString(await redis.get(key));
     if (!value) return null;
     const entry: CacheEntry<T> = JSON.parse(value);
     return isExpired(entry) ? null : entry.data;
@@ -246,17 +246,20 @@ export async function getCacheStats(): Promise<{
 }> {
   try {
     const redis = await getRedisClient();
-    const info = await redis.info('memory');
-    const statsInfo = await redis.info('stats');
-    const dbSize = await redis.dbSize();
+    // Redis 5+ info() returns `string | Buffer | {}`; coerce safely (empty object → empty string)
+    const infoRaw = await redis.info('memory');
+    const statsRaw = await redis.info('stats');
+    const info = typeof infoRaw === 'string' ? infoRaw : String(infoRaw ?? '');
+    const statsInfo = typeof statsRaw === 'string' ? statsRaw : String(statsRaw ?? '');
+    const dbSize = Number(await redis.dbSize()); // Redis 5+ returns number | `${number}`
 
     const memMatch = info.match(/used_memory:(\d+)/);
     const hitsMatch = statsInfo.match(/keyspace_hits:(\d+)/);
     const missesMatch = statsInfo.match(/keyspace_misses:(\d+)/);
 
-    const usedMemory = memMatch ? parseInt(memMatch[1]) : 0;
-    const hits = hitsMatch ? parseInt(hitsMatch[1]) : 0;
-    const misses = missesMatch ? parseInt(missesMatch[1]) : 0;
+    const usedMemory = memMatch ? parseInt(memMatch[1], 10) : 0;
+    const hits = hitsMatch ? parseInt(hitsMatch[1], 10) : 0;
+    const misses = missesMatch ? parseInt(missesMatch[1], 10) : 0;
     const total = hits + misses;
 
     return {
@@ -299,26 +302,25 @@ export async function invalidateRelatedCaches(
   entity: string,
   entityId?: string
 ): Promise<void> {
-  // Clear specific entity cache
-  if (entityId) {
-    await deleteCachePattern(`${entity}:${entityId}:*`);
-  }
-  
-  // Clear list caches
-  await deleteCachePattern(`${entity}:list:*`);
-  
-  // Clear related caches based on entity type
+  // Tüm invalidate işlemleri tek paralel batch'te
+  const ops: Promise<unknown>[] = [
+    deleteCachePattern(`${entity}:list:*`),
+    ...(entityId ? [deleteCachePattern(`${entity}:${entityId}:*`)] : []),
+  ];
+
   switch (entity) {
     case 'place':
-      await clearNamespace(CACHE_NAMESPACES.SEARCH);
+      ops.push(clearNamespace(CACHE_NAMESPACES.SEARCH));
       break;
     case 'blog':
-      await clearNamespace(CACHE_NAMESPACES.BLOG);
+      ops.push(clearNamespace(CACHE_NAMESPACES.BLOG));
       break;
     case 'user':
-      await deleteCachePattern(`${CACHE_NAMESPACES.USER}:*`);
+      ops.push(deleteCachePattern(`${CACHE_NAMESPACES.USER}:*`));
       break;
   }
+
+  await Promise.all(ops);
 }
 
 /**
@@ -340,7 +342,8 @@ export async function checkRateLimit(
   try {
     const redis = await getRedisClient();
     const windowKey = `${key}:${windowStart}`;
-    const current = await redis.incr(windowKey);
+    // Redis 5+ incr() returns `number | string` (template literal); coerce
+    const current = Number(await redis.incr(windowKey));
     if (current === 1) {
       await redis.expire(windowKey, windowSeconds);
     }

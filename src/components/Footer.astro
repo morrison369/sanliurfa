@@ -1,194 +1,128 @@
 ---
-import { getSiteSetting } from '../lib/site-content';
+import Icon from './Icon.astro';
 
-const currentYear = new Date().getFullYear();
+const year = new Date().getFullYear();
 
-const footerLinksFallback = {
-  explore: [
-    { label: 'Mekanlar', href: '/mekanlar' },
-    { label: 'Kebapçılar', href: '/mekanlar/kebapcilar' },
-    { label: 'Ciğerciler', href: '/mekanlar/cigerciler' },
-    { label: 'Kafeler', href: '/mekanlar/kafeler' },
-    { label: 'Gezilecek Yerler', href: '/gezilecek-yerler' },
-    { label: 'Etkinlikler', href: '/etkinlikler' },
-  ],
-  districts: [
-    { label: 'Eyyübiye', href: '/ilceler/eyyubiye' },
-    { label: 'Haliliye', href: '/ilceler/haliliye' },
-    { label: 'Karaköprü', href: '/ilceler/karakopru' },
-    { label: 'Halfeti', href: '/ilceler/halfeti' },
-    { label: 'Harran', href: '/ilceler/harran' },
-    { label: 'Tüm İlçeler', href: '/ilceler' },
-  ],
-  popular: [
-    { label: 'En İyi Kebapçılar', href: '/en-iyi-kebapcilar' },
-    { label: 'Kahvaltı Mekanları', href: '/sanliurfa-kahvalti-mekanlari' },
-    { label: 'Ne Yenir?', href: '/sanliurfada-ne-yenir' },
-    { label: 'Yemek Tarifleri', href: '/yemek-tarifleri' },
-    { label: 'Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler' },
-    { label: 'Topluluk Özellikleri', href: '/topluluk' },
-    { label: 'Hafta Sonu Rehberi', href: '/blog/sanliurfa-hafta-sonu-rehberi' },
-    { label: 'Blog', href: '/blog' },
-  ],
-  company: [
-    { label: 'Hakkımızda', href: '/hakkinda' },
-    { label: 'İletişim', href: '/iletisim' },
-    { label: 'İşletme Ekleyin', href: '/isletme-kayit' },
-    { label: 'Gizlilik Politikası', href: '/gizlilik-politikasi' },
-    { label: 'Kullanım Koşulları', href: '/kullanim-kosullari' },
-    { label: 'KVKK', href: '/kvkk' },
-  ],
-  services: [
-    { label: 'Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler' },
-    { label: 'Otobüs Saatleri', href: '/ulasim/otobus-saatleri' },
-    { label: 'Uçak Saatleri', href: '/ulasim/ucak-saatleri' },
-    { label: 'Etkinlik Takvimi', href: '/etkinlikler' },
-    { label: 'Yemek Tarifleri', href: '/yemek-tarifleri' },
-    { label: 'Premium Üyelik', href: '/fiyatlandirma' },
-    { label: 'İlçe Rehberi', href: '/ilceler' },
-    { label: 'Mekan Rehberi', href: '/mekanlar' },
-  ],
-};
+const social = [
+  { label: 'Instagram', href: 'https://www.instagram.com/sanliurfacom', icon: 'lucide:instagram' },
+  { label: 'Facebook',  href: 'https://www.facebook.com/sanliurfacom',  icon: 'lucide:facebook'  },
+  { label: 'X',         href: 'https://x.com/sanliurfacom',             icon: 'lucide:twitter'   },
+  { label: 'YouTube',   href: 'https://www.youtube.com/@sanliurfacom',  icon: 'lucide:youtube'   },
+];
 
-const footerLinks = await getSiteSetting('footer.links', footerLinksFallback);
-const footerBrandFallback = {
-  title: 'Sanliurfa.com',
-  highlight: '.com',
-  description:
-    "Şanlıurfa’nın en kapsamlı şehir rehberi. Mekanlar, gezilecek yerler, etkinlikler ve daha fazlası.",
-  infoNote: 'Resmi sosyal medya hesabımız bulunmamaktadır.',
-};
-const footerBottomFallback = {
-  copyrightLabel: `© ${currentYear} Sanliurfa.com — Tarihin Sıfır Noktası`,
-  legalLinks: [
-    { label: 'Gizlilik', href: '/gizlilik-politikasi' },
-    { label: 'Koşullar', href: '/kullanim-kosullari' },
-    { label: 'İletişim', href: '/iletisim' },
-  ],
-};
-
-const footerBrand = await getSiteSetting('footer.brand', footerBrandFallback);
-const footerBottom = await getSiteSetting('footer.bottom', footerBottomFallback);
-const socialProfilesFallback = {
-  instagram: { enabled: false, handle: '', url: '' },
-  tiktok: { enabled: false, handle: '', url: '' },
-  youtube: { enabled: false, handle: '', url: '' },
-  x: { enabled: false, handle: '', url: '' },
-};
-const socialProfilesRaw = await getSiteSetting('social.profiles', socialProfilesFallback);
-const socialProfiles = Object.entries(socialProfilesRaw as Record<string, any>)
-  .filter(([, v]) => v?.enabled && v?.url)
-  .map(([platform, v]) => ({ platform, url: v.url, handle: v.handle || '' }));
-const bottomLinks = Array.isArray((footerBottom as any)?.legalLinks)
-  ? (footerBottom as any).legalLinks
-  : footerBottomFallback.legalLinks;
-
+const groups = [
+  {
+    title: 'Keşfet',
+    links: [
+      { label: 'Mekanlar', href: '/mekanlar' },
+      { label: 'Gezilecek Yerler', href: '/gezilecek-yerler' },
+      { label: 'Etkinlikler', href: '/etkinlikler' },
+      { label: 'Topluluk', href: '/topluluk' },
+      { label: 'Eşleşme', href: '/eslesme' },
+      { label: 'Harita', href: '/harita' },
+    ],
+  },
+  {
+    title: 'İlçeler',
+    links: [
+      { label: 'Haliliye', href: '/ilceler/haliliye' },
+      { label: 'Eyyübiye', href: '/ilceler/eyyubiye' },
+      { label: 'Karaköprü', href: '/ilceler/karakopru' },
+      { label: 'Siverek', href: '/ilceler/siverek' },
+      { label: 'Viranşehir', href: '/ilceler/viransehir' },
+      { label: 'Harran', href: '/ilceler/harran' },
+      { label: 'Halfeti', href: '/ilceler/halfeti' },
+      { label: 'Tüm İlçeler', href: '/ilceler' },
+    ],
+  },
+  {
+    title: 'Kategoriler',
+    links: [
+      { label: 'Yeme İçme', href: '/yeme-icme' },
+      { label: 'Kebapçılar', href: '/mekanlar/yeme-icme-kebapcilar' },
+      { label: 'Ciğerciler', href: '/mekanlar/yeme-icme-cigerciler' },
+      { label: 'Nöbetçi Eczaneler', href: '/saglik/nobetci-eczaneler' },
+      { label: 'Otobüs Saatleri', href: '/ulasim/otobus-saatleri' },
+      { label: 'Oteller', href: '/konaklama' },
+      { label: 'Sıra Gecesi', href: '/sanliurfa-sira-gecesi-mekanlari' },
+    ],
+  },
+  {
+    title: 'Kurumsal',
+    links: [
+      { label: 'Hakkımızda', href: '/hakkinda' },
+      { label: 'İletişim', href: '/iletisim' },
+      { label: 'İşletme Ekle', href: '/isletme-kayit' },
+      { label: 'Gizlilik', href: '/gizlilik-politikasi' },
+    ],
+  },
+];
 ---
 
-<footer class="bg-gray-900 text-white">
-  <div class="container mx-auto px-4 py-12">
-    <div class="grid md:grid-cols-2 lg:grid-cols-6 gap-8 mb-8">
-      {/* Brand */}
-      <div class="lg:col-span-2">
-        <a href="/" class="text-2xl font-bold text-white mb-4 inline-block">
-          {(footerBrand as any).title || 'Sanliurfa'}<span class="text-red-500">{(footerBrand as any).highlight || '.com'}</span>
+<footer class="bg-[#100a05]">
+  <div class="mx-auto w-full max-w-7xl px-4 pt-14 pb-8 sm:px-6 lg:px-8">
+    <div class="grid gap-10 lg:grid-cols-[1.1fr_2fr]">
+      <div>
+        <a href="/" class="inline-flex items-center gap-1" aria-label="Sanliurfa.com ana sayfa">
+          <span class="font-display text-3xl font-semibold text-white">Sanliurfa</span>
+          <span class="text-lg font-bold text-[#f4c56e]">.com</span>
         </a>
-        <p class="text-gray-400 mb-6 max-w-sm">
-          {(footerBrand as any).description || footerBrandFallback.description}
+        <p class="mt-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#f4c56e]/70">
+          12.000 Yıllık Tarihin Modern Rehberi
         </p>
-        <p class="text-sm text-gray-500">
-          {(footerBrand as any).infoNote || footerBrandFallback.infoNote}
+        <p class="mt-4 max-w-sm text-sm leading-7 text-white/50">
+          Şanlıurfa mekanları, gezi rotaları, ilçeler, yemek kültürü ve günlük şehir servisleri için modern yerel rehber.
         </p>
-      </div>
-
-      <div>
-        <h4 class="font-bold text-lg mb-4">Keşfet</h4>
-        <ul class="space-y-2">
-          {footerLinks.explore.map(link => (
-            <li><a href={link.href} class="text-gray-400 hover:text-white transition-colors">{link.label}</a></li>
-          ))}
-        </ul>
-      </div>
-
-      <div>
-        <h4 class="font-bold text-lg mb-4">İlçeler</h4>
-        <ul class="space-y-2">
-          {footerLinks.districts.map(link => (
-            <li><a href={link.href} class="text-gray-400 hover:text-white transition-colors">{link.label}</a></li>
-          ))}
-        </ul>
-      </div>
-
-      <div>
-        <h4 class="font-bold text-lg mb-4">Popüler</h4>
-        <ul class="space-y-2">
-          {footerLinks.popular.map(link => (
-            <li><a href={link.href} class="text-gray-400 hover:text-white transition-colors">{link.label}</a></li>
-          ))}
-        </ul>
-      </div>
-
-      <div>
-        <h4 class="font-bold text-lg mb-4">Kurumsal</h4>
-        <ul class="space-y-2">
-          {footerLinks.company.map(link => (
-            <li><a href={link.href} class="text-gray-400 hover:text-white transition-colors">{link.label}</a></li>
-          ))}
-        </ul>
-      </div>
-    </div>
-
-    <div class="mb-8 rounded-2xl border border-gray-800 bg-gray-950 p-5">
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div>
-          <p class="text-xs uppercase tracking-wider text-gray-500">Platform</p>
-          <p class="mt-1 text-sm text-gray-300">Şanlıurfa odaklı yerel dijital rehber</p>
+        <div class="mt-5 flex flex-wrap gap-2">
+          <a href="/saglik/nobetci-eczaneler" class="rounded-full border border-white/15 bg-white/6 px-3 py-2 text-xs font-bold text-white/65 transition hover:border-[#f4c56e]/45 hover:text-[#f4c56e]">Nöbetçi Eczane</a>
+          <a href="/eslesme" class="rounded-full border border-white/15 bg-white/6 px-3 py-2 text-xs font-bold text-white/65 transition hover:border-[#f4c56e]/45 hover:text-[#f4c56e]">Eşleşme</a>
+          <a href="/ulasim/otobus-saatleri" class="rounded-full border border-white/15 bg-white/6 px-3 py-2 text-xs font-bold text-white/65 transition hover:border-[#f4c56e]/45 hover:text-[#f4c56e]">Otobüs Saatleri</a>
+          <a href="/isletme-kayit" class="rounded-full border border-white/15 bg-white/6 px-3 py-2 text-xs font-bold text-white/65 transition hover:border-[#f4c56e]/45 hover:text-[#f4c56e]">İşletme Ekle</a>
         </div>
-        <div>
-          <p class="text-xs uppercase tracking-wider text-gray-500">Kapsam</p>
-          <p class="mt-1 text-sm text-gray-300">Mekan, sağlık, ulaşım, gezi, ilçe ve tarif içerikleri</p>
-        </div>
-        <div>
-          <p class="text-xs uppercase tracking-wider text-gray-500">Hızlı Servisler</p>
-          <ul class="mt-1 space-y-1">
-            {footerLinks.services.slice(0, 3).map((link) => (
-              <li><a href={link.href} class="text-sm text-gray-300 hover:text-white transition-colors">{link.label}</a></li>
+
+        <div class="mt-7">
+          <p class="text-xs font-black uppercase tracking-[0.13em] text-[#f4c56e]/80">Sosyal medya</p>
+          <p class="mt-2 max-w-sm text-xs leading-6 text-white/45">Sanliurfa.com güncellemeleri, mekanlar ve etkinlikler için takip edin.</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            {social.map((item) => (
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Sanliurfa.com ${item.label}`}
+                class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/6 text-white/70 transition hover:border-[#f4c56e]/50 hover:bg-white/10 hover:text-[#f4c56e]"
+              >
+                <Icon name={item.icon} size={18} />
+              </a>
             ))}
-          </ul>
+          </div>
         </div>
-        <div>
-          <p class="text-xs uppercase tracking-wider text-gray-500">Bilgilendirme</p>
-          {socialProfiles.length > 0 ? (
-            <ul class="mt-1 space-y-1">
-              {socialProfiles.map((profile) => (
+      </div>
+
+      <div class="grid grid-cols-2 gap-7 sm:grid-cols-4">
+        {groups.map((group) => (
+          <div>
+            <p class="text-xs font-black uppercase tracking-[0.13em] text-[#f4c56e]/80">{group.title}</p>
+            <ul class="mt-4 grid gap-2.5">
+              {group.links.map((link) => (
                 <li>
-                  <a
-                    href={profile.url}
-                    rel="noopener noreferrer nofollow"
-                    target="_blank"
-                    class="text-sm text-gray-300 hover:text-white transition-colors"
-                  >
-                    {profile.platform.toUpperCase()} {profile.handle}
+                  <a href={link.href} class="inline-flex min-h-8 items-center text-sm font-medium text-white/45 transition hover:text-white">
+                    {link.label}
                   </a>
                 </li>
               ))}
             </ul>
-          ) : (
-            <p class="mt-1 text-sm text-gray-300">{(footerBrand as any).infoNote || footerBrandFallback.infoNote}</p>
-          )}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
 
-    {/* Bottom */}
-    <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-      <p class="text-gray-400 text-sm">
-        {(footerBottom as any).copyrightLabel || footerBottomFallback.copyrightLabel}
-      </p>
-      <div class="flex gap-6 text-sm text-gray-400">
-        {bottomLinks.map((link: { label: string; href: string }) => (
-          <a href={link.href} class="hover:text-white transition-colors">{link.label}</a>
-        ))}
+    <div class="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs font-semibold text-white/35 sm:flex-row sm:items-center sm:justify-between">
+      <p>© {year} Sanliurfa.com. Tarihin sıfır noktasından şehir rehberi.</p>
+      <div class="flex flex-wrap gap-4">
+        <a href="/kullanim-kosullari" class="inline-flex min-h-8 items-center transition hover:text-white/65">Kullanım Koşulları</a>
+        <a href="/kvkk" class="inline-flex min-h-8 items-center transition hover:text-white/65">KVKK</a>
+        <a href="/iletisim" class="inline-flex min-h-8 items-center transition hover:text-white/65">İletişim</a>
       </div>
     </div>
   </div>

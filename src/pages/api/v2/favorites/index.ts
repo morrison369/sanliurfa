@@ -6,7 +6,7 @@ import type { APIRoute } from 'astro';
 import { verifyToken } from '../../../../lib/auth';
 import { query } from '../../../../lib/postgres';
 import { resolveContentImage } from '../../../../lib/content-images';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../../lib/api';
 
 // GET /api/v2/favorites - List user favorites
 export const GET: APIRoute = async ({ request }) => {
@@ -67,14 +67,11 @@ export const GET: APIRoute = async ({ request }) => {
       }),
     }));
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       data,
       count: data.length
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     return problemJson({
@@ -132,10 +129,7 @@ export const POST: APIRoute = async ({ request }) => {
       [user.userId, place_id]
     );
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse({ success: true }, HttpStatus.CREATED);
 
   } catch (error) {
     return problemJson({
@@ -191,10 +185,7 @@ export const DELETE: APIRoute = async ({ request, url }) => {
       [user.userId, placeId]
     );
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse({ success: true }, HttpStatus.OK);
 
   } catch (error) {
     return problemJson({

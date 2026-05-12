@@ -7,6 +7,7 @@ import { query } from '../postgres';
 import { sendEmail } from '../email';
 import { sendSMS } from '../sms';
 import { sendNotification as sendPushNotification } from '../push';
+import { safeErrorDetail } from '../api';
 
 export interface NotificationPayload {
   type: 'email' | 'sms' | 'push' | 'in-app';
@@ -85,7 +86,7 @@ export async function sendNotification(payload: NotificationPayload): Promise<{
   } catch (error: any) {
     // Log failed notification
     await logNotification({ ...payload, status: 'failed', error: error.message });
-    return { success: false, error: error.message };
+    return { success: false, error: safeErrorDetail(error, 'Bildirim gönderilemedi') };
   }
 }
 
@@ -136,7 +137,7 @@ async function sendPushNotificationInternal(payload: NotificationPayload) {
         await sendPushNotification(row.subscription, {
           title: payload.title,
           body: payload.message,
-          data: payload.data,
+          ...(payload.data ? { data: payload.data } : {}),
         });
         return true;
       } catch (e) {
@@ -196,29 +197,36 @@ export async function processScheduledNotifications(): Promise<{
      LIMIT 50`
   );
 
-  let sent = 0;
-  let failed = 0;
-
-  for (const row of pending.rows) {
-    const result = await sendNotification({
+  // Fire all sends in parallel, then batch-update results
+  const sendResults = await Promise.allSettled(
+    pending.rows.map(row => sendNotification({
       type: row.type,
       recipient: row.recipient,
       title: row.title,
       message: row.message,
       data: row.data,
       priority: row.priority,
-    });
+    }))
+  );
 
-    await query(
-      `UPDATE scheduled_notifications 
-       SET status = $1, sent_at = NOW(), error = $2
-       WHERE id = $3`,
-      [result.success ? 'sent' : 'failed', result.error, row.id]
-    );
+  let sent = 0;
+  let failed = 0;
 
-    if (result.success) sent++;
-    else failed++;
-  }
+  await Promise.all(
+    sendResults.map(async (result, i) => {
+      const row = pending.rows[i];
+      const success = result.status === 'fulfilled' && result.value.success;
+      const error = result.status === 'fulfilled'
+        ? (result.value.error ?? null)
+        : (result.reason instanceof Error ? result.reason.message : 'dispatch_error');
+      if (success) sent++;
+      else failed++;
+      await query(
+        `UPDATE scheduled_notifications SET status = $1, sent_at = NOW(), error = $2 WHERE id = $3`,
+        [success ? 'sent' : 'failed', error, row.id]
+      ).catch(() => null);
+    }),
+  );
 
   return { processed: pending.rows.length, sent, failed };
 }
@@ -270,7 +278,9 @@ export function renderTemplate(
   
   template.variables.forEach(varName => {
     const value = variables[varName] || '';
-    content = content.replace(new RegExp(`{{${varName}}}`, 'g'), value);
+    // Escape regex special chars in varName to prevent ReDoS via crafted template variables
+    const escapedVar = varName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    content = content.replace(new RegExp(`\\{\\{${escapedVar}\\}\\}`, 'g'), value);
   });
 
   return content;
@@ -299,25 +309,16 @@ export async function updateNotificationPreference(
   channel: string,
   preference: Partial<NotificationPreference>
 ): Promise<void> {
-  const existing = await getNotificationPreference(userId, channel);
-
-  if (existing) {
-    await query(
-      `UPDATE notification_preferences 
-       SET enabled = COALESCE($1, enabled),
-           frequency = COALESCE($2, frequency),
-           updated_at = NOW()
-       WHERE user_id = $3 AND channel = $4`,
-      [preference.enabled, preference.frequency, userId, channel]
-    );
-  } else {
-    await query(
-      `INSERT INTO notification_preferences 
-       (user_id, channel, enabled, frequency, created_at)
-       VALUES ($1, $2, $3, $4, NOW())`,
-      [userId, channel, preference.enabled ?? true, preference.frequency || 'immediate']
-    );
-  }
+  // HARD RULE #47: atomic upsert — ON CONFLICT eliminates SELECT+INSERT/UPDATE race window
+  await query(
+    `INSERT INTO notification_preferences (user_id, channel, enabled, frequency, created_at)
+     VALUES ($1, $2, $3, $4, NOW())
+     ON CONFLICT (user_id, channel) DO UPDATE SET
+       enabled = COALESCE(EXCLUDED.enabled, notification_preferences.enabled),
+       frequency = COALESCE(EXCLUDED.frequency, notification_preferences.frequency),
+       updated_at = NOW()`,
+    [userId, channel, preference.enabled ?? true, preference.frequency || 'immediate']
+  );
 }
 
 /**
@@ -380,7 +381,7 @@ export async function getUnreadCount(userId: string): Promise<number> {
     `SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND read = false`,
     [userId]
   );
-  return parseInt(result.rows[0].count);
+  return parseInt(result.rows[0].count, 10);
 }
 
 // WebSocket broadcast helper (placeholder)

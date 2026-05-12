@@ -1,276 +1,300 @@
 ---
 
 // Category Detail Page
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
 import { getPlaces } from '../../lib/places/db';
 import { query } from '../../lib/postgres';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import OptimizedImage from '../../components/OptimizedImage.astro';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+const baseUrl = getPublicAppUrl();
 
 const { slug } = Astro.params;
 if (!slug) {
-  return Astro.redirect('/');
+ return Astro.redirect('/');
 }
 
 let catRow: any = null;
 let places: any[] = [];
 
 try {
+ const data = await getCachedPublicRouteData(`page:kategori:${slug}`, async () => {
   const catResult = await query(
-    `SELECT id, slug, name, description, icon, color, is_active FROM categories WHERE slug = $1`,
-    [slug]
+   `SELECT id, slug, name, description, icon, is_active FROM categories WHERE slug = $1`,
+   [slug]
   );
-  catRow = catResult.rows[0];
+  const categoryRow = catResult.rows[0];
+  if (!categoryRow) return { catRow: null, places: [] };
+  const placeResult = await getPlaces({ category: slug, status: 'active', limit: 50, sortBy: 'rating' });
+  return { catRow: categoryRow, places: placeResult.places };
+ });
+ catRow = data.catRow;
+ places = data.places;
 } catch (e) {
-  console.error('Category query failed:', e);
+ logger.error('Category query failed:', e instanceof Error ? e : new Error(String(e)));
 }
 
 if (!catRow) {
-  return Astro.redirect('/404');
+ return Astro.redirect('/404');
 }
 
 const category = {
-  ...catRow,
-  metaDescription: catRow.description,
+ ...catRow,
+ metaDescription: catRow.description,
 };
-
-try {
-  const result = await getPlaces({ category: slug, status: 'active', limit: 50, sortBy: 'rating' });
-  places = result.places;
-} catch (e) {
-  console.error('Places query failed:', e);
-}
 
 const seo = {
-  title: `${category.name} - Şanlıurfa Rehberi`,
-  description: category.metaDescription || `${category.name} kategorisindeki en iyi mekanları keşfedin. ${places.length}+ mekan, yorumlar ve puanlamalar.`,
-  keywords: ['şanlıurfa ' + category.name.toLowerCase(), 'urfa ' + category.name.toLowerCase(), category.name + ' listesi'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: `/kategori/${Astro.params.slug}`,
+ title: `${category.name} - Şanlıurfa Rehberi`,
+ description: category.metaDescription || `${category.name} kategorisindeki en iyi mekanları keşfedin. ${places.length}+ mekan, yorumlar ve puanlamalar.`,
+ keywords: ['şanlıurfa ' + category.name.toLowerCase(), 'urfa ' + category.name.toLowerCase(), category.name + ' listesi'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: `/kategori/${Astro.params.slug}`,
 };
 const faqItems = [
-  { S: `Şanlıurfa'da ${category.name.toLowerCase()} kategorisinde hangi mekanlar var?`, C: `${category.name} kategorisindeki tüm aktif mekanlar puan ve öne çıkarılma durumuna göre listelenmektedir.` },
-  { S: `${category.name} mekanlarına nasıl yorum yazabilirim?`, C: 'Mekan sayfasına girerek kullanıcı hesabınızla değerlendirme bırakabilirsiniz.' },
-  { S: `Yeni bir ${category.name.toLowerCase()} mekanı ekleyebilir miyim?`, C: 'İşletme Ekle sayfasından ücretsiz başvuru yapabilirsiniz. Onaylanan mekanlar rehberde yayımlanır.' },
+ { S: `Şanlıurfa'da ${category.name.toLowerCase()} kategorisinde hangi mekanlar var?`, C: `${category.name} kategorisindeki tüm aktif mekanlar puan ve öne çıkarılma durumuna göre listelenmektedir.` },
+ { S: `${category.name} mekanlarına nasıl yorum yazabilirim?`, C: 'Mekan sayfasına girerek kullanıcı hesabınızla değerlendirme bırakabilirsiniz.' },
+ { S: `Yeni bir ${category.name.toLowerCase()} mekanı ekleyebilir miyim?`, C: 'İşletme Ekle sayfasından ücretsiz başvuru yapabilirsiniz. Onaylanan mekanlar rehberde yayımlanır.' },
 ];
 ---
 
 <Layout seo={seo}>
-  <!-- Hero -->
-  <section class="relative py-16" style={`background-color: ${category.color}15`}>
-    <div class="container-custom">
-      <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
-        <a href="/" class="hover:text-gray-900">Ana Sayfa</a>
-        <span>/</span>
-        <span class="text-gray-900">{category.name}</span>
-      </div>
-      
-      <h1 class="text-4xl md:text-5xl font-bold mb-4">{category.name}</h1>
-      <p class="text-xl text-gray-600 max-w-2xl">{category.description}</p>
-      
-      <div class="flex items-center gap-6 mt-6">
-        <span class="text-gray-600">
-          <strong class="text-gray-900">{places.length}</strong> mekan
-        </span>
-        <span class="text-gray-600">
-          <strong class="text-gray-900">{places.filter(p => p.rating >= 4).length}</strong> yüksek puanlı
-        </span>
-      </div>
-    </div>
-  </section>
+ <style is:inline>
+ .ka-body{min-height:100vh;background:var(--bg)}
+ .ka-breadcrumb{background:var(--bg);border-bottom:1px solid rgba(184,115,51,.1);padding:.65rem 0}
+ .ka-breadcrumb nav{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:#4A3828}
+ .ka-breadcrumb a:hover{color:#B87333}
+ .ka-breadcrumb-current{color:#1F1410;font-weight:600}
+ .ka-hero{background:rgba(184,115,51,.04);border-bottom:1px solid rgba(184,115,51,.1);padding:2.5rem 0}
+ .ka-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:600;color:#1F1410;margin-bottom:.75rem}
+ .ka-hero-desc{font-size:.9rem;color:#7A6B58;max-width:680px;line-height:1.8}
+ .ka-hero-stats{display:flex;align-items:center;gap:1.5rem;margin-top:1rem;font-size:.85rem;color:#4A3828}
+ .ka-hero-stats strong{color:#B87333}
+ .ka-main{padding:2.5rem 0 5rem}
+ .ka-layout{display:flex;flex-direction:column;gap:2rem}
+ @media(min-width:1024px){.ka-layout{flex-direction:row}}
+ .ka-sidebar{flex-shrink:0}
+ @media(min-width:1024px){.ka-sidebar{width:15rem}}
+ .ka-filter-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.25rem;position:sticky;top:1rem}
+ .ka-filter-title{font-size:.85rem;font-weight:700;color:#1F1410;margin-bottom:1.1rem}
+ .ka-filter-group{margin-bottom:1.25rem}
+ .ka-filter-group:last-of-type{margin-bottom:0}
+ .ka-filter-label{font-size:.75rem;font-weight:600;color:#4A3828;margin-bottom:.5rem}
+ .ka-filter-item{display:flex;align-items:center;gap:.5rem;cursor:pointer;margin-bottom:.35rem}
+ .ka-filter-item input{accent-color:#B87333}
+ .ka-filter-text{font-size:.8rem;color:#7A6B58}
+ .ka-filter-btn{width:100%;padding:.6rem;background:#B87333;color:#EDE0C6;border:none;cursor:pointer;font-size:.82rem;font-weight:600;margin-top:.85rem;transition:background .15s}
+ .ka-filter-btn:hover{background:#9D5F1A;color:#0D0A08}
+ .ka-results{flex:1;min-width:0}
+ .ka-results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;flex-wrap:wrap;gap:.65rem}
+ .ka-results-count{font-size:.82rem;color:#7A6B58}
+ .ka-sort{padding:.5rem .85rem;border:1px solid rgba(184,115,51,.2);background:var(--bg-card);color:#1F1410;font-size:.8rem;font-family:inherit;appearance:none;cursor:pointer}
+ .ka-sort option{background:#fff;color:#1F1410}
+ .ka-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+ .ka-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s}
+ @media(min-width:640px){.ka-card{flex-direction:row}}
+ .ka-card:hover{border-color:#B87333}
+ .ka-card-img{background:rgba(184,115,51,.06);display:flex;align-items:center;justify-content:center;color:#4A3828}
+ @media(max-width:639px){.ka-card-img{height:11rem}}
+ @media(min-width:640px){.ka-card-img{width:40%;flex-shrink:0}}
+ .ka-card-body{padding:1rem 1.1rem;flex:1}
+ .ka-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.4rem}
+ .ka-card-category{font-size:.68rem;color:#7A6B58;text-transform:uppercase;letter-spacing:.08em}
+ .ka-card-verified{width:1.1rem;height:1.1rem;color:#B87333}
+ .ka-card-title{font-size:.92rem;font-weight:700;color:#1F1410;margin-bottom:.4rem;transition:color .15s}
+ .ka-card:hover .ka-card-title{color:#B87333}
+ .ka-card-stars{display:flex;align-items:center;gap:.25rem;font-size:.8rem;color:#B87333}
+ .ka-card-rating{color:#7A6B58;margin-left:.15rem}
+ .ka-card-desc{font-size:.78rem;color:#7A6B58;line-height:1.65;margin-top:.4rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .ka-card-meta{display:flex;align-items:center;gap:1rem;margin-top:.75rem;font-size:.75rem;color:#4A3828}
+ .ka-card-feature{padding:.2rem .55rem;background:rgba(184,115,51,.08);border:1px solid rgba(184,115,51,.15);font-size:.68rem;color:#7A6B58}
+ .ka-empty{text-align:center;padding:4rem 1rem}
+ .ka-empty-icon{width:3.5rem;height:3.5rem;color:rgba(184,115,51,.2);margin:0 auto .75rem}
+ .ka-empty-title{font-size:1.05rem;font-weight:700;color:#1F1410;margin-bottom:.35rem}
+ .ka-empty-text{font-size:.82rem;color:#4A3828}
+ </style>
 
-  <!-- Filters & Results -->
-  <section class="py-12">
-    <div class="container-custom">
-      <div class="flex flex-col lg:flex-row gap-8">
-        <!-- Sidebar Filters -->
-        <aside class="lg:w-64 flex-shrink-0">
-          <div class="bg-white rounded-xl shadow-sm p-6 sticky top-4">
-            <h3 class="font-bold text-lg mb-4">Filtreler</h3>
-            
-            <!-- Price Range -->
-            <div class="mb-6">
-              <h4 class="font-medium mb-2">Fiyat Aralığı</h4>
-              <div class="space-y-2">
-                {['₺', '₺₺', '₺₺₺', '₺₺₺₺'].map((price, i) => (
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="price" value={i} class="rounded border-gray-300" />
-                    <span class="text-gray-700">{price}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            
-            <!-- Rating -->
-            <div class="mb-6">
-              <h4 class="font-medium mb-2">Puan</h4>
-              <div class="space-y-2">
-                {[5, 4, 3].map(rating => (
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="rating" value={rating} class="rounded border-gray-300" />
-                    <div class="flex text-yellow-400 text-sm">
-                      {'★'.repeat(rating)}
-                      <span class="text-gray-300">{'★'.repeat(5 - rating)}</span>
-                    </div>
-                    <span class="text-gray-500 text-sm">ve üzeri</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            
-            <!-- Features -->
-            <div class="mb-6">
-              <h4 class="font-medium mb-2">Özellikler</h4>
-              <div class="space-y-2">
-                {['WiFi', 'Otopark', 'Engelli Erişimi', 'Açık Alan'].map(feature => (
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" name="feature" value={feature} class="rounded border-gray-300" />
-                    <span class="text-gray-700 text-sm">{feature}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            
-            <button
-              onclick="applyFilters()"
-              class="w-full py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-            >
-              Filtrele
-            </button>
-          </div>
-        </aside>
-        
-        <!-- Results -->
-        <div class="flex-1">
-          <!-- Sort -->
-          <div class="flex justify-between items-center mb-6">
-            <p class="text-gray-600">{places.length} sonuç bulundu</p>
-            <select id="sort" onchange="sortResults()" class="px-4 py-2 border border-gray-300 rounded-lg">
-              <option value="rating">En Yüksek Puan</option>
-              <option value="popular">En Popüler</option>
-              <option value="newest">En Yeni</option>
-              <option value="name">İsim (A-Z)</option>
-            </select>
-          </div>
-          
-          <!-- Places Grid -->
-          {places.length > 0 ? (
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {places.map(place => (
-                <a href={`/isletme/${place.slug}`} class="group">
-                  <article class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow flex flex-col md:flex-row">
-                    <div class="md:w-2/5 h-48 md:h-auto bg-gray-200">
-                      {place.thumbnail ? (
-                        <OptimizedImage
-                          src={place.thumbnail}
-                          alt={place.name}
-                          width={400}
-                          height={300}
-                          class="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div class="w-full h-full flex items-center justify-center text-gray-300 text-4xl">
-                          📍
-                        </div>
-                      )}
-                    </div>
-                    <div class="md:w-3/5 p-5">
-                      <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs text-gray-500 uppercase tracking-wider">{category.name}</span>
-                        {place.is_verified && (
-                          <span class="text-blue-500" title="Doğrulanmış">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                              <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                          </span>
-                        )}
-                      </div>
-                      
-                      <h3 class="font-bold text-lg group-hover:text-amber-600 transition-colors">{place.name}</h3>
-                      
-                      <div class="flex items-center gap-2 mt-2">
-                        <div class="flex text-yellow-400">
-                          {'★'.repeat(Math.floor(place.rating || 0))}
-                          <span class="text-gray-300">{'★'.repeat(5 - Math.floor(place.rating || 0))}</span>
-                        </div>
-                        <span class="text-sm text-gray-500">{place.rating?.toFixed(1) || '-'}</span>
-                        <span class="text-sm text-gray-400">({place.review_count} yorum)</span>
-                      </div>
-                      
-                      <p class="text-gray-600 text-sm mt-2 line-clamp-2">{place.short_description}</p>
-                      
-                      <div class="flex items-center gap-4 mt-4 text-sm text-gray-500">
-                        {place.price_range && (
-                          <span class="font-medium text-gray-700">{place.price_range}</span>
-                        )}
-                        {place.address && (
-                          <span class="truncate">{place.address}</span>
-                        )}
-                      </div>
-                      
-                      {place.features && place.features.length > 0 && (
-                        <div class="flex flex-wrap gap-2 mt-3">
-                          {place.features.slice(0, 3).map(feature => (
-                            <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                              {feature}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </article>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div class="text-center py-16">
-              <div class="text-6xl mb-4">🔍</div>
-              <h3 class="text-xl font-bold text-gray-900 mb-2">Mekan Bulunamadı</h3>
-              <p class="text-gray-600">Bu kategoride henüz mekan eklenmemiş.</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  </section>
+ <div class="ka-body">
+ <!-- Breadcrumb -->
+ <div class="ka-breadcrumb">
+ <div class="sf-container">
+ <nav>
+ <a href="/">Ana Sayfa</a>
+ <span>/</span>
+ <span class="ka-breadcrumb-current">{category.name}</span>
+ </nav>
+ </div>
+ </div>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: `${category.name} - Şanlıurfa Rehberi`,
-    description: category.metaDescription || `${category.name} kategorisindeki mekanlar.`,
-    url: `${baseUrl}/kategori/${slug}`,
-    about: { '@type': 'City', name: 'Şanlıurfa' },
-    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'LocalBusiness',
-        '@id': `${baseUrl}/isletme/${p.slug}`,
-        name: p.name,
-        url: `${baseUrl}/isletme/${p.slug}`,
-        ...(p.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: p.rating, bestRating: 5 } } : {}),
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
-      { '@type': 'ListItem', position: 3, name: category.name, item: `${baseUrl}/kategori/${slug}` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <!-- Hero -->
+ <div class="ka-hero">
+ <div class="sf-container">
+ <h1 class="ka-h1">{category.name}</h1>
+ <p class="ka-hero-desc">{category.description}</p>
+ <div class="ka-hero-stats">
+ <span><strong>{places.length}</strong> mekan</span>
+ <span><strong>{places.filter(p => p.rating >= 4).length}</strong> yüksek puanlı</span>
+ </div>
+ </div>
+ </div>
+
+ <!-- Main -->
+ <div class="ka-main">
+ <div class="sf-container">
+ <div class="ka-layout">
+ <!-- Sidebar -->
+ <aside class="ka-sidebar">
+ <div class="ka-filter-card">
+ <p class="ka-filter-title">Filtreler</p>
+
+ <div class="ka-filter-group">
+ <p class="ka-filter-label">Fiyat Aralığı</p>
+ {['₺', '₺₺', '₺₺₺', '₺₺₺₺'].map((price, i) => (
+ <label class="ka-filter-item">
+ <input type="checkbox" name="price" value={i} />
+ <span class="ka-filter-text">{price}</span>
+ </label>
+ ))}
+ </div>
+
+ <div class="ka-filter-group">
+ <p class="ka-filter-label">Puan</p>
+ {[5, 4, 3].map(rating => (
+ <label class="ka-filter-item">
+ <input type="checkbox" name="rating" value={rating} />
+ <span class="ka-filter-text" style="color:#B87333">{'★'.repeat(rating)}<span style="color:#4A3828">{'★'.repeat(5 - rating)}</span> ve üzeri</span>
+ </label>
+ ))}
+ </div>
+
+ <div class="ka-filter-group">
+ <p class="ka-filter-label">Özellikler</p>
+ {['WiFi', 'Otopark', 'Engelli Erişimi', 'Açık Alan'].map(feature => (
+ <label class="ka-filter-item">
+ <input type="checkbox" name="feature" value={feature} />
+ <span class="ka-filter-text">{feature}</span>
+ </label>
+ ))}
+ </div>
+
+ <button onclick="applyFilters()" class="ka-filter-btn">Filtrele</button>
+ </div>
+ </aside>
+
+ <!-- Results -->
+ <div class="ka-results">
+ <div class="ka-results-header">
+ <p class="ka-results-count">{places.length} sonuç bulundu</p>
+ <select id="sort" onchange="sortResults()" class="ka-sort">
+ <option value="rating">En Yüksek Puan</option>
+ <option value="popular">En Popüler</option>
+ <option value="newest">En Yeni</option>
+ <option value="name">İsim (A-Z)</option>
+ </select>
+ </div>
+
+ {places.length > 0 ? (
+ <div class="ka-grid">
+ {places.map(place => (
+ <a href={`/isletme/${place.slug}`}>
+ <article class="ka-card">
+ <div class="ka-card-img">
+ {place.thumbnail ? (
+ <OptimizedImage
+ src={place.thumbnail}
+ alt={place.name}
+ width={400}
+ height={300}
+ class="w-full h-full object-cover"
+ loading="lazy"
+ />
+ ) : (
+ <Icon name="lucide:map-pin" style="width:2.5rem;height:2.5rem;color:#4A3828" />
+ )}
+ </div>
+ <div class="ka-card-body">
+ <div class="ka-card-header">
+ <span class="ka-card-category">{category.name}</span>
+ {place.is_verified && (
+ <Icon name="lucide:badge-check" class="ka-card-verified" />
+ )}
+ </div>
+
+ <h3 class="ka-card-title">{place.name}</h3>
+
+ <div class="ka-card-stars">
+ <span style="color:#B87333">{'★'.repeat(Math.floor(place.rating || 0))}<span style="color:#4A3828">{'★'.repeat(5 - Math.floor(place.rating || 0))}</span></span>
+ <span class="ka-card-rating">{place.rating?.toFixed(1) || '-'} ({place.review_count} yorum)</span>
+ </div>
+
+ <p class="ka-card-desc">{place.short_description}</p>
+
+ <div class="ka-card-meta">
+ {place.price_range && <span style="color:#B87333;font-weight:600">{place.price_range}</span>}
+ {place.address && <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{place.address}</span>}
+ </div>
+
+ {place.features && place.features.length > 0 && (
+ <div style="display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.6rem">
+ {place.features.slice(0, 3).map((feature: string) => (
+ <span class="ka-card-feature">{feature}</span>
+ ))}
+ </div>
+ )}
+ </div>
+ </article>
+ </a>
+ ))}
+ </div>
+ ) : (
+ <div class="ka-empty">
+ <Icon name="lucide:search" class="ka-empty-icon" />
+ <p class="ka-empty-title">Mekan Bulunamadı</p>
+ <p class="ka-empty-text">Bu kategoride henüz mekan eklenmemiş.</p>
+ </div>
+ )}
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'CollectionPage',
+ name: `${category.name} - Şanlıurfa Rehberi`,
+ description: category.metaDescription || `${category.name} kategorisindeki mekanlar.`,
+ url: `${baseUrl}/kategori/${slug}`,
+ about: { '@type': 'City', name: 'Şanlıurfa' },
+ itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+ '@type': 'ListItem',
+ position: i + 1,
+ item: {
+ '@type': 'LocalBusiness',
+ '@id': `${baseUrl}/isletme/${p.slug}`,
+ name: p.name,
+ url: `${baseUrl}/isletme/${p.slug}`,
+ ...(p.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: p.rating, bestRating: 5 } } : {}),
+ },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
+ { '@type': 'ListItem', position: 3, name: category.name, item: `${baseUrl}/kategori/${slug}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

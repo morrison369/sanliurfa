@@ -1,0 +1,85 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import FeaturedListingsManager from '../../components/FeaturedListingsManager';
+import MarketingCampaignBuilder from '../../components/MarketingCampaignBuilder';
+
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect('/giris?redirect=/isletme/pazarlama');
+}
+
+const seo = {
+ title: 'Pazarlama & Öne Çıkan Listeler',
+ description: 'İşletmenizi pazarlayın ve öne çıkan liste oluşturun',
+ canonical: '/isletme/pazarlama',
+ noIndex: true,
+};
+---
+
+<Layout seo={seo}>
+ <style is:inline>
+ .pm-page{background:var(--bg);min-height:100vh}
+ .pm-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:2.5rem 0}
+ .pm-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-text-soft);margin-bottom:.5rem}
+ .pm-h1{font-size:1.75rem;font-weight:700;color:var(--public-text);margin-bottom:.5rem}
+ .pm-desc{color:var(--public-accent);font-size:.95rem}
+ .pm-body{padding:2rem 0 4rem}
+ .pm-grid{display:grid;gap:2rem}
+ @media(min-width:48rem){.pm-grid{grid-template-columns:repeat(2,1fr)}}
+ .pm-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem}
+ .pm-card-title{font-size:1.25rem;font-weight:700;color:var(--public-text);margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid rgba(184,115,51,.14)}
+ .pm-card-desc{font-size:.875rem;color:var(--public-muted);margin-bottom:1.5rem}
+ .pm-info-grid{display:grid;gap:1.5rem;margin-top:2rem}
+ @media(min-width:48rem){.pm-info-grid{grid-template-columns:repeat(3,1fr)}}
+ .pm-info-card{background:rgba(184,115,51,.06);border:1px solid rgba(184,115,51,.2);padding:1rem}
+ .pm-info-title{font-weight:700;color:var(--public-text);margin-bottom:.5rem;font-size:.95rem}
+ .pm-info-desc{font-size:.82rem;color:var(--public-muted)}
+ </style>
+
+ <div class="pm-page">
+ <div class="pm-hero">
+ <div class="sf-container">
+ <p class="pm-label">İŞLETME PANELİ</p>
+ <h1 class="pm-h1">Pazarlama & Öne Çıkan Listeler</h1>
+ <p class="pm-desc">İşletmenizi pazarlayın, kampanyalar oluşturun ve öne çıkan listeler yönetin</p>
+ </div>
+ </div>
+
+ <div class="pm-body">
+ <div class="sf-container">
+ <div class="pm-grid">
+ <div class="pm-card">
+ <h2 class="pm-card-title">Öne Çıkan Listeler</h2>
+ <div class="pm-card-desc">
+ <p>Öne çıkan listeler, işletmenizi platformda öne çıkarmak için premium bir özelliktir. Daha fazla görünürlük kazanın, müşteri trafiğini artırın ve başarıyı ölçün.</p>
+ </div>
+ <FeaturedListingsManager client:visible />
+ </div>
+
+ <div class="pm-card">
+ <h2 class="pm-card-title">Pazarlama Kampanyaları</h2>
+ <div class="pm-card-desc">
+ <p>Hedeflenen pazarlama kampanyaları oluşturun. Bütçe yönetimi, performans takibi ve detaylı analizler ile başarınızı maksimize edin.</p>
+ </div>
+ <MarketingCampaignBuilder client:visible />
+ </div>
+ </div>
+
+ <div class="pm-info-grid">
+ <div class="pm-info-card">
+ <h3 class="pm-info-title">Analitik</h3>
+ <p class="pm-info-desc">Her kampanya ve öne çıkan listeninizin performansını gerçek zamanlı olarak izleyin.</p>
+ </div>
+ <div class="pm-info-card">
+ <h3 class="pm-info-title">Bütçe Kontrolü</h3>
+ <p class="pm-info-desc">Pazarlama harcamalarınızı kontrol edin ve ROI'nizi takip edin.</p>
+ </div>
+ <div class="pm-info-card">
+ <h3 class="pm-info-title">Hedefleme</h3>
+ <p class="pm-info-desc">Kampanyalarınız için özel hedefler belirleyin ve doğru müşterilere ulaşın.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+</Layout>

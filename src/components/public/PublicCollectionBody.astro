@@ -1,0 +1,60 @@
+---
+interface Props {
+  compactSidebar?: boolean;
+}
+
+const { compactSidebar = false } = Astro.props;
+---
+
+<div class="pcb">
+  <div class="sf-container">
+    <slot name="lead" />
+    <div class:list={['pcb-layout', compactSidebar && 'pcb-layout-compact']}>
+      <div class="pcb-main">
+        <slot />
+      </div>
+      <aside class="pcb-sidebar">
+        <slot name="sidebar" />
+      </aside>
+    </div>
+  </div>
+</div>
+
+<style>
+  .pcb {
+    padding: clamp(2rem, 4vw, 3rem) 0 clamp(4rem, 6vw, 5rem);
+  }
+
+  .pcb-layout {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .pcb-main {
+    min-width: 0;
+  }
+
+  .pcb-sidebar {
+    min-width: 0;
+  }
+
+  .pcb-sidebar:empty {
+    display: none;
+  }
+
+  @media (min-width: 1100px) {
+    .pcb-layout {
+      grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+      align-items: start;
+    }
+
+    .pcb-layout-compact {
+      grid-template-columns: minmax(0, 1fr) minmax(16rem, 19rem);
+    }
+
+    .pcb-sidebar {
+      position: sticky;
+      top: 5.5rem;
+    }
+  }
+</style>

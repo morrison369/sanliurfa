@@ -85,7 +85,7 @@ describe('social match profile api', () => {
     const body = await parseJson(response);
 
     expect(response.status).toBe(200);
-    expect(body?.success).toBe(true);
+    expect(body?.data?.success ?? body?.success).toBe(true);
     expect(upsertMatchProfileMock).toHaveBeenCalledWith('u1', {
       bio: 'Merhaba',
       photos: ['a', 'b', 'c', 'd'],

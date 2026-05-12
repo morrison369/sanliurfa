@@ -75,7 +75,7 @@ export const GET: APIRoute = async (context) => {
              ${where}
              ORDER BY created_at ASC
              LIMIT 100`,
-            params as any[],
+            params,
           );
           if (!result.rows.length) return;
           const last = result.rows[result.rows.length - 1];

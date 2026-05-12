@@ -6,7 +6,7 @@
 
 import { queryOne } from '../postgres';
 import { logger } from '../logger';
-import { sendEmail } from './email';
+import { sendEmail } from './index';
 import { getPublicAppUrl } from '../public-app-url';
 
 // sendEmail() kendi içinde DB'den veya env'den key okur
@@ -81,12 +81,23 @@ export async function sendEmailNotification(payload: EmailNotificationPayload): 
         break;
     }
 
-    // sendEmail() DB'den veya env'den key okur
-    const ok = await sendEmail({ to: payload.recipientEmail, subject, html: htmlContent });
-    if (ok) logger.info('Email gönderildi', { type: payload.type, recipient: payload.recipientEmail });
-    return ok;
+    // sendEmail() DB'den veya env'den key okur — 3-tier: Resend → SMTP → dev log
+    const result = await sendEmail({ to: payload.recipientEmail, subject, html: htmlContent });
+    if (result.success) {
+      logger.info('Email gönderildi', { type: payload.type, recipient: payload.recipientEmail, tier: result.tier });
+    } else {
+      logger.warn('Email gönderilemedi', { type: payload.type, recipient: payload.recipientEmail, error: result.error });
+    }
+    return result.success;
   } catch (err) {
-    logger.error('Email gönderimi başarısız', err instanceof Error ? err : new Error(String(err)), { payload });
+    // Sanitize: full payload log'a sızdırmıyor — commentContent/email body sensitive olabilir
+    // (reset token URL'leri, verification kodları, kişisel mesajlar). Sadece metadata log'la.
+    logger.error('Email gönderimi başarısız', err instanceof Error ? err : new Error(String(err)), {
+      type: payload.type,
+      recipient: payload.recipientEmail,
+      postId: payload.postId,
+      postSlug: payload.postSlug,
+    });
     return false;
   }
 }
@@ -205,7 +216,7 @@ export async function notifyNewPost(
       [`%${categoryId}%`]
     );
 
-    if (!subscribers || parseInt(subscribers.count || '0') === 0) {
+    if (!subscribers || parseInt(subscribers.count || '0', 10) === 0) {
       return 0;
     }
 
@@ -216,7 +227,7 @@ export async function notifyNewPost(
       title: postTitle
     });
 
-    return parseInt(subscribers.count || '0');
+    return parseInt(subscribers.count || '0', 10);
   } catch (err) {
     logger.error('Yeni yazı bildirimi başarısız', err instanceof Error ? err : new Error(String(err)));
     return 0;

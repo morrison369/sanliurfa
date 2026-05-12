@@ -1,155 +1,248 @@
 ---
 
 import Layout from '../layouts/Layout.astro';
+import Image from '../components/Image.astro';
+import PublicPageIntro from '../components/public/PublicPageIntro.astro';
 import { query } from '../lib/postgres';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getCachedPublicRouteData } from '../lib/public-route-cache';
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
+import { resolveRecipeImage } from '../lib/public-image-resolvers';
+const baseUrl = getPublicAppUrl();
 
 let recipes: any[] = [];
 let topRestaurants: any[] = [];
 
 try {
+ const data = await getCachedPublicRouteData('page:guide:sanliurfada-ne-yenir', async () => {
   const [recipesResult, restaurantsResult] = await Promise.all([
-    query(`SELECT id, slug, name, description, cover_image, is_spicy, difficulty, rating
-           FROM recipes WHERE status = 'published'
-           ORDER BY is_featured DESC, rating DESC NULLS LAST LIMIT 6`),
-    query(`SELECT p.slug, p.name, p.address, p.rating, p.review_count, c.name AS category_name
-           FROM places p LEFT JOIN categories c ON p.category_id = c.id
-           WHERE p.status = 'active'
-             AND c.slug IN ('restoran', 'kebapcilar', 'cigerciler', 'yoresel-yemekler')
-           ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST LIMIT 8`),
+   query(`SELECT id, slug, name, description, cover_image, is_spicy, difficulty, rating
+ FROM recipes WHERE status = 'published'
+ ORDER BY is_featured DESC, rating DESC NULLS LAST LIMIT 6`),
+   query(`SELECT p.slug, p.name, p.address, p.rating, p.review_count, c.name AS category_name
+ FROM places p LEFT JOIN categories c ON p.category_id = c.id
+ WHERE p.status = 'active'
+ AND c.slug IN ('restoran', 'kebapcilar', 'cigerciler', 'yoresel-yemekler')
+ ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST LIMIT 8`),
   ]);
-  recipes = recipesResult.rows;
-  topRestaurants = restaurantsResult.rows;
+  return {
+   recipes: recipesResult.rows,
+   topRestaurants: restaurantsResult.rows,
+  };
+ });
+ recipes = data.recipes;
+ topRestaurants = data.topRestaurants;
 } catch (e) {
-  console.error('sanliurfada-ne-yenir verileri yüklenemedi:', e);
+ logger.error('sanliurfada-ne-yenir verileri yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const lezzetler = [
-  { name: 'Urfa Kebabı', emoji: '🥩', link: '/yemek-tarifleri/urfa-kebabi', desc: 'Yağlı kuzu kıyması ve isot dengesi' },
-  { name: 'Çiğ Köfte', emoji: '🌿', link: '/yemek-tarifleri/cig-kofte', desc: 'Urfa usulü elde yoğurulmuş bulgur' },
-  { name: 'Tandır Ciğeri', emoji: '🍖', link: '/en-iyi-cigerciler', desc: 'Şanlıurfa\'nın simgesi olan lezzet' },
-  { name: 'Borani', emoji: '🥣', link: '/yemek-tarifleri/borani', desc: 'Yoğurt, pazı ve nohutla' },
-  { name: 'Şıllık Tatlısı', emoji: '🍮', link: '/yemek-tarifleri/sillik-tatlisi', desc: 'Cevizli krep tatlısı' },
-  { name: 'Lebeni', emoji: '🍜', link: '/yemek-tarifleri/lebeni', desc: 'Yoğurtlu buğday çorbası' },
+ { name: 'Urfa Kebabı', emoji: '🥩', link: '/yemek-tarifleri/urfa-kebabi', desc: 'Yağlı kuyu kıyması ve isot dengesi' },
+ { name: 'Çiğ Köfte', emoji: '🌿', link: '/yemek-tarifleri/cig-kofte', desc: 'Urfa usulü elde yoğurulmuş bulgur' },
+ { name: 'Tandır Ciğeri', emoji: '🍖', link: '/en-iyi-cigerciler', desc: "Şanlıurfa'nın simgesi olan lezzet" },
+ { name: 'Borani', emoji: '🥣', link: '/yemek-tarifleri/borani', desc: 'Yoğurt, pazı ve nohutla' },
+ { name: 'Şıllık Tatlısı', emoji: '🍮', link: '/yemek-tarifleri/sillik-tatlisi', desc: 'Cevizli krep tatlısı' },
+ { name: 'Lebeni', emoji: '🍜', link: '/yemek-tarifleri/lebeni', desc: 'Yoğurtlu buğday çorbası' },
 ];
 
 const seo = {
-  title: 'Şanlıurfa\'da Ne Yenir? | Urfa Mutfağı Rehberi',
-  description: 'Şanlıurfa\'da ne yenir? Urfa kebabı, tandır ciğeri, çiğ köfte, borani ve daha fazlası. Şanlıurfa mutfağının en özel lezzetleri.',
-  keywords: ['şanlıurfada ne yenir', 'urfa mutfağı', 'urfa yemekleri', 'şanlıurfa lezzetleri', 'urfa yöresel yemek', 'şanlıurfa gastronomi rehberi'],
-  ogImage: '/images/hero/hero-food.webp',
-  canonical: '/sanliurfada-ne-yenir',
+ title: "Şanlıurfa'da Ne Yenir? | Urfa Mutfağı Rehberi",
+ description: "Şanlıurfa'da ne yenir? Urfa kebabı, tandır ciğeri, çiğ köfte, borani ve daha fazlası. Şanlıurfa mutfağının en özel lezzetleri.",
+ keywords: ['şanlıurfada ne yenir', 'urfa mutfağı', 'urfa yemekleri', 'şanlıurfa lezzetleri', 'urfa yöresel yemek', 'şanlıurfa gastronomi rehberi'],
+ ogImage: '/images/hero/hero-food.webp',
+ canonical: '/sanliurfada-ne-yenir',
 };
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-gradient-to-br from-urfa-800 to-isot-800 text-white py-16">
-      <div class="container mx-auto px-4 max-w-5xl">
-        <p class="text-urfa-200 font-medium mb-2">Şanlıurfa Yemek Rehberi</p>
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Şanlıurfa’da Ne Yenir?</h1>
-        <p class="text-urfa-100 text-lg max-w-2xl">
-          UNESCO Gastronomi Şehri adayı Şanlıurfa’nın eşsiz mutfağını keşfedin. İşte mutlaka tatmanız gereken lezzetler.
-        </p>
-      </div>
-    </div>
+ <style is:inline>
+ .sny-body{background:var(--bg);padding:2rem 0 4rem}
+ .sny-section{margin-bottom:3rem}
+ .sny-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+ .sny-section-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:700;color:#1F1410}
+ .sny-see-all{font-size:.8rem;font-weight:600;color:#B87333;transition:color .15s}
+ .sny-see-all:hover{color:#B87333}
+ .sny-lezzet-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+ .sny-lezzet-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.25rem;transition:border-color .15s,transform .15s}
+ .sny-lezzet-card:hover{border-color:#B87333;transform:translateY(-2px)}
+ .sny-lezzet-emoji{font-size:1.75rem;margin-bottom:.5rem}
+ .sny-lezzet-name{font-size:.9rem;font-weight:700;color:#1F1410;transition:color .15s}
+ .sny-lezzet-card:hover .sny-lezzet-name{color:#B87333}
+ .sny-lezzet-desc{font-size:.78rem;color:#7A6B58;margin-top:.25rem}
+ .sny-tarif-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+ .sny-tarif-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);overflow:hidden;transition:border-color .15s}
+ .sny-tarif-card:hover{border-color:#B87333}
+ .sny-tarif-thumb{height:9rem;overflow:hidden;background:rgba(184,115,51,.06)}
+ .sny-tarif-thumb img,.sny-tarif-thumb picture{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+ .sny-tarif-card:hover .sny-tarif-thumb img{transform:scale(1.05)}
+ .sny-tarif-info{padding:.75rem}
+ .sny-tarif-name{font-size:.9rem;font-weight:600;color:#1F1410;transition:color .15s}
+ .sny-tarif-card:hover .sny-tarif-name{color:#B87333}
+ .sny-tarif-meta{display:flex;align-items:center;gap:.5rem;margin-top:.25rem;font-size:.75rem;color:#7A6B58}
+ .sny-tarif-spicy{color:#c0392b}
+ .sny-rest-grid{display:grid;gap:1rem}
+ @media(min-width:48rem){.sny-rest-grid{grid-template-columns:1fr 1fr}}
+ .sny-rest-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);display:flex;align-items:center;gap:1rem;padding:1rem;transition:border-color .15s}
+ .sny-rest-card:hover{border-color:#B87333}
+ .sny-rest-icon{width:3rem;height:3rem;background:rgba(184,115,51,.1);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+ .sny-rest-name{font-size:.9rem;font-weight:600;color:#1F1410;transition:color .15s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .sny-rest-card:hover .sny-rest-name{color:#B87333}
+ .sny-rest-cat{font-size:.72rem;color:#7A6B58}
+ .sny-rest-rating{color:#B87333;font-weight:700;font-size:.88rem;flex-shrink:0}
+ details summary{list-style:none}
+ details summary::-webkit-details-marker{display:none}
+ details[open] .faq-arrow{transform:rotate(180deg)}
+ </style>
 
-    <div class="container mx-auto px-4 max-w-5xl py-12">
-      <!-- Öne Çıkan Lezzetler -->
-      <section class="mb-12">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Mutlaka Denenmesi Gereken Lezzetler</h2>
-        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {lezzetler.map((l) => (
-            <a href={l.link} class="bg-white rounded-xl p-5 shadow-sm border hover:shadow-lg transition-all group">
-              <div class="text-3xl mb-3">{l.emoji}</div>
-              <h3 class="font-bold text-gray-900 group-hover:text-red-600 transition-colors">{l.name}</h3>
-              <p class="text-sm text-gray-500 mt-1">{l.desc}</p>
-            </a>
-          ))}
-        </div>
-      </section>
+ <PublicPageIntro
+ eyebrow="Şanlıurfa Yemek Rehberi"
+ title="Şanlıurfa'da Ne Yenir?"
+ description="UNESCO Gastronomi Şehri adayı Şanlıurfa'nın kebap, ciğer, çiğ köfte ve geleneksel tatlı rotalarını tek sayfada keşfedin."
+ quickAnswerTitle="Hızlı cevap"
+ quickAnswerText="Urfa kebabı, tandır ciğeri, çiğ köfte, borani ve şıllık tatlısı şehirde ilk denenmesi gereken tatlardır."
+ actions={[
+  { href: '/yemek-tarifleri', label: 'Yemek Tarifleri' },
+  { href: '/gastronomi', label: 'Gastronomi Rehberi' },
+  { href: '/en-iyi-kebapcilar', label: 'Kebapçılar' },
+  { href: '/en-iyi-cigerciler', label: 'Ciğerciler' },
+ ]}
+ />
 
-      <!-- Tarifler -->
-      {recipes.length > 0 && (
-        <section class="mb-12">
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">Yöresel Tarifler</h2>
-            <a href="/yemek-tarifleri" class="text-red-600 hover:text-red-700 font-medium text-sm">Tüm Tarifler →</a>
-          </div>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recipes.map((r) => (
-              <a href={`/yemek-tarifleri/${r.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm border hover:shadow-lg transition-all group">
-                <div class="h-36 bg-amber-100 overflow-hidden">
-                  <img src={r.cover_image || '/images/foods/default.jpg'} alt={r.name}
-                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-                </div>
-                <div class="p-3">
-                  <h3 class="font-semibold text-gray-900 group-hover:text-red-600">{r.name}</h3>
-                  <div class="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                    {r.is_spicy && <span class="text-red-500">🌶 Acılı</span>}
-                    <span>{r.difficulty}</span>
-                    {r.rating && <span>★ {r.rating}</span>}
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+ <div class="sny-body">
+ <div class="sf-container">
+ <div class="sny-section">
+ <div class="sny-section-head">
+ <h2 class="sny-section-title">Mutlaka Denenmesi Gereken Lezzetler</h2>
+ </div>
+ <div class="sny-lezzet-grid">
+ {lezzetler.map((l) => (
+ <a href={l.link} class="sny-lezzet-card">
+ <div class="sny-lezzet-emoji">{l.emoji}</div>
+ <h3 class="sny-lezzet-name">{l.name}</h3>
+ <p class="sny-lezzet-desc">{l.desc}</p>
+ </a>
+ ))}
+ </div>
+ </div>
 
-      <!-- Restoranlar -->
-      {topRestaurants.length > 0 && (
-        <section>
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-gray-900">En İyi Restoranlar</h2>
-            <a href="/gastronomi#restoranlar" class="text-red-600 hover:text-red-700 font-medium text-sm">Tümünü Gör →</a>
-          </div>
-          <div class="grid md:grid-cols-2 gap-4">
-            {topRestaurants.map((p) => (
-              <a href={`/isletme/${p.slug}`} class="bg-white rounded-xl p-4 shadow-sm border hover:shadow-lg transition-all group flex items-center gap-4">
-                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-xl shrink-0">🍽️</div>
-                <div class="flex-1 min-w-0">
-                  <h3 class="font-semibold text-gray-900 group-hover:text-red-600 truncate">{p.name}</h3>
-                  <p class="text-xs text-gray-500">{p.category_name}</p>
-                </div>
-                {p.rating && <span class="text-yellow-600 font-bold shrink-0">★ {p.rating}</span>}
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
-  </div>
+ {recipes.length > 0 && (
+ <div class="sny-section">
+ <div class="sny-section-head">
+ <h2 class="sny-section-title">Yöresel Tarifler</h2>
+ <a href="/yemek-tarifleri" class="sny-see-all">Tüm Tarifler →</a>
+ </div>
+ <div class="sny-tarif-grid">
+ {recipes.map((r) => (
+ <a href={`/yemek-tarifleri/${r.slug}`} class="sny-tarif-card">
+ <div class="sny-tarif-thumb">
+ <Image
+ src={resolveRecipeImage(r)}
+ alt={r.name}
+ width={400}
+ height={200}
+ loading="lazy"
+ />
+ </div>
+ <div class="sny-tarif-info">
+ <h3 class="sny-tarif-name">{r.name}</h3>
+ <div class="sny-tarif-meta">
+ {r.is_spicy && <span class="sny-tarif-spicy">🌶 Acılı</span>}
+ {r.difficulty && <span>{r.difficulty}</span>}
+ {r.rating && <span>★ {r.rating}</span>}
+ </div>
+ </div>
+ </a>
+ ))}
+ </div>
+ </div>
+ )}
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: 'Şanlıurfa\'da ne yenir?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Şanlıurfa\'da mutlaka Urfa kebabı, tandır ciğeri, çiğ köfte, borani, şıllık tatlısı ve lebeni yenilmelidir. Bu lezzetler Şanlıurfa mutfağının simgeleridir.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'Şanlıurfa kebabı nerede yenir?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Şanlıurfa\'daki kebapçı mekanları için sanliurfa.com/en-iyi-kebapcilar sayfasını ziyaret edebilirsiniz.' },
-      },
-      {
-        '@type': 'Question',
-        name: 'Şanlıurfa ciğeri nasıl bir lezzettir?',
-        acceptedAnswer: { '@type': 'Answer', text: 'Şanlıurfa tandır ciğeri, ince dilimlenmiş kuzu ciğerinin yüksek ateşte hızla pişirilmesiyle hazırlanır. Taze pide, domates ve maydanozla servis edilir.' },
-      },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Gastronomi', item: `${baseUrl}/gastronomi` },
-      { '@type': 'ListItem', position: 3, name: 'Şanlıurfa\'da Ne Yenir?', item: `${baseUrl}/sanliurfada-ne-yenir` },
-    ],
-  })} is:inline />
+ {topRestaurants.length > 0 && (
+ <div class="sny-section">
+ <div class="sny-section-head">
+ <h2 class="sny-section-title">En İyi Restoranlar</h2>
+ <a href="/gastronomi#restoranlar" class="sny-see-all">Tümünü Gör →</a>
+ </div>
+ <div class="sny-rest-grid">
+ {topRestaurants.map((p) => (
+ <a href={`/isletme/${p.slug}`} class="sny-rest-card">
+ <div class="sny-rest-icon">🍽️</div>
+ <div style="flex:1;min-width:0">
+ <h3 class="sny-rest-name">{p.name}</h3>
+ <p class="sny-rest-cat">{p.category_name}</p>
+ </div>
+ {p.rating && <span class="sny-rest-rating">★ {p.rating}</span>}
+ </a>
+ ))}
+ </div>
+ </div>
+ )}
+ </div>
+ </div>
+
+ <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+ <div class="sf-container">
+ <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+ <div style="display:flex;flex-direction:column;gap:.75rem">
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ Şanlıurfa'da ne yenir?
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ Şanlıurfa'da mutlaka Urfa kebabı, tandır ciğeri, çiğ köfte, borani, şıllık tatlısı ve lebeni yenilmelidir.
+ </div>
+ </details>
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ Şanlıurfa kebabı nerede yenir?
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ Şanlıurfa'daki kebapçı mekanları için <a href="/en-iyi-kebapcilar" style="color:#B87333;text-decoration:underline">En İyi Kebapçılar</a> sayfasını ziyaret edebilirsiniz.
+ </div>
+ </details>
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ Şanlıurfa ciğeri nasıl bir lezzettir?
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ Şanlıurfa tandır ciğeri, ince dilimlenmiş kuzu ciğerinin yüksek ateşte hızla pişirilmesiyle hazırlanır.
+ </div>
+ </details>
+ </div>
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: [
+ {
+ '@type': 'Question',
+ name: "Şanlıurfa'da ne yenir?",
+ acceptedAnswer: { '@type': 'Answer', text: "Şanlıurfa'da mutlaka Urfa kebabı, tandır ciğeri, çiğ köfte, borani, şıllık tatlısı ve lebeni yenilmelidir." },
+ },
+ {
+ '@type': 'Question',
+ name: "Şanlıurfa kebabı nerede yenir?",
+ acceptedAnswer: { '@type': 'Answer', text: "Şanlıurfa'daki kebapçı mekanları için sanliurfa.com/en-iyi-kebapcilar sayfasını ziyaret edebilirsiniz." },
+ },
+ {
+ '@type': 'Question',
+ name: "Şanlıurfa ciğeri nasıl bir lezzettir?",
+ acceptedAnswer: { '@type': 'Answer', text: "Şanlıurfa tandır ciğeri, ince dilimlenmiş kuzu ciğerinin yüksek ateşte hızla pişirilmesiyle hazırlanır." },
+ },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Gastronomi', item: `${baseUrl}/gastronomi` },
+ { '@type': 'ListItem', position: 3, name: "Şanlıurfa'da Ne Yenir?", item: `${baseUrl}/sanliurfada-ne-yenir` },
+ ],
+ })} is:inline />
 </Layout>

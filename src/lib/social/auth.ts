@@ -5,6 +5,7 @@
 
 import { query } from '../postgres';
 import { generateJWT } from '../auth';
+import { safeErrorDetail } from '../api';
 
 // Configuration
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
@@ -103,7 +104,7 @@ class GoogleAuth {
 
       return this.createOrLoginUser(socialUser);
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Google auth error' };
+      return { success: false, error: safeErrorDetail(error, 'Google kimlik doğrulaması başarısız') };
     }
   }
 
@@ -143,8 +144,8 @@ class GoogleAuth {
         id: userId,
         email: socialUser.email,
         fullName: socialUser.name,
-        avatar: socialUser.picture,
         token,
+        ...(socialUser.picture ? { avatar: socialUser.picture } : {}),
       },
     };
   }
@@ -209,7 +210,7 @@ class FacebookAuth {
 
       return this.createOrLoginUser(socialUser);
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Facebook auth error' };
+      return { success: false, error: safeErrorDetail(error, 'Facebook kimlik doğrulaması başarısız') };
     }
   }
 
@@ -242,8 +243,8 @@ class FacebookAuth {
         id: userId,
         email: socialUser.email,
         fullName: socialUser.name,
-        avatar: socialUser.picture,
         token,
+        ...(socialUser.picture ? { avatar: socialUser.picture } : {}),
       },
     };
   }
@@ -319,7 +320,7 @@ class TwitterAuth {
 
       return this.createOrLoginUser(socialUser);
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : 'Twitter auth error' };
+      return { success: false, error: safeErrorDetail(error, 'Twitter kimlik doğrulaması başarısız') };
     }
   }
 
@@ -351,8 +352,8 @@ class TwitterAuth {
         id: userId,
         email: socialUser.email,
         fullName: socialUser.name,
-        avatar: socialUser.picture,
         token,
+        ...(socialUser.picture ? { avatar: socialUser.picture } : {}),
       },
     };
   }

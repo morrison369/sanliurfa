@@ -1,252 +1,308 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../layouts/Layout.astro';
 import { query } from '../lib/postgres';
+import { getCachedPublicRouteData } from '../lib/public-route-cache';
 import { actions, isInputError } from 'astro:actions';
-import { getSiteBranding } from '../lib/site-branding';
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
 
 let categories: any[] = [];
 let districts: any[] = [];
 
 try {
+ const data = await getCachedPublicRouteData('page:isletme-kayit:form-options', async () => {
   const [catResult, distResult] = await Promise.all([
-    query("SELECT id, name, slug FROM categories WHERE parent_id IS NOT NULL AND is_active = true ORDER BY sort_order LIMIT 30"),
-    query("SELECT id, name, slug FROM districts ORDER BY is_central DESC, sort_order"),
+   query("SELECT id, name, slug FROM categories WHERE parent_id IS NOT NULL AND is_active = true ORDER BY sort_order LIMIT 30"),
+   query("SELECT id, name, slug FROM districts ORDER BY is_central DESC, sort_order"),
   ]);
-  categories = catResult.rows;
-  districts = distResult.rows;
+  return {
+   categories: catResult.rows,
+   districts: distResult.rows,
+  };
+ });
+ categories = data.categories;
+ districts = data.districts;
 } catch (e) {
-  console.error('Error loading isletme-kayit data:', e);
+ logger.error('Error loading isletme-kayit data:', e instanceof Error ? e : new Error(String(e)));
 }
 
+const baseUrl = getPublicAppUrl();
+
 const seo = {
-  title: 'Şanlıurfa İşletme Kaydı | Sanliurfa.com',
-  description: 'Şanlıurfa işletmenizi Sanliurfa.com\'a ücretsiz ekleyin. Mekan başvurusu, kategori, ilçe, yorum ve görünürlük yönetimi.',
-  keywords: ['şanlıurfa işletme ekle', 'urfa mekan kaydı', 'sanliurfa.com işletme', 'şanlıurfa ücretsiz ilan', 'urfa işletme kayıt'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/isletme-kayit',
+ title: 'Şanlıurfa İşletme Kaydı | Sanliurfa.com',
+ description: "Şanlıurfa işletmenizi Sanliurfa.com'a ücretsiz ekleyin. Mekan başvurusu, kategori, ilçe, yorum ve görünürlük yönetimi.",
+ keywords: ['şanlıurfa işletme ekle', 'urfa mekan kaydı', 'sanliurfa.com işletme', 'şanlıurfa ücretsiz ilan', 'urfa işletme kayıt'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/isletme-kayit',
 };
-const { baseUrl } = await getSiteBranding();
 
 const faqItems = [
-  {
-    S: 'Şanlıurfa işletme kaydı ücretsiz mi?',
-    C: 'Evet. İlk aşamada işletme başvurusu ve temel listeleme ücretsiz olarak açık tutulur.',
-  },
-  {
-    S: 'Başvuru sonrası işletme hemen yayınlanır mı?',
-    C: 'Başvuru admin onayından geçer. Onaylanan işletme kayıtları public rehberde görünür olur.',
-  },
-  {
-    S: 'İşletme hangi bilgilerle eklenir?',
-    C: 'İşletme adı, kategori, ilçe, telefon, adres ve kısa açıklama bilgileriyle başvuru yapılır.',
-  },
+ {
+ S: 'Şanlıurfa işletme kaydı ücretsiz mi?',
+ C: 'Evet. İlk aşamada işletme başvurusu ve temel listeleme ücretsiz olarak açık tutulur.',
+ },
+ {
+ S: 'Başvuru sonrası işletme hemen yayınlanır mı?',
+ C: 'Başvuru admin onayından geçer. Onaylanan işletme kayıtları public rehberde görünür olur.',
+ },
+ {
+ S: 'İşletme hangi bilgilerle eklenir?',
+ C: 'İşletme adı, kategori, ilçe, telefon, adres ve kısa açıklama bilgileriyle başvuru yapılır.',
+ },
 ];
 
 const applicationResult = Astro.getActionResult(actions.submitPlaceApplication);
 const applicationInputErrors = isInputError(applicationResult?.error)
-  ? applicationResult.error.fields
-  : {};
+ ? applicationResult.error.fields
+ : {};
 const applicationSubmitError =
-  !isInputError(applicationResult?.error) && applicationResult?.error?.message
-    ? applicationResult.error.message
-    : null;
+ !isInputError(applicationResult?.error) && applicationResult?.error?.message
+ ? applicationResult.error.message
+ : null;
+
+const benefits = [
+ { icon: 'lucide:badge-check', title: 'Ücretsiz Kayıt', desc: 'Temel listeleme tamamen ücretsiz' },
+ { icon: 'lucide:users', title: 'Geniş Kitle', desc: "Şanlıurfa'nın en büyük rehberinde yer alın" },
+ { icon: 'lucide:star', title: 'Yorum Sistemi', desc: 'Müşteri yorumları ile güven inşa edin' },
+];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 pt-20 pb-16">
-    <div class="container mx-auto px-4 max-w-3xl">
-      <!-- Header -->
-      <div class="text-center mb-10">
-        <div class="text-5xl mb-4">🏪</div>
-        <h1 class="text-4xl font-bold text-gray-900 mb-3">Şanlıurfa İşletmenizi Ekleyin</h1>
-        <p class="text-gray-600 text-lg">
-          Sanliurfa.com'a katılın — ücretsiz, hızlı ve kolay.
-          Binlerce kişiye işletmenizi tanıtın.
-        </p>
-      </div>
+ <style is:inline>
+ .ik-hero{padding:4rem 0 3rem;border-bottom:1px solid rgba(184,115,51,.1);text-align:center}
+ .ik-eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#B87333;margin-bottom:.75rem}
+ .ik-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,4vw,2.8rem);font-weight:600;color:#1F1410;line-height:1.15;margin-bottom:.75rem}
+ .ik-sub{font-size:.9rem;color:#7A6B58;line-height:1.7;max-width:540px;margin:0 auto}
+ .ik-body{padding:2.5rem 0 5rem}
+ .ik-inner{max-width:760px;margin:0 auto}
+ .ik-hizli{background:rgba(184,115,51,.05);border:1px solid rgba(184,115,51,.18);padding:1.25rem 1.5rem;margin-bottom:2rem}
+ .ik-hizli-label{font-size:.67rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#B87333;margin-bottom:.35rem}
+ .ik-hizli-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:#1F1410;margin-bottom:.4rem}
+ .ik-hizli-body{font-size:.8rem;color:#7A6B58;line-height:1.7;margin-bottom:.75rem}
+ .ik-hizli-links{display:flex;flex-wrap:wrap;gap:.75rem}
+ .ik-hizli-links a{font-size:.78rem;font-weight:600;color:#B87333;text-decoration:underline;text-underline-offset:3px;transition:color .15s}
+ .ik-hizli-links a:hover{color:#B87333}
+ .ik-benefits{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));margin-bottom:2rem}
+ .ik-benefit{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.25rem;text-align:center}
+ .ik-benefit-icon{width:2rem;height:2rem;color:#B87333;margin:0 auto .6rem}
+ .ik-benefit-title{font-size:.82rem;font-weight:700;color:#1F1410;margin-bottom:.25rem}
+ .ik-benefit-desc{font-size:.75rem;color:#7A6B58}
+ .ik-form{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:2rem}
+ .ik-section-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:#1F1410;margin-bottom:1.25rem;padding-bottom:.5rem;border-bottom:1px solid rgba(184,115,51,.12)}
+ .ik-section{margin-bottom:2rem}
+ .ik-grid{display:grid;gap:1rem}
+ @media(min-width:640px){.ik-grid-2{grid-template-columns:1fr 1fr}}
+ .ik-full{grid-column:1/-1}
+ .ik-lbl{display:block;font-size:.75rem;font-weight:600;color:#4A3828;margin-bottom:.4rem;letter-spacing:.03em}
+ .ik-input,.ik-select,.ik-textarea{width:100%;padding:.7rem 1rem;background:rgba(255,255,255,.8);border:1px solid rgba(184,115,51,.25);color:#1F1410;border-radius:.125rem;font-size:.875rem;font-family:inherit;transition:border-color .15s}
+ .ik-input:focus,.ik-select:focus,.ik-textarea:focus{outline:none;border-color:#B87333}
+ .ik-input::placeholder,.ik-textarea::placeholder{color:#9E8E7A}
+ .ik-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%234A3828' stroke-width='2'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right .75rem center;padding-right:2.5rem;cursor:pointer}
+ .ik-select option{background:#fff;color:#1F1410}
+ .ik-textarea{resize:none}
+ .ik-field-err{font-size:.72rem;color:#E08090;margin-top:.3rem}
+ .ik-field{margin-bottom:0}
+ .ik-ok{background:rgba(23,184,166,.1);border:1px solid rgba(23,184,166,.25);color:#5ECFC6;padding:.75rem 1rem;border-radius:.125rem;font-size:.82rem;margin-bottom:1.25rem}
+ .ik-err{background:rgba(199,58,71,.1);border:1px solid rgba(199,58,71,.25);color:#E08090;padding:.65rem 1rem;border-radius:.125rem;font-size:.82rem;margin-bottom:1.25rem}
+ .ik-submit{width:100%;padding:.85rem;font-size:.9rem;margin-top:.5rem}
+ .ik-note{font-size:.72rem;color:#4A3828;text-align:center;margin-top:.75rem}
+ details summary{list-style:none}
+ details summary::-webkit-details-marker{display:none}
+ details[open] .faq-arrow{transform:rotate(180deg)}
+ </style>
 
-      <section class="mb-10 rounded-2xl border border-red-100 bg-white p-5 shadow-sm">
-        <p class="text-sm font-semibold uppercase tracking-wide text-red-700">Hızlı Cevap</p>
-        <h2 class="mt-1 text-2xl font-bold text-gray-950">Şanlıurfa işletme kaydı nasıl yapılır?</h2>
-        <p class="mt-2 text-sm leading-6 text-gray-700">
-          İşletme adı, kategori, ilçe, telefon ve adres bilgilerini girerek ücretsiz başvuru yapabilirsiniz.
-          Başvurular admin onayından sonra Şanlıurfa mekan rehberinde yayınlanır.
-        </p>
-        <div class="mt-3 flex flex-wrap gap-3 text-sm">
-          <a href="/isletme-kayit" class="font-semibold text-red-700 underline underline-offset-4">İşletme kaydı</a>
-          <a href="/mekanlar" class="font-semibold text-red-700 underline underline-offset-4">Mekanlar</a>
-          <a href="/topluluk" class="font-semibold text-red-700 underline underline-offset-4">Topluluk</a>
-        </div>
-      </section>
+ <!-- Hero -->
+ <div class="ik-hero">
+ <div class="sf-container">
+ <p class="ik-eyebrow">Sanliurfa.com</p>
+ <h1 class="ik-h1">Şanlıurfa İşletmenizi Ekleyin</h1>
+ <p class="ik-sub">Sanliurfa.com'a katılın — ücretsiz, hızlı ve kolay. Binlerce kişiye işletmenizi tanıtın.</p>
+ </div>
+ </div>
 
-      <!-- Faydalar -->
-      <div class="grid md:grid-cols-3 gap-4 mb-10">
-        {[
-          { icon: '🆓', title: 'Ücretsiz Kayıt', desc: 'Temel listeleme tamamen ücretsiz' },
-          { icon: '👥', title: 'Geniş Kitle', desc: 'Şanlıurfa\'nın en büyük rehberinde yer alın' },
-          { icon: '⭐', title: 'Yorum Sistemi', desc: 'Müşteri yorumları ile güven inşa edin' },
-        ].map(item => (
-          <div class="bg-white rounded-xl p-5 text-center shadow-sm">
-            <div class="text-3xl mb-2">{item.icon}</div>
-            <h3 class="font-bold text-gray-900">{item.title}</h3>
-            <p class="text-sm text-gray-500 mt-1">{item.desc}</p>
-          </div>
-        ))}
-      </div>
+ <!-- Body -->
+ <div class="sf-container ik-body">
+ <div class="ik-inner">
 
-      <!-- Form -->
-      <form action={actions.submitPlaceApplication} method="POST" class="bg-white rounded-2xl shadow-lg p-8 space-y-8">
-        {applicationResult?.data?.success && (
-          <div class="rounded-xl p-4 text-sm font-medium bg-green-50 text-green-700 border border-green-200">
-            Başvurunuz alındı. 1-3 iş günü içinde size ulaşacağız.
-          </div>
-        )}
+ <!-- Hızlı Cevap -->
+ <div class="ik-hizli">
+ <p class="ik-hizli-label">Hızlı Cevap</p>
+ <h2 class="ik-hizli-title">Şanlıurfa işletme kaydı nasıl yapılır?</h2>
+ <p class="ik-hizli-body">
+ İşletme adı, kategori, ilçe, telefon ve adres bilgilerini girerek ücretsiz başvuru yapabilirsiniz.
+ Başvurular admin onayından sonra Şanlıurfa mekan rehberinde yayınlanır.
+ </p>
+ <div class="ik-hizli-links">
+ <a href="/isletme-kayit">İşletme kaydı</a>
+ <a href="/mekanlar">Mekanlar</a>
+ <a href="/topluluk">Topluluk</a>
+ </div>
+ </div>
 
-        {applicationSubmitError && (
-          <div class="rounded-xl p-4 text-sm font-medium bg-red-50 text-red-700 border border-red-200">
-            {applicationSubmitError}
-          </div>
-        )}
+ <!-- Benefits -->
+ <div class="ik-benefits">
+ {benefits.map(item => (
+ <div class="ik-benefit">
+ <Icon name={item.icon} class="ik-benefit-icon" />
+ <p class="ik-benefit-title">{item.title}</p>
+ <p class="ik-benefit-desc">{item.desc}</p>
+ </div>
+ ))}
+ </div>
 
-        <!-- İşletme Bilgileri -->
-        <section>
-          <h2 class="text-xl font-bold text-gray-900 mb-5 pb-3 border-b">İşletme Bilgileri</h2>
-          <div class="grid md:grid-cols-2 gap-4">
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-1">İşletme Adı *</label>
-              <input type="text" name="name" required placeholder="Örn: Ciğerci Aziz Usta"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent">
-              {applicationInputErrors.name && (
-                <p class="mt-2 text-sm text-red-600">{applicationInputErrors.name.join(', ')}</p>
-              )}
-            </div>
+ <!-- Form -->
+ <form action={actions.submitPlaceApplication} method="POST" class="ik-form">
+ {applicationResult?.data?.success && (
+ <div class="ik-ok">Başvurunuz alındı. 1-3 iş günü içinde size ulaşacağız.</div>
+ )}
+ {applicationSubmitError && (
+ <div class="ik-err">{applicationSubmitError}</div>
+ )}
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Kategori *</label>
-              <select name="category_id" required
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500">
-                <option value="">Kategori seçin</option>
-                {categories.map(cat => (
-                  <option value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-              {applicationInputErrors.category_id && (
-                <p class="mt-2 text-sm text-red-600">{applicationInputErrors.category_id.join(', ')}</p>
-              )}
-            </div>
+ <!-- İşletme Bilgileri -->
+ <div class="ik-section">
+ <h2 class="ik-section-title">İşletme Bilgileri</h2>
+ <div class="ik-grid ik-grid-2">
+ <div class="ik-field ik-full">
+ <label class="ik-lbl">İşletme Adı *</label>
+ <input type="text" name="name" required placeholder="Örn: Ciğerci Aziz Usta" class="ik-input" />
+ {applicationInputErrors.name && (
+ <p class="ik-field-err">{applicationInputErrors.name.join(', ')}</p>
+ )}
+ </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">İlçe *</label>
-              <select name="district_id" required
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500">
-                <option value="">İlçe seçin</option>
-                {districts.map(d => (
-                  <option value={d.id}>{d.name}</option>
-                ))}
-              </select>
-              {applicationInputErrors.district_id && (
-                <p class="mt-2 text-sm text-red-600">{applicationInputErrors.district_id.join(', ')}</p>
-              )}
-            </div>
+ <div class="ik-field">
+ <label class="ik-lbl">Kategori *</label>
+ <select name="category_id" required class="ik-select">
+ <option value="">Kategori seçin</option>
+ {categories.map(cat => (
+ <option value={cat.id}>{cat.name}</option>
+ ))}
+ </select>
+ {applicationInputErrors.category_id && (
+ <p class="ik-field-err">{applicationInputErrors.category_id.join(', ')}</p>
+ )}
+ </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Telefon *</label>
-              <input type="tel" name="phone" required placeholder="+90 414 000 0000"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500">
-              {applicationInputErrors.phone && (
-                <p class="mt-2 text-sm text-red-600">{applicationInputErrors.phone.join(', ')}</p>
-              )}
-            </div>
+ <div class="ik-field">
+ <label class="ik-lbl">İlçe *</label>
+ <select name="district_id" required class="ik-select">
+ <option value="">İlçe seçin</option>
+ {districts.map(d => (
+ <option value={d.id}>{d.name}</option>
+ ))}
+ </select>
+ {applicationInputErrors.district_id && (
+ <p class="ik-field-err">{applicationInputErrors.district_id.join(', ')}</p>
+ )}
+ </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Web Sitesi</label>
-              <input type="url" name="website" placeholder="https://..."
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500">
-              {applicationInputErrors.website && (
-                <p class="mt-2 text-sm text-red-600">{applicationInputErrors.website.join(', ')}</p>
-              )}
-            </div>
+ <div class="ik-field">
+ <label class="ik-lbl">Telefon *</label>
+ <input type="tel" name="phone" required placeholder="+90 414 000 0000" class="ik-input" />
+ {applicationInputErrors.phone && (
+ <p class="ik-field-err">{applicationInputErrors.phone.join(', ')}</p>
+ )}
+ </div>
 
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Açık Adres *</label>
-              <textarea name="address" rows="2" required placeholder="Mahalle, cadde, kapı no..."
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 resize-none"></textarea>
-              {applicationInputErrors.address && (
-                <p class="mt-2 text-sm text-red-600">{applicationInputErrors.address.join(', ')}</p>
-              )}
-            </div>
+ <div class="ik-field">
+ <label class="ik-lbl">Web Sitesi</label>
+ <input type="url" name="website" placeholder="https://..." class="ik-input" />
+ {applicationInputErrors.website && (
+ <p class="ik-field-err">{applicationInputErrors.website.join(', ')}</p>
+ )}
+ </div>
 
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-1">Kısa Açıklama</label>
-              <textarea name="short_description" rows="2" maxlength="200"
-                placeholder="İşletmenizi kısaca tanıtın (max 200 karakter)"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 resize-none"></textarea>
-              {applicationInputErrors.short_description && (
-                <p class="mt-2 text-sm text-red-600">{applicationInputErrors.short_description.join(', ')}</p>
-              )}
-            </div>
-          </div>
-        </section>
+ <div class="ik-field ik-full">
+ <label class="ik-lbl">Açık Adres *</label>
+ <textarea name="address" rows="2" required placeholder="Mahalle, cadde, kapı no..." class="ik-textarea"></textarea>
+ {applicationInputErrors.address && (
+ <p class="ik-field-err">{applicationInputErrors.address.join(', ')}</p>
+ )}
+ </div>
 
-        <!-- Başvuran Bilgileri -->
-        <section>
-          <h2 class="text-xl font-bold text-gray-900 mb-5 pb-3 border-b">Başvuran Bilgileri</h2>
-          <div class="grid md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Ad Soyad *</label>
-              <input type="text" name="owner_name" required placeholder="Adınız ve soyadınız"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500">
-              {applicationInputErrors.owner_name && (
-                <p class="mt-2 text-sm text-red-600">{applicationInputErrors.owner_name.join(', ')}</p>
-              )}
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">E-posta *</label>
-              <input type="email" name="owner_email" required placeholder="ornek@email.com"
-                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500">
-              {applicationInputErrors.owner_email && (
-                <p class="mt-2 text-sm text-red-600">{applicationInputErrors.owner_email.join(', ')}</p>
-              )}
-            </div>
-          </div>
-        </section>
+ <div class="ik-field ik-full">
+ <label class="ik-lbl">Kısa Açıklama</label>
+ <textarea name="short_description" rows="2" maxlength="200"
+ placeholder="İşletmenizi kısaca tanıtın (max 200 karakter)"
+ class="ik-textarea"></textarea>
+ {applicationInputErrors.short_description && (
+ <p class="ik-field-err">{applicationInputErrors.short_description.join(', ')}</p>
+ )}
+ </div>
+ </div>
+ </div>
 
-        <button type="submit"
-          class="w-full py-4 bg-red-600 text-white rounded-xl font-bold text-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-          Başvuruyu Gönder
-        </button>
+ <!-- Başvuran Bilgileri -->
+ <div class="ik-section">
+ <h2 class="ik-section-title">Başvuran Bilgileri</h2>
+ <div class="ik-grid ik-grid-2">
+ <div class="ik-field">
+ <label class="ik-lbl">Ad Soyad *</label>
+ <input type="text" name="owner_name" required placeholder="Adınız ve soyadınız" class="ik-input" />
+ {applicationInputErrors.owner_name && (
+ <p class="ik-field-err">{applicationInputErrors.owner_name.join(', ')}</p>
+ )}
+ </div>
+ <div class="ik-field">
+ <label class="ik-lbl">E-posta *</label>
+ <input type="email" name="owner_email" required placeholder="ornek@email.com" class="ik-input" />
+ {applicationInputErrors.owner_email && (
+ <p class="ik-field-err">{applicationInputErrors.owner_email.join(', ')}</p>
+ )}
+ </div>
+ </div>
+ </div>
 
-        <p class="text-xs text-gray-500 text-center">
-          Başvurunuz incelendikten sonra 1-3 iş günü içinde e-posta ile bildirilecektir.
-        </p>
-      </form>
-    </div>
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.C,
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Şanlıurfa İşletme Kaydı',
-    url: `${baseUrl}/isletme-kayit`,
-    description: 'Şanlıurfa işletmeleri için ücretsiz başvuru ve mekan rehberine kayıt sayfası.',
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'İşletme Kayıt', item: `${baseUrl}/isletme-kayit` },
-    ],
-  })} is:inline />
+ <button type="submit" class="sf-btn-primary ik-submit">Başvuruyu Gönder</button>
+ <p class="ik-note">Başvurunuz incelendikten sonra 1-3 iş günü içinde e-posta ile bildirilecektir.</p>
+ </form>
+ </div>
+ </div>
+
+ {faqItems.length > 0 && (
+ <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+ <div class="sf-container">
+ <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+ <div style="display:flex;flex-direction:column;gap:.75rem">
+ {faqItems.map((item) => (
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ {item.S}
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ {item.C}
+ </div>
+ </details>
+ ))}
+ </div>
+ </div>
+ </div>
+ )}
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'WebPage',
+ name: 'Şanlıurfa İşletme Kaydı',
+ url: `${baseUrl}/isletme-kayit`,
+ description: 'Şanlıurfa işletmeleri için ücretsiz başvuru ve mekan rehberine kayıt sayfası.',
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'İşletme Kayıt', item: `${baseUrl}/isletme-kayit` },
+ ],
+ })} is:inline />
 </Layout>

@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { authenticateUser } from '../../../../lib/auth/middleware';
 import { logger } from '../../../../lib/logging';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, HttpStatus, problemJson } from '../../../../lib/api';
 
 export const PUT: APIRoute = async (context) => {
   try {
@@ -31,6 +31,19 @@ export const PUT: APIRoute = async (context) => {
       });
     }
 
+    if ('status' in body && body.status) {
+      const VALID_STATUSES = new Set(['draft', 'published', 'scheduled', 'archived']);
+      if (!VALID_STATUSES.has(String(body.status))) {
+        return problemJson({
+          status: 422,
+          title: 'Geçersiz Durum',
+          detail: 'Geçersiz yazı durumu',
+          type: '/problems/blog-admin-post-invalid-status',
+          instance: `/api/blog/${id}/admin`,
+        });
+      }
+    }
+
     const allowedFields = [
       'title', 'slug', 'excerpt', 'content', 'featured_image',
       'status', 'seo_title', 'seo_description', 'is_featured',
@@ -44,7 +57,7 @@ export const PUT: APIRoute = async (context) => {
     };
     
     const updates: string[] = [];
-    const params: any[] = [];
+    const params: unknown[] = [];
     let paramIndex = 1;
 
     for (const [key, value] of Object.entries(body)) {
@@ -78,13 +91,10 @@ export const PUT: APIRoute = async (context) => {
       params
     );
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       post: result.rows[0]
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Update blog post error:', error);
@@ -115,13 +125,10 @@ export const DELETE: APIRoute = async (context) => {
 
     await query('DELETE FROM blog_posts WHERE id = $1', [id]);
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       message: 'Post deleted'
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Delete blog post error:', error);

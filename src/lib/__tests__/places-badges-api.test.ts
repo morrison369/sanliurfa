@@ -47,7 +47,7 @@ describe('places badges api', () => {
   });
 
   it('returns cached badges when cache hit', async () => {
-    getCacheMock.mockResolvedValueOnce(JSON.stringify([{ code: 'verified' }]));
+    getCacheMock.mockResolvedValueOnce([{ code: 'verified' }]);
 
     const response = await GET(
       createApiContext({

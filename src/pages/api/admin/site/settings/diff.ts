@@ -1,16 +1,14 @@
 import type { APIRoute } from 'astro';
+import { apiResponse, safeErrorDetail } from '../../../../../lib/api';
 import { queryOne } from '../../../../../lib/postgres';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 type JsonObject = Record<string, any>;
@@ -104,7 +102,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     });
   } catch (error) {
     return json(
-      { success: false, error: error instanceof Error ? error.message : 'diff failed' },
+      { success: false, error: safeErrorDetail(error, 'diff failed') },
       500,
     );
   }

@@ -11,6 +11,16 @@ export const GET: APIRoute = async ({ request, params }) => {
 
   try {
     const userId = params.id;
+    if (!userId) {
+      recordRequest('GET', '/api/users/{id}/badges', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Kullanıcı kimliği gerekli',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
     const badges = await getUserBadges(userId);
     const progress = await getBadgeProgress(userId);
 
@@ -31,7 +41,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('GET', `/api/users/${params.id}/badges`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    recordRequest('GET', `/api/users/${params.id ?? '{id}'}/badges`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Get badges failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,

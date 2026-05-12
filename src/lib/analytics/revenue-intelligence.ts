@@ -69,7 +69,12 @@ export class RevenueAttributor {
   attributeRevenue(amount: number, channel: string, campaignId?: string): void {
     let attribution = this.attributions.find(a => a.channel === channel && a.campaignId === campaignId);
     if (!attribution) {
-      attribution = { channel, campaignId, revenue: 0, conversions: 0 };
+      attribution = {
+        channel,
+        ...(campaignId ? { campaignId } : {}),
+        revenue: 0,
+        conversions: 0,
+      };
       this.attributions.push(attribution);
     }
     attribution.revenue += amount;

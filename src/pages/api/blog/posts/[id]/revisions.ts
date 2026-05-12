@@ -15,6 +15,19 @@ export const GET: APIRoute = async ({ request, params }) => {
   logger.setRequestId(requestId);
 
   try {
+    const cookie = request.headers.get('Cookie');
+    const tokenMatch = cookie?.match(/auth-token=([^;]+)/);
+    const token = tokenMatch?.[1];
+    if (!token) {
+      recordRequest('GET', `/api/blog/posts/${params.id}/revisions`, HttpStatus.UNAUTHORIZED, Date.now() - startTime);
+      return apiError(ErrorCode.UNAUTHORIZED, 'Kimlik doğrulama gerekli', HttpStatus.UNAUTHORIZED, undefined, requestId);
+    }
+    const sessionData = await verifyToken(token);
+    if (!sessionData || sessionData.role !== 'admin') {
+      recordRequest('GET', `/api/blog/posts/${params.id}/revisions`, HttpStatus.FORBIDDEN, Date.now() - startTime);
+      return apiError(ErrorCode.FORBIDDEN, 'Admin yetkisi gerekli', HttpStatus.FORBIDDEN, undefined, requestId);
+    }
+
     const postId = Number.parseInt(params.id || '', 10);
     if (!Number.isFinite(postId)) {
       recordRequest('GET', `/api/blog/posts/${params.id}/revisions`, HttpStatus.BAD_REQUEST, Date.now() - startTime);

@@ -1,207 +1,233 @@
 ---
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
-import Image from '../../components/Image.astro';
+import PublicPageIntro from '../../components/public/PublicPageIntro.astro';
+import PublicCollectionList from '../../components/public/PublicCollectionList.astro';
+import EventCalendarToggle from '../../components/events/EventCalendarToggle';
 import { query } from '../../lib/postgres';
-import { resolveContentImage } from '../../lib/content-images';
-import { getSiteBranding } from '../../lib/site-branding';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { resolveEventImage } from '../../lib/public-image-resolvers';
 
 const queryParam = Astro.url.searchParams.get('q') || '';
+const kategoriParam = Astro.url.searchParams.get('kategori') || '';
+const ayParam = Astro.url.searchParams.get('ay') || '';
+const validAy = /^\d{4}-(0[1-9]|1[0-2])$/.test(ayParam) ? ayParam : '';
 
-// SVG ikonlar
-const icons = {
-  search: `<svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-white/60" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
-  calendar: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
-  mapPin: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
-  clock: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-};
-
-let sql = "SELECT * FROM events WHERE status = 'published' AND (end_date IS NULL OR end_date >= CURRENT_DATE)";
 const values: any[] = [];
+const conditions: string[] = [
+  "status = 'published'",
+  "(end_date IS NULL OR end_date >= CURRENT_DATE)",
+];
 
-if (queryParam) {
-  sql += " AND (title ILIKE $1 OR description ILIKE $1 OR location ILIKE $1)";
-  values.push(`%${queryParam}%`);
+if (validAy) {
+  values.push(`${validAy}-01`);
+  conditions.push(`DATE_TRUNC('month', start_date) = DATE_TRUNC('month', $${values.length}::date)`);
+} else {
+  conditions.push("start_date <= CURRENT_DATE + INTERVAL '180 days'");
 }
 
-sql += " ORDER BY is_featured DESC, start_date ASC";
+if (queryParam) {
+  values.push(`%${queryParam}%`);
+  conditions.push(`(title ILIKE $${values.length} OR description ILIKE $${values.length} OR location ILIKE $${values.length})`);
+}
+
+if (kategoriParam) {
+  values.push(kategoriParam);
+  conditions.push(`category = $${values.length}`);
+}
+
+const sql = `SELECT * FROM events WHERE ${conditions.join(' AND ')} ORDER BY is_featured DESC, start_date ASC LIMIT 80`;
+const filterKey = [queryParam, kategoriParam, validAy].filter(Boolean).join(':') || 'all';
 
 let events: any[] = [];
+let availableCategories: string[] = [];
+let availableMonths: { label: string; value: string }[] = [];
 
-const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('tr-TR', {
-    day: 'numeric', month: 'long', year: 'numeric'
-  });
-};
+const formatDate = (dateStr: string) =>
+ new Date(dateStr).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-const getEventImage = (event: any) =>
-  resolveContentImage({
-    category: 'etkinlikler',
-    slug: event?.slug,
-    explicit: event?.image_url,
-    placeholder: '/images/placeholder-event.jpg',
-  });
+const getEventImage = (event: any) => resolveEventImage(event);
 
 const seo = {
-  title: 'Etkinlikler - Şanlıurfa\'da Bugün ve Yakında',
-  description: 'Şanlıurfa\'daki konserler, festivaller, sergiler ve diğer etkinlikler. Kültürel etkinlikleri takip edin.',
-  keywords: ['şanlıurfa etkinlikler', 'urfa konser', 'şanlıurfa festival', 'urfa kültür etkinlikleri', 'şanlıurfa bugün ne var', 'urfa sergi', 'şanlıurfa organizasyon'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/etkinlikler',
+ title: 'Etkinlikler — Şanlıurfa\'da Bugün ve Yakında',
+ description: 'Şanlıurfa\'daki konserler, festivaller, sergiler ve diğer etkinlikler. Kültürel etkinlikleri takip edin.',
+ keywords: ['şanlıurfa etkinlikler', 'urfa konser', 'şanlıurfa festival', 'urfa kültür etkinlikleri', 'şanlıurfa bugün ne var', 'urfa sergi', 'şanlıurfa organizasyon'],
+ canonical: '/etkinlikler',
 };
-const { baseUrl } = await getSiteBranding();
+
+const baseUrl = getPublicAppUrl();
 
 const faqItems = [
-  {
-    S: 'Şanlıurfa etkinlik takvimi nasıl takip edilir?',
-    C: 'Etkinlikler sayfasında yayınlanan aktif etkinlikler tarih sırasına göre listelenir ve arama kutusuyla filtrelenebilir.',
-  },
-  {
-    S: 'Konser ve festival etkinlikleri bu sayfada yer alıyor mu?',
-    C: 'Evet. Konser, festival, sergi ve benzeri etkinlik içerikleri kategori etiketleriyle birlikte gösterilir.',
-  },
-  {
-    S: 'Etkinlik detayına nasıl giderim?',
-    C: 'Listede yer alan herhangi bir etkinlik kartına tıklayarak detay sayfasına geçebilirsiniz.',
-  },
+ { S: 'Şanlıurfa etkinlik takvimi nasıl takip edilir?', C: "Etkinlikler sayfasında yayınlanan aktif etkinlikler tarih sırasına göre listelenir ve arama kutusuyla filtrelenebilir. Sayfayı düzenli kontrol ederek veya tarayıcı favorilerinize ekleyerek yaklaşan konser, festival ve kültürel etkinliklerden haberdar olabilirsiniz." },
+ { S: 'Konser ve festival etkinlikleri bu sayfada yer alıyor mu?', C: "Evet. Konser, festival, sergi, toplantı ve benzeri etkinlik içerikleri kategori etiketleriyle birlikte gösterilir. Şanlıurfa'daki kültürel ve sanatsal etkinliklere ait detaylı bilgi; tarih, saat, mekan ve katılım koşullarıyla birlikte her etkinlik detay sayfasında sunulmaktadır." },
+ { S: 'Etkinlik detayına nasıl giderim?', C: "Listede yer alan herhangi bir etkinlik kartına tıklayarak detay sayfasına geçebilirsiniz. Detay sayfasında etkinliğin tarihi, konumu, kategorisi, açıklaması ve varsa katılım bilgileri yer almaktadır. Ücretsiz etkinlikler için ayrıca özel bir etiket gösterilmektedir." },
+ { S: "Şanlıurfa'da hangi tür etkinlikler düzenleniyor?", C: "Şanlıurfa'da yıl boyu müzik konserleri, Nevruz kutlamaları, Uluslararası Divan Şiiri Festivali, tarım fuarları, spor organizasyonları ve geleneksel sıra geceleri düzenlenmektedir. Kültürel çeşitliliğiyle Şanlıurfa, tarih turizminin yanı sıra canlı bir etkinlik takvimine ev sahipliği yapar." },
 ];
 
 try {
-  const result = await query(sql, values);
-  events = result.rows;
+ const data = await getCachedPublicRouteData(`page:etkinlikler:index:${filterKey}`, async () => {
+  const [eventsResult, catsResult, monthsResult] = await Promise.all([
+   query(sql, values),
+   query(`SELECT DISTINCT category FROM events WHERE status='published' AND category IS NOT NULL AND category <> '' ORDER BY category`),
+   query(`SELECT DISTINCT TO_CHAR(DATE_TRUNC('month',start_date),'YYYY-MM') AS m FROM events WHERE status='published' AND start_date >= CURRENT_DATE ORDER BY m LIMIT 12`),
+  ]);
+  return {
+   events: eventsResult.rows,
+   categories: catsResult.rows.map((r: any) => r.category as string),
+   months: monthsResult.rows.map((r: any) => r.m as string),
+  };
+ });
+ events = data.events;
+ availableCategories = data.categories;
+ availableMonths = data.months.map((m: string) => {
+  const [y, mo] = m.split('-');
+  const label = new Date(parseInt(y), parseInt(mo) - 1, 1).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+  return { label, value: m };
+ });
 } catch (e) {
-  console.error('Error loading events:', e);
+ logger.error('Error loading events:', e instanceof Error ? e : new Error(String(e)));
 }
 ---
 
 <Layout seo={seo}>
-  <div class="page-header">
-    <div class="page-header-content">
-      <h1 class="page-header-title">Şanlıurfa Etkinlikleri</h1>
-      <p class="page-header-description">
-        Şanlıurfa’daki kültürel etkinlikleri keşfedin.
-      </p>
-      
-      <div class="mt-8 max-w-2xl mx-auto">
-        <form action="/etkinlikler" class="relative">
-          <input 
-            type="search"
-            name="q"
-            value={queryParam}
-            placeholder="Etkinlik ara..."
-            class="w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border border-white/20 focus:outline-none focus:border-white/40"
-          />
-          <span set:html={icons.search}></span>
-        </form>
-      </div>
-    </div>
-  </div>
-  
-  <div class="section bg-gray-50 dark:bg-gray-900">
-    <div class="container-custom">
-      <div class="rounded-2xl border border-indigo-100 bg-indigo-50 dark:border-indigo-900/40 dark:bg-indigo-950/20 p-5 mb-8">
-        <h2 class="text-lg font-bold text-indigo-900 dark:text-indigo-200">Hızlı Cevap</h2>
-        <p class="text-sm text-indigo-800 dark:text-indigo-300 mt-1">
-          Şanlıurfa etkinlik takvimini bu sayfadan takip edebilir, tarih ve konuma göre uygun etkinliği hızlıca bulabilirsiniz.
-        </p>
-      </div>
+ <style is:inline>
+ .et-body{padding:2.5rem 0 5rem}
+ .et-filters{display:flex;flex-wrap:wrap;gap:.4rem .5rem;margin-bottom:1.25rem;align-items:center}
+ .et-filter-label{font-size:.7rem;color:var(--public-muted);margin-right:.15rem;white-space:nowrap}
+ .et-filter-chip{font-size:.7rem;font-weight:600;padding:.28rem .65rem;border:1px solid rgba(184,115,51,.22);color:var(--public-text-soft);text-decoration:none;transition:all .15s;background:transparent}
+ .et-filter-chip:hover{border-color:rgba(184,115,51,.5);color:var(--public-text)}
+ .et-filter-chip.active{background:rgba(184,115,51,.15);border-color:rgba(184,115,51,.5);color:var(--public-accent)}
+ .et-filter-sep{width:1px;height:1rem;background:rgba(184,115,51,.2);align-self:center;margin:0 .25rem}
+ .et-empty{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:3rem 2rem;text-align:center}
+ .et-empty-icon{width:2.5rem;height:2.5rem;margin:0 auto .75rem;color:var(--public-accent)}
+ .et-empty-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;color:var(--public-text);margin-bottom:.5rem}
+ .et-empty-desc{font-size:.82rem;color:var(--public-muted);line-height:1.7;max-width:440px;margin:0 auto 1.25rem}
+ .et-empty-links{display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem}
+ </style>
 
-      <div class="space-y-6">
-        {events.map((event) => (
-          <article class="card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden">
-            <a href={`/etkinlikler/${event.slug}`} class="flex flex-col md:flex-row">
-              <div class="md:w-1/3 aspect-video md:aspect-auto overflow-hidden">
-                <Image
-                  src={getEventImage(event)}
-                  alt={event.title}
-                  class="w-full h-full object-cover"
-                  loading="lazy"
-                  width={960}
-                  height={540}
-                />
-              </div>
-              
-              <div class="flex-1 p-6">
-                <div class="flex flex-wrap items-center gap-2 mb-2">
-                  <span class="badge-primary">{event.category}</span>
-                  {event.is_featured && (
-                    <span class="badge bg-urfa-600 text-white">Öne Çıkan</span>
-                  )}
-                </div>
-                
-                <h3 class="font-display font-bold text-xl text-gray-900 dark:text-white hover:text-urfa-600 dark:hover:text-urfa-400 transition-colors">
-                  {event.title}
-                </h3>
-                
-                <p class="text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">
-                  {event.description}
-                </p>
-                
-                <div class="flex flex-wrap items-center gap-4 mt-4 text-sm text-gray-500 dark:text-gray-400">
-                  <span class="flex items-center gap-1">
-                    <span set:html={icons.calendar}></span>
-                    {formatDate(event.start_date)}
-                    {event.end_date && ` - ${formatDate(event.end_date)}`}
-                  </span>
-                  <span class="flex items-center gap-1">
-                    <span set:html={icons.mapPin}></span>
-                    {event.location}
-                  </span>
-                </div>
-              </div>
-            </a>
-          </article>
-        ))}
-      </div>
+ <PublicPageIntro
+  eyebrow="Şanlıurfa"
+  title="Şanlıurfa Etkinlikleri"
+  description="Şanlıurfa'daki kültürel etkinlikleri keşfedin."
+  searchAction="/etkinlikler"
+  searchValue={queryParam}
+  searchPlaceholder="Etkinlik ara…"
+  searchAriaLabel="Etkinlik arama terimi"
+  quickAnswerTitle="Hızlı Cevap"
+  quickAnswerText="Şanlıurfa Etkinlikleri sayfası, aktif konser, festival, sergi ve topluluk buluşmalarını tarih sırasıyla listeler."
+ />
 
-      {events.length === 0 && (
-        <div class="rounded-2xl border border-indigo-100 bg-white p-8 text-center shadow-sm dark:border-indigo-900/40 dark:bg-gray-800">
-          <span class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300" set:html={icons.calendar}></span>
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Aktif etkinlik bulunamadı</h3>
-          <p class="mx-auto max-w-2xl text-gray-600 dark:text-gray-400">
-            Bugün için veritabanında yayınlanmış etkinlik kaydı yok. Şanlıurfa gezi planınızı
-            mekan rehberi, tarihi yerler ve yemek önerileriyle tamamlayabilirsiniz.
-          </p>
-          <div class="mt-6 flex flex-wrap justify-center gap-3">
-            <a href="/mekanlar" class="rounded-xl bg-urfa-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-urfa-700">
-              Mekanları Keşfet
-            </a>
-            <a href="/tarihi-yerler" class="rounded-xl border border-gray-200 px-5 py-3 font-semibold text-gray-700 transition-colors hover:border-urfa-200 hover:text-urfa-700 dark:border-gray-700 dark:text-gray-200">
-              Tarihi Yerler
-            </a>
-          </div>
-        </div>
-      )}
-    </div>
+ <!-- Takvim / Liste toggle -->
+ <div class="sf-container et-body">
+
+ <!-- Filtreler -->
+ {(availableCategories.length > 0 || availableMonths.length > 0) && (
+  <div class="et-filters">
+   {availableCategories.length > 0 && (
+    <>
+     <span class="et-filter-label">Kategori:</span>
+     <a href={`/etkinlikler${queryParam ? `?q=${encodeURIComponent(queryParam)}` : ''}${validAy ? `${queryParam ? '&' : '?'}ay=${validAy}` : ''}`}
+      class:list={['et-filter-chip', { active: !kategoriParam }]}>Tümü</a>
+     {availableCategories.map(cat => {
+      const base = new URLSearchParams();
+      if (queryParam) base.set('q', queryParam);
+      if (validAy) base.set('ay', validAy);
+      base.set('kategori', cat);
+      return <a href={`/etkinlikler?${base.toString()}`} class:list={['et-filter-chip', { active: kategoriParam === cat }]}>{cat}</a>;
+     })}
+    </>
+   )}
+   {availableCategories.length > 0 && availableMonths.length > 0 && <span class="et-filter-sep" />}
+   {availableMonths.length > 0 && (
+    <>
+     <span class="et-filter-label">Ay:</span>
+     <a href={`/etkinlikler${queryParam ? `?q=${encodeURIComponent(queryParam)}` : ''}${kategoriParam ? `${queryParam ? '&' : '?'}kategori=${encodeURIComponent(kategoriParam)}` : ''}`}
+      class:list={['et-filter-chip', { active: !validAy }]}>Tümü</a>
+     {availableMonths.map(({ label, value }) => {
+      const base = new URLSearchParams();
+      if (queryParam) base.set('q', queryParam);
+      if (kategoriParam) base.set('kategori', kategoriParam);
+      base.set('ay', value);
+      return <a href={`/etkinlikler?${base.toString()}`} class:list={['et-filter-chip', { active: validAy === value }]}>{label}</a>;
+     })}
+    </>
+   )}
   </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.C,
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: 'Şanlıurfa Etkinlik Listesi',
-    itemListElement: events.slice(0, 12).map((event, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: event.title,
-      url: `${baseUrl}/etkinlikler/${event.slug}`,
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Etkinlikler', item: `${baseUrl}/etkinlikler` },
-    ],
-  })} is:inline />
+ )}
+
+ {events.length > 0 && !queryParam && !kategoriParam && !validAy && (
+  <EventCalendarToggle
+   client:load
+   events={events.map((e) => ({
+    id: String(e.id),
+    title: e.title,
+    slug: e.slug,
+    start_date: e.start_date instanceof Date ? e.start_date.toISOString() : String(e.start_date ?? ''),
+    end_date: e.end_date ? (e.end_date instanceof Date ? e.end_date.toISOString() : String(e.end_date)) : undefined,
+    location: e.location,
+    category: e.category,
+    is_free: e.is_free,
+    image_url: e.image_url,
+   }))}
+  />
+ )}
+ {events.length > 0 ? (
+ <PublicCollectionList
+  items={events.map((event) => ({
+   href: `/etkinlikler/${event.slug}`,
+   title: event.title,
+   description: event.description,
+   imageSrc: getEventImage(event),
+   imageAlt: event.title,
+   badges: [
+    ...(event.category ? [{ label: event.category }] : []),
+    ...(event.is_featured ? [{ label: 'Öne Çıkan', tone: 'accent' as const }] : []),
+   ],
+   metaItems: [
+    { label: `${formatDate(event.start_date)}${event.end_date ? ` — ${formatDate(event.end_date)}` : ''}`, icon: 'lucide:calendar' },
+    ...(event.location ? [{ label: event.location, icon: 'lucide:map-pin' }] : []),
+   ],
+  }))}
+ />
+ ) : (
+ <div class="et-empty">
+ <Icon name="lucide:calendar" class="et-empty-icon" />
+ <h2 class="et-empty-title">Aktif etkinlik bulunamadı</h2>
+ <p class="et-empty-desc">
+ {queryParam
+ ? `"${queryParam}" için etkinlik bulunamadı. Farklı bir arama deneyin.`
+ : 'Bugün için veritabanında yayınlanmış etkinlik kaydı yok. Şanlıurfa gezi planınızı mekan rehberi ve tarihi yerlerle tamamlayabilirsiniz.'}
+ </p>
+ <div class="et-empty-links">
+ <a href="/isletme" class="sf-btn-primary">Mekanları Keşfet</a>
+ <a href="/tarihi-yerler" class="sf-btn-ghost">Tarihi Yerler</a>
+ </div>
+ </div>
+ )}
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'FAQPage',
+ mainEntity: faqItems.map(item => ({
+ '@type': 'Question', name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'ItemList',
+ name: 'Şanlıurfa Etkinlik Listesi',
+ itemListElement: events.slice(0, 12).map((event, index) => ({
+ '@type': 'ListItem', position: index + 1,
+ name: event.title, url: `${baseUrl}/etkinlikler/${event.slug}`,
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Etkinlikler', item: `${baseUrl}/etkinlikler` },
+ ],
+ })} is:inline />
 </Layout>

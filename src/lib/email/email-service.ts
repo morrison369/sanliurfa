@@ -1,5 +1,6 @@
 import { logger } from '../logging';
 import { getPublicAppUrl } from '../public-app-url';
+import { randomBytes } from 'node:crypto';
 /**
  * Email Service
  * Nodemailer-based email sending with queue management
@@ -146,7 +147,13 @@ export async function sendBulkEmail(
 
     await Promise.all(
       batch.map(async (to) => {
-        const result = await sendEmail({ to, subject, html, text, from });
+        const result = await sendEmail({
+          to,
+          subject,
+          html,
+          ...(text ? { text } : {}),
+          ...(from ? { from } : {}),
+        });
         if (result.success) {
           results.success++;
         } else {
@@ -167,7 +174,7 @@ export async function sendBulkEmail(
 
 // Add email to queue
 export function queueEmail(options: Omit<EmailQueueItem, 'id' | 'retries' | 'maxRetries'>): string {
-  const id = `email_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  const id = `email_${Date.now()}_${randomBytes(6).toString('hex')}`;
   const queueItem: EmailQueueItem = {
     ...options,
     id,
@@ -193,8 +200,8 @@ export async function processQueue(): Promise<void> {
       to: item.to,
       subject: item.subject,
       html: item.html,
-      text: item.text,
-      from: item.from,
+      ...(item.text ? { text: item.text } : {}),
+      ...(item.from ? { from: item.from } : {}),
     });
 
     if (!result.success && item.retries < item.maxRetries) {
@@ -246,7 +253,7 @@ export const emailTemplates = {
           <li>Tarihi yerler</li>
           <li>Etkinlikler</li>
         </ul>
-        <a href="${PUBLIC_APP_URL}/places" style="display: inline-block; padding: 12px 24px; background: #dc2626; color: white; text-decoration: none; border-radius: 8px;">Mekanları Keşfet</a>
+        <a href="${PUBLIC_APP_URL}/mekanlar" style="display: inline-block; padding: 12px 24px; background: #dc2626; color: white; text-decoration: none; border-radius: 8px;">Mekanları Keşfet</a>
       </div>
     `,
   }),

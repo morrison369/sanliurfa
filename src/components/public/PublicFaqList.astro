@@ -1,0 +1,98 @@
+---
+type FaqItem = {
+  q?: string;
+  a?: string;
+  S?: string;
+  C?: string;
+};
+
+interface Props {
+ title?: string;
+ items: FaqItem[];
+ openFirst?: boolean;
+}
+
+const { title = 'Sıkça Sorulan Sorular', items = [], openFirst = true } = Astro.props;
+---
+
+<section class="pfq">
+  <h2 class="pfq-title">{title}</h2>
+  <div class="pfq-list">
+    {items.map((item, index) => {
+      const question = item.q || item.S || '';
+      const answer = item.a || item.C || '';
+      return (
+        <details class="pfq-item" open={openFirst && index === 0}>
+          <summary>{question}</summary>
+          <p>{answer}</p>
+        </details>
+      );
+    })}
+  </div>
+</section>
+
+<style>
+  .pfq-title {
+    margin: 0 0 0.9rem;
+    color: var(--public-text);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+  }
+
+  .pfq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .pfq-item {
+    overflow: hidden;
+    border: 1px solid rgba(192, 87, 31, 0.12);
+    border-radius: 0.8rem;
+    background: #fbf6ec;
+    transition: border-color 0.15s ease;
+  }
+
+  .pfq-item:hover {
+    border-color: rgba(192, 87, 31, 0.28);
+  }
+
+  .pfq-item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    cursor: pointer;
+    list-style: none;
+    padding: 0.95rem 1.1rem;
+    color: #1f1410;
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+
+  .pfq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .pfq-item summary::after {
+    content: '+';
+    flex-shrink: 0;
+    color: #c0571f;
+    font-size: 1.35rem;
+    font-weight: 300;
+    transition: transform 0.18s ease;
+  }
+
+  .pfq-item[open] summary::after {
+    transform: rotate(45deg);
+  }
+
+  .pfq-item p {
+    margin: 0;
+    padding: 0 1.1rem 1.1rem;
+    color: #3d2a1e;
+    font-size: 1rem;
+    line-height: 1.72;
+  }
+</style>

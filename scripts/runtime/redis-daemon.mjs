@@ -120,6 +120,9 @@ function isPortOpen(port, host = '127.0.0.1') {
 
 function commandLineForPid(pid) {
   try {
+    if (process.platform !== 'win32') {
+      return execFileSync('ps', ['-p', String(pid), '-o', 'args='], { encoding: 'utf8' }).trim();
+    }
     const output = execFileSync(
       'powershell',
       [
@@ -216,7 +219,11 @@ function stopPid(pid) {
   if (!commandLine.includes(confFile) && !commandLine.includes(normalizedConf)) {
     throw new Error(`Refusing to stop pid ${pid}: not this project's Redis config.`);
   }
-  execFileSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
+  if (process.platform === 'win32') {
+    execFileSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
+    return;
+  }
+  process.kill(pid, 'SIGTERM');
 }
 
 async function start() {
@@ -264,11 +271,21 @@ async function stop() {
     return;
   }
 
+  const stopped = [];
   for (const pid of pids) {
-    stopPid(pid);
+    try {
+      stopPid(pid);
+      stopped.push(pid);
+    } catch (error) {
+      console.warn(error instanceof Error ? error.message : String(error));
+    }
   }
   removePidFile();
-  console.log(`project redis stopped (pid=${pids.join(',')})`);
+  if (stopped.length > 0) {
+    console.log(`project redis stopped (pid=${stopped.join(',')})`);
+    return;
+  }
+  console.log('project redis status: stopped');
 }
 
 async function status() {

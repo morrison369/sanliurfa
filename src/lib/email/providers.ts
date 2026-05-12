@@ -139,7 +139,7 @@ export function createEmailProvider(): EmailProvider {
     
     const config: SMTPConfig = {
       host: preset?.host || process.env.SMTP_HOST,
-      port: preset?.port || parseInt(process.env.SMTP_PORT || '587'),
+      port: preset?.port || parseInt(process.env.SMTP_PORT || '587', 10),
       secure: preset?.secure || process.env.SMTP_SECURE === 'true',
       auth: {
         user: process.env.SMTP_USER || '',

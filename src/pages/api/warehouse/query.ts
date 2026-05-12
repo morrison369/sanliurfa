@@ -51,6 +51,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const safeDimensions = (dimensions as string[]).filter((d: string) => ALLOWED_DIMENSIONS.includes(d));
     const safeMeasures = (measures as string[]).filter((m: string) => ALLOWED_MEASURES.includes(m));
     const safeOrderBy = ALLOWED_ORDER_BY.includes(orderBy) ? orderBy : undefined;
+    const limitParsed = parseInt(String(limit), 10);
+    const safeLimit = Math.min(Number.isFinite(limitParsed) ? limitParsed : 100, 1000);
 
     const result = await queryOLAP({
       cube,
@@ -58,7 +60,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       measures: safeMeasures,
       filters,
       orderBy: safeOrderBy,
-      limit: Math.min(limit || 100, 1000)
+      limit: safeLimit
     });
 
     const duration = Date.now() - startTime;

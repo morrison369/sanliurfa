@@ -34,61 +34,6 @@ export function routeToRegion(regionId: string): string {
   return `https://${regionId}.sanliurfa.com`;
 }
 
-// Backup management functions
-export interface BackupConfig {
-  id: string;
-  enabled: boolean;
-  schedule: 'hourly' | 'daily' | 'weekly';
-  retention_days: number;
-  destination: 'local';
-  last_backup?: Date;
-  next_backup?: Date;
-}
-
-import { query } from '../postgres';
-
-export async function getBackupConfigs(): Promise<BackupConfig[]> {
-  const result = await query(`SELECT * FROM backup_configs ORDER BY name`);
-  return result.rows.map((r: any) => ({
-    id: r.id,
-    enabled: r.enabled ?? true,
-    schedule: r.schedule || 'daily',
-    retention_days: r.retention || 30,
-    destination: 'local' as const,
-    last_backup: r.last_run,
-  }));
-}
-
-export async function updateBackupConfig(id: string, updates: Partial<BackupConfig>): Promise<BackupConfig | null> {
-  const fields: string[] = [];
-  const values: any[] = [];
-
-  if (updates.schedule !== undefined) {
-    fields.push(`schedule = $${values.length + 1}`);
-    values.push(updates.schedule);
-  }
-  if (updates.retention_days !== undefined) {
-    fields.push(`retention = $${values.length + 1}`);
-    values.push(updates.retention_days);
-  }
-
-  if (fields.length === 0) {
-    const result = await query(`SELECT * FROM backup_configs WHERE id = $1`, [id]);
-    if (!result.rows[0]) return null;
-    const r = result.rows[0];
-    return { id: r.id, enabled: true, schedule: r.schedule || 'daily', retention_days: r.retention || 30, destination: 'local' };
-  }
-
-  values.push(id);
-  const result = await query(
-    `UPDATE backup_configs SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${values.length} RETURNING *`,
-    values
-  );
-  if (!result.rows[0]) return null;
-  const r = result.rows[0];
-  return { id: r.id, enabled: true, schedule: r.schedule || 'daily', retention_days: r.retention || 30, destination: 'local' };
-}
-
 // Environment and deployment functions
 export interface EnvironmentStatus {
   name: string;

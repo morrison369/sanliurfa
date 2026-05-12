@@ -1,281 +1,269 @@
 ---
-
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
-
-const icons = {
-  Utensils: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>',
-  Flame: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
-  ChefHat: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13.87V4a2 2 0 0 1 3.07-1.67c1.14-.36 2.4-.36 3.54 0A2 2 0 0 1 15.67 4v1.13c1.15.17 2.22.73 3.03 1.6a6 6 0 0 1-1.55 10.14V20a2 2 0 0 1-2 2H8.86a2 2 0 0 1-2-2v-3.13a6 6 0 0 1-1.55-10.14c.8-.87 1.88-1.43 3.03-1.6z"/><line x1="6" x2="18" y1="17" y2="17"/></svg>',
-  Star: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
-  MapPin: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 4.993-5.538 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 1 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>',
-  ArrowRight: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>',
-};
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import FeaturedFoods from '../../components/food/FeaturedFoods.astro';
+import Image from '../../components/Image.astro';
+import { logger } from '../../lib/logging';
+import { resolvePlaceImage } from '../../lib/public-image-resolvers';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+const baseUrl = getPublicAppUrl();
 
 let restaurants: any[] = [];
 let restaurantCount = 0;
 
 try {
-  const result = await query(
-    "SELECT * FROM places WHERE category = 'restaurant' AND status = 'active' ORDER BY rating DESC LIMIT 6"
-  );
-  restaurants = result.rows;
-
-  const countResult = await query(
-    "SELECT COUNT(*) FROM places WHERE category = 'restaurant' AND status = 'active'"
-  );
-  restaurantCount = parseInt(countResult.rows[0]?.count || '0');
+ const data = await getCachedPublicRouteData('page:gastronomi:index:v2', async () => {
+  const [result, countResult] = await Promise.all([
+  query(`
+   SELECT p.*, c.name AS cat_name FROM places p
+   LEFT JOIN categories c ON p.category_id = c.id
+   WHERE p.status = 'active'
+     AND (
+       c.parent_id = (SELECT id FROM categories WHERE slug = 'yeme-icme' LIMIT 1)
+       OR c.slug = 'yeme-icme'
+       OR p.category = 'restaurant'
+     )
+   ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+   LIMIT 6
+  `),
+  query(`
+   SELECT COUNT(*) FROM places p
+   LEFT JOIN categories c ON p.category_id = c.id
+   WHERE p.status = 'active'
+     AND (
+       c.parent_id = (SELECT id FROM categories WHERE slug = 'yeme-icme' LIMIT 1)
+       OR c.slug = 'yeme-icme'
+       OR p.category = 'restaurant'
+     )
+  `),
+  ]);
+  return {
+   restaurants: result.rows,
+   restaurantCount: parseInt(countResult.rows[0]?.count || '0'),
+  };
+ });
+ restaurants = data.restaurants;
+ restaurantCount = data.restaurantCount;
 } catch (e) {
-  console.error('Error loading gastronomi:', e);
+ logger.error('Error loading gastronomi:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const seo = {
-  title: 'Gastronomi Rehberi - Urfa Lezzetleri',
-  description: 'Şanlıurfa mutfağının eşsiz lezzetlerini keşfedin. Ciğer kebabı, çiğ köfte, isot ve daha fazlası.',
-  keywords: ['urfa mutfağı', 'şanlıurfa gastronomi', 'urfa kebabı', 'şanlıurfa yemekleri', 'urfa çiğ köfte', 'şanlıurfa isot', 'urfa lezzetleri', 'şanlıurfa yöresel yemekler'],
-  ogImage: '/images/blog/sanliurfa-lezzetler-2026.webp',
-  canonical: '/gastronomi',
+ title: 'Gastronomi Rehberi - Urfa Lezzetleri',
+ description: 'Şanlıurfa mutfağının eşsiz lezzetlerini keşfedin. Ciğer kebabı, çiğ köfte, isot ve daha fazlası.',
+ keywords: ['urfa mutfağı', 'şanlıurfa gastronomi', 'urfa kebabı', 'şanlıurfa yemekleri', 'urfa çiğ köfte', 'şanlıurfa isot', 'urfa lezzetleri', 'şanlıurfa yöresel yemekler'],
+ ogImage: '/images/blog/sanliurfa-lezzetler-2026.webp',
+ canonical: '/gastronomi',
 };
 
-let featuredFoods: any[] = [];
-try {
-  const foodsResult = await query(
-    `SELECT id, slug, name, description, cover_image, is_spicy, difficulty, rating
-     FROM recipes WHERE status = 'published' ORDER BY is_featured DESC, rating DESC NULLS LAST LIMIT 4`
-  );
-  featuredFoods = foodsResult.rows.map((f: any) => ({
-    id: f.slug,
-    name: f.name,
-    description: f.description || '',
-    image: f.cover_image || '/images/foods/default.jpg',
-    isSpicy: f.is_spicy || false,
-    difficulty: f.difficulty || '',
-    rating: parseFloat(f.rating) || 0,
-  }));
-} catch (e) {
-  console.error('Error loading featured foods:', e);
-}
-
 const faqItems = [
-  {
-    S: 'Şanlıurfa\'nın en meşhur yemekleri neler?',
-    C: 'Şanlıurfa mutfağının başında çiğ köfte, Urfa kebabı, tandır ciğeri, lahmacun ve borani gelmektedir. İsot (kurutulmuş kırmızı biber), Urfa mutfağının vazgeçilmez lezzetidir.',
-  },
-  {
-    S: 'Şanlıurfa mutfağı neden ünlüdür?',
-    C: 'Mezopotamya\'nın merkezinde yer alan Şanlıurfa, binlerce yıllık yemek kültürüne ev sahipliği yapar. Baharatlı et yemekleri, tahıl bazlı tarifler ve yöresel tatlılarıyla UNESCO Gastronomi Şehri adayları arasındadır.',
-  },
-  {
-    S: 'Şanlıurfa\'da isot nereden alınır?',
-    C: 'İsot, Şanlıurfa\'nın kapalı çarşısı ve tarihi Gümrük Hanı çevresindeki aktarlardan ve yöresel ürün dükkanlarından satın alınabilir.',
-  },
+ {
+  S: "Şanlıurfa'nın en meşhur yemekleri neler?",
+  C: "Şanlıurfa mutfağının başında çiğ köfte, Urfa kebabı, tandır ciğeri, lahmacun ve borani gelmektedir. İsot (kurutulmuş kırmızı biber) Urfa mutfağının vazgeçilmez lezzetidir; kebaptan çorbalara kadar pek çok yemekte bölgeye özgü bu baharat belirleyici bir rol üstlenir.",
+ },
+ {
+  S: 'Şanlıurfa mutfağı neden ünlüdür?',
+  C: "Mezopotamya'nın merkezinde yer alan Şanlıurfa, binlerce yıllık yemek kültürüne ev sahipliği yapar. Baharatlı et yemekleri, tahıl bazlı tarifler ve yöresel tatlılarıyla UNESCO Gastronomi Şehri adayları arasındadır. Yöresel ürünler ve geleneksel tarif aktarımı kültürel mirasın canlı bir parçasıdır.",
+ },
+ {
+  S: "Şanlıurfa'da isot nereden alınır?",
+  C: "İsot, Şanlıurfa'nın kapalı çarşısı ve tarihi Gümrük Hanı çevresindeki aktarlardan ve yöresel ürün dükkanlarından satın alınabilir. Hasat sonrası kurutulup öğütülen isot'u taze veya yağda işlenmiş olarak tercih edebilirsiniz; her iki formda da şehrin pek çok pazarında kolayca bulunur.",
+ },
+ {
+  S: "Şanlıurfa'da gastronomi turu için en iyi zaman ne zaman?",
+  C: "İlkbahar ve sonbahar ayları Şanlıurfa gastronomi turu için en uygun mevsimdir. Açık hava lezzetlerini ve pazar atmosferini birlikte yaşamak için Mart–Mayıs ile Eylül–Kasım dönemleri önerilir. Yaz aylarında ise geleneksel sıra gecelerinde yöresel yemek kültürünü daha samimi bir ortamda deneyimleyebilirsiniz.",
+ },
 ];
 ---
 
-
 <Layout seo={seo}>
-  <section class="relative py-24 lg:py-32 bg-gradient-to-br from-urfa-800 to-urfa-900 overflow-hidden">
-    <div class="absolute inset-0 opacity-10">
-      <img src="/images/foods/pattern.jpg" alt="" class="w-full h-full object-cover" />
-    </div>
-    <div class="relative container-custom">
-      <div class="max-w-3xl">
-        <span class="inline-flex items-center gap-2 px-4 py-2 bg-isot-500/20 rounded-full text-isot-300 text-sm mb-6">
-          <span set:html={icons.ChefHat}></span>
-          2029 Gastronomi Şehri Adayı
-        </span>
-        <h1 class="text-4xl lg:text-6xl font-display font-bold text-white mb-6">
-          Şanlıurfa<br />
-          <span class="text-urfa-200">Gastronomi Rehberi</span>
-        </h1>
-        <p class="text-xl text-urfa-100 mb-8 leading-relaxed">
-          UNESCO Gastronomi Şehri adayı Şanlıurfa’nın dünyaca ünlü mutfağını keşfedin.
-        </p>
-        <div class="flex flex-wrap gap-4">
-          <a href="#yemekler" class="btn-accent">
-            Lezzetleri Keşfet
-            <span set:html={icons.ArrowRight}></span>
-          </a>
-          <a href="#restoranlar" class="btn bg-white/10 text-white hover:bg-white/20">
-            En İyi Restoranlar
-          </a>
-        </div>
-      </div>
-      
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
-        <div class="text-center">
-          <div class="text-4xl font-bold text-white">100+</div>
-          <div class="text-urfa-200">Yöresel Yemek</div>
-        </div>
-        <div class="text-center">
-          <div class="text-4xl font-bold text-white">{restaurantCount}+</div>
-          <div class="text-urfa-200">Restoran</div>
-        </div>
-        <div class="text-center">
-          <div class="text-4xl font-bold text-white">12</div>
-          <div class="text-urfa-200">Yıllık Festival</div>
-        </div>
-        <div class="text-center">
-          <div class="text-4xl font-bold text-white">4.9</div>
-          <div class="text-urfa-200">Ortalama Puan</div>
-        </div>
-      </div>
-    </div>
-  </section>
-  
-  <section id="yemekler" class="section bg-white dark:bg-gray-900">
-    <div class="container-custom">
-      <div class="text-center max-w-2xl mx-auto mb-12">
-        <span class="inline-flex items-center gap-2 text-isot-600 font-medium mb-2">
-          <span set:html={icons.Utensils}></span>
-          Yöresel Lezzetler
-        </span>
-        <h2 class="section-title dark:text-white">Efsane Lezzetler</h2>
-        <p class="section-subtitle dark:text-gray-400">
-          Şanlıurfa mutfağının vazgeçilmez lezzetlerini keşfedin.
-        </p>
-      </div>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {featuredFoods.map((food) => (
-          <article class="card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden group">
-            <a href={`/yemek-tarifleri/${food.id}`}>
-              <div class="relative aspect-square overflow-hidden">
-                <img 
-                  src={food.image}
-                  alt={food.name}
-                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  loading="lazy"
-                />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                
-                {food.isSpicy && (
-                  <div class="absolute top-3 left-3">
-                    <span class="badge bg-isot-600 text-white flex items-center gap-1">
-                      <span set:html={icons.Flame}></span>
-                      Acılı
-                    </span>
-                  </div>
-                )}
-                
-                <div class="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 class="font-display font-bold text-xl text-white">{food.name}</h3>
-                  <div class="flex items-center gap-3 mt-2 text-sm text-white/80">
-                    <span class="flex items-center gap-1">
-                      <span set:html={icons.Star}></span>
-                      {food.rating}
-                    </span>
-                    <span>•</span>
-                    <span>{food.difficulty}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="p-4">
-                <p class="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">{food.description}</p>
-              </div>
-            </a>
-          </article>
-        ))}
-      </div>
-    </div>
-  </section>
-  
-  <section id="restoranlar" class="section bg-gray-50 dark:bg-gray-800">
-    <div class="container-custom">
-      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-10">
-        <div>
-          <span class="inline-flex items-center gap-2 text-urfa-600 font-medium mb-2">
-            <span set:html={icons.ChefHat}></span>
-            Restoranlar
-          </span>
-          <h2 class="section-title dark:text-white">En İyi Restoranlar</h2>
-          <p class="section-subtitle max-w-2xl dark:text-gray-400">
-            Usta ellerden çıkan, geleneksel tariflerle hazırlanan lezzetleri sunan en iyi restoranlar.
-          </p>
-        </div>
-        <a href="/mekanlar?category=restaurant" class="btn-outline inline-flex items-center gap-2">
-          Tüm Restoranları Gör
-          <span set:html={icons.ArrowRight}></span>
-        </a>
-      </div>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {restaurants?.map((restaurant) => (
-          <article class="card-hover bg-white dark:bg-gray-800 rounded-xl overflow-hidden group">
-            <a href={`/isletme/${restaurant.slug}`}>
-              <div class="relative aspect-video overflow-hidden">
-                <img 
-                  src={restaurant.images?.[0] || '/images/placeholder-place.jpg'}
-                  alt={restaurant.name}
-                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  loading="lazy"
-                />
-                <div class="absolute top-3 right-3">
-                  <div class="flex items-center gap-1 bg-white/90 dark:bg-gray-800/90 px-2 py-1 rounded-lg">
-                    <span set:html={icons.Star}></span>
-                    <span class="font-semibold text-sm text-gray-900 dark:text-white">{restaurant.rating || '4.5'}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="p-5">
-                <h3 class="font-semibold text-gray-900 dark:text-white group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors">
-                  {restaurant.name}
-                </h3>
-                <p class="text-sm text-urfa-600 dark:text-urfa-400 mt-1 flex items-center gap-1">
-                  <span set:html={icons.MapPin}></span>
-                  {restaurant.address}
-                </p>
-                <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                  {restaurant.review_count || 0} değerlendirme
-                </p>
-              </div>
-            </a>
-          </article>
-        ))}
-        
-        {(!restaurants || restaurants.length === 0) && (
-          <div class="col-span-full text-center py-12 text-gray-500 dark:text-gray-400">
-            Henüz restoran bulunmuyor.
-          </div>
-        )}
-      </div>
-    </div>
-  </section>
+ <style is:inline>
+ .gs-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+ .gs-hero-inner{max-width:52rem;margin:0 auto}
+ .gs-eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--public-muted);margin-bottom:.75rem}
+ .gs-badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem 1rem;background:rgba(184,115,51,.08);border:1px solid rgba(184,115,51,.18);font-size:.82rem;color:var(--public-accent);margin-bottom:1.5rem}
+ .gs-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2.5rem,6vw,4rem);font-weight:600;color:var(--public-text);margin-bottom:1.5rem;line-height:1.15}
+ .gs-h1-sub{color:var(--public-accent)}
+ .gs-sub{font-size:.95rem;color:var(--public-muted);max-width:38rem;line-height:1.8;margin-bottom:2rem}
+ .gs-hero-btns{display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:3rem}
+ .gs-btn-primary{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.5rem;background:var(--public-accent);color:var(--public-text);font-size:.85rem;font-weight:600;transition:background .15s,color .15s}
+ .gs-btn-primary:hover{background:var(--public-accent-strong);color:#fff}
+ .gs-btn-ghost{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.5rem;background:transparent;border:1px solid rgba(192,87,31,.35);color:var(--public-text);font-size:.85rem;font-weight:600;transition:background .15s,border-color .15s}
+ .gs-btn-ghost:hover{background:rgba(192,87,31,.08);border-color:rgba(192,87,31,.6)}
+ .gs-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem}
+ .gs-stat-val{font-size:2.25rem;font-weight:700;color:var(--public-text)}
+ .gs-stat-label{font-size:.8rem;color:var(--public-muted)}
+ .gs-section{padding:3rem 0}
+ .gs-section-header{text-align:center;max-width:36rem;margin:0 auto 2.5rem}
+ .gs-section-eyebrow{display:inline-flex;align-items:center;gap:.4rem;font-size:.82rem;color:var(--public-accent);font-weight:600;margin-bottom:.4rem}
+ .gs-section-title{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:600;color:var(--public-text)}
+ .gs-section-sub{font-size:.82rem;color:var(--public-muted);margin-top:.35rem}
+ .gs-restaurants{border-top:1px solid rgba(184,115,51,.12);background:var(--bg-card);padding:3rem 0}
+ .gs-restaurants-header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:2.5rem}
+ .gs-restaurants-title{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:600;color:var(--public-text)}
+ .gs-restaurants-sub{font-size:.82rem;color:var(--public-muted);max-width:36rem;margin-top:.35rem}
+ .gs-all-link{display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1rem;border:1px solid rgba(184,115,51,.25);color:var(--public-muted);font-size:.8rem;transition:border-color .15s,color .15s;flex-shrink:0}
+ .gs-all-link:hover{border-color:var(--public-accent);color:var(--public-accent)}
+ .gs-rest-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+ .gs-rest-card{background:var(--bg);border:1px solid rgba(184,115,51,.14);overflow:hidden;transition:border-color .15s}
+ .gs-rest-card:hover{border-color:var(--public-accent)}
+ .gs-rest-img-wrap{position:relative;aspect-ratio:16/9;overflow:hidden}
+ .gs-rest-img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+ .gs-rest-card:hover .gs-rest-img{transform:scale(1.06)}
+ .gs-rest-rating{position:absolute;top:.6rem;right:.6rem;display:flex;align-items:center;gap:.3rem;background:rgba(13,10,8,.85);padding:.2rem .55rem;font-size:.78rem;font-weight:600;color:var(--public-text)}
+ .gs-rest-body{padding:1rem}
+ .gs-rest-name{font-size:.92rem;font-weight:700;color:var(--public-text);margin-bottom:.25rem;transition:color .15s}
+ .gs-rest-card:hover .gs-rest-name{color:var(--public-accent)}
+ .gs-rest-addr{display:flex;align-items:center;gap:.3rem;font-size:.75rem;color:var(--public-accent);margin-bottom:.35rem}
+ .gs-rest-reviews{font-size:.72rem;color:var(--public-text-soft)}
+ .gs-empty{color:var(--public-muted);font-size:.85rem;padding:3rem 1rem;text-align:center}
+ </style>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: 'Şanlıurfa Gastronomi Rehberi',
-    description: 'Şanlıurfa\'nın en iyi restoranları, kebapçıları ve yöresel lezzetleri',
-    url: `${baseUrl}/gastronomi`,
-    itemListElement: restaurants.slice(0, 10).map((r: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'Restaurant',
-        name: r.name,
-        url: `${baseUrl}/isletme/${r.slug}`,
-        address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' },
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Gastronomi', item: `${baseUrl}/gastronomi` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <!-- Hero -->
+ <div class="gs-hero">
+ <div class="sf-container">
+ <div class="gs-hero-inner">
+ <p class="gs-eyebrow">Gastronomi Rehberi</p>
+ <div class="gs-badge">
+ <Icon name="lucide:chef-hat" style="width:1rem;height:1rem" />
+ 2029 Gastronomi Şehri Adayı
+ </div>
+ <h1 class="gs-h1">
+ Şanlıurfa<br />
+ <span class="gs-h1-sub">Gastronomi Rehberi</span>
+ </h1>
+ <p class="gs-sub">UNESCO Gastronomi Şehri adayı Şanlıurfa'nın dünyaca ünlü mutfağını keşfedin.</p>
+ <div class="gs-hero-btns">
+ <a href="#yemekler" class="gs-btn-primary">
+ Lezzetleri Keşfet
+ <Icon name="lucide:arrow-right" style="width:1rem;height:1rem" />
+ </a>
+ <a href="#restoranlar" class="gs-btn-ghost">En İyi Restoranlar</a>
+ </div>
+ <div class="gs-stats">
+ <div>
+ <div class="gs-stat-val">100+</div>
+ <div class="gs-stat-label">Yöresel Yemek</div>
+ </div>
+ <div>
+ <div class="gs-stat-val">{restaurantCount}+</div>
+ <div class="gs-stat-label">Restoran</div>
+ </div>
+ <div>
+ <div class="gs-stat-val">12</div>
+ <div class="gs-stat-label">Yıllık Festival</div>
+ </div>
+ <div>
+ <div class="gs-stat-val">4.9</div>
+ <div class="gs-stat-label">Ortalama Puan</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <!-- Yöresel Lezzetler -->
+ <section id="yemekler" class="gs-section" style="background:var(--bg)">
+ <div class="sf-container">
+ <div class="gs-section-header">
+ <div class="gs-section-eyebrow">
+ <Icon name="lucide:utensils" style="width:1rem;height:1rem" />
+ Yöresel Lezzetler
+ </div>
+ <h2 class="gs-section-title">Efsane Lezzetler</h2>
+ <p class="gs-section-sub">Şanlıurfa mutfağının vazgeçilmez lezzetlerini keşfedin.</p>
+ </div>
+
+ <FeaturedFoods />
+ </div>
+ </section>
+
+ <!-- Restoranlar -->
+ <section id="restoranlar" class="gs-restaurants">
+ <div class="sf-container">
+ <div class="gs-restaurants-header">
+ <div>
+ <div class="gs-section-eyebrow">
+ <Icon name="lucide:chef-hat" style="width:1rem;height:1rem" />
+ Restoranlar
+ </div>
+ <h2 class="gs-restaurants-title">En İyi Restoranlar</h2>
+ <p class="gs-restaurants-sub">Usta ellerden çıkan, geleneksel tariflerle hazırlanan lezzetleri sunan en iyi restoranlar.</p>
+ </div>
+ <a href="/mekanlar?category=restaurant" class="gs-all-link">
+ Tüm Restoranları Gör
+ <Icon name="lucide:arrow-right" style="width:.9rem;height:.9rem" />
+ </a>
+ </div>
+
+ <div class="gs-rest-grid">
+ {restaurants?.map((restaurant) => (
+ <a href={`/isletme/${restaurant.slug}`} class="gs-rest-card">
+ <div class="gs-rest-img-wrap">
+<Image
+ src={resolvePlaceImage(restaurant)}
+ alt={restaurant.name}
+ class="gs-rest-img"
+ loading="lazy"
+ width={480}
+ height={270}
+ />
+ <div class="gs-rest-rating">
+ <Icon name="lucide:star" style="width:.85rem;height:.85rem;color:var(--public-accent)" />
+ {restaurant.rating || '4.5'}
+ </div>
+ </div>
+ <div class="gs-rest-body">
+ <p class="gs-rest-name">{restaurant.name}</p>
+ <p class="gs-rest-addr">
+ <Icon name="lucide:map-pin" style="width:.75rem;height:.75rem" />
+ {restaurant.address}
+ </p>
+ <p class="gs-rest-reviews">{restaurant.review_count || 0} değerlendirme</p>
+ </div>
+ </a>
+ ))}
+ {(!restaurants || restaurants.length === 0) && (
+ <p class="gs-empty">Henüz restoran bulunmuyor.</p>
+ )}
+ </div>
+ </div>
+ </section>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'ItemList',
+ name: 'Şanlıurfa Gastronomi Rehberi',
+ description: "Şanlıurfa'nın en iyi restoranları, kebapçıları ve yöresel lezzetleri",
+ url: `${baseUrl}/gastronomi`,
+ itemListElement: restaurants.slice(0, 10).map((r: any, i: number) => ({
+ '@type': 'ListItem',
+ position: i + 1,
+ item: {
+ '@type': 'Restaurant',
+ name: r.name,
+ url: `${baseUrl}/isletme/${r.slug}`,
+ address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' },
+ },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Gastronomi', item: `${baseUrl}/gastronomi` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

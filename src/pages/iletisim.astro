@@ -1,291 +1,216 @@
 ---
-
 import Layout from '../layouts/Layout.astro';
 import { actions, isInputError } from 'astro:actions';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../lib/public-app-url';
+
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'İletişim - Sanliurfa.com',
-  description: 'Bize ulaşın, işletmenizi ekleyin veya destek alın. Sanliurfa.com ekibi size yardımcı olmaya hazır.',
-  keywords: ['sanliurfa.com iletişim', 'şanlıurfa rehber destek', 'urfa mekan ekle', 'sanliurfa.com yardım'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/iletisim',
+ title: 'İletişim — Sanliurfa.com',
+ description: 'Bize ulaşın, işletmenizi ekleyin veya destek alın. Sanliurfa.com ekibi size yardımcı olmaya hazır.',
+ keywords: ['sanliurfa.com iletişim', 'şanlıurfa rehber destek', 'urfa mekan ekle'],
+ ogImage: '/images/blog/urfa-tarihi.webp',
+ canonical: '/iletisim',
 };
 
 const contactInfo = [
-  {
-    icon: '📧',
-    title: 'E-posta',
-    value: 'info@sanliurfa.com',
-    link: 'mailto:info@sanliurfa.com',
-  },
-  {
-    icon: '📱',
-    title: 'Telefon',
-    value: '+90 (414) 123 45 67',
-    link: 'tel:+904141234567',
-  },
-  {
-    icon: '📍',
-    title: 'Adres',
-    value: 'Eyyübiye, Şanlıurfa',
-    link: '#',
-  },
-  {
-    icon: '💼',
-    title: 'İşletme Başvurusu',
-    value: 'business@sanliurfa.com',
-    link: 'mailto:business@sanliurfa.com',
-  },
+ { icon: '📧', title: 'E-posta', value: 'info@sanliurfa.com', link: 'mailto:info@sanliurfa.com' },
+ { icon: '📱', title: 'Telefon', value: '+90 (414) 123 45 67', link: 'tel:+904141234567' },
+ { icon: '📍', title: 'Adres', value: 'Eyyübiye, Şanlıurfa', link: '#' },
+ { icon: '💼', title: 'İşletme Başvurusu', value: 'business@sanliurfa.com', link: 'mailto:business@sanliurfa.com' },
 ];
 
 const contactTypes = [
-  { value: 'general', label: 'Genel Bilgi' },
-  { value: 'business_inquiry', label: 'İşletme Başvurusu' },
-  { value: 'technical_support', label: 'Teknik Destek' },
-  { value: 'complaint', label: 'Şikayet' },
-  { value: 'suggestion', label: 'Öneri' },
-  { value: 'partnership', label: 'İşbirliği' },
+ { value: 'general', label: 'Genel Bilgi' },
+ { value: 'business_inquiry', label: 'İşletme Başvurusu' },
+ { value: 'technical_support', label: 'Teknik Destek' },
+ { value: 'complaint', label: 'Şikayet' },
+ { value: 'suggestion', label: 'Öneri' },
+ { value: 'partnership', label: 'İşbirliği' },
 ];
 
 const contactResult = Astro.getActionResult(actions.submitContactRequest);
 const contactInputErrors = isInputError(contactResult?.error) ? contactResult.error.fields : {};
 const contactSubmitError =
-  !isInputError(contactResult?.error) && contactResult?.error?.message
-    ? contactResult.error.message
-    : null;
+ !isInputError(contactResult?.error) && contactResult?.error?.message
+ ? contactResult.error.message
+ : null;
+
 const faqItems = [
-  { S: 'Sanliurfa.com ile nasıl iletişime geçebilirim?', C: 'İletişim formunu doldurup mesajınızı gönderebilir veya info@sanliurfa.com adresine e-posta atabilirsiniz.' },
-  { S: 'İşletmemi siteye nasıl ekleyebilirim?', C: 'İşletme Ekle sayfasından başvurunuzu ücretsiz olarak yapabilirsiniz. Başvurular incelendikten sonra yayına alınır.' },
-  { S: 'Yanlış bilgi bildirmek istiyorum, ne yapmalıyım?', C: 'İletişim formu üzerinden yanlış bilgi içeren mekanı ve doğru bilgiyi belirterek bize ulaşabilirsiniz.' },
+ { S: 'Sanliurfa.com ile nasıl iletişime geçebilirim?', C: 'İletişim formunu doldurup mesajınızı gönderebilir veya info@sanliurfa.com adresine e-posta atabilirsiniz.' },
+ { S: 'İşletmemi siteye nasıl ekleyebilirim?', C: 'İşletme Ekle sayfasından başvurunuzu ücretsiz olarak yapabilirsiniz. Başvurular incelendikten sonra yayına alınır.' },
+ { S: 'Yanlış bilgi bildirmek istiyorum, ne yapmalıyım?', C: 'İletişim formu üzerinden yanlış bilgi içeren mekanı ve doğru bilgiyi belirterek bize ulaşabilirsiniz.' },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gradient-to-b from-gray-50 to-white pt-20 pb-12">
-    <div class="container mx-auto px-4">
-      {/* Header */}
-      <div class="text-center max-w-2xl mx-auto mb-12">
-        <h1 class="text-4xl font-bold text-gray-900 mb-4">Bize Ulaşın</h1>
-        <p class="text-gray-600 text-lg">
-          Sorularınız mı var? İşletmenizi mi eklemek istiyorsunuz? 
-          Veya önerileriniz mi var? Size yardımcı olmaktan memnuniyet duyarız.
-        </p>
-      </div>
+ <style is:inline>
+ .ct-hero{padding:5rem 0 3rem;border-bottom:1px solid rgba(184,115,51,.1)}
+ .ct-eyebrow{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--public-accent);margin-bottom:.75rem}
+ .ct-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,4vw,3rem);font-weight:600;color:var(--public-text);line-height:1.15}
+ .ct-sub{font-size:.9rem;color:var(--public-muted);line-height:1.7;margin-top:.5rem;max-width:480px}
+ .ct-layout{display:grid;grid-template-columns:1fr;gap:2rem;padding:3rem 0 5rem}
+ @media(min-width:1024px){.ct-layout{grid-template-columns:1fr 280px}}
+ /* Form */
+ .ct-card{background:var(--bg-card);border:1px solid var(--border);padding:1.75rem}
+ .ct-card-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:var(--public-text);margin-bottom:1.5rem}
+ .ct-lbl{display:block;font-size:.75rem;font-weight:600;color:var(--public-accent);margin-bottom:.4rem;letter-spacing:.03em}
+ .ct-input{width:100%;padding:.65rem 1rem;background:rgba(255,255,255,.03);border:1px solid rgba(184,115,51,.2);color:var(--public-text);border-radius:.125rem;font-size:.875rem;font-family:inherit;transition:border-color .15s}
+ .ct-input:focus{outline:none;border-color:var(--public-accent)}
+ .ct-input::placeholder{color:var(--public-text-soft)}
+ .ct-field{margin-bottom:1rem}
+ .ct-field-err{font-size:.72rem;color:#E08090;margin-top:.3rem}
+ .ct-err{background:rgba(199,58,71,.1);border:1px solid rgba(199,58,71,.25);color:#E08090;padding:.75rem 1rem;border-radius:.125rem;font-size:.82rem;margin-bottom:1.25rem}
+ .ct-ok{background:rgba(23,184,166,.1);border:1px solid rgba(23,184,166,.25);color:#5ECFC6;padding:.75rem 1rem;border-radius:.125rem;font-size:.82rem;margin-bottom:1.25rem}
+ .ct-row2{display:grid;grid-template-columns:1fr;gap:1rem}
+ @media(min-width:600px){.ct-row2{grid-template-columns:1fr 1fr}}
+ .ct-submit{width:100%;padding:.75rem;margin-top:.5rem;font-size:.875rem}
+ .ct-privacy{text-align:center;font-size:.72rem;color:var(--public-text-soft);margin-top:.75rem}
+ .ct-privacy a{color:var(--public-accent)}.ct-privacy a:hover{color:var(--public-text)}
+ /* Sidebar */
+ .ct-side{display:flex;flex-direction:column;gap:1.25rem}
+ .ct-info-item{display:flex;align-items:flex-start;gap:.85rem;padding:.65rem 0;border-bottom:1px solid rgba(184,115,51,.08);text-decoration:none;transition:opacity .15s}
+ .ct-info-item:last-child{border-bottom:none}
+ .ct-info-item:hover{opacity:.8}
+ .ct-info-icon{font-size:1.25rem;flex-shrink:0;width:1.5rem;text-align:center;margin-top:.1rem}
+ .ct-info-title{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--public-accent);margin-bottom:.2rem}
+ .ct-info-val{font-size:.82rem;color:var(--public-accent)}
+ .ct-biz{background:rgba(184,115,51,.06);border:1px solid rgba(184,115,51,.18);padding:1.5rem}
+ .ct-biz-title{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--public-text);margin-bottom:.5rem}
+ .ct-biz-desc{font-size:.8rem;color:var(--public-muted);line-height:1.6;margin-bottom:1rem}
+ /* FAQ */
+ .ct-faq{border-top:1px solid rgba(184,115,51,.1);margin-top:3rem}
+ .ct-faq-lbl{font-size:.65rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--public-accent);margin-bottom:1.5rem;padding-top:3rem;display:block}
+ .ct-faq details{border-bottom:1px solid rgba(184,115,51,.08)}
+ .ct-faq summary{padding:.95rem 0;font-size:.9rem;font-weight:600;color:var(--public-accent);cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;transition:color .15s}
+ .ct-faq summary:hover{color:var(--public-text)}
+ .ct-faq summary::after{content:'↓';font-size:.7rem;color:var(--public-accent);transition:transform .2s;flex-shrink:0}
+ .ct-faq details[open] summary::after{transform:rotate(180deg)}
+ .ct-faq-ans{padding:0 0 1rem;font-size:.85rem;color:var(--public-muted);line-height:1.7}
+ </style>
 
-      <div class="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {/* Contact Form */}
-        <div class="lg:col-span-2">
-          <div class="bg-white rounded-2xl shadow-lg p-8">
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">Mesaj Gönderin</h2>
-            {contactResult?.data?.success && (
-              <div class="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
-                Mesajınız alındı. Talep numarası: {contactResult.data.ticket.ticketNumber || contactResult.data.ticket.id}
-              </div>
-            )}
+ <!-- Hero -->
+ <div class="ct-hero">
+ <div class="sf-container">
+ <p class="ct-eyebrow">İletişim</p>
+ <h1 class="ct-h1">Bize Ulaşın</h1>
+ <p class="ct-sub">Sorularınız, önerileriniz veya işletme başvurusu için aşağıdaki formu kullanın.</p>
+ </div>
+ </div>
 
-            {contactSubmitError && (
-              <div class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                {contactSubmitError}
-              </div>
-            )}
+ <!-- Content -->
+ <div class="sf-container">
+ <div class="ct-layout">
+ <!-- Form -->
+ <div>
+ <div class="ct-card">
+ <p class="ct-card-title">Mesaj Gönderin</p>
 
-            <form action={actions.submitContactRequest} method="POST" class="space-y-5">
-              <div class="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Adınız Soyadınız *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    placeholder="Örn: Ahmet Yılmaz"
-                  />
-                  {contactInputErrors.name && (
-                    <p class="mt-2 text-sm text-red-600">{contactInputErrors.name.join(', ')}</p>
-                  )}
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">E-posta Adresiniz *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    placeholder="ornek@email.com"
-                  />
-                  {contactInputErrors.email && (
-                    <p class="mt-2 text-sm text-red-600">{contactInputErrors.email.join(', ')}</p>
-                  )}
-                </div>
-              </div>
+ {contactResult?.data?.success && (
+ <div class="ct-ok">
+ Mesajınız alındı. Talep numarası: {contactResult.data.ticket?.ticketNumber || contactResult.data.ticket?.id}
+ </div>
+ )}
+ {contactSubmitError && <div class="ct-err">{contactSubmitError}</div>}
 
-              <div class="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Telefon (İsteğe bağlı)</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                    placeholder="5XX XXX XX XX"
-                  />
-                  {contactInputErrors.phone && (
-                    <p class="mt-2 text-sm text-red-600">{contactInputErrors.phone.join(', ')}</p>
-                  )}
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Konu Tipi *</label>
-                  <select
-                    name="type"
-                    required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  >
-                    {contactTypes.map(type => (
-                      <option value={type.value}>{type.label}</option>
-                    ))}
-                  </select>
-                  {contactInputErrors.type && (
-                    <p class="mt-2 text-sm text-red-600">{contactInputErrors.type.join(', ')}</p>
-                  )}
-                </div>
-              </div>
+ <form action={actions.submitContactRequest} method="POST">
+ <div class="ct-row2">
+ <div class="ct-field">
+ <label class="ct-lbl">Adınız Soyadınız *</label>
+ <input type="text" name="name" required class="ct-input" placeholder="Ahmet Yılmaz" />
+ {contactInputErrors.name && <p class="ct-field-err">{contactInputErrors.name.join(', ')}</p>}
+ </div>
+ <div class="ct-field">
+ <label class="ct-lbl">E-posta *</label>
+ <input type="email" name="email" required autocomplete="email" class="ct-input" placeholder="ornek@email.com" />
+ {contactInputErrors.email && <p class="ct-field-err">{contactInputErrors.email.join(', ')}</p>}
+ </div>
+ </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Konu Başlığı *</label>
-                <input
-                  type="text"
-                  name="subject"
-                  required
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                  placeholder="Mesajınızın konusu..."
-                />
-                {contactInputErrors.subject && (
-                  <p class="mt-2 text-sm text-red-600">{contactInputErrors.subject.join(', ')}</p>
-                )}
-              </div>
+ <div class="ct-row2">
+ <div class="ct-field">
+ <label class="ct-lbl">Telefon (İsteğe bağlı)</label>
+ <input type="tel" name="phone" autocomplete="tel" class="ct-input" placeholder="5XX XXX XX XX" />
+ {contactInputErrors.phone && <p class="ct-field-err">{contactInputErrors.phone.join(', ')}</p>}
+ </div>
+ <div class="ct-field">
+ <label class="ct-lbl">Konu Tipi *</label>
+ <select name="type" required class="ct-input">
+ {contactTypes.map(t => <option value={t.value}>{t.label}</option>)}
+ </select>
+ {contactInputErrors.type && <p class="ct-field-err">{contactInputErrors.type.join(', ')}</p>}
+ </div>
+ </div>
 
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Mesajınız *</label>
-                <textarea
-                  name="message"
-                  required
-                  rows="5"
-                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
-                  placeholder="Mesajınızı buraya yazın..."
-                ></textarea>
-                {contactInputErrors.message && (
-                  <p class="mt-2 text-sm text-red-600">{contactInputErrors.message.join(', ')}</p>
-                )}
-              </div>
+ <div class="ct-field">
+ <label class="ct-lbl">Konu Başlığı *</label>
+ <input type="text" name="subject" required class="ct-input" placeholder="Mesajınızın konusu…" />
+ {contactInputErrors.subject && <p class="ct-field-err">{contactInputErrors.subject.join(', ')}</p>}
+ </div>
 
-              <button
-                type="submit"
-                class="w-full py-3 bg-gradient-to-r from-red-600 to-orange-500 text-white font-semibold rounded-lg hover:from-red-700 hover:to-orange-600 transition-all"
-              >
-                Mesajı Gönder
-              </button>
+ <div class="ct-field">
+ <label class="ct-lbl">Mesajınız *</label>
+ <textarea name="message" required rows="5" class="ct-input" style="resize:none" placeholder="Mesajınızı buraya yazın…"></textarea>
+ {contactInputErrors.message && <p class="ct-field-err">{contactInputErrors.message.join(', ')}</p>}
+ </div>
 
-              <p class="text-xs text-gray-500 text-center">
-                Mesaj göndererek <a href="/gizlilik-politikasi" class="text-red-600 hover:underline">gizlilik politikamızı</a> kabul etmiş olursunuz.
-              </p>
-            </form>
-          </div>
-        </div>
+ <button type="submit" class="sf-btn-primary ct-submit">Mesajı Gönder</button>
+ <p class="ct-privacy">
+ Mesaj göndererek <a href="/gizlilik-politikasi">gizlilik politikamızı</a> kabul etmiş olursunuz.
+ </p>
+ </form>
+ </div>
 
-        {/* Contact Info Sidebar */}
-        <div class="space-y-6">
-          <div class="bg-white rounded-2xl shadow-lg p-6">
-            <h3 class="font-bold text-gray-900 mb-4">İletişim Bilgileri</h3>
-            <div class="space-y-4">
-              {contactInfo.map((item) => (
-                <a
-                  href={item.link}
-                  class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <span class="text-2xl">{item.icon}</span>
-                  <div>
-                    <div class="font-medium text-gray-900">{item.title}</div>
-                    <div class="text-gray-600 text-sm">{item.value}</div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
+ <!-- FAQ -->
+ <div class="ct-faq">
+ <span class="ct-faq-lbl">Sık Sorulan Sorular</span>
+ {faqItems.map(item => (
+ <details>
+ <summary>{item.S}</summary>
+ <p class="ct-faq-ans">{item.C}</p>
+ </details>
+ ))}
+ </div>
+ </div>
 
-          {/* Business CTA */}
-          <div class="bg-gradient-to-br from-red-600 to-orange-500 rounded-2xl shadow-lg p-6 text-white">
-            <h3 class="font-bold text-xl mb-2">İşletmenizi Ekleyin</h3>
-            <p class="text-red-100 text-sm mb-4">
-              Sanliurfa.com'da yer alın, binlerce potansiyel müşteriye ulaşın.
-            </p>
-            <a
-              href="/isletme-kayit"
-              class="inline-block px-4 py-2 bg-white text-red-600 rounded-lg font-medium hover:bg-red-50 transition-colors"
-            >
-              Hemen Başvurun →
-            </a>
-          </div>
+ <!-- Sidebar -->
+ <aside class="ct-side">
+ <div class="ct-card">
+ <p class="ct-card-title" style="font-size:1rem;margin-bottom:1rem">İletişim Bilgileri</p>
+ {contactInfo.map(item => (
+ <a href={item.link} class="ct-info-item">
+ <span class="ct-info-icon" aria-hidden="true">{item.icon}</span>
+ <div>
+ <p class="ct-info-title">{item.title}</p>
+ <p class="ct-info-val">{item.value}</p>
+ </div>
+ </a>
+ ))}
+ </div>
 
-          {/* FAQ Link */}
-          <div class="bg-white rounded-2xl shadow-lg p-6">
-            <h3 class="font-bold text-gray-900 mb-2">Sıkça Sorulan Sorular</h3>
-            <p class="text-gray-600 text-sm mb-4">
-              Hızlı cevaplar için SSS sayfamıza göz atın.
-            </p>
-            <a
-              href="/sss"
-              class="text-red-600 font-medium hover:underline"
-            >
-              SSS'yi Görüntüle →
-            </a>
-          </div>
-        </div>
-      </div>
+ <div class="ct-biz">
+ <h2 class="ct-biz-title">İşletmenizi Ekleyin</h2>
+ <p class="ct-biz-desc">Sanliurfa.com'da yer alın, binlerce potansiyel müşteriye ulaşın.</p>
+ <a href="/isletme-kayit" class="sf-btn-primary" style="width:100%;justify-content:center">Hemen Başvurun</a>
+ </div>
+ </aside>
+ </div>
+ </div>
 
-      {/* Map Section */}
-      <div class="max-w-6xl mx-auto mt-12">
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div class="aspect-[21/9] bg-gray-100 flex items-center justify-center">
-            <div class="text-center text-gray-400">
-              <div class="text-6xl mb-4">🗺️</div>
-              <p>Harita entegrasyonu burada görüntülenecek</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'ContactPage',
-    name: 'Sanliurfa.com İletişim',
-    url: `${baseUrl}/iletisim`,
-    description: 'Sanliurfa.com ile iletişime geçin.',
-    mainEntity: {
-      '@type': 'Organization',
-      name: 'Sanliurfa.com',
-      url: `${baseUrl}`,
-      email: 'iletisim@sanliurfa.com',
-      address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' },
-    },
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'İletişim', item: `${baseUrl}/iletisim` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'ContactPage',
+ name: 'Sanliurfa.com İletişim', url: `${baseUrl}/iletisim`,
+ mainEntity: {
+ '@type': 'Organization', name: 'Sanliurfa.com', url: baseUrl,
+ email: 'iletisim@sanliurfa.com',
+ address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' },
+ },
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'FAQPage',
+ mainEntity: faqItems.map(item => ({
+ '@type': 'Question', name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

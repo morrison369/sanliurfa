@@ -1,0 +1,112 @@
+---
+/**
+ * Mobile Bottom Navigation — Şanlıurfa light tema, 5 link.
+ * Sadece <768px viewport'ta görünür. Aktif route highlight'lı.
+ *
+ * SSR-safe: Astro.url.pathname ile aktif state hesaplanır,
+ * client-side hidrasyon gerekmez.
+ */
+import { Icon } from 'astro-icon/components';
+
+const path = Astro.url.pathname;
+const isAuthenticated = Boolean(Astro.locals.user?.id);
+
+const items = [
+ { href: '/', label: 'Ana', icon: 'lucide:home', match: (p: string) => p === '/' },
+ { href: '/mekanlar', label: 'Mekanlar', icon: 'lucide:map-pin', match: (p: string) => p.startsWith('/mekanlar') || p.startsWith('/isletme') },
+ { href: '/eslesme', label: 'Eşleşme', icon: 'lucide:heart', match: (p: string) => p.startsWith('/eslesme') },
+ { href: isAuthenticated ? '/profil/bildirimler' : '/giris?redirect=/profil/bildirimler', label: 'Bildirim', icon: 'lucide:bell', match: (p: string) => p.startsWith('/profil/bildirimler') },
+ { href: isAuthenticated ? '/profil' : '/giris', label: isAuthenticated ? 'Profil' : 'Giriş', icon: isAuthenticated ? 'lucide:user' : 'lucide:log-in', match: (p: string) => p.startsWith('/profil') || p.startsWith('/giris') },
+];
+---
+
+<nav class="mbn" aria-label="Mobil ana menü">
+ {items.map((item) => {
+  const active = item.match(path);
+  return (
+   <a href={item.href} class:list={['mbn-item', active && 'mbn-item-active']} aria-current={active ? 'page' : undefined}>
+    <Icon name={item.icon} class="mbn-icon" />
+    <span class="mbn-label">{item.label}</span>
+   </a>
+  );
+ })}
+</nav>
+
+<style>
+ .mbn {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: #fff;
+  border-top: 1px solid rgba(192, 87, 31, 0.14);
+  padding: 0.4rem 0.25rem max(0.4rem, env(safe-area-inset-bottom)) 0.25rem;
+  box-shadow: 0 -4px 16px -4px rgba(31, 20, 16, 0.08);
+  backdrop-filter: saturate(180%) blur(8px);
+  -webkit-backdrop-filter: saturate(180%) blur(8px);
+ }
+
+ @media (max-width: 768px) {
+  .mbn {
+   display: flex;
+   align-items: stretch;
+   justify-content: space-around;
+  }
+ }
+
+ .mbn-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  padding: 0.45rem 0.15rem 0.4rem;
+  text-decoration: none;
+  color: #5A4030;
+  font-size: 0.65rem;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s, transform 0.1s;
+  min-height: 3rem;
+  position: relative;
+ }
+
+ .mbn-item:active {
+  transform: scale(0.96);
+ }
+
+ .mbn-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  stroke-width: 2;
+  transition: color 0.15s;
+ }
+
+ .mbn-label {
+  font-family: 'Jost', system-ui, sans-serif;
+  letter-spacing: 0.01em;
+ }
+
+ .mbn-item-active {
+  color: #C0571F;
+ }
+
+ .mbn-item-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1.4rem;
+  height: 0.18rem;
+  background: linear-gradient(90deg, #C0571F, #D49718);
+  border-radius: 0 0 4px 4px;
+ }
+
+ .mbn-item-active .mbn-icon {
+  color: #C0571F;
+ }
+</style>

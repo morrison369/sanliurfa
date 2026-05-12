@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../../lib/api';
+import { invalidateNotification } from '../../../../lib/cache/invalidation';
 
 // Mark notification as read
 export const POST: APIRoute = async ({ params, locals }) => {
@@ -23,15 +24,15 @@ export const POST: APIRoute = async ({ params, locals }) => {
       [new Date().toISOString(), id, user.id]
     );
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (error: any) {
+    // Cache invalidation: unread count + user notifications cache'lerini etkiler
+    await invalidateNotification(user.id);
+
+    return apiResponse({ success: true }, HttpStatus.OK);
+  } catch (error) {
     return problemJson({
       status: 500,
       title: 'Bildirim Güncellenemedi',
-      detail: error instanceof Error ? error.message : 'notification_read_failed',
+      detail: safeErrorDetail(error, 'notification_read_failed'),
       type: '/problems/notifications-read-failed',
       instance: '/api/notifications/{id}/read',
     });

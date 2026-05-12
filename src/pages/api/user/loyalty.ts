@@ -10,7 +10,7 @@ import {
   getTransactionHistory
 } from '../../../lib/loyalty/loyalty-system';
 import { getAchievementStats, getUserAchievements } from '../../../lib/achievements';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const section = url.searchParams.get('section') || 'summary';
 
-    let data: any = {};
+    let data: Record<string, unknown> = {};
 
     if (section === 'summary' || section === 'all') {
       const balance = await getLoyaltyBalance(locals.user.id);
@@ -41,8 +41,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     if (section === 'transactions' || section === 'all') {
-      const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-      const offset = parseInt(url.searchParams.get('offset') || '0');
+      const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
+      const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
       const transactions = await getTransactionHistory(locals.user.id, limit, offset);
       data.transactions = transactions;
     }

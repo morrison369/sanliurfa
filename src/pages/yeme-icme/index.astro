@@ -1,155 +1,185 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 
 let subcategories: any[] = [];
 let topPlaces: any[] = [];
 
 try {
-  const catResult = await query(
-    "SELECT * FROM categories WHERE parent_id = 11 AND is_active = true ORDER BY sort_order"
-  );
-  subcategories = catResult.rows;
-
-  const placesResult = await query(
-    "SELECT p.*, c.name as category_name FROM places p LEFT JOIN categories c ON p.category_id = c.id WHERE p.status = 'active' ORDER BY p.rating DESC LIMIT 8"
-  );
-  topPlaces = placesResult.rows;
+ const data = await getCachedPublicRouteData('page:yeme-icme:index', async () => {
+  const [catResult, placesResult] = await Promise.all([
+  query("SELECT * FROM categories WHERE parent_id = 11 AND is_active = true ORDER BY sort_order"),
+  query("SELECT p.*, c.name as category_name FROM places p LEFT JOIN categories c ON p.category_id = c.id WHERE p.status = 'active' ORDER BY p.rating DESC LIMIT 8"),
+  ]);
+  return {
+   subcategories: catResult.rows,
+   topPlaces: placesResult.rows,
+  };
+ });
+ subcategories = data.subcategories;
+ topPlaces = data.topPlaces;
 } catch (e) {
-  console.error('Error loading yeme-icme:', e);
+ logger.error('Error loading yeme-icme:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const seo = {
-  title: 'Şanlıurfa Yeme İçme Rehberi | Kebap, Ciğer, Tatlı ve Yöresel Lezzetler',
-  description: "Kahvaltıdan gece mekanlarına, paket servisten aile mekanlarına Şanlıurfa\'nın tüm lezzetleri.",
-  keywords: ['şanlıurfa yemek', 'urfa kebap', 'şanlıurfa ciğer', 'urfa restoran', 'şanlıurfa kahvaltı', 'urfa yeme içme', 'şanlıurfa aile mekanları'],
-  ogImage: '/images/hero/hero-food.webp',
-  canonical: '/yeme-icme',
+ title: 'Şanlıurfa Yeme İçme Rehberi | Kebap, Ciğer, Tatlı ve Yöresel Lezzetler',
+ description: "Kahvaltıdan gece mekanlarına, paket servisten aile mekanlarına Şanlıurfa'nın tüm lezzetleri.",
+ keywords: ['şanlıurfa yemek', 'urfa kebap', 'şanlıurfa ciğer', 'urfa restoran', 'şanlıurfa kahvaltı', 'urfa yeme içme', 'şanlıurfa aile mekanları'],
+ ogImage: '/images/hero/hero-food.webp',
+ canonical: '/yeme-icme',
 };
-const { baseUrl } = await getSiteBranding();
+const baseUrl = getPublicAppUrl();
 
 const featuredGuides = [
-  { title: 'En İyi Kebapçılar', href: '/en-iyi-kebapcilar', icon: '🍖', desc: 'Şehrin efsane kebapçıları' },
-  { title: 'En İyi Ciğerciler', href: '/en-iyi-cigerciler', icon: '🥩', desc: 'Ciğer kebabının en iyisi' },
-  { title: 'Kahvaltı Mekanları', href: '/sanliurfa-kahvalti-mekanlari', icon: '🍳', desc: 'Serpme kahvaltı' },
-  { title: 'Ne Yenir?', href: '/sanliurfada-ne-yenir', icon: '🥘', desc: 'Tam lezzet rehberi' },
+ { title: 'En İyi Kebapçılar', href: '/en-iyi-kebapcilar', icon: '🍖', desc: 'Şehrin efsane kebapçıları' },
+ { title: 'En İyi Ciğerciler', href: '/en-iyi-cigerciler', icon: '🥩', desc: 'Ciğer kebabının en iyisi' },
+ { title: 'Kahvaltı Mekanları', href: '/sanliurfa-kahvalti-mekanlari', icon: '🍳', desc: 'Serpme kahvaltı' },
+ { title: 'Ne Yenir?', href: '/sanliurfada-ne-yenir', icon: '🥘', desc: 'Tam lezzet rehberi' },
 ];
 
 const faqItems = [
-  {
-    S: "Şanlıurfa'da ne yenir?",
-    C: 'Kebap, ciğer, çiğ köfte, lahmacun, yöresel yemekler ve tatlılar yeme içme rehberinde kategori bazlı listelenir.',
-  },
-  {
-    S: 'Yeme içme mekanlarını nasıl seçebilirim?',
-    C: 'Alt kategori kartlarından ihtiyacınıza uygun başlığa girip mekanları puan ve içerik bilgilerine göre değerlendirebilirsiniz.',
-  },
-  {
-    S: 'Aileye uygun mekanlar var mı?',
-    C: 'Yeme içme alt kategorilerinde aile mekanları ve farklı bütçelere uygun seçenekler yer alır.',
-  },
+ {
+ S: "Şanlıurfa'da ne yenir?",
+ C: 'Kebap, ciğer, çiğ köfte, lahmacun, yöresel yemekler ve tatlılar yeme içme rehberinde kategori bazlı listelenir.',
+ },
+ {
+ S: 'Yeme içme mekanlarını nasıl seçebilirim?',
+ C: 'Alt kategori kartlarından ihtiyacınıza uygun başlığa girip mekanları puan ve içerik bilgilerine göre değerlendirebilirsiniz.',
+ },
+ {
+ S: 'Aileye uygun mekanlar var mı?',
+ C: 'Yeme içme alt kategorilerinde aile mekanları ve farklı bütçelere uygun seçenekler yer alır.',
+ },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-gradient-to-br from-orange-600 to-red-700 text-white py-16">
-      <div class="container mx-auto px-4">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Yeme İçme Rehberi</h1>
-        <p class="text-xl text-orange-100 max-w-2xl">
-          Ciğer kebabından çiğ köfteye, mırra'dan meyan şerbetine Şanlıurfa mutfağı
-        </p>
-      </div>
-    </div>
+ <style>
+ .yi-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+ .yi-hero-inner{max-width:50rem;margin:0 auto}
+ .yi-eyebrow{font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--public-muted);margin-bottom:.5rem}
+ .yi-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.9rem,4vw,3rem);font-weight:600;color:var(--public-text);margin-bottom:.5rem}
+ .yi-sub{font-size:.9rem;color:var(--public-muted);max-width:38rem;line-height:1.75}
+ .yi-body{background:var(--public-bg);padding:2.5rem 0 5rem}
+ .yi-quick{background:var(--public-accent-soft);border:1px solid var(--public-border);padding:1.1rem 1.4rem;margin-bottom:1.75rem}
+ .yi-quick-title{font-size:.8rem;font-weight:700;color:var(--public-accent);margin-bottom:.2rem}
+ .yi-quick-text{font-size:.78rem;color:var(--public-muted);line-height:1.65}
+ .yi-section-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:600;color:var(--public-text);margin-bottom:1.1rem}
+ .yi-guide-grid{display:grid;gap:.85rem;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:2.5rem}
+ .yi-guide-card{background:var(--public-surface);border:1px solid var(--public-border);padding:1.25rem;transition:border-color .15s,transform .15s;text-align:center}
+ .yi-guide-card:hover{border-color:var(--public-accent);transform:translateY(-2px)}
+ .yi-guide-icon{font-size:1.75rem;margin-bottom:.5rem}
+ .yi-guide-name{font-size:.85rem;font-weight:700;color:var(--public-text);margin-bottom:.15rem;transition:color .15s}
+ .yi-guide-card:hover .yi-guide-name{color:var(--public-accent)}
+ .yi-guide-desc{font-size:.72rem;color:var(--public-muted)}
+ .yi-cat-grid{display:grid;gap:.65rem;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));margin-bottom:2.5rem}
+ .yi-cat-item{display:flex;align-items:center;gap:.75rem;background:var(--public-surface);border:1px solid var(--public-border);padding:.85rem 1rem;transition:border-color .15s,background .15s}
+ .yi-cat-item:hover{border-color:var(--public-accent);background:var(--public-accent-soft)}
+ .yi-cat-icon{font-size:1.4rem;flex-shrink:0}
+ .yi-cat-name{font-size:.82rem;font-weight:600;color:var(--public-accent);transition:color .15s}
+ .yi-cat-item:hover .yi-cat-name{color:var(--public-text)}
+ .yi-place-grid{display:grid;gap:.85rem;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+ .yi-place-card{background:var(--public-surface);border:1px solid var(--public-border);padding:1rem;transition:border-color .15s}
+ .yi-place-card:hover{border-color:var(--public-accent)}
+ .yi-place-name{font-size:.88rem;font-weight:700;color:var(--public-text);margin-bottom:.2rem;transition:color .15s}
+ .yi-place-card:hover .yi-place-name{color:var(--public-accent)}
+ .yi-place-cat{font-size:.7rem;color:var(--public-accent);font-weight:600;margin-bottom:.35rem}
+ .yi-place-rating{display:flex;align-items:center;gap:.25rem;font-size:.78rem;color:var(--public-accent);margin-top:.35rem}
+ </style>
 
-    <div class="container mx-auto px-4 py-12">
-      <div class="rounded-2xl border border-orange-100 bg-orange-50 p-5 mb-8">
-        <h2 class="text-lg font-bold text-orange-900">Hızlı Cevap</h2>
-        <p class="text-sm text-orange-800 mt-1">
-          Şanlıurfa yeme içme rehberinde kebapçılar, ciğerciler, kahvaltı mekanları ve diğer lezzet duraklarını tek ekranda keşfedebilirsiniz.
-        </p>
-      </div>
+ <div class="yi-hero">
+ <div class="sf-container">
+ <div class="yi-hero-inner">
+ <p class="yi-eyebrow">Yeme İçme Rehberi</p>
+ <h1 class="yi-h1">Yeme İçme Rehberi</h1>
+ <p class="yi-sub">Ciğer kebabından çiğ köfteye, mırra'dan meyan şerbetine Şanlıurfa mutfağı</p>
+ </div>
+ </div>
+ </div>
 
-      {/* Rehberler */}
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-        {featuredGuides.map(g => (
-          <a href={g.href} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
-            <span class="text-3xl">{g.icon}</span>
-            <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-2">{g.title}</h3>
-            <p class="text-sm text-gray-500 mt-1">{g.desc}</p>
-          </a>
-        ))}
-      </div>
+ <div class="yi-body">
+ <div class="sf-container">
+ <div class="yi-quick">
+ <p class="yi-quick-title">Hızlı Cevap</p>
+ <p class="yi-quick-text">Şanlıurfa yeme içme rehberinde kebapçılar, ciğerciler, kahvaltı mekanları ve diğer lezzet duraklarını tek ekranda keşfedebilirsiniz.</p>
+ </div>
 
-      {/* Alt Kategoriler */}
-      {subcategories.length > 0 && (
-        <div class="mb-12">
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Kategoriler</h2>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {subcategories.map(cat => (
-              <a href={`/mekanlar/${cat.slug}`} class="flex items-center gap-3 bg-white rounded-lg p-4 hover:bg-red-50 transition-colors group">
-                <span class="text-2xl">{
-                  cat.slug === 'kahvalti' ? '🍳' : cat.slug === 'brunch' ? '🥐' :
-                  cat.slug === 'gece-acik-mekanlar' ? '🌙' : cat.slug === 'paket-servis' ? '📦' :
-                  cat.slug === 'aile-mekanlari' ? '👨‍👩‍👧' : '💰'
-                }</span>
-                <span class="font-medium text-gray-700 group-hover:text-red-600">{cat.name}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+ <h2 class="yi-section-title">Lezzet Rehberleri</h2>
+ <div class="yi-guide-grid">
+ {featuredGuides.map(g => (
+ <a href={g.href} class="yi-guide-card">
+ <div class="yi-guide-icon">{g.icon}</div>
+ <p class="yi-guide-name">{g.title}</p>
+ <p class="yi-guide-desc">{g.desc}</p>
+ </a>
+ ))}
+ </div>
 
-      {/* En İyi Mekanlar */}
-      {topPlaces.length > 0 && (
-        <div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">En Yüksek Puanlı Mekanlar</h2>
-          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {topPlaces.map(place => (
-              <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl p-4 shadow-sm hover:shadow-lg transition-all group">
-                <h3 class="font-bold text-gray-900 group-hover:text-red-600">{place.name}</h3>
-                <span class="text-xs text-red-600">{place.category_name}</span>
-                <div class="flex items-center gap-1 mt-2">
-                  <span class="text-yellow-500">★</span>
-                  <span class="font-medium">{place.rating || '-'}</span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.C,
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: 'Şanlıurfa Yeme İçme Kategorileri',
-    itemListElement: subcategories.map((cat, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: cat.name,
-      url: `${baseUrl}/mekanlar/${cat.slug}`,
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Yeme İçme', item: `${baseUrl}/yeme-icme` },
-    ],
-  })} is:inline />
+ {subcategories.length > 0 && (
+ <div>
+ <h2 class="yi-section-title">Kategoriler</h2>
+ <div class="yi-cat-grid">
+ {subcategories.map(cat => (
+ <a href={`/mekanlar/${cat.slug}`} class="yi-cat-item">
+ <span class="yi-cat-icon">{
+ cat.slug === 'kahvalti' ? '🍳' : cat.slug === 'brunch' ? '🥐' :
+ cat.slug === 'gece-acik-mekanlar' ? '🌙' : cat.slug === 'paket-servis' ? '📦' :
+ cat.slug === 'aile-mekanlari' ? '👨‍👩‍👧' : '💰'
+ }</span>
+ <span class="yi-cat-name">{cat.name}</span>
+ </a>
+ ))}
+ </div>
+ </div>
+ )}
+
+ {topPlaces.length > 0 && (
+ <div>
+ <h2 class="yi-section-title">En Yüksek Puanlı Mekanlar</h2>
+ <div class="yi-place-grid">
+ {topPlaces.map(place => (
+ <a href={`/isletme/${place.slug}`} class="yi-place-card">
+ <p class="yi-place-name">{place.name}</p>
+ <p class="yi-place-cat">{place.category_name}</p>
+ <div class="yi-place-rating">★ {place.rating || '-'}</div>
+ </a>
+ ))}
+ </div>
+ </div>
+ )}
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'ItemList',
+ name: 'Şanlıurfa Yeme İçme Kategorileri',
+ itemListElement: subcategories.map((cat, index) => ({
+ '@type': 'ListItem',
+ position: index + 1,
+ name: cat.name,
+ url: `${baseUrl}/mekanlar/${cat.slug}`,
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Yeme İçme', item: `${baseUrl}/yeme-icme` },
+ ],
+ })} is:inline />
 </Layout>

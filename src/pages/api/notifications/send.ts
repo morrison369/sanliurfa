@@ -13,7 +13,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId(request);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
@@ -23,17 +23,42 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (!title || !message) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Başlık ve mesaj zorunludur', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
+    if (typeof title !== 'string' || title.length > 200) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Başlık 200 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    if (typeof message !== 'string' || message.length > 5000) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mesaj 5000 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    if (url !== undefined && url !== null && (typeof url !== 'string' || url.length > 2000)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'URL 2000 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
 
     // Determine recipients
     let recipientIds: string[] = [];
     if (target === 'all') {
-      const users = await queryMany(`SELECT id FROM users WHERE status = 'active' LIMIT 10000`, []);
-      recipientIds = users.map((u: any) => u.id);
+      // Offset pagination — avoids hard cap on large user bases
+      const FETCH_SIZE = 1000;
+      let offset = 0;
+      while (true) {
+        const batch = await queryMany(
+          `SELECT id FROM users WHERE status = 'active' ORDER BY id LIMIT $1 OFFSET $2`,
+          [FETCH_SIZE, offset]
+        );
+        recipientIds.push(...batch.map((u: any) => u.id));
+        if (batch.length < FETCH_SIZE) break;
+        offset += FETCH_SIZE;
+      }
     } else if (target === 'specific' && Array.isArray(userIds)) {
+      if (userIds.length > 500) {
+        return apiError(ErrorCode.VALIDATION_ERROR, 'userIds dizisi 500 öğeyi aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      }
       recipientIds = userIds;
     } else if (target === 'segment' && segment) {
+      if (typeof segment !== 'string' || segment.length > 100) {
+        return apiError(ErrorCode.VALIDATION_ERROR, 'segment 100 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      }
       const users = await queryMany(`SELECT id FROM users WHERE subscription_tier = $1 AND status = 'active'`, [segment]);
-      recipientIds = users.map((u: any) => u.id);
+      recipientIds = users.map((u) => u.id);
     } else {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz hedef', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
@@ -51,15 +76,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
       created_at: new Date().toISOString(),
     }).catch(() => null); // non-fatal if table doesn't exist yet
 
-    // Send push to each recipient's subscriptions
+    // Send push to each recipient — chunked to avoid overwhelming the push service
+    const CHUNK_SIZE = 100;
     let sent = 0;
-    for (const userId of recipientIds) {
-      try {
-        await sendPushToUser(userId, { title, body: message, data: { url } });
-        sent++;
-      } catch {
-        // Individual failures don't abort the broadcast
-      }
+    for (let i = 0; i < recipientIds.length; i += CHUNK_SIZE) {
+      const chunk = recipientIds.slice(i, i + CHUNK_SIZE);
+      const results = await Promise.allSettled(
+        chunk.map(userId => sendPushToUser(userId, { title, body: message, data: { url } }))
+      );
+      sent += results.filter(r => r.status === 'fulfilled').length;
     }
 
     logger.info('Notification broadcast sent', { notifId, target, sent, total: recipientIds.length });

@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import fs from 'node:fs';
 import path from 'node:path';
+import { getPublicAppUrl } from '../../../lib/public-app-url';
 
 const API_ROOT = path.join(process.cwd(), 'src', 'pages', 'api');
-const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || 'https://sanliurfa.com').replace(/\/$/, '');
+const PUBLIC_APP_URL = getPublicAppUrl();
 
 function walkApiFiles(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -106,6 +107,27 @@ export const GET: APIRoute = async () => {
     '/places': buildGetPath('List places', 'Places'),
     '/places/{id}/analytics': buildGetPath('Place analytics', 'Places'),
     '/places/{id}/badges': buildGetPath('Place badges', 'Places'),
+    '/health': buildGetPath('Service healthcheck (DB + Redis + integrations summary). Returns 200 when DB is reachable, 503 otherwise.', 'System'),
+    '/health/schema-ready': buildGetPath('Database schema readiness probe (used by deploy gates)', 'System'),
+    '/version': buildGetPath('API version + docs links', 'System'),
+    '/metrics': buildGetPath('Prometheus-style request metrics (latency, error rate)', 'System'),
+    '/performance': buildGetPath('Server performance snapshot (uptime, memory, load)', 'System'),
+    '/docs': buildGetPath('OpenAPI documentation HTML viewer', 'System'),
+    '/activity': buildGetPath('Activity stream (recent platform events)', 'System'),
+    '/analytics': buildGetPath('Aggregate platform analytics (page views, event counts)', 'System'),
+    '/leaderboard': buildGetPath('Top users / places by points (gamification)', 'System'),
+    '/contact': {
+      get: buildGetPath('List contact form submissions (admin only)', 'System', true).get,
+      post: buildPostPath('Submit a contact form message', 'System').post,
+    },
+    '/flags': {
+      get: buildGetPath('List feature flags', 'System', true).get,
+      post: buildPostPath('Toggle a feature flag (admin only)', 'System', true).post,
+    },
+    '/graphql': {
+      get: buildGetPath('GraphQL schema introspection (if enabled)', 'System').get,
+      post: buildPostPath('GraphQL query / mutation', 'System').post,
+    },
     '/places/{id}/review-analytics': buildGetPath('Place review analytics', 'Places'),
     '/search/advanced': buildGetPath('Advanced search', 'Search'),
     '/search/recommendations': buildGetPath('Search recommendations', 'Search'),
@@ -186,6 +208,11 @@ export const GET: APIRoute = async () => {
     },
     '/admin/site/media/import': buildPostPath('Import media asset to site library', 'Admin', true),
     '/admin/site/media/search': buildGetPath('Search media provider assets', 'Admin', true),
+    '/admin/site/integrations': {
+      get: buildGetPath('Get all admin-managed integrations (email, analytics, payment, image providers, OAuth)', 'Admin', true).get,
+      post: buildPostPath('Save integration credentials for one section', 'Admin', true).post,
+    },
+    '/admin/site/integrations/test': buildPostPath('Probe a saved integration (sends test email / hits provider API)', 'Admin', true),
     '/admin/city-content-agents': {
       get: buildGetPath('List city content agents, sources, jobs and drafts', 'Admin', true).get,
       post: buildPostPath('Run city content agent or moderate draft', 'Admin', true).post,
@@ -231,9 +258,7 @@ export const GET: APIRoute = async () => {
     '/admin/blog/tags': buildGetPath('Admin blog tags', 'Admin', true),
     '/admin/blog/{id}': buildGetPath('Admin blog detail', 'Admin', true),
     '/admin/dashboard/overview': buildGetPath('Admin dashboard overview', 'Admin', true),
-    '/admin/deployment/backup': buildPostPath('Admin deployment backup', 'Admin', true),
     '/admin/deployment/status': buildGetPath('Admin deployment status', 'Admin', true),
-    '/admin/jobs/trigger': buildPostPath('Trigger admin background job', 'Admin', true),
     '/admin/loyalty/award': buildPostPath('Award loyalty points', 'Admin', true),
     '/admin/loyalty/rewards': buildGetPath('Manage loyalty rewards', 'Admin', true),
     '/admin/messages/{id}/status': buildPostPath('Update admin message status', 'Admin', true),
@@ -243,7 +268,6 @@ export const GET: APIRoute = async () => {
     '/admin/moderation/reports': buildGetPath('Moderation reports', 'Admin', true),
     '/admin/moderation/stats': buildGetPath('Moderation statistics', 'Admin', true),
     '/admin/monitoring/dashboard': buildGetPath('Monitoring dashboard', 'Admin', true),
-    '/admin/performance/optimization': buildGetPath('Performance optimization data', 'Admin', true),
     '/admin/performance/recommendations': buildGetPath(
       'Performance recommendations',
       'Admin',
@@ -348,7 +372,7 @@ export const GET: APIRoute = async () => {
 
   const autoDiscoveredPaths = Object.fromEntries(
     discoverApiRoutes()
-      .filter((route) => !generatedDomainPaths[route])
+      .filter((route) => !(generatedDomainPaths as Record<string, unknown>)[route])
       .map((route) => [route, buildGetPath(`Auto-discovered route: ${route}`, 'Auto')]),
   );
 
@@ -3062,6 +3086,1056 @@ export const GET: APIRoute = async () => {
           },
         },
       },
+      // ─── TOP 20 Detailed Endpoint Specs (Türkçe açıklamalı, kalite ağırlıklı) ───
+      '/health': {
+        get: {
+          summary: 'Sistem sağlık kontrolü',
+          description: 'DB + Redis + entegrasyon konfigürasyon özetini döner. PM2/load balancer probe için kullanılır. DB erişilebilirse 200, aksi halde 503 döner.',
+          tags: ['System'],
+          responses: {
+            '200': {
+              description: 'Servis sağlıklı',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/HealthStatus' },
+                },
+              },
+            },
+            '503': {
+              description: 'Servis kullanılamıyor (DB bağlantı hatası)',
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/HealthStatus' },
+                },
+              },
+            },
+          },
+        },
+      },
+      '/contact': {
+        get: {
+          summary: 'İletişim taleplerini listele (admin)',
+          description: 'Destek talebi (support_tickets) listesi. Sadece admin rolü erişebilir.',
+          tags: ['System'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'status', in: 'query', schema: { type: 'string', enum: ['open', 'pending', 'resolved', 'closed'], default: 'open' } },
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1, minimum: 1 } },
+          ],
+          responses: {
+            '200': {
+              description: 'Talep listesi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      tickets: { type: 'array', items: { type: 'object' } },
+                      pagination: { $ref: '#/components/schemas/Pagination' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': {
+              description: 'Admin yetkisi gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+        post: {
+          summary: 'İletişim formu gönderimi',
+          description: 'Public iletişim formu — destek talebi oluşturur. Auth gerektirmez.',
+          tags: ['System'],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ContactRequestInput' },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'Talep oluşturuldu',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      ticketId: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+            '400': {
+              description: 'Validasyon hatası (zorunlu alan eksik, çok uzun, geçersiz tür)',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+      },
+      '/blog/posts': {
+        get: {
+          summary: 'Blog yazılarını listele',
+          description: 'Yayınlanmış blog yazılarını sayfalı olarak döner. Kategori ve durum filtreleri desteklenir.',
+          tags: ['Blog'],
+          parameters: [
+            { name: 'status', in: 'query', schema: { type: 'string', enum: ['published', 'draft', 'all'], default: 'published' } },
+            { name: 'category', in: 'query', schema: { type: 'string', maxLength: 100 } },
+            { name: 'categoryId', in: 'query', schema: { type: 'string' } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, minimum: 1, maximum: 100 } },
+            { name: 'offset', in: 'query', schema: { type: 'integer', default: 0, minimum: 0 } },
+          ],
+          responses: {
+            '200': {
+              description: 'Blog yazısı listesi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        type: 'object',
+                        properties: {
+                          posts: { type: 'array', items: { $ref: '#/components/schemas/BlogPost' } },
+                          pagination: {
+                            type: 'object',
+                            properties: {
+                              total: { type: 'integer' },
+                              limit: { type: 'integer' },
+                              offset: { type: 'integer' },
+                              hasMore: { type: 'boolean' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            '500': {
+              description: 'Sunucu hatası',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+      },
+      '/blog/comments': {
+        get: {
+          summary: 'Blog yazısı yorumlarını getir',
+          description: 'Belirli bir blog yazısının onaylı yorumlarını döner. `approved=false` ile bekleyenler de listelenebilir.',
+          tags: ['Blog'],
+          parameters: [
+            { name: 'postId', in: 'query', required: true, schema: { type: 'integer', minimum: 1 } },
+            { name: 'approved', in: 'query', schema: { type: 'boolean', default: true } },
+          ],
+          responses: {
+            '200': {
+              description: 'Yorum listesi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        type: 'object',
+                        properties: {
+                          comments: { type: 'array', items: { $ref: '#/components/schemas/BlogComment' } },
+                          count: { type: 'integer' },
+                          postId: { type: 'integer' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            '400': {
+              description: 'Validasyon hatası (postId yok / geçersiz)',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+        post: {
+          summary: 'Blog yazısına yorum ekle',
+          description: 'Yorum gönderir; admin onayından sonra yayınlanır. Auth opsiyonel — giriş yapılmışsa kullanıcıya bağlanır.',
+          tags: ['Blog'],
+          security: [{ bearerAuth: [] }, {}],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/BlogCommentInput' },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'Yorum gönderildi (onay bekliyor)',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: { $ref: '#/components/schemas/BlogComment' },
+                      message: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+            '422': {
+              description: 'Validasyon hatası',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+      },
+      '/events/list': {
+        get: {
+          summary: 'Etkinlikleri listele',
+          description: 'Yayınlanmış etkinlikleri filtre + sayfalama ile döner.',
+          tags: ['Events'],
+          parameters: [
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, minimum: 1, maximum: 100 } },
+            { name: 'offset', in: 'query', schema: { type: 'integer', default: 0, minimum: 0 } },
+            { name: 'category', in: 'query', schema: { type: 'string', maxLength: 100 } },
+            { name: 'placeId', in: 'query', schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': {
+              description: 'Etkinlik listesi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      events: { type: 'array', items: { $ref: '#/components/schemas/Event' } },
+                      total: { type: 'integer' },
+                      limit: { type: 'integer' },
+                      offset: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+            '500': {
+              description: 'Sunucu hatası',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+      },
+      '/events/create': {
+        post: {
+          summary: 'Yeni etkinlik oluştur (admin)',
+          description: 'Admin paneli üzerinden çalışan formdata endpoint\'i. Başarılı oluşturmada `/admin/events?success=created` adresine 302 redirect döner.',
+          tags: ['Events'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'multipart/form-data': {
+                schema: { $ref: '#/components/schemas/EventInput' },
+              },
+            },
+          },
+          responses: {
+            '302': {
+              description: 'Redirect (başarı veya hata querystring ile)',
+              headers: {
+                Location: { schema: { type: 'string' } },
+              },
+            },
+            '403': {
+              description: 'Admin yetkisi gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+      },
+      '/events/{id}/details': {
+        get: {
+          summary: 'Etkinlik detayını getir',
+          description: 'Tek bir etkinliğin tüm alanlarını + lokasyon ve RSVP sayılarını döner.',
+          tags: ['Events'],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': {
+              description: 'Etkinlik detayı',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: { $ref: '#/components/schemas/Event' },
+                    },
+                  },
+                },
+              },
+            },
+            '404': {
+              description: 'Etkinlik bulunamadı',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+      },
+      '/reviews': {
+        get: {
+          summary: 'Yorumları listele',
+          description: 'Mekan veya kullanıcı için yorumları listeler. `stats=true` ile rating breakdown alır.',
+          tags: ['Reviews'],
+          parameters: [
+            { name: 'placeId', in: 'query', schema: { type: 'string' } },
+            { name: 'userId', in: 'query', schema: { type: 'string' } },
+            { name: 'stats', in: 'query', schema: { type: 'string', description: 'true ise rating dağılımı döner' } },
+            { name: 'sortBy', in: 'query', schema: { type: 'string', enum: ['newest', 'oldest', 'highest', 'lowest', 'helpful'], default: 'newest' } },
+            { name: 'rating', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 5 } },
+            { name: 'page', in: 'query', schema: { type: 'integer', default: 1, minimum: 1 } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, minimum: 1, maximum: 50 } },
+          ],
+          responses: {
+            '200': {
+              description: 'Yorum listesi veya rating breakdown',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        oneOf: [
+                          {
+                            type: 'object',
+                            properties: {
+                              reviews: { type: 'array', items: { $ref: '#/components/schemas/Review' } },
+                              pagination: { $ref: '#/components/schemas/Pagination' },
+                            },
+                          },
+                          {
+                            type: 'object',
+                            properties: {
+                              breakdown: { type: 'object', additionalProperties: { type: 'integer' } },
+                              total: { type: 'integer' },
+                              average: { type: 'string' },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            '400': {
+              description: 'Validasyon hatası',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+      },
+      '/reviews/add': {
+        post: {
+          summary: 'Mekan yorumu ekle',
+          description: 'Auth gerekli. Rating (1-5) + content (10-5000c) zorunlu. Başarılı eklemede +5 puan + cache invalidation + gamification tetiklenir.',
+          tags: ['Reviews'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/ReviewInput' },
+              },
+            },
+          },
+          responses: {
+            '200': {
+              description: 'Yorum eklendi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: { $ref: '#/components/schemas/Review' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+            '422': {
+              description: 'Validasyon hatası (rating range / content uzunluk / images > 20)',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+      },
+      '/favorites': {
+        get: {
+          summary: 'Favori mekanları listele',
+          description: 'Auth gerekli. Kullanıcının favorilediği mekanları döner; her satırda place_name, place_images, place_rating join edilir. 5 dk Redis cache.',
+          tags: ['Favorites'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '200': {
+              description: 'Favori liste',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { type: 'array', items: { $ref: '#/components/schemas/Favorite' } },
+                    },
+                  },
+                },
+              },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+            '500': {
+              description: 'Server error',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+        post: {
+          summary: 'Favorilere mekan ekle',
+          description: 'Auth gerekli. `placeId` zorunlu. ON CONFLICT atomic insert (HARD RULE #47); zaten favoride ise 400. +5 puan + logActivity + cache invalidate.',
+          tags: ['Favorites'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['placeId'],
+                  properties: { placeId: { type: 'string', description: 'Mekan UUID' } },
+                },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'Favorilere eklendi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      data: { $ref: '#/components/schemas/Favorite' },
+                      message: { type: 'string', example: 'Favorilere eklendi' },
+                    },
+                  },
+                },
+              },
+            },
+            '400': {
+              description: 'placeId yok ya da zaten favoride',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+        delete: {
+          summary: 'Favorilerden mekan çıkar',
+          description: 'Auth gerekli. `placeId` body içinde. (Path-param varyantı için `/favorites/{id}` kullan.)',
+          tags: ['Favorites'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  required: ['placeId'],
+                  properties: { placeId: { type: 'string' } },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': {
+              description: 'Favorilerden kaldırıldı',
+              content: { 'application/json': { schema: { type: 'object', properties: { message: { type: 'string' } } } } },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+      },
+      '/favorites/{id}': {
+        delete: {
+          summary: 'Favori kaydını ID ile sil',
+          description: 'Auth gerekli. Owner check: yalnızca `user_favorites.user_id = locals.user.id` olan satırı siler (IDOR koruma).',
+          tags: ['Favorites'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'user_favorites.id (UUID)' },
+          ],
+          responses: {
+            '200': {
+              description: 'Silindi',
+              content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean', example: true } } } } },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+            '404': {
+              description: 'Favori bulunamadı (veya başkasına ait)',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+      },
+      '/followers': {
+        get: {
+          summary: 'Takipçi / takip edilen / ortak arkadaş listesi',
+          description: '`type` query: followers (default), following, mutual. `limit` 1-100 (safeIntParam HARD RULE #17).',
+          tags: ['Followers'],
+          parameters: [
+            { name: 'userId', in: 'query', required: true, schema: { type: 'string' }, description: 'Listenin sahibi kullanıcı' },
+            { name: 'type', in: 'query', schema: { type: 'string', enum: ['followers', 'following', 'mutual'], default: 'followers' } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 50, minimum: 1, maximum: 100 } },
+          ],
+          responses: {
+            '200': {
+              description: 'Takipçi listesi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: { type: 'array', items: { $ref: '#/components/schemas/Follower' } },
+                      count: { type: 'integer' },
+                      type: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+            '422': {
+              description: 'userId eksik veya geçersiz type',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+        post: {
+          summary: 'Kullanıcıyı takip et',
+          description: 'Auth gerekli. Body: `userId` (takip edilecek). Kendini takip etmek `/followers/{id}` üzerinden engellenir.',
+          tags: ['Followers'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { type: 'object', required: ['userId'], properties: { userId: { type: 'string' } } },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'Takip edildi',
+              content: {
+                'application/json': {
+                  schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } },
+                },
+              },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+            '422': {
+              description: 'userId eksik',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+        delete: {
+          summary: 'Takipten çık (body ile)',
+          description: 'Auth gerekli. Body: `userId`. Path-param varyantı: `/followers/{id}`.',
+          tags: ['Followers'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { type: 'object', required: ['userId'], properties: { userId: { type: 'string' } } },
+              },
+            },
+          },
+          responses: {
+            '200': {
+              description: 'Takip durduruldu',
+              content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } } } },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+      },
+      '/followers/{id}': {
+        post: {
+          summary: 'Kullanıcıyı takip et (path-param)',
+          description: 'Auth gerekli. Path: hedef kullanıcı ID. Kendini takip 400 döner.',
+          tags: ['Followers'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Hedef kullanıcı UUID' },
+          ],
+          responses: {
+            '201': {
+              description: 'Takip edildi',
+              content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, following: { type: 'boolean', example: true } } } } },
+            },
+            '400': {
+              description: 'Kendini takip edemezsiniz / ID eksik',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+        delete: {
+          summary: 'Takibi bırak (path-param)',
+          description: 'Auth gerekli. Path: takipten çıkılacak kullanıcı ID.',
+          tags: ['Followers'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': {
+              description: 'Takip kaldırıldı',
+              content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, following: { type: 'boolean', example: false } } } } },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+      },
+      '/followers/stats': {
+        get: {
+          summary: 'Bir kullanıcının takipçi istatistikleri',
+          description: 'Followers count / following count / mutual count / current viewer takip edip etmediği. 2 dk Redis cache.',
+          tags: ['Followers'],
+          parameters: [
+            { name: 'userId', in: 'query', required: true, schema: { type: 'string' } },
+          ],
+          responses: {
+            '200': {
+              description: 'İstatistikler',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: {
+                        type: 'object',
+                        properties: {
+                          followers: { type: 'integer' },
+                          following: { type: 'integer' },
+                          mutual: { type: 'integer' },
+                          isFollowing: { type: 'boolean' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            '422': {
+              description: 'userId eksik',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+      },
+      '/notifications': {
+        get: {
+          summary: 'Bildirimleri listele',
+          description: 'Auth gerekli. `unreadOnly=true` ile filtrele. `limit` safeIntParam (default 20). unreadCount paralel hesaplanır.',
+          tags: ['Notifications'],
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            { name: 'unreadOnly', in: 'query', schema: { type: 'string', enum: ['true', 'false'] } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, minimum: 0 } },
+          ],
+          responses: {
+            '200': {
+              description: 'Bildirim listesi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      notifications: { type: 'array', items: { $ref: '#/components/schemas/Notification' } },
+                      unreadCount: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+            '500': {
+              description: 'Server error',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+        post: {
+          summary: 'Bildirimi okundu işaretle',
+          description: 'Auth gerekli. `markAll: true` ile tümü, ya da `notificationId` ile tek bir bildirim. En az biri zorunlu.',
+          tags: ['Notifications'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    notificationId: { type: 'string' },
+                    markAll: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '200': {
+              description: 'Güncellendi',
+              content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean' }, unreadCount: { type: 'integer' } } } } },
+            },
+            '400': {
+              description: 'notificationId veya markAll eksik',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+      },
+      '/notifications/read-all': {
+        put: {
+          summary: 'Tüm bildirimleri okundu işaretle (queue version)',
+          description: 'Auth gerekli. notifications-queue lib üzerinden idempotent. Etkilenen satır sayısını `markedCount` olarak döner. Cache invalidation tetiklenir.',
+          tags: ['Notifications'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '200': {
+              description: 'Tümü okundu işaretlendi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      markedCount: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+      },
+      '/notifications/mark-all-read': {
+        post: {
+          summary: 'Tüm bildirimleri okundu işaretle (direct query)',
+          description: 'Auth gerekli. Raw UPDATE: `read=true, read_at=now()` for unread rows. ISO read_at zamanı.',
+          tags: ['Notifications'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '200': {
+              description: 'Okundu işaretlendi',
+              content: { 'application/json': { schema: { type: 'object', properties: { success: { type: 'boolean', example: true } } } } },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+            '500': {
+              description: 'Server error',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+      },
+      '/profile/update': {
+        post: {
+          summary: 'Profil bilgilerini güncelle (form action)',
+          description: 'Auth gerekli. `multipart/form-data` ile `full_name`, `username`, `bio`. Başarılıysa `/profil/ayarlar?success=profile_updated` URL\'sine **303 redirect**; bu nedenle JSON response yoktur. Cache: user invalidate.',
+          tags: ['Profile'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'multipart/form-data': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    full_name: { type: 'string' },
+                    username: { type: 'string' },
+                    bio: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '303': {
+              description: 'Profil güncellendi — `/profil/ayarlar` sayfasına yönlendirme',
+              headers: { Location: { schema: { type: 'string' } } },
+            },
+            '302': {
+              description: 'Auth yok — login sayfasına yönlendirme',
+              headers: { Location: { schema: { type: 'string', example: '/giris?redirect=/profil/ayarlar' } } },
+            },
+          },
+        },
+      },
+      '/profile/delete': {
+        post: {
+          summary: 'Hesabımı sil',
+          description: 'Auth gerekli. `users` tablosundan satırı siler, oturumu sonlandırır (`signOut(token)`), `auth-token` cookie\'sini temizler, ana sayfaya yönlendirir.',
+          tags: ['Profile'],
+          security: [{ bearerAuth: [] }],
+          responses: {
+            '303': {
+              description: 'Hesap silindi — `/?account_deleted=true` yönlendirme',
+              headers: { Location: { schema: { type: 'string' } } },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+      },
+      '/historical-sites/create': {
+        post: {
+          summary: 'Tarihi yer ekle (admin)',
+          description: 'Admin yetkisi gerekli (`locals.isAdmin`). `multipart/form-data`. Başarılıysa `/admin/historical-sites?success=created` redirect. Cache: historical-site invalidate.',
+          tags: ['HistoricalSites'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'multipart/form-data': {
+                schema: {
+                  type: 'object',
+                  required: ['name', 'description', 'location'],
+                  properties: {
+                    name: { type: 'string' },
+                    description: { type: 'string' },
+                    short_description: { type: 'string' },
+                    location: { type: 'string' },
+                    period: { type: 'string' },
+                    entry_fee: { type: 'string' },
+                    opening_hours: { type: 'string' },
+                    latitude: { type: 'string' },
+                    longitude: { type: 'string' },
+                    images: { type: 'string', description: 'JSON array veya CSV string' },
+                    is_unesco: { type: 'string', enum: ['true', 'false', 'on'] },
+                    is_featured: { type: 'string', enum: ['true', 'false', 'on'] },
+                    status: { type: 'string', enum: ['draft', 'published', 'archived'], default: 'draft' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '303': {
+              description: 'Tarihi yer oluşturuldu — admin listesine yönlendirme',
+              headers: { Location: { schema: { type: 'string' } } },
+            },
+            '403': {
+              description: 'Admin yetkisi yok',
+              content: { 'application/problem+json': { schema: { $ref: '#/components/schemas/ProblemDetails' } } },
+            },
+          },
+        },
+      },
+      '/comments': {
+        get: {
+          summary: 'Yorumları listele (multi-target)',
+          description: '`targetType` zorunlu allowlist: place|review|blog|event|recipe. `targetId` zorunlu. `limit` safeIntParam (1-100, default 50).',
+          tags: ['Comments'],
+          parameters: [
+            { name: 'targetType', in: 'query', required: true, schema: { type: 'string', enum: ['place', 'review', 'blog', 'event', 'recipe'] } },
+            { name: 'targetId', in: 'query', required: true, schema: { type: 'string' } },
+            { name: 'limit', in: 'query', schema: { type: 'integer', default: 50, minimum: 1, maximum: 100 } },
+          ],
+          responses: {
+            '200': {
+              description: 'Yorum listesi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: { type: 'array', items: { $ref: '#/components/schemas/Comment' } },
+                      count: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+            '400': {
+              description: 'Geçersiz targetType',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+            '422': {
+              description: 'targetType veya targetId eksik',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+        post: {
+          summary: 'Yorum ekle (multi-target)',
+          description: 'Auth gerekli. `targetType` allowlist (place/review/blog/event/recipe). `content` 1-5000 char (sanitize: true XSS koruma). `parentCommentId` opsiyonel (reply). Cache invalidate.',
+          tags: ['Comments'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/CommentInput' },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'Yorum eklendi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: { $ref: '#/components/schemas/Comment' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+            '422': {
+              description: 'Validasyon hatası (boş içerik / 5000c aşımı / geçersiz targetType)',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+      },
+      '/photos/upload': {
+        post: {
+          summary: 'Mekan fotoğrafı yükle',
+          description: 'Auth + (admin VEYA mekan sahibi). `multipart/form-data` ile `file` + `placeId`. Sıkı validasyon: MAX 10MB, MIME allowlist (jpeg/png/webp), uzantı + **magic bytes** (HARD RULE #2). Mekan başına max 50 fotoğraf. Cloud storage YASAK — local disk.',
+          tags: ['Photos'],
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              'multipart/form-data': {
+                schema: {
+                  type: 'object',
+                  required: ['file', 'placeId'],
+                  properties: {
+                    file: { type: 'string', format: 'binary', description: 'Görsel dosya (jpeg/png/webp, max 10MB)' },
+                    placeId: { type: 'string', description: 'Mekan UUID' },
+                    altText: { type: 'string' },
+                    caption: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            '201': {
+              description: 'Fotoğraf yüklendi',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      success: { type: 'boolean', example: true },
+                      data: { $ref: '#/components/schemas/Photo' },
+                    },
+                  },
+                },
+              },
+            },
+            '401': {
+              description: 'Giriş gerekli',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+            '403': {
+              description: 'Yetki yok — admin veya mekan sahibi olmalı (IDOR koruma)',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+            '404': {
+              description: 'Mekan bulunamadı',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+            '422': {
+              description: 'Validasyon (dosya boyutu / MIME / magic bytes / 50 fotoğraf limiti)',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+            '500': {
+              description: 'Disk yazma hatası',
+              content: { 'application/json': { schema: { $ref: '#/components/schemas/ErrorApi' } } },
+            },
+          },
+        },
+      },
     },
     components: {
       schemas: {
@@ -3566,6 +4640,180 @@ export const GET: APIRoute = async () => {
             totalPages: { type: 'integer' },
           },
         },
+        ProblemDetails: {
+          type: 'object',
+          description: 'RFC 7807 problem+json error envelope (apiError/problemJson helper output)',
+          required: ['status', 'title'],
+          properties: {
+            type: { type: 'string', description: 'URI referans (problems/...)', example: '/problems/validation-error' },
+            title: { type: 'string' },
+            status: { type: 'integer' },
+            detail: { type: 'string' },
+            instance: { type: 'string' },
+          },
+        },
+        HealthStatus: {
+          type: 'object',
+          properties: {
+            success: { type: 'boolean' },
+            status: { type: 'string', enum: ['healthy', 'unhealthy'] },
+            timestamp: { type: 'string', format: 'date-time' },
+            uptime: { type: 'number' },
+            database: { type: 'string', enum: ['connected', 'disconnected'] },
+            redis: { type: 'string', enum: ['connected', 'disconnected', 'optional'] },
+            integrations: {
+              type: 'object',
+              additionalProperties: { type: 'string', enum: ['configured', 'unconfigured'] },
+            },
+            version: { type: 'string' },
+          },
+        },
+        ContactRequestInput: {
+          type: 'object',
+          required: ['name', 'email', 'subject', 'message'],
+          properties: {
+            name: { type: 'string', minLength: 1, maxLength: 200 },
+            email: { type: 'string', format: 'email', maxLength: 254 },
+            phone: { type: 'string', maxLength: 30, nullable: true },
+            subject: { type: 'string', minLength: 1, maxLength: 200 },
+            message: { type: 'string', minLength: 1, maxLength: 5000 },
+            type: {
+              type: 'string',
+              enum: ['general', 'business_inquiry', 'technical_support', 'complaint', 'suggestion', 'partnership'],
+              default: 'general',
+            },
+            placeId: { type: 'string', nullable: true },
+          },
+        },
+        Review: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            place_id: { type: 'string' },
+            user_id: { type: 'string' },
+            rating: { type: 'integer', minimum: 1, maximum: 5 },
+            title: { type: 'string', nullable: true },
+            content: { type: 'string' },
+            images: { type: 'array', items: { type: 'string' }, nullable: true },
+            status: { type: 'string', enum: ['active', 'pending', 'rejected', 'deleted'] },
+            helpful_count: { type: 'integer' },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+            author: {
+              type: 'object',
+              nullable: true,
+              properties: {
+                id: { type: 'string' },
+                name: { type: 'string' },
+                avatar_url: { type: 'string', nullable: true },
+              },
+            },
+          },
+          required: ['id', 'place_id', 'user_id', 'rating', 'content', 'status'],
+        },
+        ReviewInput: {
+          type: 'object',
+          required: ['placeId', 'rating', 'content'],
+          properties: {
+            placeId: { type: 'string', description: 'Yorumlanacak mekan ID (snake_case `place_id` de kabul edilir)' },
+            rating: { type: 'number', minimum: 1, maximum: 5 },
+            title: { type: 'string', maxLength: 200, nullable: true },
+            content: { type: 'string', minLength: 10, maxLength: 5000 },
+            images: {
+              type: 'array',
+              items: { type: 'string' },
+              maxItems: 20,
+              description: 'En fazla 20 görsel URL',
+            },
+            visitType: { type: 'string', nullable: true },
+          },
+        },
+        BlogPost: {
+          type: 'object',
+          properties: {
+            id: { type: 'integer' },
+            slug: { type: 'string' },
+            title: { type: 'string' },
+            excerpt: { type: 'string', nullable: true },
+            content: { type: 'string' },
+            category: { type: 'string', nullable: true },
+            category_id: { type: 'integer', nullable: true },
+            featured_image: { type: 'string', nullable: true },
+            thumbnail: { type: 'string', nullable: true },
+            tags: { type: 'array', items: { type: 'string' } },
+            status: { type: 'string', enum: ['published', 'draft', 'archived'] },
+            seo_title: { type: 'string', nullable: true },
+            seo_description: { type: 'string', nullable: true },
+            seo_keywords: { type: 'string', nullable: true },
+            author_id: { type: 'string', nullable: true },
+            read_time: { type: 'integer', nullable: true },
+            view_count: { type: 'integer' },
+            published_at: { type: 'string', format: 'date-time', nullable: true },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+          required: ['id', 'slug', 'title', 'status'],
+        },
+        BlogComment: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            post_id: { type: 'string' },
+            user_id: { type: 'string', nullable: true },
+            author_name: { type: 'string' },
+            author_email: { type: 'string', format: 'email', nullable: true },
+            content: { type: 'string' },
+            approved: { type: 'boolean' },
+            created_at: { type: 'string', format: 'date-time' },
+          },
+          required: ['id', 'post_id', 'author_name', 'content', 'approved'],
+        },
+        BlogCommentInput: {
+          type: 'object',
+          required: ['postId', 'authorName', 'content'],
+          properties: {
+            postId: { type: 'integer', minimum: 1 },
+            authorName: { type: 'string', minLength: 2, maxLength: 100 },
+            authorEmail: { type: 'string', format: 'email', nullable: true },
+            content: { type: 'string', minLength: 2, maxLength: 5000 },
+          },
+        },
+        Event: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            slug: { type: 'string', nullable: true },
+            title: { type: 'string' },
+            description: { type: 'string' },
+            short_description: { type: 'string', nullable: true },
+            location: { type: 'string' },
+            start_date: { type: 'string', format: 'date-time' },
+            end_date: { type: 'string', format: 'date-time', nullable: true },
+            category: { type: 'string', nullable: true },
+            image_url: { type: 'string', nullable: true },
+            is_featured: { type: 'boolean' },
+            status: { type: 'string', enum: ['draft', 'published', 'cancelled'] },
+            place_id: { type: 'string', nullable: true },
+            rsvp_count: { type: 'integer', nullable: true },
+            created_at: { type: 'string', format: 'date-time' },
+          },
+          required: ['id', 'title', 'description', 'location', 'start_date', 'status'],
+        },
+        EventInput: {
+          type: 'object',
+          required: ['title', 'description', 'location', 'start_date', 'category'],
+          properties: {
+            title: { type: 'string', maxLength: 200 },
+            description: { type: 'string', maxLength: 5000 },
+            location: { type: 'string', maxLength: 500 },
+            start_date: { type: 'string', format: 'date-time' },
+            end_date: { type: 'string', format: 'date-time', nullable: true },
+            category: { type: 'string' },
+            image: { type: 'string', nullable: true },
+            is_featured: { type: 'string', description: 'Form checkbox değeri ("on" veya boş)' },
+            status: { type: 'string', enum: ['draft', 'published', 'cancelled'], default: 'draft' },
+          },
+        },
         SocialEventItem: {
           type: 'object',
           properties: {
@@ -3779,6 +5027,92 @@ export const GET: APIRoute = async () => {
             { $ref: '#/components/schemas/ErrorApi' },
           ],
         },
+        Favorite: {
+          type: 'object',
+          description: 'Bir kullanıcının favori mekan kaydı (favorites tablosu + places join).',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            user_id: { type: 'string', format: 'uuid' },
+            place_id: { type: 'string', format: 'uuid' },
+            created_at: { type: 'string', format: 'date-time' },
+            place_name: { type: 'string' },
+            place_images: { type: 'array', items: { type: 'string' }, description: 'public path veya CDN URL listesi' },
+            place_rating: { type: 'number', format: 'float' },
+          },
+        },
+        Follower: {
+          type: 'object',
+          description: 'Takipçi / takip edilen kullanıcı kaydı.',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            name: { type: 'string' },
+            username: { type: 'string' },
+            avatar: { type: 'string', nullable: true },
+            followed_at: { type: 'string', format: 'date-time' },
+            is_following_back: { type: 'boolean', description: 'mutual ve following tiplerinde anlamlı' },
+          },
+        },
+        Notification: {
+          type: 'object',
+          description: 'Kullanıcı bildirimi (notifications tablosu).',
+          required: ['id', 'user_id', 'type', 'read'],
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            user_id: { type: 'string', format: 'uuid' },
+            type: { type: 'string', description: 'follow / comment / review / system / promotion vb.' },
+            title: { type: 'string' },
+            body: { type: 'string' },
+            data: { type: 'object', description: 'type-specific payload (linkler, entity ID)' },
+            read: { type: 'boolean' },
+            read_at: { type: 'string', format: 'date-time', nullable: true },
+            created_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        Comment: {
+          type: 'object',
+          description: 'Multi-target yorum (place / review / blog / event / recipe).',
+          required: ['id', 'user_id', 'targetType', 'targetId', 'content'],
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            user_id: { type: 'string', format: 'uuid' },
+            user_name: { type: 'string' },
+            user_avatar: { type: 'string', nullable: true },
+            targetType: { type: 'string', enum: ['place', 'review', 'blog', 'event', 'recipe'] },
+            targetId: { type: 'string' },
+            content: { type: 'string', minLength: 1, maxLength: 5000 },
+            parentCommentId: { type: 'string', format: 'uuid', nullable: true },
+            likeCount: { type: 'integer' },
+            replyCount: { type: 'integer' },
+            created_at: { type: 'string', format: 'date-time' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+        CommentInput: {
+          type: 'object',
+          required: ['targetType', 'targetId', 'content'],
+          properties: {
+            targetType: { type: 'string', enum: ['place', 'review', 'blog', 'event', 'recipe'] },
+            targetId: { type: 'string', maxLength: 100 },
+            content: { type: 'string', minLength: 1, maxLength: 5000, description: 'XSS sanitize edilir' },
+            parentCommentId: { type: 'string', maxLength: 100, description: 'Reply için parent comment ID' },
+          },
+        },
+        Photo: {
+          type: 'object',
+          description: 'place_photos kaydı (lokal disk).',
+          required: ['id', 'place_id', 'file_path'],
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+            place_id: { type: 'string', format: 'uuid' },
+            user_id: { type: 'string', format: 'uuid' },
+            file_path: { type: 'string', description: 'public/uploads altındaki relative path' },
+            file_size: { type: 'integer' },
+            mime_type: { type: 'string', enum: ['image/jpeg', 'image/png', 'image/webp'] },
+            alt_text: { type: 'string', nullable: true },
+            caption: { type: 'string', nullable: true },
+            created_at: { type: 'string', format: 'date-time' },
+          },
+        },
       },
       securitySchemes: {
         bearerAuth: {
@@ -3790,10 +5124,8 @@ export const GET: APIRoute = async () => {
     },
   };
 
-  return new Response(JSON.stringify(openApiSpec, null, 2), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-    },
+  return new Response(JSON.stringify(openApiSpec), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
   });
 };

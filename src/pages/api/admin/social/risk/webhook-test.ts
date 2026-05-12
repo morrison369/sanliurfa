@@ -3,9 +3,9 @@ import { problemJson } from '../../../../../lib/api';
 import { getSiteSetting } from '../../../../../lib/site-content';
 import { triggerWebhook } from '../../../../../lib/webhooks/index';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 export const POST: APIRoute = async ({ locals, request }) => {
@@ -26,7 +26,7 @@ export const POST: APIRoute = async ({ locals, request }) => {
     cooldownMinutes: 30,
   });
 
-  let body: any = {};
+  let body: Record<string, unknown> = {};
   try {
     body = await request.json();
   } catch {

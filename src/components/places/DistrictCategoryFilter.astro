@@ -1,0 +1,55 @@
+---
+/**
+ * DistrictCategoryFilter — Server Island
+ *
+ * Renders the category-filter chips on /ilceler/[ilce] (district detail page).
+ * Used with `server:defer` so the main place grid streams without waiting on
+ * the GROUP BY aggregate query for category counts.
+ *
+ * <DistrictCategoryFilter districtId={district.id} districtSlug={ilce} server:defer>
+ * <div slot="fallback" class="..." />
+ * </DistrictCategoryFilter>
+ */
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+interface Props {
+ districtId: string | number;
+ districtSlug: string;
+}
+
+const { districtId, districtSlug } = Astro.props;
+
+let categories: Array<{ slug: string; name: string; count: number }> = [];
+
+try {
+ const result = await query(
+ `SELECT c.slug, c.name, COUNT(p.id) as count
+ FROM places p
+ JOIN categories c ON p.category_id = c.id
+ WHERE p.district_id = $1 AND p.status = 'active'
+ GROUP BY c.slug, c.name
+ ORDER BY count DESC`,
+ [districtId],
+ );
+ categories = result.rows;
+} catch (e) {
+ logger.error('DistrictCategoryFilter query failed', e instanceof Error ? e : new Error(String(e)));
+}
+---
+
+{categories.length > 0 && (
+ <div class="mb-8">
+ <h2 class="text-xl font-bold text-[#1F1410] mb-4">Kategoriler</h2>
+ <div class="flex flex-wrap gap-2">
+ {categories.map((cat) => (
+ <a
+ href={`/ilceler/${districtSlug}/${cat.slug}`}
+ class="px-4 py-2 bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-full text-[#7A6B58] text-sm font-medium hover:border-[rgba(184,115,51,0.4)] hover:text-[#B87333] transition-colors"
+ >
+ {cat.name} ({cat.count})
+ </a>
+ ))}
+ </div>
+ </div>
+)}

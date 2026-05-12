@@ -6,6 +6,8 @@
 
 import { logger } from '../logger';
 import { getPublicAppUrl } from '../public-app-url';
+import { randomBytes, createHmac } from 'node:crypto';
+import { validateExternalUrl } from '../security/safe-url';
 
 export interface WebhookEvent {
   type: 'post.published' | 'post.updated' | 'post.deleted' | 'comment.approved';
@@ -157,26 +159,23 @@ function generateSignature(event: WebhookEvent): string {
   if (!secret) {
     throw new Error('BLOG_WEBHOOK_SECRET environment variable is required');
   }
-  const payload = JSON.stringify(event);
-
-  // SHA256 hash oluştur
-  const crypto = require('crypto');
-  return crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  return createHmac('sha256', secret).update(JSON.stringify(event)).digest('hex');
 }
 
 /**
  * Webhook ID oluştur
  */
 function generateId(): string {
-  return `wh_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  return `wh_${Date.now()}_${randomBytes(6).toString('hex')}`;
 }
 
 /**
  * Webhook kayıt ekle (admin API'ye entegre edilecek)
  */
 export async function registerWebhook(url: string): Promise<boolean> {
-  if (!url.startsWith('https://')) {
-    logger.warn('Webhook URL HTTPS olmak zorundadır', Object.assign(new Error('Webhook URL HTTPS olmak zorundadır'), { url }));
+  const check = validateExternalUrl(url);
+  if (!check.ok) {
+    logger.warn('Güvensiz webhook URL engellendi', Object.assign(new Error('Güvensiz webhook URL'), { url, reason: check.reason }));
     return false;
   }
 

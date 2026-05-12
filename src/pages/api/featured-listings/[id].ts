@@ -82,8 +82,24 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     }
 
     const body = await request.json();
+    const { title, description } = body;
 
-    const updated = await updateFeaturedListing(id, locals.user.id, body);
+    if (title !== undefined) {
+      if (typeof title !== 'string' || title.length < 1 || title.length > 200) {
+        recordRequest('PUT', '/api/featured-listings/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Başlık 1-200 karakter arasında olmalıdır', HttpStatus.BAD_REQUEST, undefined, requestId);
+      }
+    }
+    if (description !== undefined && (typeof description !== 'string' || description.length > 2000)) {
+      recordRequest('PUT', '/api/featured-listings/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Açıklama 2000 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+
+    const safeUpdates: Record<string, unknown> = {};
+    if (title !== undefined) safeUpdates.title = title;
+    if (description !== undefined) safeUpdates.description = description;
+
+    const updated = await updateFeaturedListing(id, locals.user.id, safeUpdates);
 
     const duration = Date.now() - startTime;
     recordRequest('PUT', '/api/featured-listings/[id]', HttpStatus.OK, duration);

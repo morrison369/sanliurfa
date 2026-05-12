@@ -7,7 +7,7 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
 import { resolveContentImage } from '../../../lib/content-images';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeIntParam } from '../../../lib/api';
 
 interface MobilePlaceRow {
   id: string;
@@ -40,18 +40,21 @@ interface SyncRequestBody {
   categories?: string[];
 }
 
-function toNumber(value: string | number | null | undefined): number {
-  if (typeof value === 'number') return value;
-  if (typeof value === 'string') return parseFloat(value);
-  return 0;
+function toNumber(value: string | number | null | undefined): number | null {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value === 'string') {
+    const n = parseFloat(value);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
 }
 
 // GET: List places with pagination
 export const GET: APIRoute = async ({ request }) => {
   try {
     const url = new URL(request.url);
-    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const page = safeIntParam(url.searchParams.get('page'), 1, 1, 1_000_000);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
     const offset = (page - 1) * limit;
     const category = url.searchParams.get('category');
     const lat = url.searchParams.get('lat');
@@ -70,22 +73,27 @@ export const GET: APIRoute = async ({ request }) => {
 
     // Geo filter via Haversine in SQL
     if (lat && lon && radius) {
-      where += ` AND (
-        6371 * acos(
-          cos(radians($${idx})) * cos(radians(p.latitude)) *
-          cos(radians(p.longitude) - radians($${idx + 1})) +
-          sin(radians($${idx})) * sin(radians(p.latitude))
-        )
-      ) <= $${idx + 2}`;
-      params.push(parseFloat(lat), parseFloat(lon), parseFloat(radius));
-      idx += 3;
+      const latNum = toNumber(lat);
+      const lonNum = toNumber(lon);
+      const radiusNum = toNumber(radius);
+      if (latNum !== null && lonNum !== null && radiusNum !== null && radiusNum > 0) {
+        where += ` AND (
+          6371 * acos(
+            cos(radians($${idx})) * cos(radians(p.latitude)) *
+            cos(radians(p.longitude) - radians($${idx + 1})) +
+            sin(radians($${idx})) * sin(radians(p.latitude))
+          )
+        ) <= $${idx + 2}`;
+        params.push(latNum, lonNum, radiusNum);
+        idx += 3;
+      }
     }
 
     const countResult = await query(
       `SELECT COUNT(*) FROM places p LEFT JOIN categories c ON c.id = p.category_id ${where}`,
       params
     );
-    const total = parseInt(countResult.rows[0].count || '0');
+    const total = Number.parseInt(countResult.rows[0].count || '0', 10) || 0;
 
     const dataResult = await query<MobilePlaceRow>(
       `SELECT

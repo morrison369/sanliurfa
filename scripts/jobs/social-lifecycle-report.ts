@@ -19,7 +19,7 @@ async function upsertSetting(key: string, value: Record<string, unknown>, descri
 async function main() {
   const hoursRaw = Number(process.env.SOCIAL_LIFECYCLE_REPORT_HOURS || 24);
   const hours = Number.isFinite(hoursRaw) ? Math.max(1, Math.min(720, Math.trunc(hoursRaw))) : 24;
-  const adminEmail = (process.env.ADMIN_EMAIL || process.env.FROM_EMAIL || '').trim();
+  const adminEmail = (process.env.ADMIN_EMAIL || process.env.EMAIL_FROM || '').trim();
 
   const [eventsByType, lifecycleByStatus, pendingRow] = await Promise.all([
     query(
@@ -100,4 +100,3 @@ main()
   .finally(async () => {
     await pool.end();
   });
-

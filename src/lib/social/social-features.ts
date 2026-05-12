@@ -6,7 +6,25 @@
 import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache, deleteCache } from '../cache';
-import { batchInsert } from '../performance/performance-optimizations';
+import { pool } from '../postgres';
+
+// Inline polyfill (replaces deleted lib/performance/performance-optimizations).
+// Single multi-row INSERT instead of N+1 queries. The `table` argument is hard-coded
+// at call sites in this file (`activity_feeds`), so no allowlist check is needed here.
+async function batchInsert(table: string, rows: Record<string, any>[]): Promise<void> {
+  if (rows.length === 0) return;
+  const columns = Object.keys(rows[0]);
+  const values: any[] = [];
+  const placeholders: string[] = [];
+  rows.forEach((row, i) => {
+    placeholders.push(`(${columns.map((_, j) => `$${i * columns.length + j + 1}`).join(', ')})`);
+    columns.forEach((col) => values.push(row[col]));
+  });
+  await pool.query(
+    `INSERT INTO ${table} (${columns.join(', ')}) VALUES ${placeholders.join(', ')}`,
+    values,
+  );
+}
 
 // ===== HASHTAG FUNCTIONS =====
 
@@ -14,18 +32,13 @@ export async function getOrCreateHashtag(tagName: string): Promise<any | null> {
   try {
     const tagSlug = tagName.toLowerCase().replace(/[^a-z0-9]/g, '-');
 
-    let hashtag = await queryOne(
-      'SELECT * FROM hashtags WHERE tag_slug = $1',
-      [tagSlug]
+    const hashtag = await queryOne(
+      `INSERT INTO hashtags (tag_name, tag_slug, usage_count)
+       VALUES ($1, $2, 0)
+       ON CONFLICT (tag_slug) DO UPDATE SET tag_name = EXCLUDED.tag_name
+       RETURNING *`,
+      [tagName, tagSlug]
     );
-
-    if (!hashtag) {
-      hashtag = await insert('hashtags', {
-        tag_name: tagName,
-        tag_slug: tagSlug,
-        usage_count: 0
-      });
-    }
 
     return hashtag;
   } catch (error) {
@@ -40,7 +53,7 @@ export async function getTrendingHashtags(limit: number = 20, period: string = '
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const hashtags = await queryMany(
@@ -73,7 +86,7 @@ export async function recordHashtagUsage(hashtagId: string, userId: string, cont
     );
 
     await update('hashtags', { id: hashtagId }, {
-      usage_count: parseInt(count?.count || '0'),
+      usage_count: parseInt(count?.count || '0', 10),
       last_used_at: new Date()
     });
 
@@ -89,14 +102,16 @@ export async function recordHashtagUsage(hashtagId: string, userId: string, cont
 
 export async function followUser(followerUserId: string, followingUserId: string): Promise<any | null> {
   try {
-    const result = await insert('user_follows', {
-      follower_user_id: followerUserId,
-      following_user_id: followingUserId,
-      is_approved: true,
-      followed_at: new Date()
-    });
+    const result = await queryOne(
+      `INSERT INTO user_follows (follower_user_id, following_user_id, is_approved, followed_at)
+       VALUES ($1, $2, true, NOW())
+       ON CONFLICT (follower_user_id, following_user_id) DO NOTHING
+       RETURNING *`,
+      [followerUserId, followingUserId]
+    );
 
-    // Update social stats (optimized: fire-and-forget to avoid blocking)
+    if (!result) return null;
+
     Promise.all([
       updateFollowStats(followingUserId),
       updateFollowStats(followerUserId)
@@ -239,7 +254,7 @@ export async function getUserFeed(userId: string, limit: number = 50): Promise<a
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const feed = await queryMany(
@@ -267,7 +282,7 @@ export async function getTrendingPlaces(limit: number = 20, period: string = 'da
     let cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const places = await queryMany(
@@ -335,30 +350,16 @@ export async function shareContent(userId: string, contentType: string, contentI
       shared_at: new Date()
     });
 
-    // Update share analytics
-    const shareCount = await queryOne(
-      'SELECT COUNT(*) as count FROM content_shares WHERE content_type = $1 AND content_id = $2',
+    // Atomic upsert — ON CONFLICT prevents race between two concurrent share requests
+    await queryOne(
+      `INSERT INTO share_analytics (content_type, content_id, share_count, last_shared_at)
+       VALUES ($1, $2, 1, NOW())
+       ON CONFLICT (content_type, content_id)
+       DO UPDATE SET
+         share_count = share_analytics.share_count + 1,
+         last_shared_at = NOW()`,
       [contentType, contentId]
     );
-
-    const existing = await queryOne(
-      'SELECT * FROM share_analytics WHERE content_type = $1 AND content_id = $2',
-      [contentType, contentId]
-    );
-
-    if (existing) {
-      await update('share_analytics', { content_id: contentId }, {
-        share_count: parseInt(shareCount?.count || '0'),
-        last_shared_at: new Date()
-      });
-    } else {
-      await insert('share_analytics', {
-        content_type: contentType,
-        content_id: contentId,
-        share_count: 1,
-        last_shared_at: new Date()
-      });
-    }
 
     logger.info('Content shared', { userId, contentType, contentId });
     return result;

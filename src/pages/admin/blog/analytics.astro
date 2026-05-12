@@ -1,321 +1,224 @@
 ---
-/**
- * Blog analitik paneli
- * İstatistikler, en çok okunan yazılar, kategori performansı
- */
-
-import Layout from '../../../layouts/Layout.astro';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { queryOne, queryMany } from '../../../lib/postgres';
 
 interface CountRow {
-  count: string | number;
+ count: string | number;
 }
 
 interface TotalRow {
-  total: string | number | null;
+ total: string | number | null;
 }
 
 interface AvgRow {
-  average: string | number | null;
+ average: string | number | null;
 }
 
 interface BlogTopPostRow {
-  id: string;
-  title: string;
-  slug: string;
-  view_count: string | number | null;
-  like_count?: string | number | null;
-  comment_count?: string | number | null;
-  status?: string;
-  created_at?: string | Date;
+ id: string;
+ title: string;
+ slug: string;
+ view_count: string | number | null;
+ like_count?: string | number | null;
+ comment_count?: string | number | null;
+ status?: string;
+ created_at?: string | Date;
 }
 
 interface BlogCategoryStatsRow {
-  category: string | null;
-  post_count: string | number;
-  total_views: string | number | null;
+ category: string | null;
+ post_count: string | number;
+ total_views: string | number | null;
 }
 
 interface BlogAnalytics {
-  posts: {
-    total: number;
-    published: number;
-    draft: number;
-    totalViews: number;
-    avgViews: number;
-  };
-  comments: {
-    approved: number;
-    pending: number;
-  };
-  subscribers: {
-    active: number;
-    total: number;
-  };
-  engagement: {
-    uniqueReaders: number;
-    avgReadTimeSeconds: number;
-    avgScrollPercentage: number;
-  };
-  topPosts: Array<{
-    id: string;
-    title: string;
-    slug: string;
-    views: number;
-    likes: number;
-  }>;
-  categories: Array<{
-    name: string;
-    postCount: number;
-    totalViews: number;
-  }>;
-  recentPosts: Array<{
-    id: string;
-    title: string;
-    slug: string;
-    status: string;
-  }>;
+ posts: { total: number; published: number; draft: number; totalViews: number; avgViews: number };
+ comments: { approved: number; pending: number };
+ subscribers: { active: number; total: number };
+ engagement: { uniqueReaders: number; avgReadTimeSeconds: number; avgScrollPercentage: number };
+ topPosts: Array<{ id: string; title: string; slug: string; views: number; likes: number }>;
+ categories: Array<{ name: string; postCount: number; totalViews: number }>;
+ recentPosts: Array<{ id: string; title: string; slug: string; status: string }>;
 }
 
 const asNumber = (value: string | number | null | undefined): number => Number(value ?? 0);
-
-const user = Astro.locals.user;
-if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin/blog/analytics');
-}
 
 let analytics: BlogAnalytics | null = null;
 let error = '';
 
 try {
-  const [
-    totalPosts,
-    publishedPosts,
-    draftPosts,
-    totalViews,
-    avgViews,
-    approvedComments,
-    pendingComments,
-    totalSubscribers,
-    activeSubscribers,
-    topPosts,
-    categoryStats,
-    recentPosts,
-  ] = await Promise.all([
-    queryOne<CountRow>('SELECT COUNT(*) as count FROM blog_posts'),
-    queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_posts WHERE status = 'published'"),
-    queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_posts WHERE status = 'draft'"),
-    queryOne<TotalRow>('SELECT COALESCE(SUM(view_count), 0) as total FROM blog_posts'),
-    queryOne<AvgRow>('SELECT COALESCE(ROUND(AVG(view_count)), 0) as average FROM blog_posts'),
-    queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_comments WHERE status = 'approved'"),
-    queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_comments WHERE status = 'pending'"),
-    queryOne<CountRow>('SELECT COUNT(*) as count FROM blog_subscribers'),
-    queryOne<CountRow>(
-      "SELECT COUNT(*) as count FROM blog_subscribers WHERE status = 'active' OR is_active = true"
-    ),
-    queryMany<BlogTopPostRow>(`SELECT id, title, slug, view_count, like_count, comment_count, created_at
-               FROM blog_posts WHERE status = 'published'
-               ORDER BY view_count DESC NULLS LAST LIMIT 10`),
-    queryMany<BlogCategoryStatsRow>(`SELECT COALESCE(category, 'Genel') as category, COUNT(*) as post_count, SUM(view_count) as total_views
-               FROM blog_posts WHERE status = 'published'
-               GROUP BY category ORDER BY post_count DESC`),
-    queryMany<BlogTopPostRow>(`SELECT id, title, slug, status, view_count, like_count, created_at
-               FROM blog_posts
-               ORDER BY created_at DESC NULLS LAST LIMIT 8`),
-  ]);
+ const [
+ totalPosts, publishedPosts, draftPosts, totalViews, avgViews,
+ approvedComments, pendingComments, totalSubscribers, activeSubscribers,
+ topPosts, categoryStats, recentPosts,
+ ] = await Promise.all([
+ queryOne<CountRow>('SELECT COUNT(*) as count FROM blog_posts'),
+ queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_posts WHERE status = 'published'"),
+ queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_posts WHERE status = 'draft'"),
+ queryOne<TotalRow>('SELECT COALESCE(SUM(view_count), 0) as total FROM blog_posts'),
+ queryOne<AvgRow>('SELECT COALESCE(ROUND(AVG(view_count)), 0) as average FROM blog_posts'),
+ queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_comments WHERE status = 'approved'"),
+ queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_comments WHERE status = 'pending'"),
+ queryOne<CountRow>('SELECT COUNT(*) as count FROM blog_subscribers'),
+ queryOne<CountRow>("SELECT COUNT(*) as count FROM blog_subscribers WHERE status = 'active' OR is_active = true"),
+ queryMany<BlogTopPostRow>(`SELECT id, title, slug, view_count, like_count, comment_count, created_at
+ FROM blog_posts WHERE status = 'published'
+ ORDER BY view_count DESC NULLS LAST LIMIT 10`),
+ queryMany<BlogCategoryStatsRow>(`SELECT COALESCE(category, 'Genel') as category, COUNT(*) as post_count, SUM(view_count) as total_views
+ FROM blog_posts WHERE status = 'published'
+ GROUP BY category ORDER BY post_count DESC`),
+ queryMany<BlogTopPostRow>(`SELECT id, title, slug, status, view_count, like_count, created_at
+ FROM blog_posts
+ ORDER BY created_at DESC NULLS LAST LIMIT 8`),
+ ]);
 
-  analytics = {
-    posts: {
-      total: asNumber(totalPosts?.count),
-      published: asNumber(publishedPosts?.count),
-      draft: asNumber(draftPosts?.count),
-      totalViews: asNumber(totalViews?.total),
-      avgViews: asNumber(avgViews?.average),
-    },
-    comments: {
-      approved: asNumber(approvedComments?.count),
-      pending: asNumber(pendingComments?.count),
-    },
-    subscribers: {
-      active: asNumber(activeSubscribers?.count),
-      total: asNumber(totalSubscribers?.count),
-    },
-    engagement: {
-      uniqueReaders: 0,
-      avgReadTimeSeconds: 0,
-      avgScrollPercentage: 0,
-    },
-    topPosts: topPosts.map((post) => ({
-      id: post.id,
-      title: post.title,
-      slug: post.slug,
-      views: asNumber(post.view_count),
-      likes: asNumber(post.like_count),
-    })),
-    categories: categoryStats.map((category) => ({
-      name: category.category || 'Genel',
-      postCount: asNumber(category.post_count),
-      totalViews: asNumber(category.total_views),
-    })),
-    recentPosts: recentPosts.map((post) => ({
-      id: post.id,
-      title: post.title,
-      slug: post.slug,
-      status: post.status || 'draft',
-    })),
-  };
-} catch (err) {
-  error = 'Sunucu hatası: ' + String(err);
+ analytics = {
+ posts: {
+ total: asNumber(totalPosts?.count),
+ published: asNumber(publishedPosts?.count),
+ draft: asNumber(draftPosts?.count),
+ totalViews: asNumber(totalViews?.total),
+ avgViews: asNumber(avgViews?.average),
+ },
+ comments: { approved: asNumber(approvedComments?.count), pending: asNumber(pendingComments?.count) },
+ subscribers: { active: asNumber(activeSubscribers?.count), total: asNumber(totalSubscribers?.count) },
+ engagement: { uniqueReaders: 0, avgReadTimeSeconds: 0, avgScrollPercentage: 0 },
+ topPosts: topPosts.map(p => ({ id: p.id, title: p.title, slug: p.slug, views: asNumber(p.view_count), likes: asNumber(p.like_count) })),
+ categories: categoryStats.map(c => ({ name: c.category || 'Genel', postCount: asNumber(c.post_count), totalViews: asNumber(c.total_views) })),
+ recentPosts: recentPosts.map(p => ({ id: p.id, title: p.title, slug: p.slug, status: p.status || 'draft' })),
+ };
+} catch {
+ error = 'Veriler yüklenirken bir hata oluştu';
 }
 
-const seo = {
-  title: 'Blog Analitikleri - Yönetim Paneli',
-  description: 'Blog istatistikleri, yazı performansı ve yorum durumu',
-  noIndex: true
-};
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <a href="/admin/blog" class="text-gray-600 dark:text-gray-400 hover:text-gray-900">
-              ← Geri
-            </a>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Blog Analitikleri</h1>
-          </div>
-        </div>
-      </div>
-    </div>
+<AdminLayout
+ title="Blog Analitikleri"
+ subtitle="İstatistikler, yazı performansı ve yorum durumu"
+ seo={{ title: 'Blog Analitikleri - Yönetim Paneli', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-6xl space-y-5">
+ <div class="mb-2">
+ <a href="/admin/blog" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Blog Yönetimi</a>
+ </div>
 
-    <div class="container-custom py-8">
-      {error && (
-        <div class="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
+ {error && (
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
+ {error}
+ </div>
+ )}
 
-      {analytics && (
-        <>
-          <!-- Ana İstatistikler -->
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Toplam Yazı</p>
-              <p class="text-3xl font-bold text-gray-900 dark:text-white">{analytics.posts.total}</p>
-              <p class="text-xs text-gray-500 mt-2">{analytics.posts.published} yayınlı, {analytics.posts.draft} taslak</p>
-            </div>
+ {analytics && (
+ <>
+ <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <p class="text-sm text-[#7A6B58] mb-2">Toplam Yazı</p>
+ <p class="text-3xl font-bold text-[#1F1410]">{analytics.posts.total}</p>
+ <p class="text-xs text-[#7A6B58] mt-2">{analytics.posts.published} yayınlı, {analytics.posts.draft} taslak</p>
+ </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Toplam Görüntüleme</p>
-              <p class="text-3xl font-bold text-blue-600">{analytics.posts.totalViews.toLocaleString('tr-TR')}</p>
-              <p class="text-xs text-gray-500 mt-2">⌀ {analytics.posts.avgViews} ort./yazı</p>
-            </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <p class="text-sm text-[#7A6B58] mb-2">Toplam Görüntüleme</p>
+ <p class="text-3xl font-bold text-[#7A6B58]">{analytics.posts.totalViews.toLocaleString('tr-TR')}</p>
+ <p class="text-xs text-[#7A6B58] mt-2">⌀ {analytics.posts.avgViews} ort./yazı</p>
+ </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Yorumlar</p>
-              <p class="text-3xl font-bold text-green-600">{analytics.comments.approved}</p>
-              <p class="text-xs text-gray-500 mt-2">⏳ {analytics.comments.pending} bekleme</p>
-            </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <p class="text-sm text-[#7A6B58] mb-2">Yorumlar</p>
+ <p class="text-3xl font-bold text-[#7A6B58]">{analytics.comments.approved}</p>
+ <p class="text-xs text-[#7A6B58] mt-2">⏳ {analytics.comments.pending} bekleme</p>
+ </div>
 
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Abone</p>
-              <p class="text-3xl font-bold text-purple-600">{analytics.subscribers.active}</p>
-              <p class="text-xs text-gray-500 mt-2">{analytics.subscribers.total} toplam</p>
-            </div>
-          </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <p class="text-sm text-[#7A6B58] mb-2">Abone</p>
+ <p class="text-3xl font-bold text-[#7A6B58]">{analytics.subscribers.active}</p>
+ <p class="text-xs text-[#7A6B58] mt-2">{analytics.subscribers.total} toplam</p>
+ </div>
+ </div>
 
-          <!-- Engagement -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Okuyucu Katılımı</h3>
-              <div class="space-y-3">
-                <div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Benzersiz Okuyucu</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white">{analytics.engagement.uniqueReaders}</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Ort. Okuma Süresi</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white">{analytics.engagement.avgReadTimeSeconds}s</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Ort. Scroll</p>
-                  <p class="text-2xl font-bold text-gray-900 dark:text-white">{analytics.engagement.avgScrollPercentage}%</p>
-                </div>
-              </div>
-            </div>
+ <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#1F1410] mb-4">Okuyucu Katılımı</h3>
+ <div class="space-y-3">
+ <div>
+ <p class="text-sm text-[#7A6B58] mb-1">Benzersiz Okuyucu</p>
+ <p class="text-2xl font-bold text-[#7A6B58]">{analytics.engagement.uniqueReaders}</p>
+ </div>
+ <div>
+ <p class="text-sm text-[#7A6B58] mb-1">Ort. Okuma Süresi</p>
+ <p class="text-2xl font-bold text-[#7A6B58]">{analytics.engagement.avgReadTimeSeconds}s</p>
+ </div>
+ <div>
+ <p class="text-sm text-[#7A6B58] mb-1">Ort. Scroll</p>
+ <p class="text-2xl font-bold text-[#7A6B58]">{analytics.engagement.avgScrollPercentage}%</p>
+ </div>
+ </div>
+ </div>
 
-            <!-- En Çok Okunan -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 lg:col-span-2">
-              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">En Çok Okunan Yazılar</h3>
-              <div class="space-y-3">
-                {analytics.topPosts.slice(0, 5).map((post: any) => (
-                  <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
-                    <div class="flex-1 min-w-0">
-                      <a href={`/blog/${post.slug}`} target="_blank" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600 truncate">
-                        {post.title}
-                      </a>
-                      <p class="text-xs text-gray-500 dark:text-gray-400">{post.views} görüntüleme - {post.likes} beğeni</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 lg:col-span-2">
+ <h3 class="font-semibold text-[#1F1410] mb-4">En Çok Okunan Yazılar</h3>
+ <div class="space-y-2">
+ {analytics.topPosts.slice(0, 5).map((post: any) => (
+ <div class="flex items-center justify-between p-3 bg-[rgba(184,115,51,0.04)] rounded-sm">
+ <div class="flex-1 min-w-0">
+ <a href={`/blog/${post.slug}`} target="_blank" rel="noopener" class="text-sm font-medium text-[#1F1410] hover:text-urfa-600 truncate block">
+ {post.title}
+ </a>
+ <p class="text-xs text-[#7A6B58]">{post.views} görüntüleme · {post.likes} beğeni</p>
+ </div>
+ </div>
+ ))}
+ </div>
+ </div>
+ </div>
 
-          <!-- Kategori Performansı -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 mb-8">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Kategori Performansı</h3>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead class="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th class="px-4 py-2 text-left text-gray-600 dark:text-gray-400">Kategori</th>
-                    <th class="px-4 py-2 text-right text-gray-600 dark:text-gray-400">Yazı</th>
-                    <th class="px-4 py-2 text-right text-gray-600 dark:text-gray-400">Görüntüleme</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                  {analytics.categories.map((cat: any) => (
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">{cat.name}</td>
-                      <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">{cat.postCount}</td>
-                      <td class="px-4 py-3 text-right font-semibold text-blue-600">{(cat.totalViews || 0).toLocaleString('tr-TR')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <div class="p-6 border-b border-[rgba(184,115,51,0.14)]">
+ <h3 class="font-semibold text-[#1F1410]">Kategori Performansı</h3>
+ </div>
+ <div class="overflow-x-auto">
+ <table class="w-full text-sm">
+ <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <tr>
+ <th class="px-4 py-2 text-left text-[#7A6B58]">Kategori</th>
+ <th class="px-4 py-2 text-right text-[#7A6B58]">Yazı</th>
+ <th class="px-4 py-2 text-right text-[#7A6B58]">Görüntüleme</th>
+ </tr>
+ </thead>
+ <tbody class="divide-y divide-[rgba(184,115,51,0.08)]">
+ {analytics.categories.map((cat: any) => (
+ <tr class="hover:bg-[rgba(184,115,51,0.04)]">
+ <td class="px-4 py-3 font-medium text-[#1F1410]">{cat.name}</td>
+ <td class="px-4 py-3 text-right text-[#7A6B58]">{cat.postCount}</td>
+ <td class="px-4 py-3 text-right font-semibold text-[#7A6B58]">{(cat.totalViews || 0).toLocaleString('tr-TR')}</td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ </div>
+ </div>
 
-          <!-- Son Yazılar -->
-          <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Son Yazılar</h3>
-            <div class="space-y-2">
-              {analytics.recentPosts.map((post: any) => (
-                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded">
-                  <a href={`/blog/${post.slug}`} target="_blank" class="text-sm font-medium text-gray-900 dark:text-white hover:text-blue-600">
-                    {post.title}
-                  </a>
-                  <span class={`px-2 py-1 text-xs rounded font-medium ${
-                    post.status === 'published'
-                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                      : post.status === 'draft'
-                      ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                  }`}>
-                    {post.status === 'published' ? 'Yayında' : post.status === 'draft' ? 'Taslak' : 'Arşiv'}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  </div>
-</Layout>
-
-
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#1F1410] mb-4">Son Yazılar</h3>
+ <div class="space-y-2">
+ {analytics.recentPosts.map((post: any) => (
+ <div class="flex items-center justify-between p-3 bg-[rgba(184,115,51,0.04)] rounded-sm">
+ <a href={`/blog/${post.slug}`} target="_blank" rel="noopener" class="text-sm font-medium text-[#1F1410] hover:text-urfa-600">
+ {post.title}
+ </a>
+ <span class={`px-2 py-0.5 text-xs rounded-sm font-medium ${
+ post.status === 'published' ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' :
+ post.status === 'draft' ? 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' :
+ 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'
+ }`}>
+ {post.status === 'published' ? 'Yayında' : post.status === 'draft' ? 'Taslak' : 'Arşiv'}
+ </span>
+ </div>
+ ))}
+ </div>
+ </div>
+ </>
+ )}
+ </div>
+</AdminLayout>

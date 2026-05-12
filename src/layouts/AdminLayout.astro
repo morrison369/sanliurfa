@@ -1,97 +1,105 @@
 ---
-import '../styles/global.css';
+import Layout from './Layout.astro';
 
-export interface Props {
-  title: string;
+interface Props {
+ title: string;
+ subtitle?: string;
+ label?: string;
+ seo?: { title?: string; description?: string; noIndex?: boolean };
 }
 
-const { title } = Astro.props;
+const { title, subtitle, label = 'YÖNETİM PANELİ', seo } = Astro.props;
 
-const navItems = [
-  { href: '/admin', label: 'Dashboard', icon: 'home' },
-  { href: '/admin/places', label: 'Mekanlar', icon: 'map' },
-  { href: '/admin/users', label: 'Kullanıcılar', icon: 'users' },
-  { href: '/admin/reviews', label: 'Değerlendirmeler', icon: 'star' },
-  { href: '/admin/moderation', label: 'Moderasyon', icon: 'shield' },
-  { href: '/admin/blog', label: 'Blog', icon: 'document' },
-  { href: '/admin/recipes', label: 'Tarifler', icon: 'beaker' },
-  { href: '/admin/content-agents', label: 'İçerik Ajanları', icon: 'sparkles' },
-  { href: '/admin/site-content', label: 'Site İçerikleri', icon: 'layout' },
-  { href: '/admin/ulasim', label: 'Otobüs Hatları', icon: 'truck' },
-  { href: '/admin/pharmacies', label: 'Eczaneler', icon: 'heart' },
-  { href: '/admin/analytics', label: 'Analitik', icon: 'chart' },
-  { href: '/admin/subscriptions', label: 'Abonelikler', icon: 'credit-card' },
-  { href: '/admin/integrations', label: 'Entegrasyonlar', icon: 'cog' },
-];
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+ return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+const resolvedSeo: { title: string; description?: string; noIndex: boolean } = {
+ title: seo?.title ?? `${title} - Yönetim Paneli`,
+ noIndex: seo?.noIndex ?? true,
+};
+if (seo?.description) {
+ resolvedSeo.description = seo.description;
+}
 ---
 
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{title} - Admin | Sanliurfa.com</title>
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-</head>
-<body class="bg-gray-100">
-  <div class="flex h-screen">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-white shadow-lg">
-      <div class="p-6 border-b border-gray-200">
-        <a href="/admin" class="text-2xl font-bold text-urfa-600">
-          Admin Panel
-        </a>
-      </div>
-      
-      <nav class="mt-6 px-4">
-        {navItems.map(item => (
-          <a
-            href={item.href}
-            class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-urfa-50 hover:text-urfa-600 transition-colors mb-1"
-            class:list={[{ 'bg-urfa-50 text-urfa-600': Astro.url.pathname === item.href }]}
-          >
-            <span class="ml-3">{item.label}</span>
-          </a>
-        ))}
-      </nav>
-
-      <div class="absolute bottom-0 w-64 p-4 border-t border-gray-200">
-        <a href="/" class="flex items-center text-gray-600 hover:text-urfa-600">
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-          </svg>
-          Siteye Dön
-        </a>
-      </div>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- Header -->
-      <header class="bg-white shadow-sm">
-        <div class="px-6 py-4 flex items-center justify-between">
-          <h1 class="text-2xl font-semibold text-gray-800">{title}</h1>
-          <div class="flex items-center space-x-4">
-            <button class="text-gray-400 hover:text-gray-600">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-              </svg>
-            </button>
-            <div class="flex items-center">
-              <span class="text-sm text-gray-600 mr-2">Admin</span>
-              <div class="w-8 h-8 rounded-full bg-urfa-600 text-white flex items-center justify-center">
-                A
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- Content -->
-      <main class="flex-1 overflow-auto p-6">
-        <slot />
-      </main>
+<Layout seo={resolvedSeo}>
+ <div class="admin-page min-h-screen" style="background:#FBF6EC">
+  <div style="background:linear-gradient(135deg,#FBF6EC 0%,#F4ECD8 50%,#FBF6EC 100%);border-bottom:1px solid rgba(192,87,31,0.15);padding:2.5rem 0;position:relative;overflow:hidden">
+   <div aria-hidden="true" style="position:absolute;inset:0;background:radial-gradient(circle at 15% 0%,rgba(212,151,24,0.10),transparent 45%),radial-gradient(circle at 85% 100%,rgba(44,122,82,0.08),transparent 45%);pointer-events:none"></div>
+   <div class="sf-container" style="position:relative">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+     <div>
+      <p style="font-size:0.7rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#C0571F;margin:0 0 0.45rem;display:inline-flex;align-items:center;gap:0.4rem;padding:0.35rem 0.85rem;background:rgba(192,87,31,0.10);border:1px solid rgba(192,87,31,0.22);border-radius:999px">
+       <span style="width:0.4rem;height:0.4rem;background:#D49718;border-radius:50%"></span>
+       {label}
+      </p>
+      <h1 style="font-family:'Cormorant Garamond',serif;font-size:clamp(1.75rem,3.5vw,2.6rem);font-weight:700;line-height:1.1;margin:0.5rem 0 0.35rem;background:linear-gradient(135deg,#C0571F 0%,#D49718 60%,#C0571F 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#C0571F">
+       {title}
+      </h1>
+      {subtitle && <p style="color:#5A4030;font-size:0.95rem;margin:0;line-height:1.5">{subtitle}</p>}
+     </div>
+     <slot name="hero-action" />
     </div>
+   </div>
   </div>
-</body>
-</html>
+
+  <slot />
+ </div>
+</Layout>
+
+<style is:global>
+ /* Admin form controls — light Şanlıurfa palette */
+ .admin-page input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+ .admin-page select,
+ .admin-page textarea {
+  background-color: #FFFFFF;
+  color: #1F1410;
+  border: 1px solid rgba(192, 87, 31, 0.18);
+  border-radius: 6px;
+ }
+ .admin-page input:focus,
+ .admin-page select:focus,
+ .admin-page textarea:focus {
+  border-color: #C0571F;
+  outline: 2px solid rgba(192, 87, 31, 0.18);
+  outline-offset: 1px;
+ }
+ .admin-page input::placeholder,
+ .admin-page textarea::placeholder {
+  color: #9A7A5C;
+ }
+ .admin-page option {
+  background-color: #FFFFFF;
+  color: #1F1410;
+ }
+ .admin-page label {
+  color: #1F1410;
+ }
+ /* Common dark utility overrides — push admin content cards to light */
+ .admin-page .bg-\[var\(--bg-card\)\],
+ .admin-page .bg-\[\#0D0A08\],
+ .admin-page .bg-\[\#1A1410\],
+ .admin-page .bg-\[\#1A1008\] {
+  background-color: #FFFFFF !important;
+  border-color: rgba(192, 87, 31, 0.12) !important;
+ }
+ .admin-page .text-\[\#EDE0C6\],
+ .admin-page .text-\[\#F5EDD6\] {
+  color: #1F1410 !important;
+ }
+ .admin-page .text-\[\#C4A882\],
+ .admin-page .text-\[\#9A8470\],
+ .admin-page .text-\[\#7A6B58\] {
+  color: #5A4030 !important;
+ }
+ .admin-page .text-\[\#4A3828\] {
+  color: #7A6448 !important;
+ }
+ .admin-page .border-\[rgba\(184\,115\,51\,0\.14\)\],
+ .admin-page .border-\[rgba\(184\,115\,51\,0\.18\)\],
+ .admin-page .border-\[rgba\(184\,115\,51\,0\.25\)\] {
+  border-color: rgba(192, 87, 31, 0.14) !important;
+ }
+</style>

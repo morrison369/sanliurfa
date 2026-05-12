@@ -1,0 +1,21 @@
+---
+interface Props {
+ id?: string;
+ text: string;
+ statusLabel?: string;
+ toneClass?: string;
+ className?: string;
+}
+
+const {
+ id,
+ text,
+ statusLabel = '',
+ toneClass = 'text-[#9A8470]',
+ className = 'mt-2 text-xs',
+} = Astro.props;
+
+const label = statusLabel ? `${text} (${statusLabel})` : text;
+---
+
+<p id={id} class={`${className} ${toneClass}`.trim()}>{label}</p>

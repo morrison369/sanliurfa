@@ -1,0 +1,60 @@
+---
+/**
+ * RelatedPlaces — Server Island
+ *
+ * Renders the "Similar places" panel on a venue detail page. Designed to be used
+ * with `server:defer` so the main place content reaches the browser before this
+ * secondary query completes:
+ *
+ * <RelatedPlaces categoryId={place.category_id} excludePlaceId={place.id} server:defer>
+ * <div slot="fallback" class="animate-pulse h-32 bg-[rgba(184,115,51,0.06)] rounded-sm" />
+ * </RelatedPlaces>
+ *
+ * Returns nothing (empty markup) when no related places are found, so the parent
+ * layout collapses naturally.
+ */
+import { query } from '../../lib/postgres';
+import PublicRelatedGrid from '../public/PublicRelatedGrid.astro';
+import { logger } from '../../lib/logging';
+
+interface Props {
+ categoryId: string | null | undefined;
+ excludePlaceId: string | null | undefined;
+}
+
+const { categoryId, excludePlaceId } = Astro.props;
+
+let relatedPlaces: Array<{
+ slug: string;
+ name: string;
+ short_description: string | null;
+ rating: number | null;
+ price_range: string | null;
+}> = [];
+
+if (categoryId && excludePlaceId) {
+ try {
+ const result = await query(
+ `SELECT id, name, slug, short_description, rating, price_range
+ FROM places
+ WHERE category_id = $1 AND id != $2 AND status = 'active'
+ ORDER BY rating DESC LIMIT 4`,
+ [categoryId, excludePlaceId],
+ );
+ relatedPlaces = result.rows;
+ } catch (e) {
+ // Soft-fail: empty section is preferable to a 500 page on a secondary widget.
+ logger.error('RelatedPlaces query failed', e instanceof Error ? e : new Error(String(e)));
+ }
+}
+---
+
+<PublicRelatedGrid
+ title="Benzer Mekanlar"
+ items={relatedPlaces.map((place) => ({
+  href: `/isletme/${place.slug}`,
+  title: place.name,
+  description: place.short_description || undefined,
+  meta: place.rating ? `★ ${place.rating}` : place.price_range || undefined,
+ }))}
+/>

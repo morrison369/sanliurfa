@@ -10,7 +10,7 @@ import {
   createFeaturedListing,
   getUserFeaturedListings
 } from '../../../lib/feature/featured-listings';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -21,8 +21,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
     const myListings = url.searchParams.get('my') === 'true';
 
     const data = myListings

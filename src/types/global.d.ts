@@ -12,7 +12,7 @@ declare global {
       type: string;
       subscription?: string;
     };
-    gtag?: (...args: any[]) => void;
-    trackEvent?: (eventName: string, parameters?: Record<string, any>) => void;
+    gtag?: (command: string, ...args: unknown[]) => void;
+    trackEvent?: (eventName: string, parameters?: Record<string, unknown>) => void;
   }
 }

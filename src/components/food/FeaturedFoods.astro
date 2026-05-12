@@ -1,0 +1,93 @@
+---
+/**
+ * FeaturedFoods — Server Island
+ *
+ * "Efsane Lezzetler" grid widget on /gastronomi (4 featured recipes).
+ * Used with `server:defer` so the rest of the gastronomy page renders without
+ * waiting on the recipe ORDER BY query.
+ *
+ * <FeaturedFoods server:defer>
+ * <div slot="fallback" class="..." />
+ * </FeaturedFoods>
+ *
+ * Inlines the Flame/Star SVG icons because the page-level `icons` map isn't
+ * accessible from inside a deferred island.
+ */
+import { Icon } from 'astro-icon/components';
+import Image from '../Image.astro';
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+import { resolveRecipeImage } from '../../lib/public-image-resolvers';
+
+let featuredFoods: Array<{
+ id: string;
+ name: string;
+ description: string;
+ image: string;
+ isSpicy: boolean;
+ difficulty: string;
+ rating: number;
+}> = [];
+
+try {
+ const result = await query(
+ `SELECT id, slug, name, description, cover_image, is_spicy, difficulty, rating
+ FROM recipes WHERE status = 'published' ORDER BY is_featured DESC, rating DESC NULLS LAST LIMIT 4`,
+ );
+ featuredFoods = result.rows.map((f: any) => ({
+ id: f.slug,
+ name: f.name,
+ description: f.description || '',
+ image: resolveRecipeImage(f),
+ isSpicy: f.is_spicy || false,
+ difficulty: f.difficulty || '',
+ rating: parseFloat(f.rating) || 0,
+ }));
+} catch (e) {
+ logger.error('FeaturedFoods query failed', e instanceof Error ? e : new Error(String(e)));
+}
+---
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+ {featuredFoods.map((food) => (
+ <article class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden group hover:border-[rgba(184,115,51,0.4)] transition-colors">
+ <a href={`/yemek-tarifleri/${food.id}`}>
+ <div class="relative aspect-square overflow-hidden">
+ <Image
+ src={food.image}
+ alt={food.name}
+ width={400}
+ height={400}
+ class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+ loading="lazy"
+ />
+ <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+ {food.isSpicy && (
+ <div class="absolute top-3 left-3">
+ <span class="flex items-center gap-1 px-2 py-1 bg-isot-600 text-white text-xs font-medium rounded-sm">
+ <Icon name="lucide:flame" class="w-4 h-4" />
+ Acılı
+ </span>
+ </div>
+ )}
+
+ <div class="absolute bottom-0 left-0 right-0 p-4">
+ <h3 class="font-display font-bold text-xl text-white">{food.name}</h3>
+ <div class="flex items-center gap-3 mt-2 text-sm text-white/80">
+ <span class="flex items-center gap-1">
+ <Icon name="lucide:star" class="w-3.5 h-3.5" />
+ {food.rating}
+ </span>
+ <span>•</span>
+ <span>{food.difficulty}</span>
+ </div>
+ </div>
+ </div>
+ <div class="p-4">
+ <p class="text-[var(--public-muted)] text-sm line-clamp-2">{food.description}</p>
+ </div>
+ </a>
+ </article>
+ ))}
+</div>

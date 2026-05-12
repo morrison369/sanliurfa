@@ -61,14 +61,6 @@ export async function submitPlaceReview(
     throw new Error('Yorum en az 10 karakter olmalıdır.');
   }
 
-  const existing = await query(
-    `SELECT id FROM reviews WHERE place_id = $1 AND user_id = $2 AND status != 'deleted'`,
-    [placeId, user.id],
-  );
-  if (existing.rows.length > 0) {
-    throw new Error('Bu mekan için zaten yorum yazdınız.');
-  }
-
   const antiSpamConfig = await getReviewAntiSpamConfig();
   const allowlisted =
     isAllowlisted(antiSpamConfig, user.id) || isAllowlisted(antiSpamConfig, user.email || null);
@@ -116,21 +108,32 @@ export async function submitPlaceReview(
     );
   }
 
-  const result = await query(
-    `INSERT INTO reviews (place_id, user_id, rating, title, content, images, visit_type, status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     RETURNING *`,
-    [
-      placeId,
-      user.id,
-      rating,
-      normalizeTitle(input.title),
-      content,
-      input.images || [],
-      input.visitType || null,
-      reviewStatus,
-    ],
-  );
+  // HARD RULE #47: duplicate check moved to INSERT level — catches concurrent submissions atomically
+  let result: Awaited<ReturnType<typeof query>>;
+  try {
+    result = await query(
+      `INSERT INTO reviews (place_id, user_id, rating, title, content, images, visit_type, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [
+        placeId,
+        user.id,
+        rating,
+        normalizeTitle(input.title),
+        content,
+        input.images || [],
+        input.visitType || null,
+        reviewStatus,
+      ],
+    );
+  } catch (err: any) {
+    if (err?.code === '23505') {
+      throw new Error('Bu mekan için zaten yorum yazdınız.', { cause: err });
+    }
+    throw err;
+  }
+
+  const review = result.rows[0] as Record<string, unknown>;
 
   await query(
     `UPDATE places SET
@@ -143,26 +146,34 @@ export async function submitPlaceReview(
 
   let pointsEarned = 0;
   if (input.awardUserPoints) {
-    const points = await awardPoints(
-      user.id,
-      'review',
-      50,
-      String(result.rows[0].id),
-      'Mekan yorumu eklendi',
-    );
-    pointsEarned = points?.pointsEarned || 0;
+    try {
+      const points = await awardPoints(
+        user.id,
+        'review',
+        50,
+        String(review.id),
+        'Mekan yorumu eklendi',
+      );
+      pointsEarned = points?.pointsEarned || 0;
+    } catch (error) {
+      logger.error('Review point award failed', error instanceof Error ? error : new Error(String(error)), {
+        userId: user.id,
+        placeId,
+        reviewId: review.id,
+      });
+    }
   }
 
   logger.info('Review submitted', {
     userId: user.id,
     placeId,
-    reviewId: result.rows[0].id,
+    reviewId: review.id,
     status: reviewStatus,
   });
 
   return {
     success: true,
-    review: result.rows[0],
+    review,
     pointsEarned,
     moderation: {
       status: reviewStatus,

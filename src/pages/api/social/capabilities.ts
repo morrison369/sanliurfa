@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { requireAuth } from '../../../lib/auth';
 import { getSocialFeatureConfig } from '../../../lib/social/match-features';
 import { getSwipeQuota } from '../../../lib/social/matchmaking-db';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ request }) => {
     return problemJson({
       status: 500,
       title: 'Social Capabilities Error',
-      detail: error instanceof Error ? error.message : 'Failed to fetch capabilities',
+      detail: safeErrorDetail(error, 'Failed to fetch capabilities'),
       type: '/problems/social-capabilities-failed',
       instance: '/api/social/capabilities',
     });

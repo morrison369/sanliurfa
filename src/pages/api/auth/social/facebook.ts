@@ -1,8 +1,9 @@
 import type { APIRoute } from 'astro';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
+import { getPublicAppUrl } from '../../../../lib/public-app-url';
 
-const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || 'https://sanliurfa.com').replace(/\/$/, '');
+const PUBLIC_APP_URL = getPublicAppUrl();
 
 export const GET: APIRoute = async ({ url }) => {
   try {
@@ -23,10 +24,11 @@ export const GET: APIRoute = async ({ url }) => {
       });
     }
 
+    const canonicalBase = getPublicAppUrl();
     const redirectUri =
-      url.searchParams.get('redirect_uri') || `${process.env.SITE_URL || url.origin}/api/auth/oauth/callback`;
+      url.searchParams.get('redirect_uri') || `${canonicalBase}/api/auth/oauth/callback`;
 
-    const authorizeUrl = new URL('/api/auth/oauth/authorize', url.origin);
+    const authorizeUrl = new URL('/api/auth/oauth/authorize', canonicalBase);
     authorizeUrl.searchParams.set('provider', 'facebook');
     authorizeUrl.searchParams.set('redirect_uri', redirectUri);
 
@@ -36,12 +38,12 @@ export const GET: APIRoute = async ({ url }) => {
         Location: authorizeUrl.toString(),
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     logger.error('Facebook OAuth bootstrap failed', error);
     return problemJson({
       status: 500,
       title: 'Facebook OAuth Başlatılamadı',
-      detail: error instanceof Error ? error.message : 'Bilinmeyen hata',
+      detail: safeErrorDetail(error, 'Facebook OAuth başlatılamadı'),
       type: `${PUBLIC_APP_URL}/problems/oauth-bootstrap-failed`,
       extensions: { provider: 'facebook' },
     });

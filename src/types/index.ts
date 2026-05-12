@@ -250,3 +250,5 @@ export interface PaginatedResponse<T> {
   per_page: number;
   total_pages: number;
 }
+
+export * from './home';

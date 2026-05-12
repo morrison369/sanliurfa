@@ -1,0 +1,23 @@
+---
+interface Props {
+ label: string;
+ value: string;
+ statusLabel?: string;
+ toneClass?: string;
+ className?: string;
+}
+
+const {
+ label,
+ value,
+ statusLabel = '',
+ toneClass = 'text-[#9A8470]',
+ className = '',
+} = Astro.props;
+---
+
+<div class={`inline-flex items-center gap-2 rounded-full border border-[rgba(184,115,51,0.18)] bg-[rgba(13,10,8,0.42)] px-3 py-1.5 text-xs ${toneClass} ${className}`.trim()}>
+ <span class="font-semibold uppercase tracking-[0.18em]">{label}</span>
+ <span>{value}</span>
+ {statusLabel && <span class="rounded-full border border-current/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em]">{statusLabel}</span>}
+</div>

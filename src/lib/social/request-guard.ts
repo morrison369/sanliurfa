@@ -1,4 +1,3 @@
-import type { APIContext } from 'astro';
 import { auditSiteChange } from '../site-content';
 import { enforceSocialRateLimit } from './abuse-policy';
 import { problemJson } from '../api';
@@ -11,7 +10,9 @@ type AuthUser = {
   role?: string | null;
 };
 
-export function buildSocialAuditContext(context: APIContext, user: AuthUser) {
+type RequestContext = { request: Request };
+
+export function buildSocialAuditContext(context: RequestContext, user: AuthUser) {
   return {
     userId: user.id,
     actorEmail: user.email || null,
@@ -21,7 +22,7 @@ export function buildSocialAuditContext(context: APIContext, user: AuthUser) {
 }
 
 export async function enforceSocialAction(
-  context: APIContext,
+  context: RequestContext,
   user: AuthUser,
   settingKey: string,
   action: SocialAction,

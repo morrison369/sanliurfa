@@ -1,451 +1,129 @@
 ---
-import RealtimeNotificationBadge from './RealtimeNotificationBadge';
-import { getSiteSetting } from '../lib/site-content';
-
-type UserRole = 'admin' | 'vendor' | 'user' | 'moderator';
-
-interface HeaderUser {
-  id: string;
-  email?: string;
-  fullName?: string;
-  name?: string;
-  role?: UserRole;
-}
-
-interface HeaderLinkItem {
-  href: string;
-  label: string;
-}
-
-interface HeaderMenuGroup {
-  title: string;
-  links: HeaderLinkItem[];
-}
-
-interface HeaderMenuSection {
-  label: string;
-  href: string;
-  sub: HeaderLinkItem[];
-  groups: HeaderMenuGroup[];
-}
-
-interface HeaderBrandConfig {
-  topStripText: string;
-  logoTitle: string;
-  logoHighlight: string;
-}
-
-interface HeaderLabelsConfig {
-  viewAllLabel: string;
-  loginLabel: string;
-  registerLabel: string;
-  mobileBusinessCtaLabel: string;
-}
-
-export interface Props {
-  user?: HeaderUser | null;
+interface Props {
+  user?: { id: string; email?: string; fullName?: string; role?: string } | null;
 }
 
 const { user } = Astro.props;
-const brandFallback: HeaderBrandConfig = {
-  topStripText: 'ŞANLIURFA ODAKLI DİJİTAL ŞEHİR REHBERİ',
-  logoTitle: 'Sanliurfa',
-  logoHighlight: '.com',
-};
-const labelsFallback: HeaderLabelsConfig = {
-  viewAllLabel: 'Tümünü Gör',
-  loginLabel: 'Giriş',
-  registerLabel: 'Kayıt Ol',
-  mobileBusinessCtaLabel: 'İşletmenizi Ekleyin',
-};
-const brandSettings = await getSiteSetting('header.brand', brandFallback);
-const labelsSettings = await getSiteSetting('header.labels', labelsFallback);
+const path = Astro.url.pathname;
 
-const brand: HeaderBrandConfig = {
-  topStripText: String((brandSettings as any)?.topStripText || brandFallback.topStripText),
-  logoTitle: String((brandSettings as any)?.logoTitle || brandFallback.logoTitle),
-  logoHighlight: String((brandSettings as any)?.logoHighlight || brandFallback.logoHighlight),
-};
-const labels: HeaderLabelsConfig = {
-  viewAllLabel: String((labelsSettings as any)?.viewAllLabel || labelsFallback.viewAllLabel),
-  loginLabel: String((labelsSettings as any)?.loginLabel || labelsFallback.loginLabel),
-  registerLabel: String((labelsSettings as any)?.registerLabel || labelsFallback.registerLabel),
-  mobileBusinessCtaLabel: String(
-    (labelsSettings as any)?.mobileBusinessCtaLabel || labelsFallback.mobileBusinessCtaLabel,
-  ),
-};
-
-const utilityLinksFallback = {
-  items: [
-    { href: '/saglik/nobetci-eczaneler', label: 'Nöbetçi Eczaneler' },
-    { href: '/ulasim/otobus-saatleri', label: 'Otobüs Saatleri' },
-    { href: '/ulasim/ucak-saatleri', label: 'Uçak Saatleri' },
-    { href: '/topluluk', label: 'Topluluk' },
-    { href: '/eslesme', label: 'Eşleşme' },
-    { href: '/yemek-tarifleri', label: 'Yemek Tarifleri' },
-    { href: '/isletme-kayit', label: 'İşletme Ekle' },
-  ],
-};
-const utilityLinkSettings = await getSiteSetting('header.utilityLinks', utilityLinksFallback);
-const utilityLinks = Array.isArray((utilityLinkSettings as any)?.items)
-  ? (utilityLinkSettings as any).items
-  : utilityLinksFallback.items;
-
-const megaMenuFallback = [
-  {
-    label: 'Mekanlar',
-    href: '/mekanlar',
-    sub: [
-      { href: '/mekanlar/kebapcilar', label: 'Kebapçılar' },
-      { href: '/mekanlar/cigerciler', label: 'Ciğerciler' },
-      { href: '/mekanlar/lahmacuncular', label: 'Lahmacuncular' },
-      { href: '/mekanlar/pideciler', label: 'Pideciler' },
-      { href: '/mekanlar/cig-kofteciler', label: 'Çiğ Köfteciler' },
-      { href: '/mekanlar/yoresel-yemekler', label: 'Yöresel Yemekler' },
-      { href: '/mekanlar/kahvalti-mekanlari', label: 'Kahvaltı Mekanları' },
-      { href: '/mekanlar/tatlicilar', label: 'Tatlıcılar' },
-      { href: '/mekanlar/kafeler', label: 'Kafeler' },
-      { href: '/mekanlar/cay-bahceleri', label: 'Çay Bahçeleri' },
-      { href: '/mekanlar/firinlar', label: 'Fırınlar' },
-      { href: '/mekanlar/pastaneler', label: 'Pastaneler' },
-      { href: '/mekanlar/balik-restoranlari', label: 'Balık Restoranları' },
-    ],
-  },
-  {
-    label: 'Gezilecek Yerler',
-    href: '/gezilecek-yerler',
-    sub: [
-      { href: '/isletme/gobeklitepe', label: 'Göbeklitepe' },
-      { href: '/isletme/balikligol', label: 'Balıklıgöl' },
-      { href: '/isletme/harran', label: 'Harran' },
-      { href: '/isletme/halfeti', label: 'Halfeti' },
-      { href: '/isletme/urfa-kalesi', label: 'Urfa Kalesi' },
-      { href: '/isletme/ayna-carsi', label: 'Aynalı Çarşı' },
-      { href: '/isletme/kapali-carsi', label: 'Kapalı Çarşı' },
-      { href: '/tarihi-yerler', label: 'Müzeler' },
-      { href: '/tarihi-yerler', label: 'Tarihi Yerler' },
-    ],
-  },
-  {
-    label: 'İlçeler',
-    href: '/ilceler',
-    sub: [
-      { href: '/ilceler/eyyubiye', label: 'Eyyübiye' },
-      { href: '/ilceler/haliliye', label: 'Haliliye' },
-      { href: '/ilceler/karakopru', label: 'Karaköprü' },
-      { href: '/ilceler/siverek', label: 'Siverek' },
-      { href: '/ilceler/viransehir', label: 'Viranşehir' },
-      { href: '/ilceler/suruc', label: 'Suruç' },
-      { href: '/ilceler/birecik', label: 'Birecik' },
-      { href: '/ilceler/akcakale', label: 'Akçakale' },
-      { href: '/ilceler/ceylanpinar', label: 'Ceylanpınar' },
-      { href: '/ilceler/halfeti', label: 'Halfeti' },
-      { href: '/ilceler/harran', label: 'Harran' },
-    ],
-  },
-  {
-    label: 'Günlük Yaşam',
-    href: '/kesfet',
-    sub: [
-      { href: '/saglik', label: 'Sağlık' },
-      { href: '/saglik/nobetci-eczaneler', label: 'Nöbetçi Eczaneler' },
-      { href: '/ulasim', label: 'Ulaşım' },
-      { href: '/ulasim/otobus-hatlari', label: 'Otobüs Hatları' },
-      { href: '/ulasim/otobus-saatleri', label: 'Otobüs Saatleri' },
-      { href: '/ulasim/ucak-saatleri', label: 'Uçak Saatleri' },
-      { href: '/etkinlikler', label: 'Etkinlikler' },
-      { href: '/blog', label: 'Blog' },
-      { href: '/topluluk', label: 'Topluluk' },
-      { href: '/eslesme', label: 'Eşleşme' },
-      { href: '/yeme-icme', label: 'Yeme İçme' },
-      { href: '/yemek-tarifleri', label: 'Yemek Tarifleri' },
-    ],
-  },
-  {
-    label: 'Diğer Kategoriler',
-    href: '/kesfet',
-    sub: [
-      { href: '/egitim', label: 'Eğitim' },
-      { href: '/hizmetler', label: 'Hizmetler' },
-      { href: '/alisveris', label: 'Alışveriş' },
-      { href: '/konaklama', label: 'Konaklama' },
-      { href: '/emlak', label: 'Emlak' },
-      { href: '/mahalleler', label: 'Mahalleler' },
-    ],
-  },
-];
-
-const mobileQuickLinksFallback = [
+const navLinks = [
   { href: '/mekanlar', label: 'Mekanlar' },
-  { href: '/gezilecek-yerler', label: 'Gezilecek Yerler' },
-  { href: '/ilceler', label: 'İlçeler' },
-  { href: '/saglik', label: 'Sağlık' },
-  { href: '/ulasim/otobus-saatleri', label: 'Otobüs Saatleri' },
-  { href: '/ulasim/ucak-saatleri', label: 'Uçak Saatleri' },
-  { href: '/etkinlikler', label: 'Etkinlikler' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/topluluk', label: 'Topluluk' },
-  { href: '/eslesme', label: 'Eşleşme' },
-];
-
-const mobileAllLinksFallback = [
-  { href: '/konaklama', label: 'Konaklama' },
-  { href: '/alisveris', label: 'Alışveriş' },
-  { href: '/ulasim', label: 'Ulaşım' },
-  { href: '/ulasim/otobus-saatleri', label: 'Otobüs Saatleri' },
-  { href: '/ulasim/ucak-saatleri', label: 'Uçak Saatleri' },
   { href: '/yeme-icme', label: 'Yeme İçme' },
-  { href: '/yemek-tarifleri', label: 'Yemek Tarifleri' },
+  { href: '/saglik', label: 'Sağlık' },
+  { href: '/saglik/nobetci-eczaneler', label: 'Eczaneler' },
+  { href: '/konaklama', label: 'Oteller' },
+  { href: '/gezilecek-yerler', label: 'Gezilecek Yerler' },
+  { href: '/etkinlikler', label: 'Etkinlikler' },
+  { href: '/ilceler', label: 'İlçeler' },
   { href: '/topluluk', label: 'Topluluk' },
-  { href: '/eslesme', label: 'Eşleşme' },
-  { href: '/saglik/nobetci-eczaneler', label: 'Nöbetçi Eczane' },
-  { href: '/mahalleler', label: 'Mahalleler' },
-  { href: '/emlak', label: 'Emlak' },
-  { href: '/hizmetler', label: 'Hizmetler' },
-  { href: '/egitim', label: 'Eğitim' },
+  { href: '/blog', label: 'Blog' },
 ];
 
-const sanitizeLink = (item: any): HeaderLinkItem => ({
-  href: String(item?.href || '').trim(),
-  label: String(item?.label || '').trim(),
-});
-
-const sanitizeMenuGroup = (group: any): HeaderMenuGroup => ({
-  title: String(group?.title || '').trim(),
-  links: Array.isArray(group?.links)
-    ? group.links.map(sanitizeLink).filter((x: HeaderLinkItem) => x.href && x.label)
-    : [],
-});
-
-const sanitizeMenuSection = (section: any): HeaderMenuSection => ({
-  label: String(section?.label || '').trim(),
-  href: String(section?.href || '').trim(),
-  sub: Array.isArray(section?.sub)
-    ? section.sub.map(sanitizeLink).filter((x: HeaderLinkItem) => x.href && x.label)
-    : [],
-  groups: Array.isArray(section?.groups)
-    ? section.groups
-        .map(sanitizeMenuGroup)
-        .filter((x: HeaderMenuGroup) => x.title && x.links.length > 0)
-    : [],
-});
-
-const megaMenuSettings = await getSiteSetting('header.megaMenu', { items: megaMenuFallback });
-const mobileQuickLinksSettings = await getSiteSetting('header.mobileQuickLinks', { items: mobileQuickLinksFallback });
-const mobileAllLinksSettings = await getSiteSetting('header.mobileAllLinks', { items: mobileAllLinksFallback });
-
-const megaMenu =
-  Array.isArray((megaMenuSettings as any)?.items) && (megaMenuSettings as any).items.length > 0
-    ? (megaMenuSettings as any).items
-        .map(sanitizeMenuSection)
-        .filter((x: HeaderMenuSection) => x.href && x.label)
-    : megaMenuFallback;
-
-const mobileQuickLinks =
-  Array.isArray((mobileQuickLinksSettings as any)?.items) && (mobileQuickLinksSettings as any).items.length > 0
-    ? (mobileQuickLinksSettings as any).items.map(sanitizeLink).filter((x: any) => x.href && x.label)
-    : mobileQuickLinksFallback;
-
-const mobileAllLinks =
-  Array.isArray((mobileAllLinksSettings as any)?.items) && (mobileAllLinksSettings as any).items.length > 0
-    ? (mobileAllLinksSettings as any).items.map(sanitizeLink).filter((x: any) => x.href && x.label)
-    : mobileAllLinksFallback;
-
-const currentPath = Astro.url.pathname;
+const isActive = (href: string) => href !== '/' && path.startsWith(href);
 ---
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
-  <div class="hidden lg:block bg-slate-900 text-slate-200 border-b border-slate-800">
-    <div class="container mx-auto px-4 h-9 flex items-center justify-between text-xs">
-      <p class="font-medium tracking-wide">{brand.topStripText}</p>
-      <div class="flex items-center gap-4">
-        {utilityLinks.map((item: { href: string; label: string }) => (
-          <a href={item.href} class="hover:text-white transition-colors">{item.label}</a>
-        ))}
-      </div>
-    </div>
-  </div>
-  <div class="container mx-auto px-4">
-    <div class="flex items-center justify-between h-16">
-      {/* Logo */}
-      <a href="/" class="flex items-center gap-2 flex-shrink-0">
-        <span class="text-2xl font-bold text-gray-900">
-          {brand.logoTitle}<span class="text-red-600">{brand.logoHighlight}</span>
-        </span>
-      </a>
+<header id="sf-header" class="sticky top-0 z-50 border-b border-[#eadcc4] bg-[#fffaf0]/92 backdrop-blur-xl">
+  <div class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <a href="/" class="flex min-h-11 min-w-0 items-center gap-1" aria-label="Sanliurfa.com ana sayfa">
+      <span class="font-display text-[1.55rem] font-semibold leading-none text-[#201711]">
+        Sanliurfa
+      </span>
+      <span class="text-[1.05rem] font-bold leading-none text-[#78331d]">.com</span>
+    </a>
 
-      {/* Desktop Nav */}
-      <nav class="hidden md:flex items-center gap-1">
-        {megaMenu.map((item: HeaderMenuSection) => (
-          <div class="relative group">
+    <nav class="sf-main-nav hidden items-center gap-0.5 lg:flex" aria-label="Ana menü">
+      {navLinks.map((item) => (
+        <a
+          href={item.href}
+          class:list={[
+                'whitespace-nowrap rounded-full px-2.5 py-2 text-xs font-semibold transition xl:px-3 xl:text-sm',
+            isActive(item.href)
+              ? 'bg-[#f1e3ce] text-[#8a3d22]'
+              : 'text-[#604c3a] hover:bg-[#f7ecd9] hover:text-[#24160f]',
+          ]}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="hidden items-center gap-2 lg:flex">
+      <a
+        href="/arama"
+        aria-label="Ara"
+        class="flex h-10 w-10 items-center justify-center rounded-full border border-[#d9c5a7] bg-white text-[#5c4938] transition hover:border-[#78331d] hover:text-[#78331d]"
+      >
+        <span aria-hidden="true">⌕</span>
+      </a>
+      <a
+        href="/eslesme"
+        class="rounded-full border border-[#d9c5a7] px-3 py-2 text-sm font-bold text-[#7b4129] transition hover:border-[#78331d] hover:bg-white"
+      >
+        Eşleşme
+      </a>
+      {user ? (
+        <a
+          href={user.role === 'admin' ? '/admin' : '/profil'}
+          class="rounded-full border border-[#d9c5a7] px-4 py-2 text-sm font-bold text-[#3d2c21] transition hover:border-[#78331d] hover:bg-white"
+        >
+          {user.role === 'admin' ? 'Admin Panel' : 'Profil'}
+        </a>
+      ) : (
+        <a
+          href="/isletme-kayit"
+          class="whitespace-nowrap rounded-full bg-[#78331d] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-[#78331d]/20 transition hover:bg-[#652918]"
+        >
+          İşletmeni Ekle
+        </a>
+      )}
+    </div>
+
+    <details class="group relative lg:hidden">
+      <summary
+        class="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-full border border-[#decaa9] bg-white text-[#2d2118] [&::-webkit-details-marker]:hidden"
+        aria-label="Menüyü aç"
+        id="mobileMenuBtn"
+      >
+        <span class="sr-only">Menü</span>
+        <span class="relative block h-4 w-5">
+          <span class="absolute left-0 top-0 h-0.5 w-5 rounded bg-current transition group-open:top-2 group-open:rotate-45"></span>
+          <span class="absolute left-0 top-2 h-0.5 w-5 rounded bg-current transition group-open:opacity-0"></span>
+          <span class="absolute left-0 top-4 h-0.5 w-5 rounded bg-current transition group-open:top-2 group-open:-rotate-45"></span>
+        </span>
+      </summary>
+      <div class="absolute right-0 mt-3 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-[#eadcc4] bg-[#fffaf0] p-3 shadow-2xl shadow-[#2b1c12]/15">
+        <nav class="grid gap-1" aria-label="Mobil menü">
+          {navLinks.map((item) => (
             <a
               href={item.href}
-              class={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
-                item.href !== '#' && currentPath.startsWith(item.href)
-                  ? 'text-red-600 bg-red-50'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+              class:list={[
+                'rounded-xl px-3 py-3 text-sm font-semibold',
+                isActive(item.href)
+                  ? 'bg-[#f1e3ce] text-[#8a3d22]'
+                  : 'text-[#4f3d2e] hover:bg-[#f7ecd9]',
+              ]}
             >
               {item.label}
-              <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-              </svg>
             </a>
-            {/* Dropdown */}
-            <div class="absolute left-0 top-full pt-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
-              <div class="bg-white rounded-xl shadow-xl border border-gray-100 py-2 min-w-[220px]">
-                {(item.groups && item.groups.length > 0
-                  ? item.groups
-                  : [{ title: '', links: item.sub }]).map((group: HeaderMenuGroup) => (
-                  <div class="px-2 pb-1">
-                    {group.title && (
-                      <p class="px-2 py-1 text-[11px] font-semibold tracking-wide text-gray-500 uppercase">
-                        {group.title}
-                      </p>
-                    )}
-                    {group.links.map((sub: HeaderLinkItem) => (
-                      <a
-                        href={sub.href}
-                        class="block px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
-                      >
-                        {sub.label}
-                      </a>
-                    ))}
-                  </div>
-                ))}
-                <div class="border-t border-gray-100 mt-2 pt-2 mx-2">
-                  <a href={item.href} class="block px-2 py-1.5 text-xs text-red-600 hover:underline font-medium">
-                    {labels.viewAllLabel} →
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      {/* Right Side */}
-      <div class="flex items-center gap-3">
-        {/* Search */}
-        <a
-          href="/arama"
-          class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
-          aria-label="Ara"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </a>
-
-        {user && <RealtimeNotificationBadge userId={user.id} client:idle />}
-
-        {/* User */}
-        {user ? (
-          <div class="relative group">
-            <button class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100">
-              <div class="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                {(
-                  user.fullName || user.name || user.email || 'U'
-                ).charAt(0).toUpperCase()}
-              </div>
-              <span class="hidden lg:block text-sm font-medium text-gray-700">
-                {user.fullName?.split(' ')[0] || user.name || user.email}
-              </span>
-            </button>
-            <div class="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-              <div class="py-1.5">
-                <a href="/profil" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Profilim</a>
-                {user.role === 'vendor' && (
-                  <a href="/vendor/dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">İşletme Paneli</a>
-                )}
-                {(user.role === 'admin' || user.role === 'moderator') && (
-                  <a href="/admin" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Yönetim Paneli</a>
-                )}
-                <hr class="my-1" />
-                <a href="/api/auth/logout" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Çıkış Yap</a>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div class="flex items-center gap-2">
-            <a href="/giris" class="hidden sm:block px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900">
-              {labels.loginLabel}
-            </a>
-            <a href="/kayit" class="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition-colors">
-              {labels.registerLabel}
-            </a>
-          </div>
-        )}
-
-        {/* Mobile Menu Button */}
-        <button
-          id="mobileMenuBtn"
-          class="md:hidden w-9 h-9 rounded-lg hover:bg-gray-100 flex items-center justify-center"
-          aria-label="Menü"
-          aria-controls="mobileMenu"
-          aria-expanded="false"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  {/* Mobile Menu */}
-  <div id="mobileMenu" class="hidden md:hidden bg-white border-t border-gray-100 max-h-[80vh] overflow-y-auto">
-    <div class="container mx-auto px-4 py-4">
-      {/* Quick links */}
-      <div class="grid grid-cols-3 gap-2 mb-4">
-        {mobileQuickLinks.map((item: HeaderLinkItem) => (
-          <a href={item.href} class="flex items-center justify-center p-3 rounded-xl bg-gray-50 hover:bg-red-50 group text-center">
-            <span class="text-xs font-semibold text-gray-700 group-hover:text-red-600">{item.label}</span>
+          ))}
+          <a href="/isletme-kayit" class="mt-2 rounded-xl bg-[#78331d] px-3 py-3 text-center text-sm font-bold text-white">
+            İşletmeni Ekle
           </a>
-        ))}
+        </nav>
       </div>
-
-      {/* All links */}
-      <div class="space-y-1 border-t border-gray-100 pt-4">
-        {mobileAllLinks.map((item: HeaderLinkItem) => (
-          <a href={item.href} class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg">{item.label}</a>
-        ))}
-      </div>
-
-      <div class="mt-4 pt-4 border-t border-gray-100">
-        <a href="/isletme-kayit" class="block px-4 py-3 bg-red-600 text-white rounded-xl font-medium text-center">
-          {labels.mobileBusinessCtaLabel}
-        </a>
-      </div>
-    </div>
+    </details>
   </div>
 </header>
 
-<script>
-  const btn = document.getElementById('mobileMenuBtn') as HTMLButtonElement | null;
-  const menu = document.getElementById('mobileMenu');
-
-  const setMenuState = (open: boolean) => {
-    if (!menu || !btn) return;
-    menu.classList.toggle('hidden', !open);
-    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    document.body.classList.toggle('overflow-hidden', open);
-  };
-
-  btn?.addEventListener('click', () => {
-    if (!menu) return;
-    const isOpen = !menu.classList.contains('hidden');
-    setMenuState(!isOpen);
-  });
-
+<script is:inline>
+  // Mobil menü: sayfa geçişinde ve dışarı tıklamada kapat
+  function closeMobileMenu() {
+    const d = document.querySelector('details.group');
+    if (d) d.removeAttribute('open');
+  }
+  document.addEventListener('astro:page-load', closeMobileMenu);
   document.addEventListener('click', (e) => {
-    if (!menu || !btn) return;
-    if (!btn.contains(e.target as Node) && !menu.contains(e.target as Node)) {
-      setMenuState(false);
-    }
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') setMenuState(false);
+    const d = document.querySelector('details.group');
+    if (d && d.open && !d.contains(e.target)) closeMobileMenu();
   });
 </script>

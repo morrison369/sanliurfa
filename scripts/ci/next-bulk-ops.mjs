@@ -4,8 +4,9 @@ import { spawnSync } from 'node:child_process';
 const steps = [
   'npm run public:city:gate',
   'npm run recommendations:apply',
-  'npm run ops:agency:all',
   'npm run gate:isolated',
+  'npm run jobs:nightly:core',
+  'npm run recommendations:apply:quick',
 ];
 
 function run(cmd) {

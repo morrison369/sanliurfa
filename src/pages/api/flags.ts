@@ -5,7 +5,7 @@ import { problemJson } from '../../lib/api';
 // GET: Get all flag values for current user
 export const GET: APIRoute = async ({ locals }) => {
   const userId = locals.user?.id;
-  const flags = await getAllFlags({ userId });
+  const flags = await getAllFlags(userId ? { userId } : undefined);
   return new Response(
     JSON.stringify({ flags }),
     { status: 200, headers: { 'Content-Type': 'application/json' } }
@@ -17,7 +17,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const { key } = await request.json();
     const userId = locals.user?.id;
-    const enabled = await isEnabled(key, { userId });
+    const enabled = await isEnabled(key, userId ? { userId } : undefined);
     return new Response(
       JSON.stringify({ key, enabled }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }

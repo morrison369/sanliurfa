@@ -4,7 +4,7 @@ import { recordSwipe, type SwipeDirection } from '../../../lib/social/matchmakin
 import { getSocialFeatureConfig } from '../../../lib/social/match-features';
 import { getOrCreateConversation } from '../../../lib/message/messages';
 import { auditSiteChange } from '../../../lib/site-content';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
 import { publishSocialEvent } from '../../../lib/social/event-stream';
 import { buildSocialAuditContext, enforceSocialAction } from '../../../lib/social/request-guard';
 
@@ -33,12 +33,12 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const body = await request.json();
-    const targetUserId = body?.targetUserId?.toString?.();
+    const targetUserId = typeof body?.targetUserId === 'string' ? body.targetUserId : null;
     const direction = body?.direction as SwipeDirection;
-    const auditCtx = buildSocialAuditContext({ request } as any, auth.user as any);
+    const auditCtx = buildSocialAuditContext({ request }, auth.user);
     const guardResponse = await enforceSocialAction(
-      { request } as any,
-      auth.user as any,
+      { request },
+      auth.user,
       'social.swipe',
       'swipe',
     );
@@ -82,39 +82,48 @@ export const POST: APIRoute = async ({ request }) => {
         eventType: 'swipe.match',
         actorUserId: auth.user.id,
         targetUserId,
-        conversationId,
         createdAt: new Date().toISOString(),
+        ...(conversationId ? { conversationId } : {}),
       });
     }
 
-    return new Response(JSON.stringify({ success: true, ...result, conversationId }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse(
+      {
+        success: true,
+        ...result,
+        ...(conversationId ? { conversationId } : {}),
+      },
+      HttpStatus.OK,
+    );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to save swipe';
-    if (
-      String(message).includes('Günlük kaydırma limitine ulaştınız') ||
-      String(message).includes('Kullanıcı kendisini eşleştiremez')
-    ) {
-      const auth = await requireAuth(request).catch(() => null);
-      if (auth?.user) {
+    const rawMessage = error instanceof Error ? error.message : '';
+    const isKnownBusinessError =
+      rawMessage.includes('Günlük kaydırma limitine ulaştınız') ||
+      rawMessage.includes('Kullanıcı kendisini eşleştiremez');
+
+    if (isKnownBusinessError) {
+      const authRetry = await requireAuth(request).catch(() => null);
+      if (authRetry?.user) {
         await auditSiteChange(
           'social.swipe',
           'social_abuse',
           {
-            userId: auth.user.id,
-            actorEmail: auth.user.email || null,
+            userId: authRetry.user.id,
+            actorEmail: authRetry.user.email || null,
             ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
             userAgent: request.headers.get('user-agent') || null,
           },
-          { reason: 'limit_or_invalid_swipe', message: String(message) },
+          { reason: 'limit_or_invalid_swipe', message: rawMessage },
         );
       }
     }
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 400, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
-    );
+
+    return problemJson({
+      status: 400,
+      title: 'Swipe Kaydedilemedi',
+      detail: isKnownBusinessError ? rawMessage : safeErrorDetail(error, 'Swipe kaydedilemedi'),
+      type: '/problems/social-swipe-failed',
+      instance: '/api/social/swipe',
+    });
   }
 };

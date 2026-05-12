@@ -3,7 +3,7 @@
  * Handle subscription tiers, billing, and feature access
  */
 
-import { query, queryOne, queryMany, insert, update } from '../postgres';
+import { query, queryOne, queryMany, insert } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
 
@@ -50,7 +50,7 @@ export async function getSubscriptionTiers(): Promise<SubscriptionTier[]> {
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(
@@ -90,7 +90,7 @@ export async function getActiveSubscription(userId: string): Promise<(Subscripti
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const result = await queryOne(
@@ -114,19 +114,21 @@ export async function getActiveSubscription(userId: string): Promise<(Subscripti
       subscriptionType: result.subscription_type,
       status: result.status,
       startDate: result.start_date,
-      endDate: result.end_date,
       autoRenew: result.auto_renew,
       billingCycle: result.billing_cycle,
-      nextBillingDate: result.next_billing_date,
       createdAt: result.created_at,
       updatedAt: result.updated_at,
+      ...(result.end_date ? { endDate: result.end_date } : {}),
+      ...(result.next_billing_date ? { nextBillingDate: result.next_billing_date } : {}),
       tier: {
         id: result.tier_id,
         name: result.name,
         displayName: result.display_name,
-        description: result.description,
         monthlyPrice: result.monthly_price,
-        annualPrice: result.annual_price,
+        ...(result.description ? { description: result.description } : {}),
+        ...(result.annual_price !== null && result.annual_price !== undefined
+          ? { annualPrice: result.annual_price }
+          : {}),
         tierLevel: result.tier_level,
         isActive: true
       }
@@ -219,29 +221,32 @@ export async function upgradeSubscription(
   billingCycle: string = 'monthly'
 ): Promise<Subscription | null> {
   try {
-    // Cancel existing active subscription
-    const existing = await getActiveSubscription(userId);
-    if (existing) {
-      await query(
-        'UPDATE subscriptions SET status = $1 WHERE id = $2',
-        ['cancelled', existing.id]
-      );
+    // Atomic CTE: cancel existing active subscription and insert new one in a single transaction.
+    // This prevents the TOCTOU race where two concurrent requests both see no active subscription
+    // and both INSERT, creating duplicate active subscriptions.
+    const result = await queryOne<{
+      id: string; user_id: string; tier_id: string; subscription_type: string;
+      status: string; start_date: string; end_date: string | null;
+      auto_renew: boolean; billing_cycle: string; next_billing_date: string;
+      created_at: string; updated_at: string;
+    }>(
+      `WITH cancelled AS (
+        UPDATE subscriptions SET status = 'cancelled', end_date = NOW()
+        WHERE user_id = $1 AND status = 'active'
+      )
+      INSERT INTO subscriptions
+        (user_id, tier_id, subscription_type, status, start_date, auto_renew, billing_cycle, next_billing_date)
+      VALUES
+        ($1, $2, 'premium', 'active', NOW(), true, $3, NOW() + INTERVAL '30 days')
+      RETURNING *`,
+      [userId, newTierId, billingCycle]
+    );
+
+    if (!result) {
+      return null;
     }
 
-    // Create new subscription
-    const result = await insert('subscriptions', {
-      user_id: userId,
-      tier_id: newTierId,
-      subscription_type: 'premium',
-      status: 'active',
-      start_date: new Date().toISOString(),
-      auto_renew: true,
-      billing_cycle: billingCycle,
-      next_billing_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-    });
-
-    // Invalidate cache
-    await deleteCache(`subscription:user:${userId}`);
+    await deleteCache(`subscription:user:${userId}`).catch(() => null);
 
     logger.info('Subscription upgraded', { userId, newTierId });
 
@@ -252,12 +257,12 @@ export async function upgradeSubscription(
       subscriptionType: result.subscription_type,
       status: result.status,
       startDate: result.start_date,
-      endDate: result.end_date,
       autoRenew: result.auto_renew,
       billingCycle: result.billing_cycle,
-      nextBillingDate: result.next_billing_date,
       createdAt: result.created_at,
-      updatedAt: result.updated_at
+      updatedAt: result.updated_at,
+      ...(result.end_date ? { endDate: result.end_date } : {}),
+      ...(result.next_billing_date ? { nextBillingDate: result.next_billing_date } : {})
     };
   } catch (error) {
     logger.error('Failed to upgrade subscription', error instanceof Error ? error : new Error(String(error)));
@@ -270,22 +275,21 @@ export async function upgradeSubscription(
  */
 export async function cancelSubscription(subscriptionId: string): Promise<boolean> {
   try {
-    const subscription = await queryOne(
-      'SELECT user_id FROM subscriptions WHERE id = $1',
+    // Atomic: SELECT + UPDATE combined; AND status='active' makes it idempotent
+    const result = await queryOne<{ user_id: string }>(
+      `UPDATE subscriptions
+       SET status = 'cancelled', end_date = COALESCE(end_date, NOW()), updated_at = NOW()
+       WHERE id = $1 AND status = 'active'
+       RETURNING user_id`,
       [subscriptionId]
     );
 
-    if (!subscription) {
-      return false;
+    if (!result) {
+      return false; // Not found or already cancelled
     }
 
-    await query(
-      'UPDATE subscriptions SET status = $1 WHERE id = $2',
-      ['cancelled', subscriptionId]
-    );
-
     // Invalidate cache
-    await deleteCache(`subscription:user:${subscription.user_id}`);
+    await deleteCache(`subscription:user:${result.user_id}`);
 
     logger.info('Subscription cancelled', { subscriptionId });
 
@@ -399,4 +403,41 @@ export async function incrementFeatureUsage(userId: string, featureName: string)
   }
 }
 
+/**
+ * HARD RULE #47: Atomic feature usage check + increment.
+ * Replaces the two-call checkFeatureUsage + incrementFeatureUsage pattern
+ * which is a race condition under concurrent load.
+ */
+export async function checkAndIncrementFeatureUsage(
+  userId: string,
+  featureName: string
+): Promise<{ allowed: boolean; current: number; limit: number | null }> {
+  try {
+    const result = await queryOne<{ current_usage: number; limit_value: number | null }>(
+      `UPDATE feature_access
+       SET current_usage = current_usage + 1
+       WHERE user_id = $1 AND feature_name = $2
+         AND (limit_value IS NULL OR current_usage + 1 <= limit_value)
+       RETURNING current_usage, limit_value`,
+      [userId, featureName]
+    );
 
+    if (!result) {
+      // Either quota exceeded or row doesn't exist — check which
+      const existing = await queryOne<{ current_usage: number; limit_value: number | null }>(
+        'SELECT current_usage, limit_value FROM feature_access WHERE user_id = $1 AND feature_name = $2',
+        [userId, featureName]
+      );
+      if (!existing) {
+        // No feature_access row → unlimited (no quota configured)
+        return { allowed: true, current: 0, limit: null };
+      }
+      return { allowed: false, current: existing.current_usage, limit: existing.limit_value };
+    }
+
+    return { allowed: true, current: result.current_usage, limit: result.limit_value };
+  } catch (error) {
+    logger.error('Failed to check+increment feature usage', error instanceof Error ? error : new Error(String(error)));
+    return { allowed: true, current: 0, limit: null }; // fail-open
+  }
+}

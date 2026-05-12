@@ -6,12 +6,13 @@ set -euo pipefail
 
 PORT="${PORT:-4321}"
 BASE_URL="${BASE_URL:-http://127.0.0.1:$PORT}"
+HTTP_MAX_TIME="${HTTP_MAX_TIME:-15}"
 
 check_http() {
   local path="$1"
   local expected="$2"
   local code
-  code="$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL$path" || true)"
+  code="$(curl -s --max-time "$HTTP_MAX_TIME" -o /dev/null -w "%{http_code}" "$BASE_URL$path" || true)"
   if [ "$code" != "$expected" ]; then
     echo "[FAIL] $path expected=$expected got=${code:-000}"
     return 1

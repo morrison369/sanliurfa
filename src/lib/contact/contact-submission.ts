@@ -71,7 +71,7 @@ export async function submitContactRequest(
   const ticket = result.rows[0];
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@sanliurfa.com';
 
-  await sendEmail({
+  const mailResult = await sendEmail({
     to: adminEmail,
     subject: `[Destek] ${subject} - #${ticket.ticket_number || ticket.id}`,
     html: `<p>Yeni destek talebi:</p>
@@ -85,7 +85,11 @@ export async function submitContactRequest(
 </ul>`,
   });
 
-  logger.info('Contact request submitted', { ticketId: ticket.id, email, type });
+  if (!mailResult.success) {
+    logger.warn('Contact admin notification email failed', { ticketId: ticket.id, adminEmail, error: mailResult.error });
+  }
+
+  logger.info('Contact request submitted', { ticketId: ticket.id, email, type, mailTier: mailResult.tier });
 
   return {
     success: true,

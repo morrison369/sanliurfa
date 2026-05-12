@@ -51,7 +51,7 @@ export async function recordMetric(
     value,
     unit,
     timestamp: new Date(),
-    labels,
+    ...(labels ? { labels } : {}),
   };
 
   // Add to buffer
@@ -282,20 +282,23 @@ export async function generatePerformanceReport(
     [period.start, period.end]
   );
 
-  for (const { name } of metricNames.rows) {
-    const stats = await query(
-      `SELECT 
-        AVG(value) as avg,
-        MIN(value) as min,
-        MAX(value) as max,
-        PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY value) as p95,
-        PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY value) as p99
-      FROM performance_metrics
-      WHERE name = $1 AND timestamp >= $2 AND timestamp <= $3`,
-      [name, period.start, period.end]
-    );
-
-    const row = stats.rows[0];
+  const statsResults = await Promise.all(
+    metricNames.rows.map(({ name }: { name: string }) =>
+      query(
+        `SELECT
+          AVG(value) as avg,
+          MIN(value) as min,
+          MAX(value) as max,
+          PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY value) as p95,
+          PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY value) as p99
+        FROM performance_metrics
+        WHERE name = $1 AND timestamp >= $2 AND timestamp <= $3`,
+        [name, period.start, period.end]
+      )
+    )
+  );
+  metricNames.rows.forEach(({ name }: { name: string }, i: number) => {
+    const row = statsResults[i].rows[0];
     metrics[name] = {
       avg: parseFloat(row.avg) || 0,
       min: parseFloat(row.min) || 0,
@@ -303,7 +306,7 @@ export async function generatePerformanceReport(
       p95: parseFloat(row.p95) || 0,
       p99: parseFloat(row.p99) || 0,
     };
-  }
+  });
 
   // Get alert statistics
   const alertStats = await query(
@@ -337,8 +340,8 @@ export async function generatePerformanceReport(
     metrics,
     alerts: alertStats.rows.map(row => ({
       rule: row.rule_id,
-      triggered: parseInt(row.triggered),
-      resolved: parseInt(row.resolved),
+      triggered: parseInt(row.triggered, 10),
+      resolved: parseInt(row.resolved, 10),
     })),
     recommendations,
   };
@@ -382,7 +385,7 @@ export async function getSystemHealth(): Promise<{
   const errorResult = await query(
     `SELECT COUNT(*) FROM error_logs WHERE created_at >= NOW() - INTERVAL '5 minutes'`
   );
-  const recentErrors = parseInt(errorResult.rows[0].count);
+  const recentErrors = parseInt(errorResult.rows[0].count, 10);
   if (recentErrors > 10) {
     checks.errors = { status: 'fail', message: `${recentErrors} errors in last 5 minutes` };
   } else {
@@ -434,16 +437,19 @@ export async function getMonitoringDashboard(): Promise<{
   
   const metrics: Record<string, any> = {};
   const metricNames = ['api_response_time', 'db_query_time', 'memory_usage', 'cpu_usage'];
-  
-  for (const name of metricNames) {
-    const data = await getMetrics(name, { start: hourAgo, end: now }, 'avg');
+
+  const metricResults = await Promise.all(
+    metricNames.map((name) => getMetrics(name, { start: hourAgo, end: now }, 'avg'))
+  );
+  metricNames.forEach((name, i) => {
+    const data = metricResults[i];
     if (data.length > 0) {
       metrics[name] = {
         current: data[data.length - 1].value,
         avg: data.reduce((a, b) => a + b.value, 0) / data.length,
       };
     }
-  }
+  });
 
   const alerts = await query(
     `SELECT a.*, r.name as rule_name 

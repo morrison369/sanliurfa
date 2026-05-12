@@ -6,18 +6,20 @@ import type { APIRoute } from 'astro';
 import { sendEmail, getPasswordResetEmailHTML } from '../../../lib/email';
 import { queryOne } from '../../../lib/postgres';
 import { validateWithSchema } from '../../../lib/validation';
+import type { ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { createToken } from '../../../lib/auth';
 import { getCache, setCache } from '../../../lib/cache';
+import { getPublicAppUrl } from '../../../lib/public-app-url';
 
 const RATE_LIMIT = 3;
 const RATE_WINDOW = 3600; // 1 saat
 
-const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || 'https://sanliurfa.com').replace(/\/$/, '');
+const PUBLIC_APP_URL = getPublicAppUrl();
 
-const schema = {
+const schema: ValidationSchema = {
   email: { type: 'string' as const, required: true, pattern: '^[^@]+@[^@]+\\.[^@]+$' }
 };
 
@@ -28,7 +30,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/email/send-reset', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -73,7 +75,7 @@ export const POST: APIRoute = async ({ request }) => {
       html
     });
 
-    if (!sent) {
+    if (!sent.success) {
       recordRequest('POST', '/api/email/send-reset', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,

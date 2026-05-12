@@ -1,47 +1,62 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import LeaderboardsDisplay from "../../components/LeaderboardsDisplay";
-import { getSiteBranding } from "../../lib/site-branding";
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from "../../lib/public-app-url";
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'Sıralamalar - Sanliurfa.com',
-  description: "Şanlıurfa topluluğunun en aktif ve başarılı kullanıcılarının sıralaması.",
-  keywords: ['sıralamalar', 'şanlıurfa kullanıcı sıralaması', 'topluluk puanı', 'başarılı üyeler'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/siralamalar',
+ title: 'Sıralamalar - Sanliurfa.com',
+ description: "Şanlıurfa topluluğunun en aktif ve başarılı kullanıcılarının sıralaması.",
+ keywords: ['sıralamalar', 'şanlıurfa kullanıcı sıralaması', 'topluluk puanı', 'başarılı üyeler'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/siralamalar',
 };
 
 const faqItems = [
-  { S: 'Sıralamalar nasıl hesaplanır?', C: "Sıralamalar yorum sayısı, puan, rozet ve topluluk katkıları baz alınarak hesaplanır." },
-  { S: 'Sıralamada yükselmek için ne yapmalıyım?', C: "Mekan değerlendirmesi yapın, fotoğraf yükleyin ve toplulukta aktif olun. Her aktivite puana katkı sağlar." },
-  { S: 'Sıralamalar ne sıklıkla güncelleniyor?', C: "Sıralamalar kullanıcı aktivitelerine bağlı olarak anlık güncellenir." },
+ { S: 'Sıralamalar nasıl hesaplanır?', C: "Sıralamalar yorum sayısı, puan, rozet ve topluluk katkıları baz alınarak hesaplanır." },
+ { S: 'Sıralamada yükselmek için ne yapmalıyım?', C: "Mekan değerlendirmesi yapın, fotoğraf yükleyin ve toplulukta aktif olun. Her aktivite puana katkı sağlar." },
+ { S: 'Sıralamalar ne sıklıkla güncelleniyor?', C: "Sıralamalar kullanıcı aktivitelerine bağlı olarak anlık güncellenir." },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Sıralamalar</h1>
-      <p class="text-gray-600 dark:text-gray-400">En aktif ve başarılı kullanıcılar</p>
-    </div>
-    <LeaderboardsDisplay client:visible={{ rootMargin: '120px' }} />
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Sıralamalar', item: `${baseUrl}/siralamalar` },
-    ],
-  })} is:inline />
+ <style is:inline>
+ .sr-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+ .sr-hero-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#4A3828}
+ .sr-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.7rem,4vw,2.6rem);font-weight:700;color:#1F1410;margin:.75rem 0 .25rem}
+ .sr-hero-desc{color:#7A6B58;font-size:.9rem}
+ .sr-body{background:var(--bg);padding:2rem 0 4rem}
+ </style>
+
+ <div class="sr-hero">
+ <div class="sf-container">
+ <p class="sr-hero-label">Şanlıurfa Topluluğu</p>
+ <h1 class="sr-h1">Sıralamalar</h1>
+ <p class="sr-hero-desc">En aktif ve başarılı kullanıcılar.</p>
+ </div>
+ </div>
+
+ <div class="sr-body">
+ <div class="sf-container">
+ <LeaderboardsDisplay client:visible={{ rootMargin: '120px' }} />
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Sıralamalar', item: `${baseUrl}/siralamalar` },
+ ],
+ })} is:inline />
 </Layout>

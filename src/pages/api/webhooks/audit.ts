@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { getWebhookAuditHistory, getUserActivitySummary } from '../../../lib/webhook/webhook-audit';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 /**
@@ -20,8 +20,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const url = new URL(request.url);
     const webhookId = url.searchParams.get('webhookId');
     const summary = url.searchParams.get('summary') === 'true';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     if (summary) {
       // Return activity summary

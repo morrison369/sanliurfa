@@ -1,270 +1,285 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-
-const seo = {
-  title: 'İşletme Yönetimi - Yönetim Paneli',
-  description: 'İşletmeleri yönetin',
-  noIndex: true,
-};
+import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 pt-20 pb-12">
-    <div class="container mx-auto px-4">
-      {/* Header */}
-      <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 class="text-2xl font-bold text-gray-900">İşletme Yönetimi</h1>
-            <p class="text-gray-500 mt-1">Tüm işletmeleri görüntüleyin ve yönetin</p>
-          </div>
-          <a href="/isletme-kayit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-            + Yeni İşletme
-          </a>
-        </div>
-      </div>
+<AdminLayout
+ title="İşletme Yönetimi"
+ subtitle="Tüm işletmeleri görüntüleyin ve yönetin"
+ seo={{ title: 'İşletme Yönetimi - Yönetim Paneli', description: 'İşletmeleri yönetin', noIndex: true }}
+>
+ <a slot="hero-action" href="/isletme-kayit" class="px-4 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 transition-colors">
+ + Yeni İşletme
+ </a>
 
-      {/* Stats */}
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="stats">
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <div class="text-2xl font-bold text-gray-900" id="statTotal">-</div>
-          <div class="text-sm text-gray-500">Toplam</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <div class="text-2xl font-bold text-green-600" id="statActive">-</div>
-          <div class="text-sm text-gray-500">Aktif</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <div class="text-2xl font-bold text-yellow-600" id="statPending">-</div>
-          <div class="text-sm text-gray-500">Onay Bekleyen</div>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm p-4">
-          <div class="text-2xl font-bold text-red-600" id="statSuspended">-</div>
-          <div class="text-sm text-gray-500">Askıya Alınmış</div>
-        </div>
-      </div>
+ <div class="sf-container py-8">
+ {/* Stats */}
+ <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="stats">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="text-2xl font-bold text-[#1F1410]" id="statTotal">-</div>
+ <div class="text-sm text-[#7A6B58]">Toplam</div>
+ </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="text-2xl font-bold text-[#7A6B58]" id="statActive">-</div>
+ <div class="text-sm text-[#7A6B58]">Aktif</div>
+ </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="text-2xl font-bold text-urfa-600" id="statPending">-</div>
+ <div class="text-sm text-[#7A6B58]">Onay Bekleyen</div>
+ </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="text-2xl font-bold text-[#7A6B58]" id="statSuspended">-</div>
+ <div class="text-sm text-[#7A6B58]">Askıya Alınmış</div>
+ </div>
+ </div>
 
-      {/* Filters */}
-      <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-        <div class="flex flex-wrap gap-4">
-          <input type="text" id="searchInput" placeholder="İşletme ara..."
-            class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 flex-1 min-w-[200px]" />
-          <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500">
-            <option value="all">Tüm Durumlar</option>
-            <option value="active">Aktif</option>
-            <option value="pending">Onay Bekleyen</option>
-            <option value="suspended">Askıya Alınmış</option>
-            <option value="rejected">Reddedilmiş</option>
-          </select>
-          <button id="searchBtn" class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900">Ara</button>
-        </div>
-      </div>
+ {/* Filters */}
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4 mb-6">
+ <div class="flex flex-wrap gap-4">
+ <input type="text" id="searchInput" placeholder="İşletme ara..."
+ class="px-4 py-2 border border-[rgba(184,115,51,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-500 flex-1 min-w-[200px]" />
+ <select id="statusFilter" class="px-4 py-2 border border-[rgba(184,115,51,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-500">
+ <option value="all">Tüm Durumlar</option>
+ <option value="active">Aktif</option>
+ <option value="pending">Onay Bekleyen</option>
+ <option value="suspended">Askıya Alınmış</option>
+ <option value="rejected">Reddedilmiş</option>
+ </select>
+ <button id="searchBtn" class="px-4 py-2 bg-[#B87333] text-white rounded-sm hover:bg-[#9A6528]">Ara</button>
+ </div>
+ </div>
 
-      {/* Table */}
-      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th class="px-4 py-3 text-left"><input type="checkbox" id="selectAll" class="rounded" /></th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşletme</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sahip</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">İstatistik</th>
-              <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">İşlemler</th>
-            </tr>
-          </thead>
-          <tbody id="placesTable" class="divide-y divide-gray-100">
-            <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">Yükleniyor...</td></tr>
-          </tbody>
-        </table>
-        
-        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <div class="text-sm text-gray-500">
-            <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
-          </div>
-          <div class="flex gap-2" id="pagination"></div>
-        </div>
-      </div>
+ {/* Table */}
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <table class="w-full">
+ <thead class="bg-[rgba(184,115,51,0.04)] border-b border-[rgba(184,115,51,0.14)]">
+ <tr>
+ <th class="px-4 py-3 text-left"><input type="checkbox" id="selectAll" class="rounded-sm" /></th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İşletme</th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Sahip</th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Durum</th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İstatistik</th>
+ <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İşlemler</th>
+ </tr>
+ </thead>
+ <tbody id="placesTable" class="divide-y divide-[rgba(184,115,51,0.1)]">
+ <tr><td colspan="6" class="px-6 py-12 text-center text-[#7A6B58]">Yükleniyor...</td></tr>
+ </tbody>
+ </table>
 
-      {/* Bulk Actions */}
-      <div id="bulkActions" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg hidden">
-        <span id="selectedCount">0</span> secildi
-        <div class="inline-flex gap-2 ml-4">
-          <button onclick="bulkAction('approve')" class="px-3 py-1 bg-green-600 rounded text-sm">Onayla</button>
-          <button onclick="bulkAction('suspend')" class="px-3 py-1 bg-yellow-600 rounded text-sm">Askıya Al</button>
-          <button onclick="bulkAction('reject')" class="px-3 py-1 bg-red-600 rounded text-sm">Reddet</button>
-          <button onclick="bulkAction('feature')" class="px-3 py-1 bg-blue-600 rounded text-sm">Öne Çıkar</button>
-        </div>
-      </div>
-    </div>
-  </div>
+ <div class="px-6 py-4 border-t border-[rgba(184,115,51,0.14)] flex items-center justify-between">
+ <div class="text-sm text-[#7A6B58]">
+ <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
+ </div>
+ <div class="flex gap-2" id="pagination"></div>
+ </div>
+ </div>
 
-  <script is:inline>
-    let currentPage = 1;
-    let selectedPlaces = new Set();
+ {/* Bulk Actions */}
+ <div id="bulkActions" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#0D0A08] text-white px-6 py-3 rounded-sm shadow-lg border border-[rgba(184,115,51,0.14)] hidden">
+ <span id="selectedCount">0</span> secildi
+ <div class="inline-flex gap-2 ml-4">
+ <button onclick="bulkAction('approve')" class="px-3 py-1 bg-[#6B5540] rounded-sm text-sm">Onayla</button>
+ <button onclick="bulkAction('suspend')" class="px-3 py-1 bg-urfa-600 rounded-sm text-sm">Askıya Al</button>
+ <button onclick="bulkAction('reject')" class="px-3 py-1 bg-[#9A8470] rounded-sm text-sm">Reddet</button>
+ <button onclick="bulkAction('feature')" class="px-3 py-1 bg-[#CE8E38] rounded-sm text-sm">Öne Çıkar</button>
+ </div>
+ </div>
+ </div>
 
-    const statusLabels = {
-      active: { text: 'Aktif', class: 'bg-green-100 text-green-700' },
-      pending: { text: 'Bekliyor', class: 'bg-yellow-100 text-yellow-700' },
-      suspended: { text: 'Askıda', class: 'bg-red-100 text-red-700' },
-      rejected: { text: 'Reddedildi', class: 'bg-gray-100 text-gray-600' },
-    };
+ <script is:inline>
+ let currentPage = 1;
+ let selectedPlaces = new Set();
 
-    async function loadPlaces() {
-      const tbody = document.getElementById('placesTable');
-      tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center">Yükleniyor...</td></tr>';
+ const statusLabels = {
+ active: { text: 'Aktif', class: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
+ pending: { text: 'Bekliyor', class: 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]' },
+ suspended: { text: 'Askıda', class: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' },
+ rejected: { text: 'Reddedildi', class: 'bg-[rgba(184,115,51,0.04)] text-[#7A6B58]' },
+ };
 
-      const params = new URLSearchParams({ page: currentPage.toString() });
-      const search = document.getElementById('searchInput').value;
-      const status = document.getElementById('statusFilter').value;
+ async function loadPlaces() {
+ const tbody = document.getElementById('placesTable');
+ setTbodyMsg(tbody, 6, 'Yükleniyor...', 'px-6 py-12 text-center');
 
-      if (search) params.append('search', search);
-      if (status !== 'all') params.append('status', status);
+ const params = new URLSearchParams({ page: currentPage.toString() });
+ const search = document.getElementById('searchInput').value;
+ const status = document.getElementById('statusFilter').value;
 
-      try {
-        const response = await fetch(`/api/admin/places?${params}`);
-        const data = await response.json();
+ if (search) params.append('search', search);
+ if (status !== 'all') params.append('status', status);
 
-        if (data.success) {
-          renderPlaces(data.places);
-          updatePagination(data.pagination);
-          updateStats(data.places);
-        }
-      } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-red-500">Hata oluştu</td></tr>';
-      }
-    }
+ try {
+ const response = await fetch(`/api/admin/places?${params}`);
+ const data = await response.json();
 
-    function renderPlaces(places) {
-      const tbody = document.getElementById('placesTable');
-      
-      if (places.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-gray-500">İşletme bulunamadı</td></tr>';
-        return;
-      }
+ if (data.success) {
+ renderPlaces(data.places);
+ updatePagination(data.pagination);
+ updateStats(data.places);
+ }
+ } catch (err) {
+ setTbodyMsg(tbody, 6, 'Hata oluştu', 'px-6 py-12 text-center text-[#7A6B58]');
+ }
+ }
 
-      tbody.innerHTML = places.map(place => `
-        <tr class="hover:bg-gray-50">
-          <td class="px-4 py-3">
-            <input type="checkbox" value="${place.id}" 
-              ${selectedPlaces.has(place.id) ? 'checked' : ''}
-              onchange="toggleSelection('${place.id}')" class="rounded place-checkbox" />
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-3">
-              ${place.image_url ? 
-                `<img src="${place.image_url}" class="w-10 h-10 rounded-lg object-cover" />` :
-                `<div class="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">🏪</div>`
-              }
-              <div>
-                <div class="font-medium text-gray-900">${place.name}</div>
-                <div class="text-xs text-gray-500">${place.category_name || place.category || '-'} • ${place.price_range || '-'}</div>
-              </div>
-            </div>
-          </td>
-          <td class="px-4 py-3 text-sm">
-            <div class="text-gray-900">${place.owner_name || 'Sahipsiz'}</div>
-            <div class="text-gray-500 text-xs">${place.owner_email || ''}</div>
-          </td>
-          <td class="px-4 py-3">
-            <span class="px-2 py-1 rounded-full text-xs font-medium ${statusLabels[place.status]?.class || 'bg-gray-100'}">
-              ${statusLabels[place.status]?.text || place.status}
-            </span>
-            ${place.featured ? '<span class="ml-1 px-1.5 bg-amber-100 text-amber-700 text-xs rounded">★</span>' : ''}
-          </td>
-          <td class="px-4 py-3 text-sm text-gray-600">
-            <div>${place.total_views || 0} gör.</div>
-            <div>${place.review_count || 0} yorum</div>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex gap-2">
-              <a href="/isletme/${place.slug}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">Görüntüle</a>
-              ${place.status === 'pending' ? `
-                <button onclick="approvePlace('${place.id}')" class="text-green-600 hover:text-green-800 text-sm">Onayla</button>
-              ` : ''}
-            </div>
-          </td>
-        </tr>
-      `).join('');
-    }
+ function setTbodyMsg(tbody, colSpan, text, cls) {
+ const tr = document.createElement('tr');
+ const td = document.createElement('td');
+ td.colSpan = colSpan; td.className = cls; td.textContent = text;
+ tr.appendChild(td); tbody.replaceChildren(tr);
+ }
 
-    function updateStats(places) {
-      const counts = { active: 0, pending: 0, suspended: 0, total: places.length };
-      places.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
-      
-      document.getElementById('statActive').textContent = counts.active;
-      document.getElementById('statPending').textContent = counts.pending;
-      document.getElementById('statSuspended').textContent = counts.suspended;
-      document.getElementById('statTotal').textContent = counts.total;
-    }
+ function buildPlaceRow(place) {
+ const tr = document.createElement('tr');
+ tr.className = 'hover:bg-[rgba(184,115,51,0.04)]';
+ // Col 1: checkbox
+ const td1 = document.createElement('td'); td1.className = 'px-4 py-3';
+ const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = place.id;
+ if (selectedPlaces.has(place.id)) cb.checked = true;
+ cb.className = 'rounded-sm place-checkbox';
+ cb.addEventListener('change', () => toggleSelection(place.id));
+ td1.appendChild(cb);
+ // Col 2: image + name
+ const td2 = document.createElement('td'); td2.className = 'px-4 py-3';
+ const flex = document.createElement('div'); flex.className = 'flex items-center gap-3';
+ if (place.image_url) {
+ const img = document.createElement('img');
+ img.src = place.image_url; img.className = 'w-10 h-10 rounded-sm object-cover';
+ flex.appendChild(img);
+ } else {
+ const ph = document.createElement('div');
+ ph.className = 'w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center';
+ ph.textContent = '🏪'; flex.appendChild(ph);
+ }
+ const textDiv = document.createElement('div');
+ const nameEl = document.createElement('div'); nameEl.className = 'font-medium text-[#1F1410]'; nameEl.textContent = place.name;
+ const metaEl = document.createElement('div'); metaEl.className = 'text-xs text-[#7A6B58]';
+ metaEl.textContent = (place.category_name || place.category || '-') + ' • ' + (place.price_range || '-');
+ textDiv.appendChild(nameEl); textDiv.appendChild(metaEl); flex.appendChild(textDiv); td2.appendChild(flex);
+ // Col 3: owner
+ const td3 = document.createElement('td'); td3.className = 'px-4 py-3 text-sm';
+ const ownerName = document.createElement('div'); ownerName.className = 'text-[#1F1410]'; ownerName.textContent = place.owner_name || 'Sahipsiz';
+ const ownerEmail = document.createElement('div'); ownerEmail.className = 'text-[#7A6B58] text-xs'; ownerEmail.textContent = place.owner_email || '';
+ td3.appendChild(ownerName); td3.appendChild(ownerEmail);
+ // Col 4: status
+ const td4 = document.createElement('td'); td4.className = 'px-4 py-3';
+ const badge = document.createElement('span');
+ badge.className = 'px-2 py-1 rounded-sm text-xs font-medium ' + (statusLabels[place.status]?.class || 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]');
+ badge.textContent = statusLabels[place.status]?.text || place.status;
+ td4.appendChild(badge);
+ if (place.featured) {
+ const star = document.createElement('span'); star.className = 'ml-1 px-1.5 bg-[rgba(184,115,51,0.15)] text-[#7A6B58] text-xs rounded-sm'; star.textContent = '★';
+ td4.appendChild(star);
+ }
+ // Col 5: stats
+ const td5 = document.createElement('td'); td5.className = 'px-4 py-3 text-sm text-[#7A6B58]';
+ const viewsEl = document.createElement('div'); viewsEl.textContent = (place.total_views || 0) + ' gör.';
+ const reviewsEl = document.createElement('div'); reviewsEl.textContent = (place.review_count || 0) + ' yorum';
+ td5.appendChild(viewsEl); td5.appendChild(reviewsEl);
+ // Col 6: actions
+ const td6 = document.createElement('td'); td6.className = 'px-4 py-3';
+ const actDiv = document.createElement('div'); actDiv.className = 'flex gap-2';
+ const viewA = document.createElement('a');
+ viewA.href = '/isletme/' + place.slug; viewA.target = '_blank'; viewA.rel = 'noopener';
+ viewA.className = 'text-urfa-600 hover:text-[#7A6B58] text-sm'; viewA.textContent = 'Görüntüle';
+ actDiv.appendChild(viewA);
+ if (place.status === 'pending') {
+ const approveBtn = document.createElement('button');
+ approveBtn.className = 'text-[#7A6B58] hover:text-[#1F1410] text-sm'; approveBtn.textContent = 'Onayla';
+ approveBtn.addEventListener('click', () => approvePlace(place.id));
+ actDiv.appendChild(approveBtn);
+ }
+ td6.appendChild(actDiv);
+ tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+ tr.appendChild(td4); tr.appendChild(td5); tr.appendChild(td6);
+ return tr;
+ }
 
-    function updatePagination(pagination) {
-      document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
-      document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
-      document.getElementById('totalCount').textContent = pagination.total;
+ function renderPlaces(places) {
+ const tbody = document.getElementById('placesTable');
+ if (places.length === 0) {
+ setTbodyMsg(tbody, 6, 'İşletme bulunamadı', 'px-6 py-12 text-center text-[#7A6B58]');
+ return;
+ }
+ tbody.replaceChildren(...places.map(buildPlaceRow));
+ }
 
-      const pages = [];
-      for (let i = 1; i <= Math.min(pagination.totalPages, 10); i++) {
-        pages.push(`
-          <button onclick="goToPage(${i})" 
-            class="px-3 py-1 rounded ${i === pagination.page ? 'bg-red-600 text-white' : 'bg-gray-100'}">${i}</button>
-        `);
-      }
-      document.getElementById('pagination').innerHTML = pages.join('');
-    }
+ function updateStats(places) {
+ const counts = { active: 0, pending: 0, suspended: 0, total: places.length };
+ places.forEach(p => { if (counts[p.status] !== undefined) counts[p.status]++; });
 
-    function toggleSelection(id) {
-      selectedPlaces.has(id) ? selectedPlaces.delete(id) : selectedPlaces.add(id);
-      updateBulkActions();
-    }
+ document.getElementById('statActive').textContent = counts.active;
+ document.getElementById('statPending').textContent = counts.pending;
+ document.getElementById('statSuspended').textContent = counts.suspended;
+ document.getElementById('statTotal').textContent = counts.total;
+ }
 
-    function updateBulkActions() {
-      const el = document.getElementById('bulkActions');
-      document.getElementById('selectedCount').textContent = selectedPlaces.size;
-      el.classList.toggle('hidden', selectedPlaces.size === 0);
-    }
+ function updatePagination(pagination) {
+ document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
+ document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
+ document.getElementById('totalCount').textContent = pagination.total;
 
-    async function bulkAction(action) {
-      if (!confirm(`${selectedPlaces.size} işletme için bu işlemi yapmak istiyor musunuz?`)) return;
+ const pagEl = document.getElementById('pagination');
+ const pageButtons = [];
+ for (let i = 1; i <= Math.min(pagination.totalPages, 10); i++) {
+ const btn = document.createElement('button');
+ btn.className = 'px-3 py-1 rounded-sm ' + (i === pagination.page ? 'bg-urfa-600 text-white' : 'bg-[rgba(184,115,51,0.06)]');
+ btn.textContent = String(i);
+ btn.addEventListener('click', () => goToPage(i));
+ pageButtons.push(btn);
+ }
+ pagEl.replaceChildren(...pageButtons);
+ }
 
-      const response = await fetch('/api/admin/places', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ placeIds: Array.from(selectedPlaces), action })
-      });
+ function toggleSelection(id) {
+ selectedPlaces.has(id) ? selectedPlaces.delete(id) : selectedPlaces.add(id);
+ updateBulkActions();
+ }
 
-      if (response.ok) {
-        selectedPlaces.clear();
-        updateBulkActions();
-        loadPlaces();
-      }
-    }
+ function updateBulkActions() {
+ const el = document.getElementById('bulkActions');
+ document.getElementById('selectedCount').textContent = selectedPlaces.size;
+ el.classList.toggle('hidden', selectedPlaces.size === 0);
+ }
 
-    async function approvePlace(id) {
-      const response = await fetch('/api/admin/places', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ placeIds: [id], action: 'approve' })
-      });
-      if (response.ok) loadPlaces();
-    }
+ async function bulkAction(action) {
+ if (!await window.showConfirm(`${selectedPlaces.size} işletme için bu işlemi yapmak istiyor musunuz?`)) return;
 
-    function goToPage(page) { currentPage = page; loadPlaces(); }
-    window.approvePlace = approvePlace;
-    window.goToPage = goToPage;
+ const response = await fetch('/api/admin/places', {
+ method: 'PUT',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ placeIds: Array.from(selectedPlaces), action })
+ });
 
-    document.getElementById('selectAll').addEventListener('change', (e) => {
-      document.querySelectorAll('.place-checkbox').forEach(cb => {
-        cb.checked = e.target.checked;
-        toggleSelection(cb.value);
-      });
-    });
+ if (response.ok) {
+ selectedPlaces.clear();
+ updateBulkActions();
+ loadPlaces();
+ }
+ }
 
-    document.getElementById('searchBtn').addEventListener('click', () => { currentPage = 1; loadPlaces(); });
+ async function approvePlace(id) {
+ const response = await fetch('/api/admin/places', {
+ method: 'PUT',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ placeIds: [id], action: 'approve' })
+ });
+ if (response.ok) loadPlaces();
+ }
 
-    loadPlaces();
-  </script>
-</Layout>
+ function goToPage(page) { currentPage = page; loadPlaces(); }
+ window.approvePlace = approvePlace;
+ window.goToPage = goToPage;
 
+ document.getElementById('selectAll').addEventListener('change', (e) => {
+ document.querySelectorAll('.place-checkbox').forEach(cb => {
+ cb.checked = e.target.checked;
+ toggleSelection(cb.value);
+ });
+ });
 
+ document.getElementById('searchBtn').addEventListener('click', () => { currentPage = 1; loadPlaces(); });
 
+ loadPlaces();
+ </script>
+</AdminLayout>

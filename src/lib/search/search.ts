@@ -3,7 +3,7 @@
  * Full-text search, filtreler, sıralama
  */
 
-import { pool } from '../postgres';
+import { pool, readReplicaPool } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache, deleteCache, deleteCachePattern } from '../cache';
 
@@ -71,7 +71,7 @@ async function searchPlaces(query: string, filters?: any): Promise<any[]> {
       params.push(filters.offset);
     }
 
-    const result = await pool.query(sql, params);
+    const result = await readReplicaPool.query(sql, params);
     return result.rows as any[];
   } catch (error) {
     logger.error('Yerler aranırken hata', error instanceof Error ? error : new Error(String(error)));
@@ -112,7 +112,7 @@ async function searchReviews(query: string, filters?: any): Promise<any[]> {
       paramCount++;
     }
 
-    const result = await pool.query(sql, params);
+    const result = await readReplicaPool.query(sql, params);
     return result.rows as any[];
   } catch (error) {
     logger.error('Yorumlar aranırken hata', error instanceof Error ? error : new Error(String(error)));
@@ -144,7 +144,7 @@ async function searchBlogPosts(query: string, filters?: any): Promise<any[]> {
 
     sql += ' ORDER BY rank DESC, published_at DESC';
 
-    const result = await pool.query(sql, params);
+    const result = await readReplicaPool.query(sql, params);
     return result.rows as any[];
   } catch (error) {
     logger.error('Blog yazıları aranırken hata', error instanceof Error ? error : new Error(String(error)));
@@ -182,7 +182,7 @@ async function searchEvents(query: string, filters?: any): Promise<any[]> {
 
     sql += ' ORDER BY rank DESC, start_date ASC';
 
-    const result = await pool.query(sql, params);
+    const result = await readReplicaPool.query(sql, params);
     return result.rows as any[];
   } catch (error) {
     logger.error('Etkinlikler aranırken hata', error instanceof Error ? error : new Error(String(error)));
@@ -200,7 +200,7 @@ export async function search(filters: SearchFilters): Promise<SearchResult> {
   // Cache'den kontrol et
   const cached = await getCache(cacheKey);
   if (cached) {
-    return JSON.parse(cached as string);
+    return cached as any;
   }
 
   try {
@@ -300,10 +300,10 @@ export async function getTrendingSearches(limit: number = 10): Promise<any[]> {
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
-    const result = await pool.query(
+    const result = await readReplicaPool.query(
       `SELECT query, search_count, last_searched_at
       FROM trending_searches
       WHERE last_searched_at >= NOW() - INTERVAL '7 days'
@@ -327,7 +327,7 @@ export async function getTrendingSearches(limit: number = 10): Promise<any[]> {
  */
 export async function getSearchSuggestions(partial: string, limit: number = 5): Promise<string[]> {
   try {
-    const result = await pool.query(
+    const result = await readReplicaPool.query(
       `SELECT DISTINCT query FROM search_history
       WHERE query ILIKE $1
       ORDER BY created_at DESC

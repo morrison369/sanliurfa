@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { searchPromotions, getTrendingPromotions } from '../../../lib/promotions/promotions-management';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   try {
     const q = url.searchParams.get('q') || '';
     const trending = url.searchParams.get('trending') === 'true';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
 
     let promotions = [];
 

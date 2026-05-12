@@ -8,6 +8,7 @@ import type { APIRoute } from 'astro';
 import { registerWebhook, getUserWebhooks } from '../../../lib/webhook';
 import { apiResponse, apiError, HttpStatus, ErrorCode } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
+import { validateExternalUrl } from '../../../lib/security/safe-url';
 
 export const GET: APIRoute = async ({ locals }) => {
   try {
@@ -42,6 +43,28 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (!event || !url) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Event and URL required', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+    if (typeof event !== 'string' || event.length > 100) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Event adı 100 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+    if (!/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(event)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Event formatı geçersiz (örn: place.created)', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+    if (secret !== undefined && secret !== null && (typeof secret !== 'string' || secret.length > 1000)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Secret 1000 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY);
+    }
+
+    const urlCheck = validateExternalUrl(url);
+    if (!urlCheck.ok) {
+      logger.warn('Webhook registration rejected: unsafe URL', {
+        userId: locals.user.id,
+        reason: urlCheck.reason,
+      });
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Webhook URL kabul edilmedi (private IP, internal port veya geçersiz protokol)',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
     }
 
     const webhook = await registerWebhook(locals.user.id, event, url, secret);

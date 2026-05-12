@@ -1,147 +1,94 @@
-# Deployment Guide
+# Deployment & Production Lifecycle
 
-## Production Deployment
+Bu dosya CLAUDE.md'den ayrılmıştır. PM2/CWP setup, graceful shutdown, monitoring, admin entegrasyonları.
 
-### Prerequisites
+## Production Lifecycle (Astro 6 SSR + PM2)
 
-- Kubernetes cluster (v1.28+)
-- kubectl configured
-- Helm 3+
-- Domain name with SSL certificate
+### Graceful Shutdown — `lib/lifecycle.ts`
+- PM2 SIGTERM gönderdiğinde DB pool ve Redis client **drain edilmeli** — yoksa in-flight query abort, connection leak, restart süresi uzar, kullanıcı 502 alır.
+- Pattern: `registerShutdownHandler(async () => { await pool.end(); })` — module-level call.
+- `postgres.ts` ve `cache/cache.ts` zaten bağlandı. Yeni stateful resource (websocket pool, file handle, vs.) eklenirse aynı pattern uygula.
+- 8s timeout (force-kill öncesi tampon). PM2 `kill_timeout: 10000` config'inde olmalı.
+- Test ortamında (`NODE_ENV === 'test'`) skip — Vitest kendi cleanup yapar.
 
-### Step 1: Infrastructure Setup
+### Web Vitals RUM — `PerformanceMonitor.tsx`
+- `web-vitals` library (Google official, ~3KB gzipped) ile CLS/INP/LCP/FCP/TTFB toplar.
+- `navigator.sendBeacon` ile `/api/analytics/performance` endpoint'ine gönderir.
+- `client_performance_metrics` tablosuna yazılır (TTFB/FCP/LCP dedicated column, CLS/INP JSONB).
+- Layout.astro'da `<PerformanceMonitor client:only="react" />` zaten var.
 
-```bash
-# Create namespace
-kubectl create namespace sanliurfa
+### Hata Takibi — DB-only
+- **`error_logs` tablosu**: tüm `logger.error(...)` çağrıları DB'ye yazılır
+- Admin paneli `/admin/error-logs` üzerinden son hatalar görüntülenebilir
+- Third-party hata takibi (Sentry vb.) **kullanılmaz** — DB yeterli, dış servis bağımlılığı YOK
 
-# Create secrets
-kubectl create secret generic app-secrets \
-  --from-literal=DATABASE_URL='postgresql://...' \
-  --from-literal=REDIS_URL='redis://...' \
-  --from-literal=JWT_SECRET='...' \
-  -n sanliurfa
-```
+### PWA — Service Worker + Manifest
+- `public/sw.js`, `public/manifest.json`, `src/components/PWARegister.astro` aktif.
+- SW register: `navigator.serviceWorker.register('/sw.js')` — Layout'tan otomatik.
+- Push notifications: VAPID key (env: `VAPID_PUBLIC_KEY` + `PUBLIC_VAPID_PUBLIC_KEY` browser için).
 
-### Step 2: Database Migration
+### Build & Deploy
+- Build: `npm run build` (~10-11s) → `dist/` (server entry + client assets).
+- PM2 start: `pm2 start ecosystem.config.cjs` (CWP shared hosting).
+- Required env: `DATABASE_URL`, `JWT_SECRET`, `REDIS_URL`, `INTERNAL_API_TOKEN`.
+- PM2 ecosystem.config: `kill_timeout: 10000` zorunlu (graceful shutdown 8s + buffer).
 
-```bash
-# Run migrations
-kubectl run migrate \
-  --image=ghcr.io/sanliurfa/sanliurfa.com:latest \
-  --rm -i --restart=Never \
-  -- npm run migrate
-```
+### Browser-side env (Astro PUBLIC_ prefix)
+- Browser-side React/Astro client kodu `import.meta.env.PUBLIC_*` kullanır, **never `process.env`** (browser'da `process.env` undefined döner).
+- `PUBLIC_` prefix olmayan env'ler sadece server-side görünür.
+- Browser'a expose edilmesi gereken env: hem `XYZ` (server) hem `PUBLIC_XYZ` (client) tanımla; `astro.config.mjs` `env.schema`'da `context: 'client', access: 'public'` belirt.
 
-### Step 3: Deploy Application
+### Admin-Yönetilen Entegrasyonlar
+**`/admin/integrations` paneli** 6 servisi yönetir; tüm key'ler DB'den (`site_settings.integrations.*` veya `oauth_providers` tablosu) okunur, env fallback olur, sunucu restart gerektirmez:
 
-```bash
-# Apply Kubernetes manifests
-kubectl apply -f k8s/
+| Servis | DB Konumu | Helper |
+|--------|-----------|--------|
+| Resend (E-posta Tier 1) | `site_settings.integrations.email` | `getResendConfig()` (inline `src/lib/email/index.ts`, 60s cache) |
+| SMTP (E-posta Tier 2 fallback) | `site_settings.integrations.smtp` | `getSmtpConfig()` (inline `src/lib/email/index.ts`, 60s cache) |
+| Google Analytics | `site_settings.integrations.analytics` | inline (`Layout.astro`) |
+| Stripe (Ödeme) | `site_settings.integrations.payment` | `getStripeConfig()` (`src/lib/stripe/stripe-config.ts`, 60s cache + `invalidateStripeConfigCache()`) |
+| Unsplash + Pexels | `site_settings.integrations.image_providers` | `getImageProvidersConfig()` (`src/lib/media/image-providers-config.ts`, 60s cache) |
+| Google/Facebook/Twitter OAuth | `oauth_providers` tablosu (migration 107) | `OAUTH_PROVIDER_PRESETS` + `upsertOAuthProviderFromAdmin()` (`src/lib/oauth/oauth-providers-helper.ts`) |
 
-# Verify deployment
-kubectl get pods -n sanliurfa
-kubectl get svc -n sanliurfa
-```
+**Email gönderim akışı (3-tier):** `sendEmail(data)` (`src/lib/email/index.ts`) önce **Resend** (Tier 1, DB → env), sonra **SMTP** (Tier 2, DB → env), son çare **dev log** (Tier 3) sırasını izler. Tier'lardan biri başarısız olursa otomatik bir sonrakine düşer. Return `{ success, error?, tier? }` — `tier` alanı hangi backend'in kullanıldığını söyler (`'resend' | 'smtp' | 'dev-log'`). `invalidateEmailConfigCache()` her iki cache'i (Resend + SMTP) temizler.
 
-### Step 4: Configure Ingress
+**Email rate limiting:** Per-recipient daily cap `integrations.email.daily_limit_per_recipient` (default 10). **0 = sınırsız** (transactional burst için). Spam/maliyet kontrolü için admin paneli üzerinden ayarlanabilir; tier-agnostic (Resend ya da SMTP, fark etmez aynı limit).
 
-```bash
-# Apply ingress with SSL
-kubectl apply -f k8s/ingress.yaml
+**`/api/health` integrations summary:** Yanıtın `integrations` alanı 5 servisin varlık durumunu (`'configured' | 'unconfigured'`) raporlar. Sadece DB+env varlığını probe eder, gerçek API'yi çağırmaz (real probe için `/api/admin/site/integrations/test`). Sonuç 30s in-process cache'lenir — load balancer / uptime monitor sürekli polling yaptığı için her health çağrısında 5 DB sorgusu çalıştırılmaz. SMTP "configured" sayılması için 3 alanın da (host + user + pass) set olması gerekir.
 
-# Verify SSL certificate
-kubectl get certificate -n sanliurfa
-```
+**"Test Et" akışı (`POST /api/admin/site/integrations/test`):** Admin yapılandırma sonrası her servisi probe edebilir. Section'lar: `email` (gerçek mail gönder + tier dön), `smtp` (`nodemailer.verify()`, mail göndermez), `analytics` (GA4 ID format `G-XXXXXXXXXX`), `payment` (Stripe `customers.list`), `image_providers` (Unsplash + Pexels arama probe), `oauth` (provider preset auth_url HEAD probe + DB config kontrolü). Her satırda inline StatusBadge sonuç gösterir; sayfa başında "Tümünü Test Et" master butonu paralel/sıralı tester.
 
-### Rollback
+**API response wrapping:** `apiResponse(data, status?)` (`src/lib/api.ts`) payload'u `{ data: ..., meta: { timestamp, ... } }` ile sarmalar. Test'lerde ve UI'da `response.data.field` (iki seviye) kullanın, doğrudan `response.field` değil — aksi halde silent display bug olur (her zaman `undefined`).
 
-```bash
-# Rollback to previous version
-kubectl rollout undo deployment/app -n sanliurfa
+**Yeni 3rd-party servis eklerken pattern:**
+1. Config helper: `getXyzConfig()` — DB → env fallback, 60s in-process cache
+2. `invalidateXyzCache()` — admin save sonrası temizler
+3. Admin endpoint section: GET masked değer döner, POST `****` içerikleri skip eder (mevcut korunur)
+4. UI: section eklenir (`IntegrationsSettings.tsx`), `xxx_set` boolean + masked preview göster
+5. Test Et endpoint'inde section ekle (`/admin/site/integrations/test`): network probe + UI'a "Test Et" butonu
+6. Tüketim limiti / rate limit varsa numeric field olarak DB'ye kaydedilebilir (örnek: `daily_limit_per_recipient`); 0 = sınırsız konvansiyonu
+7. Health endpoint summary'sine ekle (`/api/health` `integrations` field'ı, varlık probe — yapılandırıldı/yapılandırılmadı)
+8. OpenAPI spec'e endpoint'i belge et (`/api/docs/openapi.json.ts`)
 
-# Check rollout history
-kubectl rollout history deployment/app -n sanliurfa
-```
+### Commit Convention
+Conventional Commits: `feat(scope): description`, `fix(scope): description`, etc.
+Branch naming: `feature/`, `fix/`, `docs/`, `refactor/`, `test/`
 
-## Environment Configuration
+---
 
-### Production .env
+## Deployment
 
-```env
-NODE_ENV=production
-PORT=3000
+- **Production**: CentOS Web Panel, PM2 process manager, Apache reverse proxy (port 4321)
+- **Dev**: Local PostgreSQL + Redis (system services veya kullanıcı tercihi); Docker kullanılmaz
+- **Required env vars**: `DATABASE_URL`, `JWT_SECRET`, `REDIS_URL`
+- **Node**: >=20.0.0
+- See `DEPLOYMENT.md` and `CWP-DEPLOYMENT-GUIDE.md` for production setup
 
-# Database
-DATABASE_URL=postgresql://user:pass@postgres:5432/sanliurfa
-DATABASE_POOL_SIZE=20
+## TypeScript Configuration
 
-# Redis
-REDIS_URL=redis://redis:6379
-REDIS_CLUSTER=true
+tsconfig extends `astro/tsconfigs/strict` with **`strict: true`** (noImplicitAny, strictNullChecks, strictFunctionTypes, etc. — all active). JSX configured for React (`react-jsx`).
 
-# Security
-JWT_SECRET=<random-256-bit-key>
-CSP_NONCE_SECRET=<random-128-bit-key>
-ENCRYPTION_KEY=<random-256-bit-key>
+All DB access goes through the raw `pg` pool in `src/lib/postgres.ts` (not an ORM). The legacy `drizzle-orm` package and ~400 unused enterprise stub modules (advanced/, affiliate/, ai-moderation/, board/, policy/, compliance/, etc.) were removed in 2026-04-25 cleanup; current `astro check` is 0 errors / 0 warnings / ~105 hints.
 
-# External Services
-NETGSM_USERNAME=xxx
-NETGSM_PASSWORD=xxx
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-ELASTICSEARCH_URL=http://elasticsearch:9200
-
-# Monitoring
-SENTRY_DSN=https://xxx@sentry.io/xxx
-DATADOG_API_KEY=xxx
-```
-
-## Scaling
-
-### Horizontal Pod Autoscaler
-
-```yaml
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: app-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: app
-  minReplicas: 3
-  maxReplicas: 20
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
-```
-
-## Backup Strategy
-
-### Database Backup
-
-```bash
-# Automated daily backup
-kubectl create cronjob db-backup \
-  --image=postgres:16-alpine \
-  --schedule="0 2 * * *" \
-  -- pg_dump $DATABASE_URL | gzip > /backup/db-$(date +%Y%m%d).sql.gz
-```
-
-### Disaster Recovery
-
-1. **Primary failure**: Automatic failover to replica
-2. **Region failure**: Activate multi-region deployment
-3. **Data corruption**: Restore from backup (RPO: 5 minutes)
+### Read Replica
+`postgres.ts` exports both `pool` (write) and `readReplicaPool` (read). Currently both point to the same database. Use `readReplicaPool` for SELECT-only queries in read-heavy endpoints to be forward-compatible when a replica is configured.

@@ -8,7 +8,7 @@ import type { APIRoute } from 'astro';
 import { enableTwoFactor, generateBackupCodes, verifyTOTPCode } from '../../../../lib/two-factor';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
-import { getCache, deleteCache } from '../../../../lib/cache';
+import { getCache, setCache, deleteCache } from '../../../../lib/cache';
 import {
   deleteTwoFactorSetupSecret,
   getTwoFactorSetupSecret
@@ -17,6 +17,9 @@ import {
 type VerifySetupBody = {
   code?: unknown;
 };
+
+const MAX_SETUP_ATTEMPTS = 5;
+const SETUP_ATTEMPT_TTL = 300; // seconds — matches 2fa:setup secret TTL
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId(request);
@@ -51,12 +54,29 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Önce 2FA kurulum adımını tamamlayın.', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
+    // Brute-force protection: max 5 failed attempts before invalidating setup
+    const attemptKey = `2fa:setup:attempt:${userId}`;
+    const attempts = Number(await getCache<string>(attemptKey).catch(() => null)) || 0;
+    if (attempts >= MAX_SETUP_ATTEMPTS) {
+      // Invalidate the pending setup secret — user must restart setup
+      deleteTwoFactorSetupSecret(userId);
+      await Promise.all([
+        deleteCache(`2fa:setup:${userId}`).catch(() => null),
+        deleteCache(attemptKey).catch(() => null),
+      ]);
+      return apiError(ErrorCode.RATE_LIMITED, '2FA kurulumu çok fazla hatalı deneme. Lütfen kurulumu yeniden başlatın.', HttpStatus.RATE_LIMITED, undefined, requestId);
+    }
+
     // Verify the TOTP code against the secret
     const verified = verifyTOTPCode(secret, body.code);
 
     if (!verified) {
+      await setCache(attemptKey, String(attempts + 1), SETUP_ATTEMPT_TTL).catch(() => null);
       return apiError(ErrorCode.UNAUTHORIZED, 'Doğrulama kodu geçersiz. Tekrar deneyin.', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
+
+    // Successful verification — clear attempt counter
+    await deleteCache(attemptKey).catch(() => null);
 
     // Generate backup codes
     const backupCodes = generateBackupCodes(10);

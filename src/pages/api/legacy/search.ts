@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
@@ -48,9 +48,9 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
   try {
     const q = url.searchParams.get('q') || '';
     const type = url.searchParams.get('type') || 'all';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
     const category = url.searchParams.get('category');
-    const minRating = url.searchParams.get('rating') ? parseInt(url.searchParams.get('rating') || '0') : 0;
+    const minRating = url.searchParams.get('rating') ? safeIntParam(url.searchParams.get('rating'), 0, 0, 1_000_000) : 0;
     const sort = url.searchParams.get('sort') || 'relevance';
 
     // Validate query
@@ -73,13 +73,13 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       return applyLegacyHeaders(apiResponse(JSON.parse(cached), HttpStatus.OK, requestId));
     }
 
-    const searchTerm = '%' + q + '%';
+    const likeTerm = '%' + q + '%';
     const results: SearchResults = { places: [], users: [], collections: [] };
 
     // Search places
     if (type === 'all' || type === 'places') {
-      let placesQuery = `SELECT id, slug, name, category, rating, COALESCE(thumbnail_url, images[1]) as image_url FROM places WHERE status = 'active' AND (name ILIKE $1 OR COALESCE(short_description, description, '') ILIKE $1)`;
-      const params: Array<string | number> = [searchTerm];
+      let placesQuery = `SELECT id, slug, name, category, rating, COALESCE(thumbnail_url, images[1]) as image_url FROM places WHERE status = 'active' AND to_tsvector('turkish', coalesce(name,'') || ' ' || coalesce(short_description, description, '')) @@ plainto_tsquery('turkish', $1)`;
+      const params: Array<string | number> = [q];
       let paramCount = 2;
 
       if (category) {
@@ -120,8 +120,8 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     // Search users
     if (type === 'all' || type === 'users') {
       const users = await queryMany<SearchUserRow>(
-        `SELECT id, full_name, username, avatar_url FROM users WHERE full_name ILIKE $1 OR username ILIKE $1 LIMIT $2`,
-        [searchTerm, Math.floor(limit / 2)]
+        `SELECT id, full_name, username, avatar_url FROM users WHERE (to_tsvector('turkish', coalesce(full_name,'')) @@ plainto_tsquery('turkish', $1) OR username ILIKE $2) LIMIT $3`,
+        [q, likeTerm, Math.floor(limit / 2)]
       );
       results.users = users;
     }
@@ -129,8 +129,8 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
     // Search collections
     if (type === 'all' || type === 'collections') {
       const collections = await queryMany<SearchCollectionRow>(
-        `SELECT id, name, description FROM place_collections WHERE public = true AND (name ILIKE $1 OR description ILIKE $1) LIMIT $2`,
-        [searchTerm, Math.floor(limit / 2)]
+        `SELECT id, name, description FROM place_collections WHERE public = true AND to_tsvector('turkish', coalesce(name,'') || ' ' || coalesce(description,'')) @@ plainto_tsquery('turkish', $1) LIMIT $2`,
+        [q, Math.floor(limit / 2)]
       );
       results.collections = collections;
     }

@@ -1,19 +1,28 @@
 /**
  * Stripe Payment Integration
+ *
+ * Credentials are resolved through `getStripeConfig()` (site_settings → env fallback, 60s cache),
+ * so admin can rotate keys via /admin/integrations without a server restart.
  */
 
 import Stripe from 'stripe';
 import { pool } from '../postgres';
 import { logger } from '../logger';
+import { getStripeConfig } from './stripe-config';
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
+let _stripeClient: Stripe | null = null;
+let _stripeClientKey: string | null = null;
 
-if (!STRIPE_SECRET_KEY) {
-  logger.warn('STRIPE_SECRET_KEY not configured');
+async function getStripe(): Promise<Stripe | null> {
+  const cfg = await getStripeConfig();
+  if (!cfg.secret_key) return null;
+
+  // Re-initialize if the key was rotated.
+  if (_stripeClient && _stripeClientKey === cfg.secret_key) return _stripeClient;
+  _stripeClient = new Stripe(cfg.secret_key, { apiVersion: '2026-04-22.dahlia' });
+  _stripeClientKey = cfg.secret_key;
+  return _stripeClient;
 }
-
-const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' }) : null;
 
 export const PRICING = {
   premium: {
@@ -35,6 +44,7 @@ export const PRICING = {
  */
 export async function createStripeCustomer(userId: string, email: string): Promise<string | null> {
   try {
+    const stripe = await getStripe();
     if (!stripe) return null;
 
     const customer = await stripe.customers.create({ email });
@@ -61,6 +71,7 @@ export async function createSubscription(
   tier: 'premium' | 'pro'
 ): Promise<{ subscriptionId: string; clientSecret: string } | null> {
   try {
+    const stripe = await getStripe();
     if (!stripe) return null;
 
     const membershipResult = await pool.query(
@@ -115,7 +126,6 @@ export async function handleWebhookEvent(event: Stripe.Event): Promise<boolean> 
     switch (event.type) {
       case 'customer.subscription.updated': {
         const subscription = event.data.object as Stripe.Subscription;
-        const metadata = subscription.metadata;
         // Update membership status based on subscription status
         logger.info('Subscription updated', { subscriptionId: subscription.id });
         break;
@@ -146,10 +156,23 @@ export async function handleWebhookEvent(event: Stripe.Event): Promise<boolean> 
 /**
  * Verify webhook signature
  */
-export function verifyWebhookSignature(body: string, signature: string): Stripe.Event | null {
+export async function createStripeRefund(params: {
+  payment_intent?: string;
+  charge?: string;
+  amount: number;
+}): Promise<boolean> {
+  const stripe = await getStripe();
+  if (!stripe) return false;
+  await stripe.refunds.create(params as Stripe.RefundCreateParams);
+  return true;
+}
+
+export async function verifyWebhookSignature(body: string, signature: string): Promise<Stripe.Event | null> {
   try {
-    if (!stripe || !STRIPE_WEBHOOK_SECRET) return null;
-    return stripe.webhooks.constructEvent(body, signature, STRIPE_WEBHOOK_SECRET);
+    const stripe = await getStripe();
+    const cfg = await getStripeConfig();
+    if (!stripe || !cfg.webhook_secret) return null;
+    return stripe.webhooks.constructEvent(body, signature, cfg.webhook_secret);
   } catch (error) {
     logger.error('Webhook verification failed', error instanceof Error ? error : new Error(String(error)));
     return null;

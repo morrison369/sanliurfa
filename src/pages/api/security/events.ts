@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getSecurityEvents, getSuspiciousActivities } from '../../../lib/security';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     const suspicious = url.searchParams.get('suspicious') === 'true';
     const eventType = url.searchParams.get('type');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 0, 1_000_000);
 
     const events = suspicious
       ? await getSuspiciousActivities(locals.user.id, limit)

@@ -3,7 +3,8 @@
  * High-performance caching layer
  */
 
-import { createClient, RedisClientType } from 'redis';
+import { createClient } from 'redis';
+import type { RedisClientType } from 'redis';
 import { logger } from '../logger';
 
 let client: RedisClientType | null = null;
@@ -61,9 +62,11 @@ export async function get<T>(key: string): Promise<T | null> {
     const redis = await getRedisClient();
     if (!redis) return null;
 
-    const value = await redis.get(key);
-    if (!value) return null;
+    const raw = await redis.get(key);
+    if (!raw) return null;
 
+    // Redis 5+ returns `string | Buffer` — coerce for JSON.parse
+    const value = typeof raw === 'string' ? raw : (raw as Buffer).toString();
     return JSON.parse(value) as T;
   } catch (error) {
     logger.error('Cache get error', toError(error), { key });

@@ -126,7 +126,7 @@ export async function getUnreadCount(userId: string): Promise<number> {
        AND (expires_at IS NULL OR expires_at > NOW())`,
     [userId]
   );
-  return parseInt(row?.c || '0');
+  return parseInt(row?.c || '0', 10);
 }
 
 /**

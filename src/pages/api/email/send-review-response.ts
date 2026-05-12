@@ -6,11 +6,12 @@ import type { APIRoute } from 'astro';
 import { sendEmail, getReviewResponseEmailHTML } from '../../../lib/email';
 import { queryOne } from '../../../lib/postgres';
 import { validateWithSchema } from '../../../lib/validation';
+import type { ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-const schema = {
+const schema: ValidationSchema = {
   reviewerId: { type: 'string' as const, required: true },
   placeName: { type: 'string' as const, required: true, minLength: 2 },
   responseText: { type: 'string' as const, required: true, minLength: 5 }
@@ -29,7 +30,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/email/send-review-response', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -60,7 +61,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       html
     });
 
-    if (!sent) {
+    if (!sent.success) {
       recordRequest('POST', '/api/email/send-review-response', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,

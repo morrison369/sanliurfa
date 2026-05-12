@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeIntParam } from '../../../../lib/api';
 import {
   issueExportToken,
   listExportTokens,
@@ -9,9 +9,9 @@ import {
 } from '../../../../lib/admin/export-tokens';
 import { auditSiteChange } from '../../../../lib/site-content';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 const ALLOWED_RESOURCES: ExportResourceKey[] = [
@@ -20,7 +20,7 @@ const ALLOWED_RESOURCES: ExportResourceKey[] = [
   'admin.reports.social-lifecycle',
 ];
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
   if (!isAdmin(locals)) {
     return problemJson({
       status: 401,
@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
@@ -55,13 +55,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const payload = typeof body?.payload === 'object' && body?.payload ? body.payload : {};
-  const ttlSeconds = Number(body?.ttlSeconds || 300);
-  const maxDownloads = Number(body?.maxDownloads || 1);
+  const payload = (typeof body?.payload === 'object' && body?.payload ? body.payload : {}) as Record<string, unknown>;
+  const ttlSeconds = safeIntParam(String(body?.ttlSeconds ?? 300), 300, 30, 3600);
+  const maxDownloads = safeIntParam(String(body?.maxDownloads ?? 1), 1, 1, 20);
   const createdBy = locals?.user?.id ? String(locals.user.id) : null;
   const requestIp =
     request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    (locals as any)?.clientAddress ||
+    clientAddress ||
     null;
   const userAgent = request.headers.get('user-agent') || null;
   const bindIp = body?.bindIp !== false;
@@ -138,7 +138,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
   const resourceKey = String(url.searchParams.get('resourceKey') || '').trim() as ExportResourceKey;
   const activeOnly = url.searchParams.get('activeOnly') === '1';
-  const limit = Number(url.searchParams.get('limit') || 50);
+  const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 1000);
   const tokens = await listExportTokens({
     resourceKey: ALLOWED_RESOURCES.includes(resourceKey) ? resourceKey : '',
     activeOnly,
@@ -162,7 +162,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {

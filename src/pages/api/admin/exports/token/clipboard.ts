@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
-import { problemJson } from '../../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../../../lib/api';
 import { auditSiteChange } from '../../../../../lib/site-content';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -18,7 +18,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  let body: any = {};
+  let body: Record<string, unknown> = {};
   try {
     body = await request.json();
   } catch {
@@ -39,8 +39,5 @@ export const POST: APIRoute = async ({ request, locals }) => {
       tokenId: body?.tokenId || null,
     },
   );
-  return new Response(JSON.stringify({ success: true }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json; charset=utf-8' },
-  });
+  return apiResponse({ success: true }, HttpStatus.OK);
 };

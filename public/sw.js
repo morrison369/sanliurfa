@@ -3,7 +3,7 @@
  * Phase 2.4: Progressive Web App
  */
 
-const CACHE_NAME = 'sanliurfa-v1';
+const CACHE_NAME = 'sanliurfa-v2'; // bump → offline.html navigation fallback
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -135,6 +135,11 @@ async function networkFirst(request) {
     const cached = await cache.match(request);
     if (cached) {
       return cached;
+    }
+    // Navigation request için (HTML sayfa) → offline.html fallback
+    if (request.mode === 'navigate' || (request.headers.get('accept') || '').includes('text/html')) {
+      const offlinePage = await cache.match('/offline.html');
+      if (offlinePage) return offlinePage;
     }
     throw error;
   }

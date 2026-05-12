@@ -1,9 +1,10 @@
 // API: Newsletter subscription (PostgreSQL)
 import type { APIRoute } from 'astro';
-import { queryOne, insert } from '../../../lib/postgres';
+import { queryOne, query } from '../../../lib/postgres';
 import { sendEmail } from '../../../lib/email';
 import { logger } from '../../../lib/logging';
 import { problemJson } from '../../../lib/api';
+import { getPublicAppUrl } from '../../../lib/public-app-url';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -20,6 +21,15 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Email validation
+    if (typeof email !== 'string' || email.length > 254) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'E-posta adresi 254 karakterden uzun olamaz',
+        type: '/problems/newsletter-subscribe-email-too-long',
+        instance: '/api/newsletter/subscribe',
+      });
+    }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return problemJson({
@@ -31,50 +41,35 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Check if already subscribed
-    const existing = await queryOne(
-      'SELECT id, status FROM newsletter_subscribers WHERE email = $1',
+    // Atomic upsert — eliminates SELECT→INSERT race (HARD RULE #47)
+    const upsertResult = await query(
+      `INSERT INTO newsletter_subscribers (email, subscribed_at, status)
+       VALUES ($1, NOW(), 'active')
+       ON CONFLICT (email) DO UPDATE
+       SET status = 'active', subscribed_at = NOW()
+       RETURNING id, (xmax = 0) AS is_new`,
       [email]
     );
+    const isNew: boolean = upsertResult.rows[0]?.is_new === true;
 
-    if (existing && existing.status === 'active') {
-      return problemJson({
-        status: 400,
-        title: 'Geçersiz İstek',
-        detail: 'Bu e-posta adresi zaten kayıtlı',
-        type: '/problems/newsletter-subscribe-already-exists',
-        instance: '/api/newsletter/subscribe',
+    if (isNew) {
+      const welcomeMail = await sendEmail({
+        to: email,
+        subject: "Sanliurfa.com Bültenine Hoşgeldiniz!",
+        html: `<p>Bültenimize abone olduğunuz için teşekkür ederiz. Şanlıurfa'daki etkinlikler, mekanlar ve haberlerden ilk siz haberdar olacaksınız.</p>
+<p><a href="${getPublicAppUrl()}/newsletter/unsubscribe?email=${encodeURIComponent(email)}">Abonelikten çıkmak için tıklayın</a></p>`,
       });
+      if (!welcomeMail.success) {
+        logger.warn('Newsletter welcome email failed', { email, error: welcomeMail.error });
+      }
     }
-
-    if (existing) {
-      // Re-subscribe
-      await queryOne(
-        'UPDATE newsletter_subscribers SET status = $1, subscribed_at = $2 WHERE id = $3',
-        ['active', new Date().toISOString(), existing.id]
-      );
-    } else {
-      // Insert new subscriber
-      await insert('newsletter_subscribers', {
-        email,
-        subscribed_at: new Date().toISOString(),
-        status: 'active',
-      });
-    }
-
-    await sendEmail({
-      to: email,
-      subject: "Sanliurfa.com Bültenine Hoşgeldiniz!",
-      html: `<p>Bültenimize abone olduğunuz için teşekkür ederiz. Şanlıurfa’daki etkinlikler, mekanlar ve haberlerden ilk siz haberdar olacaksınız.</p>
-<p><a href="${process.env.PUBLIC_APP_URL || 'https://sanliurfa.com'}/newsletter/unsubscribe?email=${encodeURIComponent(email)}">Abonelikten çıkmak için tıklayın</a></p>`,
-    });
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Bültenimize başarıyla abone oldunuz!'
+        message: isNew ? 'Bültenimize başarıyla abone oldunuz!' : 'Aboneliğiniz zaten aktif',
       }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
+      { status: isNew ? 201 : 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (err) {
     logger.error('Newsletter subscription error:', err);
@@ -93,11 +88,11 @@ export const DELETE: APIRoute = async ({ request }) => {
   try {
     const { email } = await request.json();
 
-    if (!email) {
+    if (!email || typeof email !== 'string' || email.length > 254) {
       return problemJson({
         status: 400,
         title: 'Geçersiz İstek',
-        detail: 'E-posta adresi gereklidir',
+        detail: 'Geçerli bir e-posta adresi gereklidir',
         type: '/problems/newsletter-unsubscribe-validation',
         instance: '/api/newsletter/subscribe',
       });

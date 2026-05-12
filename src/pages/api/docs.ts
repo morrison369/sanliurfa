@@ -59,11 +59,8 @@ const apiDocs = {
 };
 
 export const GET: APIRoute = () => {
-  return new Response(JSON.stringify(apiDocs, null, 2), {
+  return new Response(JSON.stringify(apiDocs), {
     status: 200,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=3600'
-    }
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
   });
 };

@@ -2,12 +2,22 @@
 import type { APIRoute } from 'astro';
 import { remove } from '../../../../lib/postgres';
 import { problemJson } from '../../../../lib/api';
+import { invalidatePlace } from '../../../../lib/cache/invalidation';
 
 export const POST: APIRoute = async ({ params, locals }) => {
   try {
     const { id } = params;
+    if (!id) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Mekan kimliği eksik',
+        type: '/problems/places-delete-id-required',
+        instance: '/api/places/{id}/delete',
+      });
+    }
     
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       return problemJson({
         status: 403,
         title: 'Unauthorized',
@@ -18,6 +28,9 @@ export const POST: APIRoute = async ({ params, locals }) => {
     }
 
     await remove('places', id);
+
+    // Cache invalidation: mekan silme places:list/detail + place:{id}:* + homepage'i etkiler
+    await invalidatePlace(id);
 
     return new Response(
       JSON.stringify({ success: true }),

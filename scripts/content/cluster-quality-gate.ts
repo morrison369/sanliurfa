@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { query, pool } from '../../src/lib/postgres';
 
 type GateIssue = {
   code: string;
@@ -8,6 +7,36 @@ type GateIssue = {
   severity?: 'warning' | 'error';
   details?: Record<string, any>;
 };
+
+type QueryFn = <T = any>(text: string, params?: any[]) => Promise<{ rows: T[] }>;
+
+let queryFn: QueryFn | null = null;
+let poolRef: { end: () => Promise<void> } | null = null;
+
+function loadEnvFile(filePath: string) {
+  if (!fs.existsSync(filePath)) return;
+  for (const rawLine of fs.readFileSync(filePath, 'utf8').split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#')) continue;
+    const separator = line.indexOf('=');
+    if (separator === -1) continue;
+    const key = line.slice(0, separator).trim();
+    const value = line.slice(separator + 1).trim().replace(/^['"]|['"]$/g, '');
+    if (key && !process.env[key]) process.env[key] = value;
+  }
+}
+
+for (const file of ['.env', '.env.local', '.env.production']) {
+  loadEnvFile(path.join(process.cwd(), file));
+}
+
+async function ensureDb() {
+  if (queryFn && poolRef) return { queryFn, poolRef };
+  const mod = await import('../../src/lib/postgres');
+  queryFn = mod.query as QueryFn;
+  poolRef = mod.pool as { end: () => Promise<void> };
+  return { queryFn, poolRef };
+}
 
 const REQUIRED_ROUTES = [
   '/saglik/nobetci-eczaneler',
@@ -48,7 +77,8 @@ function readContentMarkdownCount(category: string): number {
 }
 
 async function getPrimaryActionsHrefs(): Promise<string[]> {
-  const result = await query<{ setting_value: Record<string, any> }>(
+  const { queryFn } = await ensureDb();
+  const result = await queryFn<{ setting_value: Record<string, any> }>(
     `SELECT setting_value FROM site_settings WHERE setting_key = 'homepage.primaryActions' LIMIT 1`,
   );
   const setting = result.rows[0]?.setting_value || {};
@@ -230,5 +260,7 @@ main()
     process.exit(1);
   })
   .finally(async () => {
-    await pool.end();
+    if (poolRef) {
+      await poolRef.end();
+    }
   });

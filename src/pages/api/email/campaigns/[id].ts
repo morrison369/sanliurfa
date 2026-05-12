@@ -91,19 +91,30 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     }
 
     const body = await request.json();
-    const { action, ...campaignData } = body;
+    const { action } = body;
 
     let result = null;
 
     if (action === 'launch') {
-      const scheduledFor = campaignData.scheduled_for ? new Date(campaignData.scheduled_for) : undefined;
+      const scheduledFor = body.scheduled_for ? new Date(body.scheduled_for) : undefined;
       result = await launchCampaign(campaignId, locals.user.id, scheduledFor);
       logger.info('Campaign launched', { campaignId, userId: locals.user.id });
     } else if (action === 'pause') {
       result = await pauseCampaign(campaignId, locals.user.id);
       logger.info('Campaign paused', { campaignId, userId: locals.user.id });
     } else {
-      result = await updateMarketingCampaign(campaignId, locals.user.id, campaignData);
+      // HARD RULE #51: only allowlisted fields reach updateMarketingCampaign
+      const ALLOWED_CAMPAIGN_FIELDS = new Set(['name', 'subject_line', 'preview_text', 'html_content', 'plain_text_content', 'from_name', 'from_email', 'reply_to_email', 'campaign_type', 'settings']);
+      const updates: Record<string, unknown> = {};
+      for (const key of ALLOWED_CAMPAIGN_FIELDS) {
+        if (body[key] !== undefined) updates[key] = body[key];
+      }
+      if (updates.name !== undefined && (typeof updates.name !== 'string' || (updates.name as string).length > 255)) return apiError(ErrorCode.VALIDATION_ERROR, 'name 255 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+      if (updates.subject_line !== undefined && (typeof updates.subject_line !== 'string' || (updates.subject_line as string).length > 500)) return apiError(ErrorCode.VALIDATION_ERROR, 'subject_line 500 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+      if (updates.html_content !== undefined && (typeof updates.html_content !== 'string' || (updates.html_content as string).length > 500000)) return apiError(ErrorCode.VALIDATION_ERROR, 'html_content 500000 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+      if (updates.from_name !== undefined && (typeof updates.from_name !== 'string' || (updates.from_name as string).length > 200)) return apiError(ErrorCode.VALIDATION_ERROR, 'from_name 200 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+      if (updates.from_email !== undefined && (typeof updates.from_email !== 'string' || (updates.from_email as string).length > 254)) return apiError(ErrorCode.VALIDATION_ERROR, 'from_email 254 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+      result = await updateMarketingCampaign(campaignId, locals.user.id, updates);
       logger.info('Campaign updated', { campaignId, userId: locals.user.id });
     }
 

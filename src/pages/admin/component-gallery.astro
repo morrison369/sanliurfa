@@ -1,140 +1,137 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
-
-const title = 'Bileşen Galerisi';
 ---
 
-<AdminLayout title={title}>
-  <div class="container mx-auto py-8">
-    <h1 class="text-3xl font-bold mb-8">{title}</h1>
-    
-    <!-- Butonlar -->
-    <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Butonlar</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="p-4 border rounded">
-          <p class="text-sm text-gray-500 mb-2">Birincil</p>
-          <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Birincil
-          </button>
-        </div>
-        <div class="p-4 border rounded">
-          <p class="text-sm text-gray-500 mb-2">İkincil</p>
-          <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
-            İkincil
-          </button>
-        </div>
-        <div class="p-4 border rounded">
-          <p class="text-sm text-gray-500 mb-2">Tehlike</p>
-          <button class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
-            Tehlike
-          </button>
-        </div>
-        <div class="p-4 border rounded">
-          <p class="text-sm text-gray-500 mb-2">Çerçeveli</p>
-          <button class="px-4 py-2 border-2 border-blue-600 text-blue-600 rounded hover:bg-blue-50">
-            Çerçeveli
-          </button>
-        </div>
-      </div>
-    </section>
-    
-    <!-- Rozetler -->
-    <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Rozetler</h2>
-      <div class="flex flex-wrap gap-2">
-        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded">Varsayılan</span>
-        <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded">Başarılı</span>
-        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-sm rounded">Uyarı</span>
-        <span class="px-2 py-1 bg-red-100 text-red-800 text-sm rounded">Hata</span>
-        <span class="px-2 py-1 bg-gray-100 text-gray-800 text-sm rounded">Gri</span>
-      </div>
-    </section>
-    
-    <!-- Kartlar -->
-    <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Kartlar</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white rounded-lg shadow p-6">
-          <h3 class="text-lg font-semibold mb-2">Temel Kart</h3>
-          <p class="text-gray-600">Gölge kullanan temel kart örneği.</p>
-        </div>
-        <div class="bg-white rounded-lg shadow border border-blue-200 p-6">
-          <h3 class="text-lg font-semibold mb-2 text-blue-600">Çerçeveli Kart</h3>
-          <p class="text-gray-600">Renkli kenarlık kullanan kart örneği.</p>
-        </div>
-        <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg shadow p-6 text-white">
-          <h3 class="text-lg font-semibold mb-2">Geçişli Kart</h3>
-          <p class="text-white/90">Gradient arka plan kullanan kart örneği.</p>
-        </div>
-      </div>
-    </section>
-    
-    <!-- Formlar -->
-    <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Form Elemanları</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Metin Alanı</label>
-            <input type="text" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500" placeholder="Metin girin..." />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Seçim</label>
-            <select class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500">
-              <option>Seçenek 1</option>
-              <option>Seçenek 2</option>
-              <option>Seçenek 3</option>
-            </select>
-          </div>
-        </div>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Uzun Metin</label>
-            <textarea class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500" rows="3" placeholder="Uzun metin girin..."></textarea>
-          </div>
-          <div class="flex items-center space-x-2">
-            <input type="checkbox" id="checkbox" class="rounded" />
-            <label for="checkbox" class="text-sm text-gray-700">Onay kutusu seçeneği</label>
-          </div>
-        </div>
-      </div>
-    </section>
-    
-    <!-- Tipografi -->
-    <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Tipografi</h2>
-      <div class="space-y-4">
-        <h1 class="text-4xl font-bold">Başlık 1</h1>
-        <h2 class="text-3xl font-bold">Başlık 2</h2>
-        <h3 class="text-2xl font-semibold">Başlık 3</h3>
-        <h4 class="text-xl font-semibold">Başlık 4</h4>
-        <p class="text-base text-gray-600">Gövde metni içinde <a href="/admin/component-gallery" class="text-blue-600 hover:underline">örnek link</a>, <strong>kalın</strong> ve <em>italik</em> stiller.</p>
-        <p class="text-sm text-gray-500">Açıklama ve meta bilgiler için küçük metin.</p>
-      </div>
-    </section>
-    
-    <!-- Renkler -->
-    <section class="mb-12">
-      <h2 class="text-2xl font-semibold mb-4">Renkler</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="space-y-2">
-          <div class="h-20 bg-blue-600 rounded"></div>
-          <p class="text-sm font-medium">Birincil</p>
-        </div>
-        <div class="space-y-2">
-          <div class="h-20 bg-green-600 rounded"></div>
-          <p class="text-sm font-medium">Başarılı</p>
-        </div>
-        <div class="space-y-2">
-          <div class="h-20 bg-yellow-500 rounded"></div>
-          <p class="text-sm font-medium">Uyarı</p>
-        </div>
-        <div class="space-y-2">
-          <div class="h-20 bg-red-600 rounded"></div>
-          <p class="text-sm font-medium">Tehlike</p>
-        </div>
-      </div>
-    </section>
-  </div>
+<AdminLayout
+ title="Bileşen Galerisi"
+ subtitle="Harran Scripts tasarım sistemi referansı"
+>
+ <div class="sf-container py-8 max-w-4xl space-y-8">
+ <div class="mb-2">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-xl font-bold text-[#1F1410] mb-4">Butonlar</h2>
+ <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+ <div class="p-4 border border-[rgba(184,115,51,0.14)] rounded-sm">
+ <p class="text-xs text-[#7A6B58] mb-2">Birincil</p>
+ <button class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+ Birincil
+ </button>
+ </div>
+ <div class="p-4 border border-[rgba(184,115,51,0.14)] rounded-sm">
+ <p class="text-xs text-[#7A6B58] mb-2">İkincil</p>
+ <button class="rounded-sm border border-[rgba(184,115,51,0.2)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">
+ İkincil
+ </button>
+ </div>
+ <div class="p-4 border border-[rgba(184,115,51,0.14)] rounded-sm">
+ <p class="text-xs text-[#7A6B58] mb-2">Koyu</p>
+ <button class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5c4839]">
+ Koyu
+ </button>
+ </div>
+ <div class="p-4 border border-[rgba(184,115,51,0.14)] rounded-sm">
+ <p class="text-xs text-[#7A6B58] mb-2">Devre Dışı</p>
+ <button class="rounded-sm bg-[rgba(184,115,51,0.1)] px-4 py-2 text-sm text-[#7A6B58]" disabled>
+ Devre Dışı
+ </button>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-xl font-bold text-[#1F1410] mb-4">Durum Rozetleri</h2>
+ <div class="flex flex-wrap gap-2">
+ <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[rgba(184,115,51,0.15)] text-[#7A6B58]">Yayında</span>
+ <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58]">Taslak</span>
+ <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[rgba(184,115,51,0.06)] text-[#7A6B58]">Pasif</span>
+ <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[rgba(184,115,51,0.1)] text-[#7A6B58]">Beklemede</span>
+ <span class="px-2 py-0.5 text-xs font-medium rounded-sm border border-[rgba(184,115,51,0.3)] text-[#7A6B58]">Arşiv</span>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-xl font-bold text-[#1F1410] mb-4">Kartlar</h2>
+ <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="text-base font-semibold text-[#1F1410] mb-2">Standart Kart</h3>
+ <p class="text-sm text-[#7A6B58]">Gölge + bakır kenarlık kullanan temel kart örneği.</p>
+ </div>
+ <div class="bg-[var(--bg-card)] rounded-sm border border-[rgba(184,115,51,0.5)] shadow-sm p-6">
+ <h3 class="text-base font-semibold text-[#7A6B58] mb-2">Aktif Kart</h3>
+ <p class="text-sm text-[#7A6B58]">Güçlü bakır kenarlık ile öne çıkan kart.</p>
+ </div>
+ <div class="bg-[rgba(184,115,51,0.06)] rounded-sm border border-[rgba(184,115,51,0.2)] p-6">
+ <h3 class="text-base font-semibold text-[#1F1410] mb-2">Bilgi Kutusu</h3>
+ <p class="text-sm text-[#7A6B58]">Arka plan tonlu bilgilendirme kartı.</p>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-xl font-bold text-[#1F1410] mb-4">Form Elemanları</h2>
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+ <div class="space-y-4">
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Metin Alanı</label>
+ <input type="text" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" placeholder="Metin girin..." />
+ </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Seçim</label>
+ <select class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option>Seçenek 1</option>
+ <option>Seçenek 2</option>
+ <option>Seçenek 3</option>
+ </select>
+ </div>
+ </div>
+ <div class="space-y-4">
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Uzun Metin</label>
+ <textarea class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" rows="3" placeholder="Uzun metin girin..."></textarea>
+ </div>
+ <div class="flex items-center gap-2">
+ <input type="checkbox" id="checkbox" class="rounded-sm" />
+ <label for="checkbox" class="text-sm text-[#7A6B58]">Onay kutusu seçeneği</label>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-xl font-bold text-[#1F1410] mb-4">Tipografi</h2>
+ <div class="space-y-4">
+ <h1 class="text-4xl font-bold text-[#1F1410]">Başlık 1</h1>
+ <h2 class="text-3xl font-bold text-[#1F1410]">Başlık 2</h2>
+ <h3 class="text-2xl font-semibold text-[#1F1410]">Başlık 3</h3>
+ <h4 class="text-xl font-semibold text-[#7A6B58]">Başlık 4</h4>
+ <p class="text-base text-[#7A6B58]">Gövde metni içinde <a href="/admin/component-gallery" class="text-urfa-600 hover:text-[#7A6B58]">örnek link</a>, <strong class="text-[#1F1410]">kalın</strong> ve <em>italik</em> stiller.</p>
+ <p class="text-sm text-[#7A6B58]">Açıklama ve meta bilgiler için küçük metin.</p>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-xl font-bold text-[#1F1410] mb-4">Renk Paleti</h2>
+ <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+ <div class="space-y-2">
+ <div class="h-16 bg-urfa-600 rounded-sm"></div>
+ <p class="text-sm text-[#7A6B58] font-medium">urfa-600 — Birincil</p>
+ </div>
+ <div class="space-y-2">
+ <div class="h-16 bg-[#6B5540] rounded-sm"></div>
+ <p class="text-sm text-[#7A6B58] font-medium">#6B5540 — Koyu</p>
+ </div>
+ <div class="space-y-2">
+ <div class="h-16 bg-[#9A8470] rounded-sm"></div>
+ <p class="text-sm text-[#7A6B58] font-medium">#9A8470 — Meta</p>
+ </div>
+ <div class="space-y-2">
+ <div class="h-16 bg-[#0D0A08] rounded-sm"></div>
+ <p class="text-sm text-[#7A6B58] font-medium">#0D0A08 — Hero</p>
+ </div>
+ </div>
+ </div>
+ </div>
 </AdminLayout>

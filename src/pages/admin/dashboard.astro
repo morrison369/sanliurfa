@@ -1,100 +1,112 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
 import AdminDashboardOverview from '../../components/AdminDashboardOverview';
 import ModerationQueueManager from '../../components/ModerationQueueManager';
 import UserManagementTable from '../../components/UserManagementTable';
-
-const { locals } = Astro;
-
-// Redirect if not admin
-if (!locals.user || locals.user.role !== 'admin') {
-  return Astro.redirect('/');
-}
+import DashboardStats from '../../components/admin/DashboardStats.astro';
+import IntegrationsHealthSummary from '../../components/admin/IntegrationsHealthSummary.astro';
 ---
 
-<Layout title="Yönetim Paneli | Sanliurfa.com">
-  <div class="min-h-screen bg-gray-50">
-    <div class="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Yönetim Paneli</h1>
-        <p class="text-gray-600 mt-2">Platform yönetimi, moderasyon ve kullanıcı yönetimi</p>
-      </div>
+<AdminLayout
+ title="Yönetim Paneli"
+ subtitle="Platform yönetimi, moderasyon ve kullanıcı yönetimi"
+ seo={{ title: 'Yönetim Paneli - Admin', noIndex: true }}
+>
+ <div class="max-w-7xl mx-auto px-4 py-8">
+ {/* Server Island: İstatistikler — server:defer ile ilk HTML beklenmeden yüklenir */}
+ <div class="mb-6">
+ <DashboardStats server:defer>
+ <div slot="fallback" class="grid grid-cols-2 md:grid-cols-3 gap-4 animate-pulse">
+ {[1,2,3].map(() => (
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5 h-24" />
+ ))}
+ </div>
+ </DashboardStats>
+ </div>
 
-      {/* Tabs */}
-      <div class="mb-6">
-        <div class="border-b border-gray-200 flex gap-8">
-          <button
-            onclick="switchTab('overview')"
-            class="py-3 px-1 border-b-2 border-blue-600 text-blue-600 font-medium text-sm"
-            id="tab-overview"
-          >
-            Genel Bakış
-          </button>
-          <button
-            onclick="switchTab('moderation')"
-            class="py-3 px-1 border-b-2 border-transparent text-gray-600 font-medium text-sm hover:text-gray-900"
-            id="tab-moderation"
-          >
-            Moderasyon
-          </button>
-          <button
-            onclick="switchTab('users')"
-            class="py-3 px-1 border-b-2 border-transparent text-gray-600 font-medium text-sm hover:text-gray-900"
-            id="tab-users"
-          >
-            Kullanıcı Yönetimi
-          </button>
-        </div>
-      </div>
+ {/* Server Island: Entegrasyonlar sağlık özeti */}
+ <div class="mb-6">
+ <IntegrationsHealthSummary server:defer>
+ <div slot="fallback" class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 animate-pulse">
+ <div class="h-5 bg-[rgba(184,115,51,0.1)] rounded-sm w-40 mb-4"></div>
+ <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+ <div class="h-20 bg-[rgba(184,115,51,0.06)] rounded-sm"></div>
+ <div class="h-20 bg-[rgba(184,115,51,0.06)] rounded-sm"></div>
+ <div class="h-20 bg-[rgba(184,115,51,0.06)] rounded-sm"></div>
+ <div class="h-20 bg-[rgba(184,115,51,0.06)] rounded-sm"></div>
+ <div class="h-20 bg-[rgba(184,115,51,0.06)] rounded-sm"></div>
+ </div>
+ </div>
+ </IntegrationsHealthSummary>
+ </div>
 
-      {/* Content Sections */}
-      <div id="overview-section">
-        <AdminDashboardOverview client:visible />
-      </div>
+ {/* Tabs */}
+ <div class="mb-6">
+ <div class="border-b border-[rgba(184,115,51,0.2)] flex gap-8">
+ <button
+ onclick="switchTab('overview')"
+ class="py-3 px-1 border-b-2 border-urfa-600 text-urfa-600 font-medium text-sm"
+ id="tab-overview"
+ >
+ Genel Bakış
+ </button>
+ <button
+ onclick="switchTab('moderation')"
+ class="py-3 px-1 border-b-2 border-transparent text-[#7A6B58] font-medium text-sm hover:text-[#1F1410]"
+ id="tab-moderation"
+ >
+ Moderasyon
+ </button>
+ <button
+ onclick="switchTab('users')"
+ class="py-3 px-1 border-b-2 border-transparent text-[#7A6B58] font-medium text-sm hover:text-[#1F1410]"
+ id="tab-users"
+ >
+ Kullanıcı Yönetimi
+ </button>
+ </div>
+ </div>
 
-      <div id="moderation-section" class="hidden">
-        <div class="bg-white border border-gray-200 rounded-lg p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">Moderasyon Kuyruğu</h2>
-          <ModerationQueueManager client:visible />
-        </div>
-      </div>
+ {/* Content Sections */}
+ <div id="overview-section">
+ <AdminDashboardOverview client:visible />
+ </div>
 
-      <div id="users-section" class="hidden">
-        <div class="bg-white border border-gray-200 rounded-lg p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">Kullanıcı Yönetimi</h2>
-          <UserManagementTable client:visible />
-        </div>
-      </div>
-    </div>
-  </div>
+ <div id="moderation-section" class="hidden">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 shadow-sm">
+ <h2 class="text-xl font-semibold text-[#1F1410] mb-4">Moderasyon Kuyruğu</h2>
+ <ModerationQueueManager client:visible />
+ </div>
+ </div>
 
-  <script is:inline>
-    function switchTab(tabName) {
-      // Hide all sections
-      document.getElementById('overview-section')?.classList.add('hidden');
-      document.getElementById('moderation-section')?.classList.add('hidden');
-      document.getElementById('users-section')?.classList.add('hidden');
+ <div id="users-section" class="hidden">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 shadow-sm">
+ <h2 class="text-xl font-semibold text-[#1F1410] mb-4">Kullanıcı Yönetimi</h2>
+ <UserManagementTable client:visible />
+ </div>
+ </div>
+ </div>
 
-      // Remove active state from all tabs
-      document.getElementById('tab-overview')?.classList.remove('border-blue-600', 'text-blue-600');
-      document.getElementById('tab-moderation')?.classList.remove('border-blue-600', 'text-blue-600');
-      document.getElementById('tab-users')?.classList.remove('border-blue-600', 'text-blue-600');
+ <script is:inline>
+ function switchTab(tabName) {
+ document.getElementById('overview-section')?.classList.add('hidden');
+ document.getElementById('moderation-section')?.classList.add('hidden');
+ document.getElementById('users-section')?.classList.add('hidden');
 
-      document.getElementById('tab-overview')?.classList.add('border-transparent', 'text-gray-600');
-      document.getElementById('tab-moderation')?.classList.add('border-transparent', 'text-gray-600');
-      document.getElementById('tab-users')?.classList.add('border-transparent', 'text-gray-600');
+ document.getElementById('tab-overview')?.classList.remove('border-urfa-600', 'text-urfa-600');
+ document.getElementById('tab-moderation')?.classList.remove('border-urfa-600', 'text-urfa-600');
+ document.getElementById('tab-users')?.classList.remove('border-urfa-600', 'text-urfa-600');
 
-      // Show selected section and activate tab
-      const sectionId = `${tabName}-section`;
-      const tabId = `tab-${tabName}`;
+ document.getElementById('tab-overview')?.classList.add('border-transparent', 'text-[#7A6B58]');
+ document.getElementById('tab-moderation')?.classList.add('border-transparent', 'text-[#7A6B58]');
+ document.getElementById('tab-users')?.classList.add('border-transparent', 'text-[#7A6B58]');
 
-      document.getElementById(sectionId)?.classList.remove('hidden');
-      document.getElementById(tabId)?.classList.remove('border-transparent', 'text-gray-600');
-      document.getElementById(tabId)?.classList.add('border-blue-600', 'text-blue-600');
-    }
-  </script>
-</Layout>
+ const sectionId = `${tabName}-section`;
+ const tabId = `tab-${tabName}`;
 
-
-
+ document.getElementById(sectionId)?.classList.remove('hidden');
+ document.getElementById(tabId)?.classList.remove('border-transparent', 'text-[#7A6B58]');
+ document.getElementById(tabId)?.classList.add('border-urfa-600', 'text-urfa-600');
+ }
+ </script>
+</AdminLayout>

@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeIntParam } from '../../../lib/api';
 
 interface AuditLogPayload {
   entity?: string;
@@ -83,7 +83,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const entity = url.searchParams.get('entity');
     const action = url.searchParams.get('action');
     const actor  = url.searchParams.get('actor');
-    const limit  = Math.min(parseInt(url.searchParams.get('limit') || '100'), 1000);
+    const limit  = safeIntParam(url.searchParams.get('limit'), 100, 1, 1_000);
 
     const params: string[] = [];
     let where = 'WHERE 1=1';

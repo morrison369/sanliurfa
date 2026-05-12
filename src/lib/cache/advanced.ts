@@ -97,7 +97,8 @@ class AdvancedCacheManager {
         return null;
       }
 
-      const entry: CacheEntry<T> = this.decompress(value);
+      // Redis 5+ get() returns `string | Buffer` — coerce for decompress
+      const entry: CacheEntry<T> = this.decompress(typeof value === 'string' ? value : (value as Buffer).toString());
       const now = Date.now();
 
       if (now > entry.expiresAt) {
@@ -178,7 +179,8 @@ class AdvancedCacheManager {
 
       const value = await redis.get(cacheKey);
       if (value) {
-        const entry: CacheEntry<any> = this.decompress(value);
+        // Redis 5+ get() returns `string | Buffer` — coerce for decompress
+        const entry: CacheEntry<any> = this.decompress(typeof value === 'string' ? value : (value as Buffer).toString());
         for (const tag of entry.tags) {
           await redis.sRem(`cache:tags:${tag}`, cacheKey);
         }
@@ -195,7 +197,11 @@ class AdvancedCacheManager {
     try {
       const redis = await getRedisClient();
       const cacheKey = `cache:tags:${tag}`;
-      const keys = await redis.sMembers(cacheKey);
+      // Redis 5+ sMembers returns `(string | Buffer)[]` — coerce to string[]
+      const rawKeys = await redis.sMembers(cacheKey);
+      const keys = (Array.isArray(rawKeys) ? rawKeys : Array.from(rawKeys)).map((k) =>
+        typeof k === 'string' ? k : Buffer.isBuffer(k) ? k.toString() : String(k),
+      );
 
       if (keys.length === 0) {
         return 0;

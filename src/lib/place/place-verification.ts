@@ -72,7 +72,7 @@ export async function requestPlaceVerification(
       id: result.id,
       placeId,
       status: 'pending',
-      documents,
+      ...(documents ? { documents } : {}),
       requestedAt: result.requested_at,
       updatedAt: result.updated_at
     };
@@ -91,7 +91,7 @@ export async function getPlaceVerification(placeId: string): Promise<PlaceVerifi
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const result = await queryOne(
@@ -230,13 +230,14 @@ export async function awardBadge(
       return null;
     }
 
-    // Insert badge
-    const result = await insert('place_badges', {
-      place_id: placeId,
-      badge_type: badgeType,
-      awarded_by: awardedBy,
-      reason
-    });
+    const result = await queryOne<{ id: string; awarded_at: string }>(
+      `INSERT INTO place_badges (place_id, badge_type, awarded_by, reason)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (place_id, badge_type) DO NOTHING
+       RETURNING id, awarded_at`,
+      [placeId, badgeType, awardedBy ?? null, reason ?? null]
+    );
+    if (!result) return null;
 
     // Invalidate cache
     await deleteCache(`place:badges:${placeId}`);
@@ -250,7 +251,7 @@ export async function awardBadge(
       badgeName: badge.name,
       icon: badge.icon,
       awardedAt: result.awarded_at,
-      reason
+      ...(reason ? { reason } : {})
     };
   } catch (error) {
     logger.error('Failed to award badge', error instanceof Error ? error : new Error(String(error)));
@@ -267,7 +268,7 @@ export async function getPlaceBadges(placeId: string): Promise<PlaceBadge[]> {
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(
@@ -308,7 +309,7 @@ export async function getBadgeDefinitions(): Promise<BadgeDefinition[]> {
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(
@@ -365,4 +366,3 @@ export async function getPendingVerifications(limit: number = 50): Promise<any[]
     return [];
   }
 }
-

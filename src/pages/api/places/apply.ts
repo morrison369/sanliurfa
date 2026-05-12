@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
+import { validateWithSchema, type ValidationSchema } from '../../../lib/validation';
 import { submitPlaceApplication } from '../../../lib/places/place-application';
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {
@@ -21,9 +22,33 @@ async function readBody(request: Request): Promise<Record<string, unknown>> {
   throw new Error('application/json veya form gönderimi kullanın.');
 }
 
+const applySchema: ValidationSchema = {
+  name: { type: 'string' as const, required: true, minLength: 2, maxLength: 200, sanitize: true },
+  address: { type: 'string' as const, required: false, maxLength: 300, sanitize: true },
+  phone: { type: 'string' as const, required: false, maxLength: 30, sanitize: true },
+  website: { type: 'string' as const, required: false, maxLength: 200, sanitize: true },
+  description: { type: 'string' as const, required: false, maxLength: 1000, sanitize: true },
+  short_description: { type: 'string' as const, required: false, maxLength: 1000, sanitize: true },
+};
+
 export const POST: APIRoute = async context => {
   try {
     const body = await readBody(context.request);
+
+    const validation = validateWithSchema(body, applySchema);
+    if (!validation.valid) {
+      return problemJson({
+        status: 422,
+        title: 'Geçersiz Başvuru Verisi',
+        detail: validation.errors?.[0] || 'Geçersiz veri',
+        type: '/problems/validation-error',
+        instance: '/api/places/apply',
+      });
+    }
+
+    // Authenticated users skip provisional account creation — use existing session.
+    const authenticatedUserId = context.locals.user?.id ?? null;
+
     const result = await submitPlaceApplication({
       name: String(body.name || ''),
       categoryId: body.category_id ? String(body.category_id) : null,
@@ -37,26 +62,24 @@ export const POST: APIRoute = async context => {
       address: String(body.address || ''),
       phone: String(body.phone || ''),
       website: body.website ? String(body.website) : null,
-      ownerName: String(body.owner_name || body.ownerName || body.submitter_name || ''),
-      ownerEmail: String(body.owner_email || body.ownerEmail || body.submitter_email || ''),
+      ownerName: String(body.owner_name || body.ownerName || body.submitter_name || context.locals.user?.fullName || ''),
+      ownerEmail: String(body.owner_email || body.ownerEmail || body.submitter_email || context.locals.user?.email || ''),
       priceRange: body.priceRange ? String(body.priceRange) : null,
       acceptsReservations: body.acceptsReservations
         ? String(body.acceptsReservations)
         : body.accepts_reservations
           ? String(body.accepts_reservations)
           : null,
+      authenticatedUserId,
     });
 
-    return new Response(JSON.stringify(result), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse(result, HttpStatus.CREATED);
   } catch (error) {
     logger.error('Place application error:', error);
     return problemJson({
       status: 400,
       title: 'Başvuru Oluşturulamadı',
-      detail: error instanceof Error && error.message ? error.message : 'Başvuru gönderilemedi.',
+      detail: safeErrorDetail(error, 'Başvuru gönderilemedi.'),
       type: '/problems/places-apply-failed',
       instance: '/api/places/apply',
     });

@@ -170,7 +170,7 @@ export async function recordSuggestionImpression(suggestionText: string, suggest
         [suggestionText]
       );
       await update('search_suggestions', { suggestion_text: suggestionText }, {
-        search_count: parseInt(result?.count || '0'),
+        search_count: parseInt(result?.count || '0', 10),
         last_searched_at: new Date()
       });
     } else {

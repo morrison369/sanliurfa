@@ -2,22 +2,34 @@
 import Layout from '../../layouts/Layout.astro';
 import OLAPExplorer from '../../components/OLAPExplorer';
 
-// Admin-only access
-const userId = Astro.locals.user?.id;
-const isAdmin = Astro.locals.user?.role === 'admin';
-
-if (!userId || !isAdmin) {
-  return Astro.redirect('/giris');
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+ return Astro.redirect('/giris?redirect=/veri-ambarı');
 }
 ---
 
-<Layout title="Veri Ambarı | Şanlıurfa">
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 mb-2">Veri Ambarı & OLAP</h1>
-      <p class="text-gray-600">Çok boyutlu analitik sorgular ve veri keşfi</p>
-    </div>
+<Layout seo={{ title: "Veri Ambarı - Şanlıurfa", noIndex: true }}>
+ <style is:inline>
+ .vam-page{background:var(--bg);min-height:100vh}
+ .vam-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:2.5rem 0}
+ .vam-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:#4A3828}
+ .vam-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2rem);font-weight:700;color:#1F1410;margin:.5rem 0 .25rem}
+ .vam-desc{color:#7A6B58;font-size:.88rem}
+ .vam-body{padding:2rem 0 4rem}
+ </style>
 
-    <OLAPExplorer client:visible />
-  </div>
+ <div class="vam-page">
+ <div class="vam-hero">
+ <div class="sf-container">
+ <p class="vam-label">Analitik</p>
+ <h1 class="vam-h1">Veri Ambarı & OLAP</h1>
+ <p class="vam-desc">Çok boyutlu analitik sorgular ve veri keşfi</p>
+ </div>
+ </div>
+ <div class="vam-body">
+ <div class="sf-container">
+ <OLAPExplorer client:visible />
+ </div>
+ </div>
+ </div>
 </Layout>

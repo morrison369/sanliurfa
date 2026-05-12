@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { listFunnels, getFunnelById, createFunnel, getFunnelAnalytics, optimizeFunnelSteps } from '../../../lib/analytics/funnel-analytics';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
@@ -13,13 +13,13 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 
     const funnelId = url.searchParams.get('id');
     const withAnalytics = url.searchParams.get('analytics') === 'true';
-    const days = parseInt(url.searchParams.get('days') || '30');
+    const days = safeIntParam(url.searchParams.get('days'), 30, 0, 1_000_000);
 
     if (funnelId) {
       const funnel = await getFunnelById(funnelId);
@@ -58,7 +58,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
 

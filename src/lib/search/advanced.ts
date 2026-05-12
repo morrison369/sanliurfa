@@ -5,6 +5,7 @@
 
 import { query } from '../postgres';
 import { getCache, setCache } from '../cache';
+import { logger } from '../logger';
 
 export interface SearchFilters {
   category?: string[];
@@ -53,8 +54,9 @@ export async function advancedSearch(options: SearchOptions): Promise<{
   facets: FacetResult[];
   suggestions: string[];
 }> {
+  try {
   const cacheKey = `search:${JSON.stringify(options)}`;
-  
+
   // Check cache
   const cached = await getCache<any>(cacheKey);
   if (cached) return cached;
@@ -126,7 +128,7 @@ export async function advancedSearch(options: SearchOptions): Promise<{
 
   // Get total count
   const countResult = await query(`SELECT COUNT(*) as total FROM (${sql}) as count_query`, params);
-  const total = parseInt(countResult.rows[0].total);
+  const total = parseInt(countResult.rows[0].total, 10);
 
   // Apply sorting
   switch (sortBy) {
@@ -183,14 +185,18 @@ export async function advancedSearch(options: SearchOptions): Promise<{
     slug: row.slug,
     category: row.category,
     rating: parseFloat(row.rating) || 0,
-    reviewCount: parseInt(row.review_count) || 0,
+    reviewCount: parseInt(row.review_count, 10) || 0,
     address: row.address,
     image: row.image,
-    distance: filters?.location ? calculateDistance(
-      filters.location.lat, filters.location.lng,
-      row.latitude, row.longitude
-    ) : undefined,
-    highlights: searchQuery ? extractHighlights(row, searchQuery) : undefined,
+    ...(filters?.location
+      ? {
+          distance: calculateDistance(
+            filters.location.lat, filters.location.lng,
+            row.latitude, row.longitude
+          ),
+        }
+      : {}),
+    ...(searchQuery ? { highlights: extractHighlights(row, searchQuery) } : {}),
   }));
 
   // Get facets
@@ -205,6 +211,10 @@ export async function advancedSearch(options: SearchOptions): Promise<{
   await setCache(cacheKey, response, SEARCH_CACHE_TTL);
 
   return response;
+  } catch (error) {
+    logger.error('Advanced search failed', error instanceof Error ? error : new Error(String(error)));
+    return { results: [], total: 0, facets: [], suggestions: [] };
+  }
 }
 
 /**
@@ -245,7 +255,7 @@ function extractHighlights(row: any, query: string): string[] {
 /**
  * Get search facets
  */
-async function getFacets(searchQuery?: string, filters?: SearchFilters): Promise<FacetResult[]> {
+async function getFacets(searchQuery?: string, _filters?: SearchFilters): Promise<FacetResult[]> {
   const facets: FacetResult[] = [];
 
   // Category facet
@@ -260,7 +270,7 @@ async function getFacets(searchQuery?: string, filters?: SearchFilters): Promise
   );
   facets.push({
     field: 'category',
-    values: categoryResult.rows.map(r => ({ value: r.category, count: parseInt(r.count) })),
+    values: categoryResult.rows.map(r => ({ value: r.category, count: parseInt(r.count, 10) })),
   });
 
   // Rating facet
@@ -282,7 +292,7 @@ async function getFacets(searchQuery?: string, filters?: SearchFilters): Promise
   );
   facets.push({
     field: 'rating',
-    values: ratingResult.rows.map(r => ({ value: r.rating_range, count: parseInt(r.count) })),
+    values: ratingResult.rows.map(r => ({ value: r.rating_range, count: parseInt(r.count, 10) })),
   });
 
   return facets;
@@ -293,7 +303,7 @@ async function getFacets(searchQuery?: string, filters?: SearchFilters): Promise
  */
 export async function getSearchSuggestions(searchTerm: string = '', limit = 5): Promise<string[]> {
   if (!searchTerm || searchTerm.length < 2) return [];
-
+  try {
   const cacheKey = `search:suggestions:${searchTerm.toLowerCase()}`;
   const cached = await getCache<string[]>(cacheKey);
   if (cached) return cached;
@@ -327,36 +337,49 @@ export async function getSearchSuggestions(searchTerm: string = '', limit = 5): 
 
   await setCache(cacheKey, suggestions, 600);
   return suggestions;
+  } catch (error) {
+    logger.error('Failed to get search suggestions', error instanceof Error ? error : new Error(String(error)));
+    return [];
+  }
 }
 
 /**
  * Log search query
  */
 export async function logSearch(searchTerm: string, userId?: string, resultsCount: number = 0): Promise<void> {
-  await query(
-    `INSERT INTO search_logs (query, user_id, results_count, created_at)
-     VALUES ($1, $2, $3, NOW())`,
-    [searchTerm, userId || null, resultsCount]
-  );
+  try {
+    await query(
+      `INSERT INTO search_logs (query, user_id, results_count, created_at)
+       VALUES ($1, $2, $3, NOW())`,
+      [searchTerm, userId || null, resultsCount]
+    );
+  } catch (error) {
+    logger.error('Failed to log search', error instanceof Error ? error : new Error(String(error)));
+  }
 }
 
 /**
  * Get trending searches
  */
 export async function getTrendingSearches(limit = 10): Promise<Array<{ query: string; count: number }>> {
-  const result = await query(
-    `SELECT query, COUNT(*) as count
-     FROM search_logs
-     WHERE created_at > NOW() - INTERVAL '7 days'
-     GROUP BY query
-     ORDER BY count DESC
-     LIMIT $1`,
-    [limit]
-  );
+  try {
+    const result = await query(
+      `SELECT query, COUNT(*) as count
+       FROM search_logs
+       WHERE created_at > NOW() - INTERVAL '7 days'
+       GROUP BY query
+       ORDER BY count DESC
+       LIMIT $1`,
+      [limit]
+    );
 
-  return result.rows.map(r => ({
-    query: r.query,
-    count: parseInt(r.count),
-  }));
+    return result.rows.map(r => ({
+      query: r.query,
+      count: parseInt(r.count, 10),
+    }));
+  } catch (error) {
+    logger.error('Failed to get trending searches', error instanceof Error ? error : new Error(String(error)));
+    return [];
+  }
 }
 

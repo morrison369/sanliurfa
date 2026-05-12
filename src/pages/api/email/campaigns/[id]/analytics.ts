@@ -14,7 +14,7 @@ import {
   getGeographicEngagement,
   getSubscriberSegments,
 } from '../../../../../lib/email/email-analytics';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../../lib/api';
 import { recordRequest } from '../../../../../lib/metrics';
 import { logger } from '../../../../../lib/logging';
 
@@ -56,24 +56,24 @@ export const GET: APIRoute = async ({ request, locals, params, url }) => {
       'segments',
     ];
 
-    const data: any = {};
+    const data: Record<string, unknown> = {};
 
     if (metrics.includes('overview')) {
       data.overview = await getCampaignOverview(campaignId);
     }
 
     if (metrics.includes('daily')) {
-      const days = parseInt(url.searchParams.get('days') || '30', 10);
+      const days = safeIntParam(url.searchParams.get('days'), 30, 0, 1_000_000);
       data.daily = await getDailyMetrics(campaignId, days);
     }
 
     if (metrics.includes('timeline')) {
-      const hours = parseInt(url.searchParams.get('hours') || '24', 10);
+      const hours = safeIntParam(url.searchParams.get('hours'), 24, 0, 1_000_000);
       data.timeline = await getEngagementTimeline(campaignId, hours);
     }
 
     if (metrics.includes('links')) {
-      const limit = parseInt(url.searchParams.get('linkLimit') || '10', 10);
+      const limit = safeIntParam(url.searchParams.get('linkLimit'), 10, 0, 1_000_000);
       data.topLinks = await getTopLinks(campaignId, limit);
     }
 

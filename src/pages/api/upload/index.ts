@@ -6,23 +6,24 @@ import { join } from 'path';
 import crypto from 'crypto';
 import { logger } from '../../../lib/logging';
 import { resolveContentImage } from '../../../lib/content-images';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
+import { deleteCachePattern } from '../../../lib/cache';
 
 // Maximum file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
-function normalizePlacePhotoUrls(photo: any, placeSlug?: string | null) {
+function normalizePlacePhotoUrls(photo: { file_path?: string } | null, placeSlug?: string | null) {
   const image_url = resolveContentImage({
     category: 'places',
-    slug: placeSlug,
-    explicit: photo?.file_path,
+    slug: placeSlug ?? null,
+    explicit: photo?.file_path ?? null,
     placeholder: '/images/placeholder-place.jpg',
   });
   const thumbnail_url = resolveContentImage({
     category: 'places',
-    slug: placeSlug,
-    explicit: photo?.file_path,
+    slug: placeSlug ?? null,
+    explicit: photo?.file_path ?? null,
     placeholder: '/images/placeholder-place.jpg',
     thumb: true,
   });
@@ -67,8 +68,23 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    // Yetki kontrolu
-    if (auth.user.role === 'vendor') {
+    // Path traversal koruması: placeId path component oluşturuyor (uploads/places/<placeId>/),
+    // bu nedenle UUID veya alfanümerik+tire formatında olmalı. Yoksa "../../etc" gibi inputlar
+    // upload klasörünün dışına yazma denemesi yapabilir (auth katmanı zaten reddeder ama defense-in-depth).
+    if (!/^[a-zA-Z0-9_-]+$/.test(placeId)) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'placeId formatı geçersiz',
+        type: '/problems/upload-place-invalid-format',
+        instance: '/api/upload',
+      });
+    }
+
+    // Yetki: admin > vendor (sahip olduğu mekan) > diğer (yasak)
+    if (auth.user.role === 'admin') {
+      // admin her mekana fotoğraf yükleyebilir
+    } else if (auth.user.role === 'vendor') {
       const placeCheck = await query(
         'SELECT id FROM places WHERE id = $1 AND owner_id = $2',
         [placeId, auth.user.id]
@@ -82,6 +98,14 @@ export const POST: APIRoute = async (context) => {
           instance: '/api/upload',
         });
       }
+    } else {
+      return problemJson({
+        status: 403,
+        title: 'Forbidden',
+        detail: 'Sadece mekan sahibi veya admin fotoğraf yükleyebilir',
+        type: '/problems/upload-forbidden',
+        instance: '/api/upload',
+      });
     }
 
     // File validation
@@ -105,8 +129,16 @@ export const POST: APIRoute = async (context) => {
       });
     }
 
-    // Generate unique filename
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    // Generate unique filename — ext'i MIME type'tan derive et, file.name'den DEĞİL.
+    // Aksi halde attacker `image/jpeg` MIME + `evil.html` adıyla yükleyip
+    // sunucudan HTML/SVG/JS servis ettirebilir (stored XSS vektörü).
+    const MIME_TO_EXT: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+    };
+    const ext = MIME_TO_EXT[file.type] || 'jpg';
     const hash = crypto.randomBytes(16).toString('hex');
     const filename = `${hash}.${ext}`;
     const webpFilename = `${hash}.webp`;
@@ -126,6 +158,17 @@ export const POST: APIRoute = async (context) => {
     const webpUrl = `${baseUrl}/${webpFilename}`;
 
     // Save to database
+    const rawCaption = formData.get('caption');
+    const caption = rawCaption ? String(rawCaption) : null;
+    if (caption !== undefined && caption !== null && (typeof caption !== 'string' || caption.length > 500)) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'caption 500 karakterden uzun olamaz',
+        type: '/problems/upload-caption-too-long',
+        instance: '/api/upload',
+      });
+    }
     const result = await query(
       `INSERT INTO place_photos (
         place_id, file_path, caption,
@@ -135,7 +178,7 @@ export const POST: APIRoute = async (context) => {
       [
         placeId,
         webpUrl,
-        formData.get('caption') || null,
+        caption,
         file.size,
         file.type,
         auth.user.id,
@@ -145,17 +188,18 @@ export const POST: APIRoute = async (context) => {
 
     const photo = result.rows[0];
 
-    // If cover, update place image
+    // If cover, update place image and invalidate place caches
     if (type === 'cover') {
       await query(
         'UPDATE places SET thumbnail_url = $1, updated_at = NOW() WHERE id = $2',
         [webpUrl, placeId]
       );
+      await deleteCachePattern('places:*').catch(() => null);
     }
 
     const normalized = normalizePlacePhotoUrls(photo);
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       photo: {
         id: photo.id,
@@ -166,17 +210,14 @@ export const POST: APIRoute = async (context) => {
         caption: photo.caption,
         is_featured: photo.is_featured,
       }
-    }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.CREATED);
 
   } catch (error) {
     logger.error('Upload error:', error);
     return problemJson({
       status: 500,
       title: 'Yükleme Başarısız',
-      detail: error instanceof Error ? error.message : 'upload_failed',
+      detail: safeErrorDetail(error, 'upload_failed'),
       type: '/problems/upload-failed',
       instance: '/api/upload',
     });
@@ -210,7 +251,7 @@ export const GET: APIRoute = async (context) => {
       [placeId]
     );
 
-    const photos = result.rows.map((row: any) => {
+    const photos = result.rows.map((row) => {
       const normalized = normalizePlacePhotoUrls(row, row.place_slug);
       return {
         ...row,
@@ -220,20 +261,17 @@ export const GET: APIRoute = async (context) => {
       };
     });
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       photos
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('List photos error:', error);
     return problemJson({
       status: 500,
       title: 'Fotoğraflar Alınamadı',
-      detail: error instanceof Error ? error.message : 'server_error',
+      detail: safeErrorDetail(error, 'server_error'),
       type: '/problems/upload-list-failed',
       instance: '/api/upload',
     });

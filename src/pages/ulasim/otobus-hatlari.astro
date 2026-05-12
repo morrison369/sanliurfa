@@ -2,167 +2,211 @@
 
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'Şanlıurfa Otobüs Hatları | Şehir İçi Ulaşım Rehberi',
-  description: 'Şanlıurfa şehir içi otobüs hatları, güzergahlar, duraklar ve sefer bilgileri. Güncel hat listesi ve toplu taşıma rehberi.',
-  keywords: ['Şanlıurfa otobüs hatları', 'Şanlıurfa toplu taşıma', 'Şanlıurfa otobüs güzergahı'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/ulasim/otobus-hatlari',
+ title: 'Şanlıurfa Otobüs Hatları | Şehir İçi Ulaşım Rehberi',
+ description: 'Şanlıurfa şehir içi otobüs hatları, güzergahlar, duraklar ve sefer bilgileri. Güncel hat listesi ve toplu taşıma rehberi.',
+ keywords: ['Şanlıurfa otobüs hatları', 'Şanlıurfa toplu taşıma', 'Şanlıurfa otobüs güzergahı'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/ulasim/otobus-hatlari',
 };
 
 let routes: any[] = [];
 try {
+ routes = await getCachedPublicRouteData('page:ulasim:otobus-hatlari', async () => {
   const result = await query(
-    `SELECT r.id, r.route_no, r.name, r.start_stop, r.end_stop, r.notes,
-            COUNT(s.id) FILTER (WHERE s.day_type = 'weekday') as weekday_count,
-            array_agg(s.departure_time::TEXT ORDER BY s.departure_time) FILTER (WHERE s.day_type = 'weekday' AND s.direction = 'outbound') as weekday_times
-     FROM bus_routes r
-     LEFT JOIN bus_schedules s ON s.route_id = r.id
-     WHERE r.is_active = true
-     GROUP BY r.id
-     ORDER BY r.route_no`,
-    [],
+   `SELECT r.id, r.route_no, r.name, r.start_stop, r.end_stop, r.notes,
+ COUNT(s.id) FILTER (WHERE s.day_type = 'weekday') as weekday_count,
+ array_agg(s.departure_time::TEXT ORDER BY s.departure_time) FILTER (WHERE s.day_type = 'weekday' AND s.direction = 'outbound') as weekday_times
+ FROM bus_routes r
+ LEFT JOIN bus_schedules s ON s.route_id = r.id
+ WHERE r.is_active = true
+ GROUP BY r.id
+ ORDER BY r.route_no`,
+   [],
   );
-  routes = result.rows;
+  return result.rows;
+ });
 } catch { /* migration henüz çalışmamış olabilir */ }
 
 const faqItems = [
-  {
-    S: 'Şanlıurfa otobüs hatları kaç tanedir?',
-    C: `Şanlıurfa'da şu an ${routes.length > 0 ? routes.length + ' aktif' : 'çok sayıda'} şehir içi otobüs hattı hizmet vermektedir.`,
-  },
-  {
-    S: 'Şanlıurfa otobüs hatları ne zaman çalışır?',
-    C: "Şanlıurfa şehir içi otobüsleri genellikle sabah 06:00\'dan gece 23:30\'a kadar sefer yapmaktadır. Hat ve güne göre seferler değişebilir.",
-  },
-  {
-    S: 'Şanlıurfa otobüs ücretleri ne kadardır?',
-    C: 'Ücretler belediye tarifesine göre belirlenir ve Kent Kart ile indirimli binme imkânı sunulur.',
-  },
+ {
+ S: 'Şanlıurfa otobüs hatları kaç tanedir?',
+ C: `Şanlıurfa'da şu an ${routes.length > 0 ? routes.length + ' aktif' : 'çok sayıda'} şehir içi otobüs hattı hizmet vermektedir.`,
+ },
+ {
+ S: 'Şanlıurfa otobüs hatları ne zaman çalışır?',
+ C: "Şanlıurfa şehir içi otobüsleri genellikle sabah 06:00'dan gece 23:30'a kadar sefer yapmaktadır. Hat ve güne göre seferler değişebilir.",
+ },
+ {
+ S: 'Şanlıurfa otobüs ücretleri ne kadardır?',
+ C: 'Ücretler belediye tarifesine göre belirlenir ve Kent Kart ile indirimli binme imkânı sunulur.',
+ },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <section class="bg-gradient-to-br from-blue-700 to-blue-900 text-white py-14">
-      <div class="container mx-auto px-4">
-        <nav class="text-sm text-blue-300 mb-4">
-          <a href="/" class="hover:text-white">Ana Sayfa</a> /
-          <a href="/ulasim" class="hover:text-white ml-1">Ulaşım</a> /
-          <span class="ml-1 text-white">Otobüs Hatları</span>
-        </nav>
-        <h1 class="text-4xl font-bold mb-3">Şanlıurfa Otobüs Hatları</h1>
-        <p class="text-blue-200 max-w-2xl">
-          Şanlıurfa şehir içi toplu taşıma hatları, güzergahlar ve sefer saatleri.
-          {routes.length > 0 && <span class="font-semibold"> {routes.length} aktif hat.</span>}
-        </p>
-        <div class="mt-5 flex flex-wrap gap-3">
-          <a href="/ulasim/otobus-saatleri" class="px-4 py-2 rounded-lg bg-white text-blue-800 font-semibold hover:bg-blue-50 text-sm">
-            Saat Tabloları
-          </a>
-          <a href="/ulasim" class="px-4 py-2 rounded-lg border border-white/40 hover:bg-white/10 text-sm">
-            Ulaşım Rehberi
-          </a>
-        </div>
-      </div>
-    </section>
+ <style is:inline>
+ .oh-breadcrumb{background:var(--bg);border-bottom:1px solid rgba(184,115,51,.14);padding:.75rem 0}
+ .oh-breadcrumb nav{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--public-muted)}
+ .oh-breadcrumb a{color:var(--public-muted);transition:color .15s}.oh-breadcrumb a:hover{color:var(--public-accent)}
+ .oh-breadcrumb span:last-child{color:var(--public-accent);font-weight:500}
+ .oh-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%)}
+ .oh-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;color:var(--public-text);margin-bottom:.5rem}
+ .oh-hero-desc{color:var(--public-muted);max-width:40rem;font-size:.9rem}
+ .oh-hero-btns{margin-top:1.25rem;display:flex;flex-wrap:wrap;gap:.75rem}
+ .oh-btn-primary{padding:.5rem 1rem;background:var(--public-text);color:#0D0A08;font-weight:600;font-size:.85rem;transition:background .15s}
+ .oh-btn-primary:hover{background:var(--public-accent)}
+ .oh-btn-ghost{padding:.5rem 1rem;border:1px solid rgba(237,224,198,.3);color:var(--public-text);font-size:.85rem;transition:background .15s}
+ .oh-btn-ghost:hover{background:rgba(237,224,198,.08)}
+ .oh-body{background:var(--bg);padding:2.5rem 0 4rem}
+ .oh-routes-title{font-size:1.3rem;font-weight:700;color:var(--public-text);margin-bottom:1rem}
+ .oh-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));margin-bottom:3rem}
+ .oh-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.25rem;transition:border-color .15s}
+ .oh-card:hover{border-color:var(--public-accent)}
+ .oh-card-top{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+ .oh-route-no{font-size:1.4rem;font-weight:800;color:var(--public-accent);min-width:2.5rem}
+ .oh-route-name{font-size:.9rem;font-weight:600;color:var(--public-text)}
+ .oh-route-ends{font-size:.72rem;color:var(--public-text-soft);margin-top:.1rem}
+ .oh-times{display:flex;flex-wrap:wrap;gap:.3rem;margin-top:.5rem}
+ .oh-time-chip{font-size:.7rem;background:rgba(184,115,51,.08);color:var(--public-muted);padding:.1rem .45rem;font-family:monospace}
+ .oh-times-more{font-size:.7rem;color:var(--public-text-soft);align-self:center}
+ .oh-route-note{font-size:.72rem;color:var(--public-text-soft);margin-top:.5rem;font-style:italic}
+ .oh-empty{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:3rem;text-align:center;margin-bottom:3rem}
+ .oh-empty-icon{font-size:3rem;margin-bottom:.75rem}
+ .oh-empty-title{font-size:1.1rem;font-weight:700;color:var(--public-text);margin-bottom:.25rem}
+ .oh-empty-desc{font-size:.8rem;color:var(--public-muted)}
+ .oh-info-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));margin-bottom:3rem}
+ .oh-info-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.25rem}
+ .oh-info-icon{font-size:1.75rem;margin-bottom:.5rem}
+ .oh-info-title{font-size:.9rem;font-weight:700;color:var(--public-text);margin-bottom:.25rem}
+ .oh-info-desc{font-size:.8rem;color:var(--public-muted);line-height:1.55}
+ .oh-faq{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem}
+ .oh-faq-title{font-size:1.1rem;font-weight:700;color:var(--public-text);margin-bottom:1rem}
+ .oh-faq-item{border-bottom:1px solid rgba(184,115,51,.1);padding-bottom:1rem;margin-bottom:1rem}
+ .oh-faq-item:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0}
+ .oh-faq-q{font-size:.85rem;font-weight:600;color:var(--public-text);margin-bottom:.25rem}
+ .oh-faq-a{font-size:.8rem;color:var(--public-muted);line-height:1.55}
+ </style>
 
-    <div class="container mx-auto px-4 py-10">
-      {routes.length > 0 ? (
-        <div class="space-y-4 mb-12">
-          <h2 class="text-2xl font-bold text-gray-900">Aktif Hatlar</h2>
-          <div class="grid md:grid-cols-2 gap-4">
-            {routes.map((route) => (
-              <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                <div class="flex items-center gap-3 mb-3">
-                  <span class="text-2xl font-extrabold text-red-600 min-w-[2.5rem]">{route.route_no}</span>
-                  <div>
-                    <p class="font-semibold text-gray-900">{route.name}</p>
-                    {route.start_stop && route.end_stop && (
-                      <p class="text-xs text-gray-500">{route.start_stop} → {route.end_stop}</p>
-                    )}
-                  </div>
-                </div>
-                {route.weekday_times?.length > 0 && (
-                  <div>
-                    <p class="text-xs font-medium text-gray-500 mb-1.5">Hafta içi gidiş saatleri:</p>
-                    <div class="flex flex-wrap gap-1.5">
-                      {route.weekday_times.slice(0, 10).map((t: string) => (
-                        <span class="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-mono">{t.slice(0,5)}</span>
-                      ))}
-                      {route.weekday_times.length > 10 && (
-                        <span class="text-xs text-gray-400 self-center">+{route.weekday_times.length - 10} daha</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-                {route.notes && (
-                  <p class="text-xs text-gray-400 mt-3 italic">{route.notes}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div class="bg-white rounded-2xl p-8 text-center shadow-sm mb-12">
-          <div class="text-5xl mb-3">🚌</div>
-          <h2 class="text-xl font-bold text-gray-900 mb-2">Hat Bilgileri Yükleniyor</h2>
-          <p class="text-gray-500 text-sm">Otobüs hat verileri yakında sisteme eklenecektir.</p>
-        </div>
-      )}
+ <div class="oh-breadcrumb">
+ <div class="sf-container">
+ <nav>
+ <a href="/">Ana Sayfa</a>
+ <span>/</span>
+ <a href="/ulasim">Ulaşım</a>
+ <span>/</span>
+ <span>Otobüs Hatları</span>
+ </nav>
+ </div>
+ </div>
 
-      {/* Genel bilgi */}
-      <div class="grid md:grid-cols-3 gap-4 mb-12">
-        <div class="bg-white rounded-2xl p-5 shadow-sm">
-          <div class="text-3xl mb-2">🕐</div>
-          <h3 class="font-bold text-gray-900 mb-1">Çalışma Saatleri</h3>
-          <p class="text-sm text-gray-600">Genellikle 06:00 – 23:30 arası. Hat ve güne göre değişir.</p>
-        </div>
-        <div class="bg-white rounded-2xl p-5 shadow-sm">
-          <div class="text-3xl mb-2">💳</div>
-          <h3 class="font-bold text-gray-900 mb-1">Kent Kart</h3>
-          <p class="text-sm text-gray-600">İndirimli binme için Kent Kart kullanabilirsiniz.</p>
-        </div>
-        <div class="bg-white rounded-2xl p-5 shadow-sm">
-          <div class="text-3xl mb-2">📍</div>
-          <h3 class="font-bold text-gray-900 mb-1">Ana Aktarma</h3>
-          <p class="text-sm text-gray-600">Topçu Meydanı, Abide Kavşağı, GAP Otogarı.</p>
-        </div>
-      </div>
+ <div class="oh-hero">
+ <div class="sf-container">
+ <h1 class="oh-h1">Şanlıurfa Otobüs Hatları</h1>
+ <p class="oh-hero-desc">
+ Şanlıurfa şehir içi toplu taşıma hatları, güzergahlar ve sefer saatleri.
+ {routes.length > 0 && <span style="font-weight:600;color:var(--public-accent)"> {routes.length} aktif hat.</span>}
+ </p>
+ <div class="oh-hero-btns">
+ <a href="/ulasim/otobus-saatleri" class="oh-btn-primary">Saat Tabloları</a>
+ <a href="/ulasim" class="oh-btn-ghost">Ulaşım Rehberi</a>
+ </div>
+ </div>
+ </div>
 
-      {/* FAQ */}
-      <div class="bg-white rounded-2xl shadow-sm p-6">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">Sık Sorulan Sorular</h2>
-        <div class="space-y-4">
-          {faqItems.map((faq) => (
-            <div class="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-              <h3 class="font-semibold text-gray-900 mb-1">{faq.S}</h3>
-              <p class="text-sm text-gray-600">{faq.C}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Ulaşım', item: `${baseUrl}/ulasim` },
-      { '@type': 'ListItem', position: 3, name: 'Otobüs Hatları', item: `${baseUrl}/ulasim/otobus-hatlari` },
-    ],
-  })} is:inline />
+ <div class="oh-body">
+ <div class="sf-container">
+ {routes.length > 0 ? (
+ <div style="margin-bottom:3rem">
+ <h2 class="oh-routes-title">Aktif Hatlar</h2>
+ <div class="oh-grid">
+ {routes.map((route) => (
+ <div class="oh-card">
+ <div class="oh-card-top">
+ <span class="oh-route-no">{route.route_no}</span>
+ <div>
+ <p class="oh-route-name">{route.name}</p>
+ {route.start_stop && route.end_stop && (
+ <p class="oh-route-ends">{route.start_stop} → {route.end_stop}</p>
+ )}
+ </div>
+ </div>
+ {route.weekday_times?.length > 0 && (
+ <div>
+ <p style="font-size:.72rem;color:var(--public-text-soft);margin-bottom:.35rem">Hafta içi gidiş saatleri:</p>
+ <div class="oh-times">
+ {route.weekday_times.slice(0, 10).map((t: string) => (
+ <span class="oh-time-chip">{t.slice(0,5)}</span>
+ ))}
+ {route.weekday_times.length > 10 && (
+ <span class="oh-times-more">+{route.weekday_times.length - 10} daha</span>
+ )}
+ </div>
+ </div>
+ )}
+ {route.notes && <p class="oh-route-note">{route.notes}</p>}
+ </div>
+ ))}
+ </div>
+ </div>
+ ) : (
+ <div class="oh-empty">
+ <div class="oh-empty-icon">🚌</div>
+ <h2 class="oh-empty-title">Hat Bilgileri Yükleniyor</h2>
+ <p class="oh-empty-desc">Otobüs hat verileri yakında sisteme eklenecektir.</p>
+ </div>
+ )}
+
+ <div class="oh-info-grid">
+ <div class="oh-info-card">
+ <div class="oh-info-icon">🕐</div>
+ <h3 class="oh-info-title">Çalışma Saatleri</h3>
+ <p class="oh-info-desc">Genellikle 06:00 – 23:30 arası. Hat ve güne göre değişir.</p>
+ </div>
+ <div class="oh-info-card">
+ <div class="oh-info-icon">💳</div>
+ <h3 class="oh-info-title">Kent Kart</h3>
+ <p class="oh-info-desc">İndirimli binme için Kent Kart kullanabilirsiniz.</p>
+ </div>
+ <div class="oh-info-card">
+ <div class="oh-info-icon">📍</div>
+ <h3 class="oh-info-title">Ana Aktarma</h3>
+ <p class="oh-info-desc">Topçu Meydanı, Abide Kavşağı, GAP Otogarı.</p>
+ </div>
+ </div>
+
+ <div class="oh-faq">
+ <h2 class="oh-faq-title">Sık Sorulan Sorular</h2>
+ {faqItems.map((faq) => (
+ <div class="oh-faq-item">
+ <h3 class="oh-faq-q">{faq.S}</h3>
+ <p class="oh-faq-a">{faq.C}</p>
+ </div>
+ ))}
+ </div>
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Ulaşım', item: `${baseUrl}/ulasim` },
+ { '@type': 'ListItem', position: 3, name: 'Otobüs Hatları', item: `${baseUrl}/ulasim/otobus-hatlari` },
+ ],
+ })} is:inline />
 </Layout>

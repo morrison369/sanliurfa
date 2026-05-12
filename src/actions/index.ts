@@ -24,6 +24,7 @@ import {
   requestPasswordReset,
   resetPasswordWithToken,
 } from '../lib/auth/password-reset';
+import { getPublicAppUrl } from '../lib/public-app-url';
 import { submitPlaceApplication } from '../lib/places/place-application';
 import { moderateReview } from '../lib/review/admin-review-moderation';
 import { submitPlaceReview } from '../lib/review/review-submission';
@@ -31,6 +32,7 @@ import {
   changeAccountPassword,
   updateProfileSettings,
 } from '../lib/user/profile-settings';
+import { safeErrorDetail } from '../lib/api';
 
 const emailSchema = z
   .string()
@@ -126,9 +128,9 @@ export const server = {
     input: z.object({
       email: emailSchema,
     }),
-    handler: async ({ email }, context) => {
+    handler: async ({ email }) => {
       try {
-        await requestPasswordReset(email, context.url.origin);
+        await requestPasswordReset(email, getPublicAppUrl());
         return {
           success: true,
           message: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.',
@@ -225,7 +227,7 @@ export const server = {
           {
             placeId,
             rating,
-            title,
+            title: title ?? null,
             content,
             visitType: visitDate || null,
             awardUserPoints: true,
@@ -236,10 +238,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Yorum gönderilemedi.',
+          message: safeErrorDetail(error, 'Yorum gönderilemedi.'),
         });
       }
     },
@@ -270,10 +269,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Mesaj gönderilemedi.',
+          message: safeErrorDetail(error, 'Mesaj gönderilemedi.'),
         });
       }
     },
@@ -308,10 +304,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Başvuru gönderilemedi.',
+          message: safeErrorDetail(error, 'Başvuru gönderilemedi.'),
         });
       }
     },
@@ -349,10 +342,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Profil güncellenemedi.',
+          message: safeErrorDetail(error, 'Profil güncellenemedi.'),
         });
       }
     },
@@ -396,10 +386,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Şifre güncellenemedi.',
+          message: safeErrorDetail(error, 'Şifre güncellenemedi.'),
         });
       }
     },
@@ -428,10 +415,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Mesaj durumu güncellenemedi.',
+          message: safeErrorDetail(error, 'Mesaj durumu güncellenemedi.'),
         });
       }
     },
@@ -462,10 +446,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Yorum moderasyonu tamamlanamadı.',
+          message: safeErrorDetail(error, 'Yorum moderasyonu tamamlanamadı.'),
         });
       }
     },
@@ -508,10 +489,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Etkinlik oluşturulamadı.',
+          message: safeErrorDetail(error, 'Etkinlik oluşturulamadı.'),
         });
       }
     },
@@ -554,10 +532,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Etkinlik güncellenemedi.',
+          message: safeErrorDetail(error, 'Etkinlik güncellenemedi.'),
         });
       }
     },
@@ -581,8 +556,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message ? error.message : 'Etkinlik silinemedi.',
+          message: safeErrorDetail(error, 'Etkinlik silinemedi.'),
         });
       }
     },
@@ -632,10 +606,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Tarihi yer oluşturulamadı.',
+          message: safeErrorDetail(error, 'Tarihi yer oluşturulamadı.'),
         });
       }
     },
@@ -686,10 +657,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Tarihi yer güncellenemedi.',
+          message: safeErrorDetail(error, 'Tarihi yer güncellenemedi.'),
         });
       }
     },
@@ -713,10 +681,7 @@ export const server = {
       } catch (error) {
         throw new ActionError({
           code: 'BAD_REQUEST',
-          message:
-            error instanceof Error && error.message
-              ? error.message
-              : 'Tarihi yer silinemedi.',
+          message: safeErrorDetail(error, 'Tarihi yer silinemedi.'),
         });
       }
     },

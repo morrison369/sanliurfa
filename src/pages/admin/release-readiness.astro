@@ -1,0 +1,175 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { loadHomepagePlatformData } from '../../lib/home-data';
+import {
+ HOMEPAGE_SECTIONS_FALLBACK,
+ resolveHomepageSections,
+ summarizeHomepageSections,
+} from '../../lib/home-settings';
+import { getSiteSetting, getSiteSettingValidationStatuses } from '../../lib/site-content';
+import { query } from '../../lib/postgres';
+import { isFreshnessStale } from '../../lib/city-service-freshness';
+
+type ReadinessDashboard = {
+ generatedAt: string | null;
+ ready: boolean;
+ checks: Array<{ rel: string; ok: boolean }>;
+};
+
+const dashboardPath = path.join(process.cwd(), 'docs', 'release-readiness-dashboard.json');
+let dashboard: ReadinessDashboard = { generatedAt: null, ready: false, checks: [] };
+const homepageConfigKeys = [
+ 'homepage.primaryActions',
+ 'homepage.quickCategories',
+ 'homepage.featuredGuides',
+ 'homepage.faq',
+ 'homepage.heroQuickLinks',
+ 'homepage.liveStatusCards',
+ 'homepage.serviceQuickLinks',
+ 'homepage.communityPanel',
+ 'homepage.trendingFallbackQueries',
+ 'homepage.sections',
+ 'homepage.mvpQuickStart',
+];
+const homepageConfigStatuses = await getSiteSettingValidationStatuses(homepageConfigKeys);
+const invalidHomepageConfigs = homepageConfigStatuses.filter((item) => !item.valid);
+let freshnessRows: Array<{ key: string; value: string; stale: boolean }> = [];
+const homepageSectionsSetting = await getSiteSetting('homepage.sections', HOMEPAGE_SECTIONS_FALLBACK);
+const homepagePlatformData = await loadHomepagePlatformData();
+const homepageSectionState = resolveHomepageSections({
+ homepageSectionsSetting,
+ platformHomepageSections: homepagePlatformData.platformHomepageSections as Array<{
+ section_key?: string;
+ is_active?: boolean;
+ }>,
+});
+const homepageSectionSummary = summarizeHomepageSections({
+ sectionOrderMap: homepageSectionState.sectionOrderMap,
+ sectionVisibilitySetting: homepageSectionState.sectionVisibilitySetting,
+});
+
+if (fs.existsSync(dashboardPath)) {
+ try {
+ dashboard = JSON.parse(fs.readFileSync(dashboardPath, 'utf8'));
+ } catch {
+ dashboard = { generatedAt: null, ready: false, checks: [] };
+ }
+}
+
+try {
+ const result = await query(
+ `SELECT setting_key, setting_value
+ FROM site_settings
+ WHERE setting_key IN ('transport.lastUpdated','weather.lastUpdated','pharmacy.lastUpdated','jobs.contentQuality.lastRun')`,
+ );
+ freshnessRows = (result.rows || []).map((row) => {
+ const settingValue =
+ row?.setting_value && typeof row.setting_value === 'object'
+ ? row.setting_value
+ : {};
+ const value = String(settingValue.at || settingValue.updatedAt || settingValue.lastUpdated || '');
+ return {
+ key: String(row.setting_key || ''),
+ value,
+ stale: isFreshnessStale(String(row.setting_key || ''), {
+ [String(row.setting_key || '')]: value,
+ }),
+ };
+ });
+} catch {
+ freshnessRows = [];
+}
+---
+
+<AdminLayout
+ title="Release Readiness"
+ subtitle="Frontend release gate ve checklist durumu"
+ seo={{ title: 'Release Readiness - Sanliurfa.com', description: 'Release readiness dashboard', noIndex: true }}
+>
+ <div class="sf-container py-8">
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] p-5 mb-6">
+ <h2 class="text-xl font-bold text-[#1F1410]">Genel Durum</h2>
+ <p class="mt-2 text-sm text-[#7A6B58]">
+ Hazır: <strong class={dashboard.ready ? 'text-emerald-400' : 'text-red-700'}>{dashboard.ready ? 'EVET' : 'HAYIR'}</strong>
+ </p>
+ <p class="mt-1 text-xs text-[#7A6B58]">Üretim zamanı: {dashboard.generatedAt || 'yok'}</p>
+ </div>
+
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] p-5">
+ <h3 class="text-lg font-bold text-[#1F1410] mb-4">Checklist Kontrolleri</h3>
+ <div class="space-y-2">
+ {(dashboard.checks || []).map((item) => (
+ <div class="flex items-center justify-between rounded-sm bg-[rgba(184,115,51,0.05)] px-3 py-2">
+ <code class="text-xs text-[#4A3828]">{item.rel}</code>
+ <span class={item.ok ? 'text-emerald-400 text-sm font-semibold' : 'text-red-700 text-sm font-semibold'}>
+ {item.ok ? 'OK' : 'EKSİK'}
+ </span>
+ </div>
+ ))}
+ </div>
+ </div>
+
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] p-5 mt-6">
+ <h3 class="text-lg font-bold text-[#1F1410] mb-4">Homepage Config Sağlığı</h3>
+ <div class="space-y-2">
+ {homepageConfigStatuses.map((item) => (
+ <div class="flex items-center justify-between rounded-sm bg-[rgba(184,115,51,0.05)] px-3 py-2">
+ <div class="flex flex-col gap-1">
+ <code class="text-xs text-[#4A3828]">{item.key}</code>
+ <span class="text-[11px] uppercase tracking-[0.18em] text-[#7A6B58]">
+ {item.resolution === 'cms-valid'
+ ? 'kaynak: cms'
+ : item.resolution === 'cms-invalid-fallback'
+ ? 'kaynak: cms fakat fallback aktif'
+ : 'kaynak: fallback'}
+ </span>
+ </div>
+ <span class={item.valid ? 'text-emerald-400 text-sm font-semibold' : 'text-red-700 text-sm font-semibold'}>
+ {item.valid ? 'VALID' : item.hasRow ? 'INVALID' : 'EKSİK'}
+ </span>
+ </div>
+ ))}
+ </div>
+ {invalidHomepageConfigs.length > 0 && (
+ <p class="mt-4 text-sm text-red-700">
+ Invalid `homepage.*` payload bulundu. Son geçerli preset/fallback çalışıyor; prod deploy bloklanmalı.
+ </p>
+ )}
+ </div>
+
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] p-5 mt-6">
+ <h3 class="text-lg font-bold text-[#1F1410] mb-4">Canlı Servis Tazeliği</h3>
+ <div class="space-y-2">
+ {freshnessRows.map((item) => (
+ <div class="flex items-center justify-between rounded-sm bg-[rgba(184,115,51,0.05)] px-3 py-2">
+ <code class="text-xs text-[#4A3828]">{item.key}</code>
+ <span class={item.stale ? 'text-amber-400 text-sm font-semibold' : 'text-emerald-400 text-sm font-semibold'}>
+ {item.stale ? 'STALE' : 'OK'}
+ </span>
+ </div>
+ ))}
+ </div>
+ </div>
+
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] p-5 mt-6">
+ <h3 class="text-lg font-bold text-[#1F1410] mb-4">Homepage Section Sırası ve Görünürlüğü</h3>
+ <div class="space-y-2">
+ {homepageSectionSummary.map((item) => (
+ <div class="flex items-center justify-between rounded-sm bg-[rgba(184,115,51,0.05)] px-3 py-2">
+ <div class="flex items-center gap-3">
+ <span class="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[#B87333] px-2 text-[11px] font-bold text-[#F5EDD6]">
+ {item.order}
+ </span>
+ <code class="text-xs text-[#4A3828]">{item.id}</code>
+ </div>
+ <span class={item.enabled ? 'text-emerald-400 text-sm font-semibold' : 'text-amber-400 text-sm font-semibold'}>
+ {item.enabled ? 'AKTİF' : 'KAPALI'}
+ </span>
+ </div>
+ ))}
+ </div>
+ </div>
+ </div>
+</AdminLayout>

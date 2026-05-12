@@ -110,10 +110,10 @@ export function sendMessage(
     senderId,
     content,
     type,
-    metadata,
     status: 'sent',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    ...(metadata ? { metadata } : {}),
   };
 
   messages.set(message.id, message);
@@ -333,7 +333,7 @@ export function createGroup(
     updatedAt: new Date().toISOString(),
     isGroup: true,
     groupName: name,
-    groupAvatar: avatar,
+    ...(avatar ? { groupAvatar: avatar } : {}),
   };
 
   // Initialize unread counts

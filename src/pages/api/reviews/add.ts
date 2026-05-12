@@ -1,8 +1,10 @@
 import type { APIRoute } from 'astro';
 
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
+import { validateWithSchema, type ValidationSchema } from '../../../lib/validation';
 import { submitPlaceReview } from '../../../lib/review/review-submission';
+import { invalidateReview } from '../../../lib/cache/invalidation';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
@@ -18,10 +20,38 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
+
+    const reviewSchema: ValidationSchema = {
+      rating: { type: 'number' as const, required: true, min: 1, max: 5 },
+      title: { type: 'string' as const, required: false, maxLength: 200, sanitize: true },
+      content: { type: 'string' as const, required: true, minLength: 10, maxLength: 5000, sanitize: true },
+    };
+    const validation = validateWithSchema(body, reviewSchema);
+    if (!validation.valid) {
+      return problemJson({
+        status: 422,
+        title: 'Geçersiz Yorum Verisi',
+        detail: validation.errors?.[0] || 'Geçersiz veri',
+        type: '/problems/validation-error',
+        instance: '/api/reviews/add',
+      });
+    }
+
+    if (body.images && (!Array.isArray(body.images) || body.images.length > 20)) {
+      return problemJson({
+        status: 422,
+        title: 'Geçersiz Resimler',
+        detail: 'images dizisi geçersiz veya 20 adet sınırını aşıyor',
+        type: '/problems/review-images-invalid',
+        instance: '/api/reviews/add',
+      });
+    }
+
+    const placeIdForReview = body.placeId || body.place_id;
     const result = await submitPlaceReview(
       { id: user.id, email: user.email || null },
       {
-        placeId: body.placeId || body.place_id,
+        placeId: placeIdForReview,
         rating: body.rating,
         title: body.title,
         content: body.content,
@@ -33,16 +63,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
       },
     );
 
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    // Cache invalidation: yeni yorum place detail + list cache'lerini etkiler (rating/count değişir)
+    await invalidateReview(placeIdForReview, null);
+
+    return apiResponse(result, HttpStatus.OK);
   } catch (error) {
     logger.error('Review add API error:', error);
     return problemJson({
       status: 400,
       title: 'Yorum Gönderilemedi',
-      detail: error instanceof Error && error.message ? error.message : 'Yorum gönderilemedi.',
+      detail: safeErrorDetail(error, 'Yorum gönderilemedi.'),
       type: '/problems/review-add-failed',
       instance: '/api/reviews/add',
     });

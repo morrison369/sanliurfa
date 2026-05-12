@@ -13,7 +13,6 @@ import { saveFile, validateImageSignature, validateFileExtension } from '../../.
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const UPLOAD_DIR = process.env.PHOTO_UPLOAD_DIR || 'public/uploads/photos';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId(request);
@@ -92,13 +91,31 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Verify place exists
-    const place = await queryOne('SELECT id FROM places WHERE id = $1', [placeId]);
+    const place = await queryOne<{ id: string; owner_id: string | null }>(
+      'SELECT id, owner_id FROM places WHERE id = $1',
+      [placeId]
+    );
     if (!place) {
       recordRequest('POST', '/api/photos/upload', HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(
         ErrorCode.NOT_FOUND,
         'Mekan bulunamadı',
         HttpStatus.NOT_FOUND,
+        undefined,
+        requestId
+      );
+    }
+
+    // Yetki: admin > mekan sahibi > diğer (yasak)
+    // Aksi halde herhangi authenticated user her mekana fotoğraf yükleyebilirdi (IDOR + spam riski)
+    const role = user.role;
+    const isOwner = place.owner_id && place.owner_id === user.id;
+    if (role !== 'admin' && !isOwner) {
+      recordRequest('POST', '/api/photos/upload', HttpStatus.FORBIDDEN, Date.now() - startTime);
+      return apiError(
+        ErrorCode.FORBIDDEN,
+        'Sadece mekan sahibi veya admin fotoğraf yükleyebilir',
+        HttpStatus.FORBIDDEN,
         undefined,
         requestId
       );
@@ -118,7 +135,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Save file to storage
-    let fileResult;
+    let fileResult: { filePath: string; publicUrl: string } | undefined;
     try {
       fileResult = await saveFile(file, placeId, undefined, buffer);
     } catch (storageError) {

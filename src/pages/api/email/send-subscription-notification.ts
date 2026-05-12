@@ -84,7 +84,7 @@ const schema = {
     required: false,
     min: 0
   }
-} as any;
+};
 
 export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId(request);
@@ -93,7 +93,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   try {
     // Check authentication - admin only
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/email/send-subscription-notification', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,
@@ -132,7 +132,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       renewalDate,
       creditAmount,
       additionalCost
-    } = validation.data as any;
+    } = validation.data;
 
     let success = false;
 

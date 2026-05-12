@@ -12,6 +12,7 @@
 
 import type { APIRoute } from 'astro';
 import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
 
 /**
  * SVG tabanli OG gorseli olusturur (satori/canvas yoksa fallback)
@@ -196,7 +197,7 @@ export const GET: APIRoute = async ({ request }) => {
     });
 
   } catch (error) {
-    console.error('OG gorsel olusturma hatasi:', error);
+    logger.error('OG gorsel olusturma hatasi', error instanceof Error ? error : new Error(String(error)));
 
     // Hata durumunda varsayilan gorsel
     const { baseUrl: siteUrl, siteName } = await getSiteBranding();

@@ -1,0 +1,117 @@
+---
+import Image from '../Image.astro';
+
+interface Item {
+  href: string;
+  title: string;
+  meta?: string | undefined;
+  imageSrc?: string | undefined;
+  imageAlt?: string | undefined;
+  emoji?: string | undefined;
+}
+
+interface Props {
+  title: string;
+  items: Item[];
+}
+
+const { title, items = [] } = Astro.props;
+---
+
+{items.length > 0 && (
+  <div class="prl">
+    <h3 class="prl-title">{title}</h3>
+    <div class="prl-list">
+      {items.map((item) => (
+        <a href={item.href} class="prl-item">
+          {item.imageSrc ? (
+            <Image
+              src={item.imageSrc}
+              alt={item.imageAlt || item.title}
+              class="prl-image"
+              loading="lazy"
+              width={120}
+              height={84}
+            />
+          ) : (
+            <div class="prl-icon" aria-hidden="true">{item.emoji || '•'}</div>
+          )}
+          <div class="prl-copy">
+            {item.meta && <p class="prl-meta">{item.meta}</p>}
+            <p class="prl-name">{item.title}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+)}
+
+<style>
+  .prl {
+    border: 1px solid var(--public-border);
+    background: var(--public-surface);
+    border-radius: var(--public-radius);
+    padding: 1.25rem;
+  }
+
+  .prl-title {
+    margin: 0 0 1rem;
+    color: var(--public-text);
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .prl-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .prl-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .prl-item:hover {
+    opacity: 0.82;
+  }
+
+  .prl-image,
+  .prl-icon {
+    width: 4.25rem;
+    height: 3.5rem;
+    flex-shrink: 0;
+    border-radius: 0.125rem;
+    object-fit: cover;
+  }
+
+  .prl-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--public-accent-soft);
+    color: var(--public-accent);
+    font-size: 1.1rem;
+  }
+
+  .prl-copy {
+    min-width: 0;
+  }
+
+  .prl-meta {
+    margin: 0 0 0.2rem;
+    color: var(--public-accent);
+    font-size: 0.72rem;
+  }
+
+  .prl-name {
+    margin: 0;
+    color: var(--public-text);
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+</style>

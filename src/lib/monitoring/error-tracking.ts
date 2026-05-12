@@ -38,12 +38,12 @@ export function captureException(
     timestamp: new Date().toISOString(),
     severity: options?.severity || 'error',
     message: typeof error === 'string' ? error : error.message,
-    stack: typeof error === 'string' ? undefined : error.stack,
-    type: typeof error !== 'string' ? error.constructor.name : 'Error',
-    url: typeof window !== 'undefined' ? window.location.href : undefined,
-    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
-    userId: options?.userId,
-    context: options?.context,
+    ...(typeof error !== 'string' && error.stack ? { stack: error.stack } : {}),
+    ...(typeof error !== 'string' ? { type: error.constructor.name } : { type: 'Error' }),
+    ...(typeof window !== 'undefined' ? { url: window.location.href } : {}),
+    ...(typeof navigator !== 'undefined' ? { userAgent: navigator.userAgent } : {}),
+    ...(options?.userId ? { userId: options.userId } : {}),
+    ...(options?.context ? { context: options.context } : {}),
   };
 
   errorStore.push(errorEvent);

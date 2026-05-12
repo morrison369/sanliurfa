@@ -9,8 +9,9 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { validateWithSchema } from '../../../lib/validation';
+import type { ValidationSchema } from '../../../lib/validation';
 
-const validateSchema = {
+const validateSchema: ValidationSchema = {
   couponCode: {
     type: 'string' as const,
     required: true,
@@ -23,7 +24,7 @@ const validateSchema = {
     required: true,
     min: 0
   }
-} as any;
+};
 
 export const POST: APIRoute = async ({ request }) => {
   const requestId = getRequestId(request);

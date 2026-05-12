@@ -117,77 +117,77 @@ async function getOverviewStats(since: Date): Promise<OverviewStats> {
 
   const row = result.rows[0];
   return {
-    totalUsers: parseInt(row.total_users),
-    newUsersToday: parseInt(row.new_users_today),
-    totalPlaces: parseInt(row.total_places),
-    newPlacesToday: parseInt(row.new_places_today),
-    totalReviews: parseInt(row.total_reviews),
-    newReviewsToday: parseInt(row.new_reviews_today),
-    activeUsersToday: parseInt(row.active_users_today),
+    totalUsers: parseInt(row.total_users, 10),
+    newUsersToday: parseInt(row.new_users_today, 10),
+    totalPlaces: parseInt(row.total_places, 10),
+    newPlacesToday: parseInt(row.new_places_today, 10),
+    totalReviews: parseInt(row.total_reviews, 10),
+    newReviewsToday: parseInt(row.new_reviews_today, 10),
+    activeUsersToday: parseInt(row.active_users_today, 10),
   };
 }
 
 async function getUserStats(since: Date): Promise<UserStats> {
-  // By tier
-  const tierResult = await query(
-    `SELECT COALESCE(subscription_tier, 'free') as tier, COUNT(*) as count
-    FROM users WHERE deleted_at IS NULL
-    GROUP BY subscription_tier`,
-    []
-  );
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  const [tierResult, deviceResult, countryResult, growthResult, retentionResult] = await Promise.all([
+    query(
+      `SELECT COALESCE(subscription_tier, 'free') as tier, COUNT(*) as count
+      FROM users WHERE deleted_at IS NULL
+      GROUP BY subscription_tier`,
+      []
+    ),
+    query(
+      `SELECT device_type, COUNT(*) as count
+      FROM user_sessions WHERE created_at >= $1
+      GROUP BY device_type`,
+      [since]
+    ),
+    query(
+      `SELECT country, COUNT(*) as count
+      FROM user_sessions WHERE created_at >= $1 AND country IS NOT NULL
+      GROUP BY country
+      ORDER BY count DESC
+      LIMIT 10`,
+      [since]
+    ),
+    query(
+      `SELECT DATE(created_at) as date, COUNT(*) as count
+      FROM users WHERE created_at >= NOW() - INTERVAL '7 days'
+      GROUP BY DATE(created_at)
+      ORDER BY date`,
+      []
+    ),
+    query(
+      `SELECT
+        COUNT(DISTINCT user_id) as active_users,
+        (SELECT COUNT(*) FROM users WHERE created_at < $1 AND deleted_at IS NULL) as total_users
+      FROM user_sessions
+      WHERE last_activity_at >= $1`,
+      [thirtyDaysAgo]
+    ),
+  ]);
+
   const byTier: Record<string, number> = {};
   tierResult.rows.forEach(row => {
-    byTier[row.tier] = parseInt(row.count);
+    byTier[row.tier] = parseInt(row.count, 10);
   });
 
-  // By device
-  const deviceResult = await query(
-    `SELECT device_type, COUNT(*) as count
-    FROM user_sessions WHERE created_at >= $1
-    GROUP BY device_type`,
-    [since]
-  );
   const byDevice: Record<string, number> = {};
   deviceResult.rows.forEach(row => {
-    byDevice[row.device_type] = parseInt(row.count);
+    byDevice[row.device_type] = parseInt(row.count, 10);
   });
 
-  // By country
-  const countryResult = await query(
-    `SELECT country, COUNT(*) as count
-    FROM user_sessions WHERE created_at >= $1 AND country IS NOT NULL
-    GROUP BY country
-    ORDER BY count DESC
-    LIMIT 10`,
-    [since]
-  );
   const byCountry: Record<string, number> = {};
   countryResult.rows.forEach(row => {
-    byCountry[row.country] = parseInt(row.count);
+    byCountry[row.country] = parseInt(row.count, 10);
   });
 
-  // Growth 7 days
-  const growthResult = await query(
-    `SELECT DATE(created_at) as date, COUNT(*) as count
-    FROM users WHERE created_at >= NOW() - INTERVAL '7 days'
-    GROUP BY DATE(created_at)
-    ORDER BY date`,
-    []
-  );
-  const growth7Days = growthResult.rows.map(r => parseInt(r.count));
+  const growth7Days = growthResult.rows.map(r => parseInt(r.count, 10));
 
-  // Retention rate
-  const retentionResult = await query(
-    `SELECT 
-      COUNT(DISTINCT user_id) as active_users,
-      (SELECT COUNT(*) FROM users WHERE created_at < $1 AND deleted_at IS NULL) as total_users
-    FROM user_sessions
-    WHERE last_activity_at >= $1`,
-    [new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)]
-  );
-  const totalUsers = parseInt(retentionResult.rows[0].total_users);
+  const totalUsers = parseInt(retentionResult.rows[0].total_users, 10);
   const retentionRate = totalUsers > 0
-    ? (parseInt(retentionResult.rows[0].active_users) / totalUsers) * 100
+    ? (parseInt(retentionResult.rows[0].active_users, 10) / totalUsers) * 100
     : 0;
 
   return {
@@ -201,63 +201,57 @@ async function getUserStats(since: Date): Promise<UserStats> {
 }
 
 async function getContentStats(since: Date): Promise<ContentStats> {
-  // Places by category
-  const categoryResult = await query(
-    `SELECT category_id, COUNT(*) as count
-    FROM places GROUP BY category_id`,
-    []
-  );
+  const [categoryResult, statusResult, ratingResult, topViewedResult, topRatedResult, pendingResult] = await Promise.all([
+    query(
+      `SELECT category_id, COUNT(*) as count
+      FROM places GROUP BY category_id`,
+      []
+    ),
+    query(
+      `SELECT status, COUNT(*) as count FROM places GROUP BY status`,
+      []
+    ),
+    query(
+      `SELECT rating, COUNT(*) as count FROM reviews GROUP BY rating`,
+      []
+    ),
+    query(
+      `SELECT p.id, p.name, COUNT(pv.id) as views
+      FROM places p
+      LEFT JOIN page_views pv ON pv.path LIKE '/mekanlar/' || p.slug || '%'
+      WHERE pv.created_at >= $1
+      GROUP BY p.id, p.name
+      ORDER BY views DESC
+      LIMIT 10`,
+      [since]
+    ),
+    query(
+      `SELECT id, name, rating
+      FROM places
+      WHERE review_count > 5
+      ORDER BY rating DESC
+      LIMIT 10`,
+      []
+    ),
+    query(
+      `SELECT COUNT(*) FROM places WHERE status = 'pending'`
+    ),
+  ]);
+
   const placesByCategory: Record<string, number> = {};
   categoryResult.rows.forEach(row => {
-    placesByCategory[row.category_id] = parseInt(row.count);
+    placesByCategory[row.category_id] = parseInt(row.count, 10);
   });
 
-  // Places by status
-  const statusResult = await query(
-    `SELECT status, COUNT(*) as count FROM places GROUP BY status`,
-    []
-  );
   const placesByStatus: Record<string, number> = {};
   statusResult.rows.forEach(row => {
-    placesByStatus[row.status] = parseInt(row.count);
+    placesByStatus[row.status] = parseInt(row.count, 10);
   });
 
-  // Reviews by rating
-  const ratingResult = await query(
-    `SELECT rating, COUNT(*) as count FROM reviews GROUP BY rating`,
-    []
-  );
   const reviewsByRating: Record<string, number> = {};
   ratingResult.rows.forEach(row => {
-    reviewsByRating[row.rating] = parseInt(row.count);
+    reviewsByRating[row.rating] = parseInt(row.count, 10);
   });
-
-  // Top viewed places
-  const topViewedResult = await query(
-    `SELECT p.id, p.name, COUNT(pv.id) as views
-    FROM places p
-    LEFT JOIN page_views pv ON pv.path LIKE '/mekanlar/' || p.slug || '%'
-    WHERE pv.created_at >= $1
-    GROUP BY p.id, p.name
-    ORDER BY views DESC
-    LIMIT 10`,
-    [since]
-  );
-
-  // Top rated places
-  const topRatedResult = await query(
-    `SELECT id, name, rating
-    FROM places
-    WHERE review_count > 5
-    ORDER BY rating DESC
-    LIMIT 10`,
-    []
-  );
-
-  // Pending approvals
-  const pendingResult = await query(
-    `SELECT COUNT(*) FROM places WHERE status = 'pending'`
-  );
 
   return {
     placesByCategory,
@@ -265,44 +259,50 @@ async function getContentStats(since: Date): Promise<ContentStats> {
     reviewsByRating,
     topViewedPlaces: topViewedResult.rows,
     topRatedPlaces: topRatedResult.rows.map(r => ({ ...r, rating: parseFloat(r.rating) })),
-    pendingApprovals: parseInt(pendingResult.rows[0].count),
+    pendingApprovals: parseInt(pendingResult.rows[0].count, 10),
   };
 }
 
 async function getEngagementStats(since: Date): Promise<EngagementStats> {
-  const result = await query(
-    `SELECT
-      0 as avg_duration,
-      COUNT(*) FILTER (WHERE event_type = 'search') as searches,
-      COUNT(*) FILTER (WHERE event_type = 'share') as shares,
-      COUNT(*) FILTER (WHERE event_type = 'favorite') as favorites
-    FROM engagement_events
-    WHERE created_at >= $1`,
-    [since]
-  );
+  const [result, durationResult, bounceResult] = await Promise.all([
+    query(
+      `SELECT
+        COUNT(*) FILTER (WHERE event_type = 'search') as searches,
+        COUNT(*) FILTER (WHERE event_type = 'share') as shares,
+        COUNT(*) FILTER (WHERE event_type = 'favorite') as favorites
+       FROM engagement_events
+       WHERE created_at >= $1`,
+      [since]
+    ),
+    query(
+      `SELECT COALESCE(AVG(duration_ms), 0) as avg_duration FROM page_views WHERE created_at >= $1`,
+      [since]
+    ),
+    query(
+      `SELECT
+        COUNT(*) FILTER (WHERE page_count = 1) as bounced,
+        COUNT(*) as total,
+        COALESCE(SUM(page_count), 0) as total_page_views
+       FROM (
+         SELECT session_id, COUNT(*) as page_count
+         FROM page_views WHERE created_at >= $1
+         GROUP BY session_id
+       ) sessions`,
+      [since]
+    ),
+  ]);
 
-  const bounceResult = await query(
-    `SELECT 
-      COUNT(*) FILTER (WHERE page_count = 1) as bounced,
-      COUNT(*) as total
-    FROM (
-      SELECT session_id, COUNT(*) as page_count
-      FROM page_views WHERE created_at >= $1
-      GROUP BY session_id
-    ) sessions`,
-    [since]
-  );
-
-  const total = parseInt(bounceResult.rows[0].total);
-  const bounced = parseInt(bounceResult.rows[0].bounced);
+  const total = parseInt(bounceResult.rows[0].total, 10);
+  const bounced = parseInt(bounceResult.rows[0].bounced, 10);
+  const totalPageViews = parseInt(bounceResult.rows[0].total_page_views, 10);
 
   return {
-    avgSessionDuration: Math.round(parseFloat(result.rows[0].avg_duration) / 1000) || 0,
-    avgPagesPerSession: 0,
+    avgSessionDuration: Math.round(parseFloat(durationResult.rows[0].avg_duration) / 1000) || 0,
+    avgPagesPerSession: total > 0 ? Math.round((totalPageViews / total) * 10) / 10 : 0,
     bounceRate: total > 0 ? (bounced / total) * 100 : 0,
-    searchesToday: parseInt(result.rows[0].searches) || 0,
-    sharesToday: parseInt(result.rows[0].shares) || 0,
-    favoritesToday: parseInt(result.rows[0].favorites) || 0,
+    searchesToday: parseInt(result.rows[0].searches, 10) || 0,
+    sharesToday: parseInt(result.rows[0].shares, 10) || 0,
+    favoritesToday: parseInt(result.rows[0].favorites, 10) || 0,
   };
 }
 
@@ -319,22 +319,42 @@ async function getModerationStats(since: Date): Promise<ModerationStats> {
 
   const row = result.rows[0];
   return {
-    pendingReports: parseInt(row.pending_reports) || 0,
-    flaggedContent: parseInt(row.flagged_content) || 0,
-    bannedUsers: parseInt(row.banned_users) || 0,
-    moderatedToday: parseInt(row.moderated_today) || 0,
+    pendingReports: parseInt(row.pending_reports, 10) || 0,
+    flaggedContent: parseInt(row.flagged_content, 10) || 0,
+    bannedUsers: parseInt(row.banned_users, 10) || 0,
+    moderatedToday: parseInt(row.moderated_today, 10) || 0,
     autoModerated: 0,
   };
 }
 
 async function getSystemStats(): Promise<SystemStats> {
-  // These would typically come from monitoring systems
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  const [perfResult, connResult, storageResult] = await Promise.all([
+    query(
+      `SELECT
+        COALESCE(AVG(response_time_ms), 0) as avg_response_time,
+        COUNT(*) FILTER (WHERE status >= 500) as error_count,
+        COUNT(*) as total_count
+       FROM api_request_logs
+       WHERE created_at >= $1`,
+      [oneHourAgo]
+    ),
+    query(`SELECT COUNT(*) as count FROM pg_stat_activity WHERE state = 'active'`),
+    query(`SELECT pg_database_size(current_database()) as size`),
+  ]);
+
+  const totalCount = parseInt(perfResult.rows[0].total_count, 10) || 0;
+  const errorCount = parseInt(perfResult.rows[0].error_count, 10) || 0;
+  const avgResponseTime = Math.round(parseFloat(perfResult.rows[0].avg_response_time)) || 0;
+  const errorRate = totalCount > 0 ? (errorCount / totalCount) * 100 : 0;
+
   return {
-    uptime: 99.9,
-    avgResponseTime: 120,
-    errorRate: 0.1,
-    storageUsed: 0,
-    activeConnections: 0,
+    uptime: Math.round((100 - errorRate) * 10) / 10,
+    avgResponseTime,
+    errorRate: Math.round(errorRate * 100) / 100,
+    storageUsed: parseInt(storageResult.rows[0].size, 10) || 0,
+    activeConnections: parseInt(connResult.rows[0].count, 10) || 0,
   };
 }
 
@@ -358,9 +378,9 @@ export async function getRealtimeAdminStats(): Promise<{
   );
 
   return {
-    currentUsers: parseInt(result.rows[0].current_users) || 0,
-    requestsPerMinute: parseInt(result.rows[0].requests_per_minute) || 0,
-    errorsLastHour: parseInt(result.rows[0].errors_last_hour) || 0,
+    currentUsers: parseInt(result.rows[0].current_users, 10) || 0,
+    requestsPerMinute: parseInt(result.rows[0].requests_per_minute, 10) || 0,
+    errorsLastHour: parseInt(result.rows[0].errors_last_hour, 10) || 0,
   };
 }
 
@@ -397,8 +417,8 @@ export async function getGrowthChartData(
 
   return result.rows.map(row => ({
     date: row.date,
-    users: parseInt(row.users),
-    places: parseInt(row.places),
-    reviews: parseInt(row.reviews),
+    users: parseInt(row.users, 10),
+    places: parseInt(row.places, 10),
+    reviews: parseInt(row.reviews, 10),
   }));
 }

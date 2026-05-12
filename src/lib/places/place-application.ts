@@ -16,6 +16,8 @@ export interface PlaceApplicationInput {
   ownerEmail: string;
   priceRange?: string | null;
   acceptsReservations?: boolean | string | null;
+  /** When the applicant is already authenticated, skip provisional account creation. */
+  authenticatedUserId?: string | null;
 }
 
 export interface PlaceApplicationResult {
@@ -71,6 +73,9 @@ export async function submitPlaceApplication(
   const phone = normalizePhone(input.phone);
   const categoryId = input.categoryId ? Number(input.categoryId) : null;
   const category = input.category?.trim() || 'diger';
+  const normalizedShortDescription = input.shortDescription?.trim() || null;
+  const normalizedDescription =
+    normalizedShortDescription || `${name} icin Sanliurfa.com uzerinden yapilan isletme basvurusu.`;
 
   if (!name || !address || !phone || !ownerName || !ownerEmail || (!categoryId && !category)) {
     throw new Error('Zorunlu alanlar eksik.');
@@ -95,40 +100,47 @@ export async function submitPlaceApplication(
 
   const result = await transaction(async client => {
     let userId: string;
-    const existingUser = await client.query('SELECT id FROM users WHERE email = $1', [ownerEmail]);
 
-    if (existingUser.rows.length > 0) {
-      userId = existingUser.rows[0].id;
-      await client.query("UPDATE users SET role = 'vendor', updated_at = NOW() WHERE id = $1", [
-        userId,
-      ]);
+    if (input.authenticatedUserId) {
+      // Already authenticated — promote to vendor role without creating a new account.
+      userId = input.authenticatedUserId;
+      await client.query("UPDATE users SET role = 'vendor', updated_at = NOW() WHERE id = $1 AND role NOT IN ('admin', 'vendor')", [userId]);
     } else {
-      const provisionalPasswordHash = await bcrypt.hash(
-        `vendor-${ownerEmail}-${Date.now()}`,
-        10,
-      );
-      const newUser = await client.query(
-        `INSERT INTO users (full_name, name, email, password_hash, role, status, email_verified)
-         VALUES ($1, $1, $2, $3, 'vendor', 'active', false)
-         RETURNING id`,
-        [ownerName, ownerEmail, provisionalPasswordHash],
-      );
-      userId = newUser.rows[0].id;
+      const existingUser = await client.query('SELECT id FROM users WHERE email = $1', [ownerEmail]);
+      if (existingUser.rows.length > 0) {
+        userId = existingUser.rows[0].id;
+        await client.query("UPDATE users SET role = 'vendor', updated_at = NOW() WHERE id = $1", [
+          userId,
+        ]);
+      } else {
+        const provisionalPasswordHash = await bcrypt.hash(
+          `vendor-${ownerEmail}-${Date.now()}`,
+          10,
+        );
+        const newUser = await client.query(
+          `INSERT INTO users (full_name, name, email, password_hash, role, status, email_verified)
+           VALUES ($1, $1, $2, $3, 'vendor', 'active', false)
+           RETURNING id`,
+          [ownerName, ownerEmail, provisionalPasswordHash],
+        );
+        userId = newUser.rows[0].id;
+      }
     }
 
     const placeResult = await client.query(
       `INSERT INTO places (
-        name, slug, category, category_id, short_description, address, phone, website,
+        name, slug, category, category_id, description, short_description, address, phone, website,
         district_id, owner_id, status, price_range, accepts_reservations,
         created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', $11, $12, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13, NOW(), NOW())
       RETURNING id, slug`,
       [
         name,
         finalSlug,
         category,
         categoryId,
-        input.shortDescription?.trim() || null,
+        normalizedDescription,
+        normalizedShortDescription,
         address,
         phone,
         input.website?.trim() || null,

@@ -29,6 +29,16 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
     }
 
     const { id: placeId } = params;
+    if (!placeId) {
+      recordRequest('GET', '/api/owner/analytics/reviews/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Place ID is required',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
 
     // Verify ownership
     const place = await queryOne(

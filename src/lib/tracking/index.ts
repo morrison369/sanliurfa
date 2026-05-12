@@ -4,6 +4,7 @@
  */
 
 import { query } from '../postgres';
+import { randomBytes } from 'node:crypto';
 
 export interface PageView {
   id: string;
@@ -60,14 +61,14 @@ export interface UserJourney {
  * Generate unique visitor ID
  */
 export function generateVisitorId(): string {
-  return `v_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  return `v_${Date.now()}_${randomBytes(6).toString('hex')}`;
 }
 
 /**
  * Generate session ID
  */
 export function generateSessionId(): string {
-  return `s_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  return `s_${Date.now()}_${randomBytes(6).toString('hex')}`;
 }
 
 /**
@@ -239,20 +240,20 @@ export async function getAnalyticsDashboard(
 
   const deviceBreakdown: Record<string, number> = {};
   deviceResult.rows.forEach((r: any) => {
-    deviceBreakdown[r.device] = parseInt(r.count);
+    deviceBreakdown[r.device] = parseInt(r.count, 10);
   });
 
   const referrerBreakdown: Record<string, number> = {};
   referrerResult.rows.forEach((r: any) => {
-    referrerBreakdown[r.referrer] = parseInt(r.count);
+    referrerBreakdown[r.referrer] = parseInt(r.count, 10);
   });
 
   return {
-    pageViews: parseInt(pageViewsResult.rows[0].count),
-    uniqueVisitors: parseInt(uniqueVisitorsResult.rows[0].count),
+    pageViews: parseInt(pageViewsResult.rows[0].count, 10),
+    uniqueVisitors: parseInt(uniqueVisitorsResult.rows[0].count, 10),
     avgSessionDuration: Math.round(avgDurationResult.rows[0]?.avg_duration || 0),
     bounceRate: Math.round((bounceRateResult.rows[0]?.bounce_rate || 0) * 100),
-    topPages: topPagesResult.rows.map((r: any) => ({ path: r.path, views: parseInt(r.views) })),
+    topPages: topPagesResult.rows.map((r: any) => ({ path: r.path, views: parseInt(r.views, 10) })),
     deviceBreakdown,
     referrerBreakdown,
   };
@@ -282,7 +283,7 @@ export async function getFunnelAnalysis(
       [step.event, startDate]
     );
 
-    const count = parseInt(result.rows[0].count);
+    const count = parseInt(result.rows[0].count, 10);
     const dropOff = previousCount ? ((previousCount - count) / previousCount) * 100 : 0;
 
     results.push({
@@ -389,8 +390,8 @@ export async function getCohortAnalysis(
   return {
     cohorts: result.rows.map((r: any) => ({
       period: r.cohort_period,
-      totalUsers: parseInt(r.total_users),
-      retention: [100, Math.round((parseInt(r.retained) / parseInt(r.total_users)) * 100)],
+      totalUsers: parseInt(r.total_users, 10),
+      retention: [100, Math.round((parseInt(r.retained, 10) / parseInt(r.total_users, 10)) * 100)],
     }))
   };
 }
@@ -427,9 +428,9 @@ export async function getRealtimeStats(): Promise<{
   ]);
 
   return {
-    activeUsers: parseInt(activeUsers.rows[0].count),
-    pageViewsLast5Min: parseInt(pageViews.rows[0].count),
-    topPages: topPages.rows.map((r: any) => ({ path: r.path, views: parseInt(r.views) })),
+    activeUsers: parseInt(activeUsers.rows[0].count, 10),
+    pageViewsLast5Min: parseInt(pageViews.rows[0].count, 10),
+    topPages: topPages.rows.map((r: any) => ({ path: r.path, views: parseInt(r.views, 10) })),
   };
 }
 
@@ -452,9 +453,9 @@ export async function trackConversion(
     visitorId,
     category: 'conversion',
     action: goalName,
-    value,
-    properties: { ...properties, conversion: true },
     sessionId,
+    ...(value !== undefined ? { value } : {}),
+    properties: { ...properties, conversion: true },
   });
 }
 
@@ -487,8 +488,8 @@ export async function getConversionRate(
     `, [goalName, startDate])
   ]);
 
-  const totalSessions = parseInt(sessions.rows[0].count);
-  const totalConversions = parseInt(conversions.rows[0].count);
+  const totalSessions = parseInt(sessions.rows[0].count, 10);
+  const totalConversions = parseInt(conversions.rows[0].count, 10);
 
   return {
     sessions: totalSessions,

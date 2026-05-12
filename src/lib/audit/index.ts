@@ -164,11 +164,6 @@ export async function queryAuditLogs(
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-  const countResult = await query(
-    `SELECT COUNT(*) FROM audit_logs ${whereClause}`,
-    params
-  );
-
   const sql = `
     SELECT * FROM audit_logs
     ${whereClause}
@@ -176,11 +171,14 @@ export async function queryAuditLogs(
     LIMIT $${params.length + 1} OFFSET $${params.length + 2}
   `;
 
-  const result = await query(sql, [...params, limit, offset]);
+  const [countResult, result] = await Promise.all([
+    query(`SELECT COUNT(*) FROM audit_logs ${whereClause}`, params),
+    query(sql, [...params, limit, offset]),
+  ]);
 
   return {
     logs: result.rows.map(mapAuditRow),
-    total: parseInt(countResult.rows[0].count),
+    total: parseInt(countResult.rows[0].count, 10),
   };
 }
 
@@ -338,16 +336,16 @@ export async function getAuditStats(
 
   const byAction: Record<string, number> = {};
   actionResult.rows.forEach(row => {
-    byAction[row.action] = parseInt(row.count);
+    byAction[row.action] = parseInt(row.count, 10);
   });
 
   const bySeverity: Record<string, number> = {};
   severityResult.rows.forEach(row => {
-    bySeverity[row.severity] = parseInt(row.count);
+    bySeverity[row.severity] = parseInt(row.count, 10);
   });
 
   return {
-    totalEvents: parseInt(totalResult.rows[0].count),
+    totalEvents: parseInt(totalResult.rows[0].count, 10),
     byAction,
     bySeverity,
     criticalEvents: criticalResult.rows.map(mapAuditRow),
@@ -370,20 +368,20 @@ export async function detectSuspiciousActivity(
     [userId, minutes]
   );
 
-  const actionCount = parseInt(rapidResult.rows[0].count);
+  const actionCount = parseInt(rapidResult.rows[0].count, 10);
   if (actionCount > 50) {
     reasons.push(`Too many actions (${actionCount}) in ${minutes} minutes`);
   }
 
   // Check for failed logins
   const loginResult = await query(
-    `SELECT COUNT(*) FROM audit_logs 
+    `SELECT COUNT(*) FROM audit_logs
     WHERE user_id = $1 AND action = 'login' AND severity = 'warning'
     AND created_at >= NOW() - INTERVAL '1 hour'`,
     [userId]
   );
 
-  const failedLogins = parseInt(loginResult.rows[0].count);
+  const failedLogins = parseInt(loginResult.rows[0].count, 10);
   if (failedLogins > 5) {
     reasons.push(`Multiple failed login attempts (${failedLogins})`);
   }

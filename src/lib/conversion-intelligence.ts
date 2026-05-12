@@ -42,6 +42,13 @@ interface ConversionOptimizationAction {
   converted: boolean;
 }
 
+function withOptional<K extends string, V>(key: K, value: V | null | undefined): { [P in K]?: V } {
+  if (value === null || value === undefined) {
+    return {} as { [P in K]?: V };
+  }
+  return { [key]: value } as { [P in K]?: V };
+}
+
 class ConversionPredictor {
   predict(userId: string, signals: Array<{ name: string; value: number; weight: number }>): ConversionSignal {
     const totalWeight = signals.reduce((sum, s) => sum + s.weight, 0);
@@ -136,9 +143,12 @@ class AbandonmentDetector {
     const event: AbandonmentEvent = {
       eventId, userId, sessionId,
       abandonedAt: new Date().toISOString(),
-      lastPage, cartValue,
+      lastPage,
       recoveryAttempted: false
     };
+    if (cartValue !== undefined) {
+      event.cartValue = cartValue;
+    }
     this.events.set(eventId, event);
     logger.debug('Abandonment detected', { eventId, userId, lastPage, cartValue });
     return event;
@@ -184,9 +194,10 @@ class RevenueAttributionTracker {
     const touchpointId = `tp-${Date.now()}-${++this.counter}`;
     const tp: AttributionTouchpoint = {
       touchpointId, userId, channel,
-      campaign, timestamp: Date.now(),
+      timestamp: Date.now(),
       attributed: false, attributionWeight: 0
     };
+    Object.assign(tp, withOptional('campaign', campaign));
 
     const existing = this.touchpoints.get(userId) || [];
     existing.push(tp);
@@ -235,4 +246,4 @@ export const conversionOptimizer = new ConversionOptimizer();
 export const abandonmentDetector = new AbandonmentDetector();
 export const revenueAttributionTracker = new RevenueAttributionTracker();
 
-export {ConversionSignal, AbandonmentEvent, AttributionTouchpoint, ConversionOptimizationAction};
+export type {ConversionSignal, AbandonmentEvent, AttributionTouchpoint, ConversionOptimizationAction};

@@ -1,0 +1,1 @@
+UPDATE reviews SET content = 'Urfa Pastanesi''nde baklava ve kadayıf ikisi de gerçekten başarılı. Fıstık kalitesi iyi ve yağ dengesi çok ağır değil. Kutu olarak almak isterseniz paketleme özenli. Şehirden ayrılmadan önce hediyelik aldım, buzdolabında birkaç gün dayanıyor.' WHERE id = 'bd4e0bbf-892f-445a-8def-208912db1fd6';

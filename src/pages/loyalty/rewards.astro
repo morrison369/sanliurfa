@@ -2,38 +2,59 @@
 import Layout from '../../layouts/Layout.astro';
 import { RewardsCatalog } from '../../components/RewardsCatalog';
 
-// Redirect if not authenticated
-if (!Astro.locals.user) {
-  return Astro.redirect('/giris');
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect('/giris?redirect=/loyalty/rewards');
 }
 ---
 
 <Layout seo={{ title: "Ödüller - Sadakat Programı", noIndex: true }}>
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <a href="/loyalty" class="text-blue-600 hover:underline mb-4 inline-block">← Geri Dön</a>
-      <h1 class="text-4xl font-bold mb-2">Ödüller</h1>
-      <p class="text-gray-600">Puanlarınızı harika ödüllere dönüştürün</p>
-    </div>
+ <style is:inline>
+ .lr-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:2.5rem 0}
+ .lr-back{font-size:.82rem;color:#7A6B58;transition:color .15s;display:inline-block;margin-bottom:.75rem}
+ .lr-back:hover{color:#B87333}
+ .lr-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.75rem,4vw,2.5rem);font-weight:700;color:#1F1410;margin:.25rem 0}
+ .lr-desc{color:#7A6B58;font-size:.9rem}
+ .lr-body{background:var(--bg);padding:2rem 0 4rem}
+ .lr-inner{max-width:72rem;margin:0 auto}
+ .lr-faq{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem;margin-top:3rem}
+ .lr-faq-title{font-size:.95rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem}
+ .lr-faq-item{margin-bottom:1rem}
+ .lr-faq-q{font-size:.85rem;font-weight:600;color:#4A3828;margin-bottom:.25rem}
+ .lr-faq-a{font-size:.82rem;color:#7A6B58;line-height:1.65}
+ </style>
 
-    <RewardsCatalog client:visible={{ rootMargin: '140px' }} />
+ <div class="lr-hero">
+ <div class="sf-container">
+ <div class="lr-inner">
+ <a href="/loyalty" class="lr-back">← Sadakat Programı</a>
+ <h1 class="lr-h1">Ödüller</h1>
+ <p class="lr-desc">Puanlarınızı harika ödüllere dönüştürün</p>
+ </div>
+ </div>
+ </div>
 
-    <div class="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
-      <h2 class="font-semibold text-lg mb-4">❓ Sıkça Sorulan Sorular</h2>
-      <div class="space-y-4 text-sm">
-        <div>
-          <p class="font-medium mb-1">Ödül nasıl kullanılır?</p>
-          <p class="text-gray-700">Bir ödülü seçin, "Puan Kullan" düğmesine tıklayın. Puanlarınız hemen çıkarılacak ve bir kullanım kodu alacaksınız.</p>
-        </div>
-        <div>
-          <p class="font-medium mb-1">Puanlarım ne kadar süre geçerlidir?</p>
-          <p class="text-gray-700">Puanlarınız 2 yıl boyunca geçerlidir. Son işleminizden sonra 2 yıl hesap inaktif kalırsa puanlarınız otomatik olarak iptal edilebilir.</p>
-        </div>
-        <div>
-          <p class="font-medium mb-1">Ödülü değiştirebilir miyim?</p>
-          <p class="text-gray-700">Ödül kullanıldıktan sonra değiştirilemez. Lütfen seçiminizden emin olunduktan sonra onaylayın.</p>
-        </div>
-      </div>
-    </div>
-  </div>
+ <div class="lr-body">
+ <div class="sf-container">
+ <div class="lr-inner">
+ <RewardsCatalog client:visible={{ rootMargin: '140px' }} />
+
+ <div class="lr-faq">
+ <h2 class="lr-faq-title">❓ Sıkça Sorulan Sorular</h2>
+ <div class="lr-faq-item">
+ <p class="lr-faq-q">Ödül nasıl kullanılır?</p>
+ <p class="lr-faq-a">Bir ödülü seçin, "Puan Kullan" düğmesine tıklayın. Puanlarınız hemen çıkarılacak ve bir kullanım kodu alacaksınız.</p>
+ </div>
+ <div class="lr-faq-item">
+ <p class="lr-faq-q">Puanlarım ne kadar süre geçerlidir?</p>
+ <p class="lr-faq-a">Puanlarınız 2 yıl boyunca geçerlidir. Son işleminizden sonra 2 yıl hesap inaktif kalırsa puanlarınız otomatik olarak iptal edilebilir.</p>
+ </div>
+ <div class="lr-faq-item" style="margin-bottom:0">
+ <p class="lr-faq-q">Ödülü değiştirebilir miyim?</p>
+ <p class="lr-faq-a">Ödül kullanıldıktan sonra değiştirilemez. Lütfen seçiminizden emin olunduktan sonra onaylayın.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 </Layout>

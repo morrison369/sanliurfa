@@ -143,52 +143,24 @@ export class ReportBuilder {
   }
 
   /**
-   * Build SQL for report (simplified OLAP query)
+   * Build SQL for report (simplified OLAP query).
+   *
+   * **DEPRECATED — DO NOT USE.** Bu fonksiyon string concatenation ile SQL
+   * inşa eder, multiple SQL injection vector taşır:
+   * - `${key} = '${value}'` direct concat (filter values)
+   * - `${cube.factTable}` table name interpolation
+   * - `GROUP BY ${config.dimensions}` dimension allowlist yok
+   * - `ORDER BY ${o.dimension} ${o.direction}` arbitrary column/direction
+   *
+   * Şu anda 0 caller var; runtime guard ile kilitlendi. Yeni reporting feature
+   * gerekirse `lib/data/data-warehouse.ts:queryOLAP` pattern'ini referans al
+   * (DIMENSION_MAP / MEASURE_MAP / ORDER_BY_ALLOWLIST).
    */
-  buildReportSQL(config: ReportConfig): string {
-    const cube = ANALYTICS_CUBES[config.cube];
-    if (!cube) throw new Error(`Unknown cube: ${config.cube}`);
-
-    const selectParts = [
-      ...config.dimensions,
-      ...config.measures.map(m => `${m.toUpperCase()}(${m}) as ${m}`)
-    ];
-
-    const whereConditions: string[] = [];
-    if (config.filters) {
-      for (const [key, value] of Object.entries(config.filters)) {
-        if (typeof value === 'string') {
-          whereConditions.push(`${key} = '${value}'`);
-        } else if (Array.isArray(value)) {
-          whereConditions.push(`${key} IN (${value.map(v => `'${v}'`).join(',')})`);
-        } else {
-          whereConditions.push(`${key} = ${value}`);
-        }
-      }
-    }
-
-    let sql = `SELECT ${selectParts.join(', ')} FROM ${cube.factTable}`;
-
-    if (whereConditions.length > 0) {
-      sql += ` WHERE ${whereConditions.join(' AND ')}`;
-    }
-
-    if (config.dimensions.length > 0) {
-      sql += ` GROUP BY ${config.dimensions.join(', ')}`;
-    }
-
-    if (config.orderBy) {
-      const orderClauses = config.orderBy
-        .map(o => `${o.dimension} ${o.direction}`)
-        .join(', ');
-      sql += ` ORDER BY ${orderClauses}`;
-    }
-
-    if (config.limit) {
-      sql += ` LIMIT ${config.limit}`;
-    }
-
-    return sql;
+  buildReportSQL(_config: ReportConfig): string {
+    throw new Error(
+      'buildReportSQL is deprecated and disabled — multiple SQL injection vectors. ' +
+      'Use parametrized queries with strict allowlist (see lib/data/data-warehouse.ts:queryOLAP).',
+    );
   }
 
   /**

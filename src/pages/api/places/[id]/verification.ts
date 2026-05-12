@@ -17,6 +17,10 @@ export const GET: APIRoute = async ({ request, params }) => {
 
   try {
     const { id: placeId } = params;
+    if (!placeId) {
+      recordRequest('GET', '/api/places/[id]/verification', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan kimliği gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     // Verify place exists
     const place = await queryOne('SELECT id FROM places WHERE id = $1', [placeId]);

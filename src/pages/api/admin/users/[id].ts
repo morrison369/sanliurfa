@@ -102,13 +102,19 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
           requestId
         );
       }
+      const VALID_FLAG_TYPES = new Set(['spam', 'harassment', 'fraud', 'fake_account', 'inappropriate_content', 'abuse', 'other']);
+      const VALID_SEVERITIES  = new Set(['low', 'medium', 'high', 'critical']);
+      if (typeof flagType !== 'string' || !VALID_FLAG_TYPES.has(flagType)) return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz flagType', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      if (severity !== undefined && severity !== null && (typeof severity !== 'string' || !VALID_SEVERITIES.has(severity))) return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz severity', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      if (typeof reason !== 'string' || reason.length > 1000) return apiError(ErrorCode.VALIDATION_ERROR, 'reason 1000 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
       await flagUserAccount(params.id as string, user.id, flagType, reason, severity || 'medium', expiresAt ? new Date(expiresAt) : undefined);
     } else if (action === 'changeRole') {
-      if (!newRole) {
+      const VALID_ROLES = new Set(['user', 'admin', 'moderator', 'vendor']);
+      if (!newRole || typeof newRole !== 'string' || !VALID_ROLES.has(newRole)) {
         recordRequest('POST', `/api/admin/users/${params.id}`, HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
         return apiError(
           ErrorCode.VALIDATION_ERROR,
-          'newRole gereklidir',
+          'Geçerli bir rol gereklidir: user, admin, moderator, vendor',
           HttpStatus.UNPROCESSABLE_ENTITY,
           undefined,
           requestId
@@ -117,13 +123,25 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
       await changeUserRole(params.id as string, user.id, newRole);
     } else if (action === 'log') {
       const { actionType, changes } = body;
+      if (!actionType || typeof actionType !== 'string' || actionType.length > 100) {
+        return apiError(ErrorCode.VALIDATION_ERROR, 'actionType geçersiz veya 100 karakteri aşıyor', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      }
+      if (changes !== undefined && changes !== null) {
+        if (typeof changes !== 'object' || Array.isArray(changes) || JSON.stringify(changes).length > 10000) {
+          return apiError(ErrorCode.VALIDATION_ERROR, 'changes geçersiz nesne veya 10000 karakteri aşıyor', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+        }
+      }
       await logAdminAction(user.id, params.id as string, actionType, changes);
     }
 
     const duration = Date.now() - startTime;
     recordRequest('POST', `/api/admin/users/${params.id}`, HttpStatus.OK, duration);
 
-    logger.info('Admin user action completed', { userId: params.id, action, adminId: user.id });
+    logger.info('Admin user action completed', {
+      ...(params.id ? { userId: params.id } : {}),
+      action,
+      adminId: user.id,
+    });
 
     return apiResponse(
       {

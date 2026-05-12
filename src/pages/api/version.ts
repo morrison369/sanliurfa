@@ -10,7 +10,7 @@ export const GET: APIRoute = async ({ request }) => {
     default: 'v1',
     docs: {
       v1: '/api/docs',
-      openapi: '/api/openapi.json'
+      openapi: '/api/docs/openapi.json'
     }
   }, HttpStatus.OK, requestId);
 };

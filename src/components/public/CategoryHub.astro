@@ -1,0 +1,215 @@
+---
+import Icon from '../Icon.astro';
+import type { CityTaxonomyCategory } from '../../data/city-taxonomy';
+import { CITY_DISTRICT_LABELS } from '../../data/city-taxonomy';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+
+interface Props {
+  category: CityTaxonomyCategory;
+}
+
+const { category } = Astro.props;
+const baseUrl = getPublicAppUrl();
+
+const pageTitle = `Şanlıurfa ${category.title}`;
+
+const districts = Object.entries(CITY_DISTRICT_LABELS).map(([slug, label]) => ({
+  slug,
+  label,
+  href: `/ilceler/${slug}`,
+}));
+
+const faqSchema = category.faq.length > 0 ? {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: category.faq.map(({ q, a }) => ({
+    '@type': 'Question',
+    name: q,
+    acceptedAnswer: { '@type': 'Answer', text: a },
+  })),
+} : null;
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: baseUrl },
+    { '@type': 'ListItem', position: 2, name: category.title, item: `${baseUrl}${category.href}` },
+  ],
+};
+
+function slugifyChild(text: string): string {
+  return text
+    .toLocaleLowerCase('tr-TR')
+    .replace(/ğ/g, 'g').replace(/ü/g, 'u').replace(/ş/g, 's')
+    .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c')
+    .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+}
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} is:inline />
+{faqSchema && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} is:inline />}
+
+<!-- HERO -->
+<section class="relative border-b border-[#eadcc4] bg-[radial-gradient(ellipse_at_top_left,#f0d5b0_0%,#fff8ec_40%,#f5ead4_100%)] px-4 py-16 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl">
+    <nav aria-label="Breadcrumb" class="mb-6 flex items-center gap-2 text-sm text-[#8a6545]">
+      <a href="/" class="hover:text-[#78331d]">Ana Sayfa</a>
+      <Icon name="chevron-right" size={14} class="text-[#c5a882]" />
+      <span class="font-semibold text-[#201711]">{category.title}</span>
+    </nav>
+
+    <div class="flex items-start gap-5">
+      <span class="hidden shrink-0 items-center justify-center rounded-2xl bg-[#f3e4cc] p-4 text-[#78331d] sm:flex">
+        <Icon name={category.icon} size={32} />
+      </span>
+      <div>
+        <p class="mb-3 inline-flex rounded-full border border-[#e1c59d] bg-white/80 px-4 py-1.5 text-sm font-bold text-[#8a3d22]">
+          Şanlıurfa {category.title} Rehberi
+        </p>
+        <h1 class="font-display text-4xl font-semibold leading-[1.06] text-[#201711] sm:text-5xl">
+          {pageTitle}
+        </h1>
+        <p class="mt-4 max-w-3xl text-lg leading-8 text-[#5e4a38]">
+          {category.description}
+        </p>
+        <div class="mt-6 flex flex-wrap gap-3">
+          <a href="/mekanlar" class="inline-flex min-h-11 items-center rounded-full bg-[#78331d] px-5 text-sm font-black text-white shadow-md shadow-[#78331d]/20 hover:bg-[#652918]">
+            Tüm Mekanlar
+          </a>
+          <a href="/isletme-kayit" class="inline-flex min-h-11 items-center rounded-full border border-[#c99b6d] bg-white px-5 text-sm font-black text-[#7c3b24] hover:bg-[#fff4e1]">
+            İşletme Ekle
+          </a>
+          <a href="/arama" class="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#eadcc4] bg-white px-5 text-sm font-black text-[#5e4a38] hover:border-[#d39b62]">
+            <Icon name="search" size={14} />
+            Ara
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HIZLI CEVAP — AI/GEO snippet için 40-60 kelimelik direkt cevap -->
+<section class="border-b border-[#eadcc4] bg-[#fffaf0] px-4 py-10 sm:px-6 lg:px-8" aria-labelledby="hizli-cevap-baslik">
+  <div class="mx-auto max-w-4xl">
+    <p class="text-xs font-black uppercase tracking-[0.16em] text-[#8a3d22]">Hızlı Cevap</p>
+    <h2 id="hizli-cevap-baslik" class="mt-2 font-display text-2xl font-semibold text-[#201711] sm:text-3xl">
+      {pageTitle} kategorisinde ne bulabilirsiniz?
+    </h2>
+    <p class="mt-3 text-base leading-7 text-[#3d2f23]">
+      {category.description}
+      {category.children.length > 0 && (
+        <span class="mt-2 block text-sm text-[#5e4a38]">
+          {category.children.length} alt kategori, 13 ilçeye yayılmış mekanlar, çalışma saatleri, telefon ve adres bilgileriyle birlikte listelenmektedir.
+        </span>
+      )}
+    </p>
+    <div class="mt-5 flex flex-wrap gap-2 text-sm">
+      <a href="/mekanlar" class="inline-flex min-h-9 items-center rounded-full border border-[#c99b6d] bg-white px-4 font-bold text-[#7c3b24] hover:bg-[#fff4e1]">
+        Tüm Liste
+      </a>
+      <a href="/ilceler" class="inline-flex min-h-9 items-center rounded-full border border-[#eadcc4] bg-white px-4 font-bold text-[#5e4a38] hover:border-[#d39b62]">
+        İlçeye Göre
+      </a>
+      <a href="/harita" class="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-[#eadcc4] bg-white px-4 font-bold text-[#5e4a38] hover:border-[#d39b62]">
+        <Icon name="map-pin" size={14} />
+        Harita
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ALT KATEGORİLER -->
+<section class="bg-[#fff8ec] px-4 py-14 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl">
+    <div class="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h2 class="font-display text-3xl font-semibold text-[#201711]">{category.title} Alt Kategorileri</h2>
+        <p class="mt-2 text-base text-[#66513d]">Şanlıurfa'da {category.children.length} farklı {category.title.toLocaleLowerCase('tr-TR')} kategorisi listeleniyor.</p>
+      </div>
+    </div>
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {category.children.map((child) => {
+        const desc = category.childDescriptions[child] ?? `Şanlıurfa ${child} listesi, adres ve iletişim bilgileri.`;
+        const href = `/mekanlar/${slugifyChild(child)}`;
+        return (
+          <a href={href} class="group rounded-2xl border border-[#eadcc4] bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#d39b62] hover:shadow-xl hover:shadow-[#78331d]/10">
+            <h2 class="text-lg font-black text-[#201711]">{child}</h2>
+            <p class="mt-2 text-sm leading-6 text-[#6a5643]">{desc}</p>
+            <span class="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#78331d]">
+              Listele
+              <Icon name="arrow-right" size={15} class="transition group-hover:translate-x-1" />
+            </span>
+          </a>
+        );
+      })}
+    </div>
+  </div>
+</section>
+
+<!-- İLÇE BAZLI KESİF -->
+<section class="border-y border-[#eadcc4] bg-[#fffdf7] px-4 py-14 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl">
+    <h2 class="font-display text-3xl font-semibold text-[#201711]">İlçe Bazlı {category.title}</h2>
+    <p class="mt-2 text-base text-[#66513d]">
+      Şanlıurfa'nın 13 ilçesinde {category.title.toLocaleLowerCase('tr-TR')} mekanlarını filtrele.
+    </p>
+    <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+      {districts.map(({ label, href }) => (
+        <a
+          href={href}
+          class="flex items-center justify-between rounded-xl border border-[#eadcc4] bg-white px-4 py-3 text-sm font-semibold text-[#201711] transition hover:border-[#c99b6d] hover:bg-[#fff4e1] hover:text-[#78331d]"
+        >
+          {label}
+          <Icon name="chevron-right" size={15} class="text-[#c5a882]" />
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- SSS / FAQ -->
+{category.faq.length > 0 && (
+  <section class="bg-[#f6ead6] px-4 py-14 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-4xl">
+      <p class="text-sm font-black uppercase tracking-[0.14em] text-[#8a3d22]">Sık Sorulan Sorular</p>
+      <h2 class="mt-3 font-display text-3xl font-semibold text-[#201711]">{pageTitle} hakkında merak edilenler</h2>
+      <div class="mt-8 space-y-4">
+        {category.faq.map(({ q, a }) => (
+          <details class="group rounded-2xl border border-[#e3d0b0] bg-white px-6 py-5 shadow-sm open:shadow-md">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-black text-[#201711]">
+              {q}
+              <span class="shrink-0 rounded-full bg-[#f3e4cc] p-1.5 text-[#78331d] transition group-open:rotate-45">
+                <Icon name="plus" size={16} />
+              </span>
+            </summary>
+            <p class="mt-4 text-sm leading-7 text-[#5e4a38]">{a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
+
+<!-- CTA BANNER -->
+<section class="px-4 py-14 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl">
+    <div class="rounded-[1.75rem] bg-[#0f4034] px-6 py-10 text-white shadow-2xl shadow-[#0f4034]/18 sm:px-10">
+      <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div>
+          <p class="text-sm font-black text-[#7fd4b5]">Şanlıurfa rehberine kat</p>
+          <h2 class="mt-2 font-display text-3xl font-semibold text-white">
+            {pageTitle} alanında işletmeniz var mı?
+          </h2>
+          <p class="mt-3 max-w-2xl text-base leading-7 text-[#c8ede3]">
+            Sanliurfa.com şehir rehberine ücretsiz ekle; yerel müşterilere daha hızlı ulaş. Konum, telefon, çalışma saatleri ve fotoğraflarınla tam profil oluştur.
+          </p>
+        </div>
+        <a href="/isletme-kayit" class="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-[#ffd070] px-7 text-base font-black text-[#24170f] shadow-lg hover:bg-[#f3c45f]">
+          İşletmemi Ekle
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

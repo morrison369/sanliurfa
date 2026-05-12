@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { queryOne, queryMany } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
-import { problemJson } from '../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../lib/api';
 
 interface CountRow {
   count: string | number;
@@ -29,26 +29,35 @@ export const GET: APIRoute = async ({ locals }) => {
       });
     }
 
-    const totalUsers = await queryOne<CountRow>('SELECT COUNT(*) as count FROM users');
-    const totalReviews = await queryOne<CountRow>('SELECT COUNT(*) as count FROM reviews');
-    const totalPlaces = await queryOne<CountRow>('SELECT COUNT(*) as count FROM places');
-    const avgRating = await queryOne<AvgRow>('SELECT AVG(rating) as avg FROM reviews');
-    const activeToday = await queryOne<CountRow>(
-      `SELECT COUNT(DISTINCT user_id) as count FROM user_activity WHERE created_at > NOW() - INTERVAL '24 hours'`
-    );
+    const [totalUsers, totalReviews, totalPlaces, avgRating, activeToday, topPlaces, topUsers] = await Promise.all([
+      queryOne<CountRow>('SELECT COUNT(*) as count FROM users'),
+      queryOne<CountRow>('SELECT COUNT(*) as count FROM reviews'),
+      queryOne<CountRow>('SELECT COUNT(*) as count FROM places'),
+      queryOne<AvgRow>('SELECT AVG(rating) as avg FROM reviews'),
+      queryOne<CountRow>(
+        `SELECT COUNT(DISTINCT user_id) as count FROM user_activity WHERE created_at > NOW() - INTERVAL '24 hours'`
+      ),
+      queryMany(
+        `SELECT p.id, p.name,
+                COALESCE(AVG(r.rating), 0) as avg_rating,
+                COUNT(r.id) as review_count
+         FROM places p
+         LEFT JOIN reviews r ON r.place_id = p.id
+         GROUP BY p.id, p.name
+         ORDER BY avg_rating DESC LIMIT 5`
+      ),
+      queryMany(
+        `SELECT u.id, u.full_name,
+                COUNT(r.id) as review_count,
+                u.points
+         FROM users u
+         LEFT JOIN reviews r ON r.user_id = u.id
+         GROUP BY u.id, u.full_name, u.points
+         ORDER BY u.points DESC LIMIT 5`
+      ),
+    ]);
 
-    const topPlaces = await queryMany(
-      `SELECT id, name, (SELECT AVG(rating) FROM reviews WHERE place_id = places.id) as avg_rating, 
-              (SELECT COUNT(*) FROM reviews WHERE place_id = places.id) as review_count 
-       FROM places ORDER BY avg_rating DESC LIMIT 5`
-    );
-
-    const topUsers = await queryMany(
-      `SELECT id, full_name, (SELECT COUNT(*) FROM reviews WHERE user_id = users.id) as review_count, points 
-       FROM users ORDER BY points DESC LIMIT 5`
-    );
-
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       data: {
         summary: {
@@ -61,13 +70,13 @@ export const GET: APIRoute = async ({ locals }) => {
         topPlaces,
         topUsers
       }
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }, HttpStatus.OK);
   } catch (error) {
     logger.error('Analytics error', error);
     return problemJson({
       status: 500,
       title: 'Analitik Verisi Alınamadı',
-      detail: error instanceof Error ? error.message : 'failed',
+      detail: safeErrorDetail(error, 'analytics_failed'),
       type: '/problems/analytics-fetch-failed',
       instance: '/api/analytics',
     });

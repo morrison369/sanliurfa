@@ -19,9 +19,9 @@ export interface RedisConfig {
 
 export const redisConfig: RedisConfig = {
   host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD,
-  db: parseInt(process.env.REDIS_DB || '0'),
+  port: parseInt(process.env.REDIS_PORT || '6379', 10),
+  ...(process.env.REDIS_PASSWORD ? { password: process.env.REDIS_PASSWORD } : {}),
+  db: parseInt(process.env.REDIS_DB || '0', 10),
   maxRetriesPerRequest: 3,
   enableReadyCheck: true,
   lazyConnect: true,
@@ -66,8 +66,8 @@ export function parseRedisUrl(url: string): Partial<RedisConfig> {
     const parsed = new URL(url);
     return {
       host: parsed.hostname,
-      port: parseInt(parsed.port) || 6379,
-      password: parsed.password || undefined,
+      port: parseInt(parsed.port, 10) || 6379,
+      ...(parsed.password ? { password: parsed.password } : {}),
     };
   } catch {
     return {};

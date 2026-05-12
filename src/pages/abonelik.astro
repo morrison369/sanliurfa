@@ -2,56 +2,63 @@
 import Layout from '../layouts/Layout.astro';
 import { SubscriptionManager } from '../components/SubscriptionManager';
 
-// Require authentication
-if (!Astro.locals.user) {
-  return Astro.redirect('/giris');
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect('/giris?redirect=/abonelik');
 }
 ---
 
-<Layout title="Üyelik Durumu - Şanlıurfa">
-  <div class="max-w-4xl mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-        Üyelik Durumu
-      </h1>
-      <p class="text-gray-600 dark:text-gray-400">
-        Faz 1 açık erişim döneminde tüm özellikler ücretsiz olarak sunulmaktadır.
-      </p>
-    </div>
+<Layout seo={{ title: "Üyelik Durumu - Şanlıurfa", noIndex: true }}>
+ <style is:inline>
+ .ab-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,.12);background:radial-gradient(circle at 18% 0%,rgba(212,151,24,.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);padding:2.5rem 0}
+ .ab-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-text-soft)}
+ .ab-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:700;color:var(--public-text);margin:.5rem 0 .25rem}
+ .ab-desc{color:var(--public-muted);font-size:.9rem}
+ .ab-body{background:var(--bg);padding:2rem 0 4rem}
+ .ab-inner{max-width:56rem;margin:0 auto}
+ .ab-manager{margin-bottom:3rem}
+ .ab-section-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:700;color:var(--public-text);margin-bottom:.75rem}
+ .ab-info{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1rem;color:var(--public-muted);font-size:.85rem;line-height:1.65;margin-bottom:2rem}
+ .ab-help{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem}
+ .ab-help-title{font-size:.95rem;font-weight:700;color:var(--public-text);margin-bottom:.4rem}
+ .ab-help-desc{font-size:.85rem;color:var(--public-muted);margin-bottom:1rem}
+ .ab-link{color:var(--public-accent);font-size:.85rem;font-weight:500;transition:color .15s}
+ .ab-link:hover{color:var(--public-accent-strong)}
+ </style>
 
-    <!-- Subscription Manager -->
-    <div class="mb-12">
-      <SubscriptionManager
-        client:visible={{ rootMargin: '140px' }}
-        onUpgrade={() => window.location.href = '/fiyatlandirma'}
-      />
-    </div>
+ <div class="ab-hero">
+ <div class="sf-container">
+ <div class="ab-inner">
+ <p class="ab-label">Hesabım</p>
+ <h1 class="ab-h1">Üyelik Durumu</h1>
+ <p class="ab-desc">Faz 1 açık erişim döneminde tüm özellikler ücretsiz olarak sunulmaktadır.</p>
+ </div>
+ </div>
+ </div>
 
-    <!-- Billing History -->
-    <div class="mb-8">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-        Bilgilendirme
-      </h2>
-      <div class="rounded-lg border border-green-200 bg-green-50 p-4 text-green-900">
-        Bu aşamada ücretli faturalama devre dışı. Ödeme geçmişi ekranı daha sonraki fazlarda aktif edilecektir.
-      </div>
-    </div>
+ <div class="ab-body">
+ <div class="sf-container">
+ <div class="ab-inner">
+ <div class="ab-manager">
+ <SubscriptionManager
+ client:visible={{ rootMargin: '140px' }}
+ onUpgrade={() => window.location.href = '/fiyatlandirma'}
+ />
+ </div>
 
-    <!-- Help Section -->
-    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-      <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">
-        Yardıma İhtiyacınız var mı?
-      </h3>
-      <p class="text-blue-800 dark:text-blue-400 mb-4">
-        Üyelik modeliyle ilgili sorularınız için bizimle iletişime geçebilirsiniz.
-      </p>
-      <a
-        href="mailto:support@sanliurfa.com"
-        class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-      >
-        Destek E-postası Gönder →
-      </a>
-    </div>
-  </div>
+ <div>
+ <h2 class="ab-section-title">Bilgilendirme</h2>
+ <div class="ab-info">
+ Bu aşamada ücretli faturalama devre dışı. Ödeme geçmişi ekranı daha sonraki fazlarda aktif edilecektir.
+ </div>
+ </div>
+
+ <div class="ab-help">
+ <h3 class="ab-help-title">Yardıma İhtiyacınız var mı?</h3>
+ <p class="ab-help-desc">Üyelik modeliyle ilgili sorularınız için bizimle iletişime geçebilirsiniz.</p>
+ <a href="mailto:support@sanliurfa.com" class="ab-link">Destek E-postası Gönder →</a>
+ </div>
+ </div>
+ </div>
+ </div>
 </Layout>

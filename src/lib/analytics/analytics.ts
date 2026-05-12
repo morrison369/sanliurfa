@@ -215,13 +215,13 @@ export async function getPlatformStats(days: number): Promise<any> {
     `, [startDate]);
 
     return {
-      totalSessions: parseInt(stats?.total_sessions || '0'),
-      uniqueUsers: parseInt(stats?.unique_users || '0'),
-      totalTimeSpent: parseInt(stats?.total_time_spent || '0'),
-      uniquePages: parseInt(stats?.unique_pages || '0'),
-      uniqueSearches: parseInt(stats?.unique_searches || '0'),
+      totalSessions: parseInt(stats?.total_sessions || '0', 10),
+      uniqueUsers: parseInt(stats?.unique_users || '0', 10),
+      totalTimeSpent: parseInt(stats?.total_time_spent || '0', 10),
+      uniquePages: parseInt(stats?.unique_pages || '0', 10),
+      uniqueSearches: parseInt(stats?.unique_searches || '0', 10),
       avgSessionDuration: Math.round(parseFloat(stats?.avg_session_duration || '0')),
-      totalConversions: parseInt(stats?.total_conversions || '0'),
+      totalConversions: parseInt(stats?.total_conversions || '0', 10),
       period: days
     };
   } catch (error) {
@@ -258,12 +258,12 @@ export async function getTrendingPlacesByViews(days: number, limit: number): Pro
       id: p.id,
       name: p.name,
       category: p.category,
-      totalViews: parseInt(p.total_views || '0'),
-      totalClicks: parseInt(p.total_clicks || '0'),
-      totalLikes: parseInt(p.total_likes || '0'),
-      totalShares: parseInt(p.total_shares || '0'),
+      totalViews: parseInt(p.total_views || '0', 10),
+      totalClicks: parseInt(p.total_clicks || '0', 10),
+      totalLikes: parseInt(p.total_likes || '0', 10),
+      totalShares: parseInt(p.total_shares || '0', 10),
       avgRating: parseFloat(p.avg_rating || '0'),
-      reviewCount: parseInt(p.review_count || '0')
+      reviewCount: parseInt(p.review_count || '0', 10)
     }));
   } catch (error) {
     logger.error('Failed to get trending places', error instanceof Error ? error : new Error(String(error)));
@@ -290,7 +290,7 @@ export async function getSearchTrends(days: number, limit: number): Promise<any[
 
     return trends.map((t: any) => ({
       query: t.search_query,
-      count: parseInt(t.search_count || '0'),
+      count: parseInt(t.search_count || '0', 10),
       avgResults: Math.round(parseFloat(t.avg_results || '0'))
     }));
   } catch (error) {
@@ -312,11 +312,11 @@ export async function getUserActivitySummary(userId: string, days: number): Prom
       queryOne(`SELECT COUNT(*) as count FROM place_likes WHERE user_id = $1 AND created_at >= $2`, [userId, startDate])
     ]);
 
-    const viewCount = parseInt(views?.count || '0');
-    const searchCount = parseInt(searches?.count || '0');
-    const reviewCount = parseInt(reviews?.count || '0');
-    const commentCount = parseInt(comments?.count || '0');
-    const favoriteCount = parseInt(favorites?.count || '0');
+    const viewCount = parseInt(views?.count || '0', 10);
+    const searchCount = parseInt(searches?.count || '0', 10);
+    const reviewCount = parseInt(reviews?.count || '0', 10);
+    const commentCount = parseInt(comments?.count || '0', 10);
+    const favoriteCount = parseInt(favorites?.count || '0', 10);
 
     return {
       views: viewCount,

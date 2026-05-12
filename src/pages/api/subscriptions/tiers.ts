@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request }) => {
   try {
     const tiers = await getSubscriptionTiers();
     const normalizedTiers = PHASE1_FREE_MODE
-      ? tiers.map((tier: any) => ({
+      ? tiers.map((tier) => ({
           ...tier,
           monthlyPrice: 0,
           annualPrice: 0,

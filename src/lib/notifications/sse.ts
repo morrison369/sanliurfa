@@ -269,7 +269,7 @@ export const notify = {
       type: 'system',
       title,
       message,
-      link,
+      ...(link ? { link } : {}),
     });
   },
 };

@@ -3,13 +3,14 @@
  */
 
 import type { APIRoute } from 'astro';
-import { createCampaign, getAllCampaigns, getCampaign, updateCampaign, getCampaignMetrics } from '../../../lib/email/email-campaigns';
+import { createCampaign, getAllCampaigns, getCampaign, updateCampaign, getCampaignMetrics, type EmailCampaign } from '../../../lib/email/email-campaigns';
 import { validateWithSchema } from '../../../lib/validation';
+import type { ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-const createSchema = {
+const createSchema: ValidationSchema = {
   name: { type: 'string' as const, required: true, minLength: 3 },
   subject: { type: 'string' as const, required: true, minLength: 5 },
   fromName: { type: 'string' as const, required: true },
@@ -32,7 +33,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
     const campaignId = url.searchParams.get('id');
 
-    let data;
+    let data: unknown;
 
     if (campaignId) {
       const campaign = await getCampaign(campaignId);
@@ -74,7 +75,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, createSchema as any);
+    const validation = validateWithSchema(body, createSchema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/marketing/campaigns', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -87,7 +88,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { name, subject, fromName, fromEmail, htmlContent, segment } = validation.data as any;
+    const { name, subject, fromName, fromEmail, htmlContent, segment } = validation.data;
 
     const campaign = await createCampaign({
       name,
@@ -145,7 +146,7 @@ export const PUT: APIRoute = async ({ request, locals, url }) => {
 
     const body = await request.json();
 
-    const result = await updateCampaign(id, body as any);
+    const result = await updateCampaign(id, body as Partial<EmailCampaign>);
 
     if (!result) {
       recordRequest('PUT', '/api/marketing/campaigns', HttpStatus.NOT_FOUND, Date.now() - startTime);

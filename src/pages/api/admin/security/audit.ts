@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('GET', '/api/admin/security/audit', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }
@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('POST', '/api/admin/security/audit', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return new Response('Unauthorized', { status: 403 });
     }

@@ -7,12 +7,10 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../../lib/postgres';
 import { createCampaign } from '../../../../lib/email/email-campaigns';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
-// import { recordRequest } from '../../../../lib/metrics';
+import type { SegmentType } from '../../../../lib/email/email-campaigns';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
+import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
-
-// @ts-ignore - metrics module may not exist
-const recordRequest = (...args: any[]) => {};
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
   const requestId = getRequestId(request);
@@ -25,12 +23,18 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const status = url.searchParams.get('status');
-    const limit = parseInt(url.searchParams.get('limit') || '50', 10);
-    const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+    const VALID_CAMPAIGN_STATUSES = new Set(['draft', 'scheduled', 'active', 'paused', 'completed', 'failed']);
+    const rawStatus = url.searchParams.get('status');
+    if (rawStatus !== undefined && rawStatus !== null && (typeof rawStatus !== 'string' || !VALID_CAMPAIGN_STATUSES.has(rawStatus))) {
+      recordRequest('GET', '/api/email/campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz campaign status', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const status = rawStatus || null;
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 0, 1_000_000);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     let whereClause = 'WHERE user_id = $1';
-    const params: any[] = [locals.user.id];
+    const params: unknown[] = [locals.user.id];
 
     if (status) {
       whereClause += ` AND status = $${params.length + 1}`;
@@ -97,7 +101,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       plain_text_content,
     } = body;
 
-    if (!name || !campaign_type || !from_email || !subject_line || !html_content) {
+    if (typeof name !== 'string' || typeof campaign_type !== 'string' || typeof from_email !== 'string' || typeof subject_line !== 'string' || typeof html_content !== 'string' || !name || !campaign_type || !from_email || !subject_line || !html_content) {
       recordRequest('POST', '/api/email/campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
@@ -108,21 +112,43 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    if (name.length > 255) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'name 255 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const VALID_CAMPAIGN_TYPES = new Set(['newsletter', 'promotional', 'transactional', 'drip', 'announcement', 'welcome', 'reengagement']);
+    if (!VALID_CAMPAIGN_TYPES.has(campaign_type)) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz campaign_type', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (from_email.length > 254) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'from_email 254 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (subject_line.length > 500) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'subject_line 500 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (html_content.length > 500_000) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'html_content 500000 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (plain_text_content !== undefined && plain_text_content !== null) {
+      if (typeof plain_text_content !== 'string' || plain_text_content.length > 500_000) {
+        return apiError(ErrorCode.VALIDATION_ERROR, 'plain_text_content geçersiz veya 500000 karakteri aşıyor', HttpStatus.BAD_REQUEST, undefined, requestId);
+      }
+    }
+
     const campaign = await createCampaign({
-      userId: locals.user.id,
       name,
-      campaignType: campaign_type,
+      subject: subject_line,
+      fromName: name,
       fromEmail: from_email,
-      subjectLine: subject_line,
       htmlContent: html_content,
-      plainTextContent: plain_text_content,
-      status: 'draft'
-    } as any);
+      textContent: plain_text_content || '',
+      segment: 'all_users' as SegmentType,
+      status: 'draft',
+    });
 
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/email/campaigns', HttpStatus.CREATED, duration);
 
-    logger.info('Campaign created', { id: (campaign as any).id, userId: locals.user.id, name });
+    logger.info('Campaign created', { id: campaign?.id, userId: locals.user.id, name });
 
     return apiResponse(
       {

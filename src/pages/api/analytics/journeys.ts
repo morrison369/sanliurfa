@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getUserJourneys, getJourneyDetails, getTopConvertingPaths, analyzeBehaviorPattern } from '../../../lib/analytics/journey-analytics';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals, url }) => {
@@ -13,22 +13,24 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin && !locals.user) {
+    if (!locals.user) {
       return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const type = url.searchParams.get('type') || 'journeys';
+    const VALID_JOURNEY_TYPES = new Set(['journeys', 'journey_details', 'top_paths', 'behavior_pattern']);
+    const rawType = url.searchParams.get('type') || 'journeys';
+    const type = VALID_JOURNEY_TYPES.has(rawType) ? rawType : 'journeys';
     const userId = url.searchParams.get('user_id');
     const journeyId = url.searchParams.get('journey_id');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 0, 1_000_000);
 
     if (type === 'journeys') {
       if (!userId) {
         return apiError(ErrorCode.VALIDATION_ERROR, 'User ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
       }
 
-      // User can only access their own journeys
-      if (!locals.isAdmin && userId !== locals.user.id) {
+      // User can only access their own journeys (admin-only override, not moderator)
+      if (locals.user.role !== 'admin' && userId !== locals.user.id) {
         return apiError(ErrorCode.FORBIDDEN, 'Cannot access other users journeys', HttpStatus.FORBIDDEN, undefined, requestId);
       }
 
@@ -56,7 +58,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     if (type === 'top_paths') {
-      if (!locals.isAdmin) {
+      if (locals.user?.role !== 'admin') {
         return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
       }
 
@@ -70,6 +72,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     if (type === 'behavior_pattern') {
       if (!userId) {
         return apiError(ErrorCode.VALIDATION_ERROR, 'User ID required', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      }
+
+      if (locals.user.role !== 'admin' && userId !== locals.user.id) {
+        return apiError(ErrorCode.FORBIDDEN, 'Cannot access other users behavior data', HttpStatus.FORBIDDEN, undefined, requestId);
       }
 
       const pattern = await analyzeBehaviorPattern(userId);

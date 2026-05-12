@@ -61,10 +61,10 @@ const publicSeoSignals = [
 ];
 
 const publicImageSignals = [
-  ['src/pages/index.astro', ['hero-home.webp', 'heroImageAlt', 'alt=']],
-  ['src/pages/etkinlikler/index.astro', ['placeholder-event.jpg', 'alt={event.title}', '<Image']],
-  ['src/pages/yemek-tarifleri/index.astro', ['foods/default.jpg', 'alt={recipe.name}', '<img']],
-  ['src/pages/gezilecek-yerler/[slug].astro', ['placeholder-historical.jpg', 'alt={site.name}', '<Image']],
+  ['src/components/home/CityGuideLanding.astro', ['/images/places/balikligol.jpg', '/images/places/gobeklitepe.jpg', '/images/tarihi-yerler/harran-kumbet-evleri.jpg']],
+  ['src/pages/etkinlikler/index.astro', ['resolveEventImage', 'imageAlt: event.title', 'PublicCollectionList']],
+  ['src/pages/yemek-tarifleri/index.astro', ['resolveRecipeImage', 'alt={recipe.name}', '<Image']],
+  ['src/pages/gezilecek-yerler/[slug].astro', ['resolveHistoricalImage', 'imageAlt={site.name}', 'Şanlıurfa Gezilecek Yerler']],
 ];
 
 const agentSignals = [

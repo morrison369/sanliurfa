@@ -5,118 +5,113 @@
 <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
 
 <script>
-  interface ToastOptions {
-    message: string;
-    type?: 'success' | 'error' | 'warning' | 'info';
-    duration?: number;
-    action?: {
-      label: string;
-      onClick: () => void;
-    };
-  }
+ interface ToastOptions {
+ message: string;
+ type?: 'success' | 'error' | 'warning' | 'info';
+ duration?: number;
+ action?: {
+ label: string;
+ onClick: () => void;
+ };
+ }
 
-  class ToastManager {
-    private container: HTMLElement;
-    private toasts: Set<HTMLElement> = new Set();
+ class ToastManager {
+ private container: HTMLElement;
+ private toasts: Set<HTMLElement> = new Set();
 
-    constructor() {
-      this.container = document.getElementById('toast-container')!;
-    }
+ constructor() {
+ this.container = document.getElementById('toast-container')!;
+ }
 
-    show(options: ToastOptions) {
-      const toast = this.createToast(options);
-      this.container.appendChild(toast);
-      this.toasts.add(toast);
+ show(options: ToastOptions) {
+ const toast = this.createToast(options);
+ this.container.appendChild(toast);
+ this.toasts.add(toast);
 
-      // Animate in
-      requestAnimationFrame(() => {
-        toast.classList.add('translate-y-0', 'opacity-100');
-        toast.classList.remove('translate-y-2', 'opacity-0');
-      });
+ // Animate in
+ requestAnimationFrame(() => {
+ toast.classList.add('translate-y-0', 'opacity-100');
+ toast.classList.remove('translate-y-2', 'opacity-0');
+ });
 
-      // Auto dismiss
-      if (options.duration !== 0) {
-        setTimeout(() => {
-          this.dismiss(toast);
-        }, options.duration || 5000);
-      }
+ // Auto dismiss
+ if (options.duration !== 0) {
+ setTimeout(() => {
+ this.dismiss(toast);
+ }, options.duration || 5000);
+ }
 
-      return toast;
-    }
+ return toast;
+ }
 
-    private createToast(options: ToastOptions): HTMLElement {
-      const toast = document.createElement('div');
-      const colors = {
-        success: 'bg-green-500',
-        error: 'bg-red-500',
-        warning: 'bg-yellow-500',
-        info: 'bg-blue-500'
-      };
-      
-      const icons = {
-        success: '✓',
-        error: '✕',
-        warning: '⚠',
-        info: 'ℹ'
-      };
+ private createToast(options: ToastOptions): HTMLElement {
+ const toast = document.createElement('div');
+ const colors = { success: 'bg-[rgba(34,197,94,0.08)]0', error: 'bg-[rgba(239,68,68,0.1)]0', warning: 'bg-[rgba(234,179,8,0.08)]0', info: 'bg-urfa-600' };
+ const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+ const type = options.type || 'info';
 
-      toast.className = `
-        ${colors[options.type || 'info']}
-        text-white px-6 py-4 rounded-xl shadow-lg
-        transform translate-y-2 opacity-0
-        transition-all duration-300 ease-out
-        min-w-[300px] max-w-md
-        flex items-start gap-3
-      `;
+ toast.className = [
+ colors[type],
+ 'text-white px-6 py-4 rounded-sm shadow-lg',
+ 'transform translate-y-2 opacity-0',
+ 'transition-all duration-300 ease-out',
+ 'min-w-[300px] max-w-md flex items-start gap-3',
+ ].join(' ');
 
-      toast.innerHTML = `
-        <span class="text-xl flex-shrink-0">${icons[options.type || 'info']}</span>
-        <div class="flex-1">
-          <p class="font-medium">${options.message}</p>
-          ${options.action ? `
-            <button class="mt-2 text-sm underline hover:no-underline opacity-90">
-              ${options.action.label}
-            </button>
-          ` : ''}
-        </div>
-        <button class="text-white/70 hover:text-white flex-shrink-0" onclick="this.parentElement.remove()">
-          ✕
-        </button>
-      `;
+ const iconSpan = document.createElement('span');
+ iconSpan.className = 'text-xl flex-shrink-0';
+ iconSpan.textContent = icons[type];
 
-      if (options.action) {
-        const actionBtn = toast.querySelector('button');
-        actionBtn?.addEventListener('click', options.action.onClick);
-      }
+ const contentDiv = document.createElement('div');
+ contentDiv.className = 'flex-1';
 
-      return toast;
-    }
+ const msgP = document.createElement('p');
+ msgP.className = 'font-medium';
+ msgP.textContent = options.message;
+ contentDiv.appendChild(msgP);
 
-    dismiss(toast: HTMLElement) {
-      toast.classList.add('translate-y-2', 'opacity-0');
-      setTimeout(() => {
-        toast.remove();
-        this.toasts.delete(toast);
-      }, 300);
-    }
+ if (options.action) {
+ const actionBtn = document.createElement('button');
+ actionBtn.className = 'mt-2 text-sm underline hover:no-underline opacity-90';
+ actionBtn.textContent = options.action.label;
+ actionBtn.addEventListener('click', options.action.onClick);
+ contentDiv.appendChild(actionBtn);
+ }
 
-    success(message: string, duration?: number) {
-      return this.show({ message, type: 'success', duration });
-    }
+ const closeBtn = document.createElement('button');
+ closeBtn.className = 'text-white/70 hover:text-white flex-shrink-0';
+ closeBtn.textContent = '✕';
+ closeBtn.addEventListener('click', () => toast.remove());
 
-    error(message: string, duration?: number) {
-      return this.show({ message, type: 'error', duration });
-    }
+ toast.appendChild(iconSpan); toast.appendChild(contentDiv); toast.appendChild(closeBtn);
+ return toast;
+ }
 
-    warning(message: string, duration?: number) {
-      return this.show({ message, type: 'warning', duration });
-    }
+ dismiss(toast: HTMLElement) {
+ toast.classList.add('translate-y-2', 'opacity-0');
+ setTimeout(() => {
+ toast.remove();
+ this.toasts.delete(toast);
+ }, 300);
+ }
 
-    info(message: string, duration?: number) {
-      return this.show({ message, type: 'info', duration });
-    }
-  }
+ success(message: string, duration?: number) {
+ return this.show({ message, type: 'success', ...(duration !== undefined ? { duration } : {}) });
+ }
 
-  // Global toast instance
-  (window as any).toast = new ToastManager();
+ error(message: string, duration?: number) {
+ return this.show({ message, type: 'error', ...(duration !== undefined ? { duration } : {}) });
+ }
+
+ warning(message: string, duration?: number) {
+ return this.show({ message, type: 'warning', ...(duration !== undefined ? { duration } : {}) });
+ }
+
+ info(message: string, duration?: number) {
+ return this.show({ message, type: 'info', ...(duration !== undefined ? { duration } : {}) });
+ }
+ }
+
+ // Global toast instance
+ (window as any).toast = new ToastManager();
 </script>

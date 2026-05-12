@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeErrorDetail, safeIntParam } from '../../../../lib/api';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 export const GET: APIRoute = async ({ locals, url }) => {
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
     });
   }
 
-  const limit = Math.min(200, Math.max(1, Number(url.searchParams.get('limit') || '100')));
+  const limit = safeIntParam(url.searchParams.get('limit'), 100, 1, 200);
   try {
     const result = await query(
       `SELECT id, setting_key, action, actor_user_id, actor_email, ip_address, metadata, created_at
@@ -42,7 +42,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
     return problemJson({
       status: 500,
       title: 'Anti-Spam Eventleri Alınamadı',
-      detail: error instanceof Error ? error.message : 'antispam_events_failed',
+      detail: safeErrorDetail(error, 'antispam_events_failed'),
       type: '/problems/admin-reviews-antispam-events-failed',
       instance: '/api/admin/reviews/antispam-events',
     });

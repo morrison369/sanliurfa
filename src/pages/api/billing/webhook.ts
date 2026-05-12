@@ -19,7 +19,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Verify webhook signature
-    const event = verifyWebhookSignature(body, signature);
+    const event = await verifyWebhookSignature(body, signature);
 
     if (!event) {
       logger.warn('Webhook signature verification failed');

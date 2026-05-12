@@ -1,0 +1,191 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+let reservations: any[] = [];
+let totalCount = 0;
+
+const statusFilter = Astro.url.searchParams.get('status') || '';
+const dateFilter = Astro.url.searchParams.get('date') || '';
+
+try {
+ let sql = `
+ SELECT r.id, r.customer_name, r.customer_phone, r.customer_email,
+ r.reservation_date, r.reservation_time, r.party_size,
+ r.status, r.special_requests, r.occasion, r.created_at,
+ p.name as place_name, p.slug as place_slug
+ FROM reservations r
+ JOIN places p ON r.place_id = p.id
+ WHERE 1=1
+ `;
+ const params: unknown[] = [];
+ let i = 1;
+
+ if (statusFilter) {
+ sql += ` AND r.status = $${i++}`;
+ params.push(statusFilter);
+ }
+ if (dateFilter) {
+ sql += ` AND r.reservation_date = $${i++}`;
+ params.push(dateFilter);
+ }
+
+ sql += ` ORDER BY r.created_at DESC LIMIT 100`;
+
+ const result = await query(sql, params);
+ reservations = result.rows;
+ totalCount = reservations.length;
+} catch (e) {
+ logger.error('Reservations admin query failed', e instanceof Error ? e : new Error(String(e)));
+}
+
+const statusLabels: Record<string, string> = {
+ pending: 'Bekliyor',
+ confirmed: 'Onaylandı',
+ cancelled: 'İptal',
+ completed: 'Tamamlandı',
+ no_show: 'Gelmedi',
+};
+
+const statusColors: Record<string, string> = {
+ pending: 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]',
+ confirmed: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]',
+ cancelled: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]',
+ completed: 'bg-[rgba(184,115,51,0.12)] text-[#7A6B58]',
+ no_show: 'bg-[rgba(184,115,51,0.04)] text-[#7A6B58]',
+};
+
+---
+
+<AdminLayout
+ title="Rezervasyon Yönetimi"
+ subtitle={`${totalCount} rezervasyon`}
+ seo={{ title: 'Rezervasyon Yönetimi - Admin', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-6xl space-y-5">
+ <div class="mb-2">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ </div>
+
+ <form method="get" class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4 shadow-sm flex gap-3 flex-wrap">
+ <select name="status" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm">
+ <option value="">Tüm Durumlar</option>
+ {Object.entries(statusLabels).map(([val, label]) => (
+ <option value={val} selected={statusFilter === val}>{label}</option>
+ ))}
+ </select>
+ <input
+ type="date"
+ name="date"
+ value={dateFilter}
+ class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm"
+ />
+ <button type="submit" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+ Filtrele
+ </button>
+ {(statusFilter || dateFilter) && (
+ <a href="/admin/reservations" class="rounded-sm border border-[rgba(184,115,51,0.14)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">
+ Temizle
+ </a>
+ )}
+ </form>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ {reservations.length === 0 ? (
+ <div class="p-12 text-center text-[#7A6B58] text-sm">Rezervasyon bulunamadı.</div>
+ ) : (
+ <div class="overflow-x-auto">
+ <table class="w-full text-sm">
+ <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <tr>
+ <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Müşteri</th>
+ <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Mekan</th>
+ <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Tarih / Saat</th>
+ <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Kişi</th>
+ <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Durum</th>
+ <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">İşlem</th>
+ </tr>
+ </thead>
+ <tbody>
+ {reservations.map(r => (
+ <tr class="border-b border-[rgba(184,115,51,0.08)] last:border-0 hover:bg-[rgba(184,115,51,0.04)]">
+ <td class="py-3 px-4">
+ <div class="font-medium text-[#1F1410]">{r.customer_name}</div>
+ <div class="text-xs text-[#7A6B58]">{r.customer_phone}</div>
+ </td>
+ <td class="py-3 px-4">
+ <a href={`/isletme/${r.place_slug}`} target="_blank" rel="noopener" class="text-urfa-600 hover:underline">
+ {r.place_name}
+ </a>
+ </td>
+ <td class="py-3 px-4 text-[#7A6B58]">
+ <div>{new Date(r.reservation_date).toLocaleDateString('tr-TR')}</div>
+ <div class="text-xs text-[#7A6B58]">{r.reservation_time}</div>
+ </td>
+ <td class="py-3 px-4 text-[#7A6B58]">{r.party_size} kişi</td>
+ <td class="py-3 px-4">
+ <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${statusColors[r.status] || 'bg-[rgba(184,115,51,0.04)] text-[#7A6B58]'}`}>
+ {statusLabels[r.status] || r.status}
+ </span>
+ </td>
+ <td class="py-3 px-4">
+ <div class="flex gap-1" data-reservation-id={r.id} data-current-status={r.status}>
+ {r.status === 'pending' && (
+ <>
+ <button
+ class="confirm-btn px-2 py-1 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] rounded-sm text-xs hover:bg-[rgba(184,115,51,0.2)]"
+ data-id={r.id}
+ >
+ Onayla
+ </button>
+ <button
+ class="cancel-btn px-2 py-1 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] rounded-sm text-xs hover:bg-[rgba(184,115,51,0.12)]"
+ data-id={r.id}
+ >
+ İptal
+ </button>
+ </>
+ )}
+ {r.status === 'confirmed' && (
+ <button
+ class="cancel-btn px-2 py-1 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] rounded-sm text-xs hover:bg-[rgba(184,115,51,0.12)]"
+ data-id={r.id}
+ >
+ İptal
+ </button>
+ )}
+ </div>
+ </td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ </div>
+ )}
+ </div>
+ </div>
+</AdminLayout>
+
+<script is:inline>
+ async function updateStatus(id, status) {
+ const res = await fetch(`/api/reservations/${id}`, {
+ method: 'PUT',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ status }),
+ });
+ if (res.ok) {
+ location.reload();
+ } else {
+ window.toast?.error('İşlem başarısız oldu.');
+ }
+ }
+
+ document.querySelectorAll('.confirm-btn').forEach(btn => {
+ btn.addEventListener('click', () => updateStatus(btn.dataset.id, 'confirmed'));
+ });
+
+ document.querySelectorAll('.cancel-btn').forEach(btn => {
+ btn.addEventListener('click', () => updateStatus(btn.dataset.id, 'cancelled'));
+ });
+</script>

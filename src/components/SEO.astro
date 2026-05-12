@@ -1,52 +1,78 @@
 ---
 import { getSiteSetting } from '../lib/site-content';
+import { resolveSeoOgImage } from '../lib/seo-image';
 
 interface Props {
-  title: string;
-  description?: string;
-  canonical?: string;
-  ogImage?: string;
-  noIndex?: boolean;
-  noFollow?: boolean;
-  keywords?: string[];
-  author?: string;
-  publishedTime?: string;
-  modifiedTime?: string;
-  type?: 'website' | 'article';
+ title: string;
+ description?: string;
+ canonical?: string;
+ ogImage?: string;
+ noIndex?: boolean;
+ noFollow?: boolean;
+ keywords?: string[];
+ author?: string;
+ publishedTime?: string;
+ modifiedTime?: string;
+ type?: 'website' | 'article';
 }
 
+const SANLIURFA_DEFAULT_DESCRIPTION = 'Şanlıurfa şehir rehberi: mekanlar, kebapçılar, oteller, hastaneler, gezilecek yerler, etkinlikler ve günlük yaşam — Sanliurfa.com.';
+const SANLIURFA_DEFAULT_KEYWORDS = [
+ 'Şanlıurfa', 'Şanlıurfa rehberi', 'Şanlıurfa mekanlar',
+ 'Şanlıurfa kebap', 'Şanlıurfa otel', 'Göbeklitepe', 'Balıklıgöl',
+ 'Harran', 'Halfeti', 'Şanlıurfa gezi', 'Şanlıurfa nöbetçi eczane',
+ 'Şanlıurfa otobüs saatleri', 'Şanlıurfa etkinlikler',
+];
+
 const {
-  title,
-  description = '',
-  canonical,
-  ogImage = '/og-image.png',
-  noIndex = false,
-  noFollow = false,
-  keywords = [],
-  author = 'Sanliurfa.com',
-  publishedTime,
-  modifiedTime,
-  type = 'website',
+ title,
+ description = SANLIURFA_DEFAULT_DESCRIPTION,
+ canonical,
+ ogImage = '/og-image.png',
+ noIndex = false,
+ noFollow = false,
+ keywords = SANLIURFA_DEFAULT_KEYWORDS,
+ author = 'Sanliurfa.com',
+ publishedTime,
+ modifiedTime,
+ type = 'website',
 } = Astro.props;
 
+// Şanlıurfa odak garanti: title'da yoksa hiç değişme, description sayfa-spesifik gelmediyse genel kullan
+const finalDescription = description && description.length > 0
+ ? (description.includes('Şanlıurfa') ? description : `${description} — Şanlıurfa şehir rehberi.`)
+ : SANLIURFA_DEFAULT_DESCRIPTION;
+const mergedKeywords = keywords.length > 0
+ ? (keywords.some(k => k.toLowerCase().includes('şanlıurfa') || k.toLowerCase().includes('sanliurfa'))
+    ? keywords
+    : [...keywords, 'Şanlıurfa', 'Sanliurfa.com'])
+ : SANLIURFA_DEFAULT_KEYWORDS;
+
 const homepageSchemaFallback = {
-  siteName: 'Sanliurfa.com',
-  baseUrl: 'https://sanliurfa.com',
+ siteName: 'Sanliurfa.com',
+ baseUrl: 'https://sanliurfa.com',
 };
 const homepageSchema = await getSiteSetting('homepage.schema', homepageSchemaFallback);
 const siteName = String((homepageSchema as any)?.siteName || homepageSchemaFallback.siteName);
 const siteUrl = String((homepageSchema as any)?.baseUrl || import.meta.env.SITE_URL || homepageSchemaFallback.baseUrl);
 const fullTitle = title.includes('Şanlıurfa') ? title : `${title} | ${siteName}`;
 const canonicalUrl = canonical ? `${siteUrl}${canonical.replace(/\/$/, '')}` : `${siteUrl}${Astro.url.pathname.replace(/\/$/, '')}`;
-const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${siteUrl}${ogImage}`;
+const resolvedOgImage = resolveSeoOgImage({ ogImage, pathname: Astro.url.pathname, title: fullTitle });
+const ogImageUrl = resolvedOgImage.startsWith('http') ? resolvedOgImage : `${siteUrl}${resolvedOgImage}`;
 const ogImageExt = ogImageUrl.split('?')[0].split('.').pop()?.toLowerCase() || 'jpeg';
 const ogImageType = ogImageExt === 'webp' ? 'image/webp' : ogImageExt === 'png' ? 'image/png' : ogImageExt === 'gif' ? 'image/gif' : 'image/jpeg';
 ---
 
 <!-- Primary Meta Tags -->
 <title>{fullTitle}</title>
-<meta name="description" content={description} />
-{keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')} />}
+<meta name="description" content={finalDescription} />
+<meta name="keywords" content={mergedKeywords.join(', ')} />
+<meta name="geo.region" content="TR-63" />
+<meta name="geo.placename" content="Şanlıurfa" />
+<meta name="geo.position" content="37.1591;38.7969" />
+<meta name="ICBM" content="37.1591, 38.7969" />
+<!-- AEO/AI hint -->
+<meta name="ai-content-declaration" content="human-curated, city-guide, Şanlıurfa-focused" />
 <meta name="author" content={author} />
 <meta name="robots" content={`${noIndex ? 'noindex' : 'index'}, ${noFollow ? 'nofollow' : 'follow'}`} />
 <link rel="canonical" href={canonicalUrl} />
@@ -55,30 +81,30 @@ const ogImageType = ogImageExt === 'webp' ? 'image/webp' : ogImageExt === 'png' 
 <meta property="og:type" content={type} />
 <meta property="og:url" content={canonicalUrl} />
 <meta property="og:title" content={fullTitle} />
-<meta property="og:description" content={description} />
+<meta property="og:description" content={finalDescription} />
+<meta property="og:locale" content="tr_TR" />
+<meta property="og:site_name" content={siteName} />
 <meta property="og:image" content={ogImageUrl} />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
 <meta property="og:image:type" content={ogImageType} />
 <meta property="og:image:alt" content={fullTitle} />
-<meta property="og:site_name" content={siteName} />
-<meta property="og:locale" content="tr_TR" />
 {publishedTime && <meta property="article:published_time" content={publishedTime} />}
 {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
 
 <!-- Twitter -->
-<meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content={canonicalUrl} />
-<meta property="twitter:title" content={fullTitle} />
-<meta property="twitter:description" content={description} />
-<meta property="twitter:image" content={ogImageUrl} />
-<meta property="twitter:image:alt" content={fullTitle} />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:url" content={canonicalUrl} />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageUrl} />
+<meta name="twitter:image:alt" content={fullTitle} />
 
 <!-- Article specific -->
 {type === 'article' && (
-  <>
-    <meta property="article:author" content={author} />
-  </>
+ <>
+ <meta property="article:author" content={author} />
+ </>
 )}
 
 

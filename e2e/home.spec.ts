@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+test.use({ viewport: { width: 1280, height: 720 } });
+
 test.describe('Homepage', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -11,7 +13,7 @@ test.describe('Homepage', () => {
 
     // Check main elements
     await expect(page.locator('header')).toBeVisible();
-    await expect(page.locator('main')).toBeVisible();
+    await expect(page.locator('#main-content')).toBeVisible();
     await expect(page.locator('footer')).toBeVisible();
   });
 
@@ -21,12 +23,11 @@ test.describe('Homepage', () => {
   });
 
   test('should have search functionality', async ({ page }) => {
-    const searchInput = page.locator('form[action="/arama"] input[name="q"]').first();
-    await expect(searchInput).toBeVisible();
-    
-    await searchInput.fill('Göbeklitepe');
-    await searchInput.press('Enter');
-    
+    const searchLink = page.locator('header a[aria-label="Ara"]').first();
+    await expect(searchLink).toBeVisible();
+
+    await searchLink.click();
+
     await expect(page).toHaveURL(/arama/);
   });
 
@@ -39,6 +40,18 @@ test.describe('Homepage', () => {
     // Test desktop viewport
     await page.setViewportSize({ width: 1280, height: 720 });
     await expect(mobileMenu).toBeHidden();
+  });
+
+  test('should match desktop homepage visual baseline', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 2200 });
+    await page.goto('/');
+    await expect(page).toHaveScreenshot('home-desktop.png', { fullPage: true });
+  });
+
+  test('should match mobile homepage visual baseline', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 1900 });
+    await page.goto('/');
+    await expect(page).toHaveScreenshot('home-mobile.png', { fullPage: true });
   });
 });
 

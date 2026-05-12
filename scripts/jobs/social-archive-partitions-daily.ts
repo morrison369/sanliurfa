@@ -53,7 +53,7 @@ async function main() {
       'Social archive partition daily wrapper son çalışma özeti',
     );
 
-    const adminEmail = (process.env.ADMIN_EMAIL || process.env.FROM_EMAIL || '').trim();
+    const adminEmail = (process.env.ADMIN_EMAIL || process.env.EMAIL_FROM || '').trim();
     if (adminEmail) {
       await sendEmail({
         to: adminEmail,

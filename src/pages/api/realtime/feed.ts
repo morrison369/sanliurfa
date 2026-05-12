@@ -17,12 +17,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
   logger.info('Real-time feed connection established', { userId: user.id });
   const closeAfterInitial = new URL(request.url).searchParams.get('once') === '1';
 
-  // SSE headers
+  // SSE headers — no CORS wildcard; same-origin SSE only (HARD RULE #34)
   const headers = {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*'
   };
 
   let isClosed = false;
@@ -86,7 +85,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
                            WHERE f.follower_id = $1
                              AND ua.created_at > NOW() - INTERVAL '1 hour'`;
 
-              const params: any[] = [user.id];
+              const params: unknown[] = [user.id];
 
               if (lastActivityId) {
                 query += ` AND ua.id > $${params.length + 1}`;

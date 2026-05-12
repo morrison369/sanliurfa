@@ -5,9 +5,78 @@
 import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 
-export async function getModerationQueue(status: string = 'pending', limit: number = 20, offset: number = 0): Promise<any[]> {
+type JsonObject = Record<string, unknown>;
+
+interface ModerationQueueItem {
+  id: string;
+  queue_type: string;
+  item_type: string;
+  item_id: string;
+  priority: number | string;
+  reason: string | null;
+  submitted_count: number | string | null;
+  last_reported_at: string | null;
+  assigned_to_admin_id: string | null;
+  status: string;
+  created_at: string;
+  assigned_admin_email?: string | null;
+}
+
+interface ContentFlagRow {
+  id: string;
+  content_type: string;
+  content_id: string;
+  flagged_by_user_id: string | null;
+  flag_reason: string | null;
+  flag_description: string | null;
+  flag_severity: string;
+  status: string;
+  reviewed_by_admin_id: string | null;
+  review_notes: string | null;
+  created_at: string;
+  reporter_email?: string | null;
+  reviewer_email?: string | null;
+}
+
+interface ModerationActionRow {
+  id: string;
+  admin_id: string;
+  action_type: string;
+  target_type: string;
+  target_id: string;
+  action_reason: string | null;
+  status: string;
+  duration_hours: number | null;
+  is_permanent: boolean;
+  expires_at: string | null;
+  created_at: string;
+  admin_email?: string | null;
+}
+
+interface ModerationStats {
+  queue: { pending: number; inReview: number; resolved: number };
+  flags: { pending: number; resolved: number; highSeverity: number };
+  actions: { warnings: number; suspensions: number; bans: number; total: number };
+}
+
+interface ContentFilterRule {
+  id: string;
+  rule_type: string;
+  pattern: string;
+  action: string;
+  severity: string;
+  is_active: boolean;
+  created_by_admin_id: string;
+  created_at?: string;
+}
+
+export async function getModerationQueue(
+  status: string = 'pending',
+  limit: number = 20,
+  offset: number = 0,
+): Promise<ModerationQueueItem[]> {
   try {
-    const items = await queryMany(`
+    const items = await queryMany<ModerationQueueItem>(`
       SELECT
         mq.id,
         mq.queue_type,
@@ -34,9 +103,13 @@ export async function getModerationQueue(status: string = 'pending', limit: numb
   }
 }
 
-export async function getContentFlags(status: string = 'pending', limit: number = 20, offset: number = 0): Promise<any[]> {
+export async function getContentFlags(
+  status: string = 'pending',
+  limit: number = 20,
+  offset: number = 0,
+): Promise<ContentFlagRow[]> {
   try {
-    const flags = await queryMany(`
+    const flags = await queryMany<ContentFlagRow>(`
       SELECT
         cf.id,
         cf.content_type,
@@ -116,7 +189,7 @@ export async function createModerationAction(
   targetType: string,
   targetId: string,
   reason: string,
-  details?: any,
+  details?: JsonObject,
   durationHours?: number
 ): Promise<string> {
   try {
@@ -146,9 +219,13 @@ export async function createModerationAction(
   }
 }
 
-export async function getModerationActions(targetId?: string, status: string = 'active', limit: number = 20): Promise<any[]> {
+export async function getModerationActions(
+  targetId?: string,
+  status: string = 'active',
+  limit: number = 20,
+): Promise<ModerationActionRow[]> {
   try {
-    let query = `
+    let sql = `
       SELECT
         ma.id,
         ma.admin_id,
@@ -166,17 +243,17 @@ export async function getModerationActions(targetId?: string, status: string = '
       LEFT JOIN users u ON ma.admin_id = u.id
       WHERE ma.status = $1
     `;
-    const params: any[] = [status];
+    const params: unknown[] = [status];
 
     if (targetId) {
-      query += ` AND ma.target_id = $${params.length + 1}`;
+      sql += ` AND ma.target_id = $${params.length + 1}`;
       params.push(targetId);
     }
 
-    query += ` ORDER BY ma.created_at DESC LIMIT $${params.length + 1}`;
+    sql += ` ORDER BY ma.created_at DESC LIMIT $${params.length + 1}`;
     params.push(limit);
 
-    const actions = await queryMany(query, params);
+    const actions = await queryMany<ModerationActionRow>(sql, params);
     return actions;
   } catch (error) {
     logger.error('Failed to get moderation actions', error instanceof Error ? error : new Error(String(error)));
@@ -184,7 +261,7 @@ export async function getModerationActions(targetId?: string, status: string = '
   }
 }
 
-export async function getModerationStats(): Promise<any> {
+export async function getModerationStats(): Promise<ModerationStats | null> {
   try {
     const [queueStats, flagStats, actionStats] = await Promise.all([
       queryOne(`
@@ -215,20 +292,20 @@ export async function getModerationStats(): Promise<any> {
 
     return {
       queue: {
-        pending: parseInt(queueStats?.pending || '0'),
-        inReview: parseInt(queueStats?.in_review || '0'),
-        resolved: parseInt(queueStats?.resolved || '0')
+        pending: parseInt(queueStats?.pending || '0', 10),
+        inReview: parseInt(queueStats?.in_review || '0', 10),
+        resolved: parseInt(queueStats?.resolved || '0', 10)
       },
       flags: {
-        pending: parseInt(flagStats?.pending || '0'),
-        resolved: parseInt(flagStats?.resolved || '0'),
-        highSeverity: parseInt(flagStats?.high_severity || '0')
+        pending: parseInt(flagStats?.pending || '0', 10),
+        resolved: parseInt(flagStats?.resolved || '0', 10),
+        highSeverity: parseInt(flagStats?.high_severity || '0', 10)
       },
       actions: {
-        warnings: parseInt(actionStats?.warnings || '0'),
-        suspensions: parseInt(actionStats?.suspensions || '0'),
-        bans: parseInt(actionStats?.bans || '0'),
-        total: parseInt(actionStats?.total || '0')
+        warnings: parseInt(actionStats?.warnings || '0', 10),
+        suspensions: parseInt(actionStats?.suspensions || '0', 10),
+        bans: parseInt(actionStats?.bans || '0', 10),
+        total: parseInt(actionStats?.total || '0', 10)
       }
     };
   } catch (error) {
@@ -256,9 +333,9 @@ export async function addContentFilterRule(ruleType: string, pattern: string, ac
   }
 }
 
-export async function getContentFilterRules(isActive: boolean = true): Promise<any[]> {
+export async function getContentFilterRules(isActive: boolean = true): Promise<ContentFilterRule[]> {
   try {
-    const rules = await queryMany(`
+    const rules = await queryMany<ContentFilterRule>(`
       SELECT * FROM content_filter_rules
       WHERE is_active = $1
       ORDER BY created_at DESC

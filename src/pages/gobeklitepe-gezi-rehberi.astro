@@ -1,0 +1,211 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { query } from '../lib/postgres';
+import { getCachedPublicRouteData } from '../lib/public-route-cache';
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
+const baseUrl = getPublicAppUrl();
+
+let places: any[] = [];
+let blogPosts: any[] = [];
+try {
+  const data = await getCachedPublicRouteData('page:guide:gobeklitepe-gezi', async () => {
+    const [placesResult, blogResult] = await Promise.all([
+      query(`
+        SELECT p.slug, p.name, p.address, p.rating, p.review_count, p.short_description
+        FROM places p
+        WHERE p.status = 'active' AND p.district_id = 1
+          AND (p.name ILIKE '%göbeklitepe%' OR p.name ILIKE '%tarihi%'
+            OR p.category_id IN (SELECT id FROM categories WHERE slug ILIKE '%oren%' OR slug ILIKE '%tarihi%' OR slug ILIKE '%turizm%'))
+        ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+        LIMIT 8
+      `),
+      query(`
+        SELECT slug, title FROM blog_posts
+        WHERE status = 'published' AND published_at <= CURRENT_DATE
+          AND (tags && ARRAY['göbeklitepe']::text[] OR title ILIKE '%göbeklitepe%')
+        ORDER BY published_at DESC LIMIT 5
+      `).catch(() => ({ rows: [] })),
+    ]);
+    return { places: placesResult.rows, blogPosts: blogResult.rows };
+  });
+  places = data.places;
+  blogPosts = data.blogPosts;
+} catch (e) {
+  logger.error('Göbeklitepe rehberi yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
+}
+
+const seo = {
+  title: "Göbeklitepe Gezi Rehberi 2026 | Bilet, Ulaşım, Ziyaret Saatleri",
+  description: "Göbeklitepe nasıl gidilir, bilet ücreti, ziyaret saatleri, rehberli tur bilgisi ve yakın çevre gezilecek yerler. Dünyanın en eski tapınağı için eksiksiz rehber.",
+  keywords: ['göbeklitepe gezi rehberi', 'göbeklitepe nasıl gidilir', 'göbeklitepe bilet', 'göbeklitepe ziyaret saatleri', 'göbeklitepe tur', 'gobeklitepe'],
+  ogImage: '/uploads/places/gobeklitepe-arkeoloji-muzesi.jpg',
+  canonical: '/gobeklitepe-gezi-rehberi',
+};
+
+const faqItems = [
+  { q: "Göbeklitepe'ye nasıl gidilir?", a: "Şanlıurfa şehir merkezinden Göbeklitepe'ye yaklaşık 18 km mesafe vardır. Taksi veya araçla Örencik köyü yönünde yaklaşık 25–30 dakikada ulaşılır. Şanlıurfa otogarından düzenli servis bulunmamakla birlikte tur şirketleri taşıma hizmeti sunmaktadır." },
+  { q: "Göbeklitepe bilet ücreti ne kadar, ziyaret saatleri nedir?", a: "Göbeklitepe'ye giriş ücretlidir; 2026 yılı için bilet fiyatları Türk Müzeler Kart ile indirimlidir. Yaz sezonu (Nisan–Ekim) 08:00–19:00, kış sezonu (Kasım–Mart) 08:00–17:00 saatleri arasında ziyarete açıktır. Resmi e-devlet veya biletix üzerinden önceden alınması önerilir." },
+  { q: "Göbeklitepe rehberli tur zorunlu mu?", a: "Göbeklitepe'de rehberli tur zorunlu değildir; sesli rehber cihazı site girişinde kiralanabilir. Ancak 12.000 yıllık tarihin daha iyi anlaşılması için sertifikalı rehberle tur şiddetle önerilir. Tur süresi genellikle 1,5–2 saattir." },
+  { q: "Göbeklitepe'de fotoğraf çekilebilir mi?", a: "Göbeklitepe'de fotoğraf çekmek serbesttir; yalnızca kapalı alanda flash kullanımı yasaktır. Drone çekimi özel izin gerektirir ve genellikle turistlere verilmemektedir." },
+  { q: "Göbeklitepe ziyareti sırasında nelere dikkat edilmeli?", a: "Göbeklitepe açık hava alanında bol yürüyüş yapılır; rahat ayakkabı ve güneş koruyucu zorunludur. Yaz aylarında öğlen saatlerinde sıcaklık 45°C'ye ulaşabilir; sabah erken veya akşam üstü ziyaret tavsiye edilir. Su yanında bulundurulmalı, korunmalı arkeolojik alana temas edilmemelidir." },
+];
+---
+
+<Layout seo={seo}>
+  <style is:inline>
+    .hr-hero{background:linear-gradient(135deg,#120a03 0%,#2a1505 50%,#120a03 100%);border-bottom:1px solid rgba(212,151,24,.2);padding:4rem 0 3rem}
+    .hr-eyebrow{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.14em;color:#D49718;margin-bottom:.75rem}
+    .hr-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.25rem);font-weight:700;color:#e8caa9;margin:0 0 1rem;line-height:1.15}
+    .hr-desc{font-size:1rem;color:rgba(232,202,169,.75);max-width:600px;line-height:1.65;margin-bottom:2rem}
+    .hr-badges{display:flex;flex-wrap:wrap;gap:.5rem}
+    .hr-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.4rem .85rem;background:rgba(212,151,24,.15);border:1px solid rgba(212,151,24,.3);color:#D49718;font-size:.78rem;font-weight:600;border-radius:999px}
+    .hr-body{background:#FBF6EC;padding:3rem 0 5rem}
+    .hr-grid{display:grid;gap:2.5rem}
+    @media(min-width:64rem){.hr-grid{grid-template-columns:2fr 1fr}}
+    .hr-section-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:700;color:#1F1410;margin:0 0 1.25rem;padding-bottom:.65rem;border-bottom:2px solid rgba(212,151,24,.2)}
+    .hr-places{display:flex;flex-direction:column;gap:.75rem}
+    .hr-place{display:flex;align-items:flex-start;gap:1rem;background:#fff;border:1px solid rgba(212,151,24,.15);padding:1rem 1.25rem;border-radius:8px;text-decoration:none;transition:border-color .15s,box-shadow .15s}
+    .hr-place:hover{border-color:#D49718;box-shadow:0 2px 8px rgba(212,151,24,.12)}
+    .hr-place-icon{width:2.5rem;height:2.5rem;background:rgba(212,151,24,.1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;margin-top:.1rem}
+    .hr-place-name{font-weight:700;color:#1F1410;font-size:.95rem;margin-bottom:.2rem}
+    .hr-place-desc{font-size:.8rem;color:#7A6448;line-height:1.4}
+    .hr-place-rating{font-size:.82rem;color:#C0571F;font-weight:700;white-space:nowrap;margin-left:auto;padding-left:.5rem}
+    .hr-tips{background:#fff;border:1px solid rgba(212,151,24,.15);border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+    .hr-tips-title{font-weight:700;color:#1F1410;margin-bottom:.85rem;font-size:.95rem}
+    .hr-tip{display:flex;align-items:flex-start;gap:.6rem;font-size:.85rem;color:#2C1810;line-height:1.5;margin-bottom:.6rem}
+    .hr-tip-dot{width:.4rem;height:.4rem;background:#D49718;border-radius:50%;flex-shrink:0;margin-top:.55rem}
+    .hr-faq{margin-top:2rem}
+    .hr-faq-item{border:1px solid rgba(212,151,24,.15);border-radius:8px;margin-bottom:.65rem;overflow:hidden;background:#fff}
+    .hr-faq-q{padding:1rem 1.25rem;font-weight:700;font-size:.9rem;color:#1F1410;cursor:default}
+    .hr-faq-a{padding:0 1.25rem 1rem;font-size:.85rem;color:#2C1810;line-height:1.6}
+    .hr-blog-links{display:flex;flex-direction:column;gap:.4rem;margin-top:.75rem}
+    .hr-blog-link{font-size:.85rem;color:#C0571F;text-decoration:none;padding:.4rem .6rem;border-radius:4px;transition:background .12s}
+    .hr-blog-link:hover{background:rgba(192,87,31,.08)}
+    .hr-highlight{background:linear-gradient(135deg,rgba(212,151,24,.08),rgba(212,151,24,.04));border:1px solid rgba(212,151,24,.2);border-radius:8px;padding:1.25rem 1.5rem;margin-bottom:1.5rem}
+    .hr-highlight-title{font-weight:700;color:#1F1410;font-size:.9rem;margin-bottom:.5rem}
+    .hr-highlight p{font-size:.85rem;color:#2C1810;line-height:1.6;margin:0}
+  </style>
+
+  <div class="hr-hero">
+    <div class="sf-container">
+      <p class="hr-eyebrow">Şanlıurfa Gezi Rehberi</p>
+      <h1 class="hr-h1">Göbeklitepe Gezi Rehberi 2026</h1>
+      <p class="hr-desc">
+        Tarih öncesi dönemden kalma dünyanın en eski tapınağı, UNESCO Dünya Mirası. Bilet, ziyaret
+        saatleri, ulaşım ve yakın çevre gezilecek yerler için eksiksiz rehber.
+      </p>
+      <div class="hr-badges">
+        <span class="hr-badge">🏛️ UNESCO Mirası</span>
+        <span class="hr-badge">⛏️ 12.000 Yıllık</span>
+        <span class="hr-badge">🎟️ Biletli Giriş</span>
+        <span class="hr-badge">👁️ Açık Hava Müzesi</span>
+        <span class="hr-badge">18 km / 25 dk</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hr-body">
+    <div class="sf-container">
+      <div class="hr-grid">
+        <div>
+          <div class="hr-highlight">
+            <div class="hr-highlight-title">ℹ️ Göbeklitepe Hakkında</div>
+            <p>MÖ 10.000 yılına tarihlenen Göbeklitepe, insanlık tarihinin bilinen en eski tapınak kompleksidir. Neolitik Çağ'a ait T biçimli dikili taşlar (stelae) ve hayvan kabartmalarıyla dolu bu alan, 2018'de UNESCO Dünya Mirası Listesi'ne alınmıştır. Şanlıurfa'nın yaklaşık 18 km kuzeydoğusunda yer alır.</p>
+          </div>
+
+          <h2 class="hr-section-title">Yakın Çevre Mekanlar</h2>
+          {places.length > 0 ? (
+            <div class="hr-places">
+              {places.map((p: any) => (
+                <a href={`/isletme/${p.slug}`} class="hr-place">
+                  <div class="hr-place-icon">📍</div>
+                  <div style="flex:1">
+                    <div class="hr-place-name">{p.name}</div>
+                    {p.short_description && <div class="hr-place-desc">{p.short_description}</div>}
+                  </div>
+                  {p.rating && <div class="hr-place-rating">★ {p.rating}</div>}
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p style="color:#7A6448;font-size:.9rem">Mekanlar yükleniyor…</p>
+          )}
+
+          <div class="hr-faq" style="margin-top:2.5rem">
+            <h2 class="hr-section-title">Sık Sorulan Sorular</h2>
+            {faqItems.map((item) => (
+              <div class="hr-faq-item">
+                <div class="hr-faq-q">{item.q}</div>
+                <div class="hr-faq-a">{item.a}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <aside>
+          <div class="hr-tips">
+            <div class="hr-tips-title">💡 Pratik Bilgiler</div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Mesafe:</strong> Şanlıurfa merkezden 18 km, ~25–30 dk</span></div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Yaz saatleri:</strong> Nisan–Ekim, 08:00–19:00</span></div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Kış saatleri:</strong> Kasım–Mart, 08:00–17:00</span></div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Bilet:</strong> Müzekart geçerli; online alım önerilir</span></div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Ziyaret süresi:</strong> 1,5–2 saat (rehberli tura dahil)</span></div>
+            <div class="hr-tip"><span class="hr-tip-dot"></span><span><strong>Combo:</strong> Göbeklitepe + Şanlıurfa Müzesi aynı günde yapılabilir</span></div>
+          </div>
+
+          {blogPosts.length > 0 && (
+            <div class="hr-tips">
+              <div class="hr-tips-title">📖 İlgili Rehber Yazılar</div>
+              <div class="hr-blog-links">
+                {blogPosts.map((p: any) => (
+                  <a href={`/blog/${p.slug}`} class="hr-blog-link">{p.title}</a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div class="hr-tips">
+            <div class="hr-tips-title">🗺️ Yakın Güzergahlar</div>
+            <div class="hr-blog-links">
+              <a href="/halfeti-gezi-rehberi" class="hr-blog-link">Halfeti — Tekne Turu</a>
+              <a href="/harran-gezi-rehberi" class="hr-blog-link">Harran — Kümbet Evler</a>
+              <a href="/tarihi-yerler" class="hr-blog-link">Tüm Tarihi Yerler</a>
+              <a href="/gezilecek-yerler" class="hr-blog-link">Gezilecek Tüm Yerler</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'TouristAttraction',
+    name: 'Göbeklitepe',
+    description: 'MÖ 10.000 yılına tarihlenen dünyanın en eski tapınak kompleksi. UNESCO Dünya Mirası. Şanlıurfa, Türkiye.',
+    url: `${baseUrl}/gobeklitepe-gezi-rehberi`,
+    touristType: ['Tarih', 'Arkeoloji', 'UNESCO'],
+    containedInPlace: { '@type': 'City', name: 'Şanlıurfa' },
+    isAccessibleForFree: false,
+    publicAccess: true,
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  })} is:inline />
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+      { '@type': 'ListItem', position: 2, name: 'Gezi Rehberleri', item: `${baseUrl}/blog` },
+      { '@type': 'ListItem', position: 3, name: 'Göbeklitepe Gezi Rehberi', item: `${baseUrl}/gobeklitepe-gezi-rehberi` },
+    ],
+  })} is:inline />
+</Layout>

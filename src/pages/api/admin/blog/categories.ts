@@ -5,7 +5,7 @@
 import type { APIRoute } from 'astro';
 import { requireRole } from '../../../../lib/auth';
 import { getCategories, createCategory } from '../../../../lib/blog/db';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, HttpStatus, problemJson, safeErrorDetail } from '../../../../lib/api';
 
 export const GET: APIRoute = async ({ request }) => {
   try {
@@ -22,15 +22,12 @@ export const GET: APIRoute = async ({ request }) => {
 
     const categories = await getCategories();
     
-    return new Response(JSON.stringify({ categories }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse({ categories }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Kategori Listesi Alınamadı',
-      detail: error instanceof Error ? error.message : 'Kategoriler alınamadı',
+      detail: safeErrorDetail(error, 'Kategoriler alınamadı'),
       type: '/problems/admin-blog-categories-get-failed',
       instance: '/api/admin/blog/categories',
     });
@@ -62,6 +59,26 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    if (typeof body.name !== 'string' || body.name.length > 200) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'İsim 200 karakterden uzun olamaz', type: '/problems/admin-blog-categories-validation', instance: '/api/admin/blog/categories' });
+    if (typeof body.slug !== 'string' || body.slug.length > 100) return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'Slug 100 karakterden uzun olamaz', type: '/problems/admin-blog-categories-validation', instance: '/api/admin/blog/categories' });
+    if (body.description !== undefined && body.description !== null && (typeof body.description !== 'string' || body.description.length > 500)) {
+      return problemJson({
+        status: 422,
+        title: 'Çok Uzun',
+        detail: 'Açıklama 500 karakteri aşamaz',
+        type: '/problems/admin-blog-categories-validation',
+        instance: '/api/admin/blog/categories',
+      });
+    }
+    if (body.color !== undefined && body.color !== null && (typeof body.color !== 'string' || body.color.length > 50)) {
+      return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'color 50 karakterden uzun olamaz', type: '/problems/admin-blog-categories-validation', instance: '/api/admin/blog/categories' });
+    }
+    if (body.icon !== undefined && body.icon !== null && (typeof body.icon !== 'string' || body.icon.length > 100)) {
+      return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'icon 100 karakterden uzun olamaz', type: '/problems/admin-blog-categories-validation', instance: '/api/admin/blog/categories' });
+    }
+    const sortOrderRaw = Number(body.sort_order ?? 0);
+    const sortOrder = Number.isFinite(sortOrderRaw) ? Math.floor(sortOrderRaw) : 0;
+
     const category = await createCategory({
       slug: body.slug,
       name: body.name,
@@ -69,19 +86,16 @@ export const POST: APIRoute = async ({ request }) => {
       color: body.color,
       icon: body.icon,
       parent_id: body.parent_id,
-      sort_order: body.sort_order || 0,
+      sort_order: sortOrder,
       is_active: body.is_active !== false,
     });
 
-    return new Response(JSON.stringify({ success: true, category }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse({ success: true, category }, HttpStatus.CREATED);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Kategori Oluşturulamadı',
-      detail: error instanceof Error ? error.message : 'Kategori oluşturulamadı',
+      detail: safeErrorDetail(error, 'Kategori oluşturulamadı'),
       type: '/problems/admin-blog-categories-create-failed',
       instance: '/api/admin/blog/categories',
     });

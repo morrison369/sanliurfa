@@ -3,8 +3,9 @@
  * Dynamic feature toggling for gradual rollouts and A/B testing
  */
 
+import { createHash } from 'node:crypto';
 import { query } from '../postgres';
-import { getRedisClient } from '../cache';
+import { getRedisClient, prefixKey } from '../cache';
 import { logger } from '../logging';
 
 export interface FeatureFlag {
@@ -27,7 +28,7 @@ export interface UserContext {
 
 class FeatureFlagManager {
   private flags: Map<string, FeatureFlag> = new Map();
-  private cacheKey = 'feature_flags';
+  private cacheKey = prefixKey('feature_flags');
   private cacheTTL = 300; // 5 minutes
 
   /**
@@ -37,9 +38,11 @@ class FeatureFlagManager {
     try {
       // Try Redis first
       const redis = await getRedisClient();
-      const cached = await redis.get(this.cacheKey);
-      
-      if (cached) {
+      const raw = await redis.get(this.cacheKey);
+
+      if (raw) {
+        // Redis 5+ get() returns `string | Buffer` — coerce for JSON.parse
+        const cached = typeof raw === 'string' ? raw : (raw as Buffer).toString();
         const flags = JSON.parse(cached);
         this.flags = new Map(Object.entries(flags));
         return;
@@ -59,8 +62,8 @@ class FeatureFlagManager {
           rolloutPercentage: row.rollout_percentage,
           allowedUsers: row.allowed_users || [],
           allowedGroups: row.allowed_groups || [],
-          startDate: row.start_date ? new Date(row.start_date) : undefined,
-          endDate: row.end_date ? new Date(row.end_date) : undefined,
+          ...(row.start_date ? { startDate: new Date(row.start_date) } : {}),
+          ...(row.end_date ? { endDate: new Date(row.end_date) } : {}),
           metadata: row.metadata || {},
         });
       }
@@ -100,9 +103,9 @@ class FeatureFlagManager {
       return false;
     }
 
-    // If no context, use rollout percentage only
+    // If no context, exclude from percentage rollout (no userId = no deterministic bucket)
     if (!context) {
-      return Math.random() * 100 < flag.rolloutPercentage;
+      return flag.rolloutPercentage >= 100;
     }
 
     // Check allowed users
@@ -117,14 +120,17 @@ class FeatureFlagManager {
       }
     }
 
-    // Use consistent hashing for rollout percentage
+    // Deterministic SHA-256 bucket for logged-in users (HARD RULE #49)
     if (context.userId) {
-      const hash = this.hashString(context.userId + flagName);
-      return (hash % 100) < flag.rolloutPercentage;
+      const bucket = parseInt(
+        createHash('sha256').update(`${context.userId}:${flagName}`).digest('hex').slice(0, 8),
+        16
+      ) % 100;
+      return bucket < flag.rolloutPercentage;
     }
 
-    // Fallback to random for anonymous users
-    return Math.random() * 100 < flag.rolloutPercentage;
+    // Anonymous users: exclude from percentage rollout
+    return false;
   }
 
   /**
@@ -199,18 +205,6 @@ class FeatureFlagManager {
     }
   }
 
-  /**
-   * Simple hash function for consistent user bucketing
-   */
-  private hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return Math.abs(hash);
-  }
 }
 
 // Singleton instance

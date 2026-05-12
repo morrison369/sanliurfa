@@ -12,14 +12,12 @@ import { logger } from '../../../../lib/logging';
 export const POST: APIRoute = async (context) => {
   try {
     if (!context.locals.user) {
-      return apiError(context, HttpStatus.UNAUTHORIZED, 'Authentication required');
+      return apiError('UNAUTHORIZED', 'Authentication required', HttpStatus.UNAUTHORIZED);
     }
 
     const { id } = context.params;
-    const body = await context.request.json();
-
     if (!id) {
-      return apiError(context, HttpStatus.BAD_REQUEST, 'Collection ID is required');
+      return apiError('VALIDATION_ERROR', 'Collection ID is required', HttpStatus.BAD_REQUEST);
     }
 
     // Check if already following
@@ -47,6 +45,6 @@ export const POST: APIRoute = async (context) => {
     return apiResponse({ success: true, message, following: !isFollowing }, HttpStatus.OK);
   } catch (error) {
     logger.error('Failed to toggle collection follow', error instanceof Error ? error : new Error(String(error)));
-    return apiError(context, HttpStatus.INTERNAL_SERVER_ERROR, 'Failed to toggle collection follow');
+    return apiError('INTERNAL_ERROR', 'Failed to toggle collection follow', HttpStatus.INTERNAL_SERVER_ERROR);
   }
 };

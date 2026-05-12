@@ -51,3 +51,25 @@ lighthouse-report.json
 # Temporary files
 *.tmp
 *.temp
+
+# Scripts: local secret file (real prod credentials, never commit)
+scripts/.env.scripts
+scripts/.env.scripts.local
+
+# Scripts: temporary working files (tmp-* prefix convention)
+scripts/tmp-*
+
+# Scripts: secret files (service account keys, OAuth credentials)
+scripts/sa-key.json
+scripts/*-key.json
+scripts/credentials.json
+scripts/*.credentials.json
+*-sa-key.json
+*-service-account*.json
+
+# Python cache (Claude hook scripts)
+scripts/__pycache__/
+
+# Memory & local-only paths
+memory/
+.claude/memory/

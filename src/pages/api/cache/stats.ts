@@ -9,7 +9,7 @@ interface CacheClearRequest {
 }
 
 export const GET: APIRoute = async ({ locals }) => {
-  if (!locals.isAdmin) {
+  if (locals.user?.role !== 'admin') {
     return problemJson({
       status: 403,
       title: 'Forbidden',
@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  if (!locals.isAdmin) {
+  if (locals.user?.role !== 'admin') {
     return problemJson({
       status: 403,
       title: 'Forbidden',
@@ -51,7 +51,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     if (type === 'image') {
       clearImageCache();
-    } else if (type === 'namespace' && namespace && Object.values(CACHE_NAMESPACES).includes(namespace as any)) {
+    } else if (type === 'namespace' && namespace && ( Object.values(CACHE_NAMESPACES) as string[]).includes(namespace)) {
       await clearNamespace(namespace);
     } else if (type === 'all') {
       clearImageCache();

@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getUserPoints, getPointsLeaderboard } from '../../../lib/points/points';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
 
     if (view === 'leaderboard') {
       // Get leaderboard
-      const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+      const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
       const leaderboard = await getPointsLeaderboard(limit);
 
       recordRequest('GET', '/api/points', HttpStatus.OK, Date.now() - startTime);

@@ -5,6 +5,9 @@ const includeBuild = process.argv.includes('--build');
 
 const steps = [
   ['npm', ['run', '-s', 'smoke:city-content:acceptance']],
+  ['npm', ['run', '-s', 'public:city:structure:gate']],
+  ['npm', ['run', '-s', 'public:theme:surface:gate']],
+  ['npm', ['run', '-s', 'docs:terminology:gate']],
   ['npm', ['run', '-s', 'smoke:city-content-agents']],
   ['npm', ['run', '-s', 'seo:geo:gate']],
   ['npx', ['astro', 'check', '--minimumFailingSeverity', 'error']],

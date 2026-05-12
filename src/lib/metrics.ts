@@ -1,4 +1,5 @@
 // API metrics and performance tracking
+import { logger } from './logging';
 
 /**
  * Request metric record
@@ -38,6 +39,13 @@ export interface SlowOperationMetric {
   timestamp: number;
   context?: Record<string, any>;
   stack?: string;
+}
+
+function withOptional<K extends string, V>(key: K, value: V | null | undefined): { [P in K]?: V } {
+  if (value === null || value === undefined) {
+    return {} as { [P in K]?: V };
+  }
+  return { [key]: value } as { [P in K]?: V };
 }
 
 /**
@@ -132,9 +140,9 @@ class MetricsCollector {
       duration,
       timestamp: Date.now(),
       isSlow,
-      rowCount,
-      error,
-      pool: poolName
+      ...withOptional('rowCount', rowCount),
+      ...withOptional('error', error),
+      ...withOptional('pool', poolName),
     });
   }
 
@@ -153,8 +161,8 @@ class MetricsCollector {
       message,
       duration,
       timestamp: Date.now(),
-      context,
-      stack: stack?.substring(0, 500) // Truncate stack trace
+      ...withOptional('context', context),
+      ...withOptional('stack', stack?.substring(0, 500)) // Truncate stack trace
     });
 
     // Keep only last 500 slow operations
@@ -185,7 +193,7 @@ class MetricsCollector {
     const removedQueries = beforeQueries - this.queryMetrics.length;
 
     if (removedRequests > 0 || removedQueries > 0) {
-      console.debug(`Metrics cleanup: removed ${removedRequests} request records, ${removedQueries} query records`);
+      logger.debug('Metrics cleanup', { removedRequests, removedQueries });
     }
 
     this.lastCleanup = now;
@@ -390,8 +398,8 @@ export function recordRequest(
     path,
     statusCode,
     duration,
-    cacheHit: options?.cacheHit,
-    error: options?.error
+    ...withOptional('cacheHit', options?.cacheHit),
+    ...withOptional('error', options?.error),
   });
 }
 

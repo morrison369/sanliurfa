@@ -1,15 +1,13 @@
 import type { APIRoute } from 'astro';
+import { apiResponse, safeErrorDetail } from '../../../../../lib/api';
 import { query } from '../../../../../lib/postgres';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  return locals?.user?.role === 'admin';
 }
 
 export const GET: APIRoute = async ({ locals }) => {
@@ -51,6 +49,6 @@ export const GET: APIRoute = async ({ locals }) => {
       },
     });
   } catch (error) {
-    return json({ success: false, error: error instanceof Error ? error.message : 'audit anomaly failed' }, 500);
+    return json({ success: false, error: safeErrorDetail(error, 'audit anomaly failed') }, 500);
   }
 };

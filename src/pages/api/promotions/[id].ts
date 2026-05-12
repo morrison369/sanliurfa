@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 export const PUT: APIRoute = async (context) => {
   try {
@@ -38,8 +38,10 @@ export const PUT: APIRoute = async (context) => {
 
     const promotion = promoResult.rows[0];
 
-    // Yetki kontrolu
-    if (auth.user.role === 'vendor') {
+    // Yetki: admin > vendor (sahip olduğu mekan) > diğer (yasak)
+    if (auth.user.role === 'admin') {
+      // admin tüm promosyonları güncelleyebilir
+    } else if (auth.user.role === 'vendor') {
       const placeCheck = await query(
         'SELECT id FROM places WHERE id = $1 AND owner_id = $2',
         [promotion.place_id, auth.user.id]
@@ -53,11 +55,25 @@ export const PUT: APIRoute = async (context) => {
           instance: `/api/promotions/${id}`,
         });
       }
+    } else {
+      return problemJson({
+        status: 403,
+        title: 'Forbidden',
+        detail: 'Sadece mekan sahibi veya admin promosyon güncelleyebilir',
+        type: '/problems/promotions-update-forbidden',
+        instance: `/api/promotions/${id}`,
+      });
     }
 
     const allowedFields = ['status', 'featured', 'title', 'description', 'end_date'];
+
+    if (body.title !== undefined && body.title !== null && (typeof body.title !== 'string' || body.title.length > 200)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Başlık 200 karakterden uzun olamaz', type: '/problems/promotions-update-title-too-long', instance: `/api/promotions/${id}` });
+    if (body.description !== undefined && body.description !== null && (typeof body.description !== 'string' || body.description.length > 5000)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Açıklama 5000 karakterden uzun olamaz', type: '/problems/promotions-update-description-too-long', instance: `/api/promotions/${id}` });
+    const VALID_PROMO_STATUSES = new Set(['active', 'draft', 'paused', 'expired', 'scheduled']);
+    if (body.status !== undefined && body.status !== null && (typeof body.status !== 'string' || !VALID_PROMO_STATUSES.has(body.status))) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Geçersiz promosyon durumu', type: '/problems/promotions-update-status-invalid', instance: `/api/promotions/${id}` });
+
     const updates: string[] = [];
-    const params: any[] = [];
+    const params: unknown[] = [];
     let paramIndex = 1;
 
     for (const [key, value] of Object.entries(body)) {
@@ -86,13 +102,10 @@ export const PUT: APIRoute = async (context) => {
       params
     );
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       promotion: result.rows[0]
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Update promotion error:', error);
@@ -123,13 +136,10 @@ export const DELETE: APIRoute = async (context) => {
 
     await query('DELETE FROM promotions WHERE id = $1', [id]);
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       message: 'Promotion deleted'
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Delete promotion error:', error);

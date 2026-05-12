@@ -1,162 +1,163 @@
 ---
-
 import Layout from '../layouts/Layout.astro';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../lib/public-app-url';
+
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'Gizlilik Politikası - Sanliurfa.com',
-  description: 'Sanliurfa.com gizlilik politikası ve kişisel verilerin korunması hakkında bilgiler.',
-  keywords: ['şanlıurfa.com gizlilik politikası', 'kişisel verilerin korunması', 'kvkk'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/gizlilik-politikasi',
+ title: 'Gizlilik Politikası — Sanliurfa.com',
+ description: 'Sanliurfa.com gizlilik politikası ve kişisel verilerin korunması hakkında bilgiler.',
+ keywords: ['şanlıurfa.com gizlilik politikası', 'kişisel verilerin korunması', 'kvkk'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/gizlilik-politikasi',
 };
 
 const lastUpdated = '1 Nisan 2025';
 const faqItems = [
-  { S: "Sanliurfa.com hangi kişisel verileri toplar?", C: "Ad, e-posta adresi, konum bilgisi ve kullanım verileri toplanabilmektedir. Detaylar için gizlilik politikamızı inceleyiniz." },
-  { S: "Kişisel verilerimi nasıl silebilirim?", C: "Hesap silme talebini profil ayarlarından veya iletişim formu üzerinden yapabilirsiniz." },
-  { S: "Verilerim üçüncü taraflarla paylaşılıyor mu?", C: "Sanliurfa.com, kişisel verilerinizi açık rızanız olmaksızın üçüncü taraflarla paylaşmaz." },
+ { S: "Sanliurfa.com hangi kişisel verileri toplar?", C: "Ad, e-posta adresi, konum bilgisi ve kullanım verileri toplanabilmektedir. Detaylar için gizlilik politikamızı inceleyiniz." },
+ { S: "Kişisel verilerimi nasıl silebilirim?", C: "Hesap silme talebini profil ayarlarından veya iletişim formu üzerinden yapabilirsiniz." },
+ { S: "Verilerim üçüncü taraflarla paylaşılıyor mu?", C: "Sanliurfa.com, kişisel verilerinizi açık rızanız olmaksızın üçüncü taraflarla paylaşmaz." },
 ];
-
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Page Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-12">
-        <h1 class="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white mb-4">
-          Gizlilik Politikası
-        </h1>
-        <p class="text-gray-600 dark:text-gray-400">
-          Son Güncelleme: {lastUpdated}
-        </p>
-      </div>
-    </div>
-    
-    <div class="container-custom py-12">
-      <div class="max-w-3xl mx-auto">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 md:p-12">
-          <div class="prose dark:prose-invert max-w-none">
-            <p class="lead">
-              Sanliurfa.com olarak kullanıcılarımızın gizliliğini ciddiye alıyoruz. Bu gizlilik politikası, 
-              kişisel verilerinizin nasıl toplandığını, kullanıldığını ve korunduğunu açıklamaktadır.
-            </p>
-            
-            <h2>1. Toplanan Bilgiler</h2>
-            <p>
-              Hizmetlerimizi kullanırken aşağıdaki bilgileri toplayabiliriz:
-            </p>
-            <ul>
-              <li><strong>Hesap Bilgileri:</strong> Ad, soyad, e-posta adresi, profil fotoğrafı</li>
-              <li><strong>Kullanım Verileri:</strong> Ziyaret ettiğiniz sayfalar, tıklamalar, arama sorguları</li>
-              <li><strong>Konum Bilgileri:</strong> IP adresi, tarayıcı bilgileri, cihaz bilgileri</li>
-              <li><strong>İletişim Bilgileri:</strong> Bize gönderdiğiniz mesajlar ve geri bildirimler</li>
-            </ul>
-            
-            <h2>2. Bilgilerin Kullanımı</h2>
-            <p>
-              Topladığımız bilgileri aşağıdaki amaçlarla kullanırız:
-            </p>
-            <ul>
-              <li>Hesabınızın oluşturulması ve yönetimi</li>
-              <li>Hizmetlerimizin iyileştirilmesi ve kişiselleştirilmesi</li>
-              <li>Güvenlik önlemlerinin uygulanması</li>
-              <li>Yasal yükümlülüklerin yerine getirilmesi</li>
-              <li>Pazarlama ve promosyon iletişimleri (izninizle)</li>
-            </ul>
-            
-            <h2>3. Çerezler (Cookies)</h2>
-            <p>
-              Sitemizde çerezler kullanılmaktadır. Çerezler, tarayıcınız tarafından saklanan küçük metin dosyalarıdır. 
-              Kullandığımız çerez türleri:
-            </p>
-            <ul>
-              <li><strong>Zorunlu Çerezler:</strong> Site'nin çalışması için gerekli</li>
-              <li><strong>Analitik Çerezler:</strong> Site kullanımını analiz etmek için</li>
-              <li><strong>İşlevsellik Çerezleri:</strong> Tercihlerinizi hatırlamak için</li>
-              <li><strong>Hedefleme Çerezleri:</strong> Size özel içerik sunmak için</li>
-            </ul>
-            
-            <h2>4. Veri Güvenliği</h2>
-            <p>
-              Kişisel verilerinizin güvenliğini sağlamak için endüstri standardı güvenlik önlemleri kullanıyoruz. 
-              Ancak, internet üzerinden hiçbir veri iletiminin %100 güvenli olmadığını lütfen unutmayın.
-            </p>
-            
-            <h2>5. Veri Paylaşımı</h2>
-            <p>
-              Kişisel verilerinizi üçüncü taraflarla paylaşmıyoruz, ancak aşağıdaki durumlar istisnadır:
-            </p>
-            <ul>
-              <li>Yasal zorunluluk durumunda</li>
-              <li>Hizmet sağlayıcılarımızla (analiz, barındırma vb.)</li>
-              <li>İş transferi veya birleşme durumunda</li>
-            </ul>
-            
-            <h2>6. Haklarınız</h2>
-            <p>
-              KVKK kapsamında aşağıdaki haklara sahipsiniz:
-            </p>
-            <ul>
-              <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme</li>
-              <li>Kişisel verileriniz düzeltilmesini, silinmesini veya yok edilmesini isteme</li>
-              <li>İşlenen verilerin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi nedeniyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme</li>
-              <li>Kişisel verilerinizin kanuna aykırı işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme</li>
-            </ul>
-            
-            <h2>7. İletişim</h2>
-            <p>
-              Gizlilik politikamız hakkında sorularınız için bize ulaşabilirsiniz:
-            </p>
-            <p>
-              <strong>E-posta:</strong> privacy@sanliurfa.com<br>
-              <strong>Adres:</strong> Haliliye, Şanlıurfa, Türkiye
-            </p>
-            
-            <h2>8. Değişiklikler</h2>
-            <p>
-              Bu gizlilik politikasını zaman zaman güncelleyebiliriz. Değişiklikler bu sayfada yayınlanacak ve 
-              önemli değişikliklerde e-posta ile bilgilendirileceksiniz.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+ <style is:inline>
+ .lp-hero{padding:3rem 0 2.5rem;border-bottom:1px solid rgba(184,115,51,.1)}
+ .lp-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.7rem,4vw,2.5rem);font-weight:600;color:var(--public-text);margin-bottom:.4rem}
+ .lp-date{font-size:.78rem;color:var(--public-text-soft)}
+ .lp-body{padding:2.5rem 0 5rem}
+ .lp-inner{max-width:680px;margin:0 auto}
+ .lp-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:2rem 2.25rem}
+ .lp-prose h2{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--public-text);margin:1.75rem 0 .6rem;padding-bottom:.4rem;border-bottom:1px solid rgba(184,115,51,.1)}
+ .lp-prose h2:first-child{margin-top:0}
+ .lp-prose p{font-size:.855rem;color:var(--public-muted);line-height:1.8;margin-bottom:.85rem}
+ .lp-prose p.lead{font-size:.9rem;color:var(--public-accent);line-height:1.75;margin-bottom:1.25rem}
+ .lp-prose ul{margin:.4rem 0 1rem 1.1rem;list-style:disc}
+ .lp-prose ul li{font-size:.855rem;color:var(--public-muted);line-height:1.7;margin-bottom:.3rem}
+ .lp-prose strong{color:var(--public-accent);font-weight:600}
+ .lp-prose br{display:block;content:'';margin-top:.25rem}
+ </style>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'WebPage',
-    name: 'Gizlilik Politikası',
-    url: `${baseUrl}/gizlilik-politikasi`,
-    description: 'Sanliurfa.com gizlilik politikası ve kişisel verilerin korunması hakkında bilgiler.',
-    dateModified: lastUpdated,
-    inLanguage: 'tr',
-    isPartOf: { '@type': 'WebSite', name: 'Sanliurfa.com', url: `${baseUrl}` },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Sanliurfa.com',
-      url: `${baseUrl}`,
-      logo: { '@type': 'ImageObject', url: `${baseUrl}/favicon.svg`, width: 200, height: 200 },
-    },
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Gizlilik Politikası', item: `${baseUrl}/gizlilik-politikasi` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <!-- Hero -->
+ <div class="lp-hero">
+ <div class="sf-container">
+ <h1 class="lp-h1">Gizlilik Politikası</h1>
+ <p class="lp-date">Son Güncelleme: {lastUpdated}</p>
+ </div>
+ </div>
+
+ <!-- Content -->
+ <div class="sf-container lp-body">
+ <div class="lp-inner">
+ <div class="lp-card">
+ <div class="lp-prose">
+ <p class="lead">
+ Sanliurfa.com olarak kullanıcılarımızın gizliliğini ciddiye alıyoruz. Bu gizlilik politikası,
+ kişisel verilerinizin nasıl toplandığını, kullanıldığını ve korunduğunu açıklamaktadır.
+ </p>
+
+ <h2>1. Toplanan Bilgiler</h2>
+ <p>Hizmetlerimizi kullanırken aşağıdaki bilgileri toplayabiliriz:</p>
+ <ul>
+ <li><strong>Hesap Bilgileri:</strong> Ad, soyad, e-posta adresi, profil fotoğrafı</li>
+ <li><strong>Kullanım Verileri:</strong> Ziyaret ettiğiniz sayfalar, tıklamalar, arama sorguları</li>
+ <li><strong>Konum Bilgileri:</strong> IP adresi, tarayıcı bilgileri, cihaz bilgileri</li>
+ <li><strong>İletişim Bilgileri:</strong> Bize gönderdiğiniz mesajlar ve geri bildirimler</li>
+ </ul>
+
+ <h2>2. Bilgilerin Kullanımı</h2>
+ <p>Topladığımız bilgileri aşağıdaki amaçlarla kullanırız:</p>
+ <ul>
+ <li>Hesabınızın oluşturulması ve yönetimi</li>
+ <li>Hizmetlerimizin iyileştirilmesi ve kişiselleştirilmesi</li>
+ <li>Güvenlik önlemlerinin uygulanması</li>
+ <li>Yasal yükümlülüklerin yerine getirilmesi</li>
+ <li>Pazarlama ve promosyon iletişimleri (izninizle)</li>
+ </ul>
+
+ <h2>3. Çerezler (Cookies)</h2>
+ <p>
+ Sitemizde çerezler kullanılmaktadır. Çerezler, tarayıcınız tarafından saklanan küçük metin dosyalarıdır.
+ Kullandığımız çerez türleri:
+ </p>
+ <ul>
+ <li><strong>Zorunlu Çerezler:</strong> Sitenin çalışması için gerekli</li>
+ <li><strong>Analitik Çerezler:</strong> Site kullanımını analiz etmek için</li>
+ <li><strong>İşlevsellik Çerezleri:</strong> Tercihlerinizi hatırlamak için</li>
+ <li><strong>Hedefleme Çerezleri:</strong> Size özel içerik sunmak için</li>
+ </ul>
+
+ <h2>4. Veri Güvenliği</h2>
+ <p>
+ Kişisel verilerinizin güvenliğini sağlamak için endüstri standardı güvenlik önlemleri kullanıyoruz.
+ Ancak, internet üzerinden hiçbir veri iletiminin %100 güvenli olmadığını lütfen unutmayın.
+ </p>
+
+ <h2>5. Veri Paylaşımı</h2>
+ <p>Kişisel verilerinizi üçüncü taraflarla paylaşmıyoruz, ancak aşağıdaki durumlar istisnadır:</p>
+ <ul>
+ <li>Yasal zorunluluk durumunda</li>
+ <li>Hizmet sağlayıcılarımızla (analiz, barındırma vb.)</li>
+ <li>İş transferi veya birleşme durumunda</li>
+ </ul>
+
+ <h2>6. Haklarınız</h2>
+ <p>KVKK kapsamında aşağıdaki haklara sahipsiniz:</p>
+ <ul>
+ <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme</li>
+ <li>Kişisel verilerinizin düzeltilmesini, silinmesini veya yok edilmesini isteme</li>
+ <li>İşlenen verilerin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi nedeniyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme</li>
+ <li>Kişisel verilerinizin kanuna aykırı işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme</li>
+ </ul>
+
+ <h2>7. İletişim</h2>
+ <p>Gizlilik politikamız hakkında sorularınız için bize ulaşabilirsiniz:</p>
+ <p>
+ <strong>E-posta:</strong> privacy@sanliurfa.com<br />
+ <strong>Adres:</strong> Haliliye, Şanlıurfa, Türkiye
+ </p>
+
+ <h2>8. Değişiklikler</h2>
+ <p>
+ Bu gizlilik politikasını zaman zaman güncelleyebiliriz. Değişiklikler bu sayfada yayınlanacak ve
+ önemli değişikliklerde e-posta ile bilgilendirileceksiniz.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'WebPage',
+ name: 'Gizlilik Politikası',
+ url: `${baseUrl}/gizlilik-politikasi`,
+ description: 'Sanliurfa.com gizlilik politikası ve kişisel verilerin korunması hakkında bilgiler.',
+ dateModified: lastUpdated,
+ inLanguage: 'tr',
+ isPartOf: { '@type': 'WebSite', name: 'Sanliurfa.com', url: baseUrl },
+ publisher: {
+ '@type': 'Organization',
+ name: 'Sanliurfa.com',
+ url: baseUrl,
+ logo: { '@type': 'ImageObject', url: `${baseUrl}/favicon.svg`, width: 200, height: 200 },
+ },
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Gizlilik Politikası', item: `${baseUrl}/gizlilik-politikasi` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

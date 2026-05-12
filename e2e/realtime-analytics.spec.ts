@@ -63,7 +63,8 @@ test.describe('Health & Observability', () => {
   test('GET /api/health - Basic health check', async ({ request }) => {
     const response = await request.get('/api/health');
     expect([200, 503]).toContain(response.status());
-    const data = await response.json();
+    const body = await response.json();
+    const data = body.data ?? body;
     expect(data).toHaveProperty('status');
     expect(data).toHaveProperty('services');
     expect(data.services).toHaveProperty('database');

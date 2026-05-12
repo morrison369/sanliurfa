@@ -83,7 +83,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       'show_followers'
     ];
 
-    const updates: any = {};
+    const updates: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (field in body) {
         if (typeof body[field] !== 'boolean') {

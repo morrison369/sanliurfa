@@ -1,0 +1,74 @@
+---
+/**
+ * RelatedPosts — Server Island
+ *
+ * "Benzer Yazılar" widget at the bottom of a blog post detail page.
+ * Used with `server:defer` so the article body streams without waiting on
+ * the related-posts category lookup.
+ *
+ * <RelatedPosts category={post.category} excludeSlug={post.slug} server:defer>
+ * <div slot="fallback" class="..." />
+ * </RelatedPosts>
+ */
+import { query } from '../../lib/postgres';
+import PublicRelatedGrid from '../public/PublicRelatedGrid.astro';
+import { resolveBlogImage } from '../../lib/public-image-resolvers';
+import { logger } from '../../lib/logging';
+
+interface Props {
+ category: string | null | undefined;
+ excludeSlug: string;
+}
+
+const { category, excludeSlug } = Astro.props;
+
+let relatedPosts: Array<{
+ id: string | number;
+ title: string;
+ slug: string;
+ excerpt: string | null;
+ featured_image: string | null;
+ category: string | null;
+ reading_time: number | null;
+ created_at: string;
+}> = [];
+
+if (category) {
+ try {
+ const result = await query(
+ "SELECT id, title, slug, excerpt, featured_image, category, reading_time, created_at FROM blog_posts WHERE status = 'published' AND category = $1 AND slug != $2 LIMIT 3",
+ [category, excludeSlug],
+ );
+ relatedPosts = result.rows;
+ } catch (e) {
+ logger.error('RelatedPosts query failed', e instanceof Error ? e : new Error(String(e)));
+ }
+}
+
+const getBlogImage = (entry: typeof relatedPosts[number]) =>
+ resolveBlogImage(
+  {
+   slug: entry?.slug,
+   featured_image: entry?.featured_image,
+  },
+  { thumb: true },
+ );
+---
+
+{relatedPosts.length > 0 && (
+ <div class="bg-[var(--bg)] py-12 border-t border-[rgba(184,115,51,0.14)]">
+  <div class="sf-container">
+   <PublicRelatedGrid
+    title="Benzer Yazılar"
+    items={relatedPosts.map((related) => ({
+     href: `/blog/${related.slug}`,
+     title: related.title,
+     description: related.excerpt || undefined,
+     imageSrc: getBlogImage(related),
+     imageAlt: related.title,
+     meta: related.reading_time ? `${related.reading_time} dk okuma` : undefined,
+    }))}
+   />
+  </div>
+ </div>
+)}

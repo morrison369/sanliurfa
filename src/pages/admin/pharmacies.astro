@@ -1,25 +1,17 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
 import PharmacyManager from '../../components/admin/PharmacyManager';
-
-if (!Astro.locals.isAdmin && Astro.locals.user?.role !== 'admin') {
-  return Astro.redirect('/giris?redirect=/admin/pharmacies');
-}
-
-const seo = {
-  title: 'Nöbetçi Eczane Yönetimi - Admin',
-  description: 'Günlük nöbetçi eczane ataması ve eczane yönetimi',
-  noIndex: true,
-};
 ---
 
-<Layout seo={seo}>
-  <div class="bg-gray-50 min-h-screen pt-24 pb-10">
-    <div class="container mx-auto px-4 max-w-5xl">
-      <div class="mb-6">
-        <a href="/admin" class="text-sm text-gray-500 hover:text-gray-700">← Admin Paneli</a>
-      </div>
-      <PharmacyManager client:idle />
-    </div>
-  </div>
-</Layout>
+<AdminLayout
+ title="Nöbetçi Eczane Yönetimi"
+ subtitle="Günlük nöbetçi eczane ataması ve eczane yönetimi"
+ seo={{ title: 'Nöbetçi Eczane Yönetimi - Admin', description: 'Günlük nöbetçi eczane ataması ve eczane yönetimi', noIndex: true }}
+>
+ <div class="sf-container py-8">
+ <div class="mb-6">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ </div>
+ <PharmacyManager client:idle />
+ </div>
+</AdminLayout>

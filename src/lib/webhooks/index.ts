@@ -5,6 +5,7 @@
 
 import { query } from '../postgres';
 import crypto from 'crypto';
+import { safeErrorDetail } from '../api';
 
 export interface Webhook {
   id: string;
@@ -85,7 +86,7 @@ export async function createWebhook(
       },
     };
   } catch (error) {
-    return { error: error instanceof Error ? error.message : 'Failed to create webhook' };
+    return { error: safeErrorDetail(error, 'Webhook oluşturulamadı') };
   }
 }
 
@@ -110,7 +111,7 @@ export async function getWebhooks(userId: string): Promise<Webhook[]> {
     status: row.status,
     retry_count: row.retry_count,
     created_at: new Date(row.created_at),
-    last_triggered: row.last_triggered ? new Date(row.last_triggered) : undefined,
+    ...(row.last_triggered ? { last_triggered: new Date(row.last_triggered) } : {}),
   }));
 }
 
@@ -180,6 +181,13 @@ async function deliverWebhook(
   const signature = createWebhookSignature(webhook.secret, payload, timestamp);
 
   try {
+    // Defense-in-depth SSRF check at fetch time.
+    const { validateExternalUrl } = await import('../security/safe-url');
+    const urlCheck = validateExternalUrl(webhook.url);
+    if (!urlCheck.ok) {
+      throw new Error(`unsafe_url:${urlCheck.reason}`);
+    }
+
     const response = await fetch(webhook.url, {
       method: 'POST',
       headers: {
@@ -274,11 +282,13 @@ export async function getWebhookDeliveries(
     webhook_id: row.webhook_id,
     event: row.event,
     payload: row.payload,
-    response_status: row.response_status,
-    response_body: row.response_body,
-    error: row.error,
-    delivered_at: row.delivered_at ? new Date(row.delivered_at) : undefined,
     retry_count: row.retry_count,
+    ...(row.response_status !== null && row.response_status !== undefined
+      ? { response_status: row.response_status }
+      : {}),
+    ...(row.response_body ? { response_body: row.response_body } : {}),
+    ...(row.error ? { error: row.error } : {}),
+    ...(row.delivered_at ? { delivered_at: new Date(row.delivered_at) } : {}),
   }));
 }
 

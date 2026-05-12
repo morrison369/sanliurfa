@@ -294,7 +294,7 @@ export function extractHeadings(content: string): Array<{ id: string; text: stri
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(content)) !== null) {
-    const level = parseInt(match[1]);
+    const level = parseInt(match[1], 10);
     const text = match[2].trim();
     const id = text.toLowerCase().replace(/[\s\W]+/g, '-');
     
@@ -302,37 +302,6 @@ export function extractHeadings(content: string): Array<{ id: string; text: stri
   }
 
   return headings;
-}
-
-/**
- * Generate hreflang tags for multilingual content
- */
-export function generateHreflang(
-  _path: string,
-  languages: Array<{ code: string; url: string }>,
-  defaultLang = 'tr'
-): Array<{ rel: string; hreflang: string; href: string }> {
-  const tags: Array<{ rel: string; hreflang: string; href: string }> = [];
-
-  for (const lang of languages) {
-    tags.push({
-      rel: 'alternate',
-      hreflang: lang.code,
-      href: lang.url,
-    });
-  }
-
-  // Add x-default
-  const defaultUrl = languages.find((l) => l.code === defaultLang)?.url || languages[0]?.url;
-  if (defaultUrl) {
-    tags.push({
-      rel: 'alternate',
-      hreflang: 'x-default',
-      href: defaultUrl,
-    });
-  }
-
-  return tags;
 }
 
 /**

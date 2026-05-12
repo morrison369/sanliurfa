@@ -143,35 +143,34 @@ export async function getPosts(filters: {
     whereClause += ` AND (p.title ILIKE $${params.length - 1} OR p.content ILIKE $${params.length})`;
   }
 
-  // Get total count
-  const countResult = await queryOne<{ count: number }>(
-    `SELECT COUNT(*)::int as count FROM blog_posts p
-     LEFT JOIN blog_categories c ON c.id = p.category_id
-     ${whereClause}`,
-    params
-  );
+  const countParams = [...params];
+  const listParams = [...params, limit, offset];
 
-  // Get posts
-  params.push(limit);
-  params.push(offset);
-
-  const result = await query<BlogPost>(
-    `SELECT 
-      p.*,
-      c.name as category_name,
-      COALESCE(json_agg(
-        json_build_object('id', t.id, 'slug', t.slug, 'name', t.name, 'color', t.color)
-      ) FILTER (WHERE t.id IS NOT NULL), '[]') as tags
-    FROM blog_posts p
-    LEFT JOIN blog_categories c ON c.id = p.category_id
-    LEFT JOIN blog_post_tags pt ON pt.post_id = p.id
-    LEFT JOIN blog_tags t ON t.id = pt.tag_id
-    ${whereClause}
-    GROUP BY p.id, c.name
-    ORDER BY p.is_pinned DESC, p.published_at DESC NULLS LAST
-    LIMIT $${params.length - 1} OFFSET $${params.length}`,
-    params
-  );
+  const [countResult, result] = await Promise.all([
+    queryOne<{ count: number }>(
+      `SELECT COUNT(*)::int as count FROM blog_posts p
+       LEFT JOIN blog_categories c ON c.id = p.category_id
+       ${whereClause}`,
+      countParams
+    ),
+    query<BlogPost>(
+      `SELECT
+        p.*,
+        c.name as category_name,
+        COALESCE(json_agg(
+          json_build_object('id', t.id, 'slug', t.slug, 'name', t.name, 'color', t.color)
+        ) FILTER (WHERE t.id IS NOT NULL), '[]') as tags
+      FROM blog_posts p
+      LEFT JOIN blog_categories c ON c.id = p.category_id
+      LEFT JOIN blog_post_tags pt ON pt.post_id = p.id
+      LEFT JOIN blog_tags t ON t.id = pt.tag_id
+      ${whereClause}
+      GROUP BY p.id, c.name
+      ORDER BY p.is_pinned DESC, p.published_at DESC NULLS LAST
+      LIMIT $${listParams.length - 1} OFFSET $${listParams.length}`,
+      listParams
+    ),
+  ]);
 
   const response = { posts: result.rows, total: countResult?.count || 0 };
   await setCache(cacheKey, response, 300);

@@ -5,13 +5,14 @@
 import type { APIRoute } from 'astro';
 import { saveOnboardingProgress } from '../../../../lib/vendor/vendor-onboarding';
 import { validateWithSchema } from '../../../../lib/validation';
+import type { ValidationSchema } from '../../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
-const schema = {
+const schema: ValidationSchema = {
   step: { type: 'number' as const, required: true, min: 1, max: 10 },
-  data: { type: 'string' as const, required: true }
+  data: { type: 'string' as const, required: true, maxLength: 50000 }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -26,7 +27,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/vendor/onboarding/step', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -39,10 +40,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { step, data } = validation.data as any;
+    const { step, data } = validation.data;
 
     // Parse data if it's a JSON string
-    let parsedData: Record<string, any> = {};
+    let parsedData: Record<string, unknown> = {};
     try {
       parsedData = typeof data === 'string' ? JSON.parse(data) : data;
     } catch {

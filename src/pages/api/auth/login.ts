@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
 import { runLoginFlow } from '../../../lib/auth/auth-flows';
 
 export const POST: APIRoute = async (context) => {
@@ -8,7 +8,7 @@ export const POST: APIRoute = async (context) => {
     const body = await context.request.json();
     const { email, password } = body;
 
-    if (!email || !password) {
+    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password) {
       return problemJson({
         status: 400,
         title: 'Geçersiz İstek',
@@ -20,20 +20,14 @@ export const POST: APIRoute = async (context) => {
 
     const authResult = await runLoginFlow({ email, password }, context.cookies);
 
-    return new Response(JSON.stringify({
-      success: true,
-      ...authResult,
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse(authResult, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Login error:', error);
     return problemJson({
       status: 400,
       title: 'Giriş Yapılamadı',
-      detail: error instanceof Error ? error.message : 'Sunucu hatası',
+      detail: safeErrorDetail(error, 'Giriş işlemi başarısız'),
       type: '/problems/auth-login-failed',
       instance: '/api/auth/login',
     });

@@ -1,54 +1,101 @@
 ---
-
-/**
- * User Discovery & Search Page
- * Browse and search for users
- */
-
 import Layout from '../layouts/Layout.astro';
 import UserSearchResults from '../components/UserSearchResults';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import PublicPageIntro from '../components/public/PublicPageIntro.astro';
+import { getPublicAppUrl } from '../lib/public-app-url';
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'Kullanıcıları Keşfet - Sanliurfa.com',
-  description: 'Şanlıurfa.com topluluğunu keşfet ve diğer kullanıcılarla bağlantı kur.',
-  keywords: ['şanlıurfa.com kullanıcılar', 'topluluk keşfet', 'sanliurfa.com üyeler'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/kullanicilar',
+ title: 'Kullanıcıları Keşfet - Sanliurfa.com',
+ description: 'Şanlıurfa.com topluluğunu keşfet ve diğer kullanıcılarla bağlantı kur.',
+ keywords: ['şanlıurfa.com kullanıcılar', 'topluluk keşfet', 'sanliurfa.com üyeler'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/kullanicilar',
 };
 const faqItems = [
-  { S: 'Sanliurfa.com topluluğuna nasıl katılabilirim?', C: 'Ücretsiz kayıt olarak topluluğa katılabilir, mekan yorumlayabilir ve diğer kullanıcıları takip edebilirsiniz.' },
-  { S: 'Kullanıcıları nasıl arayabilirim?', C: 'Kullanıcılar sayfasındaki arama alanını kullanarak üyeleri adlarına göre bulabilirsiniz.' },
-  { S: 'Sanliurfa.com üyeliğinin avantajları nelerdir?', C: 'Üyeler yorum yazabilir, koleksiyon oluşturabilir, etkinliklere katılabilir ve premium özelliklerden yararlanabilir.' },
+ { S: 'Sanliurfa.com topluluğuna nasıl katılabilirim?', C: 'Ücretsiz kayıt olarak topluluğa katılabilir, mekan yorumlayabilir ve diğer kullanıcıları takip edebilirsiniz.' },
+ { S: 'Kullanıcıları nasıl arayabilirim?', C: 'Kullanıcılar sayfasındaki arama alanını kullanarak üyeleri adlarına göre bulabilirsiniz.' },
+ { S: 'Sanliurfa.com üyeliğinin avantajları nelerdir?', C: 'Üyeler yorum yazabilir, koleksiyon oluşturabilir, etkinliklere katılabilir ve premium özelliklerden yararlanabilir.' },
 ];
-
 ---
 
 <Layout seo={seo}>
-  <div class="container-custom py-8">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Kullanıcıları Keşfet</h1>
-      <p class="text-gray-600 dark:text-gray-400 mt-2">Toplulumuzu keşfet ve diğer kullanıcılarla bağlantı kur</p>
-    </div>
+ <div class="kl-page">
+ <PublicPageIntro
+ eyebrow="Şanlıurfa Topluluğu"
+ title="Kullanıcıları Keşfet"
+ description="Şanlıurfa.com üyelerini, katkı veren gezginleri ve yerel öneri paylaşan kullanıcıları keşfet."
+ quickAnswerTitle="Hızlı cevap"
+ quickAnswerText="Ücretsiz hesapla kullanıcıları takip edebilir, koleksiyonları görebilir ve mekan yorumlarına katkı verebilirsin."
+ actions={[
+ { href: '/kayit', label: 'Ücretsiz Katıl' },
+ { href: '/liderlik-tablosu', label: 'Liderlik' },
+ { href: '/topluluk', label: 'Topluluk' },
+ ]}
+ />
 
-    <UserSearchResults client:visible={{ rootMargin: '140px' }} currentUserId={Astro.locals.user?.id} />
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Kullanıcılar', item: `${baseUrl}/kullanıcılar` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <div class="kl-body">
+ <div class="sf-container">
+ {Astro.locals.user?.id ? (
+ <UserSearchResults client:visible={{ rootMargin: '140px' }} currentUserId={Astro.locals.user.id} />
+ ) : (
+ <UserSearchResults client:visible={{ rootMargin: '140px' }} />
+ )}
+ </div>
+ </div>
+ </div>
+
+ <style is:inline>
+ details summary{list-style:none}
+ details summary::-webkit-details-marker{display:none}
+ details[open] .faq-arrow{transform:rotate(180deg)}
+ </style>
+ {faqItems.length > 0 && (
+ <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+ <div class="sf-container">
+ <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+ <div style="display:flex;flex-direction:column;gap:.75rem">
+ {faqItems.map((item) => (
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ {item.S}
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ {item.C}
+ </div>
+ </details>
+ ))}
+ </div>
+ </div>
+ </div>
+ )}
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Kullanıcılar', item: `${baseUrl}/kullanicilar` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>
+
+<style>
+ .kl-page {
+ background: var(--public-bg);
+ min-height: 100vh;
+ }
+
+ .kl-body {
+ padding: 2rem 0 4rem;
+ }
+</style>

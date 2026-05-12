@@ -3,7 +3,7 @@
  * Event-driven webhooks for external integrations
  */
 
-import { query, queryOne, insert, queryMany } from '../postgres';
+import { query, insert, queryMany } from '../postgres';
 import { logger } from '../logger';
 
 export interface WebhookEvent {
@@ -73,15 +73,15 @@ export async function triggerWebhook(event: string, data: Record<string, any>, u
     }
 
     // Create event records and queue for delivery
-    for (const webhook of webhooks) {
-      await insert('webhook_events', {
+    await Promise.all(
+      webhooks.map((webhook: any) => insert('webhook_events', {
         webhook_id: webhook.id,
         event,
         data: JSON.stringify(data),
         status: 'pending',
         attempts: 0
-      });
-    }
+      }))
+    );
 
     logger.info('Webhook event queued', { event, count: webhooks.length });
   } catch (error) {
@@ -107,9 +107,7 @@ export async function processPendingWebhooks(maxRetries: number = 3): Promise<vo
       [maxRetries]
     );
 
-    for (const event of pendingEvents) {
-      await deliverWebhook(event);
-    }
+    await Promise.allSettled(pendingEvents.map((event: any) => deliverWebhook(event)));
   } catch (error) {
     logger.error('Failed to process webhooks', error instanceof Error ? error : new Error(String(error)));
   }
@@ -120,6 +118,21 @@ export async function processPendingWebhooks(maxRetries: number = 3): Promise<vo
  */
 async function deliverWebhook(event: any): Promise<void> {
   try {
+    // Defense-in-depth SSRF check at fetch time.
+    const { validateExternalUrl } = await import('../security/safe-url');
+    const urlCheck = validateExternalUrl(event.url);
+    if (!urlCheck.ok) {
+      logger.warn('Webhook delivery skipped: unsafe URL', {
+        eventId: event.id,
+        reason: urlCheck.reason,
+      });
+      await query(
+        `UPDATE webhook_events SET status = 'failed', last_error = $1 WHERE id = $2`,
+        [`unsafe_url:${urlCheck.reason}`, event.id]
+      );
+      return;
+    }
+
     const response = await fetch(event.url, {
       method: 'POST',
       headers: {

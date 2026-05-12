@@ -30,11 +30,11 @@ export type ExportTokenRow = {
 };
 
 function getSecret(): string {
-  return (
-    process.env.EXPORT_TOKEN_SECRET ||
-    process.env.JWT_SECRET ||
-    'sanliurfa-export-token-fallback-secret'
-  );
+  const secret = process.env.EXPORT_TOKEN_SECRET || process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('EXPORT_TOKEN_SECRET veya JWT_SECRET env değişkeni tanımlanmamış');
+  }
+  return secret;
 }
 
 function hashToken(token: string): string {
@@ -96,13 +96,15 @@ export async function issueExportToken(input: {
   const tokenHash = hashToken(token);
   const expiresAt = new Date(Date.now() + ttlSeconds * 1000).toISOString();
 
+  const allowedIpCidrs = Array.isArray(input.allowedIpCidrs)
+    ? input.allowedIpCidrs.map((x) => String(x).trim()).filter(Boolean)
+    : undefined;
+  const allowedCountries = Array.isArray(input.allowedCountries)
+    ? input.allowedCountries.map((x) => String(x).trim().toUpperCase()).filter(Boolean)
+    : undefined;
   const policy: ExportTokenPolicy = {
-    allowedIpCidrs: Array.isArray(input.allowedIpCidrs)
-      ? input.allowedIpCidrs.map((x) => String(x).trim()).filter(Boolean)
-      : undefined,
-    allowedCountries: Array.isArray(input.allowedCountries)
-      ? input.allowedCountries.map((x) => String(x).trim().toUpperCase()).filter(Boolean)
-      : undefined,
+    ...(allowedIpCidrs?.length ? { allowedIpCidrs } : {}),
+    ...(allowedCountries?.length ? { allowedCountries } : {}),
     replayProtection: input.replayProtection !== false,
   };
   const payload = {
@@ -268,7 +270,8 @@ export async function revokeExportToken(input: {
        AND revoked_at IS NULL`,
     [tokenHash, input.revokedBy || null, input.reason || null],
   );
-  return { ok: (result.rowCount || 0) > 0, reason: (result.rowCount || 0) > 0 ? undefined : 'token_not_found_or_revoked' };
+  const ok = (result.rowCount || 0) > 0;
+  return ok ? { ok } : { ok, reason: 'token_not_found_or_revoked' };
 }
 
 export async function revokeExportTokenById(input: {
@@ -286,10 +289,8 @@ export async function revokeExportTokenById(input: {
        AND revoked_at IS NULL`,
     [input.tokenId, input.revokedBy || null, input.reason || null],
   );
-  return {
-    ok: (result.rowCount || 0) > 0,
-    reason: (result.rowCount || 0) > 0 ? undefined : 'token_not_found_or_revoked',
-  };
+  const ok = (result.rowCount || 0) > 0;
+  return ok ? { ok } : { ok, reason: 'token_not_found_or_revoked' };
 }
 
 export async function listExportTokens(input?: {

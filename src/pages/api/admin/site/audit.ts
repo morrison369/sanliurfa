@@ -1,15 +1,13 @@
 import type { APIRoute } from 'astro';
+import { apiResponse, safeErrorDetail, safeIntParam } from '../../../../lib/api';
 import { query } from '../../../../lib/postgres';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  return locals?.user?.role === 'admin';
 }
 
 export const GET: APIRoute = async ({ url, locals }) => {
@@ -17,13 +15,11 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
   const key = String(url.searchParams.get('key') || '').trim();
   const action = String(url.searchParams.get('action') || '').trim();
-  const limitRaw = Number(url.searchParams.get('limit') || 50);
-  const offsetRaw = Number(url.searchParams.get('offset') || 0);
-  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(200, limitRaw)) : 50;
-  const offset = Number.isFinite(offsetRaw) ? Math.max(0, offsetRaw) : 0;
+  const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 200);
+  const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
   const where: string[] = [];
-  const params: any[] = [];
+  const params: unknown[] = [];
 
   if (key) {
     params.push(key);
@@ -36,37 +32,34 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
+  const listParams = [...params, limit, offset];
   try {
-    const countResult = await query(
-      `
-      SELECT COUNT(*)::int AS total
-      FROM site_change_audit
-      ${whereSql}
-      `,
-      params,
-    );
-
-    const listParams = [...params, limit, offset];
-    const result = await query(
-      `
-      SELECT
-        id,
-        setting_key,
-        action,
-        actor_user_id,
-        actor_email,
-        ip_address::text AS ip_address,
-        user_agent,
-        metadata,
-        created_at
-      FROM site_change_audit
-      ${whereSql}
-      ORDER BY created_at DESC
-      LIMIT $${listParams.length - 1}
-      OFFSET $${listParams.length}
-      `,
-      listParams,
-    );
+    const [countResult, result] = await Promise.all([
+      query(
+        `SELECT COUNT(*)::int AS total FROM site_change_audit ${whereSql}`,
+        params,
+      ),
+      query(
+        `
+        SELECT
+          id,
+          setting_key,
+          action,
+          actor_user_id,
+          actor_email,
+          ip_address::text AS ip_address,
+          user_agent,
+          metadata,
+          created_at
+        FROM site_change_audit
+        ${whereSql}
+        ORDER BY created_at DESC
+        LIMIT $${listParams.length - 1}
+        OFFSET $${listParams.length}
+        `,
+        listParams,
+      ),
+    ]);
 
     return json({
       success: true,
@@ -78,7 +71,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     return json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'audit list failed',
+        error: safeErrorDetail(error, 'audit list failed'),
       },
       500,
     );

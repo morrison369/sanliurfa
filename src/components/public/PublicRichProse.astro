@@ -1,0 +1,90 @@
+---
+interface Props {
+  html?: string;
+}
+
+const { html } = Astro.props;
+---
+
+{html ? (
+  <div class="prp" set:html={html} />
+) : (
+  <div class="prp">
+    <slot />
+  </div>
+)}
+
+<style>
+  .prp :global(h1) {
+    margin: 0 0 1rem;
+    color: var(--public-text);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.85rem;
+    font-weight: 700;
+  }
+
+  .prp :global(h2) {
+    margin: 2rem 0 0.9rem;
+    color: var(--public-text);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .prp :global(h3) {
+    margin: 1.5rem 0 0.65rem;
+    color: var(--public-text);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .prp :global(p),
+  .prp :global(li) {
+    color: var(--public-muted);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+
+  .prp :global(p) {
+    margin: 0 0 1.05rem;
+  }
+
+  .prp :global(ul),
+  .prp :global(ol) {
+    margin: 0.5rem 0 1.1rem 1.25rem;
+  }
+
+  .prp :global(li) {
+    margin-bottom: 0.3rem;
+  }
+
+  .prp :global(strong) {
+    color: var(--public-accent-strong);
+    font-weight: 600;
+  }
+
+  .prp :global(a) {
+    color: var(--public-accent);
+    text-decoration: underline;
+    text-underline-offset: 0.18rem;
+  }
+
+  .prp :global(a:hover) {
+    color: var(--public-accent-strong);
+  }
+
+  .prp :global(img) {
+    width: 100%;
+    margin: 1.5rem 0;
+    border-radius: 0.85rem;
+  }
+
+  .prp :global(blockquote) {
+    margin: 1.5rem 0;
+    padding-left: 1rem;
+    border-left: 3px solid var(--public-border);
+    color: var(--public-text-soft);
+    font-style: italic;
+  }
+</style>

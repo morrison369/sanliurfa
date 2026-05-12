@@ -1,11 +1,19 @@
-<!-- ThemeScript.astro - FOUC prevention for dark mode -->
+<!-- ThemeScript.astro - FOUC prevention for the canonical light Şanlıurfa theme -->
 <script is:inline>
-  (function() {
-    const theme = localStorage.getItem('theme') || 'light';
-    if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  })();
+ (function() {
+   try {
+     document.documentElement.classList.remove('dark');
+     document.documentElement.dataset.theme = 'light';
+     document.documentElement.style.colorScheme = 'light';
+
+     // Older builds stored `theme=dark`; keep the site on its canonical public
+     // palette until a complete dark theme exists.
+     if (localStorage.getItem('theme') === 'dark') {
+       localStorage.setItem('theme', 'light');
+     }
+   } catch {
+     document.documentElement.classList.remove('dark');
+     document.documentElement.dataset.theme = 'light';
+   }
+ })();
 </script>

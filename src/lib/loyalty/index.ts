@@ -61,9 +61,9 @@ export async function getLoyaltyPoints(userId: string): Promise<LoyaltyPoints> {
   
   return {
     userId,
-    total: parseInt(row.loyalty_points) || 0,
-    available: parseInt(row.loyalty_points) || 0,
-    lifetime: parseInt(row.loyalty_points_lifetime) || 0,
+    total: parseInt(row.loyalty_points, 10) || 0,
+    available: parseInt(row.loyalty_points, 10) || 0,
+    lifetime: parseInt(row.loyalty_points_lifetime, 10) || 0,
     tier: row.loyalty_tier || 'bronze'
   };
 }

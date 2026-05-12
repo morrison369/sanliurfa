@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, relative } from 'node:path';
 
 const forbiddenMatchers = [
   /\bplesk\b/i,
@@ -9,9 +9,24 @@ const forbiddenMatchers = [
   /\bpost-receive\b/i,
 ];
 
-const allFiles = execSync('rg --files', { encoding: 'utf8' })
-  .split(/\r?\n/)
-  .filter(Boolean);
+function walkFiles(dir, root = dir) {
+  const files = [];
+  for (const entry of readdirSync(dir)) {
+    const fullPath = join(dir, entry);
+    const stats = statSync(fullPath);
+    if (stats.isDirectory()) {
+      if (entry === 'node_modules' || entry === '.git' || entry === 'dist') {
+        continue;
+      }
+      files.push(...walkFiles(fullPath, root));
+      continue;
+    }
+    files.push(relative(root, fullPath).replace(/\\/g, '/'));
+  }
+  return files;
+}
+
+const allFiles = walkFiles(process.cwd());
 
 const files = allFiles.filter((file) => {
   if (file === 'AGENTS.md') return true;

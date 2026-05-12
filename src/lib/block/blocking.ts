@@ -58,9 +58,11 @@ export async function blockUser(blockerId: string, blockedId: string, reason?: s
       throw new Error('Engelleme başarısız oldu');
     }
 
-    // Clear caches
-    await deleteCache(`user:blocks:${blockerId}`);
-    await deleteCache(`user:blocked_by:${blockedId}`);
+    // Clear caches (paralel)
+    await Promise.all([
+      deleteCache(`user:blocks:${blockerId}`),
+      deleteCache(`user:blocked_by:${blockedId}`),
+    ]);
 
     logger.info('User blocked', { blockerId, blockedId });
 
@@ -91,8 +93,10 @@ export async function unblockUser(blockerId: string, blockedId: string): Promise
     );
 
     if ((result.rowCount || 0) > 0) {
-      await deleteCache(`user:blocks:${blockerId}`);
-      await deleteCache(`user:blocked_by:${blockedId}`);
+      await Promise.all([
+        deleteCache(`user:blocks:${blockerId}`),
+        deleteCache(`user:blocked_by:${blockedId}`),
+      ]);
       logger.info('User unblocked', { blockerId, blockedId });
       return true;
     }

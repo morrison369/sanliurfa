@@ -77,18 +77,36 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/marketing-campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Missing required fields: place_id, name, campaign_type',
+        'Zorunlu alanlar eksik: place_id, name, campaign_type',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId
       );
+    }
+    if (name.length > 200) {
+      recordRequest('POST', '/api/marketing-campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Kampanya adı 200 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (description !== undefined && description !== null && (typeof description !== 'string' || description.length > 2000)) {
+      recordRequest('POST', '/api/marketing-campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Açıklama 2000 karakterden uzun olamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const VALID_CAMPAIGN_TYPES = new Set(['promotion', 'awareness', 'conversion', 'promotional']);
+    if (!VALID_CAMPAIGN_TYPES.has(campaign_type)) {
+      recordRequest('POST', '/api/marketing-campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz kampanya tipi', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    const budgetNum = budget !== undefined ? parseFloat(String(budget)) : 0;
+    if (!Number.isFinite(budgetNum) || budgetNum < 0) {
+      recordRequest('POST', '/api/marketing-campaigns', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz bütçe değeri', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
     const campaign = await createMarketingCampaign(place_id, locals.user.id, {
       name,
       description,
       campaign_type,
-      budget: budget || 0,
+      budget: budgetNum,
       targeting,
       creative_content,
       schedule_config,

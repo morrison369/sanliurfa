@@ -9,7 +9,7 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 import { queryOne } from '../../../../lib/postgres';
-import { getCache, setCache } from '../../../../lib/cache';
+import { getCache } from '../../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, params }) => {
   const requestId = getRequestId(request);
@@ -18,6 +18,10 @@ export const GET: APIRoute = async ({ request, params }) => {
 
   try {
     const { id: placeId } = params;
+    if (!placeId) {
+      recordRequest('GET', '/api/places/[id]/badges', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan kimliği gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     // Check cache first
     const cacheKey = `place:badges:${placeId}`;
@@ -26,7 +30,7 @@ export const GET: APIRoute = async ({ request, params }) => {
       recordRequest('GET', '/api/places/[id]/badges', HttpStatus.OK, Date.now() - startTime);
       return apiResponse({
         success: true,
-        badges: JSON.parse(cached as string)
+        badges: cached as any
       }, HttpStatus.OK, requestId);
     }
 

@@ -4,7 +4,7 @@
 
 import type { APIRoute } from 'astro';
 import { performHealthCheck } from '../../../lib/monitoring';
-import { apiResponse, HttpStatus, getRequestId } from '../../../lib/api';
+import { apiResponse, HttpStatus, getRequestId, safeErrorDetail } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 
 export const GET: APIRoute = async ({ request }) => {
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ request }) => {
         success: false,
         data: {
           status: 'down',
-          error: error instanceof Error ? error.message : String(error),
+          error: safeErrorDetail(error, 'Sağlık durumu alınamadı'),
           timestamp: new Date().toISOString()
         }
       },

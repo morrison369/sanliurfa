@@ -1,7 +1,41 @@
-import { getSanliurfaWeather } from '../../src/lib/weather/open-meteo';
-import { query, pool } from '../../src/lib/postgres';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 
-async function upsertSetting(key: string, value: Record<string, unknown>, description: string) {
+function loadEnvFile(filePath: string) {
+  if (!existsSync(filePath)) return;
+  const content = readFileSync(filePath, 'utf8');
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#') || !line.includes('=')) continue;
+    const idx = line.indexOf('=');
+    const key = line.slice(0, idx).trim();
+    let value = line.slice(idx + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"'))
+      || (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+
+function loadRuntimeEnv() {
+  const root = process.cwd();
+  const candidates = [
+    path.join(root, '.env.production'),
+    path.join(root, '.env.local'),
+    path.join(root, '.env'),
+  ];
+  for (const candidate of candidates) loadEnvFile(candidate);
+}
+
+async function upsertSetting(
+  query: <T = any>(text: string, params?: any[]) => Promise<T>,
+  key: string,
+  value: Record<string, unknown>,
+  description: string,
+) {
   await query(
     `
     INSERT INTO site_settings (setting_key, setting_value, description, updated_at)
@@ -17,10 +51,15 @@ async function upsertSetting(key: string, value: Record<string, unknown>, descri
 }
 
 async function main() {
+  loadRuntimeEnv();
+
+  const { query, pool } = await import('../../src/lib/postgres');
+  const { getSanliurfaWeather } = await import('../../src/lib/weather/open-meteo');
   const now = new Date().toISOString();
   const { payload, fromCache } = await getSanliurfaWeather({ forceRefresh: true });
 
   await upsertSetting(
+    query,
     'weather.lastUpdated',
     {
       updatedAt: now,
@@ -33,14 +72,10 @@ async function main() {
   );
 
   console.log(`weather metadata refreshed at ${now} (fromCache=${fromCache ? '1' : '0'})`);
+  await pool.end();
 }
 
-main()
-  .catch((error) => {
-    console.error(`weather refresh failed: ${error instanceof Error ? error.message : String(error)}`);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await pool.end();
-  });
-
+main().catch((error) => {
+  console.error(`weather refresh failed: ${error instanceof Error ? error.message : String(error)}`);
+  process.exit(1);
+});

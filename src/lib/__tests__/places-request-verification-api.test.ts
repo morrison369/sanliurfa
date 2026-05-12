@@ -50,7 +50,7 @@ describe('places request verification api', () => {
   });
 
   it('returns 201 when verification request is created', async () => {
-    queryOneMock.mockResolvedValueOnce({ id: '1' });
+    queryOneMock.mockResolvedValueOnce({ id: '1', owner_id: 'u1' });
     requestPlaceVerificationMock.mockResolvedValueOnce({ id: 'vr1' });
 
     const response = await POST(

@@ -5,6 +5,7 @@
 
 import { queryOne, queryMany, insert, update as updateDb } from '../postgres';
 import { logger } from '../logger';
+import { deleteCache } from '../cache/cache';
 
 /**
  * Get subscription analytics
@@ -78,7 +79,7 @@ export async function getSubscriptionAnalytics(): Promise<{
       mrr: parseFloat(mrrResult?.mrr || 0),
       arr: parseFloat(arrResult?.arr || 0),
       averageLifetimeValue: parseFloat(mrrResult?.mrr || 0) > 0
-        ? Math.round((parseFloat(mrrResult?.mrr || 0) / Math.max(parseInt(activeResult?.count || '1'), 1)) * 12)
+        ? Math.round((parseFloat(mrrResult?.mrr || 0) / Math.max(parseInt(activeResult?.count || '1', 10), 1)) * 12)
         : 0,
       churnRate: parseFloat(churnResult?.churn_rate || 0),
     };
@@ -172,6 +173,9 @@ export async function changeUserTier(
       reason
     );
 
+    // Invalidate subscription cache after tier change
+    await deleteCache(`subscription:user:${userId}`).catch(() => null);
+
     logger.info('User tier changed', {
       userId,
       oldTierId,
@@ -229,18 +233,14 @@ export async function processRefund(
           [refundRequest.billing_id]
         );
         if (billing?.stripe_payment_intent_id || billing?.stripe_charge_id) {
-          const stripeModule = await import('../stripe/stripe');
-          const stripe = (stripeModule as any).stripe || (stripeModule as any).default?.stripe;
-          if (stripe) {
-            const refundParams: any = {
-              amount: Math.round(parseFloat(refundRequest.amount) * 100),
-            };
-            if (billing.stripe_payment_intent_id) {
-              refundParams.payment_intent = billing.stripe_payment_intent_id;
-            } else {
-              refundParams.charge = billing.stripe_charge_id;
-            }
-            await stripe.refunds.create(refundParams);
+          const { createStripeRefund } = await import('../stripe/stripe');
+          const refunded = await createStripeRefund({
+            amount: Math.round(parseFloat(refundRequest.amount) * 100),
+            ...(billing.stripe_payment_intent_id
+              ? { payment_intent: billing.stripe_payment_intent_id }
+              : { charge: billing.stripe_charge_id }),
+          });
+          if (refunded) {
             logger.info('Stripe refund processed', { refundRequestId, amount: refundRequest.amount });
           }
         }

@@ -1,0 +1,14 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+interface Props {
+ seo: any;
+}
+
+const { seo } = Astro.props;
+---
+
+<Layout seo={seo}>
+ <slot name="head" slot="head" />
+ <slot />
+</Layout>

@@ -4,14 +4,14 @@ import {
   listMediaUsage,
   upsertMediaUsage,
 } from '../../../../lib/site-platform';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, HttpStatus, problemJson, safeErrorDetail } from '../../../../lib/api';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
-function auditCtx(request: Request, locals: any) {
+function auditCtx(request: Request, locals: App.Locals) {
   return {
     userId: locals?.user?.id ? String(locals.user.id) : null,
     actorEmail: locals?.user?.email ? String(locals.user.email) : null,
@@ -34,14 +34,12 @@ export const GET: APIRoute = async ({ url, locals }) => {
   try {
     const assetKey = String(url.searchParams.get('assetKey') || '').trim();
     const items = await listMediaUsage(assetKey || undefined);
-    return new Response(JSON.stringify({ success: true, items }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, items }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Media Usage Okunamadı',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-media-usage-read-failed',
       instance: '/api/admin/site/media-usage',
     });
@@ -70,6 +68,11 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     });
   }
 
+  if (body.metadata !== undefined && body.metadata !== null) {
+    if (typeof body.metadata !== 'object' || Array.isArray(body.metadata) || JSON.stringify(body.metadata).length > 5000) {
+      return problemJson({ status: 400, title: 'Validation Failed', detail: 'metadata geçersiz nesne veya 5000 karakteri aşıyor', type: '/problems/admin-media-usage-validation', instance: '/api/admin/site/media-usage' });
+    }
+  }
   try {
     const item = await upsertMediaUsage(
       {
@@ -81,14 +84,12 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       },
       auditCtx(request, locals),
     );
-    return new Response(JSON.stringify({ success: true, item }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, item }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Media Usage Yazılamadı',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-media-usage-write-failed',
       instance: '/api/admin/site/media-usage',
     });
@@ -124,14 +125,12 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
 
   try {
     await deleteMediaUsage(assetKey, entityType, entityKey, placementKey, auditCtx(request, locals));
-    return new Response(JSON.stringify({ success: true, assetKey, entityType, entityKey, placementKey }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, assetKey, entityType, entityKey, placementKey }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Media Usage Silinemedi',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-media-usage-delete-failed',
       instance: '/api/admin/site/media-usage',
     });

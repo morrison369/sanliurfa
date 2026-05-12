@@ -180,33 +180,37 @@ export async function getUserBadges(userId: string): Promise<any[]> {
 }
 
 /**
- * Grant badge to user if not already earned
+ * Grant badge to user if not already earned.
+ *
+ * **Atomic + race-safe**: `INSERT ... ON CONFLICT DO NOTHING RETURNING id` tek query'de:
+ * - Yeni insert: RETURNING id row döndürür → award points
+ * - Concurrent duplicate: UNIQUE(user_id, badge_type) constraint çakışır → empty result → skip points
+ *
+ * Eski check-then-insert pattern (SELECT + INSERT) race window'da iki badge yaratabilirdi
+ * (DB constraint hata atıp 2.'yi durdursa da, bazı edge case'lerde points double-award olur).
  */
 export async function grantBadgeToUser(userId: string, badgeType: string): Promise<boolean> {
   try {
-    const existing = await queryOne(
-      'SELECT id FROM user_badges WHERE user_id = $1 AND badge_type = $2',
+    // Atomic insert — returns row only if newly inserted
+    const insertResult = await query<{ id: string }>(
+      `INSERT INTO user_badges (user_id, badge_type, earned_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (user_id, badge_type) DO NOTHING
+       RETURNING id`,
       [userId, badgeType]
     );
 
-    if (existing) {
-      return false; // Already earned
+    // Empty result = already exists (concurrent or pre-existing). Skip points.
+    if (insertResult.rowCount === 0) {
+      return false;
     }
 
-    // Get badge definition
-    const badgeDef = await queryOne(
+    // Newly granted: lookup reward + award points
+    const badgeDef = await queryOne<{ points_reward: number | null }>(
       'SELECT points_reward FROM badge_definitions WHERE badge_type = $1',
       [badgeType]
     );
 
-    // Insert badge
-    await query(
-      `INSERT INTO user_badges (user_id, badge_type, earned_at)
-       VALUES ($1, $2, NOW())`,
-      [userId, badgeType]
-    );
-
-    // Award points
     if (badgeDef?.points_reward) {
       await awardPoints(userId, badgeDef.points_reward, 'badge', `Earned badge: ${badgeType}`);
     }

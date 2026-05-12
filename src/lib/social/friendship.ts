@@ -245,6 +245,8 @@ export function searchUsers(query: string, currentUserId: string): UserWithFrien
     .filter(u => u.name.toLowerCase().includes(query.toLowerCase()))
     .map(u => ({
       ...u,
-      friendshipStatus: getFriendshipStatus(currentUserId, u.id) || undefined,
+      ...(getFriendshipStatus(currentUserId, u.id)
+        ? { friendshipStatus: getFriendshipStatus(currentUserId, u.id) as FriendshipStatus }
+        : {}),
     }));
 }

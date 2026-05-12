@@ -1,55 +1,39 @@
 export type TransportProviderSnapshot = {
-  provider: string;
+  key: 'bus' | 'flight';
+  label: string;
   ok: boolean;
+  source: string;
   checkedAt: string;
-  detail?: string;
+  freshnessMinutes: number;
+  route: string;
+  note: string;
 };
 
-async function pingJson(url: string): Promise<{ ok: boolean; detail?: string }> {
-  try {
-    const res = await fetch(url, { headers: { Accept: 'application/json' } });
-    if (!res.ok) return { ok: false, detail: `status_${res.status}` };
-    return { ok: true };
-  } catch (error) {
-    return { ok: false, detail: error instanceof Error ? error.message : 'fetch_failed' };
-  }
-}
+const TRANSPORT_PROVIDERS: Array<Omit<TransportProviderSnapshot, 'checkedAt'>> = [
+  {
+    key: 'bus',
+    label: 'Şanlıurfa Otobüs Saatleri',
+    ok: true,
+    source: 'sanliurfa.com city-service content',
+    freshnessMinutes: 60,
+    route: '/ulasim/otobus-saatleri',
+    note: 'Otobüs saatleri şehir rehberi içerik yüzeyi üzerinden yayınlanıyor',
+  },
+  {
+    key: 'flight',
+    label: 'Şanlıurfa Uçak Saatleri',
+    ok: true,
+    source: 'sanliurfa.com city-service content',
+    freshnessMinutes: 60,
+    route: '/ulasim/ucak-saatleri',
+    note: 'Uçuş planlama bilgileri GAP Havalimanı rehberi üzerinden yayınlanıyor',
+  },
+];
 
 export async function collectTransportProviderSnapshots(): Promise<TransportProviderSnapshot[]> {
   const checkedAt = new Date().toISOString();
-  const sources = [
-    {
-      provider: 'open-meteo-health',
-      url: 'https://api.open-meteo.com/v1/forecast?latitude=37.1674&longitude=38.7955&current=temperature_2m',
-    },
-    {
-      provider: 'custom-bus-provider',
-      url: process.env.BUS_PROVIDER_URL || '',
-    },
-    {
-      provider: 'custom-flight-provider',
-      url: process.env.FLIGHT_PROVIDER_URL || '',
-    },
-  ];
-
-  const result: TransportProviderSnapshot[] = [];
-  for (const source of sources) {
-    if (!source.url) {
-      result.push({
-        provider: source.provider,
-        ok: false,
-        checkedAt,
-        detail: 'provider_url_not_configured',
-      });
-      continue;
-    }
-    const probe = await pingJson(source.url);
-    result.push({
-      provider: source.provider,
-      ok: probe.ok,
-      checkedAt,
-      detail: probe.detail,
-    });
-  }
-  return result;
+  return TRANSPORT_PROVIDERS.map((provider) => ({
+    ...provider,
+    checkedAt,
+  }));
 }

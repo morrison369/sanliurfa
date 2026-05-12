@@ -1,0 +1,305 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+const user = Astro.locals.user;
+if (!user || user.role !== 'admin') return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+---
+
+<AdminLayout title="AI İçerik Üretici — Ollama">
+  <style is:inline>
+    .cg-wrap{max-width:900px;margin:0 auto;padding:2rem 1rem}
+    .cg-header{margin-bottom:2rem}
+    .cg-title{font-size:1.5rem;font-weight:700;color:#1F1410;margin:0 0 .35rem}
+    .cg-sub{font-size:.88rem;color:#7A6448}
+    .cg-badge{display:inline-flex;align-items:center;gap:.4rem;padding:.25rem .7rem;background:#ecfdf5;border:1px solid #86efac;color:#16a34a;border-radius:999px;font-size:.75rem;font-weight:600;margin-left:.5rem}
+    .cg-card{background:#fff;border:1px solid rgba(192,87,31,.12);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem}
+    .cg-card-title{font-weight:700;color:#1F1410;font-size:.95rem;margin-bottom:1rem}
+    .cg-field{margin-bottom:1rem}
+    .cg-label{display:block;font-size:.82rem;font-weight:600;color:#3D2B1A;margin-bottom:.4rem}
+    .cg-input,.cg-select,.cg-textarea{width:100%;padding:.55rem .75rem;border:1px solid rgba(192,87,31,.25);border-radius:6px;font-size:.88rem;background:#FDFAF6;color:#1F1410;transition:border-color .15s}
+    .cg-input:focus,.cg-select:focus,.cg-textarea:focus{outline:none;border-color:#C0571F;background:#fff}
+    .cg-textarea{min-height:90px;resize:vertical;font-family:inherit}
+    .cg-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    @media(max-width:600px){.cg-row{grid-template-columns:1fr}}
+    .cg-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.4rem;background:#C0571F;color:#fff;border:none;border-radius:6px;font-size:.88rem;font-weight:600;cursor:pointer;transition:background .15s}
+    .cg-btn:hover{background:#a0481a}
+    .cg-btn:disabled{opacity:.5;cursor:not-allowed}
+    .cg-btn-sec{background:#fff;color:#C0571F;border:1px solid #C0571F}
+    .cg-btn-sec:hover{background:rgba(192,87,31,.06)}
+    .cg-result{background:#F8F3EC;border:1px solid rgba(192,87,31,.15);border-radius:8px;padding:1.25rem;margin-top:1rem;min-height:80px;white-space:pre-wrap;font-size:.87rem;color:#2C1810;line-height:1.65}
+    .cg-result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem}
+    .cg-result-label{font-weight:700;font-size:.82rem;color:#7A6448}
+    .cg-status{padding:.3rem .9rem;border-radius:6px;font-size:.8rem;font-weight:600;display:none}
+    .cg-status.loading{display:inline-block;background:#fef3c7;color:#92400e}
+    .cg-status.success{display:inline-block;background:#ecfdf5;color:#166534}
+    .cg-status.error{display:inline-block;background:#fef2f2;color:#991b1b}
+    .cg-types{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1.25rem}
+    .cg-type-btn{padding:.35rem .85rem;border:1px solid rgba(192,87,31,.25);border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;background:#fff;color:#7A6448;transition:all .15s}
+    .cg-type-btn.active{background:#C0571F;color:#fff;border-color:#C0571F}
+    .cg-params{display:none}
+    .cg-params.show{display:block}
+    .cg-model-info{font-size:.75rem;color:#7A6448;margin-top:.4rem}
+    .cg-copy-btn{padding:.25rem .65rem;border:1px solid rgba(192,87,31,.25);border-radius:5px;font-size:.75rem;cursor:pointer;background:#fff;color:#C0571F;transition:background .12s}
+    .cg-copy-btn:hover{background:rgba(192,87,31,.06)}
+  </style>
+
+  <div class="cg-wrap">
+    <div class="cg-header">
+      <div class="cg-title">
+        AI İçerik Üretici
+        <span class="cg-badge">✦ Ollama Cloud</span>
+      </div>
+      <p class="cg-sub">Türkçe içerik üretimi — gemma4:31b modeli ile powered</p>
+    </div>
+
+    <div class="cg-card">
+      <div class="cg-card-title">İçerik Tipi Seç</div>
+      <div class="cg-types">
+        <button class="cg-type-btn active" data-type="place_description">🏪 Mekan Açıklaması</button>
+        <button class="cg-type-btn" data-type="blog_content_html">📝 Blog İçeriği (HTML)</button>
+        <button class="cg-type-btn" data-type="category_description">📂 Kategori Açıklaması</button>
+        <button class="cg-type-btn" data-type="faq_items">❓ SSS Maddeleri</button>
+        <button class="cg-type-btn" data-type="district_guide">🗺️ İlçe Rehberi</button>
+        <button class="cg-type-btn" data-type="meta_description">🔍 Meta Description</button>
+        <button class="cg-type-btn" data-type="custom">✏️ Serbest Prompt</button>
+      </div>
+
+      <!-- place_description params -->
+      <div class="cg-params show" id="params-place_description">
+        <div class="cg-row">
+          <div class="cg-field">
+            <label class="cg-label">Mekan Adı</label>
+            <input class="cg-input" id="pd-name" placeholder="Örn: Balıklıgöl Kahvaltı Bahçesi" />
+          </div>
+          <div class="cg-field">
+            <label class="cg-label">Kategori</label>
+            <input class="cg-input" id="pd-category" placeholder="Örn: Kafe, Restoran, Otel" />
+          </div>
+        </div>
+        <div class="cg-field">
+          <label class="cg-label">İlçe</label>
+          <select class="cg-select" id="pd-district">
+            <option>Eyyübiye</option><option>Haliliye</option><option>Karaköprü</option>
+            <option>Halfeti</option><option>Harran</option><option>Siverek</option>
+            <option>Birecik</option><option>Viranşehir</option><option>Bozova</option>
+            <option>Suruç</option><option>Hilvan</option><option>Akçakale</option>
+            <option>Ceylanpınar</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- blog_content_html params -->
+      <div class="cg-params" id="params-blog_content_html">
+        <div class="cg-field">
+          <label class="cg-label">Blog Başlığı</label>
+          <input class="cg-input" id="bc-title" placeholder="Örn: Halfeti Gezi Rehberi 2026" />
+        </div>
+        <div class="cg-row">
+          <div class="cg-field">
+            <label class="cg-label">Anahtar Kelimeler (virgülle ayır)</label>
+            <input class="cg-input" id="bc-keywords" placeholder="halfeti, tekne turu, siyah gül" />
+          </div>
+          <div class="cg-field">
+            <label class="cg-label">Hedef Kelime Sayısı</label>
+            <input class="cg-input" type="number" id="bc-words" value="600" min="200" max="2000" />
+          </div>
+        </div>
+      </div>
+
+      <!-- category_description params -->
+      <div class="cg-params" id="params-category_description">
+        <div class="cg-row">
+          <div class="cg-field">
+            <label class="cg-label">Kategori Adı</label>
+            <input class="cg-input" id="cd-name" placeholder="Örn: Restoranlar, Oteller" />
+          </div>
+          <div class="cg-field">
+            <label class="cg-label">Üst Kategori (opsiyonel)</label>
+            <input class="cg-input" id="cd-parent" placeholder="Örn: Yeme-İçme" />
+          </div>
+        </div>
+      </div>
+
+      <!-- faq_items params -->
+      <div class="cg-params" id="params-faq_items">
+        <div class="cg-row">
+          <div class="cg-field">
+            <label class="cg-label">Konu</label>
+            <input class="cg-input" id="fq-topic" placeholder="Örn: Halfeti tekne turu" />
+          </div>
+          <div class="cg-field">
+            <label class="cg-label">Soru Sayısı</label>
+            <input class="cg-input" type="number" id="fq-count" value="5" min="3" max="10" />
+          </div>
+        </div>
+      </div>
+
+      <!-- district_guide params -->
+      <div class="cg-params" id="params-district_guide">
+        <div class="cg-row">
+          <div class="cg-field">
+            <label class="cg-label">İlçe Adı</label>
+            <input class="cg-input" id="dg-district" placeholder="Örn: Halfeti" />
+          </div>
+          <div class="cg-field">
+            <label class="cg-label">Öne Çıkan Yerler (virgülle)</label>
+            <input class="cg-input" id="dg-highlights" placeholder="Tekne turu, Rum Kale, Siyah Güller" />
+          </div>
+        </div>
+      </div>
+
+      <!-- meta_description params -->
+      <div class="cg-params" id="params-meta_description">
+        <div class="cg-row">
+          <div class="cg-field">
+            <label class="cg-label">Sayfa Başlığı</label>
+            <input class="cg-input" id="md-title" placeholder="Örn: Halfeti Gezi Rehberi 2026" />
+          </div>
+          <div class="cg-field">
+            <label class="cg-label">Sayfa Tipi</label>
+            <select class="cg-select" id="md-type">
+              <option>gezi rehberi sayfası</option>
+              <option>blog yazısı</option>
+              <option>mekan detay sayfası</option>
+              <option>kategori listesi sayfası</option>
+              <option>ilçe rehber sayfası</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- custom params -->
+      <div class="cg-params" id="params-custom">
+        <div class="cg-field">
+          <label class="cg-label">Serbest Prompt</label>
+          <textarea class="cg-textarea" id="cu-prompt" placeholder="Türkçe üretmek istediğin içeriği tanımla..."></textarea>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:1rem;margin-top:1rem">
+        <button class="cg-btn" id="gen-btn" onclick="generateContent()">
+          ✦ İçerik Üret
+        </button>
+        <span class="cg-status" id="gen-status">İşleniyor...</span>
+        <p class="cg-model-info" style="margin:0">Model: <strong>gemma4:31b</strong> → fallback: ministral-3:14b</p>
+      </div>
+    </div>
+
+    <div class="cg-card" id="result-card" style="display:none">
+      <div class="cg-result-header">
+        <span class="cg-result-label">Üretilen İçerik</span>
+        <button class="cg-copy-btn" onclick="copyResult()">📋 Kopyala</button>
+      </div>
+      <div class="cg-result" id="gen-result"></div>
+    </div>
+  </div>
+
+  <script is:inline>
+    let currentType = 'place_description';
+
+    document.querySelectorAll('.cg-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cg-type-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.cg-params').forEach(p => p.classList.remove('show'));
+        btn.classList.add('active');
+        currentType = btn.dataset.type;
+        const panel = document.getElementById('params-' + currentType);
+        if (panel) panel.classList.add('show');
+      });
+    });
+
+    async function generateContent() {
+      const btn = document.getElementById('gen-btn');
+      const status = document.getElementById('gen-status');
+      const result = document.getElementById('gen-result');
+      const card = document.getElementById('result-card');
+
+      btn.disabled = true;
+      status.className = 'cg-status loading';
+      status.textContent = 'Üretiliyor...';
+
+      let params = {};
+      let prompt = '';
+
+      switch (currentType) {
+        case 'place_description':
+          params = {
+            name: document.getElementById('pd-name').value,
+            category: document.getElementById('pd-category').value,
+            district: document.getElementById('pd-district').value,
+          };
+          break;
+        case 'blog_content_html':
+          params = {
+            title: document.getElementById('bc-title').value,
+            keywords: document.getElementById('bc-keywords').value.split(',').map(k => k.trim()),
+            wordCount: parseInt(document.getElementById('bc-words').value),
+          };
+          break;
+        case 'category_description':
+          params = {
+            categoryName: document.getElementById('cd-name').value,
+            parentCategory: document.getElementById('cd-parent').value || undefined,
+          };
+          break;
+        case 'faq_items':
+          params = {
+            topic: document.getElementById('fq-topic').value,
+            count: parseInt(document.getElementById('fq-count').value),
+          };
+          break;
+        case 'district_guide':
+          params = {
+            district: document.getElementById('dg-district').value,
+            highlights: document.getElementById('dg-highlights').value.split(',').map(h => h.trim()),
+          };
+          break;
+        case 'meta_description':
+          params = {
+            pageTitle: document.getElementById('md-title').value,
+            pageType: document.getElementById('md-type').value,
+          };
+          break;
+        case 'custom':
+          prompt = document.getElementById('cu-prompt').value;
+          break;
+      }
+
+      try {
+        const res = await fetch('/api/admin/content/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: currentType, params, prompt }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.data) {
+          throw new Error(data.error || 'Üretim başarısız');
+        }
+
+        const content = data.data.result;
+        result.textContent = typeof content === 'string'
+          ? content
+          : JSON.stringify(content, null, 2);
+
+        card.style.display = 'block';
+        status.className = 'cg-status success';
+        status.textContent = '✓ Tamamlandı';
+      } catch (err) {
+        status.className = 'cg-status error';
+        status.textContent = '✗ Hata: ' + err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function copyResult() {
+      const text = document.getElementById('gen-result').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.cg-copy-btn');
+        const orig = btn.textContent;
+        btn.textContent = '✓ Kopyalandı';
+        setTimeout(() => { btn.textContent = orig; }, 2000);
+      });
+    }
+  </script>
+</AdminLayout>

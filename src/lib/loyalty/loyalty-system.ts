@@ -3,7 +3,7 @@
  * Points management, tier progression, and balance tracking
  */
 
-import { queryOne, queryMany, insert, update } from '../postgres';
+import { queryOne, queryMany, insert } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { createNotification } from '../notification/notifications-queue';
 import { logger } from '../logger';
@@ -117,23 +117,26 @@ export async function awardPoints(
       reference_id: referenceId
     });
 
-    // Update balance
-    const updated = await update(
-      'user_loyalty_balance',
-      { user_id: userId },
-      {
-        total_points: balance.total_points + awardedAmount,
-        available_points: balance.available_points + awardedAmount,
-        lifetime_points: balance.lifetime_points + awardedAmount,
-        points_last_earned_at: new Date(),
-        updated_at: new Date()
-      }
+    // Atomic: increment all counters in one statement (prevents concurrent award losing points)
+    const updated = await queryOne<LoyaltyBalance>(
+      `UPDATE user_loyalty_balance
+       SET total_points = total_points + $1,
+           available_points = available_points + $1,
+           lifetime_points = lifetime_points + $1,
+           points_last_earned_at = NOW(),
+           updated_at = NOW()
+       WHERE user_id = $2
+       RETURNING *`,
+      [awardedAmount, userId]
     );
 
     // Clear cache
     await deleteCache(`loyalty:balance:${userId}`);
 
     // Check for tier promotion
+    if (!updated) {
+      throw new Error('Loyalty balance update failed');
+    }
     await checkAndPromoteTier(userId, updated.total_points);
 
     logger.info('Points awarded', { userId, amount: awardedAmount, reason });
@@ -158,12 +161,21 @@ export async function redeemPoints(
   referenceId?: string
 ): Promise<{ transaction: LoyaltyTransaction; newBalance: LoyaltyBalance }> {
   try {
-    const balance = await getLoyaltyBalance(userId);
-    if (!balance || balance.available_points < amount) {
+    // Atomic: deduct only if available (prevents double-redeem race; no separate SELECT needed)
+    const updated = await queryOne<LoyaltyBalance>(
+      `UPDATE user_loyalty_balance
+       SET available_points = available_points - $1,
+           redeemed_points = redeemed_points + $1,
+           updated_at = NOW()
+       WHERE user_id = $2 AND available_points >= $1
+       RETURNING *`,
+      [amount, userId]
+    );
+    if (!updated) {
       throw new Error('Insufficient points');
     }
 
-    // Create transaction
+    // Record transaction after confirmed deduction
     const transaction = await insert('loyalty_transactions', {
       user_id: userId,
       transaction_type: 'redeem',
@@ -171,17 +183,6 @@ export async function redeemPoints(
       reason,
       reference_id: referenceId
     });
-
-    // Update balance
-    const updated = await update(
-      'user_loyalty_balance',
-      { user_id: userId },
-      {
-        available_points: balance.available_points - amount,
-        redeemed_points: balance.redeemed_points + amount,
-        updated_at: new Date()
-      }
-    );
 
     // Clear cache
     await deleteCache(`loyalty:balance:${userId}`);
@@ -251,19 +252,22 @@ export async function checkAndPromoteTier(userId: string, currentPoints: number)
 
     // If tier changed, update and notify
     if (newTier !== balance.current_tier) {
-      await update(
-        'user_loyalty_balance',
-        { user_id: userId },
-        { current_tier: newTier, updated_at: new Date() }
+      // Atomic CTE: update tier + insert history only if current_tier still matches (prevents duplicate history on concurrent calls)
+      const promoted = await queryOne<{ id: string }>(
+        `WITH updated AS (
+           UPDATE user_loyalty_balance
+           SET current_tier = $1, updated_at = NOW()
+           WHERE user_id = $2 AND current_tier = $3
+           RETURNING user_id
+         )
+         INSERT INTO user_tier_history (user_id, previous_tier, new_tier, milestone_points)
+         SELECT user_id, $3, $1, $4
+         FROM updated
+         RETURNING id`,
+        [newTier, userId, balance.current_tier, currentPoints]
       );
 
-      // Record tier promotion
-      await insert('user_tier_history', {
-        user_id: userId,
-        previous_tier: balance.current_tier,
-        new_tier: newTier,
-        milestone_points: currentPoints
-      });
+      if (!promoted) return; // Concurrent request already promoted
 
       // Clear cache
       await deleteCache(`loyalty:balance:${userId}`);
@@ -292,22 +296,23 @@ export async function getTransactionHistory(
   offset: number = 0
 ): Promise<{ transactions: LoyaltyTransaction[]; total: number }> {
   try {
-    const transactions = await queryMany(
-      `SELECT * FROM loyalty_transactions
-       WHERE user_id = $1
-       ORDER BY created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [userId, limit, offset]
-    );
-
-    const countResult = await queryOne(
-      'SELECT COUNT(*) as total FROM loyalty_transactions WHERE user_id = $1',
-      [userId]
-    );
+    const [transactions, countResult] = await Promise.all([
+      queryMany(
+        `SELECT * FROM loyalty_transactions
+         WHERE user_id = $1
+         ORDER BY created_at DESC
+         LIMIT $2 OFFSET $3`,
+        [userId, limit, offset]
+      ),
+      queryOne(
+        'SELECT COUNT(*) as total FROM loyalty_transactions WHERE user_id = $1',
+        [userId]
+      ),
+    ]);
 
     return {
       transactions: transactions,
-      total: parseInt(countResult?.total || '0')
+      total: parseInt(countResult?.total || '0', 10)
     };
   } catch (error) {
     logger.error('Failed to get transaction history', error instanceof Error ? error : new Error(String(error)));

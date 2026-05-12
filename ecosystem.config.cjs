@@ -1,18 +1,20 @@
 module.exports = {
   apps: [
     {
-      name: 'sanliurfa',
+      name: 'sanliurfa-app',
       script: './dist/server/entry.mjs',
       // CWP Shared Hosting: Single instance (cluster mode requires more resources)
       instances: 1,
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        HOST: '127.0.0.1',
+        PORT: 4321,
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3000,
+        HOST: '127.0.0.1',
+        PORT: 4321,
       },
       // Log files with rotation
       error_file: './logs/err.log',
@@ -44,8 +46,9 @@ module.exports = {
       monitoring: false,
       // PM2 Plus (optional)
       pmx: false,
-      // Kill timeout
-      kill_timeout: 5000,
+      // Kill timeout — graceful shutdown (lib/lifecycle.ts) 8s'de complete olur, +2s buffer.
+      // Aksi halde lifecycle handler'ları DB pool drain ederken PM2 SIGKILL gönderir → leak.
+      kill_timeout: 10000,
       // Listen timeout
       listen_timeout: 10000,
     },

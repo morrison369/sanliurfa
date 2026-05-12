@@ -1,15 +1,44 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import NotificationsCenter from "../../components/NotificationsCenter";
+import PublicPageIntro from "../../components/public/PublicPageIntro.astro";
 
-const { locals } = Astro;
-if (!locals.user) {
-  return Astro.redirect("/giris?redirect=/bildirimler");
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect("/giris?redirect=/bildirimler");
 }
 ---
 
-<Layout title="Bildirimler - Sanliurfa.com">
-  <div class="max-w-2xl mx-auto px-4 py-8">
-    <NotificationsCenter client:visible={{ rootMargin: '120px' }} />
-  </div>
+<Layout seo={{ title: "Bildirimler - Sanliurfa.com", noIndex: true }}>
+ <PublicPageIntro
+ eyebrow="Hesabım"
+ title="Bildirimler"
+ description="Takip, yorum, koleksiyon ve sistem bildirimlerini tek merkezden yönet."
+ quickAnswerTitle="Hızlı cevap"
+ quickAnswerText="Yeni etkileşimler ve hesap uyarıları bu ekranda kronolojik olarak listelenir."
+ actions={[
+ { href: '/bildirim-tercihleri', label: 'Tercihler' },
+ { href: '/profil', label: 'Profil' },
+ ]}
+ />
+
+ <div class="bn-body">
+ <div class="sf-container">
+ <div class="bn-inner">
+ <NotificationsCenter client:visible={{ rootMargin: '120px' }} />
+ </div>
+ </div>
+</div>
 </Layout>
+
+<style>
+ .bn-body {
+ background: var(--public-bg);
+ padding: 2rem 0 4rem;
+ }
+
+ .bn-inner {
+ max-width: 42rem;
+ margin: 0 auto;
+ }
+</style>

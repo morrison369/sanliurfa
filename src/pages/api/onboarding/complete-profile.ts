@@ -5,11 +5,12 @@
 import type { APIRoute } from 'astro';
 import { completeUserProfile, getUserOnboardingStatus, autoCompleteOnboarding } from '../../../lib/user/user-onboarding';
 import { validateWithSchema } from '../../../lib/validation';
+import type { ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-const schema = {
+const schema: ValidationSchema = {
   fullName: { type: 'string' as const, required: true, minLength: 2, maxLength: 100 },
   bio: { type: 'string' as const, required: true, minLength: 10, maxLength: 500 },
   avatar: { type: 'string' as const, required: false }
@@ -27,7 +28,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/onboarding/complete-profile', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -40,7 +41,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { fullName, bio, avatar } = validation.data as any;
+    const { fullName, bio, avatar } = validation.data;
 
     // Complete the profile
     const completed = await completeUserProfile(locals.user.id, {
@@ -81,4 +82,3 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return apiError(ErrorCode.INTERNAL_ERROR, 'Internal server error', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
   }
 };
-

@@ -3,12 +3,12 @@ import { query, queryOne } from '../../../../lib/postgres';
 import { getSiteSetting } from '../../../../lib/site-content';
 import { problemJson } from '../../../../lib/api';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
-async function safeRows(sql: string, params: any[] = []) {
+async function safeRows(sql: string, params: unknown[] = []) {
   try {
     const result = await query(sql, params);
     return result.rows || [];
@@ -17,7 +17,7 @@ async function safeRows(sql: string, params: any[] = []) {
   }
 }
 
-async function safeRow<T>(sql: string, params: any[] = []): Promise<T | null> {
+async function safeRow<T>(sql: string, params: unknown[] = []): Promise<T | null> {
   try {
     return (await queryOne<T>(sql, params)) || null;
   } catch {
@@ -77,7 +77,7 @@ export const GET: APIRoute = async ({ locals }) => {
     await Promise.all([
       queryOne<{ db_size: string }>(
         `SELECT pg_size_pretty(pg_database_size(current_database())) as db_size`,
-      ).catch(() => ({ db_size: '-' } as any)),
+      ).catch(() => ({ db_size: '-' } as { db_size: string })),
       safeRows(
         `SELECT level, COUNT(*)::int as count
          FROM system_logs
@@ -202,7 +202,7 @@ export const GET: APIRoute = async ({ locals }) => {
   });
 
   const reviewsByStatus = Object.fromEntries(
-    reviewStatusRows.map((x: any) => [String(x.status || 'unknown'), Number(x.count || 0)]),
+    reviewStatusRows.map((x) => [String(x.status || 'unknown'), Number(x.count || 0)]),
   );
   const alarmAck = await getSiteSetting<{
     alarms: Record<

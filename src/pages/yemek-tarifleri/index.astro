@@ -1,266 +1,237 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import PublicPageIntro from '../../components/public/PublicPageIntro.astro';
+import Image from '../../components/Image.astro';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { resolveRecipeImage } from '../../lib/public-image-resolvers';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+
+const vegParam = Astro.url.searchParams.get('veg') === '1';
+const spicyParam = Astro.url.searchParams.get('spicy') === '1';
+const diffParam = Astro.url.searchParams.get('diff') || '';
+const validDiffs = new Set(['Kolay', 'Orta', 'Zor']);
+const activeDiff = validDiffs.has(diffParam) ? diffParam : '';
+
+const filterKey = [vegParam ? 'veg' : '', spicyParam ? 'spicy' : '', activeDiff].filter(Boolean).join(':') || 'all';
 
 let recipes: any[] = [];
 let popularFoodPlaces: any[] = [];
 
 const fallbackRecipes = [
-  {
-    id: 'urfa-kebabi',
-    slug: 'urfa-kebabi',
-    name: 'Urfa Kebabı',
-    description: 'Acısız zırh kıyması, isot dengesi ve köz sebze eşliğiyle klasik Şanlıurfa kebabı.',
-    cover_image: '/images/hero/hero-food.webp',
-    is_spicy: false,
-    difficulty: 'Orta',
-    prep_time: 45,
-    rating: '4.9',
-  },
-  {
-    id: 'cig-kofte',
-    slug: 'cig-kofte',
-    name: 'Şanlıurfa Çiğ Köftesi',
-    description: 'İnce bulgur, isot, domates salçası ve uzun yoğurma tekniğiyle Urfa usulü çiğ köfte.',
-    cover_image: '/images/blog/sanliurfa-lezzetler-2026.webp',
-    is_spicy: true,
-    difficulty: 'Zor',
-    prep_time: 60,
-    rating: '4.8',
-  },
-  {
-    id: 'borani',
-    slug: 'borani',
-    name: 'Borani',
-    description: 'Yoğurt, pazı ve nohutla hazırlanan, Şanlıurfa sofralarının dengeli yöresel lezzeti.',
-    cover_image: '/images/places/cigerci-aziz-usta/food-card.webp',
-    is_spicy: false,
-    difficulty: 'Kolay',
-    prep_time: 35,
-    rating: '4.7',
-  },
-  {
-    id: 'lebeni',
-    slug: 'lebeni',
-    name: 'Lebeni',
-    description: 'Yoğurtlu buğday çorbası; özellikle yaz aylarında serin ve doyurucu bir Urfa tarifi.',
-    cover_image: '/images/hero/hero-food.webp',
-    is_spicy: false,
-    difficulty: 'Kolay',
-    prep_time: 30,
-    rating: '4.6',
-  },
-  {
-    id: 'sillik-tatlisi',
-    slug: 'sillik-tatlisi',
-    name: 'Şıllık Tatlısı',
-    description: "İnce krep hamuru, ceviz ve şerbetle hazırlanan Şanlıurfa'nın en bilinen tatlılarından.",
-    cover_image: '/images/blog/sanliurfa-lezzetler-2026.webp',
-    is_spicy: false,
-    difficulty: 'Orta',
-    prep_time: 40,
-    rating: '4.8',
-  },
-  {
-    id: 'patlican-kebabi',
-    slug: 'patlican-kebabi',
-    name: 'Patlıcan Kebabı',
-    description: 'Köz kokusu, yağ dengesi ve kuzu etiyle yapılan Urfa yaz sofralarının güçlü ana yemeği.',
-    cover_image: '/images/hero/hero-food.webp',
-    is_spicy: false,
-    difficulty: 'Orta',
-    prep_time: 55,
-    rating: '4.9',
-  },
+ { id: 'urfa-kebabi', slug: 'urfa-kebabi', name: 'Urfa Kebabı', description: 'Acısız zırh kıyması, isot dengesi ve köz sebze eşliğiyle klasik Şanlıurfa kebabı.', cover_image: '/images/hero/hero-food.webp', is_spicy: false, difficulty: 'Orta', prep_time: 45, rating: '4.9' },
+ { id: 'cig-kofte', slug: 'cig-kofte', name: 'Şanlıurfa Çiğ Köftesi', description: 'İnce bulgur, isot, domates salçası ve uzun yoğurma tekniğiyle Urfa usulü çiğ köfte.', cover_image: '/images/blog/sanliurfa-lezzetler-2026.webp', is_spicy: true, difficulty: 'Zor', prep_time: 60, rating: '4.8' },
+ { id: 'borani', slug: 'borani', name: 'Borani', description: 'Yoğurt, pazı ve nohutla hazırlanan, Şanlıurfa sofralarının dengeli yöresel lezzeti.', cover_image: '/images/places/cigerci-aziz-usta/food-card.webp', is_spicy: false, difficulty: 'Kolay', prep_time: 35, rating: '4.7' },
+ { id: 'lebeni', slug: 'lebeni', name: 'Lebeni', description: 'Yoğurtlu buğday çorbası; özellikle yaz aylarında serin ve doyurucu bir Urfa tarifi.', cover_image: '/images/hero/hero-food.webp', is_spicy: false, difficulty: 'Kolay', prep_time: 30, rating: '4.6' },
+ { id: 'sillik-tatlisi', slug: 'sillik-tatlisi', name: 'Şıllık Tatlısı', description: "İnce krep hamuru, ceviz ve şerbetle hazırlanan Şanlıurfa'nın en bilinen tatlılarından.", cover_image: '/images/blog/sanliurfa-lezzetler-2026.webp', is_spicy: false, difficulty: 'Orta', prep_time: 40, rating: '4.8' },
+ { id: 'patlican-kebabi', slug: 'patlican-kebabi', name: 'Patlıcan Kebabı', description: 'Köz kokusu, yağ dengesi ve kuzu etiyle yapılan Urfa yaz sofralarının güçlü ana yemeği.', cover_image: '/images/hero/hero-food.webp', is_spicy: false, difficulty: 'Orta', prep_time: 55, rating: '4.9' },
 ];
 
 const fallbackFoodPlaces = [
-  { slug: 'cigerci-aziz-usta', name: 'Ciğerci Aziz Usta', category_name: 'Ciğerciler', rating: '4.8', review_count: 128 },
-  { slug: 'sembol-ocakbasi', name: 'Sembol Ocakbaşı', category_name: 'Kebapçılar', rating: '4.7', review_count: 96 },
-  { slug: 'culcuoglu', name: 'Çulcuoğlu', category_name: 'Yöresel Yemekler', rating: '4.6', review_count: 84 },
-  { slug: 'gumruk-han', name: 'Gümrük Han', category_name: 'Kahvaltı ve Çay', rating: '4.5', review_count: 77 },
+ { slug: 'cigerci-mehmet-usta', name: 'Ciğerci Mehmet Usta', category_name: 'Ciğerciler', rating: '4.8', review_count: 128 },
+ { slug: 'sirin-kebap', name: 'Şirin Kebap', category_name: 'Kebapçılar', rating: '4.7', review_count: 96 },
+ { slug: 'culcuoglu-restaurant', name: 'Çulcuoğlu Restaurant', category_name: 'Yöresel Yemekler', rating: '4.6', review_count: 84 },
+ { slug: 'halil-ibrahim-sofrasi', name: 'Halil İbrahim Sofrası', category_name: 'Kebapçılar', rating: '4.5', review_count: 77 },
 ];
 
 try {
+ const data = await getCachedPublicRouteData(`page:yemek-tarifleri:index:${filterKey}`, async () => {
+  const conditions: string[] = ["status = 'published'"];
+  if (vegParam) conditions.push('is_vegetarian = true');
+  if (spicyParam) conditions.push('is_spicy = true');
+  if (activeDiff) conditions.push(`difficulty = '${activeDiff}'`);
+  const whereClause = conditions.join(' AND ');
+
   const [recipesResult, placesResult] = await Promise.all([
-    query(`
-      SELECT id, slug, name, description, cover_image, is_spicy, difficulty, prep_time, rating
-      FROM recipes
-      WHERE status = 'published'
-      ORDER BY is_featured DESC, rating DESC NULLS LAST
-      LIMIT 24
-    `),
-    query(`
-      SELECT p.id, p.slug, p.name, p.rating, p.review_count, c.name AS category_name
-      FROM places p
-      LEFT JOIN categories c ON p.category_id = c.id
-      WHERE p.status = 'active'
-        AND c.slug IN (
-          'kebapcilar', 'cigerciler', 'lahmacuncular', 'pideciler',
-          'cig-kofteciler', 'yoresel-yemekler', 'tatlicilar'
-        )
-      ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
-      LIMIT 8
-    `),
+  query(`
+  SELECT id, slug, name, description, cover_image, is_spicy, difficulty, prep_time, rating
+  FROM recipes
+  WHERE ${whereClause}
+  ORDER BY is_featured DESC, rating DESC NULLS LAST
+  LIMIT 60
+  `),
+  query(`
+  SELECT p.id, p.slug, p.name, p.rating, p.review_count, c.name AS category_name
+  FROM places p
+  LEFT JOIN categories c ON p.category_id = c.id
+  WHERE p.status = 'active'
+  AND c.slug IN (
+  'yeme-icme-kebapcilar', 'yeme-icme-cigerciler', 'yeme-icme-lahmacuncular', 'yeme-icme-pideciler',
+  'yeme-icme-cig-kofteciler', 'yeme-icme-otoyagli-yoresel-yemek-mekanlari', 'yeme-icme-tatlicilar'
+  )
+  ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+  LIMIT 8
+  `),
   ]);
-
-  recipes = recipesResult.rows;
-  popularFoodPlaces = placesResult.rows;
+  return {
+   recipes: recipesResult.rows,
+   popularFoodPlaces: placesResult.rows,
+  };
+ });
+ recipes = data.recipes;
+ popularFoodPlaces = data.popularFoodPlaces;
 } catch (error) {
-  console.error('Yemek tarifleri sayfası verileri yüklenemedi:', error);
+ logger.error('Yemek tarifleri sayfası verileri yüklenemedi:', error instanceof Error ? error : new Error(String(error)));
 }
 
-if (recipes.length === 0) {
-  recipes = fallbackRecipes;
-}
-
-if (popularFoodPlaces.length === 0) {
-  popularFoodPlaces = fallbackFoodPlaces;
-}
+if (recipes.length === 0) recipes = fallbackRecipes;
+if (popularFoodPlaces.length === 0) popularFoodPlaces = fallbackFoodPlaces;
 
 const seo = {
-  title: 'Şanlıurfa Özel Yemek Tarifleri | Geleneksel Urfa Mutfağı',
-  description: 'Şanlıurfa özel yemek tarifleri: kebap, ciğer, çiğ köfte, tatlılar ve yöresel tarifler.',
-  keywords: ['urfa yemek tarifleri', 'şanlıurfa urfa kebabı tarifi', 'çiğ köfte tarifi', 'urfa borani', 'şanlıurfa şıllık tatlısı', 'yöresel tarifler', 'urfa mutfağı tarifi'],
-  ogImage: '/images/hero/hero-food.webp',
-  canonical: '/yemek-tarifleri',
+ title: 'Şanlıurfa Özel Yemek Tarifleri | Geleneksel Urfa Mutfağı',
+ description: 'Şanlıurfa özel yemek tarifleri: kebap, ciğer, çiğ köfte, tatlılar ve yöresel tarifler.',
+ keywords: ['urfa yemek tarifleri', 'şanlıurfa urfa kebabı tarifi', 'çiğ köfte tarifi', 'urfa borani', 'şanlıurfa şıllık tatlısı', 'yöresel tarifler', 'urfa mutfağı tarifi'],
+ ogImage: '/images/hero/hero-food.webp',
+ canonical: '/yemek-tarifleri',
 };
-const { baseUrl } = await getSiteBranding();
+
+const baseUrl = getPublicAppUrl();
 
 const faqItems = [
-  {
-    S: 'Şanlıurfa yemek tarifleri hangi lezzetleri kapsar?',
-    C: 'Urfa kebabı, çiğ köfte, borani, lebeni, şıllık tatlısı ve patlıcan kebabı gibi yöresel tarifler bu rehberde öne çıkar.',
-  },
-  {
-    S: 'Tariflerle ilgili mekan önerisi var mı?',
-    C: "Evet. Tarif kartlarının altında Şanlıurfa'da bu lezzetleri deneyebileceğiniz popüler mekan önerileri gösterilir.",
-  },
-  {
-    S: 'Tarif görselleri nasıl yönetilir?',
-    C: 'Görseller slug uyumlu adlandırılır ve Pexels öncelikli, Unsplash yedekli medya akışıyla admin onayına bağlı tutulur.',
-  },
+ { S: 'Şanlıurfa yemek tarifleri hangi lezzetleri kapsar?', C: 'Urfa kebabı, çiğ köfte, borani, lebeni, şıllık tatlısı ve patlıcan kebabı gibi yöresel tarifler bu rehberde öne çıkar. Her tarif malzeme listesi, hazırlık süresi, zorluk seviyesi ve Şanlıurfa mutfağına özgü püf noktalarıyla birlikte sunulmaktadır.' },
+ { S: 'Tariflerle ilgili mekan önerisi var mı?', C: "Evet. Her tarif için sayfada Şanlıurfa'nın en iyi restoranlarına yönlendiren mekan önerileri gösterilir. Bu mekanları Mekan Rehberi'nden inceleyebilir, puana göre sıralı listelerden en doğru tercihi kolayca yapabilirsiniz." },
+ { S: 'Bu tarifleri evde deneyebilir miyim?', C: 'Evet. Sayfadaki tüm tarifler adım adım anlatımlı, malzeme ölçüleri Türk pişirme geleneklerine uygun olarak hazırlanmıştır. İsot, biber salçası ve sumak gibi özel Urfa baharatlarını Kapalı Çarşı veya aktarlardan kolaylıkla temin edebilirsiniz.' },
+ { S: 'Şanlıurfa mutfağı hakkında daha fazla bilgiye nereden ulaşabilirim?', C: "Gastronomi rehberi sayfamızda Şanlıurfa'nın yemek kültürü, tarihsel arka planı, en iyi restoranlar ve yöresel lezzetler hakkında kapsamlı bilgiye ulaşabilirsiniz. Yemek tarifleri sayfasından gastronomi rehberine kolayca geçiş yapılabilir." },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-amber-50/40">
-    <section class="pt-28 pb-14 bg-gradient-to-br from-amber-700 to-orange-800 text-white">
-      <div class="container mx-auto px-4">
-        <p class="text-amber-200 font-medium mb-2">Sanliurfa.com Mutfak Rehberi</p>
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Şanlıurfa Özel Yemek Tarifleri</h1>
-        <p class="text-amber-100 max-w-3xl text-lg">
-          Urfa mutfağının geleneksel lezzetlerini adım adım keşfedin. Tarifler, malzemeler ve yöresel püf noktaları tek sayfada.
-        </p>
-        <div class="mt-6 flex flex-wrap gap-3">
-          <a href="/yeme-icme" class="px-5 py-2.5 rounded-full bg-white/20 border border-white/30 hover:bg-white/30 transition-colors">
-            Yeme İçme Rehberi
-          </a>
-          <a href="/mekanlar/yoresel-yemekler" class="px-5 py-2.5 rounded-full bg-white/20 border border-white/30 hover:bg-white/30 transition-colors">
-            Yöresel Yemek Mekanları
-          </a>
-          <a href="/mekanlar/cig-kofteciler" class="px-5 py-2.5 rounded-full bg-white/20 border border-white/30 hover:bg-white/30 transition-colors">
-            Çiğ Köfteciler
-          </a>
-        </div>
-      </div>
-    </section>
+ <style is:inline>
+ .yt-body{padding:2.5rem 0}
+ .yt-section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1.25rem}
+ .yt-section-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;color:var(--public-text)}
+ .yt-section-link{font-size:.78rem;color:var(--public-accent);transition:color .15s}.yt-section-link:hover{color:var(--public-text)}
+ .yt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.25rem;margin-bottom:3rem}
+ .yt-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);overflow:hidden;text-decoration:none;display:block;transition:border-color .15s,background .15s}
+ .yt-card:hover{border-color:rgba(184,115,51,.35);background:var(--bg-hover)}
+ .yt-card-img{height:10rem;background:rgba(184,115,51,.06);overflow:hidden}
+ .yt-card-img img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+ .yt-card:hover .yt-card-img img{transform:scale(1.04)}
+ .yt-card-body{padding:1rem 1.25rem}
+ .yt-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.35rem}
+ .yt-card-name{font-size:.875rem;font-weight:700;color:var(--public-text);transition:color .15s}
+ .yt-card:hover .yt-card-name{color:var(--public-accent)}
+ .yt-badge-spicy{font-size:.65rem;font-weight:700;padding:.2rem .5rem;background:rgba(200,40,30,.12);border:1px solid rgba(200,40,30,.25);color:#e07060;white-space:nowrap;flex-shrink:0}
+ .yt-card-desc{font-size:.78rem;color:var(--public-muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .yt-card-meta{display:flex;gap:.75rem;margin-top:.6rem;font-size:.7rem;color:var(--public-text-soft)}
+ .yt-places-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin-bottom:4rem}
+ .yt-place-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1rem 1.25rem;text-decoration:none;transition:border-color .15s,background .15s}
+ .yt-place-card:hover{border-color:rgba(184,115,51,.35);background:var(--bg-hover)}
+ .yt-place-cat{font-size:.7rem;color:var(--public-muted);margin-bottom:.2rem}
+ .yt-place-name{font-size:.875rem;font-weight:600;color:var(--public-text);margin-bottom:.3rem;transition:color .15s}
+ .yt-place-card:hover .yt-place-name{color:var(--public-accent)}
+ .yt-place-meta{font-size:.72rem;color:var(--public-text-soft)}
+ .yt-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.5rem;align-items:center}
+ .yt-filter-label{font-size:.72rem;color:var(--public-muted);margin-right:.25rem}
+ .yt-filter-chip{font-size:.72rem;font-weight:600;padding:.3rem .75rem;border:1px solid rgba(184,115,51,.25);color:var(--public-text-soft);text-decoration:none;transition:all .15s;background:transparent}
+ .yt-filter-chip:hover{border-color:rgba(184,115,51,.5);color:var(--public-text)}
+ .yt-filter-chip.active{background:rgba(184,115,51,.15);border-color:rgba(184,115,51,.5);color:var(--public-accent)}
+ .yt-empty{text-align:center;padding:3rem 0;color:var(--public-muted);font-size:.875rem}
+ </style>
 
-    <section class="py-12">
-      <div class="container mx-auto px-4">
-        <div class="mb-8 rounded-2xl border border-amber-200 bg-white p-5 shadow-sm">
-          <p class="text-sm font-semibold uppercase tracking-wide text-amber-700">Hızlı Cevap</p>
-          <h2 class="mt-1 text-xl font-bold text-gray-950">Şanlıurfa yemek tarifleri nereden başlanır?</h2>
-          <p class="mt-2 text-sm leading-6 text-gray-700">
-            Şanlıurfa yemek tarifleri sayfası; Urfa kebabı, çiğ köfte, borani, lebeni ve şıllık tatlısı gibi
-            yöresel lezzetleri tek rehberde toplar. Tarifleri inceleyip ilgili yeme-içme mekanlarına geçebilirsiniz.
-          </p>
-          <div class="mt-3 flex flex-wrap gap-3 text-sm">
-            <a href="/yemek-tarifleri" class="font-semibold text-amber-800 underline underline-offset-4">Tarif rehberi</a>
-            <a href="/mekanlar/yoresel-yemekler" class="font-semibold text-amber-800 underline underline-offset-4">Yöresel yemek mekanları</a>
-            <a href="/gastronomi" class="font-semibold text-amber-800 underline underline-offset-4">Gastronomi</a>
-          </div>
-        </div>
+ <PublicPageIntro
+  eyebrow="Sanliurfa.com Mutfak Rehberi"
+  title="Şanlıurfa Özel Yemek Tarifleri"
+  description="Urfa mutfağının geleneksel lezzetlerini adım adım keşfedin. Tarifler, malzemeler ve yöresel püf noktaları tek sayfada."
+  actions={[
+   { href: '/yeme-icme', label: 'Yeme İçme Rehberi' },
+   { href: '/mekanlar/yeme-icme-otoyagli-yoresel-yemek-mekanlari', label: 'Yöresel Yemek Mekanları' },
+   { href: '/mekanlar/yeme-icme-cig-kofteciler', label: 'Çiğ Köfteciler' },
+  ]}
+  quickAnswerTitle="Hızlı Cevap"
+  quickAnswerText="Şanlıurfa yemek tarifleri sayfası; Urfa kebabı, çiğ köfte, borani, lebeni ve şıllık tatlısı gibi yöresel lezzetleri tek rehberde toplar. Tarifleri inceleyip ilgili yeme-içme mekanlarına geçebilirsiniz."
+ />
 
-        <div class="flex items-center justify-between mb-7">
-          <h2 class="text-2xl font-bold text-gray-900">Tarifler</h2>
-          <a href="/gastronomi" class="text-red-600 hover:text-red-700 font-medium">Gastronomi Sayfası →</a>
-        </div>
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {recipes.length > 0 ? recipes.map((recipe) => (
-            <a href={`/yemek-tarifleri/${recipe.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm border border-amber-100 hover:shadow-lg transition-all group">
-              <div class="h-44 bg-amber-100">
-                <img
-                  src={recipe.cover_image || recipe.images?.[0] || '/images/foods/default.jpg'}
-                  alt={recipe.name}
-                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  loading="lazy"
-                  onerror="this.setAttribute('src','/images/foods/default.jpg')"
-                />
-              </div>
-              <div class="p-4">
-                <div class="flex items-center justify-between gap-2">
-                  <h3 class="font-bold text-gray-900 group-hover:text-red-600">{recipe.name}</h3>
-                  {recipe.is_spicy && <span class="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">Acılı</span>}
-                </div>
-                <p class="text-sm text-gray-600 mt-1 line-clamp-2">{recipe.description || 'Şanlıurfa mutfağından özel tarif.'}</p>
-                <div class="flex items-center gap-3 mt-3 text-xs text-gray-500">
-                  <span>Zorluk: {recipe.difficulty || '-'}</span>
-                  <span>Hazırlık: {recipe.prep_time ? `${recipe.prep_time} dk` : '-'}</span>
-                  <span>Puan: {recipe.rating || '-'}</span>
-                </div>
-              </div>
-            </a>
-          )) : null}
-        </div>
-      </div>
-    </section>
+ <!-- Content -->
+ <div class="sf-container yt-body">
+ <div class="yt-section-header">
+ <h2 class="yt-section-title">Tarifler <span style="font-size:.8rem;font-weight:400;color:var(--public-muted)">({recipes.length})</span></h2>
+ <a href="/gastronomi" class="yt-section-link">Gastronomi Sayfası →</a>
+ </div>
 
-    <section class="pb-16">
-      <div class="container mx-auto px-4">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Tarifler İçin Önerilen Mekanlar</h2>
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {popularFoodPlaces.length > 0 ? popularFoodPlaces.map((place) => (
-            <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl border p-4 hover:shadow-lg transition-all group">
-              <p class="text-xs text-gray-500">{place.category_name || 'Mekan'}</p>
-              <h3 class="font-bold text-gray-900 group-hover:text-red-600 mt-1">{place.name}</h3>
-              <p class="text-sm text-gray-500 mt-2">Puan: {place.rating || '-'} ({place.review_count || 0} yorum)</p>
-            </a>
-          )) : null}
-        </div>
-      </div>
-    </section>
+ <!-- Filtreler -->
+ <div class="yt-filters">
+  <span class="yt-filter-label">Filtre:</span>
+  <a href="/yemek-tarifleri" class:list={['yt-filter-chip', { active: filterKey === 'all' }]}>Tümü</a>
+  <a href={`/yemek-tarifleri?veg=1${spicyParam ? '&spicy=1' : ''}${activeDiff ? `&diff=${activeDiff}` : ''}`}
+   class:list={['yt-filter-chip', { active: vegParam }]}>Vejetaryen</a>
+  <a href={`/yemek-tarifleri?spicy=1${vegParam ? '&veg=1' : ''}${activeDiff ? `&diff=${activeDiff}` : ''}`}
+   class:list={['yt-filter-chip', { active: spicyParam }]}>Acılı</a>
+  <span class="yt-filter-label" style="margin-left:.5rem">Zorluk:</span>
+  {['Kolay', 'Orta', 'Zor'].map(d => (
+   <a href={`/yemek-tarifleri?diff=${d}${vegParam ? '&veg=1' : ''}${spicyParam ? '&spicy=1' : ''}`}
+    class:list={['yt-filter-chip', { active: activeDiff === d }]}>{d}</a>
+  ))}
+ </div>
+
+ {recipes.length === 0 ? (
+  <div class="yt-empty">
+   <p>Seçilen filtreye uygun tarif bulunamadı.</p>
+   <a href="/yemek-tarifleri" style="color:var(--public-accent);font-size:.8rem">Filtreyi temizle →</a>
   </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.C,
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    name: 'Şanlıurfa Yemek Tarifleri',
-    itemListElement: recipes.slice(0, 12).map((recipe, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: recipe.name,
-      url: `${baseUrl}/yemek-tarifleri/${recipe.slug}`,
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Yemek Tarifleri', item: `${baseUrl}/yemek-tarifleri` },
-    ],
-  })} is:inline />
+ ) : (
+ <div class="yt-grid">
+ {recipes.map((recipe) => (
+<a href={`/yemek-tarifleri/${recipe.slug}`} class="yt-card">
+<div class="yt-card-img">
+<Image
+ src={resolveRecipeImage(recipe)}
+ alt={recipe.name}
+ loading="lazy"
+ width={480}
+ height={320}
+/>
+ </div>
+ <div class="yt-card-body">
+ <div class="yt-card-head">
+ <p class="yt-card-name">{recipe.name}</p>
+ {recipe.is_spicy && <span class="yt-badge-spicy">Acılı</span>}
+ </div>
+ <p class="yt-card-desc">{recipe.description || 'Şanlıurfa mutfağından özel tarif.'}</p>
+ <div class="yt-card-meta">
+ {recipe.difficulty && <span>Zorluk: {recipe.difficulty}</span>}
+ {recipe.prep_time && <span>{recipe.prep_time} dk</span>}
+ {recipe.rating && <span>★ {recipe.rating}</span>}
+ </div>
+ </div>
+ </a>
+ ))}
+ </div>
+ )}
+
+ <h2 class="yt-section-title" style="margin-bottom:1.25rem">Tarifler İçin Önerilen Mekanlar</h2>
+ <div class="yt-places-grid">
+ {popularFoodPlaces.map((place) => (
+ <a href={`/isletme/${place.slug}`} class="yt-place-card">
+ <p class="yt-place-cat">{place.category_name || 'Mekan'}</p>
+ <p class="yt-place-name">{place.name}</p>
+ <p class="yt-place-meta">★ {place.rating || '-'} · {place.review_count || 0} yorum</p>
+ </a>
+ ))}
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'FAQPage',
+ mainEntity: faqItems.map(item => ({
+ '@type': 'Question', name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'ItemList',
+ name: 'Şanlıurfa Yemek Tarifleri',
+ itemListElement: recipes.slice(0, 12).map((recipe, index) => ({
+ '@type': 'ListItem', position: index + 1,
+ name: recipe.name, url: `${baseUrl}/yemek-tarifleri/${recipe.slug}`,
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Yemek Tarifleri', item: `${baseUrl}/yemek-tarifleri` },
+ ],
+ })} is:inline />
 </Layout>

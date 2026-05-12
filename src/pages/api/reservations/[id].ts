@@ -3,7 +3,7 @@ import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { sendEmail } from '../../../lib/email';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 // Rezervasyon detayı görüntüle
 export const GET: APIRoute = async (context) => {
@@ -41,8 +41,13 @@ export const GET: APIRoute = async (context) => {
 
     const reservation = result.rows[0];
 
-    // Yetki kontrolü
-    if (auth.user.role === 'vendor' && auth.placeId !== reservation.place_id) {
+    // Yetki: admin tüm rezervasyonları görebilir, vendor sadece kendi mekanını,
+    // diğer roller (user, moderator) erişemez (rezervasyonlar guest-only, müşteri user_id'si yok)
+    if (auth.user.role === 'admin') {
+      // tüm rezervasyonlara erişim
+    } else if (auth.user.role === 'vendor' && auth.placeId === reservation.place_id) {
+      // kendi mekanına ait rezervasyon
+    } else {
       return problemJson({
         status: 403,
         title: 'Forbidden',
@@ -52,13 +57,10 @@ export const GET: APIRoute = async (context) => {
       });
     }
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       reservation
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
   } catch (error) {
     logger.error('Reservation detail error:', error);
     return problemJson({
@@ -107,8 +109,12 @@ export const PUT: APIRoute = async (context) => {
 
     const reservation = existingResult.rows[0];
 
-    // Yetki kontrolü
-    if (auth.user.role === 'vendor' && auth.placeId !== reservation.place_id) {
+    // Yetki: admin tüm rezervasyonları güncelleyebilir, vendor sadece kendi mekanını
+    if (auth.user.role === 'admin') {
+      // tüm rezervasyonlar güncellenebilir
+    } else if (auth.user.role === 'vendor' && auth.placeId === reservation.place_id) {
+      // kendi mekanına ait rezervasyon
+    } else {
       return problemJson({
         status: 403,
         title: 'Forbidden',
@@ -130,9 +136,12 @@ export const PUT: APIRoute = async (context) => {
       });
     }
 
+    if (notes !== undefined && typeof notes === 'string' && notes.length > 1000) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Not 1000 karakterden uzun olamaz', type: '/problems/reservations-update-notes-too-long', instance: `/api/reservations/${id}` });
+    if (tableNumber !== undefined && typeof tableNumber === 'string' && tableNumber.length > 50) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Masa numarası 50 karakterden uzun olamaz', type: '/problems/reservations-update-table-too-long', instance: `/api/reservations/${id}` });
+
     // Güncelleme sorgusu oluştur
     const updates: string[] = [];
-    const params: any[] = [];
+    const params: unknown[] = [];
     let paramIndex = 1;
 
     if (status) {
@@ -192,7 +201,7 @@ export const PUT: APIRoute = async (context) => {
       };
       const label = statusLabels[r.status];
       if (label) {
-        await sendEmail({
+        const statusMail = await sendEmail({
           to: r.customer_email,
           subject: `Rezervasyon Durumu: ${label}`,
           html: `<p>Sayın ${r.customer_name}, rezervasyonunuzun durumu güncellendi:</p>
@@ -202,17 +211,17 @@ export const PUT: APIRoute = async (context) => {
   <li><strong>Kişi sayısı:</strong> ${r.party_size}</li>
 </ul>`,
         });
+        if (!statusMail.success) {
+          logger.warn('Reservation status update email failed', { reservationId: r.id, customerEmail: r.customer_email, status: r.status, error: statusMail.error });
+        }
       }
     }
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       message: 'Reservation updated successfully',
       reservation: updatedReservation
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
   } catch (error) {
     logger.error('Reservation update error:', error);
     return problemJson({
@@ -256,13 +265,10 @@ export const DELETE: APIRoute = async (context) => {
       });
     }
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       message: 'Reservation deleted successfully'
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
   } catch (error) {
     logger.error('Reservation delete error:', error);
     return problemJson({

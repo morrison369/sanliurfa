@@ -1,188 +1,233 @@
 ---
-
-// Map Page - All Places
+import { Icon } from 'astro-icon/components';
 import Layout from '../layouts/Layout.astro';
+import Image from '../components/Image.astro';
 import LeafletMap from '../components/map/LeafletMap.astro';
 import { getPlaces } from '../lib/places/db';
 import { query } from '../lib/postgres';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { logger } from '../lib/logging';
+import { getCachedPublicRouteData } from '../lib/public-route-cache';
+const baseUrl = getPublicAppUrl();
 
 const url = new URL(Astro.request.url);
-const category = url.searchParams.get('kategori') || undefined;
+const category = url.searchParams.get('kategori');
 
 let places: any[] = [];
 let categories: any[] = [];
 
 try {
+ const data = await getCachedPublicRouteData(`page:harita:${category || 'all'}`, async () => {
   const [placesResult, categoriesResult] = await Promise.all([
-    getPlaces({ status: 'active', category, limit: 200 }),
-    query(`SELECT id, slug, name, icon, color, is_active FROM categories WHERE is_active = true ORDER BY sort_order, name`),
+  getPlaces({
+  status: 'active',
+  limit: 200,
+  ...(category ? { category } : {}),
+  }),
+  query(`SELECT id, slug, name, icon, color, is_active FROM categories WHERE is_active = true ORDER BY sort_order, name`),
   ]);
-  places = placesResult.places;
-  categories = categoriesResult.rows;
+  return {
+   places: placesResult.places,
+   categories: categoriesResult.rows,
+  };
+ });
+ places = data.places;
+ categories = data.categories;
 } catch (e) {
-  console.error('Harita verileri yüklenemedi:', e);
+ logger.error('Harita verileri yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const validPlaces = places.filter((p: any) => p.latitude && p.longitude).map((p: any) => ({
-  id: p.id,
-  name: p.name,
-  lat: p.latitude,
-  lon: p.longitude,
-  category: p.category_slug,
-  thumbnail: p.thumbnail,
-  rating: p.rating,
-  slug: p.slug,
+ id: p.id,
+ name: p.name,
+ lat: Number(p.latitude),
+ lon: Number(p.longitude),
+ category: p.category_slug,
+ thumbnail: p.thumbnail,
+ ...(p.rating != null ? { rating: Number(p.rating) } : {}),
+ slug: p.slug,
 }));
+const mapFallbackImage = '/images/places/balikligol.jpg';
 
 const seo = {
-  title: 'Harita - Şanlıurfa Mekanları',
-  description: `Şanlıurfa'daki ${validPlaces.length}+ mekanı haritada keşfedin. Restoranlar, oteller, tarihi yerler ve daha fazlası.`,
-  keywords: ['şanlıurfa harita', 'urfa mekan haritası', 'şanlıurfa mekanlar nerede', 'urfa haritada gezilecek yerler', 'şanlıurfa konum'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/harita',
+ title: 'Harita - Şanlıurfa Mekanları',
+ description: `Şanlıurfa'daki ${validPlaces.length}+ mekanı haritada keşfedin. Restoranlar, oteller, tarihi yerler ve daha fazlası.`,
+ keywords: ['şanlıurfa harita', 'urfa mekan haritası', 'şanlıurfa mekanlar nerede', 'urfa haritada gezilecek yerler', 'şanlıurfa konum'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/harita',
 };
 const faqItems = [
-  { S: 'Şanlıurfa haritasında hangi mekanlar görüntülenir?', C: 'Restoran, kafe, tarihi yer, eczane, market ve hizmet noktaları dahil tüm aktif mekanlar haritada işaretlidir.' },
-  { S: 'Harita üzerinde nasıl arama yapabilirim?', C: 'Harita sayfasında kategori filtresi ve ilçe seçeneğiyle mekanları daraltabilir, yakınlaştırarak detaylı görünüm elde edebilirsiniz.' },
-  { S: 'Mobil cihazdan haritaya nasıl ulaşabilirim?', C: 'Harita sayfası mobil cihazlara tam uyumludur; konumunuza en yakın mekanları da filtreleyebilirsiniz.' },
+ { S: 'Şanlıurfa haritasında hangi mekanlar görüntülenir?', C: 'Restoran, kafe, tarihi yer, eczane, market ve hizmet noktaları dahil tüm aktif mekanlar haritada işaretlidir.' },
+ { S: 'Harita üzerinde nasıl arama yapabilirim?', C: 'Harita sayfasında kategori filtresi ve ilçe seçeneğiyle mekanları daraltabilir, yakınlaştırarak detaylı görünüm elde edebilirsiniz.' },
+ { S: 'Mobil cihazdan haritaya nasıl ulaşabilirim?', C: 'Harita sayfası mobil cihazlara tam uyumludur; konumunuza en yakın mekanları da filtreleyebilirsiniz.' },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    {/* Header */}
-    <div class="bg-white border-b">
-      <div class="container-custom py-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 class="text-2xl font-bold">Harita</h1>
-            <p class="text-gray-600 text-sm">{validPlaces.length} mekan haritada gösteriliyor</p>
-          </div>
-          
-          {/* Category Filter */}
-          <div class="flex flex-wrap gap-2">
-            <a
-              href="/harita"
-              class={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                !category ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              Tümü
-            </a>
-            {categories.filter(c => c.is_active).slice(0, 6).map(cat => (
-              <a
-                href={`/harita?kategori=${cat.slug}`}
-                class={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  category === cat.slug ? 'bg-amber-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {cat.name}
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+ <style>
+ .ht-page{background:var(--public-bg);min-height:100vh}
+ .ht-header{background:linear-gradient(135deg,#fff8ec 0%,#f3e4cc 100%);border-bottom:1px solid #eadcc4}
+ .ht-header-inner{display:flex;flex-direction:column;gap:.75rem;padding:.85rem 0}
+ @media(min-width:48rem){.ht-header-inner{flex-direction:row;align-items:center;justify-content:space-between}}
+ .ht-title{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:700;color:var(--public-text)}
+ .ht-subtitle{font-size:.8rem;color:var(--public-muted);margin-top:.1rem}
+ .ht-filters{display:flex;flex-wrap:wrap;gap:.5rem}
+ .ht-cat-btn{display:inline-block;padding:.5rem .95rem;border-radius:999px;font-size:.8rem;font-weight:700;background:#fff;color:#6d5945;border:1px solid #e2c79d;transition:background .15s,color .15s,border-color .15s}
+ .ht-cat-btn:hover{background:#fff8ec;color:#78331d;border-color:#d39b62}
+ .ht-cat-btn.is-active{background:#78331d;color:white;border-color:#78331d}
+ .ht-map-wrap{height:calc(100vh - 180px)}
+ .ht-toggle-wrap{position:fixed;bottom:1rem;left:1rem;right:1rem;z-index:400;display:block}
+ @media(min-width:48rem){.ht-toggle-wrap{display:none}}
+ .ht-toggle-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;padding:.9rem;border-radius:1rem;background:#fff;border:1px solid #d39b62;color:#201711;font-size:.88rem;font-weight:800;cursor:pointer;box-shadow:0 16px 36px rgba(120,51,29,.16)}
+ .ht-modal{position:fixed;inset:0;background:rgba(32,23,17,.45);z-index:500}
+ .ht-modal.hidden{display:none}
+ .ht-panel{position:absolute;bottom:0;left:0;right:0;background:#fff8ec;border-top:1px solid #e2c79d;max-height:70vh;overflow:hidden;display:flex;flex-direction:column;border-radius:1.5rem 1.5rem 0 0}
+ .ht-panel-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--public-border-soft);flex-shrink:0}
+ .ht-panel-title{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:700;color:var(--public-text)}
+ .ht-panel-close{padding:.4rem;background:var(--public-accent-soft);border:none;cursor:pointer;display:flex;align-items:center}
+ .ht-panel-list{overflow-y:auto;flex:1}
+ .ht-list-item{display:flex;align-items:center;gap:.75rem;padding:.85rem 1.25rem;border-bottom:1px solid var(--public-border-soft);transition:background .15s}
+ .ht-list-item:hover{background:var(--public-accent-soft)}
+ .ht-list-thumb{width:3rem;height:3rem;flex-shrink:0;overflow:hidden;background:#f3e4cc;border-radius:.9rem}
+ .ht-list-img-el{width:100%;height:100%;object-fit:cover}
+ .ht-list-name{font-size:.88rem;font-weight:500;color:var(--public-text)}
+ .ht-list-rating{font-size:.8rem;color:var(--public-accent);margin-top:.15rem}
+ </style>
 
-    {/* Map */}
-    <div class="h-[calc(100vh-180px)]">
-      <LeafletMap 
-        places={validPlaces}
-        zoom={13}
-        height="100%"
-      />
-    </div>
+ <div class="ht-page">
+ <div class="ht-header">
+ <div class="sf-container">
+ <div class="ht-header-inner">
+ <div>
+ <h1 class="ht-title">Harita</h1>
+ <p class="ht-subtitle">{validPlaces.length} mekan haritada gösteriliyor</p>
+ </div>
 
-    {/* Mobile Place List Toggle */}
-    <div class="md:hidden fixed bottom-4 left-4 right-4 z-[400]">
-      <button
-        onclick="togglePlaceList()"
-        class="w-full py-3 bg-white rounded-xl shadow-lg font-medium flex items-center justify-center gap-2"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-        Mekan Listesi ({validPlaces.length})
-      </button>
-    </div>
+ <div class="ht-filters">
+ <a href="/harita" class={`ht-cat-btn${!category ? ' is-active' : ''}`}>Tümü</a>
+ {categories.filter(c => c.is_active).slice(0, 6).map(cat => (
+ <a href={`/harita?kategori=${cat.slug}`} class={`ht-cat-btn${category === cat.slug ? ' is-active' : ''}`}>
+ {cat.name}
+ </a>
+ ))}
+ </div>
+ </div>
+ </div>
+ </div>
 
-    {/* Mobile Place List Modal */}
-    <div id="place-list-modal" class="fixed inset-0 bg-black/50 z-[500] hidden" onclick="togglePlaceList()">
-      <div id="place-list-panel" class="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl max-h-[70vh] overflow-hidden">
-        <div class="p-4 border-b flex items-center justify-between">
-          <h3 class="font-bold">Mekanlar ({validPlaces.length})</h3>
-          <button onclick="togglePlaceList()" class="p-2 hover:bg-gray-100 rounded-full">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-        <div class="overflow-y-auto max-h-[60vh]">
-          {validPlaces.map(place => (
-            <a href={`/isletme/${place.slug}`} class="flex items-center gap-3 p-4 border-b hover:bg-gray-50">
-              <div class="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0">
-                {place.thumbnail ? (
-                  <img src={place.thumbnail} alt={place.name} class="w-full h-full object-cover rounded-lg" />
-                ) : (
-                  <div class="w-full h-full flex items-center justify-center text-2xl">📍</div>
-                )}
-              </div>
-              <div class="flex-1 min-w-0">
-                <h4 class="font-medium truncate">{place.name}</h4>
-                <div class="flex items-center gap-2 text-sm text-gray-500">
-                  {place.rating && (
-                    <span class="text-yellow-500">★ {place.rating.toFixed(1)}</span>
-                  )}
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
+ <div class="ht-map-wrap">
+ <LeafletMap
+ places={validPlaces}
+ zoom={13}
+ height="100%"
+ />
+ </div>
 
-  <script is:inline>
-    function togglePlaceList() {
-      const modal = document.getElementById('place-list-modal');
-      modal.classList.toggle('hidden');
-      document.body.style.overflow = modal.classList.contains('hidden') ? '' : 'hidden';
-    }
-    window['togglePlaceList'] = togglePlaceList;
+ <div class="ht-toggle-wrap">
+ <button onclick="togglePlaceList()" class="ht-toggle-btn">
+ <Icon name="lucide:menu" class="w-5 h-5" />
+ Mekan Listesi ({validPlaces.length})
+ </button>
+ </div>
 
-    const panel = document.getElementById('place-list-panel');
-    if (panel) {
-      panel.addEventListener('click', function (e) {
-        e.stopPropagation();
-      });
-    }
-  </script>
+ <div id="place-list-modal" class="ht-modal hidden" onclick="togglePlaceList()">
+ <div id="place-list-panel" class="ht-panel">
+ <div class="ht-panel-head">
+ <h3 class="ht-panel-title">Mekanlar ({validPlaces.length})</h3>
+ <button onclick="togglePlaceList()" class="ht-panel-close">
+ <Icon name="lucide:x" class="w-5 h-5" />
+ </button>
+ </div>
+ <div class="ht-panel-list">
+ {validPlaces.map(place => (
+ <a href={`/isletme/${place.slug}`} class="ht-list-item">
+ <div class="ht-list-thumb">
+ <Image
+ src={place.thumbnail || mapFallbackImage}
+ alt={place.name}
+ class="ht-list-img-el"
+ width={48}
+ height={48}
+ loading="lazy"
+ />
+ </div>
+ <div>
+ <h4 class="ht-list-name">{place.name}</h4>
+ {place.rating && (
+ <p class="ht-list-rating">★ {place.rating.toFixed(1)}</p>
+ )}
+ </div>
+ </a>
+ ))}
+ </div>
+ </div>
+ </div>
+ </div>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'Map',
-    name: 'Şanlıurfa Mekan Haritası',
-    description: 'Şanlıurfa\'daki tüm mekanların interaktif haritası',
-    url: `${baseUrl}/harita`,
-    about: { '@type': 'City', name: 'Şanlıurfa', url: `${baseUrl}` },
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Harita', item: `${baseUrl}/harita` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <script is:inline>
+ function togglePlaceList() {
+ const modal = document.getElementById('place-list-modal');
+ modal.classList.toggle('hidden');
+ document.body.style.overflow = modal.classList.contains('hidden') ? '' : 'hidden';
+ }
+ window['togglePlaceList'] = togglePlaceList;
+
+ const panel = document.getElementById('place-list-panel');
+ if (panel) {
+ panel.addEventListener('click', function (e) {
+ e.stopPropagation();
+ });
+ }
+ </script>
+
+ <style is:inline>
+ details summary{list-style:none}
+ details summary::-webkit-details-marker{display:none}
+ details[open] .faq-arrow{transform:rotate(180deg)}
+ </style>
+ {faqItems.length > 0 && (
+ <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+ <div class="sf-container">
+ <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+ <div style="display:flex;flex-direction:column;gap:.75rem">
+ {faqItems.map((item) => (
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ {item.S}
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ {item.C}
+ </div>
+ </details>
+ ))}
+ </div>
+ </div>
+ </div>
+ )}
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'Map',
+ name: 'Şanlıurfa Mekan Haritası',
+ description: 'Şanlıurfa\'daki tüm mekanların interaktif haritası',
+ url: `${baseUrl}/harita`,
+ about: { '@type': 'City', name: 'Şanlıurfa', url: `${baseUrl}` },
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Harita', item: `${baseUrl}/harita` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

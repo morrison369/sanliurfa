@@ -33,25 +33,35 @@ require_user_mode() {
 }
 
 managed_entries() {
+  local runtime_prefix
+  runtime_prefix='export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" &&'
   cat <<EOF
 $CRON_TAG doctor-hourly
-5 * * * * cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh doctor-hourly npm run -s ops:cwp:doctor >> "$APP_DIR/backups/.ops/cron-doctor.log" 2>&1
+5 * * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh doctor-hourly npm run -s ops:cwp:doctor >> "$APP_DIR/backups/.ops/cron-doctor.log" 2>&1
+$CRON_TAG weather-refresh-halfhour
+10,40 * * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh weather-refresh-halfhour npm run -s jobs:weather:refresh >> "$APP_DIR/backups/.ops/cron-weather-refresh.log" 2>&1
+$CRON_TAG transit-refresh-hourly
+20 * * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh transit-refresh-hourly npm run -s jobs:transit:refresh >> "$APP_DIR/backups/.ops/cron-transit-refresh.log" 2>&1
+$CRON_TAG pharmacy-refresh-daily
+15 2 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh pharmacy-refresh-daily npm run -s jobs:pharmacy:refresh >> "$APP_DIR/backups/.ops/cron-pharmacy-refresh.log" 2>&1
 $CRON_TAG smoke-6hour
-35 */6 * * * cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh smoke-6hour npm run -s ops:cwp:smoke >> "$APP_DIR/backups/.ops/cron-smoke.log" 2>&1
+35 */6 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh smoke-6hour npm run -s ops:cwp:smoke >> "$APP_DIR/backups/.ops/cron-smoke.log" 2>&1
 $CRON_TAG report-daily
-45 3 * * * cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh report-daily npm run -s ops:cwp:report >> "$APP_DIR/backups/.ops/cron-report.log" 2>&1
+45 3 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh report-daily npm run -s ops:cwp:report >> "$APP_DIR/backups/.ops/cron-report.log" 2>&1
 $CRON_TAG rotate-events-daily
-10 3 * * * cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh rotate-events-daily npm run -s ops:cwp:rotate-events >> "$APP_DIR/backups/.ops/cron-rotate.log" 2>&1
+10 3 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh rotate-events-daily npm run -s ops:cwp:rotate-events >> "$APP_DIR/backups/.ops/cron-rotate.log" 2>&1
 $CRON_TAG cleanup-weekly
-20 3 * * 0 cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh cleanup-weekly npm run -s ops:cwp:cleanup >> "$APP_DIR/backups/.ops/cron-cleanup.log" 2>&1
+20 3 * * 0 $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh cleanup-weekly npm run -s ops:cwp:cleanup >> "$APP_DIR/backups/.ops/cron-cleanup.log" 2>&1
 $CRON_TAG incident-cleanup-weekly
-30 3 * * 0 cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh incident-cleanup-weekly npm run -s ops:cwp:incident-cleanup >> "$APP_DIR/backups/.ops/cron-incident-cleanup.log" 2>&1
+30 3 * * 0 $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh incident-cleanup-weekly npm run -s ops:cwp:incident-cleanup >> "$APP_DIR/backups/.ops/cron-incident-cleanup.log" 2>&1
 $CRON_TAG daily-ops
-5 4 * * * cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh daily-ops npm run -s ops:cwp:daily >> "$APP_DIR/backups/.ops/cron-daily-ops.log" 2>&1
+5 4 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh daily-ops npm run -s ops:cwp:daily >> "$APP_DIR/backups/.ops/cron-daily-ops.log" 2>&1
 $CRON_TAG weekly-audit
-15 4 * * 0 cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh weekly-audit npm run -s ops:cwp:weekly >> "$APP_DIR/backups/.ops/cron-weekly-audit.log" 2>&1
+15 4 * * 0 $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh weekly-audit npm run -s ops:cwp:weekly >> "$APP_DIR/backups/.ops/cron-weekly-audit.log" 2>&1
 $CRON_TAG release-readiness
-35 4 * * * cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh release-readiness npm run -s ops:cwp:release-readiness >> "$APP_DIR/backups/.ops/cron-release-readiness.log" 2>&1
+35 4 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh release-readiness npm run -s ops:cwp:release-readiness >> "$APP_DIR/backups/.ops/cron-release-readiness.log" 2>&1
+$CRON_TAG db-backup-daily
+30 2 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh db-backup-daily bash scripts/backup-database.sh >> "$APP_DIR/backups/.ops/cron-db-backup.log" 2>&1
 EOF
 }
 
@@ -71,7 +81,7 @@ install_cron() {
 
   local tmp
   tmp="$(mktemp)"
-  trap 'rm -f "$tmp"' EXIT
+  trap 'rm -f -- "${tmp:-}"' EXIT
 
   crontab -l 2>/dev/null | strip_managed_entries > "$tmp" || true
 
@@ -82,6 +92,8 @@ install_cron() {
 
   crontab "$tmp"
   date +%s > "$INSTALLED_AT_FILE"
+  rm -f -- "$tmp"
+  trap - EXIT
   echo "Cron kuruldu."
 }
 
@@ -90,10 +102,12 @@ remove_cron() {
   mkdir -p "$OPS_DIR"
   local tmp
   tmp="$(mktemp)"
-  trap 'rm -f "$tmp"' EXIT
+  trap 'rm -f -- "${tmp:-}"' EXIT
 
   crontab -l 2>/dev/null | strip_managed_entries > "$tmp" || true
   crontab "$tmp"
+  rm -f -- "$tmp"
+  trap - EXIT
   echo "Cron kayıtları kaldırıldı."
 }
 
@@ -115,7 +129,7 @@ diff_cron() {
   local current managed
   current="$(mktemp)"
   managed="$(mktemp)"
-  trap 'rm -f "$current" "$managed"' EXIT
+  trap 'rm -f -- "${current:-}" "${managed:-}"' EXIT
 
   current_managed_entries > "$current"
   managed_entries > "$managed"
@@ -127,6 +141,8 @@ diff_cron() {
     echo "Uyarı: diff komutu yok, sadece managed entries gösteriliyor."
     cat "$managed"
   fi
+  rm -f -- "$current" "$managed"
+  trap - EXIT
 }
 
 install_if_needed_cron() {
@@ -134,17 +150,21 @@ install_if_needed_cron() {
   local current managed
   current="$(mktemp)"
   managed="$(mktemp)"
-  trap 'rm -f "$current" "$managed"' EXIT
+  trap 'rm -f -- "${current:-}" "${managed:-}"' EXIT
 
   current_managed_entries > "$current"
   managed_entries > "$managed"
 
   if diff -q "$current" "$managed" >/dev/null 2>&1; then
     echo "Cron zaten güncel. Değişiklik yok."
+    rm -f -- "$current" "$managed"
+    trap - EXIT
     return 0
   fi
 
   install_cron
+  rm -f -- "$current" "$managed"
+  trap - EXIT
 }
 
 apply_safe_cron() {

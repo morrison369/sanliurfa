@@ -4,6 +4,7 @@ import {
   requestPasswordReset,
 } from '../../../lib/auth/password-reset';
 import { getCache, setCache } from '../../../lib/cache';
+import { getPublicAppUrl } from '../../../lib/public-app-url';
 
 const RESET_LIMIT = 5;
 const RESET_WINDOW = 3600; // 1 saat
@@ -42,7 +43,7 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       setCache(emailKey, emailCount + 1, RESET_WINDOW).catch(() => null),
     ]);
 
-    await requestPasswordReset(email, new URL(request.url).origin);
+    await requestPasswordReset(email, getPublicAppUrl());
 
     return redirect('/sifremi-unuttum?success=email_sent');
   } catch (err) {

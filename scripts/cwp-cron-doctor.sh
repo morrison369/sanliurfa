@@ -12,6 +12,9 @@ JSON_MODE=0
 JSON_FILE=""
 required_jobs=(
   "doctor-hourly"
+  "weather-refresh-halfhour"
+  "transit-refresh-hourly"
+  "pharmacy-refresh-daily"
   "smoke-6hour"
   "report-daily"
   "rotate-events-daily"
@@ -25,6 +28,9 @@ required_jobs=(
 expected_schedule() {
   case "$1" in
     doctor-hourly) echo "5 * * * *" ;;
+    weather-refresh-halfhour) echo "10,40 * * * *" ;;
+    transit-refresh-hourly) echo "20 * * * *" ;;
+    pharmacy-refresh-daily) echo "15 2 * * *" ;;
     smoke-6hour) echo "35 */6 * * *" ;;
     report-daily) echo "45 3 * * *" ;;
     rotate-events-daily) echo "10 3 * * *" ;;
@@ -40,6 +46,9 @@ expected_schedule() {
 expected_npm_target() {
   case "$1" in
     doctor-hourly) echo "ops:cwp:doctor" ;;
+    weather-refresh-halfhour) echo "jobs:weather:refresh" ;;
+    transit-refresh-hourly) echo "jobs:transit:refresh" ;;
+    pharmacy-refresh-daily) echo "jobs:pharmacy:refresh" ;;
     smoke-6hour) echo "ops:cwp:smoke" ;;
     report-daily) echo "ops:cwp:report" ;;
     rotate-events-daily) echo "ops:cwp:rotate-events" ;;
@@ -100,11 +109,13 @@ for job in "${required_jobs[@]}"; do
   reason=""
   line=""
   actual_schedule=""
+  marker=""
   want_schedule="$(expected_schedule "$job")"
   want_npm="$(expected_npm_target "$job")"
+  marker="# ${CRON_TAG} ${job}"
 
-  if printf '%s\n' "$current_cron" | grep -q "${CRON_TAG} ${job}"; then
-    line="$(printf '%s\n' "$current_cron" | awk -v tag="${CRON_TAG} ${job}" '$0==tag {getline; print; exit}')"
+  if printf '%s\n' "$current_cron" | grep -qF "$marker"; then
+    line="$(printf '%s\n' "$current_cron" | awk -v tag="$marker" '$0==tag {getline; print; exit}')"
     if [ -z "$line" ]; then
       reason="cron line missing after tag"
       status="fail"

@@ -2,6 +2,7 @@
 import type { APIRoute } from 'astro';
 import { logger } from '../../../lib/logging';
 import { updateProfileSettings } from '../../../lib/user/profile-settings';
+import { invalidateUser } from '../../../lib/cache/invalidation';
 
 export const POST: APIRoute = async ({ request, locals, redirect }) => {
   try {
@@ -19,11 +20,14 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     await updateProfileSettings(
       { id: user.id },
       {
-        fullName,
-        username,
-        bio,
+        fullName: fullName ?? null,
+        username: username ?? null,
+        bio: bio ?? null,
       },
     );
+
+    // Cache invalidation: profil güncellemesi user:profile/settings cache'lerini etkiler
+    await invalidateUser(user.id);
 
     return redirect('/profil/ayarlar?success=profile_updated');
   } catch (err) {

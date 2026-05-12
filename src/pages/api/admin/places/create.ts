@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { logger } from '../../../../lib/logging';
+import { deleteCachePattern } from '../../../../lib/cache';
 
 export const POST: APIRoute = async (context) => {
-  if (!context.locals.isAdmin) {
+  if (context.locals.user?.role !== 'admin') {
     return context.redirect('/giris?redirect=/admin');
   }
 
@@ -33,6 +34,16 @@ export const POST: APIRoute = async (context) => {
       return context.redirect('/admin/places/add?error=missing_fields');
     }
 
+    const VALID_PLACE_STATUSES = new Set(['active', 'draft', 'pending', 'rejected', 'inactive']);
+    if (!VALID_PLACE_STATUSES.has(status)) {
+      return context.redirect('/admin/places/add?error=invalid_status');
+    }
+
+    if (name.length > 200) return context.redirect('/admin/places/add?error=name_too_long');
+    if (description.length > 5000) return context.redirect('/admin/places/add?error=description_too_long');
+    if (shortDescription !== undefined && shortDescription !== null && (typeof shortDescription !== 'string' || shortDescription.length > 5000)) return context.redirect('/admin/places/add?error=short_description_too_long');
+    if (address.length > 500) return context.redirect('/admin/places/add?error=address_too_long');
+
     // Slug oluştur
     const baseSlug = name.toLowerCase()
       .replace(/[^a-z0-9\s-]/g, '')
@@ -43,6 +54,13 @@ export const POST: APIRoute = async (context) => {
       ? `${baseSlug}-${Date.now().toString(36).slice(-4)}`
       : baseSlug;
 
+    if (tags.length > 50) return context.redirect('/admin/places/add?error=too_many_tags');
+
+    const parsedCategoryId = categoryId ? parseInt(categoryId, 10) : null;
+    const parsedDistrictId = districtId ? parseInt(districtId, 10) : null;
+    if (parsedCategoryId !== null && !Number.isFinite(parsedCategoryId)) return context.redirect('/admin/places/add?error=invalid_category');
+    if (parsedDistrictId !== null && !Number.isFinite(parsedDistrictId)) return context.redirect('/admin/places/add?error=invalid_district');
+
     const result = await query(
       `INSERT INTO places (
         name, slug, category_id, district_id, description, short_description,
@@ -52,18 +70,19 @@ export const POST: APIRoute = async (context) => {
       RETURNING id, slug`,
       [
         name, slug,
-        categoryId ? parseInt(categoryId) : null,
-        districtId ? parseInt(districtId) : null,
+        parsedCategoryId,
+        parsedDistrictId,
         description || null, shortDescription,
         address, phone, email, website, priceRange,
         status, isFeatured, isVerified,
-        latitude ? parseFloat(latitude) : null,
-        longitude ? parseFloat(longitude) : null,
+        latitude ? (Number.isFinite(parseFloat(latitude)) ? parseFloat(latitude) : null) : null,
+        longitude ? (Number.isFinite(parseFloat(longitude)) ? parseFloat(longitude) : null) : null,
         tags.length ? tags : null,
       ]
     );
 
     const newPlace = result.rows[0];
+    await deleteCachePattern('places:*').catch(() => null);
     return context.redirect(`/admin/places/edit/${newPlace.id}?success=created`);
 
   } catch (err) {

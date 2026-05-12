@@ -1,51 +1,67 @@
 #!/bin/bash
-# Database Backup Script for CWP
-# Run daily via cron
+# Database Backup Script for CWP — cron tarafından günlük çalıştırılır.
+# Cron tag: db-backup-daily (cwp-cron-install.sh'da 02:30 UTC)
+#
+# Env override:
+#   PROD_DB_NAME (default: sanliur_sanliurfa veya .env DATABASE_URL'den parse)
+#   PROD_DB_USER (default: sanliur)
+#   BACKUP_DIR   (default: $HOME/backups)
+#   BACKUP_RETENTION_DAYS (default: 7)
 
-# Configuration
-DB_NAME="sanliurfa"
-DB_USER="postgres"
-BACKUP_DIR="/home/$(whoami)/backups"
+set -euo pipefail
+
+# .env dosyasını yükle (varsa)
+if [ -f "$(dirname "$0")/../.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . "$(dirname "$0")/../.env"
+    set +a
+fi
+
+# DATABASE_URL parse: postgresql://user:pass@host:port/db
+if [ -n "${DATABASE_URL:-}" ] && [ -z "${PROD_DB_NAME:-}" ]; then
+    PROD_DB_NAME=$(echo "$DATABASE_URL" | sed -E 's|.*/([^?]+).*|\1|')
+    PROD_DB_USER=$(echo "$DATABASE_URL" | sed -E 's|postgresql://([^:]+):.*|\1|')
+fi
+
+DB_NAME="${PROD_DB_NAME:-sanliur_sanliurfa}"
+DB_USER="${PROD_DB_USER:-$(whoami)}"
+BACKUP_DIR="${BACKUP_DIR:-$HOME/backups}"
+RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-7}"
 DATE=$(date +%Y%m%d_%H%M%S)
-RETENTION_DAYS=7
 
-# Create backup directory if not exists
-mkdir -p "$BACKUP_DIR"
-
-# Backup filename
+# Backup hedef dosyası (gzip ile sıkıştırılmış SQL dump)
 BACKUP_FILE="$BACKUP_DIR/${DB_NAME}_backup_$DATE.sql.gz"
-
-# Log file
 LOG_FILE="$BACKUP_DIR/backup.log"
 
-# Function to log messages
-log_message() {
+mkdir -p "$BACKUP_DIR"
+
+log() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
 }
 
-log_message "Starting database backup..."
+log "Starting database backup: db=$DB_NAME user=$DB_USER → $BACKUP_FILE"
 
-# Create backup
-if pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$BACKUP_FILE"; then
-    log_message "Backup created successfully: $BACKUP_FILE"
-    
-    # Get file size
+# pg_dump → gzip. Hata durumunda log + non-zero exit.
+if pg_dump -U "$DB_USER" -d "$DB_NAME" --no-owner --no-acl --clean --if-exists | gzip -9 > "$BACKUP_FILE"; then
     FILE_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
-    log_message "Backup size: $FILE_SIZE"
+    log "Backup OK ($FILE_SIZE)"
 else
-    log_message "ERROR: Backup failed!"
+    log "ERROR: pg_dump failed (db=$DB_NAME)"
+    rm -f "$BACKUP_FILE"
     exit 1
 fi
 
-# Clean up old backups (keep last 7 days)
-log_message "Cleaning up old backups..."
-find "$BACKUP_DIR" -name "${DB_NAME}_backup_*.sql.gz" -mtime +$RETENTION_DAYS -delete
+# Eski yedekleri temizle (retention günü öncesi)
+log "Cleaning backups older than $RETENTION_DAYS days..."
+DELETED=$(find "$BACKUP_DIR" -name "${DB_NAME}_backup_*.sql.gz" -mtime "+$RETENTION_DAYS" -print -delete | wc -l)
+REMAINING=$(find "$BACKUP_DIR" -name "${DB_NAME}_backup_*.sql.gz" | wc -l)
+log "Removed $DELETED old backup(s). $REMAINING remaining."
 
-# Count remaining backups
-BACKUP_COUNT=$(find "$BACKUP_DIR" -name "${DB_NAME}_backup_*.sql.gz" | wc -l)
-log_message "Cleanup completed. $BACKUP_COUNT backups remaining."
+# Disk usage check — backup dir > 1GB ise warning
+DIR_SIZE=$(du -sm "$BACKUP_DIR" | cut -f1)
+if [ "$DIR_SIZE" -gt 1024 ]; then
+    log "WARN: backup dir > 1GB ($DIR_SIZE MB) — retention'ı kısaltmayı düşün"
+fi
 
-log_message "Backup process completed."
-
-# Optional: Send notification (if configured)
-# curl -X POST "$SLACK_WEBHOOK_URL" -d "{\"text\":\"Database backup completed: $BACKUP_FILE\"}"
+log "Backup process completed successfully."

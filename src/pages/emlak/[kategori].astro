@@ -1,16 +1,17 @@
 ---
-
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+const baseUrl = getPublicAppUrl();
 
 const { kategori } = Astro.params;
 
 const categoryMeta: Record<string, { name: string; icon: string; desc: string }> = {
-  'satilik-daire': { name: 'Satılık Daireler', icon: '🏠', desc: 'Şanlıurfa\'da satılık konutlar' },
-  'kiralik-daire': { name: 'Kiralık Daireler', icon: '🔑', desc: 'Şanlıurfa\'da kiralık konutlar' },
-  'emlak-ofisleri': { name: 'Emlak Ofisleri', icon: '🏢', desc: 'Güvenilir emlakçı ve danışmanlar' },
+ 'satilik-daire': { name: 'Satılık Daireler', icon: '🏠', desc: "Şanlıurfa'da satılık konutlar" },
+ 'kiralik-daire': { name: 'Kiralık Daireler', icon: '🔑', desc: "Şanlıurfa'da kiralık konutlar" },
+ 'emlak-ofisleri': { name: 'Emlak Ofisleri', icon: '🏢', desc: 'Güvenilir emlakçı ve danışmanlar' },
 };
 
 const meta = categoryMeta[kategori || ''] || { name: kategori || '', icon: '🏠', desc: '' };
@@ -18,119 +19,148 @@ const meta = categoryMeta[kategori || ''] || { name: kategori || '', icon: '🏠
 let places: any[] = [];
 
 try {
+ places = await getCachedPublicRouteData(`page:emlak:${kategori || 'unknown'}`, async () => {
   const result = await query(
-    `SELECT p.*, d.name as district_name FROM places p
-     LEFT JOIN categories c ON p.category_id = c.id
-     LEFT JOIN districts d ON p.district_id = d.id
-     WHERE c.slug = $1 AND p.status = 'active'
-     ORDER BY p.is_featured DESC, p.created_at DESC`,
-    [kategori]
+   `SELECT p.*, d.name as district_name FROM places p
+ LEFT JOIN categories c ON p.category_id = c.id
+ LEFT JOIN districts d ON p.district_id = d.id
+ WHERE c.slug = $1 AND p.status = 'active'
+ ORDER BY p.is_featured DESC, p.created_at DESC`,
+   [kategori]
   );
-  places = result.rows;
+  return result.rows;
+ });
 } catch (e) {
-  console.error('Error loading emlak kategori:', e);
+ logger.error('Error loading emlak kategori:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const seo = {
-  title: `Şanlıurfa ${meta.name} | Emlak Rehberi`,
-  description: `${meta.desc}. Detaylı bilgi, adres ve iletişim.`,
-  keywords: ['şanlıurfa ' + meta.name.toLowerCase(), 'urfa ' + meta.name.toLowerCase(), meta.name + ' şanlıurfa', 'şanlıurfa emlak'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: `/emlak/${kategori}`,
+ title: `Şanlıurfa ${meta.name} | Emlak Rehberi`,
+ description: `${meta.desc}. Detaylı bilgi, adres ve iletişim.`,
+ keywords: ['şanlıurfa ' + meta.name.toLowerCase(), 'urfa ' + meta.name.toLowerCase(), meta.name + ' şanlıurfa', 'şanlıurfa emlak'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: `/emlak/${kategori}`,
 };
 const faqItems = [
-  { S: `Şanlıurfa'da ${meta.name.toLowerCase()} seçenekleri nelerdir?`, C: `Şanlıurfa'da ${meta.name.toLowerCase()} için güncel liste ve değerlendirmeler rehberimizde yer almaktadır.` },
-  { S: `${meta.name} için hangi ilçeler öne çıkıyor?`, C: `Eyyübiye, Haliliye ve Karaköprü ilçeleri hizmet yoğunluğu açısından öne çıkan bölgeler arasındadır.` },
-  { S: `${meta.name} bilgilerini nasıl güncelleyebilirim?`, C: `Mekan sayfasına giriş yaparak güncelleme talebinde bulunabilir veya iletişim formu üzerinden bildirimde bulunabilirsiniz.` },
+ { S: `Şanlıurfa'da ${meta.name.toLowerCase()} seçenekleri nelerdir?`, C: `Şanlıurfa'da ${meta.name.toLowerCase()} için güncel liste ve değerlendirmeler rehberimizde yer almaktadır.` },
+ { S: `${meta.name} için hangi ilçeler öne çıkıyor?`, C: `Eyyübiye, Haliliye ve Karaköprü ilçeleri hizmet yoğunluğu açısından öne çıkan bölgeler arasındadır.` },
+ { S: `${meta.name} bilgilerini nasıl güncelleyebilirim?`, C: `Mekan sayfasına giriş yaparak güncelleme talebinde bulunabilir veya iletişim formu üzerinden bildirimde bulunabilirsiniz.` },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-white border-b">
-      <div class="container mx-auto px-4 py-3">
-        <nav class="flex items-center gap-2 text-sm text-gray-500">
-          <a href="/" class="hover:text-emerald-600">Ana Sayfa</a>
-          <span>/</span>
-          <a href="/emlak" class="hover:text-emerald-600">Emlak</a>
-          <span>/</span>
-          <span class="text-gray-900 font-medium">{meta.name}</span>
-        </nav>
-      </div>
-    </div>
+ <style>
+ .emk-breadcrumb{background:var(--public-bg);border-bottom:1px solid var(--public-border);padding:.75rem 0}
+ .emk-breadcrumb nav{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--public-muted)}
+ .emk-breadcrumb a{color:var(--public-muted);transition:color .15s}.emk-breadcrumb a:hover{color:var(--public-accent)}
+ .emk-breadcrumb span:last-child{color:var(--public-accent);font-weight:500}
+ .emk-hero{background:var(--public-bg);border-bottom:1px solid var(--public-border);padding:3rem 0}
+ .emk-hero-inner{display:flex;align-items:center;gap:1rem}
+ .emk-hero-icon{font-size:3rem;line-height:1}
+ .emk-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,4vw,2.5rem);font-weight:600;color:var(--public-text)}
+ .emk-desc{font-size:.85rem;color:var(--public-muted);margin-top:.25rem}
+ .emk-body{background:var(--public-bg);padding:2rem 0 4rem}
+ .emk-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+ .emk-card{background:var(--public-surface);border:1px solid var(--public-border);padding:1.25rem;transition:border-color .15s}
+ .emk-card:hover{border-color:var(--public-accent)}
+ .emk-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.2rem}
+ .emk-card-name{font-size:.92rem;font-weight:700;color:var(--public-text);transition:color .15s}
+ .emk-card:hover .emk-card-name{color:var(--public-accent)}
+ .emk-price{font-size:.78rem;color:var(--public-accent);font-weight:600;flex-shrink:0}
+ .emk-district{font-size:.72rem;color:var(--public-text-soft);margin-top:.15rem}
+ .emk-short{font-size:.75rem;color:var(--public-muted);margin-top:.35rem;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .emk-phone{font-size:.75rem;color:var(--public-muted);margin-top:.3rem}
+ .emk-empty{text-align:center;padding:4rem 1rem;color:var(--public-muted)}
+ .emk-empty-icon{font-size:3.5rem;margin-bottom:.75rem}
+ .emk-empty-link{display:inline-block;margin-top:.75rem;color:var(--public-accent);font-size:.85rem;transition:color .15s}
+ .emk-empty-link:hover{color:var(--public-accent-strong)}
+ </style>
 
-    <div class="bg-gradient-to-br from-emerald-700 to-green-800 text-white py-12">
-      <div class="container mx-auto px-4">
-        <div class="flex items-center gap-4">
-          <span class="text-5xl">{meta.icon}</span>
-          <div>
-            <h1 class="text-3xl md:text-4xl font-bold">Şanlıurfa {meta.name}</h1>
-            <p class="text-emerald-100 mt-1">{meta.desc}</p>
-          </div>
-        </div>
-      </div>
-    </div>
+ <div class="emk-breadcrumb">
+ <div class="sf-container">
+ <nav>
+ <a href="/">Ana Sayfa</a>
+ <span>/</span>
+ <a href="/emlak">Emlak</a>
+ <span>/</span>
+ <span>{meta.name}</span>
+ </nav>
+ </div>
+ </div>
 
-    <div class="container mx-auto px-4 py-8">
-      {places.length > 0 ? (
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {places.map((place) => (
-            <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl p-5 shadow-sm hover:shadow-lg transition-all group">
-              <div class="flex items-start justify-between gap-2">
-                <h2 class="font-bold text-lg text-gray-900 group-hover:text-emerald-600">{place.name}</h2>
-                {place.price_range && <span class="text-emerald-700 font-medium">{place.price_range}</span>}
-              </div>
-              {place.district_name && <p class="text-xs text-gray-500 mt-1">📍 {place.district_name}</p>}
-              {place.short_description && <p class="text-sm text-gray-600 mt-2 line-clamp-2">{place.short_description}</p>}
-              {place.phone && <p class="text-sm text-gray-500 mt-2">📞 {place.phone}</p>}
-            </a>
-          ))}
-        </div>
-      ) : (
-        <div class="text-center py-16">
-          <div class="text-6xl mb-4">{meta.icon}</div>
-          <p class="text-gray-500 text-lg">Bu kategoride henüz ilan bulunmuyor.</p>
-          <a href="/emlak" class="mt-4 inline-block text-emerald-600 hover:underline">Emlak Rehberine Dön →</a>
-        </div>
-      )}
-    </div>
-  </div>
+ <div class="emk-hero">
+ <div class="sf-container">
+ <div class="emk-hero-inner">
+ <span class="emk-hero-icon">{meta.icon}</span>
+ <div>
+ <h1 class="emk-h1">Şanlıurfa {meta.name}</h1>
+ <p class="emk-desc">{meta.desc}</p>
+ </div>
+ </div>
+ </div>
+ </div>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: `Şanlıurfa ${meta.name}`,
-    description: `${meta.desc}. Detaylı bilgi, adres ve iletişim.`,
-    url: `${baseUrl}/emlak/${kategori}`,
-    about: { '@type': 'City', name: 'Şanlıurfa' },
-    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'RealEstateAgent',
-        name: p.name,
-        url: `${baseUrl}/isletme/${p.slug}`,
-        ...(p.address ? { address: p.address } : {}),
-        ...(p.phone ? { telephone: p.phone } : {}),
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Emlak', item: `${baseUrl}/emlak` },
-      { '@type': 'ListItem', position: 3, name: meta.name, item: `${baseUrl}/emlak/${kategori}` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <div class="emk-body">
+ <div class="sf-container">
+ {places.length > 0 ? (
+ <div class="emk-grid">
+ {places.map((place) => (
+ <a href={`/isletme/${place.slug}`} class="emk-card">
+ <div class="emk-card-top">
+ <p class="emk-card-name">{place.name}</p>
+ {place.price_range && <span class="emk-price">{place.price_range}</span>}
+ </div>
+ {place.district_name && <p class="emk-district">📍 {place.district_name}</p>}
+ {place.short_description && <p class="emk-short">{place.short_description}</p>}
+ {place.phone && <p class="emk-phone">📞 {place.phone}</p>}
+ </a>
+ ))}
+ </div>
+ ) : (
+ <div class="emk-empty">
+ <div class="emk-empty-icon">{meta.icon}</div>
+ <p>Bu kategoride henüz ilan bulunmuyor.</p>
+ <a href="/emlak" class="emk-empty-link">Emlak Rehberine Dön →</a>
+ </div>
+ )}
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'CollectionPage',
+ name: `Şanlıurfa ${meta.name}`,
+ description: `${meta.desc}. Detaylı bilgi, adres ve iletişim.`,
+ url: `${baseUrl}/emlak/${kategori}`,
+ about: { '@type': 'City', name: 'Şanlıurfa' },
+ itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+ '@type': 'ListItem',
+ position: i + 1,
+ item: {
+ '@type': 'RealEstateAgent',
+ name: p.name,
+ url: `${baseUrl}/isletme/${p.slug}`,
+ ...(p.address ? { address: p.address } : {}),
+ ...(p.phone ? { telephone: p.phone } : {}),
+ },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Emlak', item: `${baseUrl}/emlak` },
+ { '@type': 'ListItem', position: 3, name: meta.name, item: `${baseUrl}/emlak/${kategori}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

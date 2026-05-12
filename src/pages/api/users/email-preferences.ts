@@ -54,7 +54,19 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const prefs = body;
+
+    // HARD RULE #51-style: allowlist keys before JSONB merge to prevent arbitrary field injection
+    const ALLOWED_PREF_KEYS = new Set(['email_new_message', 'email_new_follower', 'email_place_review', 'email_weekly_digest', 'email_promotions', 'push_notifications']);
+    const prefs: Record<string, boolean> = {};
+    for (const [key, val] of Object.entries(body)) {
+      if (ALLOWED_PREF_KEYS.has(key) && typeof val === 'boolean') {
+        prefs[key] = val;
+      }
+    }
+
+    if (Object.keys(prefs).length === 0) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçerli tercih alanı bulunamadı', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
 
     // Update notification_preferences JSONB
     await query(

@@ -1,248 +1,285 @@
 ---
+import { ClientRouter } from 'astro:transitions';
 import SEO from '../components/SEO.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { ClientRouter } from 'astro:transitions';
+import MobileBottomNav from '../components/MobileBottomNav.astro';
+import ThemeScript from '../components/ThemeScript.astro';
 import Toast from '../components/ui/Toast.astro';
 import ErrorBoundary from '../components/ErrorBoundary.astro';
 import GoogleAnalytics from '../components/GoogleAnalytics.astro';
 import PWARegister from '../components/PWARegister.astro';
 import PerformanceMonitor from '../components/PerformanceMonitor.tsx';
-import ThemeScript from '../components/ThemeScript.astro';
-import DarkModeToggle from '../components/DarkModeToggle.astro';
-import PageLoader from '../components/PageLoader.astro';
 import { getSiteSetting } from '../lib/site-content';
 import '../styles/global.css';
 
 export interface Props {
-  title?: string;
-  seo?: {
-    title: string;
-    description?: string;
-    canonical?: string;
-    ogImage?: string;
-    noIndex?: boolean;
-    noFollow?: boolean;
-    keywords?: string[];
-    author?: string;
-    publishedTime?: string;
-    modifiedTime?: string;
-    type?: 'website' | 'article';
-  };
-  hideHeader?: boolean;
-  hideFooter?: boolean;
-  class?: string;
+ title?: string;
+ seo?: {
+ title: string;
+ description?: string;
+ canonical?: string;
+ ogImage?: string;
+ noIndex?: boolean;
+ noFollow?: boolean;
+ keywords?: string[];
+ author?: string;
+ publishedTime?: string;
+ modifiedTime?: string;
+ type?: 'website' | 'article';
+ };
+ hideHeader?: boolean;
+ hideFooter?: boolean;
+ class?: string;
 }
 
-const {
-  seo,
-  hideHeader = false,
-  hideFooter = false,
-  class: className = ''
-} = Astro.props;
+const { seo, hideHeader = false, hideFooter = false, class: className = '' } = Astro.props;
 
-// GA ID: önce env, sonra admin panelinden DB'ye kaydedilen değer (rebuild gerekmez)
 let GA_MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
-  || import.meta.env.GA_TRACKING_ID
-  || process.env.GA_TRACKING_ID
-  || import.meta.env.GOOGLE_ANALYTICS_ID
-  || process.env.GOOGLE_ANALYTICS_ID
-  || '';
+ || import.meta.env.GA_TRACKING_ID
+ || '';
 if (!GA_MEASUREMENT_ID) {
-  try {
-    const gaSettings = await getSiteSetting<{ ga_id?: string }>('integrations.analytics', {});
-    GA_MEASUREMENT_ID = gaSettings.ga_id || '';
-  } catch { /* DB henüz hazır değilse sessizce geç */ }
+ try {
+ const ga = await getSiteSetting<{ ga_id?: string }>('integrations.analytics', {});
+ GA_MEASUREMENT_ID = (ga as any)?.ga_id || '';
+ } catch { /* sessiz */ }
 }
-const homepageSchemaFallback = {
-  siteName: 'Sanliurfa.com',
-  baseUrl: 'https://sanliurfa.com',
-};
-const homepageSchema = await getSiteSetting('homepage.schema', homepageSchemaFallback);
-const siteName = String((homepageSchema as any)?.siteName || homepageSchemaFallback.siteName);
 
-// Get current user from middleware (set by src/middleware.ts)
+let siteName = 'Sanliurfa.com';
+try {
+ const schema = await getSiteSetting('homepage.schema', { siteName: 'Sanliurfa.com' });
+ siteName = String((schema as any)?.siteName || 'Sanliurfa.com');
+} catch { /* sessiz */ }
+
 const user = Astro.locals.user;
 ---
 
 <!DOCTYPE html>
-<html lang="tr" dir="ltr" class="scroll-smooth">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    
-    <!-- Theme Script (FOUC prevention) -->
-    <ThemeScript />
-    
-    <!-- Favicons -->
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Theme Colors for Light/Dark -->
-    <meta name="theme-color" content="#a18072" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
-    <meta name="msapplication-TileColor" content="#a18072" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content={siteName} />
-    
-    <!-- SEO -->
-    {seo && <SEO {...seo} />}
-    
-    <!-- RSS Feed -->
-    <link rel="alternate" type="application/rss+xml" title={`${siteName} Blog`} href="/rss.xml" />
-    
-    <!-- Sitemap -->
-    <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />
+<html lang="tr" class="scroll-smooth" data-theme="light">
+ <head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+ <meta name="google-adsense-account" content="ca-pub-7160871802649062" />
 
-    <!-- Preconnect to External Domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Preload Critical Fonts -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" as="style" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" /></noscript>
-    
-    <!-- Critical CSS -->
-    <style is:inline>
-      /* Critical CSS - Above the fold */
-      *,*::before,*::after{box-sizing:border-box}
-      html{font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.5;-webkit-text-size-adjust:100%;-webkit-font-smoothing:antialiased}
-      body{margin:0;min-height:100vh;background-color:#ffffff;color:#1f2937}
-      img{max-width:100%;height:auto;display:block}
-      a{color:inherit;text-decoration:none}
-      button{font-family:inherit}
-      .container{width:100%;max-width:1280px;margin:0 auto;padding:0 1rem}
-      @media(min-width:640px){.container{padding:0 1.5rem}}
-      @media(min-width:1024px){.container{padding:0 2rem}}
-      .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
-      .flex{display:flex}.flex-col{flex-direction:column}.flex-1{flex:1 1 0%}
-      .min-h-screen{min-height:100vh}
-      #main-content{outline:none}
-    </style>
-    
-    <!-- Astro View Transitions (SPA-like navigation + prefetch) -->
-    <ClientRouter fallback="animate" />
+ <!-- Favicons -->
+ <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+ <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+ <link rel="manifest" href="/manifest.json" />
+ <meta name="theme-color" content="#B87333" />
+ <meta name="mobile-web-app-capable" content="yes" />
+ <meta name="apple-mobile-web-app-title" content={siteName} />
 
-    <slot name="head" />
-  </head>
-  
-  <body class={`min-h-screen flex flex-col transition-colors duration-300 ${className}`}>
-    <!-- Page Loader -->
-    <PageLoader />
-    
-    <!-- Skip to main content for accessibility -->
-    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-urfa-600 focus:text-white focus:rounded-lg">
-      Ana içeriğe geç
-    </a>
-    
-    {!hideHeader && <Header user={user} transition:persist="site-header" />}
+ <!-- SEO -->
+ {seo && <SEO {...seo} />}
 
-    <!-- Theme Toggle (floating) -->
-    <div class="fixed top-24 right-4 z-40 hidden lg:block" transition:persist="dark-mode-toggle">
-      <DarkModeToggle />
-    </div>
-    
-    <ErrorBoundary fallback="Sayfa yüklenirken bir teknik hata oluştu. Lütfen sayfayı yenileyip tekrar deneyin.">
-      <main id="main-content" class="flex-1" role="main">
-        <slot />
-      </main>
-    </ErrorBoundary>
-    
-    {!hideFooter && <Footer transition:persist="site-footer" />}
+ <!-- Feeds -->
+ <link rel="alternate" type="application/rss+xml" title={`${siteName} Blog`} href="/rss.xml" />
+ <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
 
-    <!-- Toast Notifications -->
-    <Toast transition:persist="toast-container" />
-    <script>
-      // Initialize toast container
-      if (typeof window !== 'undefined') {
-        import('../lib/toast').then(({ toast }) => {
-          window.toast = toast;
-        });
-      }
-    </script>
-    
-    <!-- PWA Registration -->
-    <PWARegister />
+ <!-- Fonts -->
+ <link rel="preconnect" href="https://fonts.googleapis.com" />
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+ <!-- Preload the CSS itself with high priority — fonts load asap without guessing woff2 hashes -->
+ <link rel="preload" as="style"
+   href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600;0,700&family=Jost:wght@300;400;500;600;700&display=swap" />
+ <link
+ rel="stylesheet"
+ href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600;0,700&family=Jost:wght@300;400;500;600;700&display=swap"
+ />
+ <!-- Fallback font metrics override — keep layout stable while Cormorant loads -->
+ <style is:inline>
+ @font-face {
+   font-family: 'Cormorant Garamond Fallback';
+   src: local('Georgia'), local('Times New Roman');
+   font-display: block;
+   ascent-override: 100%;
+   descent-override: 31%;
+   line-gap-override: 0%;
+   size-adjust: 105%;
+ }
+ </style>
 
-    <!-- Performance Monitoring -->
-    <PerformanceMonitor client:only="react" />
-    
-    <!-- Cookie Consent Banner -->
-    <div id="cookie-consent" class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 shadow-lg transform translate-y-full transition-transform duration-300 z-50 hidden">
-      <div class="container-custom flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p class="text-sm text-gray-600 dark:text-gray-300">
-          Deneyiminizi geliştirmek için çerezler kullanıyoruz. Daha fazla bilgi için 
-          <a href="/gizlilik-politikasi" class="text-urfa-600 dark:text-urfa-400 hover:underline">Gizlilik Politikası</a>'nı inceleyebilirsiniz.
-        </p>
-        <div class="flex gap-2">
-          <button id="cookie-decline" class="btn-secondary text-sm">Reddet</button>
-          <button id="cookie-accept" class="btn-primary text-sm">Kabul Et</button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Back to Top Button -->
-    <button 
-      id="back-to-top" 
-      class="fixed bottom-6 right-6 bg-urfa-600 text-white p-3 rounded-full shadow-lg opacity-0 invisible transition-all duration-300 hover:bg-urfa-700 focus:outline-none focus:ring-2 focus:ring-urfa-500 z-40"
-      aria-label="Yukarı dön"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-      </svg>
-    </button>
-    
-    <!-- Scripts -->
-    <script>
-      // Back to top button
-      const backToTopBtn = document.getElementById('back-to-top');
-      
-      window.addEventListener('scroll', () => {
-        if (window.scrollY > 500) {
-          backToTopBtn?.classList.remove('opacity-0', 'invisible');
-          backToTopBtn?.classList.add('opacity-100', 'visible');
-        } else {
-          backToTopBtn?.classList.add('opacity-0', 'invisible');
-          backToTopBtn?.classList.remove('opacity-100', 'visible');
-        }
-      });
-      
-      backToTopBtn?.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-      
-      // Cookie consent
-      const cookieConsent = document.getElementById('cookie-consent');
-      const cookieAccepted = localStorage.getItem('cookieConsent');
-      
-      if (!cookieAccepted) {
-        setTimeout(() => {
-          cookieConsent?.classList.remove('translate-y-full', 'hidden');
-        }, 2000);
-      }
-      
-      document.getElementById('cookie-accept')?.addEventListener('click', () => {
-        localStorage.setItem('cookieConsent', 'accepted');
-        cookieConsent?.classList.add('translate-y-full');
-        setTimeout(() => cookieConsent?.classList.add('hidden'), 300);
-      });
-      
-      document.getElementById('cookie-decline')?.addEventListener('click', () => {
-        localStorage.setItem('cookieConsent', 'declined');
-        cookieConsent?.classList.add('translate-y-full');
-        setTimeout(() => cookieConsent?.classList.add('hidden'), 300);
-      });
-    </script>
-    
-    <!-- XSS Protection -->
-    <script src="/js/xss-protection.js" defer is:inline></script>
-    
-    {GA_MEASUREMENT_ID && <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} debug={import.meta.env.DEV} />}
-  </body>
+ <!-- Critical inline CSS: FOUC yok, taş beji zemin hemen (Şanlıurfa palette light) -->
+ <style is:inline>
+ *,*::before,*::after{box-sizing:border-box}
+ :root{--bg:#FBF6EC;--text-1:#1F1410;--copper:#C0571F;--text-on-deep:#FBF6EC}
+ html{-webkit-font-smoothing:antialiased;font-family:'Jost',system-ui,sans-serif;color-scheme:light}
+ html.dark{color-scheme:light}
+ body{margin:0;min-height:100vh;background:var(--bg);color:var(--text-1)}
+@media (max-width:768px){body{padding-bottom:calc(4.2rem + env(safe-area-inset-bottom))}}
+ .sf-container{width:100%;max-width:1280px;margin-inline:auto;padding-inline:1.25rem}
+ #main-content{outline:none}
+ .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+ </style>
+ <ThemeScript />
+ <ClientRouter />
+ <slot name="head" />
+ </head>
+
+ <body class={`flex flex-col min-h-screen ${className}`}>
+ <!-- Skip link -->
+ <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:rounded focus:bg-bakir-500 focus:text-white">
+ Ana içeriğe geç
+ </a>
+
+ {!hideHeader && <Header user={user} transition:persist="site-header" />}
+
+ <ErrorBoundary fallback="Sayfa yüklenirken bir hata oluştu. Lütfen yenileyin.">
+ <main id="main-content" class="flex-1" role="main">
+ <slot />
+ </main>
+ </ErrorBoundary>
+
+ {!hideFooter && <Footer transition:persist="site-footer" />}
+
+ <!-- Mobile bottom navigation (only <768px viewport) -->
+ <MobileBottomNav />
+
+ <!-- Toast -->
+ <Toast transition:persist="toast-container" />
+
+ <!-- Cookie banner -->
+ <div
+ id="sf-cookie"
+ class="fixed bottom-0 inset-x-0 z-50 hidden"
+ style="background:linear-gradient(180deg,#1F1410 0%,#15100C 100%);border-top:1px solid rgba(212,151,24,0.30)"
+ >
+ <div class="sf-container flex flex-col sm:flex-row items-center justify-between gap-3 py-3">
+ <p style="font-size:0.8rem;color:#C4A882;margin:0">
+ Deneyiminizi geliştirmek için çerezler kullanıyoruz.
+ <a href="/gizlilik-politikasi" style="color:#B87333;text-decoration:underline">Politika</a>
+ </p>
+ <div style="display:flex;gap:0.5rem;flex-shrink:0">
+ <button id="sf-cookie-decline" style="padding:0.4rem 1rem;border:1px solid rgba(184,115,51,0.28);border-radius:0.2rem;background:transparent;color:#C4A882;font-size:0.8rem;cursor:pointer">Reddet</button>
+ <button id="sf-cookie-accept" style="padding:0.4rem 1rem;background:linear-gradient(135deg,#C0571F 0%,#9F4717 100%);border:none;border-radius:0.4rem;color:#FFFFFF;font-weight:700;font-size:0.8rem;cursor:pointer">Kabul Et</button>
+ </div>
+ </div>
+ </div>
+
+ <!-- Yukarı çık -->
+ <button
+ id="sf-top"
+ aria-label="Yukarı dön"
+ style="position:fixed;bottom:1.5rem;right:1.5rem;z-index:40;width:2.5rem;height:2.5rem;border-radius:50%;background:linear-gradient(135deg,#C0571F 0%,#9F4717 100%);color:#FFFFFF;border:none;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;cursor:pointer"
+ >
+ <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+ </button>
+
+ <script>
+ // Cookie
+ const banner = document.getElementById('sf-cookie');
+ if (!localStorage.getItem('sf_cookie')) {
+ setTimeout(() => banner && (banner.style.display = 'block'), 1500);
+ }
+ document.getElementById('sf-cookie-accept')?.addEventListener('click', () => {
+ localStorage.setItem('sf_cookie', '1');
+ if (banner) banner.style.display = 'none';
+ });
+ document.getElementById('sf-cookie-decline')?.addEventListener('click', () => {
+ localStorage.setItem('sf_cookie', '0');
+ if (banner) banner.style.display = 'none';
+ });
+
+ // Back to top
+ const topBtn = document.getElementById('sf-top');
+ window.addEventListener('scroll', () => {
+ if (!topBtn) return;
+ if (window.scrollY > 500) {
+ topBtn.style.opacity = '1';
+ topBtn.style.pointerEvents = 'auto';
+ } else {
+ topBtn.style.opacity = '0';
+ topBtn.style.pointerEvents = 'none';
+ }
+ });
+ topBtn?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+ // Toast
+ if (typeof window !== 'undefined') {
+ import('../lib/toast').then(({ toast }) => { (window as any).toast = toast; });
+ }
+
+ // Modal dialog helpers — replaces native prompt()/confirm() with themed UI
+ (function() {
+   function _dialogBase(): { overlay: HTMLDivElement; dialog: HTMLDivElement } {
+     const overlay = document.createElement('div');
+     overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(13,10,8,0.85);display:flex;align-items:center;justify-content:center;padding:1rem';
+     const dialog = document.createElement('div');
+     dialog.style.cssText = 'background:#1A1410;border:1px solid rgba(184,115,51,0.28);border-radius:0.25rem;padding:1.5rem;min-width:280px;max-width:480px;width:100%';
+     overlay.appendChild(dialog);
+     return { overlay, dialog };
+   }
+   function _btnStyle(primary: boolean): string {
+     return primary
+       ? 'padding:0.4rem 1rem;background:linear-gradient(135deg,#C0571F 0%,#9F4717 100%);border:none;border-radius:0.4rem;color:#FFFFFF;font-weight:600;font-size:0.85rem;cursor:pointer'
+       : 'padding:0.4rem 1rem;border:1px solid rgba(184,115,51,0.28);border-radius:0.2rem;background:transparent;color:#C4A882;font-size:0.85rem;cursor:pointer';
+   }
+   function _label(text: string): HTMLParagraphElement {
+     const p = document.createElement('p');
+     p.style.cssText = 'color:#FBF6EC;margin:0 0 0.75rem;font-size:0.9rem;line-height:1.5';
+     p.textContent = text;
+     return p;
+   }
+
+   (window as any).showConfirm = function(message: string): Promise<boolean> {
+     return new Promise((resolve) => {
+       const { overlay, dialog } = _dialogBase();
+       dialog.appendChild(_label(message));
+       const btns = document.createElement('div');
+       btns.style.cssText = 'display:flex;gap:0.5rem;justify-content:flex-end;margin-top:0.5rem';
+       const cancel = document.createElement('button');
+       cancel.textContent = 'İptal';
+       cancel.style.cssText = _btnStyle(false);
+       const ok = document.createElement('button');
+       ok.textContent = 'Tamam';
+       ok.style.cssText = _btnStyle(true);
+       cancel.addEventListener('click', () => { overlay.remove(); resolve(false); });
+       ok.addEventListener('click', () => { overlay.remove(); resolve(true); });
+       btns.appendChild(cancel);
+       btns.appendChild(ok);
+       dialog.appendChild(btns);
+       document.body.appendChild(overlay);
+       ok.focus();
+     });
+   };
+
+   (window as any).promptInput = function(message: string, defaultValue?: string): Promise<string | null> {
+     return new Promise((resolve) => {
+       const { overlay, dialog } = _dialogBase();
+       dialog.appendChild(_label(message));
+       const input = document.createElement('input');
+       input.type = 'text';
+       input.value = defaultValue ?? '';
+       input.style.cssText = 'width:100%;padding:0.45rem 0.65rem;background:#FFFFFF;border:1.5px solid rgba(192,87,31,0.30);border-radius:0.4rem;color:#1F1410;font-size:0.85rem;box-sizing:border-box;margin-bottom:1rem;outline:none';
+       dialog.appendChild(input);
+       const btns = document.createElement('div');
+       btns.style.cssText = 'display:flex;gap:0.5rem;justify-content:flex-end';
+       const cancel = document.createElement('button');
+       cancel.textContent = 'İptal';
+       cancel.style.cssText = _btnStyle(false);
+       const ok = document.createElement('button');
+       ok.textContent = 'Tamam';
+       ok.style.cssText = _btnStyle(true);
+       const confirm = () => { overlay.remove(); resolve(input.value || null); };
+       cancel.addEventListener('click', () => { overlay.remove(); resolve(null); });
+       ok.addEventListener('click', confirm);
+       input.addEventListener('keydown', (e: KeyboardEvent) => {
+         if (e.key === 'Enter') confirm();
+         if (e.key === 'Escape') { overlay.remove(); resolve(null); }
+       });
+       btns.appendChild(cancel);
+       btns.appendChild(ok);
+       dialog.appendChild(btns);
+       document.body.appendChild(overlay);
+       input.focus();
+     });
+   };
+ })();
+ </script>
+
+ <PWARegister />
+ <PerformanceMonitor client:only="react" />
+ {GA_MEASUREMENT_ID && <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} debug={import.meta.env.DEV} />}
+ </body>
 </html>

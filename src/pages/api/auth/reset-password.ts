@@ -4,6 +4,7 @@ import {
   logPasswordResetError,
   resetPasswordWithToken,
 } from '../../../lib/auth/password-reset';
+import { validatePasswordStrength } from '../../../lib/auth';
 
 export const POST: APIRoute = async ({ request, redirect }) => {
   try {
@@ -15,7 +16,8 @@ export const POST: APIRoute = async ({ request, redirect }) => {
       return redirect('/sifre-sifirla?error=missing_fields');
     }
 
-    if (password.length < 6) {
+    const strength = validatePasswordStrength(password);
+    if (!strength.valid) {
       return redirect('/sifre-sifirla?error=weak_password');
     }
 

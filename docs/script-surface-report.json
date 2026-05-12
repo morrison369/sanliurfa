@@ -1,0 +1,1271 @@
+{
+  "generatedAt": "2026-05-06T19:11:51.262Z",
+  "totalScripts": 232,
+  "familyCount": 49,
+  "largestFamilies": [
+    {
+      "family": "ops",
+      "count": 50
+    },
+    {
+      "family": "dev",
+      "count": 19
+    },
+    {
+      "family": "test",
+      "count": 15
+    },
+    {
+      "family": "images",
+      "count": 12
+    },
+    {
+      "family": "smoke",
+      "count": 11
+    },
+    {
+      "family": "jobs",
+      "count": 10
+    },
+    {
+      "family": "lint",
+      "count": 9
+    },
+    {
+      "family": "db",
+      "count": 7
+    },
+    {
+      "family": "openapi",
+      "count": 7
+    },
+    {
+      "family": "release",
+      "count": 6
+    }
+  ],
+  "families": [
+    {
+      "family": "ops",
+      "count": 50,
+      "scripts": [
+        {
+          "name": "ops:contracts:gate",
+          "command": "node scripts/ci/ops-contract-gate.mjs"
+        },
+        {
+          "name": "ops:cwp:access-log:probe",
+          "command": "node scripts/ops/access-log-probe.mjs"
+        },
+        {
+          "name": "ops:cwp:audit",
+          "command": "bash scripts/prod-cwp-ops.sh audit"
+        },
+        {
+          "name": "ops:cwp:bootstrap",
+          "command": "bash scripts/prod-cwp-ops.sh bootstrap"
+        },
+        {
+          "name": "ops:cwp:bootstrap:audit",
+          "command": "bash scripts/cwp-bootstrap-audit.sh"
+        },
+        {
+          "name": "ops:cwp:bootstrap:audit:summary",
+          "command": "bash scripts/prod-cwp-ops.sh bootstrap-audit-summary"
+        },
+        {
+          "name": "ops:cwp:cleanup",
+          "command": "bash scripts/prod-cwp-ops.sh cleanup"
+        },
+        {
+          "name": "ops:cwp:cron:apply-safe",
+          "command": "bash scripts/cwp-cron-install.sh apply-safe"
+        },
+        {
+          "name": "ops:cwp:cron:diff",
+          "command": "bash scripts/cwp-cron-install.sh diff"
+        },
+        {
+          "name": "ops:cwp:cron:doctor",
+          "command": "bash scripts/prod-cwp-ops.sh cron-doctor"
+        },
+        {
+          "name": "ops:cwp:cron:freshness",
+          "command": "bash scripts/prod-cwp-ops.sh cron-freshness"
+        },
+        {
+          "name": "ops:cwp:cron:freshness:strict",
+          "command": "bash -lc 'CRON_FRESHNESS_STRICT=1 bash scripts/prod-cwp-ops.sh cron-freshness'"
+        },
+        {
+          "name": "ops:cwp:cron:install",
+          "command": "bash scripts/cwp-cron-install.sh install"
+        },
+        {
+          "name": "ops:cwp:cron:install:if-needed",
+          "command": "bash scripts/cwp-cron-install.sh install-if-needed"
+        },
+        {
+          "name": "ops:cwp:cron:preview",
+          "command": "bash scripts/cwp-cron-install.sh preview"
+        },
+        {
+          "name": "ops:cwp:cron:remove",
+          "command": "bash scripts/cwp-cron-install.sh remove"
+        },
+        {
+          "name": "ops:cwp:cron:show",
+          "command": "bash scripts/cwp-cron-install.sh show"
+        },
+        {
+          "name": "ops:cwp:daily",
+          "command": "bash scripts/prod-cwp-ops.sh daily-ops"
+        },
+        {
+          "name": "ops:cwp:deploy",
+          "command": "bash scripts/prod-cwp-ops.sh deploy"
+        },
+        {
+          "name": "ops:cwp:deploy:evidence",
+          "command": "bash scripts/cwp-deploy-evidence.sh"
+        },
+        {
+          "name": "ops:cwp:doctor",
+          "command": "bash scripts/prod-cwp-ops.sh doctor"
+        },
+        {
+          "name": "ops:cwp:env-check",
+          "command": "bash scripts/prod-cwp-ops.sh env-check"
+        },
+        {
+          "name": "ops:cwp:health",
+          "command": "bash scripts/prod-cwp-ops.sh health"
+        },
+        {
+          "name": "ops:cwp:incident-bundle",
+          "command": "bash scripts/prod-cwp-ops.sh incident-bundle"
+        },
+        {
+          "name": "ops:cwp:incident-cleanup",
+          "command": "bash scripts/prod-cwp-ops.sh incident-cleanup"
+        },
+        {
+          "name": "ops:cwp:oneshot",
+          "command": "npm run ops:cwp:preflight && npm run ops:cwp:safe-deploy && npm run ops:cwp:release-readiness"
+        },
+        {
+          "name": "ops:cwp:pipeline",
+          "command": "bash scripts/prod-cwp-ops.sh pipeline"
+        },
+        {
+          "name": "ops:cwp:pipeline:strict",
+          "command": "bash scripts/prod-cwp-ops.sh pipeline-strict"
+        },
+        {
+          "name": "ops:cwp:predeploy-checks",
+          "command": "bash scripts/prod-cwp-ops.sh predeploy-checks"
+        },
+        {
+          "name": "ops:cwp:preflight",
+          "command": "bash scripts/prod-cwp-ops.sh preflight"
+        },
+        {
+          "name": "ops:cwp:release-readiness",
+          "command": "bash scripts/prod-cwp-ops.sh release-readiness"
+        },
+        {
+          "name": "ops:cwp:release:bundle",
+          "command": "bash scripts/cwp-release-bundle.sh"
+        },
+        {
+          "name": "ops:cwp:releases",
+          "command": "bash scripts/prod-cwp-ops.sh releases"
+        },
+        {
+          "name": "ops:cwp:report",
+          "command": "bash scripts/prod-cwp-ops.sh report"
+        },
+        {
+          "name": "ops:cwp:rollback",
+          "command": "bash scripts/prod-cwp-ops.sh rollback"
+        },
+        {
+          "name": "ops:cwp:rotate-events",
+          "command": "bash scripts/prod-cwp-ops.sh rotate-events"
+        },
+        {
+          "name": "ops:cwp:safe-deploy",
+          "command": "bash scripts/prod-cwp-ops.sh safe-deploy"
+        },
+        {
+          "name": "ops:cwp:smoke",
+          "command": "bash scripts/prod-cwp-ops.sh smoke"
+        },
+        {
+          "name": "ops:cwp:status",
+          "command": "bash scripts/prod-cwp-ops.sh status"
+        },
+        {
+          "name": "ops:cwp:sync",
+          "command": "node scripts/prod-sync.mjs"
+        },
+        {
+          "name": "ops:cwp:triage",
+          "command": "bash scripts/prod-cwp-ops.sh triage"
+        },
+        {
+          "name": "ops:cwp:unlock",
+          "command": "bash scripts/prod-cwp-ops.sh unlock"
+        },
+        {
+          "name": "ops:cwp:weekly",
+          "command": "bash scripts/prod-cwp-ops.sh weekly-audit"
+        },
+        {
+          "name": "ops:next:bulk",
+          "command": "node scripts/ci/next-bulk-ops.mjs"
+        },
+        {
+          "name": "ops:targeted",
+          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=all"
+        },
+        {
+          "name": "ops:targeted:content",
+          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=content"
+        },
+        {
+          "name": "ops:targeted:landing",
+          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=landing"
+        },
+        {
+          "name": "ops:targeted:release-lite",
+          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=release-lite"
+        },
+        {
+          "name": "ops:targeted:security",
+          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=security"
+        },
+        {
+          "name": "ops:targeted:social",
+          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=social"
+        }
+      ]
+    },
+    {
+      "family": "dev",
+      "count": 19,
+      "scripts": [
+        {
+          "name": "dev",
+          "command": "npm run -s dev:isolated:ensure"
+        },
+        {
+          "name": "dev:isolated",
+          "command": "node scripts/runtime/run-isolated.mjs npm run dev"
+        },
+        {
+          "name": "dev:isolated:check-no-orphan",
+          "command": "node scripts/runtime/check-no-orphan-dev.mjs"
+        },
+        {
+          "name": "dev:isolated:doctor",
+          "command": "node scripts/runtime/doctor.mjs"
+        },
+        {
+          "name": "dev:isolated:doctor:fix",
+          "command": "node scripts/runtime/doctor.mjs --fix"
+        },
+        {
+          "name": "dev:isolated:ensure",
+          "command": "npm run -s runtime:preflight:dev && node scripts/runtime/dev-daemon.mjs ensure"
+        },
+        {
+          "name": "dev:isolated:health",
+          "command": "node scripts/runtime/dev-daemon.mjs health"
+        },
+        {
+          "name": "dev:isolated:health:report",
+          "command": "node scripts/runtime/health-report.mjs"
+        },
+        {
+          "name": "dev:isolated:health:report:fix",
+          "command": "node scripts/runtime/health-report.mjs --fix"
+        },
+        {
+          "name": "dev:isolated:logs",
+          "command": "node scripts/runtime/dev-daemon.mjs logs"
+        },
+        {
+          "name": "dev:isolated:restart",
+          "command": "npm run -s runtime:preflight:dev && node scripts/runtime/dev-daemon.mjs restart"
+        },
+        {
+          "name": "dev:isolated:start",
+          "command": "npm run -s runtime:preflight:dev && node scripts/runtime/dev-daemon.mjs start"
+        },
+        {
+          "name": "dev:isolated:status",
+          "command": "node scripts/runtime/dev-daemon.mjs status"
+        },
+        {
+          "name": "dev:isolated:stop",
+          "command": "node scripts/runtime/dev-daemon.mjs stop"
+        },
+        {
+          "name": "dev:isolated:stop:all",
+          "command": "npm run -s dev:isolated:stop && npm run -s dev:isolated:check-no-orphan && npm run -s redis:isolated:stop"
+        },
+        {
+          "name": "dev:isolated:watchdog:start",
+          "command": "node scripts/runtime/dev-watchdog.mjs start"
+        },
+        {
+          "name": "dev:isolated:watchdog:status",
+          "command": "node scripts/runtime/dev-watchdog.mjs status"
+        },
+        {
+          "name": "dev:isolated:watchdog:stop",
+          "command": "node scripts/runtime/dev-watchdog.mjs stop"
+        },
+        {
+          "name": "dev:raw",
+          "command": "astro dev --host 0.0.0.0 --port 4321"
+        }
+      ]
+    },
+    {
+      "family": "test",
+      "count": 15,
+      "scripts": [
+        {
+          "name": "test",
+          "command": "npm run test:unit && npm run test:e2e"
+        },
+        {
+          "name": "test:api-contract",
+          "command": "node ./node_modules/vitest/vitest.mjs run --config vitest.api-contract.config.ts"
+        },
+        {
+          "name": "test:api-contract:coverage",
+          "command": "node ./node_modules/vitest/vitest.mjs run --config vitest.api-contract.config.ts --coverage"
+        },
+        {
+          "name": "test:e2e",
+          "command": "npm run test:e2e:preflight && node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts"
+        },
+        {
+          "name": "test:e2e:batch:clean",
+          "command": "node scripts/runtime/run-with-cleanup.mjs \"npm run test:e2e:preflight && node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts e2e/home.spec.ts e2e/analytics/realtime-feed.spec.ts e2e/analytics/realtime-metrics.spec.ts --project=chromium --workers=2\""
+        },
+        {
+          "name": "test:e2e:chromium",
+          "command": "npm run test:e2e:preflight && node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts --project=chromium"
+        },
+        {
+          "name": "test:e2e:chromium:clean",
+          "command": "node scripts/runtime/run-with-cleanup.mjs \"npm run test:e2e:chromium\""
+        },
+        {
+          "name": "test:e2e:clean",
+          "command": "node scripts/runtime/run-with-cleanup.mjs \"npm run test:e2e\""
+        },
+        {
+          "name": "test:e2e:debug",
+          "command": "node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts --debug"
+        },
+        {
+          "name": "test:e2e:preflight",
+          "command": "node scripts/e2e-preflight.mjs"
+        },
+        {
+          "name": "test:e2e:social:phase1",
+          "command": "npm run test:e2e:preflight && node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts e2e/social-phase1.spec.ts --project=chromium"
+        },
+        {
+          "name": "test:e2e:social:phase1:clean",
+          "command": "node scripts/runtime/run-with-cleanup.mjs \"npm run test:e2e:social:phase1\""
+        },
+        {
+          "name": "test:e2e:ui",
+          "command": "node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts --ui"
+        },
+        {
+          "name": "test:unit",
+          "command": "node ./node_modules/vitest/vitest.mjs run"
+        },
+        {
+          "name": "test:unit:watch",
+          "command": "node ./node_modules/vitest/vitest.mjs"
+        }
+      ]
+    },
+    {
+      "family": "images",
+      "count": 12,
+      "scripts": [
+        {
+          "name": "images:check-external",
+          "command": "npx tsx scripts/content-scraper/check-external-content-images.ts"
+        },
+        {
+          "name": "images:check-keys",
+          "command": "node scripts/content-scraper/check-image-api-keys.mjs"
+        },
+        {
+          "name": "images:download",
+          "command": "npx tsx scripts/content-scraper/image-downloader.ts"
+        },
+        {
+          "name": "images:map",
+          "command": "npx tsx scripts/content-scraper/map-images-to-content.ts"
+        },
+        {
+          "name": "images:moderate",
+          "command": "npx tsx scripts/content-scraper/moderate-images.ts"
+        },
+        {
+          "name": "images:moderation:sync-db",
+          "command": "npx tsx scripts/content-scraper/sync-image-moderation-to-site-media.ts"
+        },
+        {
+          "name": "images:pipeline",
+          "command": "npm run images:check-keys && npm run images:download && npm run images:map && npm run images:check-external && npm run images:validate && npm run images:quality && npm run images:moderate"
+        },
+        {
+          "name": "images:pipeline:db",
+          "command": "npm run images:pipeline && npm run images:sync-db && npm run images:moderation:sync-db"
+        },
+        {
+          "name": "images:quality",
+          "command": "npx tsx scripts/content-scraper/check-image-quality.ts"
+        },
+        {
+          "name": "images:slug:gate",
+          "command": "node scripts/ci/slug-image-naming-gate.mjs"
+        },
+        {
+          "name": "images:sync-db",
+          "command": "npx tsx scripts/content-scraper/import-image-manifest-to-site-media.ts"
+        },
+        {
+          "name": "images:validate",
+          "command": "npx tsx scripts/content-scraper/validate-place-images.ts"
+        }
+      ]
+    },
+    {
+      "family": "smoke",
+      "count": 11,
+      "scripts": [
+        {
+          "name": "smoke:admin:quick-nav",
+          "command": "node scripts/smoke/admin-quick-nav-integrity.mjs"
+        },
+        {
+          "name": "smoke:api:critical",
+          "command": "npx tsx scripts/smoke/critical-api-smoke.ts"
+        },
+        {
+          "name": "smoke:city-content-agents",
+          "command": "node scripts/smoke/city-content-agents-surface.mjs"
+        },
+        {
+          "name": "smoke:city-content:acceptance",
+          "command": "node scripts/smoke/city-content-acceptance.mjs"
+        },
+        {
+          "name": "smoke:db:backup-restore",
+          "command": "npx tsx scripts/smoke/db-backup-restore.ts"
+        },
+        {
+          "name": "smoke:images:critical",
+          "command": "npx tsx scripts/smoke/critical-image-url-smoke.ts"
+        },
+        {
+          "name": "smoke:pages:critical",
+          "command": "npx tsx scripts/smoke/critical-pages-smoke.ts"
+        },
+        {
+          "name": "smoke:schema:ready",
+          "command": "npx tsx scripts/smoke/schema-ready-db.ts"
+        },
+        {
+          "name": "smoke:site-settings:schema",
+          "command": "npx tsx scripts/smoke/site-settings-schema.ts"
+        },
+        {
+          "name": "smoke:social-place:phase1",
+          "command": "node scripts/smoke/social-place-phase1.mjs"
+        },
+        {
+          "name": "smoke:transport:freshness",
+          "command": "npx tsx scripts/smoke/transport-freshness.ts"
+        }
+      ]
+    },
+    {
+      "family": "jobs",
+      "count": 10,
+      "scripts": [
+        {
+          "name": "jobs:content:quality",
+          "command": "npx tsx scripts/jobs/content-quality-refresh.ts"
+        },
+        {
+          "name": "jobs:nightly:core",
+          "command": "node scripts/jobs/nightly-core.mjs"
+        },
+        {
+          "name": "jobs:pharmacy:refresh",
+          "command": "npx tsx scripts/jobs/pharmacy-refresh.ts"
+        },
+        {
+          "name": "jobs:places:sla-alert",
+          "command": "npx tsx scripts/jobs/places-sla-alert.ts"
+        },
+        {
+          "name": "jobs:reports:social-lifecycle",
+          "command": "npx tsx scripts/jobs/social-lifecycle-report.ts"
+        },
+        {
+          "name": "jobs:social:archive-partitions",
+          "command": "npx tsx scripts/jobs/social-archive-partitions.ts"
+        },
+        {
+          "name": "jobs:social:archive-partitions:daily",
+          "command": "npx tsx scripts/jobs/social-archive-partitions-daily.ts"
+        },
+        {
+          "name": "jobs:social:retention",
+          "command": "npx tsx scripts/jobs/social-event-retention.ts"
+        },
+        {
+          "name": "jobs:transit:refresh",
+          "command": "npx tsx scripts/jobs/transit-refresh.ts"
+        },
+        {
+          "name": "jobs:weather:refresh",
+          "command": "npx tsx scripts/jobs/weather-refresh.ts"
+        }
+      ]
+    },
+    {
+      "family": "lint",
+      "count": 9,
+      "scripts": [
+        {
+          "name": "lint",
+          "command": "node ./node_modules/eslint/bin/eslint.js \"src/**/*.{ts,tsx,astro}\""
+        },
+        {
+          "name": "lint:changed",
+          "command": "node scripts/ci/lint-changed.mjs"
+        },
+        {
+          "name": "lint:ci",
+          "command": "astro check && npm run lint && npm run images:check-external && npm run images:validate"
+        },
+        {
+          "name": "lint:fix",
+          "command": "node ./node_modules/eslint/bin/eslint.js \"src/**/*.{ts,tsx,astro}\" --fix"
+        },
+        {
+          "name": "lint:phase:api",
+          "command": "node ./node_modules/eslint/bin/eslint.js src/pages/api --ext .ts,.tsx,.astro"
+        },
+        {
+          "name": "lint:phase:components",
+          "command": "node ./node_modules/eslint/bin/eslint.js src/components --ext .ts,.tsx,.astro"
+        },
+        {
+          "name": "lint:phase:gate",
+          "command": "npm run lint:phase:api && npm run lint:phase:lib && npm run lint:phase:components"
+        },
+        {
+          "name": "lint:phase:lib",
+          "command": "node ./node_modules/eslint/bin/eslint.js src/lib --ext .ts,.tsx"
+        },
+        {
+          "name": "lint:strict",
+          "command": "node ./node_modules/eslint/bin/eslint.js src --ext .ts,.tsx,.astro --max-warnings=0"
+        }
+      ]
+    },
+    {
+      "family": "db",
+      "count": 7,
+      "scripts": [
+        {
+          "name": "db:backup",
+          "command": "bash scripts/backup.sh"
+        },
+        {
+          "name": "db:migrate",
+          "command": "npx tsx scripts/migrate.ts"
+        },
+        {
+          "name": "db:migrate:check-duplicates",
+          "command": "node scripts/migrations/check-duplicates.mjs"
+        },
+        {
+          "name": "db:migrate:check-duplicates:write-baseline",
+          "command": "node scripts/migrations/check-duplicates.mjs --write-baseline"
+        },
+        {
+          "name": "db:migrate:down",
+          "command": "npx tsx scripts/migrate.ts down"
+        },
+        {
+          "name": "db:migrate:status",
+          "command": "npx tsx scripts/migrate.ts status"
+        },
+        {
+          "name": "db:seed",
+          "command": "npx tsx scripts/seed.ts"
+        }
+      ]
+    },
+    {
+      "family": "openapi",
+      "count": 7,
+      "scripts": [
+        {
+          "name": "openapi:city-services:gate",
+          "command": "npx tsx scripts/ci/openapi-city-services-gate.ts"
+        },
+        {
+          "name": "openapi:gap:summary",
+          "command": "npx tsx scripts/openapi/gap-summary.ts"
+        },
+        {
+          "name": "openapi:p0:regression-gate",
+          "command": "npx tsx scripts/openapi/p0-regression-gate.ts"
+        },
+        {
+          "name": "openapi:p0:report",
+          "command": "npx tsx scripts/openapi/p0-closure-report.ts"
+        },
+        {
+          "name": "openapi:sync:routes",
+          "command": "npx tsx scripts/openapi/sync-routes.ts"
+        },
+        {
+          "name": "openapi:sync:routes:baseline",
+          "command": "npx tsx scripts/openapi/sync-routes.ts --write-baseline --quiet-list"
+        },
+        {
+          "name": "openapi:sync:routes:gate",
+          "command": "npx tsx scripts/openapi/sync-routes.ts --quiet-list"
+        }
+      ]
+    },
+    {
+      "family": "release",
+      "count": 6,
+      "scripts": [
+        {
+          "name": "release:candidate",
+          "command": "npm run frontend:release:ready:gate && npm run gate:done && npm run release:readiness:report"
+        },
+        {
+          "name": "release:final",
+          "command": "npm run release:candidate && npm run release:handoff"
+        },
+        {
+          "name": "release:handoff",
+          "command": "node scripts/ci/release-handoff-summary.mjs"
+        },
+        {
+          "name": "release:readiness:admin:gate",
+          "command": "node scripts/ci/release-readiness-admin-gate.mjs"
+        },
+        {
+          "name": "release:readiness:dashboard",
+          "command": "node scripts/ci/release-readiness-dashboard.mjs"
+        },
+        {
+          "name": "release:readiness:report",
+          "command": "node scripts/ci/release-readiness-report.mjs"
+        }
+      ]
+    },
+    {
+      "family": "workflow",
+      "count": 6,
+      "scripts": [
+        {
+          "name": "workflow:standards:all",
+          "command": "npm run workflow:standards:gate && npm run workflow:standards:report"
+        },
+        {
+          "name": "workflow:standards:autofix",
+          "command": "node scripts/ci/workflow-standards-autofix.mjs --write"
+        },
+        {
+          "name": "workflow:standards:autofix:check",
+          "command": "node scripts/ci/workflow-standards-autofix.mjs"
+        },
+        {
+          "name": "workflow:standards:gate",
+          "command": "node scripts/ci/workflow-standards-gate.mjs"
+        },
+        {
+          "name": "workflow:standards:report",
+          "command": "node scripts/ci/workflow-standards-report.mjs"
+        },
+        {
+          "name": "workflow:standards:verify",
+          "command": "npm run workflow:standards:autofix:check && npm run workflow:standards:gate && npm run workflow:standards:report"
+        }
+      ]
+    },
+    {
+      "family": "redis",
+      "count": 5,
+      "scripts": [
+        {
+          "name": "redis:isolated:ensure",
+          "command": "node scripts/runtime/redis-daemon.mjs ensure"
+        },
+        {
+          "name": "redis:isolated:health",
+          "command": "node scripts/runtime/redis-daemon.mjs health"
+        },
+        {
+          "name": "redis:isolated:start",
+          "command": "node scripts/runtime/redis-daemon.mjs start"
+        },
+        {
+          "name": "redis:isolated:status",
+          "command": "node scripts/runtime/redis-daemon.mjs status"
+        },
+        {
+          "name": "redis:isolated:stop",
+          "command": "node scripts/runtime/redis-daemon.mjs stop"
+        }
+      ]
+    },
+    {
+      "family": "runtime",
+      "count": 5,
+      "scripts": [
+        {
+          "name": "runtime:cleanup:listeners",
+          "command": "node scripts/runtime/cleanup-project-listeners.mjs --port=4321"
+        },
+        {
+          "name": "runtime:preflight:dev",
+          "command": "npm run -s runtime:preflight:redis && npm run -s runtime:preflight:isolation"
+        },
+        {
+          "name": "runtime:preflight:isolation",
+          "command": "node scripts/runtime/preflight-isolation.mjs"
+        },
+        {
+          "name": "runtime:preflight:redis",
+          "command": "npm run -s redis:isolated:ensure"
+        },
+        {
+          "name": "runtime:single-process:gate",
+          "command": "node scripts/ci/runtime-single-process-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "social",
+      "count": 5,
+      "scripts": [
+        {
+          "name": "social:core:gate",
+          "command": "node scripts/smoke/run-social-core-gate.mjs"
+        },
+        {
+          "name": "social:core:gate:non-strict",
+          "command": "node scripts/smoke/run-social-core-gate.mjs --non-strict"
+        },
+        {
+          "name": "social:core:gate:strict",
+          "command": "node scripts/smoke/run-social-core-gate.mjs --strict"
+        },
+        {
+          "name": "social:db:first:gate",
+          "command": "node scripts/ci/social-db-first-import-gate.mjs"
+        },
+        {
+          "name": "social:safety:gate",
+          "command": "node scripts/ci/social-safety-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "codemod",
+      "count": 4,
+      "scripts": [
+        {
+          "name": "codemod:ast",
+          "command": "npx tsx scripts/codemod-ast.ts"
+        },
+        {
+          "name": "codemod:ast:dry",
+          "command": "npx tsx scripts/codemod-ast.ts --dry-run --verbose"
+        },
+        {
+          "name": "codemod:validation",
+          "command": "npx tsx scripts/codemod-validation.ts"
+        },
+        {
+          "name": "codemod:validation:dry",
+          "command": "npx tsx scripts/codemod-validation.ts --dry-run --verbose"
+        }
+      ]
+    },
+    {
+      "family": "categories",
+      "count": 3,
+      "scripts": [
+        {
+          "name": "categories:coverage:gate",
+          "command": "node scripts/ci/category-coverage-gate.mjs"
+        },
+        {
+          "name": "categories:gap:report",
+          "command": "npx tsx scripts/content/category-gap-report.ts"
+        },
+        {
+          "name": "categories:sync:txt",
+          "command": "npx tsx scripts/content/sync-categories-from-txt.ts"
+        }
+      ]
+    },
+    {
+      "family": "content",
+      "count": 3,
+      "scripts": [
+        {
+          "name": "content:cluster:quality",
+          "command": "npx tsx scripts/content/cluster-quality-gate.ts"
+        },
+        {
+          "name": "content:image:relevance:gate",
+          "command": "node scripts/ci/content-image-relevance-gate.mjs"
+        },
+        {
+          "name": "content:programmatic:quality",
+          "command": "npx tsx scripts/content/programmatic-quality-gate.ts"
+        }
+      ]
+    },
+    {
+      "family": "frontend",
+      "count": 3,
+      "scripts": [
+        {
+          "name": "frontend:quality:gate",
+          "command": "node scripts/ci/frontend-quality-gate.mjs"
+        },
+        {
+          "name": "frontend:release:checklist:gate",
+          "command": "node scripts/ci/frontend-release-checklist-gate.mjs"
+        },
+        {
+          "name": "frontend:release:ready:gate",
+          "command": "npm run frontend:quality:gate && npm run design:drift:gate && npm run content:image:relevance:gate && npm run home:section:contract:gate && npm run page:template:system:gate && npm run page:template:adoption:gate && npm run seo:helper:adoption:gate && npm run route:ownership:gate && npm run visual:regression:gate && npm run frontend:release:checklist:gate && npm run home:any:report && npm run home:any:ratchet:gate && npm run release:readiness:dashboard && npm run release:readiness:admin:gate"
+        }
+      ]
+    },
+    {
+      "family": "home",
+      "count": 3,
+      "scripts": [
+        {
+          "name": "home:any:ratchet:gate",
+          "command": "node scripts/ci/home-any-ratchet-gate.mjs"
+        },
+        {
+          "name": "home:any:report",
+          "command": "node scripts/ci/home-any-report.mjs"
+        },
+        {
+          "name": "home:section:contract:gate",
+          "command": "node scripts/ci/home-section-contract-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "problemjson",
+      "count": 3,
+      "scripts": [
+        {
+          "name": "problemjson:baseline",
+          "command": "node scripts/ci/problem-json-gate.mjs --write-baseline"
+        },
+        {
+          "name": "problemjson:report",
+          "command": "node scripts/ci/problem-json-gate.mjs"
+        },
+        {
+          "name": "problemjson:strict",
+          "command": "node scripts/ci/problem-json-gate.mjs --require-zero"
+        }
+      ]
+    },
+    {
+      "family": "recommendations",
+      "count": 3,
+      "scripts": [
+        {
+          "name": "recommendations:apply",
+          "command": "node scripts/ci/apply-all-recommendations.mjs --mode=full"
+        },
+        {
+          "name": "recommendations:apply:quick",
+          "command": "node scripts/ci/apply-all-recommendations.mjs --mode=quick"
+        },
+        {
+          "name": "recommendations:master:gate",
+          "command": "node scripts/ci/recommendations-master-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "security",
+      "count": 3,
+      "scripts": [
+        {
+          "name": "security:defaults:gate",
+          "command": "node scripts/security/check-insecure-defaults.mjs"
+        },
+        {
+          "name": "security:public-readiness",
+          "command": "node scripts/security/public-readiness-gate.mjs"
+        },
+        {
+          "name": "security:scan-secrets",
+          "command": "node scripts/security/scan-secrets.mjs"
+        }
+      ]
+    },
+    {
+      "family": "tsnocheck",
+      "count": 3,
+      "scripts": [
+        {
+          "name": "tsnocheck:audit",
+          "command": "node scripts/ci/ts-nocheck-audit.mjs"
+        },
+        {
+          "name": "tsnocheck:clean:core",
+          "command": "node scripts/ci/ts-nocheck-audit.mjs --clean-core"
+        },
+        {
+          "name": "tsnocheck:core:gate",
+          "command": "node scripts/ci/ts-nocheck-audit.mjs --check-core"
+        }
+      ]
+    },
+    {
+      "family": "build",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "build",
+          "command": "astro build"
+        },
+        {
+          "name": "build:isolated",
+          "command": "node scripts/runtime/run-isolated.mjs npm run build"
+        }
+      ]
+    },
+    {
+      "family": "docs",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "docs:build",
+          "command": "cd docs && npm run build"
+        },
+        {
+          "name": "docs:dev",
+          "command": "cd docs && npm run dev"
+        }
+      ]
+    },
+    {
+      "family": "gate",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "gate:done",
+          "command": "npm run env:gate && npm run runtime:single-process:gate && npm run workflow:standards:verify && npm run ops:contracts:gate && npm run canonical:domain:gate && npm run phase1:free:gate && npm run admin:db:first:gate && npm run social:safety:gate && npm run social:db:first:gate && npm run lifecycle:standard:gate && npm run landing:agency:gate && npm run recommendations:master:gate && npm run hosting:panel:gate && npm run frontend:release:ready:gate && npm run type-check && npm run build && npm run db:migrate:check-duplicates && npm run api:release:gate && npm run smoke:pages:critical && npm run smoke:images:critical && npm run smoke:db:backup-restore && npm run images:check-external && npm run images:validate && npm run images:quality && npm run images:moderate && npm run images:slug:gate && npm run categories:coverage:gate && npm run public:city:gate && npm run seo:geo:gate && npm run content:cluster:quality && npm run content:programmatic:quality && npm run social:core:gate:strict && npm run problemjson:strict && npm run security:scan-secrets && npm run security:defaults:gate && npm run release:readiness:report"
+        },
+        {
+          "name": "gate:isolated",
+          "command": "node scripts/runtime/run-with-cleanup.mjs npm run gate:done"
+        }
+      ]
+    },
+    {
+      "family": "page",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "page:template:adoption:gate",
+          "command": "node scripts/ci/template-adoption-gate.mjs"
+        },
+        {
+          "name": "page:template:system:gate",
+          "command": "node scripts/ci/page-template-system-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "preview",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "preview",
+          "command": "astro preview --host 0.0.0.0 --port 4321"
+        },
+        {
+          "name": "preview:isolated",
+          "command": "node scripts/runtime/run-isolated.mjs npm run preview"
+        }
+      ]
+    },
+    {
+      "family": "public",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "public:city:gate",
+          "command": "node scripts/ci/public-city-acceptance-gate.mjs"
+        },
+        {
+          "name": "public:city:gate:build",
+          "command": "node scripts/ci/public-city-acceptance-gate.mjs --build"
+        }
+      ]
+    },
+    {
+      "family": "quality",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "quality:metrics",
+          "command": "node scripts/ci/collect-quality-metrics.mjs"
+        },
+        {
+          "name": "quality:metrics:ci",
+          "command": "node scripts/ci/collect-quality-metrics.mjs --lint lint.log --type type-check.log --api api-release-gate.log --openapi docs/openapi-route-gap-baseline.json"
+        }
+      ]
+    },
+    {
+      "family": "route",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "route:legacy:report",
+          "command": "node scripts/ci/legacy-route-usage-report.mjs"
+        },
+        {
+          "name": "route:ownership:gate",
+          "command": "node scripts/ci/route-ownership-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "sdk",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "sdk:generate",
+          "command": "npx tsx scripts/openapi/generate-sdk.ts"
+        },
+        {
+          "name": "sdk:generate:check",
+          "command": "npm run sdk:generate && node -e \"const fs=require('fs'); if(!fs.existsSync('sdk/generated/client.ts')) process.exit(1)\""
+        }
+      ]
+    },
+    {
+      "family": "seo",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "seo:geo:gate",
+          "command": "node scripts/ci/seo-geo-surface-gate.mjs"
+        },
+        {
+          "name": "seo:helper:adoption:gate",
+          "command": "node scripts/ci/seo-helper-adoption-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "top-level",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "astro",
+          "command": "astro"
+        },
+        {
+          "name": "start",
+          "command": "npm run -s dev:isolated:ensure"
+        }
+      ]
+    },
+    {
+      "family": "admin",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "admin:db:first:gate",
+          "command": "node scripts/ci/admin-db-first-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "api",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "api:release:gate",
+          "command": "npm run test:api-contract:coverage && npm run openapi:sync:routes:gate && npm run openapi:city-services:gate && npm run sdk:generate:check && npm run smoke:api:critical && npm run smoke:site-settings:schema && npm run openapi:p0:report && npm run openapi:p0:regression-gate && npm run problemjson:strict"
+        }
+      ]
+    },
+    {
+      "family": "astro",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "astro:sync",
+          "command": "astro sync"
+        }
+      ]
+    },
+    {
+      "family": "canonical",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "canonical:domain:gate",
+          "command": "node scripts/ci/canonical-domain-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "design",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "design:drift:gate",
+          "command": "node scripts/ci/design-drift-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "env",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "env:gate",
+          "command": "node scripts/ci/no-dynamic-import-meta-env.mjs"
+        }
+      ]
+    },
+    {
+      "family": "hosting",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "hosting:panel:gate",
+          "command": "node scripts/ci/hosting-panel-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "landing",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "landing:agency:gate",
+          "command": "node scripts/ci/landing-agency-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "lifecycle",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "lifecycle:standard:gate",
+          "command": "node scripts/ci/lifecycle-standard-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "load",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "load:test",
+          "command": "k6 run load-tests/load-test.js"
+        }
+      ]
+    },
+    {
+      "family": "phase1",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "phase1:free:gate",
+          "command": "node scripts/ci/phase1-free-mode-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "scripts",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "scripts:surface:report",
+          "command": "node scripts/ci/script-surface-report.mjs"
+        }
+      ]
+    },
+    {
+      "family": "type-check",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "type-check",
+          "command": "astro check"
+        }
+      ]
+    },
+    {
+      "family": "visual",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "visual:regression:gate",
+          "command": "node scripts/ci/visual-regression-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "warning",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "warning:debt:summary",
+          "command": "node scripts/ci/warning-debt-summary.mjs"
+        }
+      ]
+    }
+  ]
+}

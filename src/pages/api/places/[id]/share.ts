@@ -24,6 +24,16 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     const body = await request.json();
     const { platform, share_url } = body;
 
+    const VALID_SHARE_PLATFORMS = new Set(['twitter', 'facebook', 'whatsapp', 'instagram', 'email', 'copy', 'other']);
+    if (platform !== undefined && platform !== null && (typeof platform !== 'string' || !VALID_SHARE_PLATFORMS.has(platform))) {
+      recordRequest('POST', '/api/places/[id]/share', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz platform', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (share_url !== undefined && share_url !== null && (typeof share_url !== 'string' || share_url.length > 2000)) {
+      recordRequest('POST', '/api/places/[id]/share', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'share_url 2000 karakteri aşamaz', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+
     const shareId = await sharePlace(placeId, locals.user.id, platform, share_url);
     const count = await getShareCount(placeId);
 
@@ -41,7 +51,7 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
   }
 };
 
-export const GET: APIRoute = async ({ request, locals, params }) => {
+export const GET: APIRoute = async ({ request, params }) => {
   const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);

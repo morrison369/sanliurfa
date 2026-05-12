@@ -7,6 +7,7 @@ import type { APIRoute } from 'astro';
 import { queryOne } from '../../../../lib/postgres';
 import { awardPoints } from '../../../../lib/loyalty/loyalty-points';
 import { deleteCache, deleteCachePattern } from '../../../../lib/cache';
+import { invalidateGamification } from '../../../../lib/cache/invalidation';
 import { apiResponse, apiError } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
@@ -46,10 +47,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     let awarded = false;
-    let data: any = { userId, type, reason };
+    let data: Record<string, unknown> = { userId, type, reason };
 
     if (type === 'points') {
-      if (typeof amount !== 'number' || amount <= 0) {
+      if (typeof amount !== 'number' || !Number.isFinite(amount) || amount <= 0) {
         const duration = Date.now() - startTime;
         recordRequest('POST', '/api/admin/loyalty/award', 422, duration);
         return apiError('VALIDATION_ERROR', 'amount is required and must be > 0', 422, undefined, requestId);
@@ -81,6 +82,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       awarded = true;
       data.awarded = badgeKey;
+
+      // Cache invalidation: rozet kazanımı user badges/leaderboard cache'lerini etkiler
+      await invalidateGamification(userId, null);
     } else {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/admin/loyalty/award', 422, duration);

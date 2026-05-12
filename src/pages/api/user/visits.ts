@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getUserVisits, getUserVisitStats, getMostVisitedPlaces } from '../../../lib/place/place-visits';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     const userId = locals.user.id;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 200);
     const includeStats = url.searchParams.get('includeStats') === 'true';
     const includeMostVisited = url.searchParams.get('includeMostVisited') === 'true';
 

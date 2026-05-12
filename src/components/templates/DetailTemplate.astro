@@ -1,0 +1,110 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+type BreadcrumbItem = {
+ href?: string;
+ label: string;
+};
+
+interface Props {
+ seo: any;
+ title?: string;
+ subtitle?: string;
+ breadcrumbItems?: BreadcrumbItem[];
+}
+
+const {
+ seo,
+ title,
+ subtitle,
+ breadcrumbItems = [],
+} = Astro.props;
+---
+
+<Layout seo={seo}>
+ {breadcrumbItems.length > 0 && (
+  <div class="dt-breadcrumb">
+   <div class="sf-container">
+    <nav aria-label="Breadcrumb">
+     {breadcrumbItems.map((item, index) => (
+      <>
+       {item.href ? <a href={item.href}>{item.label}</a> : <span class="dt-breadcrumb-current">{item.label}</span>}
+       {index < breadcrumbItems.length - 1 && <span class="dt-breadcrumb-sep">›</span>}
+      </>
+     ))}
+    </nav>
+   </div>
+  </div>
+ )}
+
+ {title && (
+  <section class="dt-intro">
+   <div class="sf-container">
+    <h1>{title}</h1>
+    {subtitle && <p>{subtitle}</p>}
+   </div>
+  </section>
+ )}
+
+ <slot />
+</Layout>
+
+<style>
+ .dt-breadcrumb {
+  background: var(--bg);
+  border-bottom: 1px solid rgba(184, 115, 51, 0.12);
+  padding: 0.75rem 0;
+ }
+
+ .dt-breadcrumb nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  color: #7a6b58;
+  font-size: 0.8rem;
+ }
+
+ .dt-breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.75rem;
+  color: #7a6b58;
+  text-decoration: none;
+  transition: color 0.15s ease;
+ }
+
+ .dt-breadcrumb a:hover {
+  color: #c4a882;
+ }
+
+ .dt-breadcrumb-sep {
+  color: rgba(122, 107, 88, 0.7);
+ }
+
+ .dt-breadcrumb-current {
+  color: #c4a882;
+  font-weight: 600;
+ }
+
+ .dt-intro {
+  padding: 2rem 0;
+  border-bottom: 1px solid rgba(184, 115, 51, 0.12);
+  background: linear-gradient(180deg, #fbf6ec 0%, #f4ecd8 100%);
+ }
+
+ .dt-intro h1 {
+  margin: 0;
+  color: #1f1410;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+ }
+
+ .dt-intro p {
+  margin: 0.6rem 0 0;
+  color: #5a4030;
+  font-size: 0.95rem;
+  line-height: 1.7;
+ }
+</style>

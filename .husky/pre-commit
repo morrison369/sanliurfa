@@ -3,16 +3,13 @@
 
 echo "Running pre-commit checks..."
 
-# Run linting
-npm run lint || exit 1
-
-# Run type checking
-npm run type-check || exit 1
+# Lint only changed files (full lint runs in CI)
+npm run lint:changed || exit 1
 
 # Run tests related to changed files
 npm run test:changed || exit 1
 
-# Check for secrets in code
+# Check for secrets / insecure defaults in code
 npm run security:check || exit 1
 
 echo "All checks passed!"

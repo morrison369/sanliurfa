@@ -14,7 +14,7 @@ type RejectVendorBody = {
 };
 
 const schema: ValidationSchema = {
-  reason: { type: 'string', required: true, minLength: 10 },
+  reason: { type: 'string', required: true, minLength: 10, maxLength: 500 },
 };
 
 export const POST: APIRoute = async ({ request, locals, params }) => {

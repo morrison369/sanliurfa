@@ -1,0 +1,224 @@
+---
+/**
+ * SmartSearchBar — typeahead dropdown ile aramayı zenginleştir.
+ * Recent searches + popular suggestions + autocomplete.
+ *
+ * XSS-safe: localStorage/API content textContent ile yazılır, innerHTML kullanılmaz.
+ */
+---
+
+<form action="/arama" method="get" class="ssb" role="search" autocomplete="off">
+ <div class="ssb-wrap">
+  <svg class="ssb-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+   <circle cx="11" cy="11" r="8"></circle>
+   <path d="m21 21-4.3-4.3"></path>
+  </svg>
+  <input
+   type="search"
+   name="q"
+   id="ssb-input"
+   class="ssb-input"
+   placeholder="Mekan, ilçe, etkinlik veya tarif ara…"
+   aria-label="Şanlıurfa'da ara"
+   autocomplete="off"
+   spellcheck="false"
+  />
+  <button type="submit" class="ssb-btn">Ara</button>
+ </div>
+
+ <div class="ssb-dropdown" id="ssb-dropdown" hidden>
+  <div class="ssb-section ssb-section-recent" id="ssb-recent" hidden>
+   <p class="ssb-section-h">Son aramalar</p>
+   <ul class="ssb-list" id="ssb-recent-list"></ul>
+  </div>
+  <div class="ssb-section ssb-section-popular">
+   <p class="ssb-section-h">Popüler aramalar</p>
+   <ul class="ssb-list">
+    <li><a href="/arama?q=kebap" class="ssb-link">Kebapçılar</a></li>
+    <li><a href="/arama?q=balikligol" class="ssb-link">Balıklıgöl</a></li>
+    <li><a href="/arama?q=gobeklitepe" class="ssb-link">Göbeklitepe</a></li>
+    <li><a href="/arama?q=kahvaltı" class="ssb-link">Kahvaltı mekanları</a></li>
+    <li><a href="/arama?q=halfeti" class="ssb-link">Halfeti</a></li>
+    <li><a href="/arama?q=otel" class="ssb-link">Otel</a></li>
+   </ul>
+  </div>
+  <div class="ssb-section ssb-section-suggest" id="ssb-suggest" hidden>
+   <p class="ssb-section-h">Öneriler</p>
+   <ul class="ssb-list" id="ssb-suggest-list"></ul>
+  </div>
+ </div>
+</form>
+
+<style>
+ .ssb { position: relative; max-width: 640px; }
+ .ssb-wrap {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(24, 35, 29, 0.08);
+  border-radius: 999px;
+  padding: 0.45rem 0.55rem 0.45rem 0.9rem;
+  box-shadow: 0 18px 38px -26px rgba(24, 35, 29, 0.35);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  backdrop-filter: blur(16px);
+ }
+ .ssb-wrap:focus-within {
+  border-color: rgba(49, 88, 79, 0.3);
+  box-shadow: 0 26px 40px -26px rgba(24, 35, 29, 0.42);
+  transform: translateY(-1px);
+ }
+ .ssb-icon { color: #31584f; flex-shrink: 0; }
+ .ssb-input {
+  flex: 1; min-width: 0;
+  border: none; outline: none; background: transparent;
+  font-family: 'Jost', system-ui, sans-serif;
+  font-size: 0.95rem; color: #1f2117;
+  padding: 0.55rem 0.25rem;
+ }
+ .ssb-input::placeholder { color: #8a867f; }
+ .ssb-btn {
+  flex-shrink: 0;
+  padding: 0.72rem 1.35rem;
+  background: linear-gradient(135deg, #31584f, #204840);
+  color: #fff;
+  border: none; border-radius: 999px;
+  font-size: 0.85rem; font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.16);
+ }
+ .ssb-btn:hover { transform: translateY(-1px); box-shadow: 0 10px 20px -14px rgba(24, 35, 29, 0.7); }
+
+ .ssb-dropdown {
+  position: absolute; top: calc(100% + 0.5rem); left: 0; right: 0;
+  background: rgba(255,255,255,0.94);
+  border: 1px solid rgba(24, 35, 29, 0.08);
+  border-radius: 1.1rem;
+  box-shadow: 0 28px 44px -24px rgba(24, 35, 29, 0.42);
+  z-index: 50;
+  padding: 1rem;
+  max-height: 24rem;
+  overflow-y: auto;
+  backdrop-filter: blur(18px);
+ }
+ .ssb-section { margin-bottom: 0.85rem; }
+ .ssb-section:last-child { margin-bottom: 0; }
+ .ssb-section-h {
+  font-size: 0.65rem; font-weight: 700;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: #31584f;
+  margin: 0 0 0.4rem;
+ }
+ .ssb-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+ .ssb-link {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: 0.8rem;
+  font-size: 0.88rem; font-weight: 500;
+  color: #1f2117;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+ }
+ .ssb-link:hover, .ssb-link:focus {
+  background: rgba(49, 88, 79, 0.08);
+  color: #31584f;
+  transform: translateX(2px);
+ }
+
+ @media (max-width: 640px) {
+  .ssb-btn { padding: 0.6rem 1rem; font-size: 0.78rem; }
+ }
+</style>
+
+<script>
+ const input = document.getElementById('ssb-input') as HTMLInputElement | null;
+ const dropdown = document.getElementById('ssb-dropdown') as HTMLDivElement | null;
+ const recentSection = document.getElementById('ssb-recent') as HTMLDivElement | null;
+ const recentList = document.getElementById('ssb-recent-list') as HTMLUListElement | null;
+ const suggestSection = document.getElementById('ssb-suggest') as HTMLDivElement | null;
+ const suggestList = document.getElementById('ssb-suggest-list') as HTMLUListElement | null;
+ const RECENT_KEY = 'sanliurfa.recent_searches';
+ const MAX_RECENT = 6;
+
+ function makeListItem(prefix: string, label: string, href: string): HTMLLIElement {
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+  a.className = 'ssb-link';
+  a.href = href;
+  a.textContent = prefix ? `${prefix} ${label}` : label;
+  li.appendChild(a);
+  return li;
+ }
+
+ if (input && dropdown && recentSection && recentList && suggestSection && suggestList) {
+  const renderRecent = () => {
+   try {
+    const items = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+    if (!Array.isArray(items) || items.length === 0) {
+     recentSection.hidden = true;
+     return;
+    }
+    while (recentList.firstChild) recentList.removeChild(recentList.firstChild);
+    items.slice(0, MAX_RECENT).forEach((q: string) => {
+     if (typeof q !== 'string' || !q) return;
+     recentList.appendChild(makeListItem('Son', q, `/arama?q=${encodeURIComponent(q)}`));
+    });
+    recentSection.hidden = recentList.children.length === 0;
+   } catch {}
+  };
+
+  let suggestTimer: ReturnType<typeof setTimeout> | null = null;
+  const fetchSuggest = async (q: string) => {
+   if (q.length < 2) {
+    suggestSection.hidden = true;
+    return;
+   }
+   try {
+    const r = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=5`);
+    const d = await r.json();
+    const results = (d?.data?.data?.results || []).slice(0, 5);
+    if (results.length === 0) {
+     suggestSection.hidden = true;
+     return;
+    }
+    while (suggestList.firstChild) suggestList.removeChild(suggestList.firstChild);
+    results.forEach((row: any) => {
+     if (!row?.name || !row?.slug) return;
+     suggestList.appendChild(makeListItem('Mekan', String(row.name), `/isletme/${encodeURIComponent(String(row.slug))}`));
+    });
+    suggestSection.hidden = suggestList.children.length === 0;
+   } catch {
+    suggestSection.hidden = true;
+   }
+  };
+
+  input.addEventListener('focus', () => {
+   renderRecent();
+   dropdown.hidden = false;
+  });
+
+  input.addEventListener('input', () => {
+   const v = input.value.trim();
+   if (suggestTimer) clearTimeout(suggestTimer);
+   suggestTimer = setTimeout(() => fetchSuggest(v), 250);
+  });
+
+  document.addEventListener('click', (e) => {
+   const target = e.target as Element;
+   if (target && !target.closest('.ssb')) {
+    dropdown.hidden = true;
+   }
+  });
+
+  // Save on submit
+  const form = input.closest('form');
+  form?.addEventListener('submit', () => {
+   const v = input.value.trim();
+   if (!v) return;
+   try {
+    const items = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+    const next = [v, ...items.filter((x: string) => x !== v)].slice(0, MAX_RECENT);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+   } catch {}
+  });
+ }
+</script>

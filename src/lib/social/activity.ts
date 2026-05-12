@@ -124,15 +124,15 @@ export function recordReviewActivity(
   return createActivity({
     userId,
     userName,
-    userAvatar,
     type: 'review_created',
     placeId,
     placeName,
-    placeThumbnail,
     reviewId,
     reviewContent: reviewContent.substring(0, 200),
     reviewRating: rating,
     isPublic: true,
+    ...(userAvatar ? { userAvatar } : {}),
+    ...(placeThumbnail ? { placeThumbnail } : {}),
   });
 }
 
@@ -150,12 +150,12 @@ export function recordVisitActivity(
   return createActivity({
     userId,
     userName,
-    userAvatar,
     type: 'place_visited',
     placeId,
     placeName,
-    placeThumbnail,
     isPublic: true,
+    ...(userAvatar ? { userAvatar } : {}),
+    ...(placeThumbnail ? { placeThumbnail } : {}),
   });
 }
 
@@ -173,12 +173,12 @@ export function recordSaveActivity(
   return createActivity({
     userId,
     userName,
-    userAvatar,
     type: 'place_saved',
     placeId,
     placeName,
-    placeThumbnail,
     isPublic: true,
+    ...(userAvatar ? { userAvatar } : {}),
+    ...(placeThumbnail ? { placeThumbnail } : {}),
   });
 }
 
@@ -195,11 +195,11 @@ export function recordFollowActivity(
   return createActivity({
     userId,
     userName,
-    userAvatar,
     type: 'friend_followed',
     targetUserId,
     targetUserName,
     isPublic: true,
+    ...(userAvatar ? { userAvatar } : {}),
   });
 }
 
@@ -218,13 +218,13 @@ export function recordPhotoActivity(
   return createActivity({
     userId,
     userName,
-    userAvatar,
     type: 'photo_uploaded',
     placeId,
     placeName,
-    placeThumbnail,
     photoUrl,
     isPublic: true,
+    ...(userAvatar ? { userAvatar } : {}),
+    ...(placeThumbnail ? { placeThumbnail } : {}),
   });
 }
 
@@ -242,12 +242,12 @@ export function recordCheckin(
   return createActivity({
     userId,
     userName,
-    userAvatar,
     type: 'check_in',
     placeId,
     placeName,
-    placeThumbnail,
     isPublic: true,
+    ...(userAvatar ? { userAvatar } : {}),
+    ...(placeThumbnail ? { placeThumbnail } : {}),
   });
 }
 
@@ -264,11 +264,11 @@ export function recordAchievement(
   return createActivity({
     userId,
     userName,
-    userAvatar,
     type: 'achievement_earned',
     achievementId,
     achievementName,
     isPublic: true,
+    ...(userAvatar ? { userAvatar } : {}),
   });
 }
 
@@ -323,9 +323,9 @@ export function commentOnActivity(
     id: generateId(),
     userId,
     userName,
-    userAvatar,
     content,
     createdAt: new Date().toISOString(),
+    ...(userAvatar ? { userAvatar } : {}),
   };
 
   activity.comments.push(comment);

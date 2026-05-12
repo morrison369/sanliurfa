@@ -7,6 +7,7 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../lib/postgres';
 import { getSiteBranding } from '../../lib/site-branding';
+import { logger } from '../../lib/logging';
 
 export const GET: APIRoute = async () => {
   try {
@@ -37,7 +38,7 @@ export const GET: APIRoute = async () => {
       }
     });
   } catch (err) {
-    console.error('Sitemap oluşturulamadı:', err);
+    logger.error('Sitemap oluşturulamadı', err instanceof Error ? err : new Error(String(err)));
 
     return new Response('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>', {
       status: 200,

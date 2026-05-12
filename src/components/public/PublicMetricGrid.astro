@@ -1,0 +1,55 @@
+---
+interface Item {
+  label: string;
+  value: string;
+  accent?: boolean | undefined;
+}
+
+interface Props {
+  items: Item[];
+}
+
+const { items = [] } = Astro.props;
+---
+
+{items.length > 0 && (
+  <div class="pmg">
+    {items.map((item) => (
+      <div class="pmg-item">
+        <p class="pmg-label">{item.label}</p>
+        <p class:list={['pmg-value', item.accent && 'pmg-value-accent']}>{item.value}</p>
+      </div>
+    ))}
+  </div>
+)}
+
+<style>
+  .pmg {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .pmg-item {
+    text-align: center;
+  }
+
+  .pmg-label {
+    margin: 0;
+    color: var(--public-text-soft);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .pmg-value {
+    margin: 0.2rem 0 0;
+    color: var(--public-text);
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  .pmg-value-accent {
+    color: var(--public-accent);
+  }
+</style>

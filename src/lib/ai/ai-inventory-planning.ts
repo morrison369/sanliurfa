@@ -3,6 +3,7 @@
  * ML-based demand prediction, automated replenishment, anomaly detection, predictive alerts
  */
 
+import { randomBytes } from 'node:crypto';
 import { logger } from '../logger';
 
 // ==================== TYPES & INTERFACES ====================
@@ -147,7 +148,7 @@ export class AutoReplenishment {
    * Create replenishment order
    */
   createOrder(sku: string): ReplenishmentOrder {
-    const orderId = 'reorder-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+    const orderId = 'reorder-' + Date.now() + '-' + randomBytes(6).toString('hex');
 
     const order: ReplenishmentOrder = {
       id: orderId,
@@ -205,6 +206,12 @@ export class AutoReplenishment {
 export class PredictiveAlerts {
   private alerts: PredictiveAlert[] = [];
   private acknowledged = new Set<string>();
+  private alertCount = 0;
+
+  private nextAlertId(typeIndex: number): string {
+    this.alertCount += 1;
+    return `alert-${Date.now()}-${this.alertCount}-${typeIndex}`;
+  }
 
   /**
    * Generate alerts
@@ -214,7 +221,7 @@ export class PredictiveAlerts {
 
     if (Math.random() > 0.6) {
       generatedAlerts.push({
-        id: 'alert-' + Date.now() + '-1',
+        id: this.nextAlertId(1),
         type: 'shortage',
         sku: 'SKU-' + Math.floor(Math.random() * 1000),
         severity: 'high',
@@ -225,7 +232,7 @@ export class PredictiveAlerts {
 
     if (Math.random() > 0.7) {
       generatedAlerts.push({
-        id: 'alert-' + Date.now() + '-2',
+        id: this.nextAlertId(2),
         type: 'spike',
         sku: 'SKU-' + Math.floor(Math.random() * 1000),
         severity: 'medium',
@@ -236,7 +243,7 @@ export class PredictiveAlerts {
 
     if (Math.random() > 0.8) {
       generatedAlerts.push({
-        id: 'alert-' + Date.now() + '-3',
+        id: this.nextAlertId(3),
         type: 'disruption',
         sku: 'SKU-' + Math.floor(Math.random() * 1000),
         severity: 'high',

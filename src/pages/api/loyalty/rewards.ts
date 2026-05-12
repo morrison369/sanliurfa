@@ -10,7 +10,7 @@ import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -19,9 +19,20 @@ export const GET: APIRoute = async ({ request, url }) => {
     const tier = url.searchParams.get('tier');
     const includePromos = url.searchParams.get('includePromos') === 'true';
 
+    const VALID_REWARD_CATEGORIES = new Set(['food', 'entertainment', 'travel', 'shopping', 'experiences', 'digital', 'lifestyle']);
+    const VALID_REWARD_TIERS = new Set(['bronze', 'silver', 'gold', 'platinum', 'vip']);
+    if (category !== undefined && category !== null && (typeof category !== 'string' || !VALID_REWARD_CATEGORIES.has(category))) {
+      recordRequest('GET', '/api/loyalty/rewards', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz kategori', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+    if (tier !== undefined && tier !== null && (typeof tier !== 'string' || !VALID_REWARD_TIERS.has(tier))) {
+      recordRequest('GET', '/api/loyalty/rewards', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz üyelik kademesi', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
+
     const filters = {
-      category: category || undefined,
-      tier: tier || undefined
+      ...(category ? { category } : {}),
+      ...(tier ? { tier } : {})
     };
 
     const rewards = await getRewardsList(filters);
@@ -50,7 +61,7 @@ export const GET: APIRoute = async ({ request, url }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

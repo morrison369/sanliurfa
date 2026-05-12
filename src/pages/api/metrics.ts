@@ -4,11 +4,18 @@ import { pool, readReplicaPool } from '../../lib/postgres';
 import { getRedisClient } from '../../lib/cache';
 import { metricsCollector } from '../../lib/metrics';
 import { logger } from '../../lib/logging';
+import { verifyInternalToken } from '../../lib/auth/internal-token';
 
-/**
- * Prometheus-compatible metrics endpoint
- * Returns application metrics in Prometheus exposition format
- */
+interface PgPoolStats {
+  totalCount: number;
+  idleCount: number;
+  waitingCount: number;
+}
+
+function poolStats(p: unknown): PgPoolStats {
+  const s = p as PgPoolStats;
+  return { totalCount: s.totalCount || 0, idleCount: s.idleCount || 0, waitingCount: s.waitingCount || 0 };
+}
 
 // Simple in-memory metrics store (use Prometheus client in production)
 const metrics = {
@@ -57,11 +64,9 @@ export const GET: APIRoute = async ({ request }) => {
   const requestId = getRequestId(request);
 
   try {
-    // Basic auth check (in production, use proper auth)
-    const authHeader = request.headers.get('authorization');
-    const expectedToken = process.env.METRICS_API_TOKEN;
-
-    if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
+    const authResult = verifyInternalToken(request);
+    if (!authResult.ok) {
+      logger.warn('Metrics endpoint call rejected', { reason: authResult.reason });
       return apiError(
         'UNAUTHORIZED',
         'Invalid or missing authorization',
@@ -75,11 +80,12 @@ export const GET: APIRoute = async ({ request }) => {
     const acceptHeader = request.headers.get('accept') || '';
     if (acceptHeader.includes('application/json') || new URL(request.url).searchParams.has('format') && new URL(request.url).searchParams.get('format') === 'json') {
       const m = metricsCollector.getMetrics();
+      const ps = poolStats(pool);
       const dbPoolStatus = {
-        active: (pool as any).totalCount - (pool as any).idleCount || 0,
-        idle: (pool as any).idleCount || 0,
-        waiting: (pool as any).waitingCount || 0,
-        size: (pool as any).totalCount || 0,
+        active: ps.totalCount - ps.idleCount || 0,
+        idle: ps.idleCount,
+        waiting: ps.waitingCount,
+        size: ps.totalCount,
       };
       return apiResponse({
         requestCount: m.totalRequests,
@@ -99,17 +105,13 @@ export const GET: APIRoute = async ({ request }) => {
     const uptime = process.uptime();
     
     // Database pool status
-    const dbPoolStatus = {
-      total: (pool as any).totalCount || 0,
-      idle: (pool as any).idleCount || 0,
-      waiting: (pool as any).waitingCount || 0,
-    };
-    
-    const replicaPoolStatus = readReplicaPool ? {
-      total: (readReplicaPool as any).totalCount || 0,
-      idle: (readReplicaPool as any).idleCount || 0,
-      waiting: (readReplicaPool as any).waitingCount || 0,
-    } : null;
+    const ps2 = poolStats(pool);
+    const dbPoolStatus = { total: ps2.totalCount, idle: ps2.idleCount, waiting: ps2.waitingCount };
+
+    const replicaPoolStatus = readReplicaPool ? (() => {
+      const rp = poolStats(readReplicaPool);
+      return { total: rp.totalCount, idle: rp.idleCount, waiting: rp.waitingCount };
+    })() : null;
     
     // Redis status
     let redisStatus = false;

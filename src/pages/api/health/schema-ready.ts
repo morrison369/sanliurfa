@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
+import { safeErrorDetail } from '../../../lib/api';
 
 const REQUIRED_TABLES = [
   'site_settings',
@@ -36,7 +37,7 @@ export const GET: APIRoute = async () => {
     return new Response(
       JSON.stringify({
         status: 'error',
-        error: error instanceof Error ? error.message : 'schema check failed',
+        error: safeErrorDetail(error, 'schema check failed'),
       }),
       {
         status: 500,

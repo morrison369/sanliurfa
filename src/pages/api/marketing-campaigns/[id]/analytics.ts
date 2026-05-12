@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getCampaignPerformance } from '../../../../lib/marketing/marketing-campaigns';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
@@ -27,7 +27,7 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     }
 
     const url = new URL(request.url);
-    const days = Math.min(parseInt(url.searchParams.get('days') || '30'), 365);
+    const days = safeIntParam(url.searchParams.get('days'), 30, 1, 365);
 
     const performance = await getCampaignPerformance(id, locals.user.id, days);
 

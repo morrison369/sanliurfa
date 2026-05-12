@@ -3,7 +3,7 @@
  * Handle event creation, browsing, search, and RSVP management
  */
 
-import { query, queryOne, queryMany, insert } from '../postgres';
+import { query, queryOne, queryMany, queryReadOne, queryReadMany } from '../postgres';
 import { getCache, setCache, deleteCache } from '../cache';
 import { logger } from '../logger';
 import { resolveContentImage } from '../content-images';
@@ -87,7 +87,8 @@ export async function getEventById(eventId: string): Promise<Event | null> {
       return cached as any;
     }
 
-    const result = await queryOne(
+    // Read from replica (forward-compat).
+    const result = await queryReadOne(
       'SELECT * FROM events WHERE id = $1',
       [eventId]
     );
@@ -96,10 +97,9 @@ export async function getEventById(eventId: string): Promise<Event | null> {
       return null;
     }
 
-    await query(
-      'UPDATE events SET view_count = view_count + 1 WHERE id = $1',
-      [eventId]
-    );
+    // view_count fire-and-forget — response'u bloklamaz; atomic INCREMENT.
+    query('UPDATE events SET view_count = view_count + 1 WHERE id = $1', [eventId])
+      .catch((e) => logger.warn('event view_count increment failed', { id: eventId, error: e instanceof Error ? e.message : String(e) }));
 
     const event: Event = toEvent(result);
 
@@ -129,7 +129,7 @@ export async function getEvents(
     }
 
     let whereClause = 'WHERE status = $1';
-    const params: any[] = ['active'];
+    const params: any[] = ['published'];
 
     if (filters?.category) {
       whereClause += ` AND category = $${params.length + 1}`;
@@ -141,18 +141,20 @@ export async function getEvents(
       params.push(filters.placeId);
     }
 
-    const countResult = await queryOne(
-      `SELECT COUNT(*) as count FROM events ${whereClause}`,
-      params
-    );
-    const total = parseInt(countResult?.count || '0');
-
-    const results = await queryMany(
-      `SELECT * FROM events ${whereClause}
-       ORDER BY start_date ASC
-       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-      [...params, limit, offset]
-    );
+    // Read replica routing: count + list SELECT-only.
+    const [countResult, results] = await Promise.all([
+      queryReadOne(
+        `SELECT COUNT(*) as count FROM events ${whereClause}`,
+        params
+      ),
+      queryReadMany(
+        `SELECT * FROM events ${whereClause}
+         ORDER BY start_date ASC
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, limit, offset]
+      ),
+    ]);
+    const total = parseInt(countResult?.count || '0', 10);
 
     const events: Event[] = results.map((r: any) => toEvent(r));
 
@@ -171,9 +173,9 @@ export async function getEvents(
  */
 export async function searchEvents(queryText: string, limit: number = 20): Promise<Event[]> {
   try {
-    const results = await queryMany(
+    const results = await queryReadMany(
       `SELECT * FROM events
-       WHERE status = 'active'
+       WHERE status = 'published'
          AND (title ILIKE $1 OR description ILIKE $1)
        ORDER BY start_date ASC
        LIMIT $2`,
@@ -192,39 +194,33 @@ export async function searchEvents(queryText: string, limit: number = 20): Promi
  */
 export async function toggleRsvp(eventId: string, userId: string): Promise<boolean> {
   try {
-    const existing = await queryOne(
-      'SELECT id FROM event_attendees WHERE event_id = $1 AND user_id = $2',
+    // Atomic INSERT — ON CONFLICT means "already attending" → toggle off
+    const inserted = await queryOne<{ id: string }>(
+      `INSERT INTO event_attendees (event_id, user_id, status)
+       VALUES ($1, $2, 'attending')
+       ON CONFLICT (event_id, user_id) DO NOTHING
+       RETURNING id`,
       [eventId, userId]
     );
 
-    if (existing) {
-      await query(
+    if (inserted) {
+      await query('UPDATE events SET attendee_count = attendee_count + 1 WHERE id = $1', [eventId]);
+    } else {
+      const deleted = await query(
         'DELETE FROM event_attendees WHERE event_id = $1 AND user_id = $2',
         [eventId, userId]
       );
-
-      await query(
-        'UPDATE events SET attendee_count = attendee_count - 1 WHERE id = $1',
-        [eventId]
-      );
-    } else {
-      await insert('event_attendees', {
-        event_id: eventId,
-        user_id: userId,
-        status: 'attending'
-      });
-
-      await query(
-        'UPDATE events SET attendee_count = attendee_count + 1 WHERE id = $1',
-        [eventId]
-      );
+      if ((deleted.rowCount ?? 0) > 0) {
+        await query('UPDATE events SET attendee_count = GREATEST(0, attendee_count - 1) WHERE id = $1', [eventId]);
+      }
     }
 
-    await deleteCache(`event:${eventId}`);
-    await deleteCache(`event:attendees:${eventId}`);
+    await Promise.all([
+      deleteCache(`event:${eventId}`),
+      deleteCache(`event:attendees:${eventId}`),
+    ]);
 
     logger.info('RSVP toggled', { eventId, userId });
-
     return true;
   } catch (error) {
     logger.error('Failed to toggle RSVP', error instanceof Error ? error : new Error(String(error)));
@@ -301,7 +297,7 @@ export async function getUpcomingEvents(limit: number = 10): Promise<Event[]> {
 
     const results = await queryMany(
       `SELECT * FROM events
-       WHERE status = 'active' AND start_date > NOW()
+       WHERE status = 'published' AND start_date > NOW()
        ORDER BY start_date ASC
        LIMIT $1`,
       [limit]
@@ -317,4 +313,3 @@ export async function getUpcomingEvents(limit: number = 10): Promise<Event[]> {
     return [];
   }
 }
-

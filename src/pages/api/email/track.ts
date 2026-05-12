@@ -5,6 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { trackCampaignEvent } from '../../../lib/email/email-campaigns';
+import { safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 // 1x1 transparent PNG pixel
@@ -38,7 +39,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     // Track the event
     const success = await trackCampaignEvent(
-      parseInt(campaignId, 10),
+      safeIntParam(campaignId, 0, 1, 1_000_000),
       userId,
       eventType,
       linkUrl || undefined
@@ -55,7 +56,7 @@ export const GET: APIRoute = async ({ url }) => {
         campaignId,
         userId,
         eventType
-      } as any);
+      });
     }
 
     // Handle different event types
@@ -88,7 +89,7 @@ export const GET: APIRoute = async ({ url }) => {
       }
     });
   } catch (error) {
-    logger.error('Track endpoint error', error instanceof Error ? error : new Error(String(error)), {} as any);
+    logger.error('Track endpoint error', error instanceof Error ? error : new Error(String(error)));
 
     // Always return pixel even on error
     return new Response(PIXEL, {

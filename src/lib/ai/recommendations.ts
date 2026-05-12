@@ -252,7 +252,7 @@ async function getTrendingInArea(
   return trending.rows.map(row => ({
     itemId: row.item_id,
     itemType: row.item_type,
-    score: parseInt(row.recent_views) * parseFloat(row.rating),
+    score: parseInt(row.recent_views, 10) * parseFloat(row.rating),
     reason: 'Son zamanlarda populer',
     metadata: { views: row.recent_views, name: row.name },
   }));

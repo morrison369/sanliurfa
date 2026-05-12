@@ -203,23 +203,21 @@ export async function getNotifications(
 ): Promise<{ notifications: Notification[]; total: number }> {
   const { read, limit = 20, offset = 0 } = options;
 
-  let sql = 'SELECT * FROM notifications WHERE user_id = $1';
-  const params: any[] = [userId];
+  let baseSql = 'SELECT * FROM notifications WHERE user_id = $1';
+  const baseParams: any[] = [userId];
 
   if (read !== undefined) {
-    sql += ' AND read = $2';
-    params.push(read);
+    baseSql += ' AND read = $2';
+    baseParams.push(read);
   }
 
-  const countResult = await query(
-    `SELECT COUNT(*) as total FROM (${sql}) as count_query`,
-    params
-  );
+  const listSql = `${baseSql} ORDER BY created_at DESC LIMIT $${baseParams.length + 1} OFFSET $${baseParams.length + 2}`;
+  const listParams = [...baseParams, limit, offset];
 
-  sql += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-  params.push(limit, offset);
-
-  const result = await query(sql, params);
+  const [countResult, result] = await Promise.all([
+    query(`SELECT COUNT(*) as total FROM (${baseSql}) as count_query`, baseParams),
+    query(listSql, listParams),
+  ]);
 
   return {
     notifications: result.rows.map(row => ({
@@ -232,7 +230,7 @@ export async function getNotifications(
       read: row.read,
       created_at: new Date(row.created_at),
     })),
-    total: parseInt(countResult.rows[0].total),
+    total: parseInt(countResult.rows[0].total, 10),
   };
 }
 
@@ -292,7 +290,7 @@ export async function getUnreadCount(userId: string): Promise<number> {
     [userId]
   );
 
-  const count = parseInt(result.rows[0].count);
+  const count = parseInt(result.rows[0].count, 10);
   await setCache(`notifications:unread:${userId}`, count, 60);
   return count;
 }

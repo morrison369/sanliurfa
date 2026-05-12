@@ -82,8 +82,8 @@ export async function awardPoints(
       userId,
       pointsEarned: pointsToAward,
       action,
-      actionId,
-      description,
+      ...(actionId ? { actionId } : {}),
+      ...(description ? { description } : {}),
       createdAt: transaction.created_at
     };
   } catch (error) {
@@ -133,7 +133,7 @@ export async function getUserPoints(userId: string): Promise<UserPoints | null> 
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const result = await queryOne(
@@ -201,7 +201,7 @@ export async function getRewardLevels(): Promise<RewardLevel[]> {
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(
@@ -239,7 +239,7 @@ export async function getUserRewards(userId: string): Promise<RewardLevel[]> {
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(
@@ -281,30 +281,23 @@ async function checkAndAwardRewards(userId: string, totalPoints: number): Promis
       []
     );
 
-    // Check each level
-    for (const level of levels) {
-      if (totalPoints >= level.points_required) {
-        // Check if already achieved
-        const exists = await queryOne(
-          `SELECT id FROM user_reward_achievements
-           WHERE user_id = $1 AND reward_level_id = $2`,
-          [userId, level.id]
-        );
-
-        if (!exists) {
-          // Award new level
-          await insert('user_reward_achievements', {
-            user_id: userId,
-            reward_level_id: level.id
-          });
-
-          logger.info('Reward level achieved', { userId, levelId: level.id });
-
-          // Invalidate cache
-          await deleteCache(`user:rewards:${userId}`);
-        }
-      }
-    }
+    await Promise.all(
+      levels
+        .filter((level) => totalPoints >= level.points_required)
+        .map(async (level) => {
+          const awarded = await queryOne(
+            `INSERT INTO user_reward_achievements (user_id, reward_level_id)
+             VALUES ($1, $2)
+             ON CONFLICT (user_id, reward_level_id) DO NOTHING
+             RETURNING id`,
+            [userId, level.id]
+          );
+          if (awarded) {
+            logger.info('Reward level achieved', { userId, levelId: level.id });
+            await deleteCache(`user:rewards:${userId}`);
+          }
+        })
+    );
   } catch (error) {
     logger.error('Failed to check rewards', error instanceof Error ? error : new Error(String(error)) as any);
   }
@@ -319,7 +312,7 @@ export async function getPointsLeaderboard(limit: number = 20): Promise<any[]> {
     const cached = await getCache(cacheKey);
 
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const results = await queryMany(
@@ -348,5 +341,4 @@ export async function getPointsLeaderboard(limit: number = 20): Promise<any[]> {
     return [];
   }
 }
-
 

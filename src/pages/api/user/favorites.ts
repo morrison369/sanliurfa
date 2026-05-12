@@ -3,7 +3,7 @@ import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
 import { resolveContentImage } from '../../../lib/content-images';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 // List user's favorite places
 export const GET: APIRoute = async (context) => {
@@ -28,7 +28,7 @@ export const GET: APIRoute = async (context) => {
       [auth.user.id]
     );
 
-    const favorites = result.rows.map((row: any) => ({
+    const favorites = result.rows.map((row) => ({
       ...row,
       image_url: resolveContentImage({
         category: 'places',
@@ -45,13 +45,10 @@ export const GET: APIRoute = async (context) => {
       }),
     }));
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       favorites
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Get favorites error:', error);
@@ -82,7 +79,7 @@ export const POST: APIRoute = async (context) => {
     const body = await context.request.json();
     const { placeId } = body;
 
-    if (!placeId) {
+    if (!placeId || typeof placeId !== 'string') {
       return problemJson({
         status: 400,
         title: 'Geçersiz İstek',
@@ -99,13 +96,10 @@ export const POST: APIRoute = async (context) => {
     );
 
     if (existing.rows.length > 0) {
-      return new Response(JSON.stringify({ 
+      return apiResponse({ 
         success: true,
         message: 'Already in favorites'
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
+      }, HttpStatus.OK);
     }
 
     await query(
@@ -113,13 +107,10 @@ export const POST: APIRoute = async (context) => {
       [auth.user.id, placeId]
     );
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       message: 'Added to favorites'
-    }), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.CREATED);
 
   } catch (error) {
     logger.error('Add favorite error:', error);
@@ -165,13 +156,10 @@ export const DELETE: APIRoute = async (context) => {
       [auth.user.id, placeId]
     );
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       message: 'Removed from favorites'
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    }, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Remove favorite error:', error);

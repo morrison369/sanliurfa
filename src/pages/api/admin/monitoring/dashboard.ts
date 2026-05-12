@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
   logger.setRequestId(requestId);
 
   try {
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('GET', '/api/admin/monitoring/dashboard', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Admin access required', HttpStatus.FORBIDDEN, undefined, requestId);
     }

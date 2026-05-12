@@ -83,8 +83,8 @@ export function parseSize(size: string): { width: number; height: number } | nul
   const match = size.match(/^(\d+)x(\d+)$/);
   if (match) {
     return {
-      width: parseInt(match[1]),
-      height: parseInt(match[2]),
+      width: parseInt(match[1], 10),
+      height: parseInt(match[2], 10),
     };
   }
   

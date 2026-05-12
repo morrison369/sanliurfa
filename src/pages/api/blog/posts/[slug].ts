@@ -8,7 +8,7 @@
 import type { APIRoute } from 'astro';
 import { getBlogPostBySlug, updateBlogPost, deleteBlogPost } from '../../../../lib/blog';
 import { validateWithSchema, type ValidationSchema } from '../../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeErrorDetail } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
@@ -69,7 +69,7 @@ export const GET: APIRoute = async ({ params, request }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('GET', `/api/blog/posts/${params.slug}`, HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog yazısı işlemi başarısız')
     });
     logger.error('Blog yazısı alınamadı', err instanceof Error ? err : new Error(String(err)));
 
@@ -90,7 +90,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
 
   try {
     // Yetki kontrolü
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       const duration = Date.now() - startTime;
       recordRequest('PUT', `/api/blog/posts/${params.slug}`, HttpStatus.FORBIDDEN, duration);
       return apiError(
@@ -133,7 +133,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     // Kısmi validasyon (tüm alanlar opsiyonel)
     const updateSchema: ValidationSchema = {
       title: { type: 'string' as const, required: false, minLength: 3, maxLength: 255, sanitize: true },
-      content: { type: 'string' as const, required: false, minLength: 10, sanitize: true },
+      content: { type: 'string' as const, required: false, minLength: 10, maxLength: 100000, sanitize: true },
       excerpt: { type: 'string' as const, required: false, maxLength: 500, sanitize: true },
       category: { type: 'string' as const, required: false, maxLength: 120, sanitize: true },
       categoryId: { type: 'number' as const, required: false, min: 1 },
@@ -173,13 +173,13 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
 
     // Blog yazısını güncelle
     const updatedPost = await updateBlogPost(slug, {
-      title: data.title,
-      content: data.content,
-      excerpt: data.excerpt,
-      category: data.category || (data.categoryId ? String(data.categoryId) : undefined),
-      cover_image: data.featuredImage,
-      status: data.status,
-      tags,
+      ...(data.title ? { title: data.title } : {}),
+      ...(data.content ? { content: data.content } : {}),
+      ...(data.excerpt ? { excerpt: data.excerpt } : {}),
+      ...(data.category || data.categoryId ? { category: data.category || String(data.categoryId) } : {}),
+      ...(data.featuredImage ? { cover_image: data.featuredImage } : {}),
+      ...(data.status ? { status: data.status } : {}),
+      ...(tags ? { tags } : {}),
     });
 
     if (!updatedPost) {
@@ -201,7 +201,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('PUT', `/api/blog/posts/${params.slug}`, HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog yazısı işlemi başarısız')
     });
     logger.error('Blog yazısı güncellenemedi', err instanceof Error ? err : new Error(String(err)));
 
@@ -222,7 +222,7 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
 
   try {
     // Yetki kontrolü
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       const duration = Date.now() - startTime;
       recordRequest('DELETE', `/api/blog/posts/${params.slug}`, HttpStatus.FORBIDDEN, duration);
       return apiError(
@@ -278,7 +278,7 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', `/api/blog/posts/${params.slug}`, HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog yazısı işlemi başarısız')
     });
     logger.error('Blog yazısı silinemedi', err instanceof Error ? err : new Error(String(err)));
 
@@ -291,4 +291,3 @@ export const DELETE: APIRoute = async ({ params, request, locals }) => {
     );
   }
 };
-

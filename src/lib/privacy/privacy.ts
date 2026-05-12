@@ -4,7 +4,7 @@
  */
 
 import { query, queryOne, queryMany, insert, update as updateDb } from '../postgres';
-import { deleteCache, deleteCachePattern } from '../cache';
+import { deleteCache } from '../cache';
 import { logger } from '../logger';
 
 export interface PrivacySettings {
@@ -130,21 +130,18 @@ export async function blockUser(userId: string, blockedUserId: string, reason?: 
       throw new Error('Kendinizi engelleyemezsiniz');
     }
 
-    // Check if already blocked
-    const existing = await queryOne(
-      'SELECT id FROM blocked_users WHERE user_id = $1 AND blocked_user_id = $2',
-      [userId, blockedUserId]
+    // Atomic upsert (HARD RULE #47): SELECT-then-INSERT race-prone
+    const inserted = await queryOne(
+      `INSERT INTO blocked_users (user_id, blocked_user_id, reason)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, blocked_user_id) DO NOTHING
+       RETURNING id`,
+      [userId, blockedUserId, reason || null]
     );
 
-    if (existing) {
-      return true; // Already blocked
+    if (!inserted) {
+      return true; // Already blocked — no side effects (cache invalidate / log)
     }
-
-    await insert('blocked_users', {
-      user_id: userId,
-      blocked_user_id: blockedUserId,
-      reason: reason || null
-    });
 
     // Clear blocking cache
     await deleteCache(`blocked:${userId}`);
@@ -238,19 +235,18 @@ export async function muteUser(userId: string, mutedUserId: string): Promise<boo
       throw new Error('Kendinizi susturabilirsiniz');
     }
 
-    const existing = await queryOne(
-      'SELECT id FROM muted_users WHERE user_id = $1 AND muted_user_id = $2',
+    // Atomic upsert (HARD RULE #47): SELECT-then-INSERT race-prone
+    const inserted = await queryOne(
+      `INSERT INTO muted_users (user_id, muted_user_id)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id, muted_user_id) DO NOTHING
+       RETURNING id`,
       [userId, mutedUserId]
     );
 
-    if (existing) {
+    if (!inserted) {
       return true; // Already muted
     }
-
-    await insert('muted_users', {
-      user_id: userId,
-      muted_user_id: mutedUserId
-    });
 
     await deleteCache(`muted:${userId}`);
 

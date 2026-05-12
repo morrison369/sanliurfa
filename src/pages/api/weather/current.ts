@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getSanliurfaWeather } from '../../../lib/weather/open-meteo';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ url }) => {
   const forceRefresh = url.searchParams.get('refresh') === '1';
@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ url }) => {
     return problemJson({
       status: 503,
       title: 'Weather upstream unavailable',
-      detail: error instanceof Error ? error.message : 'weather_unavailable',
+      detail: safeErrorDetail(error, 'weather_unavailable'),
       type: '/problems/weather-upstream-unavailable',
       instance: '/api/weather/current',
     });

@@ -3,7 +3,7 @@
  * Execute reports and generate exports in multiple formats
  */
 
-import { query, queryMany, queryOne } from '../postgres';
+import { queryMany, queryOne } from '../postgres';
 import { logReportExecution } from '../analytics/business-analytics';
 import { logger } from '../logger';
 
@@ -307,7 +307,12 @@ export async function executeReport(
     }
 
     const duration = Date.now() - startTime;
-    const filename = `${report.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
+    // Sanitize: remove CRLF/null (header injection), quotes+backslash (Content-Disposition breakout)
+    const safeName = report.name
+      .replace(/[\r\n\0"\\]/g, '')
+      .replace(/\s+/g, '_')
+      .substring(0, 100) || 'report';
+    const filename = `${safeName}_${new Date().toISOString().split('T')[0]}.${fileExtension}`;
 
     // Log execution
     await logReportExecution(reportId, 'completed', {

@@ -7,7 +7,8 @@
 import type { APIRoute } from 'astro';
 import { queryOne } from '../../../lib/postgres';
 import { validateWithSchema } from '../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import type { ValidationSchema } from '../../../lib/validation';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeErrorDetail } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
@@ -23,12 +24,12 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
 
     // Validasyon
-    const schema = {
+    const schema: ValidationSchema = {
       email: { type: 'string' as const, required: true, sanitize: true },
       categories: { type: 'string' as const, required: false }
     };
 
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
     if (!validation.valid) {
       const duration = Date.now() - startTime;
       recordRequest('POST', '/api/blog/subscribe', HttpStatus.UNPROCESSABLE_ENTITY, duration);
@@ -77,7 +78,7 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('POST', '/api/blog/subscribe', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog abonelik işlemi başarısız')
     });
     logger.error('Abonelik eklenemedi', err instanceof Error ? err : new Error(String(err)));
 
@@ -100,11 +101,11 @@ export const DELETE: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
 
-    const schema = {
+    const schema: ValidationSchema = {
       email: { type: 'string' as const, required: true, sanitize: true }
     };
 
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
     if (!validation.valid) {
       const duration = Date.now() - startTime;
       recordRequest('DELETE', '/api/blog/subscribe', HttpStatus.UNPROCESSABLE_ENTITY, duration);
@@ -142,7 +143,7 @@ export const DELETE: APIRoute = async ({ request }) => {
   } catch (err) {
     const duration = Date.now() - startTime;
     recordRequest('DELETE', '/api/blog/subscribe', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: err instanceof Error ? err.message : String(err)
+      error: safeErrorDetail(err, 'Blog abonelik işlemi başarısız')
     });
     logger.error('Abonelik iptal edilemedi', err instanceof Error ? err : new Error(String(err)));
 

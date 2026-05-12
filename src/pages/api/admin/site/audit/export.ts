@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../../lib/postgres';
-import { problemJson } from '../../../../../lib/api';
+import { problemJson, safeErrorDetail, safeIntParam } from '../../../../../lib/api';
 
-function isAdmin(locals: any) {
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  return locals?.user?.role === 'admin';
 }
 
 function csvEscape(value: unknown): string {
@@ -27,11 +27,10 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
   const key = String(url.searchParams.get('key') || '').trim();
   const action = String(url.searchParams.get('action') || '').trim();
-  const limitRaw = Number(url.searchParams.get('limit') || 1000);
-  const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(5000, limitRaw)) : 1000;
+  const limit = safeIntParam(url.searchParams.get('limit'), 1000, 1, 5000);
 
   const where: string[] = [];
-  const params: any[] = [];
+  const params: unknown[] = [];
 
   if (key) {
     params.push(key);
@@ -102,7 +101,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     return problemJson({
       status: 500,
       title: 'Audit Export Başarısız',
-      detail: error instanceof Error ? error.message : 'audit export failed',
+      detail: safeErrorDetail(error, 'audit export failed'),
       type: '/problems/admin-site-audit-export-failed',
       instance: '/api/admin/site/audit/export',
     });

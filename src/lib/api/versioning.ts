@@ -16,7 +16,7 @@ export class APIVersioning {
     const apiVersion: APIVersion = {
       version,
       deprecated,
-      sunsetDate: deprecated ? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) : undefined
+      ...(deprecated ? { sunsetDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) } : {})
     };
     this.versions.set(version, apiVersion);
     return apiVersion;

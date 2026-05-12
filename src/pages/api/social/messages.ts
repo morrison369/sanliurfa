@@ -23,7 +23,7 @@ import {
 } from '../../../lib/social/messaging-db';
 import { requireAuth } from '../../../lib/auth';
 import { auditSiteChange } from '../../../lib/site-content';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeIntParam, safeErrorDetail } from '../../../lib/api';
 import { buildSocialAuditContext, enforceSocialAction } from '../../../lib/social/request-guard';
 
 export const GET: APIRoute = async ({ request, url }) => {
@@ -48,18 +48,19 @@ export const GET: APIRoute = async ({ request, url }) => {
       const conversations = await getUserConversations(auth.user.id);
       const unreadCount = await getTotalUnreadCount(auth.user.id);
       
-      return new Response(JSON.stringify({ conversations, unreadCount }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return apiResponse({ conversations, unreadCount }, HttpStatus.OK);
     }
 
     // Get messages in conversation
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limit = safeIntParam(searchParams.get('limit'), 50, 0, 1_000_000);
     const before = searchParams.get('before') || undefined;
     const after = searchParams.get('after') || undefined;
 
-    const messages = await getMessages(conversationId, auth.user.id, { limit, before, after });
+    const messages = await getMessages(conversationId, auth.user.id, {
+      limit,
+      ...(before ? { before } : {}),
+      ...(after ? { after } : {}),
+    });
 
     return new Response(
       JSON.stringify({
@@ -69,11 +70,10 @@ export const GET: APIRoute = async ({ request, url }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to get messages';
     return problemJson({
       status: 500,
       title: 'Mesajlar Alınamadı',
-      detail: message,
+      detail: safeErrorDetail(error, 'Mesajlar alınamadı'),
       type: '/problems/social-messages-fetch-failed',
       instance: '/api/social/messages',
     });
@@ -92,10 +92,10 @@ export const POST: APIRoute = async ({ request }) => {
         instance: '/api/social/messages',
       });
     }
-    const auditCtx = buildSocialAuditContext({ request } as any, auth.user as any);
+    const auditCtx = buildSocialAuditContext({ request }, auth.user);
     const guardResponse = await enforceSocialAction(
-      { request } as any,
-      auth.user as any,
+      { request },
+      auth.user,
       'social.messages',
       'message_write',
     );
@@ -128,11 +128,17 @@ export const POST: APIRoute = async ({ request }) => {
           instance: '/api/social/messages',
         });
       }
+      if (typeof newContent !== 'string' || newContent.length > 5000) {
+        return problemJson({
+          status: 400,
+          title: 'Geçersiz İçerik',
+          detail: 'Mesaj içeriği 5000 karakteri aşamaz',
+          type: '/problems/social-message-edit-content-too-long',
+          instance: '/api/social/messages',
+        });
+      }
       const message = await editMessage(messageId, auth.user.id, newContent);
-      return new Response(
-        JSON.stringify({ success: true, message }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return apiResponse({ success: true, message }, HttpStatus.OK);
     }
 
     if (action === 'delete') {
@@ -150,10 +156,7 @@ export const POST: APIRoute = async ({ request }) => {
         });
       }
       await deleteMessage(messageId, auth.user.id);
-      return new Response(
-        JSON.stringify({ success: true }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return apiResponse({ success: true }, HttpStatus.OK);
     }
 
 
@@ -170,10 +173,7 @@ export const POST: APIRoute = async ({ request }) => {
       }
       const updatedCount = await markConversationRead(readConversationId, auth.user.id);
       const unreadCount = await getTotalUnreadCount(auth.user.id);
-      return new Response(
-        JSON.stringify({ success: true, updatedCount, unreadCount }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return apiResponse({ success: true, updatedCount, unreadCount }, HttpStatus.OK);
     }
 
     if (action === 'typing') {
@@ -216,11 +216,14 @@ export const POST: APIRoute = async ({ request }) => {
           instance: '/api/social/messages',
         });
       }
+      if (typeof placeName !== 'string' || placeName.length > 200) {
+        return problemJson({ status: 400, title: 'Geçersiz Parametre', detail: 'Mekan adı 200 karakterden uzun olamaz', type: '/problems/social-share-place-name-too-long', instance: '/api/social/messages' });
+      }
+      if (placeMessage !== undefined && placeMessage !== null && (typeof placeMessage !== 'string' || placeMessage.length > 1000)) {
+        return problemJson({ status: 400, title: 'Geçersiz Parametre', detail: 'Mesaj 1000 karakterden uzun olamaz', type: '/problems/social-share-place-message-too-long', instance: '/api/social/messages' });
+      }
       const message = await sharePlace(conversationId, auth.user.id, placeId, placeName, placeMessage);
-      return new Response(
-        JSON.stringify({ success: true, message }),
-        { status: 201, headers: { 'Content-Type': 'application/json' } }
-      );
+      return apiResponse({ success: true, message }, HttpStatus.CREATED);
     }
 
     if (action === 'shareLocation') {
@@ -240,11 +243,23 @@ export const POST: APIRoute = async ({ request }) => {
           instance: '/api/social/messages',
         });
       }
-      const message = await shareLocation(conversationId, auth.user.id, latitude, longitude, locationMessage);
-      return new Response(
-        JSON.stringify({ success: true, message }),
-        { status: 201, headers: { 'Content-Type': 'application/json' } }
-      );
+      const latNum = parseFloat(String(latitude));
+      const lonNum = parseFloat(String(longitude));
+      if (!Number.isFinite(latNum) || latNum < -90 || latNum > 90 ||
+          !Number.isFinite(lonNum) || lonNum < -180 || lonNum > 180) {
+        return problemJson({
+          status: 400,
+          title: 'Geçersiz Koordinat',
+          detail: 'latitude ve longitude geçerli sayısal koordinatlar olmalıdır',
+          type: '/problems/social-share-location-invalid-coords',
+          instance: '/api/social/messages',
+        });
+      }
+      if (locationMessage !== undefined && (typeof locationMessage !== 'string' || locationMessage.length > 1000)) {
+        return problemJson({ status: 400, title: 'Geçersiz Parametre', detail: 'locationMessage 1000 karakterden uzun olamaz', type: '/problems/social-share-location-message-too-long', instance: '/api/social/messages' });
+      }
+      const message = await shareLocation(conversationId, auth.user.id, latNum, lonNum, locationMessage);
+      return apiResponse({ success: true, message }, HttpStatus.CREATED);
     }
 
     // Start new conversation or send to existing
@@ -282,14 +297,42 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    if (typeof content !== 'string' || content.length > 5000) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İçerik',
+        detail: 'Mesaj içeriği 5000 karakteri aşamaz',
+        type: '/problems/social-message-content-too-long',
+        instance: '/api/social/messages',
+      });
+    }
+
+    const VALID_MESSAGE_TYPES = new Set(['text', 'image', 'location', 'place']);
+    if (!VALID_MESSAGE_TYPES.has(type)) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz Tip',
+        detail: 'Geçersiz mesaj tipi',
+        type: '/problems/social-message-type-invalid',
+        instance: '/api/social/messages',
+      });
+    }
+
+    if (metadata !== undefined && JSON.stringify(metadata).length > 5000) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz Metadata',
+        detail: 'Metadata 5000 karakteri aşamaz',
+        type: '/problems/social-message-metadata-too-large',
+        instance: '/api/social/messages',
+      });
+    }
+
     const message = await sendMessage(convId, auth.user.id, content, type, metadata);
 
-    return new Response(
-      JSON.stringify({ success: true, message, conversationId: convId }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
-    );
+    return apiResponse({ success: true, message, conversationId: convId }, HttpStatus.CREATED);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to send message';
+    const auditMessage = error instanceof Error ? error.message : 'Failed to send message';
     const auth = await requireAuth(request).catch(() => null);
     if (auth?.user) {
       await auditSiteChange(
@@ -301,13 +344,13 @@ export const POST: APIRoute = async ({ request }) => {
           ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
           userAgent: request.headers.get('user-agent') || null,
         },
-        { reason: 'messages_error', message, action: 'runtime_exception' },
+        { reason: 'messages_error', message: auditMessage, action: 'runtime_exception' },
       );
     }
     return problemJson({
       status: 400,
       title: 'Mesaj İşlenemedi',
-      detail: message,
+      detail: safeErrorDetail(error, 'Mesaj gönderilemedi'),
       type: '/problems/social-message-processing-failed',
       instance: '/api/social/messages',
     });

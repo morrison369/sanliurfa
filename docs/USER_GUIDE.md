@@ -1,5 +1,14 @@
 # Şanlıurfa.com - Kullanım Kılavuzu
 
+> ⚠️ **Bu kılavuz yanıltıcı bir noktayla başlıyor.** Şanlıurfa.com bir **web
+> platformudur** (Astro 6 SSR), mobil uygulama değil. Aşağıdaki "Mobil Uygulama
+> Kullanımı" başlığı tarihsel — proje mobil app olarak başlatılmadı, hiçbir
+> store'a yüklenmedi. Tüm fonksiyonlar tarayıcıdan kullanılır.
+>
+> Web platformu için canonical kullanıcı akışları: `/giris`, `/kayit`,
+> `/mekanlar`, `/arama`, `/profil`. PWA desteği vardır (Service Worker +
+> manifest), ama bu native uygulama değil — tarayıcıya kurulan "yer imi".
+
 ## 📱 Mobil Uygulama Kullanımı
 
 ### Giriş / Kayıt Olma

@@ -59,11 +59,11 @@ describe('users suggestions api', () => {
 
   it('returns cached suggestions without hitting database', async () => {
     getCacheMock.mockResolvedValueOnce(
-      JSON.stringify({
+      {
         success: true,
         suggestions: [{ id: 'cached-user', username: 'cached' }],
         count: 1,
-      })
+      }
     );
 
     const response = await GET(
@@ -127,4 +127,3 @@ describe('users suggestions api', () => {
     expect(setCacheMock).toHaveBeenCalled();
   });
 });
-

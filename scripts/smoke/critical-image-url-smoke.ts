@@ -1,6 +1,5 @@
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { queryOne } from '../../src/lib/postgres';
 
 type ManifestRecord = {
   slug: string;
@@ -13,6 +12,34 @@ const ROOT = process.cwd();
 const MANIFEST_PATH = join(ROOT, 'public', 'images', 'image-manifest.json');
 const PRIORITY_SLUGS = ['balikligol', 'gobeklitepe', 'halfeti', 'harran'];
 const HERO_FALLBACK = '/images/hero/hero-home.webp';
+
+function loadEnvFile(filePath: string) {
+  if (!existsSync(filePath)) return;
+  const content = readFileSync(filePath, 'utf8');
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#') || !line.includes('=')) continue;
+    const idx = line.indexOf('=');
+    const key = line.slice(0, idx).trim();
+    let value = line.slice(idx + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"'))
+      || (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+
+function loadRuntimeEnv() {
+  const candidates = [
+    join(ROOT, '.env.production'),
+    join(ROOT, '.env.local'),
+    join(ROOT, '.env'),
+  ];
+  for (const candidate of candidates) loadEnvFile(candidate);
+}
 
 function readManifest(): ManifestRecord[] {
   if (!existsSync(MANIFEST_PATH)) {
@@ -30,6 +57,7 @@ function toFs(publicPath: string): string {
 }
 
 async function loadHeroBackground(): Promise<string | null> {
+  const { queryOne, pool } = await import('../../src/lib/postgres');
   try {
     const reg = await queryOne<{ reg: string | null }>(
       `SELECT to_regclass('public.site_settings') AS reg`,
@@ -47,10 +75,13 @@ async function loadHeroBackground(): Promise<string | null> {
     return bg || null;
   } catch {
     return null;
+  } finally {
+    await pool.end();
   }
 }
 
 async function main(): Promise<void> {
+  loadRuntimeEnv();
   const manifest = readManifest();
   const errors: string[] = [];
 

@@ -1,10 +1,10 @@
 // API: Favori işlemleri (PostgreSQL + Redis cache)
 import type { APIRoute } from 'astro';
-import { query, queryOne, insert, remove } from '../../../lib/postgres';
+import { query, queryOne } from '../../../lib/postgres';
 import { getCache, setCache, deleteCache } from '../../../lib/cache';
 import { logActivity } from '../../../lib/activity';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 /**
  * Generate cache key for user favorites
@@ -33,10 +33,7 @@ export const GET: APIRoute = async ({ locals }) => {
     const cached = await getCache<{ data: any[] }>(cacheKey);
 
     if (cached) {
-      return new Response(JSON.stringify(cached), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }
-      });
+      return apiResponse(cached, HttpStatus.OK);
     }
 
     const result = await query(
@@ -53,10 +50,7 @@ export const GET: APIRoute = async ({ locals }) => {
     // Cache for 5 minutes
     await setCache(cacheKey, responseData, 300);
 
-    return new Response(JSON.stringify(responseData), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }
-    });
+    return apiResponse(responseData, HttpStatus.OK);
   } catch (err) {
     logger.error('Favorites fetch error:', err);
     return problemJson({
@@ -96,13 +90,16 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    // Check if already favorited
-    const existing = await queryOne(
-      'SELECT id FROM favorites WHERE place_id = $1 AND user_id = $2',
+    // Atomic INSERT — ON CONFLICT eliminates SELECT→INSERT race (HARD RULE #47)
+    const insertResult = await query(
+      `INSERT INTO favorites (place_id, user_id, created_at)
+       VALUES ($1, $2, NOW())
+       ON CONFLICT (place_id, user_id) DO NOTHING
+       RETURNING id, place_id, user_id, created_at`,
       [placeId, user.id]
     );
 
-    if (existing) {
+    if (insertResult.rows.length === 0) {
       return problemJson({
         status: 400,
         title: 'Geçersiz İstek',
@@ -112,11 +109,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    const data = await insert('favorites', {
-      place_id: placeId,
-      user_id: user.id,
-      created_at: new Date().toISOString()
-    });
+    const data = insertResult.rows[0];
 
     // Add points (5 puan)
     await query('UPDATE users SET points = COALESCE(points, 0) + 5 WHERE id = $1', [user.id]);
@@ -133,10 +126,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const cacheKey = generateFavoritesCacheKey(user.id);
     await deleteCache(cacheKey);
 
-    return new Response(
-      JSON.stringify({ data, message: 'Favorilere eklendi' }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
-    );
+    return apiResponse({ data, message: 'Favorilere eklendi' }, HttpStatus.CREATED);
   } catch (err) {
     logger.error('Favorite add error:', err);
     return problemJson({
@@ -182,10 +172,7 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     const cacheKey = generateFavoritesCacheKey(user.id);
     await deleteCache(cacheKey);
 
-    return new Response(
-      JSON.stringify({ message: 'Favorilerden kaldırıldı' }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    return apiResponse({ message: 'Favorilerden kaldırıldı' }, HttpStatus.OK);
   } catch (err) {
     logger.error('Favorite remove error:', err);
     return problemJson({

@@ -6,7 +6,7 @@
 import type { APIRoute } from 'astro';
 import { getFollowers, getFollowing, getPendingRequests, acceptFollowRequest, declineFollowRequest } from '../../../lib/social/friendship-db';
 import { requireAuth } from '../../../lib/auth';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeIntParam, safeErrorDetail } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ request, url }) => {
   try {
@@ -23,8 +23,8 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     const searchParams = url.searchParams;
     const type = searchParams.get('type') || 'followers';
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    const limit = safeIntParam(searchParams.get('limit'), 50, 0, 1_000_000);
+    const offset = safeIntParam(searchParams.get('offset'), 0, 0, 1_000_000);
 
     if (type === 'pending') {
       const requests = await getPendingRequests(auth.user.id);
@@ -48,11 +48,10 @@ export const GET: APIRoute = async ({ request, url }) => {
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to get followers';
     return problemJson({
       status: 500,
       title: 'Takip Listesi Alınamadı',
-      detail: message,
+      detail: safeErrorDetail(error, 'Takip listesi alınamadı'),
       type: '/problems/social-followers-fetch-failed',
       instance: '/api/social/followers',
     });
@@ -79,11 +78,12 @@ export const POST: APIRoute = async ({ request }) => {
     const body = await request.json();
     const { requestId, action } = body;
 
-    if (!requestId || !action) {
+    const VALID_FOLLOW_ACTIONS = new Set(['accept', 'decline']);
+    if (!requestId || typeof requestId !== 'string' || !action || typeof action !== 'string' || !VALID_FOLLOW_ACTIONS.has(action)) {
       return problemJson({
         status: 400,
         title: 'Geçersiz İstek',
-        detail: 'requestId ve action zorunludur',
+        detail: 'requestId ve geçerli action (accept/decline) zorunludur',
         type: '/problems/social-followers-validation',
         instance: '/api/social/followers',
       });
@@ -113,11 +113,10 @@ export const POST: APIRoute = async ({ request }) => {
       instance: '/api/social/followers',
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to process request';
     return problemJson({
       status: 400,
       title: 'İstek İşlenemedi',
-      detail: message,
+      detail: safeErrorDetail(error, 'İstek işlenemedi'),
       type: '/problems/social-followers-process-failed',
       instance: '/api/social/followers',
     });

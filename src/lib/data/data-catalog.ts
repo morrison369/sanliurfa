@@ -460,4 +460,4 @@ const businessGlossary = new BusinessGlossary();
 const lineageTracker = new LineageTracker();
 const impactAnalyzer = new ImpactAnalyzer(lineageTracker);
 
-export { dataCatalog, businessGlossary, lineageTracker, impactAnalyzer };
+export type { dataCatalog, businessGlossary, lineageTracker, impactAnalyzer };

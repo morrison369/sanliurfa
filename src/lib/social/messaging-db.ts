@@ -202,15 +202,17 @@ export async function sendMessage(
       [conversationId, senderId]
     );
 
-    // Clear cache
-    await deleteCache(`messages:${conversationId}`);
-    await deleteCache(`conversations:${senderId}`);
-    await publishMessageEvent({
-      eventType: 'message',
-      conversationId,
-      actorUserId: senderId,
-      createdAt: message.created_at,
-    });
+    // Clear cache + publish event (paralel)
+    await Promise.all([
+      deleteCache(`messages:${conversationId}`),
+      deleteCache(`conversations:${senderId}`),
+      publishMessageEvent({
+        eventType: 'message',
+        conversationId,
+        actorUserId: senderId,
+        createdAt: message.created_at,
+      }),
+    ]);
 
     return message;
   });
@@ -271,14 +273,16 @@ export async function getMessages(
        WHERE conversation_id = $1 AND user_id = $2`,
       [conversationId, userId]
     );
-    await deleteCache(`conversations:${userId}`);
-    await deleteCache(`unread:${userId}`);
-    await publishMessageEvent({
-      eventType: 'read',
-      conversationId,
-      actorUserId: userId,
-      createdAt: new Date().toISOString(),
-    });
+    await Promise.all([
+      deleteCache(`conversations:${userId}`),
+      deleteCache(`unread:${userId}`),
+      publishMessageEvent({
+        eventType: 'read',
+        conversationId,
+        actorUserId: userId,
+        createdAt: new Date().toISOString(),
+      }),
+    ]);
   }
 
   return result.rows.reverse(); // Return in chronological order
@@ -558,16 +562,17 @@ export async function markConversationRead(conversationId: string, userId: strin
     [conversationId, userId]
   );
 
-  await deleteCache(`messages:${conversationId}`);
-  await deleteCache(`conversations:${userId}`);
-  await deleteCache(`unread:${userId}`);
-
-  await publishMessageEvent({
-    eventType: 'read',
-    conversationId,
-    actorUserId: userId,
-    createdAt: new Date().toISOString(),
-  });
+  await Promise.all([
+    deleteCache(`messages:${conversationId}`),
+    deleteCache(`conversations:${userId}`),
+    deleteCache(`unread:${userId}`),
+    publishMessageEvent({
+      eventType: 'read',
+      conversationId,
+      actorUserId: userId,
+      createdAt: new Date().toISOString(),
+    }),
+  ]);
 
   return updated.rowCount || 0;
 }

@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getBillingHistory } from '../../../../lib/subscription/subscription-management';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       );
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '12'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 12, 1, 50);
 
     const billing = await getBillingHistory(locals.user.id, limit);
 

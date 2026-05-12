@@ -21,7 +21,7 @@ export function createApiContext(options: ApiContextOptions = {}) {
 
   const requestInit: RequestInit = {
     method,
-    headers: headers ?? (body ? { 'Content-Type': 'application/json' } : undefined),
+    ...(headers || body ? { headers: headers ?? { 'Content-Type': 'application/json' } } : {}),
   };
 
   if (body !== undefined) {

@@ -29,7 +29,7 @@ vi.mock('../postgres', () => ({
 vi.mock('../cache', () => ({
   getCache: getCacheMock,
   setCache: setCacheMock,
-  deleteCache: deleteCacheMock,
+  deleteCachePattern: deleteCacheMock,
 }));
 
 vi.mock('../content-images', () => ({
@@ -67,7 +67,7 @@ describe('places list api cache behavior', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('X-Cache')).toBe('HIT');
-    expect(body).toEqual(cachedPayload);
+    expect(body?.data ?? body).toEqual(cachedPayload);
     expect(queryMock).not.toHaveBeenCalled();
     expect(setCacheMock).not.toHaveBeenCalled();
   });
@@ -92,8 +92,9 @@ describe('places list api cache behavior', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('X-Cache')).toBe('MISS');
-    expect(body?.count).toBe(1);
-    expect(body?.data?.[0]?.image_url).toBe('/images/places/gobeklitepe.jpg');
+    const payload = body?.data ?? body;
+    expect(payload?.count).toBe(1);
+    expect(payload?.data?.[0]?.image_url).toBe('/images/places/gobeklitepe.jpg');
     expect(setCacheMock).toHaveBeenCalledTimes(1);
   });
 
@@ -108,12 +109,30 @@ describe('places list api cache behavior', () => {
     const body = await parseJson(response);
 
     expect(response.status).toBe(200);
-    expect(body?.count).toBe(0);
+    expect((body?.data ?? body)?.count).toBe(0);
     expect(getCacheMock).not.toHaveBeenCalled();
     expect(setCacheMock).not.toHaveBeenCalled();
   });
 
-  it('returns 401 for POST when non-admin', async () => {
+  it('queries DB with category and search filters', async () => {
+    getCacheMock.mockResolvedValueOnce(null);
+    queryMock
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ count: '0' }] });
+
+    const response = await GET(
+      createApiContext({
+        url: 'http://localhost/api/places?category=tarihi-yerler&search=balikli&limit=10&offset=5',
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(queryMock.mock.calls[0][0]).toContain('category = $2');
+    expect(queryMock.mock.calls[0][0]).toContain("plainto_tsquery('turkish', $3)");
+    expect(queryMock.mock.calls[0][1]).toEqual(['active', 'tarihi-yerler', 'balikli', 10, 5]);
+  });
+
+  it('returns 403 for POST when non-admin', async () => {
     const response = await POST(
       createApiContext({
         url: 'http://localhost/api/places',
@@ -124,8 +143,38 @@ describe('places list api cache behavior', () => {
     );
     const body = await parseJson(response);
 
-    expect(response.status).toBe(401);
-    expect(body?.title || body?.error).toBe('Unauthorized');
+    expect(response.status).toBe(403);
+    expect(body?.title || body?.error).toBe('Forbidden');
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid POST payload before insert', async () => {
+    const response = await POST(
+      createApiContext({
+        url: 'http://localhost/api/places',
+        method: 'POST',
+        body: { name: '', latitude: 120, tags: new Array(51).fill('x') },
+        locals: { isAdmin: true },
+      })
+    );
+    const body = await parseJson(response);
+
+    expect(response.status).toBe(400);
+    expect(body?.title).toBe('Geçersiz İstek');
+    expect(insertMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects invalid coordinates for admin POST', async () => {
+    const response = await POST(
+      createApiContext({
+        url: 'http://localhost/api/places',
+        method: 'POST',
+        body: { name: 'Demo', latitude: 91, longitude: 181 },
+        locals: { isAdmin: true },
+      })
+    );
+
+    expect(response.status).toBe(400);
     expect(insertMock).not.toHaveBeenCalled();
   });
 
@@ -144,9 +193,9 @@ describe('places list api cache behavior', () => {
     const body = await parseJson(response);
 
     expect(response.status).toBe(201);
-    expect(body?.data?.id).toBe('place-1');
+    expect((body?.data?.data ?? body?.data)?.id).toBe('place-1');
     expect(insertMock).toHaveBeenCalledTimes(1);
-    expect(deleteCacheMock).toHaveBeenCalledTimes(3);
+    expect(deleteCacheMock).toHaveBeenCalledWith('places:list:*');
   });
 
   it('continues when cache invalidation partially fails', async () => {

@@ -8,7 +8,13 @@
 import { pool } from '../postgres';
 import { logger } from '../logger';
 import { getCache, setCache, deleteCache } from '../cache';
-import { fireAndForget } from '../performance/performance-optimizations';
+
+// Inline polyfill (replaces deleted lib/performance/performance-optimizations).
+// Schedules a Promise without blocking the caller; the optional label is accepted
+// for call-site documentation but otherwise unused (errors are swallowed silently).
+const fireAndForget = (p: Promise<unknown>, _label?: string): void => {
+  p.catch(() => null);
+};
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'action';
 
@@ -127,19 +133,20 @@ export async function getUserNotifications(userId: string, page: number = 1, pag
   try {
     const offset = (page - 1) * pageSize;
 
-    const countResult = await pool.query(
-      `SELECT COUNT(*) as total FROM notifications WHERE user_id = $1 AND (expires_at IS NULL OR expires_at > NOW())`,
-      [userId]
-    );
-
-    const notificationsResult = await pool.query(
-      `SELECT id, user_id as userId, title, message, type, icon, action_url as actionUrl, action_label as actionLabel, read, created_at as createdAt, expires_at as expiresAt
-       FROM notifications
-       WHERE user_id = $1 AND (expires_at IS NULL OR expires_at > NOW())
-       ORDER BY created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [userId, pageSize, offset]
-    );
+    const [countResult, notificationsResult] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(*) as total FROM notifications WHERE user_id = $1 AND (expires_at IS NULL OR expires_at > NOW())`,
+        [userId]
+      ),
+      pool.query(
+        `SELECT id, user_id as userId, title, message, type, icon, action_url as actionUrl, action_label as actionLabel, read, created_at as createdAt, expires_at as expiresAt
+         FROM notifications
+         WHERE user_id = $1 AND (expires_at IS NULL OR expires_at > NOW())
+         ORDER BY created_at DESC
+         LIMIT $2 OFFSET $3`,
+        [userId, pageSize, offset]
+      ),
+    ]);
 
     const notifications = notificationsResult.rows.map((row: any) => ({
       ...row,
@@ -149,7 +156,7 @@ export async function getUserNotifications(userId: string, page: number = 1, pag
 
     return {
       notifications,
-      total: parseInt(countResult.rows[0]?.total || '0')
+      total: parseInt(countResult.rows[0]?.total || '0', 10)
     };
   } catch (error) {
     logger.error('Failed to get user notifications', error instanceof Error ? error : new Error(String(error)));
@@ -248,8 +255,8 @@ export async function getNotificationStats(userId: string): Promise<{ unread: nu
     );
 
     return {
-      total: parseInt(result.rows[0]?.total || '0'),
-      unread: parseInt(result.rows[0]?.unread || '0')
+      total: parseInt(result.rows[0]?.total || '0', 10),
+      unread: parseInt(result.rows[0]?.unread || '0', 10)
     };
   } catch (error) {
     logger.error('Failed to get notification stats', error instanceof Error ? error : new Error(String(error)));

@@ -20,28 +20,6 @@ export interface DeploymentEnvironment {
   maintenanceMode: boolean;
 }
 
-export interface BackupConfig {
-  id: string;
-  enabled: boolean;
-  schedule: 'hourly' | 'daily' | 'weekly';
-  retention_days: number;
-  include_data: boolean;
-  include_uploads: boolean;
-  destination: 'local';
-  last_backup: string;
-  next_backup: string;
-}
-
-export interface BackupResult {
-  id: string;
-  timestamp: string;
-  size_bytes: number;
-  status: 'success' | 'failed' | 'partial';
-  tables_backed_up: string[];
-  error?: string;
-  duration_seconds: number;
-}
-
 const deploymentEnvironments: Record<string, DeploymentEnvironment> = {
   development: {
     name: 'development',
@@ -76,31 +54,6 @@ const deploymentEnvironments: Record<string, DeploymentEnvironment> = {
     maintenanceMode: false
   }
 };
-
-const backupConfigs: BackupConfig[] = [
-  {
-    id: 'backup_hourly',
-    enabled: true,
-    schedule: 'hourly',
-    retention_days: 7,
-    include_data: true,
-    include_uploads: false,
-    destination: 'local',
-    last_backup: new Date().toISOString(),
-    next_backup: new Date(Date.now() + 3600000).toISOString()
-  },
-  {
-    id: 'backup_daily',
-    enabled: true,
-    schedule: 'daily',
-    retention_days: 30,
-    include_data: true,
-    include_uploads: true,
-    destination: 'local',
-    last_backup: new Date().toISOString(),
-    next_backup: new Date(Date.now() + 86400000).toISOString()
-  }
-];
 
 /**
  * Get deployment environment config
@@ -152,77 +105,6 @@ export function disableMaintenanceMode(environment: 'staging' | 'production'): b
 }
 
 /**
- * Get backup configurations
- */
-export function getBackupConfigs(): BackupConfig[] {
-  return backupConfigs;
-}
-
-/**
- * Get enabled backup configs
- */
-export function getEnabledBackups(): BackupConfig[] {
-  return backupConfigs.filter(b => b.enabled);
-}
-
-/**
- * Update backup config
- */
-export function updateBackupConfig(id: string, updates: Partial<BackupConfig>): BackupConfig | null {
-  const config = backupConfigs.find(b => b.id === id);
-
-  if (!config) {
-    return null;
-  }
-
-  Object.assign(config, updates);
-
-  logger.info('Backup config updated', { id });
-
-  return config;
-}
-
-/**
- * Simulate backup operation
- */
-export function simulateBackup(configId: string): BackupResult {
-  const config = backupConfigs.find(b => b.id === configId);
-
-  if (!config) {
-    return {
-      id: configId,
-      timestamp: new Date().toISOString(),
-      size_bytes: 0,
-      status: 'failed',
-      tables_backed_up: [],
-      error: 'Backup config not found',
-      duration_seconds: 0
-    };
-  }
-
-  const startTime = Date.now();
-  const tables = ['users', 'places', 'reviews', 'memberships', 'vendor_profiles'];
-  const sizeBytes = Math.floor(Math.random() * 1000000000) + 500000000; // 500MB - 1.5GB
-
-  const result: BackupResult = {
-    id: `backup_${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    size_bytes: sizeBytes,
-    status: 'success',
-    tables_backed_up: tables,
-    duration_seconds: Math.floor((Date.now() - startTime) / 1000)
-  };
-
-  config.last_backup = result.timestamp;
-  const nextScheduleTime = config.schedule === 'hourly' ? 3600000 : config.schedule === 'daily' ? 86400000 : 604800000;
-  config.next_backup = new Date(Date.now() + nextScheduleTime).toISOString();
-
-  logger.info('Backup completed', { configId, sizeBytes, status: result.status });
-
-  return result;
-}
-
-/**
  * Get deployment checklist
  */
 export function getDeploymentChecklist(): Record<string, boolean> {
@@ -230,7 +112,6 @@ export function getDeploymentChecklist(): Record<string, boolean> {
     'Environment variables configured': !!process.env.DATABASE_URL && !!process.env.REDIS_URL,
     'SSL enabled': process.env.NODE_ENV === 'production',
     'Database migrated': true, // Assume true if app is running
-    'Backups configured': getEnabledBackups().length > 0,
     'Monitoring enabled': true,
     'Error logging configured': true,
     'Rate limiting enabled': true,

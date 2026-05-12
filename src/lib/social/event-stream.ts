@@ -1,5 +1,6 @@
 import { EventEmitter } from 'node:events';
 import { createClient } from 'redis';
+import { prefixKey } from '../cache/cache';
 import { appendSocialEvent } from './event-store';
 
 export type SocialEventType =
@@ -22,7 +23,8 @@ export type SocialEvent = {
   metadata?: Record<string, unknown>;
 };
 
-const CHANNEL = 'social:events:v1';
+// Pub/sub channel — namespace prefix ile izole edilir (shared Redis instance).
+const CHANNEL = prefixKey('social:events:v1');
 const emitter = new EventEmitter();
 let redisPub: ReturnType<typeof createClient> | null = null;
 let redisSub: ReturnType<typeof createClient> | null = null;

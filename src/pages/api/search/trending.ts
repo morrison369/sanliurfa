@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getTrendingSearches } from '../../../lib/search/search-engine';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -17,7 +17,7 @@ export const GET: APIRoute = async ({ request }) => {
   try {
     const url = new URL(request.url);
     const searchType = url.searchParams.get('type') || 'places';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 50);
 
     const trending = await getTrendingSearches(searchType, limit);
 

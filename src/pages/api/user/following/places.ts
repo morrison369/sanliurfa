@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getUserFollowedPlaces } from '../../../../lib/place/place-followers';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
 
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     const userId = locals.user.id;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 200);
 
     // Get followed places
     const places = await getUserFollowedPlaces(userId, limit);

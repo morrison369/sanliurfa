@@ -44,7 +44,7 @@ export function formatErrorForDisplay(error: unknown, _lang?: string): ErrorDisp
   return {
     title: 'Hata',
     message: appError.message,
-    action: appError.code === 'UNKNOWN_ERROR' ? 'Tekrar Dene' : undefined
+    ...(appError.code === 'UNKNOWN_ERROR' ? { action: 'Tekrar Dene' } : {})
   };
 }
 
@@ -56,7 +56,7 @@ export function isAppError(error: unknown): error is AppError {
 }
 
 export function createError(code: string, message: string, details?: Record<string, unknown>): AppError {
-  return { code, message, details };
+  return { code, message, ...(details ? { details } : {}) };
 }
 
 // HTTP status code mapping

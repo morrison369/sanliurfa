@@ -74,7 +74,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/users/privacy/mute', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        error.message,
+        'Kendinizi susturmak mümkün değil',
         HttpStatus.UNPROCESSABLE_ENTITY,
         undefined,
         requestId

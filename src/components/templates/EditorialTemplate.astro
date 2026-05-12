@@ -1,0 +1,51 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+interface Props {
+ seo: any;
+ title?: string;
+ category?: string;
+}
+
+const { seo, title, category } = Astro.props;
+---
+
+<Layout seo={seo}>
+ <slot name="hero" />
+ <article class="et-page">
+  <div class="sf-container et-shell">
+   {category && !Astro.slots.has('hero') && <p class="et-category">{category}</p>}
+   {title && !Astro.slots.has('hero') && <h1 class="et-title">{title}</h1>}
+   <slot />
+  </div>
+ </article>
+</Layout>
+
+<style>
+ .et-page {
+  background: var(--bg);
+  padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(4rem, 6vw, 5rem);
+ }
+
+ .et-shell {
+  max-width: 52rem;
+  margin: 0 auto;
+ }
+
+ .et-category {
+  margin: 0;
+  color: #b87333;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+ }
+
+ .et-title {
+  margin: 0.8rem 0 0;
+  color: #ede0c6;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+ }
+</style>

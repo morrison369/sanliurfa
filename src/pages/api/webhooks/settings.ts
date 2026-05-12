@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import type { Pool } from 'pg';
 import { pool } from '../../../lib/postgres';
 import { getWebhookSettings, updateWebhookSettings } from '../../../lib/webhook/webhook-filters';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
@@ -24,7 +25,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       return apiError(ErrorCode.INVALID_INPUT, 'Webhook ID required', HttpStatus.BAD_REQUEST);
     }
 
-    const settings = await getWebhookSettings(pool as any, webhookId, locals.user.id);
+    const settings = await getWebhookSettings(pool as unknown as Pool, webhookId, locals.user.id);
 
     return apiResponse(
       { success: true, data: settings },
@@ -51,22 +52,32 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const { webhookId, ...settings } = body;
+    const { webhookId } = body;
 
     if (!webhookId) {
       return apiError(ErrorCode.INVALID_INPUT, 'Webhook ID required', HttpStatus.BAD_REQUEST);
     }
 
+    // Allowlist: only permit known settings keys (HARD RULE #51)
+    const ALLOWED_SETTINGS_KEYS = new Set(['timeoutSeconds', 'maxRetries', 'retryDelayMs', 'active']);
+    const settings: Record<string, unknown> = {};
+    for (const key of ALLOWED_SETTINGS_KEYS) {
+      if (body[key] !== undefined) settings[key] = body[key];
+    }
+
     // Validate settings
-    if (settings.timeoutSeconds !== undefined && settings.timeoutSeconds < 5) {
-      return apiError(ErrorCode.INVALID_INPUT, 'Timeout must be at least 5 seconds', HttpStatus.BAD_REQUEST);
+    if (settings.timeoutSeconds !== undefined) {
+      if (!Number.isFinite(Number(settings.timeoutSeconds)) || Number(settings.timeoutSeconds) < 5) {
+        return apiError(ErrorCode.INVALID_INPUT, 'Timeout en az 5 saniye olmalı ve geçerli sayı olmalı', HttpStatus.BAD_REQUEST);
+      }
+    }
+    if (settings.maxRetries !== undefined) {
+      if (!Number.isFinite(Number(settings.maxRetries)) || Number(settings.maxRetries) < 0) {
+        return apiError(ErrorCode.INVALID_INPUT, 'maxRetries sıfır veya daha büyük geçerli sayı olmalı', HttpStatus.BAD_REQUEST);
+      }
     }
 
-    if (settings.maxRetries !== undefined && settings.maxRetries < 0) {
-      return apiError(ErrorCode.INVALID_INPUT, 'Max retries must be non-negative', HttpStatus.BAD_REQUEST);
-    }
-
-    const updated = await updateWebhookSettings(pool as any, webhookId, locals.user.id, settings);
+    const updated = await updateWebhookSettings(pool as unknown as Pool, webhookId, locals.user.id, settings);
 
     logger.info('Webhook settings updated', { webhookId, userId: locals.user.id });
 

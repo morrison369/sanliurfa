@@ -3,26 +3,28 @@
  * Stub for audit logging
  */
 
+import { randomBytes } from 'node:crypto';
+
 export interface AuditEvent {
   id: string;
   userId?: string;
   action: string;
   resource: string;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class AuditLogger {
   private events: AuditEvent[] = [];
 
-  log(action: string, resource: string, userId?: string, metadata?: Record<string, any>): AuditEvent {
+  log(action: string, resource: string, userId?: string, metadata?: Record<string, unknown>): AuditEvent {
     const event: AuditEvent = {
-      id: Math.random().toString(36).substring(7),
-      userId,
+      id: randomBytes(8).toString('hex'),
       action,
       resource,
       timestamp: new Date(),
-      metadata
+      ...(userId ? { userId } : {}),
+      ...(metadata ? { metadata } : {}),
     };
     this.events.push(event);
     return event;

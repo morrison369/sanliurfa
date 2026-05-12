@@ -4,14 +4,14 @@ import {
   listHomepageSections,
   upsertHomepageSection,
 } from '../../../../lib/site-platform';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, HttpStatus, problemJson, safeErrorDetail } from '../../../../lib/api';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
-function auditCtx(request: Request, locals: any) {
+function auditCtx(request: Request, locals: App.Locals) {
   return {
     userId: locals?.user?.id ? String(locals.user.id) : null,
     actorEmail: locals?.user?.email ? String(locals.user.email) : null,
@@ -33,14 +33,12 @@ export const GET: APIRoute = async ({ locals }) => {
 
   try {
     const items = await listHomepageSections();
-    return new Response(JSON.stringify({ success: true, items }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, items }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Homepage Sections Okunamadı',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-homepage-sections-read-failed',
       instance: '/api/admin/site/homepage-sections',
     });
@@ -69,6 +67,15 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     });
   }
 
+  if (typeof body.section_key !== 'string' || body.section_key.length > 100) return problemJson({ status: 400, title: 'Validation Failed', detail: 'section_key 100 karakterden uzun olamaz', type: '/problems/admin-homepage-sections-validation', instance: '/api/admin/site/homepage-sections' });
+  if (typeof body.title !== 'string' || body.title.length > 200) return problemJson({ status: 400, title: 'Validation Failed', detail: 'title 200 karakterden uzun olamaz', type: '/problems/admin-homepage-sections-validation', instance: '/api/admin/site/homepage-sections' });
+  if (body.description !== undefined && body.description !== null && (typeof body.description !== 'string' || body.description.length > 1000)) return problemJson({ status: 400, title: 'Validation Failed', detail: 'description 1000 karakterden uzun olamaz', type: '/problems/admin-homepage-sections-validation', instance: '/api/admin/site/homepage-sections' });
+  if (body.config && typeof body.config === 'object') {
+    if (Array.isArray(body.config) || JSON.stringify(body.config).length > 10000) {
+      return problemJson({ status: 400, title: 'Validation Failed', detail: 'config nesnesi 10000 karakteri aşamaz', type: '/problems/admin-homepage-sections-validation', instance: '/api/admin/site/homepage-sections' });
+    }
+  }
+
   try {
     const item = await upsertHomepageSection(
       {
@@ -83,14 +90,12 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       auditCtx(request, locals),
     );
 
-    return new Response(JSON.stringify({ success: true, item }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, item }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Homepage Section Yazılamadı',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-homepage-sections-write-failed',
       instance: '/api/admin/site/homepage-sections',
     });
@@ -122,14 +127,12 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
 
   try {
     await deleteHomepageSection(sectionKey, auditCtx(request, locals));
-    return new Response(JSON.stringify({ success: true, sectionKey }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, sectionKey }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Homepage Section Silinemedi',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-homepage-sections-delete-failed',
       instance: '/api/admin/site/homepage-sections',
     });

@@ -4,6 +4,7 @@
  */
 
 import { logger } from '../logger';
+import { randomBytes } from 'node:crypto';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -45,7 +46,7 @@ export class DistributedLock {
       this.locks.delete(key); // Expired lock, remove it
     }
 
-    const token = 'token-' + Math.random().toString(36).slice(2, 11);
+    const token = 'token-' + randomBytes(6).toString('hex');
     const lock: Lock = {
       key,
       token,
@@ -144,17 +145,19 @@ export class CacheWarmer {
     let warmed = 0;
     let failed = 0;
 
-    for (const job of this.jobs.values()) {
-      try {
-        await job.loader();
+    const jobs = Array.from(this.jobs.values());
+    const settled = await Promise.allSettled(jobs.map((job) => job.loader()));
+    settled.forEach((result, i) => {
+      if (result.status === 'fulfilled') {
         warmed++;
-      } catch (err) {
+      } else {
         failed++;
+        const err = result.reason;
         logger.error('Cache warm failed', err instanceof Error ? err : new Error(String(err)), {
-          cacheKey: job.cacheKey
+          cacheKey: jobs[i].cacheKey,
         });
       }
-    }
+    });
 
     return { warmed, failed };
   }
@@ -181,7 +184,7 @@ export class CacheWarmer {
    * Schedule warm
    */
   scheduleWarm(cacheKey: string, intervalMs: number): string {
-    const scheduleId = 'schedule-' + Math.random().toString(36).slice(2, 11);
+    const scheduleId = 'schedule-' + randomBytes(6).toString('hex');
 
     const interval = setInterval(() => {
       this.warmKey(cacheKey);

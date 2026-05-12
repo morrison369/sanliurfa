@@ -1,190 +1,180 @@
 ---
-
+import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
 import Image from '../../components/Image.astro';
+import PublicPageIntro from '../../components/public/PublicPageIntro.astro';
 import { query } from '../../lib/postgres';
-import { resolveContentImage } from '../../lib/content-images';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
-
-// SVG ikonlar
-const icons = {
-  search: `<svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-white/60" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
-  searchLarge: `<svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
-  mapPin: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
-  clock: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-  camera: `<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
-};
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { resolveHistoricalImage } from '../../lib/public-image-resolvers';
+const baseUrl = getPublicAppUrl();
 
 const queryParam = Astro.url.searchParams.get('q') || '';
 
-let sql = "SELECT * FROM historical_sites WHERE status = 'active'";
+let sql = "SELECT * FROM historical_sites WHERE status = 'published'";
 const values: any[] = [];
 
 if (queryParam) {
-  sql += " AND (name ILIKE $1 OR description ILIKE $1 OR location ILIKE $1)";
-  values.push(`%${queryParam}%`);
+ sql += " AND (name ILIKE $1 OR description ILIKE $1 OR location ILIKE $1)";
+ values.push(`%${queryParam}%`);
 }
 
 sql += " ORDER BY is_featured DESC, created_at DESC";
 
 let sites: any[] = [];
 try {
+ sites = await getCachedPublicRouteData(`page:tarihi-yerler:index:${queryParam || 'all'}`, async () => {
   const result = await query(sql, values);
-  sites = result.rows;
+  return result.rows;
+ });
 } catch (e) {
-  console.error('Error loading tarihi yerler:', e);
+ logger.error('Error loading tarihi yerler', e instanceof Error ? e : new Error(String(e)));
 }
 
 const seo = {
-  title: 'Tarihi Yerler - Şanlıurfa\'nın Zengin Tarihi',
-  description: 'Göbeklitepe, Harran, Balıklıgöl ve daha fazlası. Şanlıurfa\'nın binlerce yıllık tarihi mirasını keşfedin.',
-  ogImage: '/images/blog/urfa-tarihi.webp',
-  keywords: ['şanlıurfa tarihi yerler', 'göbeklitepe ziyaret', 'harran kümbet evleri', 'balıklıgöl', 'şanlıurfa kalesi', 'urfa tarihi', 'şanlıurfa arkeoloji', 'urfa müze'],
-  canonical: '/tarihi-yerler',
+ title: 'Tarihi Yerler - Şanlıurfa\'nın Zengin Tarihi',
+ description: 'Göbeklitepe, Harran, Balıklıgöl ve daha fazlası. Şanlıurfa\'nın binlerce yıllık tarihi mirasını keşfedin.',
+ ogImage: '/images/blog/urfa-tarihi.webp',
+ keywords: ['şanlıurfa tarihi yerler', 'göbeklitepe ziyaret', 'harran kümbet evleri', 'balıklıgöl', 'şanlıurfa kalesi', 'urfa tarihi', 'şanlıurfa arkeoloji', 'urfa müze'],
+ canonical: '/tarihi-yerler',
 };
 
 const faqItems = [
-  { S: 'Şanlıurfa\'da en önemli tarihi yerler hangileridir?', C: 'Göbeklitepe (MÖ 10.000), Harran Kümbet Evleri, Balıklıgöl (Hz. İbrahim\'in atıldığı havuz), Şanlıurfa Kalesi ve Mozaik Müzesi Şanlıurfa\'nın öne çıkan tarihi alanlarıdır.' },
-  { S: 'Göbeklitepe\'ye nasıl gidilir?', C: 'Göbeklitepe, Şanlıurfa şehir merkezine yaklaşık 18 km uzaklıktadır. Oruca Antep yolu üzerinde yer alır; şehir merkezinden taksi veya özel araçla kolayca ulaşılabilir.' },
-  { S: 'Harran Kümbet Evleri ziyaret saatleri nedir?', C: 'Harran antik kenti ve kümbet evleri gün boyu ziyarete açıktır. Güneş batışına yakın ve sabah erken saatler en uygun fotoğraf çekim zamanlarıdır.' },
+ { S: 'Şanlıurfa\'da en önemli tarihi yerler hangileridir?', C: 'Göbeklitepe (MÖ 10.000), Harran Kümbet Evleri, Balıklıgöl (Hz. İbrahim\'in atıldığı havuz), Şanlıurfa Kalesi ve Mozaik Müzesi Şanlıurfa\'nın öne çıkan tarihi alanlarıdır.' },
+ { S: 'Göbeklitepe\'ye nasıl gidilir?', C: 'Göbeklitepe, Şanlıurfa şehir merkezine yaklaşık 18 km uzaklıktadır. Oruca Antep yolu üzerinde yer alır; şehir merkezinden taksi veya özel araçla kolayca ulaşılabilir.' },
+ { S: 'Harran Kümbet Evleri ziyaret saatleri nedir?', C: 'Harran antik kenti ve kümbet evleri gün boyu ziyarete açıktır. Güneş batışına yakın ve sabah erken saatler en uygun fotoğraf çekim zamanlarıdır.' },
 ];
 
-const getHistoricalImage = (site: any) =>
-  resolveContentImage({
-    category: 'tarihi-yerler',
-    slug: site?.slug,
-    explicit: site?.images?.[0],
-    placeholder: '/images/placeholder-historical.jpg',
-  });
+const getHistoricalImage = (site: any) => resolveHistoricalImage(site);
+const historicalFallbacks = [
+ '/images/blog/gobeklitepe.jpg',
+ '/images/blog/balikligol.jpg',
+ '/images/blog/urfa-kalesi.jpg',
+ '/images/blog/halfeti.jpg',
+ '/images/tarihi-yerler/harran-kumbet-evleri.jpg',
+];
 ---
 
 <Layout seo={seo}>
-  <div class="page-header">
-    <div class="page-header-content">
-      <h1 class="page-header-title">Tarihi Yerler</h1>
-      <p class="page-header-description">
-        Tarihin sıfır noktası Şanlıurfa’nın eşsiz mirasını keşfedin.
-      </p>
-      
-      <div class="mt-8 max-w-2xl mx-auto">
-        <form action="/tarihi-yerler" class="relative">
-          <input 
-            type="search"
-            name="q"
-            value={queryParam}
-            placeholder="Tarihi yer ara..."
-            class="w-full pl-12 pr-4 py-4 rounded-xl bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border border-white/20 focus:outline-none focus:border-white/40"
-          />
-          <span set:html={icons.search}></span>
-        </form>
-      </div>
-    </div>
-  </div>
-  
-  <div class="section bg-gray-50 dark:bg-gray-900">
-    <div class="container-custom">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {sites.map((site) => (
-          <article class="card-hover bg-white dark:bg-gray-800 rounded-2xl overflow-hidden group">
-            <a href={`/tarihi-yerler/${site.slug}`}>
-              <div class="relative aspect-[4/3] overflow-hidden">
-                <Image
-                  src={getHistoricalImage(site)}
-                  alt={site.name}
-                  class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  loading="lazy"
-                  width={800}
-                  height={600}
-                />
-                {site.is_unesco && (
-                  <div class="absolute top-4 left-4">
-                    <span class="badge bg-blue-600 text-white">UNESCO</span>
-                  </div>
-                )}
-                {site.is_featured && (
-                  <div class="absolute top-4 right-4">
-                    <span class="badge bg-urfa-600 text-white">Öne Çıkan</span>
-                  </div>
-                )}
-              </div>
-              
-              <div class="p-6">
-                <h3 class="font-display font-bold text-xl text-gray-900 dark:text-white group-hover:text-urfa-600 dark:group-hover:text-urfa-400 transition-colors">
-                  {site.name}
-                </h3>
-                
-                <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-2">
-                  <span set:html={icons.mapPin}></span>
-                  {site.location}
-                </div>
-                
-                {site.period && (
-                  <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    <span set:html={icons.clock}></span>
-                    {site.period}
-                  </div>
-                )}
-                
-                <p class="text-gray-600 dark:text-gray-400 mt-3 line-clamp-2">
-                  {site.short_description || site.description}
-                </p>
-                
-                <div class="flex items-center gap-4 mt-4 text-sm text-urfa-600 dark:text-urfa-400 font-medium">
-                  <span class="flex items-center gap-1">
-                    <span set:html={icons.camera}></span>
-                    {site.images?.length || 0} fotoğraf
-                  </span>
-                  <span>Detaylar →</span>
-                </div>
-              </div>
-            </a>
-          </article>
-        ))}
-      </div>
-      
-      {sites.length === 0 && (
-        <div class="text-center py-16">
-          <span set:html={icons.searchLarge}></span>
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Sonuç bulunamadı</h3>
-          <p class="text-gray-600 dark:text-gray-400">Farklı bir arama terimi deneyin.</p>
-        </div>
-      )}
-    </div>
-  </div>
+ <style is:inline>
+ .ty-body{background:var(--bg);padding:3rem 0 5rem}
+ .ty-grid{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
+ .ty-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);overflow:hidden;transition:border-color .15s}
+ .ty-card:hover{border-color:var(--public-accent)}
+ .ty-card-img{position:relative;aspect-ratio:4/3;overflow:hidden;background:rgba(184,115,51,.06)}
+ .ty-card-img-el{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+ .ty-card:hover .ty-card-img-el{transform:scale(1.08)}
+ .ty-badge{position:absolute;top:.65rem;left:.65rem;padding:.18rem .55rem;font-size:.68rem;font-weight:700;letter-spacing:.05em}
+ .ty-badge-feat{position:absolute;top:.65rem;right:.65rem;padding:.18rem .55rem;font-size:.68rem;font-weight:700;letter-spacing:.05em}
+ .ty-badge-unesco{background:#1d4ed8;color:#fff}
+ .ty-badge-featured{background:var(--public-accent);color:#fff}
+ .ty-card-body{padding:1.15rem 1.25rem}
+ .ty-card-title{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--public-text);margin-bottom:.5rem;transition:color .15s;line-height:1.3}
+ .ty-card:hover .ty-card-title{color:var(--public-accent)}
+ .ty-card-meta{display:flex;align-items:center;gap:.35rem;font-size:.75rem;color:var(--public-muted);margin-bottom:.2rem}
+ .ty-card-desc{font-size:.78rem;color:var(--public-muted);line-height:1.65;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:.5rem}
+ .ty-card-foot{display:flex;align-items:center;gap:1rem;margin-top:.85rem;font-size:.75rem;color:var(--public-accent);font-weight:600}
+ .ty-empty{text-align:center;padding:5rem 1rem}
+ .ty-empty-icon{width:4rem;height:4rem;color:rgba(184,115,51,.2);margin:0 auto .75rem}
+ .ty-empty h3{font-size:1.05rem;color:var(--public-muted);margin-bottom:.35rem}
+ .ty-empty p{font-size:.82rem;color:var(--public-text-soft)}
+ </style>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: 'Şanlıurfa Tarihi Yerler',
-    description: 'Şanlıurfa\'daki tarihi mekanlar, müzeler ve kültürel miras alanları.',
-    url: `${baseUrl}/tarihi-yerler`,
-    about: { '@type': 'City', name: 'Şanlıurfa' },
-    itemListElement: sites.slice(0, 10).map((s: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'LandmarksOrHistoricalBuildings',
-        name: s.name,
-        url: `${baseUrl}/tarihi-yerler/${s.slug}`,
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Tarihi Yerler', item: `${baseUrl}/tarihi-yerler` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <PublicPageIntro
+ eyebrow="Şanlıurfa Tarih Rehberi"
+ title="Tarihi Yerler"
+ description="Tarihin sıfır noktası Şanlıurfa'nın eşsiz mirasını, arkeolojik alanlarını ve kültürel duraklarını keşfedin."
+ searchAction="/tarihi-yerler"
+ searchName="q"
+ searchValue={queryParam}
+ searchPlaceholder="Tarihi yer ara..."
+ searchAriaLabel="Tarihi yer arama"
+ quickAnswerTitle="Hızlı cevap"
+ quickAnswerText="Göbeklitepe, Harran, Balıklıgöl ve Şanlıurfa Kalesi şehirde ilk görülmesi gereken tarihi alanlardır."
+ actions={[
+  { href: '/tarihi-yerler/gobeklitepe', label: 'Göbeklitepe' },
+  { href: '/tarihi-yerler/harran-kubbeli-evler', label: 'Harran' },
+  { href: '/tarihi-yerler/balikligol', label: 'Balıklıgöl' },
+ ]}
+ />
+
+ <!-- Grid -->
+ <div class="ty-body">
+ <div class="sf-container">
+ <div class="ty-grid">
+ {sites.map((site) => (
+ <article class="ty-card">
+ <a href={`/tarihi-yerler/${site.slug}`}>
+ <div class="ty-card-img">
+ <Image
+ src={getHistoricalImage(site) || historicalFallbacks[Math.abs(Number(site.id || 0)) % historicalFallbacks.length]}
+ alt={site.name}
+ class="ty-card-img-el"
+ loading="lazy"
+ width={800}
+ height={600}
+ />
+ {site.is_unesco && <span class="ty-badge ty-badge-unesco">UNESCO</span>}
+ {site.is_featured && <span class="ty-badge-feat ty-badge-featured">Öne Çıkan</span>}
+ </div>
+ <div class="ty-card-body">
+ <h3 class="ty-card-title">{site.name}</h3>
+ <p class="ty-card-meta"><Icon name="lucide:map-pin" style="width:.85rem;height:.85rem" />{site.location}</p>
+ {site.period && <p class="ty-card-meta"><Icon name="lucide:clock" style="width:.85rem;height:.85rem" />{site.period}</p>}
+ <p class="ty-card-desc">{site.short_description || site.description}</p>
+ <div class="ty-card-foot">
+ <span style="display:flex;align-items:center;gap:.3rem"><Icon name="lucide:camera" style="width:.8rem;height:.8rem" />{site.images?.length || 0} fotoğraf</span>
+ <span>Detaylar →</span>
+ </div>
+ </div>
+ </a>
+ </article>
+ ))}
+ </div>
+
+ {sites.length === 0 && (
+ <div class="ty-empty">
+ <Icon name="lucide:search" class="ty-empty-icon" />
+ <h3>Sonuç bulunamadı</h3>
+ <p>Farklı bir arama terimi deneyin.</p>
+ </div>
+ )}
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'CollectionPage',
+ name: 'Şanlıurfa Tarihi Yerler',
+ description: 'Şanlıurfa\'daki tarihi mekanlar, müzeler ve kültürel miras alanları.',
+ url: `${baseUrl}/tarihi-yerler`,
+ about: { '@type': 'City', name: 'Şanlıurfa' },
+ itemListElement: sites.slice(0, 10).map((s: any, i: number) => ({
+ '@type': 'ListItem',
+ position: i + 1,
+ item: {
+ '@type': 'LandmarksOrHistoricalBuildings',
+ name: s.name,
+ url: `${baseUrl}/tarihi-yerler/${s.slug}`,
+ },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Tarihi Yerler', item: `${baseUrl}/tarihi-yerler` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

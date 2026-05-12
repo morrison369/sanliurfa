@@ -1,144 +1,352 @@
 ---
-import Layout from '../../layouts/Layout.astro';
+import ListingTemplate from '../../components/templates/ListingTemplate.astro';
+import { Icon } from 'astro-icon/components';
+import Image from '../../components/Image.astro';
+import NearbyPlaces from '../../components/places/NearbyPlaces';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { buildPageSeo } from '../../lib/seo/pageSeo';
+import { resolvePlaceImage } from '../../lib/public-image-resolvers';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 
 let categories: any[] = [];
 let featuredPlaces: any[] = [];
+let districts: any[] = [];
+let totalPlaces = 0;
+let nearbyPlaces: any[] = [];
 
 try {
-  const catResult = await query(
-    "SELECT c.*, (SELECT COUNT(*) FROM places p WHERE p.category_id = c.id AND p.status = 'active') as place_count FROM categories c WHERE c.parent_id = 10 AND c.is_active = true ORDER BY c.sort_order"
-  );
-  categories = catResult.rows;
-
-  const featResult = await query(
-    "SELECT * FROM places WHERE is_featured = true AND status = 'active' ORDER BY rating DESC LIMIT 6"
-  );
-  featuredPlaces = featResult.rows;
+ const data = await getCachedPublicRouteData('page:mekanlar:index', async () => {
+  const [catResult, featResult, distResult, totResult, nearbyResult] = await Promise.all([
+   // Tüm kök kategoriler (parent_id NULL) — alt kategori sayısıyla beraber
+   query(`
+     SELECT
+       c.id, c.name, c.slug,
+       (SELECT COUNT(*) FROM categories sc WHERE sc.parent_id = c.id) AS sub_count,
+       (SELECT COUNT(*) FROM places p
+         JOIN categories c2 ON c2.id = p.category_id
+        WHERE (p.category_id = c.id OR c2.parent_id = c.id) AND p.status = 'active') AS place_count
+     FROM categories c
+     WHERE c.parent_id IS NULL
+     ORDER BY c.id ASC
+   `),
+   query(`
+     SELECT id, name, slug, short_description, description, image_url, rating, review_count, address
+     FROM places
+     WHERE status = 'active'
+     ORDER BY (CASE WHEN is_featured THEN 0 ELSE 1 END), rating DESC NULLS LAST, created_at DESC
+     LIMIT 9
+   `),
+   query(`
+     SELECT d.id, d.name, d.slug,
+       (SELECT COUNT(*) FROM places p WHERE p.district_id = d.id AND p.status = 'active') AS place_count
+     FROM districts d
+     ORDER BY d.name ASC
+   `),
+   query(`SELECT COUNT(*)::int AS total FROM places WHERE status = 'active'`),
+   query(`SELECT id::text, name, slug, category_name, latitude::float, longitude::float FROM places WHERE status = 'active' AND latitude IS NOT NULL AND longitude IS NOT NULL LIMIT 100`),
+  ]);
+  return {
+   categories: catResult.rows,
+   featuredPlaces: featResult.rows,
+   districts: distResult.rows,
+   totalPlaces: totResult.rows[0]?.total || 0,
+   nearbyPlaces: nearbyResult.rows,
+  };
+ });
+ categories = data.categories;
+ featuredPlaces = data.featuredPlaces;
+ districts = data.districts;
+ totalPlaces = data.totalPlaces;
+ nearbyPlaces = data.nearbyPlaces || [];
 } catch (e) {
-  console.error('Error loading mekanlar:', e);
+ logger.error('Error loading mekanlar', e instanceof Error ? e : new Error(String(e)));
 }
 
-const seo = {
-  title: 'Şanlıurfa Mekanlar Rehberi | En İyi Mekanlar ve Yerel Lezzetler',
-  description: "Şanlıurfa\'nın en popüler mekanları. Kebapçılar, ciğerciler, kafeler, tatlıcılar ve daha fazlası. Güncel fiyatlar ve yorumlarla.",
-  keywords: ['şanlıurfa mekanlar', 'urfa mekanlar', 'şanlıurfa restoranlar', 'urfa kebapçılar', 'şanlıurfa kafeler', 'urfa yemek yerleri', 'şanlıurfa işletmeler'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/mekanlar',
-};
-const { baseUrl } = await getSiteBranding();
+const seo = buildPageSeo({
+ title: 'Şanlıurfa Mekanlar Rehberi | Kebapçılar, Oteller, Kafeler ve Tarihi Yerler',
+ description: "Şanlıurfa'nın en iyi mekanları: kebapçılar, ciğerciler, kafeler, oteller, tarihi mekanlar ve daha fazlası. 22 ana kategori, 13 ilçe, güncel puanlar ve yorumlar.",
+ keywords: ['şanlıurfa mekanlar', 'urfa mekanlar', 'şanlıurfa restoranlar', 'urfa kebapçılar', 'şanlıurfa kafeler', 'şanlıurfa oteller', 'urfa yemek yerleri', 'göbeklitepe', 'halfeti', 'harran'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/mekanlar',
+});
+const baseUrl = getPublicAppUrl();
 
 const faqItems = [
-  {
-    S: "Şanlıurfa'da en iyi kebapçılar nerede?",
-    C: 'Mekanlar sayfasındaki kebapçılar kategorisinde puan, yorum ve ilçe bazlı filtreyle en iyi seçenekleri görebilirsiniz.',
-  },
-  {
-    S: 'Şanlıurfa mekanları nasıl filtrelenir?',
-    C: 'Kategori kartlarına girerek kebapçı, ciğerci, kahvaltı ve diğer alt kategorileri ayrı ayrı listeleyebilirsiniz.',
-  },
-  {
-    S: 'Mekan puanları güncel mi?',
-    C: 'Listeler aktif kayıtlar üzerinden güncellenir ve öne çıkan mekanlar puan ve görünürlük kriterlerine göre sıralanır.',
-  },
+ {
+  q: "Şanlıurfa'da en iyi kebapçılar nerede?",
+  a: 'Mekanlar sayfasındaki Yeme İçme kategorisinde puana göre sıralı kebapçıları görebilirsiniz; Halil İbrahim Sofrası, Çulcuoğlu, Cevahir Sofrası en çok ziyaret edilenler arasındadır.',
+ },
+ {
+  q: 'Şanlıurfa mekanları nasıl filtrelenir?',
+  a: '22 ana kategori (yeme-içme, konaklama, alışveriş, sağlık, ulaşım vb.) ve 13 ilçe (Eyyübiye, Haliliye, Karaköprü, Siverek, Halfeti, Harran...) bazında filtreleyebilir, puan ve fiyat aralığına göre sıralayabilirsiniz.',
+ },
+ {
+  q: 'Mekan puanları nasıl hesaplanır?',
+  a: 'Puanlar üye yorumları + Sanliurfa.com onaylı sürekli ziyaretçi geri bildirimlerinden ortalama olarak hesaplanır ve haftalık güncellenir.',
+ },
+ {
+  q: "Şanlıurfa'nın tarihi mekanları nelerdir?",
+  a: 'Göbeklitepe, Balıklıgöl, Harran kalıntıları, Halfeti, Şanlıurfa Kalesi, Müze, Mevlid-i Halil ve daha fazlası. Tarihi mekanlar bölümünden detaylı rehbere ulaşabilirsiniz.',
+ },
 ];
+
+const getMekanIcon = (slug: string) => {
+ const map: Record<string, string> = {
+  'yeme-icme': 'lucide:utensils',
+  konaklama: 'lucide:bed-double',
+  saglik: 'lucide:heart-pulse',
+  egitim: 'lucide:graduation-cap',
+  'resmi-kurumlar': 'lucide:landmark',
+  ulasim: 'lucide:bus',
+  otomotiv: 'lucide:car',
+  alisveris: 'lucide:shopping-bag',
+  'ev-ve-yasam': 'lucide:home',
+  hizmetler: 'lucide:hand-helping',
+  'hukuk-ve-finans': 'lucide:scale',
+  emlak: 'lucide:building-2',
+  'turizm-ve-gezilecek-yerler': 'lucide:map-pin',
+  'eglence-ve-sosyal-yasam': 'lucide:music',
+  etkinlikler: 'lucide:calendar-days',
+  'spor-ve-fitness': 'lucide:dumbbell',
+  'aile-ve-cocuk': 'lucide:baby',
+  'dini-ve-kulturel-yerler': 'lucide:book-open',
+  'is-dunyasi-ve-sanayi': 'lucide:briefcase',
+  'tarim-ve-hayvancilik': 'lucide:wheat',
+  'acil-durum': 'lucide:siren',
+  'medya-ve-iletisim': 'lucide:radio',
+ };
+ return map[slug] || 'lucide:store';
+};
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Hero -->
-    <div class="bg-gradient-to-br from-red-700 to-red-900 text-white py-16">
-      <div class="container mx-auto px-4">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Şanlıurfa Mekanlar</h1>
-        <p class="text-xl text-red-100 max-w-2xl">
-          Kebapçılardan ciğercilere, kafelerden tatlıcılara Şanlıurfa’nın en sevilen mekanları
-        </p>
-      </div>
+<ListingTemplate
+ seo={seo}
+ eyebrow="Şanlıurfa Şehir Rehberi"
+ title="Şanlıurfa'nın En İyi Mekanları"
+ description="Kebapçılar, kafeler, oteller, tarihi yerler ve hizmet noktaları için kategori ve ilçe bazlı güncel listeleri tek ekranda inceleyin."
+ actions={[
+  { href: '/arama', label: 'Mekan Ara', variant: 'primary' },
+  { href: '/isletme-kayit', label: 'İşletme Ekle', variant: 'ghost' },
+ ]}
+ stats={[
+  { label: 'Ana Kategori', value: categories.length },
+  { label: 'İlçe', value: districts.length },
+  { label: 'Aktif Mekan', value: totalPlaces },
+ ]}
+ quickAnswerTitle="Hızlı cevap"
+ quickAnswerText="Şanlıurfa mekanlarını kategori veya ilçe bazında filtreleyebilir, öne çıkan işletmeleri puan ve yorum bilgisiyle karşılaştırabilirsiniz."
+>
+ <style is:inline>
+  .mk-page{background:var(--bg);min-height:100vh}
+
+  /* Body sections */
+  .mk-body{padding:3rem 0 5rem}
+  .mk-section{margin-bottom:3.5rem}
+  .mk-section-h{font-family:'Cormorant Garamond',serif;font-size:1.7rem;font-weight:700;color:#1F1410;margin:0 0 .35rem;display:flex;align-items:baseline;gap:.6rem}
+  .mk-section-h::before{content:'';width:.3rem;height:1.2rem;background:linear-gradient(180deg,#C0571F,#D49718);border-radius:2px;align-self:center}
+  .mk-section-sub{font-size:.95rem;color:var(--public-muted);margin:0 0 1.5rem;padding-left:1rem}
+
+  /* Quick info box */
+  .mk-quick{background:linear-gradient(135deg,rgba(192,87,31,.06) 0%,rgba(212,151,24,.05) 100%);border:1px solid rgba(192,87,31,.18);border-left:4px solid #C0571F;padding:1.25rem 1.5rem;margin-bottom:2.5rem;border-radius:4px}
+  .mk-quick-title{font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:#C0571F;margin:0 0 .35rem}
+  .mk-quick-text{font-size:1rem;color:#3D2A1E;line-height:1.65;margin:0}
+
+  /* Category grid */
+  .mk-cat-grid{display:grid;gap:.85rem;grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+  .mk-cat-card{background:#FFFFFF;border:1px solid rgba(192,87,31,.12);padding:1.25rem;transition:all .2s ease;border-radius:6px;text-decoration:none;display:flex;flex-direction:column;align-items:center;text-align:center;box-shadow:0 1px 3px rgba(31,20,16,.04)}
+  .mk-cat-card:hover{border-color:#C0571F;transform:translateY(-3px);box-shadow:0 12px 24px -8px rgba(192,87,31,.18)}
+  .mk-cat-icon{width:2.75rem;height:2.75rem;background:linear-gradient(135deg,rgba(192,87,31,.10),rgba(212,151,24,.10));border:1px solid rgba(192,87,31,.18);display:flex;align-items:center;justify-content:center;color:#C0571F;margin-bottom:.85rem;border-radius:6px;transition:all .2s}
+  .mk-cat-card:hover .mk-cat-icon{background:linear-gradient(135deg,#C0571F,#D49718);color:#fff;border-color:#C0571F}
+  .mk-cat-name{font-size:.92rem;font-weight:700;color:#1F1410;margin:0 0 .2rem;transition:color .2s}
+  .mk-cat-card:hover .mk-cat-name{color:#C0571F}
+  .mk-cat-meta{font-size:.74rem;color:#7A6448;display:flex;gap:.5rem;align-items:center;justify-content:center;flex-wrap:wrap}
+  .mk-cat-badge{display:inline-flex;align-items:center;gap:.2rem;padding:.1rem .4rem;background:rgba(44,122,82,.10);color:#1F5F40;font-weight:600;border-radius:3px;font-size:.7rem}
+
+  /* District chips */
+  .mk-dist-chips{display:flex;flex-wrap:wrap;gap:.55rem}
+  .mk-dist-chip{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem .95rem;background:#FFFFFF;border:1px solid rgba(44,122,82,.20);color:#1F1410;font-size:.85rem;font-weight:600;text-decoration:none;border-radius:999px;transition:all .15s}
+  .mk-dist-chip:hover{background:#2C7A52;color:#fff;border-color:#2C7A52;transform:translateY(-1px)}
+  .mk-dist-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:1.4rem;padding:.05rem .35rem;background:rgba(44,122,82,.12);color:#1F5F40;font-size:.7rem;font-weight:700;border-radius:999px;transition:all .15s}
+  .mk-dist-chip:hover .mk-dist-cnt{background:rgba(255,255,255,.22);color:#fff}
+
+  /* Featured grid */
+  .mk-feat-grid{display:grid;gap:1.25rem;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  .mk-feat-card{background:#FFFFFF;border:1px solid rgba(192,87,31,.10);overflow:hidden;border-radius:8px;text-decoration:none;display:block;transition:all .2s ease;box-shadow:0 2px 6px rgba(31,20,16,.04)}
+  .mk-feat-card:hover{border-color:#C0571F;transform:translateY(-4px);box-shadow:0 16px 32px -8px rgba(192,87,31,.18)}
+  .mk-feat-img{position:relative;height:11.5rem;overflow:hidden;background:linear-gradient(135deg,rgba(192,87,31,.06),rgba(44,122,82,.06))}
+  .mk-feat-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+  .mk-feat-card:hover .mk-feat-img img{transform:scale(1.06)}
+  .mk-feat-rating-pill{position:absolute;top:.65rem;right:.65rem;display:inline-flex;align-items:center;gap:.25rem;padding:.3rem .55rem;background:rgba(31,20,16,.85);backdrop-filter:blur(6px);color:#FFE9B5;font-size:.78rem;font-weight:700;border-radius:6px}
+  .mk-feat-body{padding:1rem 1.15rem 1.15rem}
+  .mk-feat-title{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:700;color:#1F1410;margin:0 0 .35rem;transition:color .2s;line-height:1.25}
+  .mk-feat-card:hover .mk-feat-title{color:#C0571F}
+  .mk-feat-desc{font-size:.95rem;color:var(--public-muted);line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:0 0 .65rem}
+  .mk-feat-meta{display:flex;align-items:center;gap:.5rem;font-size:.75rem;color:#7A6448;border-top:1px solid rgba(192,87,31,.08);padding-top:.65rem}
+  .mk-feat-meta-icon{width:.85rem;height:.85rem;color:#C0571F}
+
+  /* CTA */
+  .mk-cta{margin-top:4rem;background:linear-gradient(135deg,#C0571F 0%,#D49718 100%);color:#FFE9B5;padding:2.5rem 2rem;text-align:center;border-radius:10px;box-shadow:0 12px 30px -8px rgba(192,87,31,.35)}
+  .mk-cta-h{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:700;margin:0 0 .5rem;color:#fff}
+  .mk-cta-p{font-size:1rem;color:rgba(255,233,181,.92);margin:0 0 1.5rem;max-width:560px;margin-left:auto;margin-right:auto;line-height:1.65}
+  .mk-cta-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.85rem 1.85rem;background:#fff;color:#C0571F;font-size:.92rem;font-weight:700;text-decoration:none;border-radius:6px;transition:transform .15s,box-shadow .15s}
+  .mk-cta-btn:hover{transform:translateY(-2px);box-shadow:0 10px 20px -5px rgba(0,0,0,.2)}
+
+  @media (max-width:640px){
+    .mk-cat-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.65rem}
+    .mk-cat-card{padding:1rem}
+    .mk-feat-grid{grid-template-columns:1fr;gap:1rem}
+    .mk-cta{padding:2rem 1.25rem}
+  }
+ </style>
+
+ <div class="mk-page">
+  <!-- Body -->
+  <div class="mk-body">
+   <div class="sf-container">
+
+    <!-- Yakınımdaki Mekanlar -->
+    {nearbyPlaces.length > 0 && (
+     <section class="mk-section" style="margin-bottom:2rem">
+      <h2 class="mk-section-h">Yakınımdaki Mekanlar</h2>
+      <p class="mk-section-sub">Konumunuzu paylaşarak size en yakın mekanları keşfedin</p>
+      <NearbyPlaces client:idle initialPlaces={nearbyPlaces} />
+     </section>
+    )}
+
+    <!-- Quick info -->
+    <div class="mk-quick">
+     <p class="mk-quick-title">Hızlı Cevap</p>
+     <p class="mk-quick-text">
+      Şanlıurfa mekanlarını <strong>kategori</strong> veya <strong>ilçe</strong> bazında filtreleyebilir, öne çıkan işletmeleri puan/yorum bilgisiyle karşılaştırabilirsiniz. Tüm listeler haftalık güncellenir, kullanıcı yorumlarıyla doğrulanır.
+     </p>
     </div>
 
-    <div class="container mx-auto px-4 py-12">
-      <div class="rounded-2xl border border-red-100 bg-red-50 p-5 mb-8">
-        <h2 class="text-lg font-bold text-red-900">Hızlı Cevap</h2>
-        <p class="text-sm text-red-800 mt-1">
-          Şanlıurfa mekanlarını kategori bazında keşfedebilir, öne çıkan işletmeleri puan ve yorum bilgileriyle karşılaştırabilirsiniz.
-        </p>
-      </div>
-
-      <!-- Kategoriler Grid -->
-      <h2 class="text-2xl font-bold text-gray-900 mb-8">Kategoriler</h2>
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-12">
+    <!-- Categories -->
+    <section class="mk-section">
+     <h2 class="mk-section-h">Kategoriler</h2>
+     <p class="mk-section-sub">22 ana kategoride 323+ alt başlık — istediğiniz hizmet türünü dakikalar içinde bulun</p>
+     {categories.length === 0 ? (
+       <p style="color:#7A6448;font-size:.9rem;padding:1rem 0">Kategoriler yüklenemedi — lütfen daha sonra tekrar deneyin.</p>
+     ) : (
+       <div class="mk-cat-grid">
         {categories.map((cat) => (
-          <a
-            href={`/mekanlar/${cat.slug}/`}
-            class="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 border border-gray-100 group"
-          >
-            <div class="text-3xl mb-3">{
-              cat.slug === 'kebapcilar' ? '🍖' :
-              cat.slug === 'cigerciler' ? '🥩' :
-              cat.slug === 'lahmacuncular' ? '🫓' :
-              cat.slug === 'pideciler' ? '🥙' :
-              cat.slug === 'cig-kofteciler' ? '🧆' :
-              cat.slug === 'yoresel-yemekler' ? '🥘' :
-              cat.slug === 'kahvalti-mekanlari' ? '🍳' :
-              cat.slug === 'tatlicilar' ? '🍮' :
-              cat.slug === 'kafeler' ? '☕' :
-              cat.slug === 'cay-bahceleri' ? '🍵' :
-              cat.slug === 'firinlar' ? '🍞' :
-              cat.slug === 'pastaneler' ? '🎂' :
-              cat.slug === 'balik-restoranlari' ? '🐟' : '🍽️'
-            }</div>
-            <h3 class="font-bold text-gray-900 group-hover:text-red-600 transition-colors">{cat.name}</h3>
-            <p class="text-sm text-gray-500 mt-1">{cat.place_count || 0} mekan</p>
-          </a>
-        ))}
-      </div>
-
-      {/* Öne Çıkan Mekanlar */}
-      {featuredPlaces.length > 0 && (
-        <div>
-          <h2 class="text-2xl font-bold text-gray-900 mb-6">Öne Çıkan Mekanlar</h2>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredPlaces.map((place) => (
-              <a href={`/isletme/${place.slug}`} class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-shadow group">
-                <div class="h-48 bg-gradient-to-br from-red-100 to-orange-100 flex items-center justify-center text-5xl">
-                  🍽️
-                </div>
-                <div class="p-5">
-                  <h3 class="font-bold text-lg text-gray-900 group-hover:text-red-600">{place.name}</h3>
-                  <p class="text-sm text-gray-500 mt-1 line-clamp-2">{place.short_description || place.description}</p>
-                  <div class="flex items-center gap-2 mt-3">
-                    <span class="text-yellow-500">★</span>
-                    <span class="font-medium">{place.rating || '-'}</span>
-                    <span class="text-gray-400">({place.review_count || 0} yorum)</span>
-                  </div>
-                </div>
-              </a>
-            ))}
+         <a href={`/mekanlar/${cat.slug}/`} class="mk-cat-card">
+          <div class="mk-cat-icon">
+           <Icon name={getMekanIcon(cat.slug)} style="width:1.35rem;height:1.35rem" />
           </div>
-        </div>
-      )}
+          <p class="mk-cat-name">{cat.name}</p>
+          <div class="mk-cat-meta">
+           {cat.place_count > 0 && <span class="mk-cat-badge">{cat.place_count} mekan</span>}
+           {cat.sub_count > 0 && <span>{cat.sub_count} alt kategori</span>}
+          </div>
+         </a>
+        ))}
+       </div>
+     )}
+    </section>
+
+    <!-- Districts -->
+    {districts.length > 0 && (
+     <section class="mk-section">
+      <h2 class="mk-section-h">İlçelere Göre</h2>
+      <p class="mk-section-sub">Şanlıurfa'nın 13 ilçesi — kendi semtinize en yakın mekanları keşfedin</p>
+      <div class="mk-dist-chips">
+       {districts.map((dist) => (
+        <a href={`/ilceler/${dist.slug}`} class="mk-dist-chip">
+         <Icon name="lucide:map-pin" style="width:.85rem;height:.85rem;color:#2C7A52" />
+         {dist.name}
+         {dist.place_count > 0 && <span class="mk-dist-cnt">{dist.place_count}</span>}
+        </a>
+       ))}
+      </div>
+     </section>
+    )}
+
+    <!-- Featured -->
+    {featuredPlaces.length > 0 && (
+     <section class="mk-section">
+      <h2 class="mk-section-h">Öne Çıkan Mekanlar</h2>
+      <p class="mk-section-sub">Sanliurfa.com editörlerinin ve üyelerin en çok ziyaret ettiği işletmeler</p>
+      <div class="mk-feat-grid">
+       {featuredPlaces.map((place) => (
+        <a href={`/isletme/${place.slug}`} class="mk-feat-card">
+         <div class="mk-feat-img">
+          <Image
+           src={resolvePlaceImage(place)}
+           alt={place.name}
+           loading="lazy"
+           width={520}
+           height={320}
+          />
+          {place.rating && (
+           <div class="mk-feat-rating-pill">
+            <Icon name="lucide:star" style="width:.85rem;height:.85rem;fill:#D49718;color:#D49718" />
+            {Number(place.rating).toFixed(1)}
+           </div>
+          )}
+         </div>
+         <div class="mk-feat-body">
+          <h3 class="mk-feat-title">{place.name}</h3>
+          <p class="mk-feat-desc">{place.short_description || place.description || 'Detaylı bilgi için tıklayın.'}</p>
+          <div class="mk-feat-meta">
+           <Icon name="lucide:message-square" class="mk-feat-meta-icon" />
+           <span>{place.review_count || 0} yorum</span>
+           {place.address && (
+            <>
+             <span style="color:rgba(192,87,31,.3)">·</span>
+             <Icon name="lucide:map-pin" class="mk-feat-meta-icon" />
+             <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{place.address}</span>
+            </>
+           )}
+          </div>
+         </div>
+        </a>
+       ))}
+      </div>
+     </section>
+    )}
+
+    <!-- CTA: işletme kayıt -->
+    <div class="mk-cta">
+     <h2 class="mk-cta-h">İşletmenizi Şanlıurfa Rehberine Ekleyin</h2>
+     <p class="mk-cta-p">
+      Sanliurfa.com'da ücretsiz işletme profili açın, müşterilere yorum ve fotoğraflarla ulaşın, doğrulanmış işletme rozeti kazanın.
+     </p>
+     <a href="/isletme-kayit" class="mk-cta-btn">
+      <Icon name="lucide:plus-circle" style="width:1.1rem;height:1.1rem" />
+      Ücretsiz Kayıt
+     </a>
     </div>
+
+   </div>
   </div>
-  {/* Schema.org BreadcrumbList */}
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
-    ]
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: item.C,
-      },
-    })),
-  })} is:inline />
-</Layout>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+   { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+   { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
+  ]
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Şanlıurfa Mekanlar Rehberi',
+  description: "Şanlıurfa'nın en iyi mekanları — kebapçılar, oteller, tarihi yerler.",
+  url: `${baseUrl}/mekanlar`,
+  numberOfItems: totalPlaces,
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqItems.map((item) => ({
+   '@type': 'Question',
+   name: item.q,
+   acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+ })} is:inline />
+</ListingTemplate>

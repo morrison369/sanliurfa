@@ -4,6 +4,7 @@
  */
 
 import { logger } from '../logger';
+import { randomBytes } from 'node:crypto';
 
 // ==================== TYPES & INTERFACES ====================
 
@@ -62,13 +63,13 @@ export class TraceCollector {
    * Start a new span
    */
   startSpan(name: string, parentSpanId?: string): Span {
-    const traceId = this.currentContext?.traceId || 'trace-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
-    const spanId = 'span-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+    const traceId = this.currentContext?.traceId || 'trace-' + Date.now() + '-' + randomBytes(6).toString('hex');
+    const spanId = 'span-' + Date.now() + '-' + randomBytes(6).toString('hex');
 
     const span: Span = {
       traceId,
       spanId,
-      parentSpanId,
+      ...(parentSpanId ? { parentSpanId } : {}),
       name,
       startTime: Date.now(),
       tags: {},
@@ -196,7 +197,6 @@ export class ErrorBudgetManager {
     const compliance = totalEvents > 0 ? budget.goodEvents / totalEvents : 1;
     const consumed = Math.max(0, 1 - compliance);
     const remaining = Math.max(0, slo.target - (1 - consumed));
-    const duration = Date.now() - budget.startTime;
 
     return {
       sloName,

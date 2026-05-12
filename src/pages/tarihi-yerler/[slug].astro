@@ -1,262 +1,288 @@
 ---
-
-import Layout from '../../layouts/Layout.astro';
-import Image from '../../components/Image.astro';
+import { Icon } from 'astro-icon/components';
+import DetailTemplate from '../../components/templates/DetailTemplate.astro';
+import PublicDetailBody from '../../components/public/PublicDetailBody.astro';
+import PublicDetailHero from '../../components/public/PublicDetailHero.astro';
+import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
+import PublicFaqList from '../../components/public/PublicFaqList.astro';
+import PublicInfoRows from '../../components/public/PublicInfoRows.astro';
+import PublicMediaGallery from '../../components/public/PublicMediaGallery.astro';
+import PublicRelatedList from '../../components/public/PublicRelatedList.astro';
 import { query, queryOne } from '../../lib/postgres';
-import { resolveContentImage } from '../../lib/content-images';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
-
-// SVG ikonlar
-const icons = {
-  mapPin: `<svg class="w-5 h-5 text-urfa-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
-  mapPinSm: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`,
-  clock: `<svg class="w-5 h-5 text-urfa-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-  ticket: `<svg class="w-5 h-5 text-urfa-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="m13 5-1 1"/><path d="m13 19-1-1"/></svg>`,
-  camera: `<svg class="w-5 h-5 text-urfa-600 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`,
-  navigation: `<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>`,
-  share2: `<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>`,
-  heart: `<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-  star: `<svg class="w-3 h-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-};
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { normalizeGalleryImages, resolveHistoricalImage } from '../../lib/public-image-resolvers';
+const baseUrl = getPublicAppUrl();
 
 let site: any = null;
 let nearbySites: any[] = [];
-const getHistoricalImage = (item: any, thumb = false) =>
-  resolveContentImage({
-    category: 'tarihi-yerler',
-    slug: item?.slug,
-    explicit: item?.images?.[0],
-    placeholder: '/images/placeholder-historical.jpg',
-    thumb,
-  });
+let siteReviews: any[] = [];
+const getHistoricalImage = (item: any) => resolveHistoricalImage(item);
 
 try {
-  const { slug } = Astro.params;
+ const { slug } = Astro.params;
 
-  site = await queryOne(
-    "SELECT * FROM historical_sites WHERE slug = $1 AND status = 'active'",
-    [slug]
+ const data = await getCachedPublicRouteData(`page:tarihi-yerler:detail:${slug || 'unknown'}`, async () => {
+  const siteRow = await queryOne(
+   "SELECT * FROM historical_sites WHERE slug = $1 AND status = 'published'",
+   [slug]
   );
-
-  if (!site) {
-    const knownPlaceSlugs = new Set(['gobeklitepe', 'balikligol', 'harran', 'halfeti', 'urfa-kalesi', 'ayna-carsi', 'kapali-carsi']);
-    if (knownPlaceSlugs.has(String(slug))) {
-      return Astro.redirect(`/isletme/${slug}`);
-    }
-    return Astro.redirect('/tarihi-yerler');
-  }
-
+  if (!siteRow) return { site: null, nearbySites: [], reviews: [] };
   const nearbyResult = await query(
-    "SELECT id, name, slug, location FROM historical_sites WHERE status = 'active' AND id != $1 LIMIT 5",
-    [site.id]
+   "SELECT id, name, slug, location FROM historical_sites WHERE status = 'published' AND id != $1 LIMIT 5",
+   [siteRow.id]
   );
-  nearbySites = nearbyResult.rows;
+  const reviewsResult = await query(
+   `SELECT r.id, r.rating, r.content, r.visit_type, r.created_at,
+           u.full_name, u.avatar_url
+    FROM reviews r
+    LEFT JOIN users u ON u.id = r.user_id
+    WHERE r.historical_site_id = $1 AND r.status = 'active'
+    ORDER BY r.created_at DESC LIMIT 8`,
+   [siteRow.id]
+  );
+  return { site: siteRow, nearbySites: nearbyResult.rows, reviews: reviewsResult.rows };
+ });
+ site = data.site;
+ nearbySites = data.nearbySites;
+ siteReviews = data.reviews || [];
+
+ if (!site) {
+ const knownPlaceSlugs = new Set(['gobeklitepe', 'balikligol', 'harran', 'halfeti', 'urfa-kalesi', 'ayna-carsi', 'kapali-carsi']);
+ if (knownPlaceSlugs.has(String(slug))) {
+ return Astro.redirect(`/isletme/${slug}`);
+ }
+ return Astro.redirect('/tarihi-yerler');
+ }
+
 } catch (e) {
-  console.error('Error loading historical site:', e);
+ logger.error('Error loading historical site:', e instanceof Error ? e : new Error(String(e)));
 }
 
+const primaryHistoricalImage = site ? getHistoricalImage(site) : '/images/placeholder-historical.jpg';
 const seo = {
-  title: site ? `${site.name} - Tarihi Yer` : 'Tarihi Yer - Şanlıurfa',
-  description: site?.description || 'Şanlıurfa tarihi yerleri',
-  ogImage: site ? getHistoricalImage(site) : '/images/placeholder-historical.jpg',
-  keywords: [site.name, site.name + ' şanlıurfa', 'şanlıurfa tarihi yerler', 'urfa ' + site.name.toLowerCase()],
-  canonical: `/tarihi-yerler/${Astro.params.slug}`,
+ title: site ? `${site.name} - Tarihi Yer` : 'Tarihi Yer - Şanlıurfa',
+ description: site?.description || 'Şanlıurfa tarihi yerleri',
+ ogImage: primaryHistoricalImage.includes('placeholder') ? undefined : primaryHistoricalImage,
+ keywords: [site.name, site.name + ' şanlıurfa', 'şanlıurfa tarihi yerler', 'urfa ' + site.name.toLowerCase()],
+ canonical: `/tarihi-yerler/${Astro.params.slug}`,
 };
+const historicalHeroBadges = [
+ ...(site.is_unesco ? [{ label: 'UNESCO Dünya Mirası', tone: 'strong' as const, icon: 'lucide:star' }] : []),
+ ...(!site.is_unesco && site.is_featured ? [{ label: 'Öne Çıkan', tone: 'accent' as const }] : []),
+ { label: site.period || 'Tarihi', tone: 'soft' as const },
+];
+const galleryImages = normalizeGalleryImages(
+ [primaryHistoricalImage, ...(Array.isArray(site?.images) ? site.images : [])],
+ primaryHistoricalImage,
+);
+const toAbsoluteImageUrl = (src: string) => (src.startsWith('http') ? src : `${baseUrl}${src}`);
 const faqItems = [
-  { S: `${site.name} nerede?`, C: `${site.name}, ${site.location || 'Şanlıurfa'} konumunda yer almaktadır.` },
-  { S: `${site.name} ziyaret saatleri nedir?`, C: site.visiting_hours || `${site.name} için ziyaret saatlerini sayfamızdan veya ilgili kurumdan öğrenebilirsiniz.` },
-  { S: `${site.name} giriş ücreti var mı?`, C: site.entrance_fee || `${site.name} giriş ücreti için güncel bilgiyi sayfamızdan takip edebilirsiniz.` },
+ { S: `${site.name} nerede?`, C: `${site.name}, ${site.location || 'Şanlıurfa'} konumunda yer almaktadır.` },
+ { S: `${site.name} ziyaret saatleri nedir?`, C: site.visiting_hours || `${site.name} için ziyaret saatlerini sayfamızdan veya ilgili kurumdan öğrenebilirsiniz.` },
+ { S: `${site.name} giriş ücreti var mı?`, C: site.entrance_fee || `${site.name} giriş ücreti için güncel bilgiyi sayfamızdan takip edebilirsiniz.` },
+];
+const visitLabels: Record<string, string> = { solo: 'Yalnız', couple: 'Çift', family: 'Aile', friends: 'Arkadaş', business: 'İş' };
+const reviewAvg = siteReviews.length > 0 ? siteReviews.reduce((s: number, r: any) => s + r.rating, 0) / siteReviews.length : 0;
+const historicalInfoRows = [
+ { icon: 'lucide:clock', label: 'Çalışma Saatleri', value: site.opening_hours || '08:00 - 18:00' },
+ { icon: 'lucide:ticket', label: 'Giriş Ücreti', value: site.entry_fee || 'Ücretsiz' },
+ { icon: 'lucide:map-pin', label: 'Konum', value: site.location || 'Şanlıurfa' },
+ { icon: 'lucide:camera', label: 'Fotoğraf', value: 'Ücretsiz çekim yapılabilir' },
 ];
 ---
 
-<Layout seo={seo}>
-  <div class="dark:bg-gray-900">
-    <div class="relative h-[70vh] min-h-[600px]">
-      <div class="absolute inset-0">
-        <Image
-          src={getHistoricalImage(site)}
-          alt={site.name}
-          width={1920}
-          height={1080}
-          class="w-full h-full object-cover"
-        />
-        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-      </div>
-      
-      <div class="absolute bottom-0 left-0 right-0 container-custom pb-12">
-        <div class="flex flex-wrap items-center gap-3 mb-4">
-          {site.is_unesco && (
-            <span class="badge bg-blue-600 text-white flex items-center gap-1">
-              <span set:html={icons.star}></span>
-              UNESCO Dünya Mirası
-            </span>
-          )}
-          {site.is_featured && !site.is_unesco && (
-            <span class="badge bg-urfa-600 text-white">Öne Çıkan</span>
-          )}
-          <span class="badge bg-white/20 text-white">{site.period || 'Tarihi'}</span>
-        </div>
-        
-        <h1 class="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-white dark:text-white mb-4">
-          {site.name}
-        </h1>
-        <p class="text-xl md:text-2xl text-urfa-100 font-medium">{site.short_description || site.location}</p>
-        
-        <div class="flex items-center gap-6 mt-6 text-white">
-          <div class="flex items-center gap-2">
-            <span set:html={icons.mapPinSm}></span>
-            <span>{site.location}</span>
-          </div>
-        </div>
-      </div>
-      
-      <div class="absolute top-4 right-4 flex gap-2">
-        <button class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors">
-          <span set:html={icons.heart}></span>
-        </button>
-        <button class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors">
-          <span set:html={icons.share2}></span>
-        </button>
-      </div>
+<DetailTemplate
+ seo={seo}
+ breadcrumbItems={[
+  { href: '/', label: 'Ana Sayfa' },
+  { href: '/tarihi-yerler', label: 'Tarihi Yerler' },
+  { label: site.name },
+ ]}
+>
+ <style is:inline>
+ .ts-section-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:600;color:var(--public-text);margin-bottom:.85rem}
+ .ts-desc{font-size:.9rem;color:var(--public-muted);line-height:1.85;margin:0}
+ .ts-directions-btn{width:100%;padding:.75rem;background:var(--public-accent);color:#fff;border:none;cursor:pointer;font-size:.85rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:.5rem;margin-top:1.25rem;text-decoration:none;letter-spacing:.05em;transition:background .15s}
+ .ts-directions-btn:hover{background:var(--public-accent-strong);color:#fff}
+ .ts-sidebar-divider{border:none;border-top:1px solid rgba(184,115,51,.1);margin:1rem 0}
+ .ts-reviews{margin-top:2.5rem}
+ .ts-reviews-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--public-text);margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem}
+ .ts-review-card{background:var(--public-card-bg);border:1px solid var(--public-border);border-radius:8px;padding:1rem 1.25rem;margin-bottom:.85rem}
+ .ts-review-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
+ .ts-review-avatar{width:36px;height:36px;border-radius:50%;background:var(--public-accent);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+ .ts-review-name{font-weight:600;font-size:.85rem;color:var(--public-text)}
+ .ts-review-date{font-size:.75rem;color:var(--public-muted);margin-top:.1rem}
+ .ts-review-stars{display:flex;gap:2px;margin-left:auto}
+ .ts-review-star{color:#CE8E38;font-size:.9rem}
+ .ts-review-star.empty{color:var(--public-border)}
+ .ts-review-content{font-size:.86rem;color:var(--public-text-soft);line-height:1.75}
+ .ts-visit-badge{display:inline-block;font-size:.7rem;padding:.2rem .5rem;border-radius:20px;background:rgba(44,122,82,.1);color:#2C7A52;font-weight:600;margin-top:.5rem;letter-spacing:.04em}
+ .ts-avg-rating{display:flex;align-items:baseline;gap:.5rem;margin-bottom:1.25rem}
+ .ts-avg-score{font-size:2.5rem;font-weight:700;color:var(--public-accent);line-height:1}
+ .ts-avg-label{font-size:.8rem;color:var(--public-muted)}
+ </style>
+
+ <PublicDetailHero
+  imageSrc={primaryHistoricalImage}
+  imageAlt={site.name}
+  title={site.name}
+  subtitle={site.short_description || site.location}
+  badges={historicalHeroBadges}
+  metaItems={[
+   { label: String(site.location || 'Şanlıurfa'), icon: 'lucide:map-pin' },
+  ]}
+ />
+
+ <PublicDetailBody compactSidebar>
+ <div>
+ <h2 class="ts-section-title">Hakkında</h2>
+ <p class="ts-desc">{site.description}</p>
+
+ {galleryImages.length > 1 && (
+ <div style="margin-top:2.5rem">
+ <PublicMediaGallery items={galleryImages.slice(1)} altBase={site.name} />
+ </div>
+ )}
+
+ <PublicFaqList items={faqItems} />
+
+ {siteReviews.length > 0 && (
+  <div class="ts-reviews">
+   <h2 class="ts-reviews-title">
+    <Icon name="lucide:star" style="width:1.2rem;height:1.2rem;color:var(--public-accent)" />
+    Ziyaretçi Yorumları
+   </h2>
+   <div class="ts-avg-rating">
+    <span class="ts-avg-score">{reviewAvg.toFixed(1)}</span>
+    <div>
+     <div class="ts-review-stars" style="margin-bottom:.2rem">
+      {[1,2,3,4,5].map(n => <span class={n <= Math.round(reviewAvg) ? 'ts-review-star' : 'ts-review-star empty'}>★</span>)}
+     </div>
+     <span class="ts-avg-label">{siteReviews.length} ziyaretçi yorumu</span>
     </div>
-    
-    <div class="container-custom py-12">
-      <div class="grid lg:grid-cols-3 gap-12">
-        <div class="lg:col-span-2 space-y-12">
-          <section>
-            <h2 class="text-3xl font-display font-bold text-gray-900 dark:text-white mb-4">Hakkında</h2>
-            <p class="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">{site.description}</p>
-          </section>
-          
-          {site.images && site.images.length > 1 && (
-            <section>
-              <h2 class="text-3xl font-display font-bold text-gray-900 dark:text-white mb-6">Galeri</h2>
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {site.images.slice(1).map((img: string, i: number) => (
-                  <div class={`${i === 0 ? 'col-span-2 row-span-2' : ''} rounded-xl overflow-hidden`}>
-                    <Image
-                      src={img}
-                      alt={`${site.name} ${i + 1}`}
-                      width={960}
-                      height={720}
-                      class="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
-                    />
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-        </div>
-        
-        <aside class="space-y-6">
-          <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-24">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Ziyaret Bilgileri</h3>
-            
-            <div class="space-y-4">
-              <div class="flex items-start gap-3">
-                <span set:html={icons.clock}></span>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white">Çalışma Saatleri</p>
-                  <p class="text-gray-600 dark:text-gray-400">{site.opening_hours || '08:00 - 18:00'}</p>
-                </div>
-              </div>
-
-              <div class="flex items-start gap-3">
-                <span set:html={icons.ticket}></span>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white">Giriş Ücreti</p>
-                  <p class="text-gray-600 dark:text-gray-400">{site.entry_fee || 'Ücretsiz'}</p>
-                </div>
-              </div>
-
-              <div class="flex items-start gap-3">
-                <span set:html={icons.mapPin}></span>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white">Konum</p>
-                  <p class="text-gray-600 dark:text-gray-400">{site.location}</p>
-                </div>
-              </div>
-
-              <div class="flex items-start gap-3">
-                <span set:html={icons.camera}></span>
-                <div>
-                  <p class="font-medium text-gray-900 dark:text-white">Fotoğraf</p>
-                  <p class="text-gray-600 dark:text-gray-400">Ücretsiz çekim yapılabilir</p>
-                </div>
-              </div>
-            </div>
-            
-            {site.latitude && site.longitude && (
-              <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
-                <a 
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${site.latitude},${site.longitude}`}
-                  target="_blank"
-                  class="btn-primary w-full flex items-center justify-center gap-2"
-                >
-                  <span set:html={icons.navigation}></span>
-                  Yol Tarifi Al
-                </a>
-              </div>
-            )}
-          </div>
-          
-          {nearbySites && nearbySites.length > 0 && (
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Diğer Tarihi Yerler</h3>
-              <div class="space-y-3">
-                {nearbySites.map((place: any) => (
-                  <a href={`/tarihi-yerler/${place.slug}`} class="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <span class="text-gray-700 dark:text-gray-300">{place.name}</span>
-                    <span class="text-sm text-urfa-600 dark:text-urfa-400">→</span>
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-        </aside>
+   </div>
+   {siteReviews.map((r: any) => {
+    const initials = (r.full_name || 'Z').split(' ').map((w: string) => w[0]).join('').substring(0, 2).toUpperCase();
+    const date = new Date(r.created_at).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' });
+    return (
+    <div class="ts-review-card">
+     <div class="ts-review-header">
+      <div class="ts-review-avatar">{initials}</div>
+      <div>
+       <div class="ts-review-name">{r.full_name || 'Ziyaretçi'}</div>
+       <div class="ts-review-date">{date}</div>
       </div>
+      <div class="ts-review-stars">
+       {[1,2,3,4,5].map(n => <span class={n <= r.rating ? 'ts-review-star' : 'ts-review-star empty'}>★</span>)}
+      </div>
+     </div>
+     <p class="ts-review-content">{r.content}</p>
+     {r.visit_type && <span class="ts-visit-badge">{visitLabels[r.visit_type] || r.visit_type}</span>}
     </div>
+    );
+   })}
   </div>
+ )}
+ </div>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'LandmarksOrHistoricalBuildings',
-    name: site.name,
-    description: site.short_description || site.description,
-    url: `${baseUrl}/tarihi-yerler/${site.slug}`,
-    image: (site.cover_image || site.images?.[0]) ? `${baseUrl}${site.cover_image || site.images[0]}` : `${baseUrl}/images/hero/hero-home.webp`,
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: 'Şanlıurfa',
-      addressRegion: 'Şanlıurfa',
-      addressCountry: 'TR',
-    },
-    geo: site.latitude && site.longitude ? {
-      '@type': 'GeoCoordinates',
-      latitude: site.latitude,
-      longitude: site.longitude,
-    } : undefined,
-    containedInPlace: { '@type': 'City', name: 'Şanlıurfa', url: `${baseUrl}` },
-    openingHours: site.visiting_hours || undefined,
-    publicAccess: true,
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Tarihi Yerler', item: `${baseUrl}/tarihi-yerler` },
-      { '@type': 'ListItem', position: 3, name: site.name, item: `${baseUrl}/tarihi-yerler/${site.slug}` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
-</Layout>
+ <Fragment slot="sidebar">
+ <PublicSidebarCard eyebrow="Ziyaret Bilgileri">
+ <PublicInfoRows rows={historicalInfoRows} />
+
+ {site.latitude && site.longitude && (
+ <>
+ <hr class="ts-sidebar-divider" />
+ <a
+ href={`https://www.google.com/maps/dir/?api=1&destination=${site.latitude},${site.longitude}`}
+ target="_blank"
+ rel="noopener"
+ class="ts-directions-btn"
+ >
+ <Icon name="lucide:navigation" style="width:1rem;height:1rem" />
+ Yol Tarifi Al
+ </a>
+ </>
+ )}
+ </PublicSidebarCard>
+
+ {siteReviews.length > 0 && (
+ <PublicSidebarCard eyebrow="Ziyaretçi Puanı">
+  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem">
+   <span style="font-size:2rem;font-weight:700;color:var(--public-accent)">{reviewAvg.toFixed(1)}</span>
+   <div>
+    <div style="display:flex;gap:2px;font-size:.9rem;color:#CE8E38">
+     {[1,2,3,4,5].map(n => <span>{n <= Math.round(reviewAvg) ? '★' : '☆'}</span>)}
+    </div>
+    <span style="font-size:.75rem;color:var(--public-muted)">{siteReviews.length} yorum</span>
+   </div>
+  </div>
+ </PublicSidebarCard>
+ )}
+
+ {nearbySites && nearbySites.length > 0 && (
+ <PublicSidebarCard eyebrow="Diğer Tarihi Yerler">
+ <PublicRelatedList
+  title="Yakındaki Yerler"
+  items={nearbySites.map((place: any) => ({
+   href: `/tarihi-yerler/${place.slug}`,
+   title: place.name,
+   meta: place.location || undefined,
+  }))}
+ />
+ </PublicSidebarCard>
+ )}
+ </Fragment>
+ </PublicDetailBody>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'LandmarksOrHistoricalBuildings',
+ name: site.name,
+ description: site.short_description || site.description,
+ url: `${baseUrl}/tarihi-yerler/${site.slug}`,
+ image: toAbsoluteImageUrl(primaryHistoricalImage),
+ address: {
+ '@type': 'PostalAddress',
+ addressLocality: 'Şanlıurfa',
+ addressRegion: 'Şanlıurfa',
+ addressCountry: 'TR',
+ },
+ geo: site.latitude && site.longitude ? {
+ '@type': 'GeoCoordinates',
+ latitude: site.latitude,
+ longitude: site.longitude,
+ } : undefined,
+ containedInPlace: { '@type': 'City', name: 'Şanlıurfa', url: baseUrl },
+ openingHours: site.visiting_hours || undefined,
+ publicAccess: true,
+ ...(siteReviews.length > 0 ? {
+  aggregateRating: {
+   '@type': 'AggregateRating',
+   ratingValue: reviewAvg.toFixed(1),
+   reviewCount: siteReviews.length,
+   bestRating: 5,
+   worstRating: 1,
+  },
+ } : {}),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Tarihi Yerler', item: `${baseUrl}/tarihi-yerler` },
+ { '@type': 'ListItem', position: 3, name: site.name, item: `${baseUrl}/tarihi-yerler/${site.slug}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+</DetailTemplate>

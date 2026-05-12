@@ -1,140 +1,169 @@
 ---
+
 import Layout from '../../layouts/Layout.astro';
 import { query } from '../../lib/postgres';
-import { getSiteBranding } from '../../lib/site-branding';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+const baseUrl = getPublicAppUrl();
 
 let districts: any[] = [];
 let neighborhoodCount = 0;
 
 try {
-  const districtResult = await query(
-    `SELECT d.*,
-            (SELECT COUNT(*) FROM neighborhoods n WHERE n.district_id = d.id) as neighborhood_count
-     FROM districts d
-     ORDER BY d.is_central DESC, d.sort_order`
-  );
-  districts = districtResult.rows;
-
-  const countResult = await query("SELECT COUNT(*) FROM neighborhoods");
-  neighborhoodCount = parseInt(countResult.rows[0]?.count || '0');
+ const data = await getCachedPublicRouteData('page:mahalleler:index', async () => {
+  const [districtResult, countResult] = await Promise.all([
+  query(
+  `SELECT d.*,
+  (SELECT COUNT(*) FROM neighborhoods n WHERE n.district_id = d.id) as neighborhood_count
+  FROM districts d
+  ORDER BY d.is_central DESC, d.sort_order`
+  ),
+  query("SELECT COUNT(*) FROM neighborhoods"),
+  ]);
+  return {
+   districts: districtResult.rows,
+   neighborhoodCount: parseInt(countResult.rows[0]?.count || '0'),
+  };
+ });
+ districts = data.districts;
+ neighborhoodCount = data.neighborhoodCount;
 } catch (e) {
-  console.error('Error loading mahalleler index:', e);
+ logger.error('Error loading mahalleler index:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const seo = {
-  title: 'Şanlıurfa Mahalleler Rehberi | İlçe ve Mahalle Bilgileri',
-  description: "Şanlıurfa\'nın tüm mahallelerini keşfedin. İlçe ve mahallelere göre mekanlar, eczaneler, okullar ve daha fazlası.",
-  keywords: ['şanlıurfa mahalleler', 'urfa mahalle listesi', 'şanlıurfa eyyübiye mahalleleri', 'urfa haliliye mahalleler', 'şanlıurfa adres', 'urfa semt rehberi'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/mahalleler',
+ title: 'Şanlıurfa Mahalleler Rehberi | İlçe ve Mahalle Bilgileri',
+ description: "Şanlıurfa'nın tüm mahallelerini keşfedin. İlçe ve mahallelere göre mekanlar, eczaneler, okullar ve daha fazlası.",
+ keywords: ['şanlıurfa mahalleler', 'urfa mahalle listesi', 'şanlıurfa eyyübiye mahalleleri', 'urfa haliliye mahalleler', 'şanlıurfa adres', 'urfa semt rehberi'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/mahalleler',
 };
-const { baseUrl } = await getSiteBranding();
+
+const popularNeighborhoods = [
+ { name: 'Dergah Mahallesi', ilce: 'eyyubiye', slug: 'dergah-mahallesi' },
+ { name: 'Balıklıgöl Mahallesi', ilce: 'eyyubiye', slug: 'balikligol-mahallesi' },
+ { name: 'Atatürk Mahallesi', ilce: 'haliliye', slug: 'ataturk-mahallesi' },
+ { name: 'Paşabağı Mahallesi', ilce: 'haliliye', slug: 'pasabagi-mahallesi' },
+ { name: 'Camikebir Mahallesi', ilce: 'eyyubiye', slug: 'camikebir-mahallesi' },
+ { name: 'Yenişehir Mahallesi', ilce: 'karakopru', slug: 'yenisehir-mahallesi' },
+ { name: 'Bağlarbaşı Mahallesi', ilce: 'haliliye', slug: 'baglarbasi-mahallesi' },
+ { name: 'Karaköprü Merkez', ilce: 'karakopru', slug: 'karakopru-merkez' },
+];
 
 const faqItems = [
-  {
-    S: "Şanlıurfa\'nın kaç ilçesi var?",
-    C: "Şanlıurfa\'ya bağlı 13 ilçe bulunmaktadır. Merkez ilçeler Eyyübiye, Haliliye ve Karaköprü'dür.",
-  },
-  {
-    S: "Şanlıurfa\'da en kalabalık mahalleler hangileri?",
-    C: 'Dergah, Balıklıgöl, Camikebir gibi tarihi merkez mahalleleri ve Haliliye ilçesindeki yeni yapılaşma bölgeleri en kalabalık mahalleler arasında yer almaktadır.',
-  },
-  {
-    S: 'Mahalle bazında mekan ve hizmet bilgilerine nasıl ulaşılır?',
-    C: 'Mahalleler rehberinden ilgili ilçeye ve ardından mahalleye tıklayarak o mahalledeki eczane, okul ve yakın mekan bilgilerine ulaşabilirsiniz.',
-  },
+ {
+ S: "Şanlıurfa'nın kaç ilçesi var?",
+ C: "Şanlıurfa'ya bağlı 13 ilçe bulunmaktadır. Merkez ilçeler Eyyübiye, Haliliye ve Karaköprü'dür.",
+ },
+ {
+ S: "Şanlıurfa'da en kalabalık mahalleler hangileri?",
+ C: 'Dergah, Balıklıgöl, Camikebir gibi tarihi merkez mahalleleri ve Haliliye ilçesindeki yeni yapılaşma bölgeleri en kalabalık mahalleler arasında yer almaktadır.',
+ },
+ {
+ S: 'Mahalle bazında mekan ve hizmet bilgilerine nasıl ulaşılır?',
+ C: 'Mahalleler rehberinden ilgili ilçeye ve ardından mahalleye tıklayarak o mahalledeki eczane, okul ve yakın mekan bilgilerine ulaşabilirsiniz.',
+ },
 ];
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="bg-gradient-to-br from-indigo-700 to-purple-800 text-white py-16">
-      <div class="container mx-auto px-4">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">Mahalleler Rehberi</h1>
-        <p class="text-xl text-indigo-100 max-w-2xl">
-          Şanlıurfa’nın tüm mahallelerini ilçelere göre keşfedin
-        </p>
-        {neighborhoodCount > 0 && (
-          <p class="text-indigo-200 mt-2">{neighborhoodCount} mahalle listelendi</p>
-        )}
-      </div>
-    </div>
+ <style>
+ .mh-hero{background:var(--public-bg);border-bottom:1px solid var(--public-border);padding:4rem 0}
+ .mh-hero-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-muted)}
+ .mh-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(1.7rem,4vw,2.6rem);font-weight:700;color:var(--public-text);margin:.75rem 0 .25rem}
+ .mh-hero-desc{color:var(--public-muted);font-size:.9rem;max-width:40rem}
+ .mh-hero-count{color:var(--public-text-soft);font-size:.8rem;margin-top:.4rem}
+ .mh-body{background:var(--public-bg);padding:2rem 0 4rem}
+ .mh-info{background:var(--public-accent-soft);border:1px solid var(--public-border);padding:1.25rem;margin-bottom:1.75rem}
+ .mh-info-h2{font-size:.9rem;font-weight:700;color:var(--public-text);margin-bottom:.25rem}
+ .mh-info-p{font-size:.8rem;line-height:1.7;color:var(--public-muted)}
+ .mh-section-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:700;color:var(--public-text);margin-bottom:1.25rem}
+ .mh-section-title-spaced{margin-top:3rem}
+ .mh-district-grid{display:grid;gap:1rem}
+ @media(min-width:48rem){.mh-district-grid{grid-template-columns:repeat(2,1fr)}}
+ @media(min-width:64rem){.mh-district-grid{grid-template-columns:repeat(3,1fr)}}
+ .mh-district-card{background:var(--public-surface);border:1px solid var(--public-border);padding:1.25rem;transition:border-color .15s,transform .15s}
+ .mh-district-card:hover{border-color:var(--public-accent);transform:translateY(-2px)}
+ .mh-district-inner{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
+ .mh-district-emoji{font-size:1.5rem}
+ .mh-district-name{font-size:.95rem;font-weight:700;color:var(--public-text);transition:color .15s}
+ .mh-district-card:hover .mh-district-name{color:var(--public-accent)}
+ .mh-district-count{font-size:.78rem;color:var(--public-muted)}
+ .mh-district-desc{font-size:.78rem;color:var(--public-text-soft);margin-top:.4rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .mh-popular-grid{display:grid;gap:.75rem;grid-template-columns:repeat(2,1fr)}
+ @media(min-width:48rem){.mh-popular-grid{grid-template-columns:repeat(3,1fr)}}
+ @media(min-width:64rem){.mh-popular-grid{grid-template-columns:repeat(4,1fr)}}
+ .mh-popular-card{background:var(--public-surface);border:1px solid var(--public-border);padding:.85rem;transition:border-color .15s}
+ .mh-popular-card:hover{border-color:var(--public-accent)}
+ .mh-popular-ilce{font-size:.68rem;color:var(--public-text-soft);text-transform:uppercase}
+ .mh-popular-name{font-size:.82rem;font-weight:600;color:var(--public-text);margin-top:.2rem;transition:color .15s}
+ .mh-popular-card:hover .mh-popular-name{color:var(--public-accent)}
+ </style>
 
-    <div class="container mx-auto px-4 py-12">
-      <!-- Öne Çıkan Bilgi -->
-      <div class="bg-indigo-50 border border-indigo-200 rounded-2xl p-6 mb-10">
-        <h2 class="text-lg font-bold text-indigo-800 mb-2">📍 Mahalle Rehberi Hakkında</h2>
-        <p class="text-indigo-700 text-sm">
-          Her mahalle sayfasında yakın mekanlar, eczaneler, okullar ve diğer hizmetleri bulabilirsiniz.
-          İlçenizi seçerek mahalle listesine ulaşın.
-        </p>
-      </div>
+ <div class="mh-hero">
+ <div class="sf-container">
+ <p class="mh-hero-label">Şanlıurfa Semt Rehberi</p>
+ <h1 class="mh-h1">Mahalleler Rehberi</h1>
+ <p class="mh-hero-desc">Şanlıurfa'nın tüm mahallelerini ilçelere göre keşfedin.</p>
+ {neighborhoodCount > 0 && (
+ <p class="mh-hero-count">{neighborhoodCount} mahalle listelendi</p>
+ )}
+ </div>
+ </div>
 
-      <!-- İlçe Listesi -->
-      <h2 class="text-2xl font-bold text-gray-900 mb-6">İlçelere Göre Mahalleler</h2>
-      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {districts.map((d) => (
-          <a
-            href={`/ilceler/${d.slug}`}
-            class="bg-white rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all hover:-translate-y-1 border border-gray-100 group"
-          >
-            <div class="flex items-center gap-3 mb-3">
-              <span class="text-3xl">🏘️</span>
-              <h3 class="text-xl font-bold text-gray-900 group-hover:text-indigo-600">{d.name}</h3>
-            </div>
-            {d.neighborhood_count > 0 ? (
-              <p class="text-sm text-gray-500">{d.neighborhood_count} mahalle</p>
-            ) : (
-              <p class="text-sm text-gray-400">Mahalle bilgisi güncelleniyor</p>
-            )}
-            {d.description && (
-              <p class="text-sm text-gray-500 mt-2 line-clamp-2">{d.description}</p>
-            )}
-          </a>
-        ))}
-      </div>
+ <div class="mh-body">
+ <div class="sf-container">
+ <div class="mh-info">
+ <h2 class="mh-info-h2">📍 Mahalle Rehberi Hakkında</h2>
+ <p class="mh-info-p">Her mahalle sayfasında yakın mekanlar, eczaneler, okullar ve diğer hizmetleri bulabilirsiniz. İlçenizi seçerek mahalle listesine ulaşın.</p>
+ </div>
 
-      <!-- Popüler Mahalleler -->
-      <div class="mt-12">
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Popüler Mahalleler</h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {[
-            { name: 'Dergah Mahallesi', ilce: 'eyyubiye', slug: 'dergah-mahallesi' },
-            { name: 'Balıklıgöl Mahallesi', ilce: 'eyyubiye', slug: 'balikligol-mahallesi' },
-            { name: 'Atatürk Mahallesi', ilce: 'haliliye', slug: 'ataturk-mahallesi' },
-            { name: 'Paşabağı Mahallesi', ilce: 'haliliye', slug: 'pasabagi-mahallesi' },
-            { name: 'Camikebir Mahallesi', ilce: 'eyyubiye', slug: 'camikebir-mahallesi' },
-            { name: 'Yenişehir Mahallesi', ilce: 'karakopru', slug: 'yenisehir-mahallesi' },
-            { name: 'Bağlarbaşı Mahallesi', ilce: 'haliliye', slug: 'baglarbasi-mahallesi' },
-            { name: 'Karaköprü Merkez', ilce: 'karakopru', slug: 'karakopru-merkez' },
-          ].map((mah) => (
-            <a
-              href={`/mahalleler/${mah.ilce}/${mah.slug}`}
-              class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-all group border border-gray-100"
-            >
-              <span class="text-xs text-indigo-500">{mah.ilce}</span>
-              <p class="font-medium text-gray-800 group-hover:text-indigo-600 text-sm mt-1">{mah.name}</p>
-            </a>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: `${baseUrl}/mahalleler` },
-    ]
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ <h2 class="mh-section-title">İlçelere Göre Mahalleler</h2>
+ <div class="mh-district-grid">
+ {districts.map((d) => (
+ <a href={`/ilceler/${d.slug}`} class="mh-district-card">
+ <div class="mh-district-inner">
+ <span class="mh-district-emoji">🏘️</span>
+ <h3 class="mh-district-name">{d.name}</h3>
+ </div>
+ {d.neighborhood_count > 0 ? (
+ <p class="mh-district-count">{d.neighborhood_count} mahalle</p>
+ ) : (
+ <p class="mh-district-count">Mahalle bilgisi güncelleniyor</p>
+ )}
+ {d.description && <p class="mh-district-desc">{d.description}</p>}
+ </a>
+ ))}
+ </div>
+
+ <h2 class="mh-section-title mh-section-title-spaced">Popüler Mahalleler</h2>
+ <div class="mh-popular-grid">
+ {popularNeighborhoods.map((mah) => (
+ <a href={`/ilceler/${mah.ilce}`} class="mh-popular-card">
+ <p class="mh-popular-ilce">{mah.ilce}</p>
+ <p class="mh-popular-name">{mah.name}</p>
+ </a>
+ ))}
+ </div>
+ </div>
+ </div>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: `${baseUrl}/mahalleler` },
+ ]
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

@@ -1,0 +1,227 @@
+---
+import { Icon } from 'astro-icon/components';
+
+type IntroAction = {
+  href: string;
+  label: string;
+};
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  description: string;
+  searchAction?: string;
+  searchName?: string;
+  searchValue?: string;
+  searchPlaceholder?: string;
+  searchAriaLabel?: string;
+  quickAnswerTitle?: string;
+  quickAnswerText?: string;
+  actions?: IntroAction[];
+}
+
+const {
+  eyebrow,
+  title,
+  description,
+  searchAction,
+  searchName = 'q',
+  searchValue = '',
+  searchPlaceholder = '',
+  searchAriaLabel = 'Arama',
+  quickAnswerTitle,
+  quickAnswerText,
+  actions = [],
+} = Astro.props;
+
+const hasSearch = Boolean(searchAction);
+const hasQuickAnswer = Boolean(quickAnswerTitle && quickAnswerText);
+const hasActions = actions.length > 0;
+---
+
+<section class="ppi">
+  <div class="sf-container">
+    <div class="ppi-inner">
+      <p class="ppi-eyebrow">{eyebrow}</p>
+      <h1 class="ppi-title">{title}</h1>
+      <p class="ppi-sub">{description}</p>
+
+      {hasSearch && (
+        <form action={searchAction} class="ppi-search" role="search" aria-label={searchAriaLabel}>
+          <div class="ppi-search-wrap">
+            <Icon name="lucide:search" class="ppi-search-icon" aria-hidden="true" />
+            <input
+              type="search"
+              name={searchName}
+              value={searchValue}
+              placeholder={searchPlaceholder}
+              class="ppi-search-input"
+              aria-label={searchAriaLabel}
+              autocomplete="off"
+            />
+          </div>
+        </form>
+      )}
+
+      {hasActions && (
+        <div class="ppi-actions" aria-label="Hızlı bağlantılar">
+          {actions.map((action) => (
+            <a href={action.href} class="ppi-chip">
+              {action.label}
+            </a>
+          ))}
+        </div>
+      )}
+
+      {hasQuickAnswer && (
+        <div class="ppi-answer">
+          <p class="ppi-answer-label">{quickAnswerTitle}</p>
+          <p class="ppi-answer-text">{quickAnswerText}</p>
+        </div>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .ppi {
+    padding: clamp(3.5rem, 7vw, 4.75rem) 0 clamp(2.5rem, 5vw, 3rem);
+    border-bottom: 1px solid rgba(184, 115, 51, 0.1);
+    background:
+      radial-gradient(circle at top left, rgba(44, 122, 82, 0.08), transparent 28%),
+      radial-gradient(circle at top right, rgba(212, 151, 24, 0.12), transparent 30%),
+      linear-gradient(180deg, #fbf6ec 0%, #f4ecd8 58%, #fbf6ec 100%);
+  }
+
+  .ppi-inner {
+    max-width: 44rem;
+    margin: 0 auto;
+  }
+
+  .ppi-eyebrow {
+    margin: 0 0 0.75rem;
+    color: #b8652b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .ppi-title {
+    margin: 0;
+    color: #1f2117;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 600;
+    line-height: 1.08;
+  }
+
+  .ppi-sub {
+    max-width: 38rem;
+    margin: 0.85rem 0 0;
+    color: #61594f;
+    font-size: 0.95rem;
+    line-height: 1.75;
+  }
+
+  .ppi-search {
+    margin-top: 1.25rem;
+  }
+
+  .ppi-search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    max-width: 34rem;
+    overflow: hidden;
+    border: 1px solid rgba(24, 35, 29, 0.08);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 16px 28px -24px rgba(24, 35, 29, 0.38);
+  }
+
+  .ppi-search-icon {
+    position: absolute;
+    left: 0.95rem;
+    width: 1rem;
+    height: 1rem;
+    color: #8a7a6a;
+    pointer-events: none;
+  }
+
+  .ppi-search-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 0.9rem 1rem 0.9rem 2.7rem;
+    color: #1a1008;
+    font-family: 'Jost', system-ui, sans-serif;
+    font-size: 0.92rem;
+  }
+
+  .ppi-search-input::placeholder {
+    color: #8a7a6a;
+  }
+
+  .ppi-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 1.15rem;
+  }
+
+  .ppi-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.45rem;
+    padding: 0 1rem;
+    border: 1px solid rgba(184, 115, 51, 0.18);
+    border-radius: 999px;
+    background: rgba(184, 115, 51, 0.08);
+    color: #7a5b42;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  }
+
+  .ppi-chip:hover {
+    transform: translateY(-1px);
+    border-color: rgba(184, 115, 51, 0.4);
+    color: #1f2117;
+  }
+
+  .ppi-answer {
+    max-width: 36rem;
+    margin-top: 1rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(184, 115, 51, 0.16);
+    background: rgba(184, 115, 51, 0.06);
+    border-radius: 1rem;
+  }
+
+  .ppi-answer-label {
+    margin: 0 0 0.3rem;
+    color: #b8652b;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .ppi-answer-text {
+    margin: 0;
+    color: #61594f;
+    font-size: 0.82rem;
+    line-height: 1.7;
+  }
+
+  @media (max-width: 767px) {
+    .ppi-search-wrap,
+    .ppi-answer {
+      max-width: none;
+    }
+  }
+</style>

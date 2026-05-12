@@ -1,0 +1,116 @@
+---
+import { Icon } from 'astro-icon/components';
+
+type Row = {
+  icon: string;
+  label: string;
+  value: string;
+  href?: string;
+  external?: boolean;
+};
+
+interface Props {
+  rows: Row[];
+}
+
+const { rows = [] } = Astro.props;
+---
+
+{rows.length > 0 && (
+  <div class="pir">
+    {rows.map((row) => (
+      <div class="pir-row">
+        <span class="pir-icon">
+          <Icon name={row.icon} style="width:1rem;height:1rem" />
+        </span>
+        <div class="pir-copy">
+          <p class="pir-label">{row.label}</p>
+          {row.href ? (
+            <a
+              href={row.href}
+              class="pir-value pir-link"
+              target={row.external ? '_blank' : undefined}
+              rel={row.external ? 'noopener noreferrer' : undefined}
+            >
+              {row.value}
+            </a>
+          ) : (
+            <p class="pir-value">{row.value}</p>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
+<style>
+  .pir {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pir-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--public-border-soft);
+  }
+
+  .pir-row:first-child {
+    padding-top: 0;
+  }
+
+  .pir-row:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+
+  .pir-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    flex-shrink: 0;
+    border-radius: 0.45rem;
+    background: var(--public-accent-soft);
+    color: var(--public-accent);
+  }
+
+  .pir-copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pir-label {
+    margin: 0 0 0.22rem;
+    color: var(--public-text);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .pir-value {
+    margin: 0;
+    color: var(--public-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .pir-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.75rem;
+    color: var(--public-accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .pir-link:hover {
+    color: var(--public-accent-strong);
+    text-decoration: underline;
+    text-underline-offset: 0.16rem;
+  }
+</style>

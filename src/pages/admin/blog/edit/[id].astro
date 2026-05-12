@@ -1,357 +1,385 @@
 ---
-// Edit Blog Post
 import AdminLayout from '../../../../layouts/AdminLayout.astro';
-import { requireRole } from '../../../../lib/auth';
 import { getPostBySlug, getCategories, getTags, getPostRevisions } from '../../../../lib/blog/db';
-
-const auth = await requireRole(Astro.request, 'admin');
-if (auth instanceof Response) return auth;
 
 const { id } = Astro.params;
 if (!id) {
-  return Astro.redirect('/admin/blog');
+ return Astro.redirect('/admin/blog');
 }
 
 const [post, categories, tags, revisions] = await Promise.all([
-  getPostBySlug(id),
-  getCategories(),
-  getTags(),
-  getPostRevisions(id),
+ getPostBySlug(id),
+ getCategories(),
+ getTags(),
+ getPostRevisions(id),
 ]);
 
 if (!post) {
-  return Astro.redirect('/admin/blog');
+ return Astro.redirect('/admin/blog');
 }
 
 const postTagIds = post.tags?.map(t => t.id) || [];
 ---
 
-<AdminLayout title={`Düzenle: ${post.title}`}>
-  <div class="max-w-4xl mx-auto">
-    <div class="flex items-center justify-between mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Yazı Düzenle</h1>
-      <div class="flex gap-2">
-        <a href={`/blog/${post.slug}`} target="_blank" class="text-blue-600 hover:text-blue-800">Görüntüle →</a>
-        <span class="text-gray-300">|</span>
-        <a href="/admin/blog/posts" class="text-gray-600 hover:text-gray-900">← Listeye Dön</a>
-      </div>
-    </div>
+<AdminLayout
+ title="Yazı Düzenle"
+ subtitle={post.title}
+ seo={{ title: `Düzenle: ${post.title} - Yönetim Paneli`, noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-4xl">
+ <div class="mb-6 flex items-center justify-between">
+ <a href="/admin/blog/posts" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Listeye Dön</a>
+ <a href={`/blog/${post.slug}`} target="_blank" rel="noopener" class="text-sm text-urfa-600 hover:text-[#7A6B58]">Görüntüle →</a>
+ </div>
 
-    <form id="post-form" class="space-y-6">
-      <input type="hidden" name="id" value={post.id} />
-      
-      <!-- Title -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Başlık</label>
-        <input
-          type="text"
-          name="title"
-          value={post.title}
-          required
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
+ <form id="post-form" class="space-y-5">
+ <input type="hidden" name="id" value={post.id} />
 
-      <!-- Slug -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">URL (Slug)</label>
-        <input
-          type="text"
-          name="slug"
-          value={post.slug}
-          required
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-      </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 space-y-4">
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Başlık</label>
+ <input
+ type="text"
+ name="title"
+ value={post.title}
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ />
+ </div>
 
-      <!-- Category & Status -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
-          <select name="category_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            <option value="">Kategori Seçin</option>
-            {categories.map(cat => (
-              <option value={cat.id} selected={post.category_id === cat.id}>{cat.name}</option>
-            ))}
-          </select>
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Durum</label>
-          <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-            <option value="draft" selected={post.status === 'draft'}>Taslak</option>
-            <option value="published" selected={post.status === 'published'}>Yayında</option>
-            <option value="scheduled" selected={post.status === 'scheduled'}>Planlandı</option>
-            <option value="archived" selected={post.status === 'archived'}>Arşiv</option>
-          </select>
-        </div>
-      </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">URL (Slug)</label>
+ <input
+ type="text"
+ name="slug"
+ value={post.slug}
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ />
+ </div>
 
-      <!-- Excerpt -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Özet</label>
-        <textarea
-          name="excerpt"
-          rows="2"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >{post.excerpt}</textarea>
-      </div>
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Kategori</label>
+ <select name="category_id" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option value="">Kategori Seçin</option>
+ {categories.map(cat => (
+ <option value={cat.id} selected={post.category_id === cat.id}>{cat.name}</option>
+ ))}
+ </select>
+ </div>
 
-      <!-- Content -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">İçerik</label>
-        <div class="border border-gray-300 rounded-lg">
-          <!-- Toolbar -->
-          <div class="flex flex-wrap gap-1 p-2 border-b border-gray-200 bg-gray-50">
-            <button type="button" onclick="formatText('bold')" class="p-2 hover:bg-gray-200 rounded" title="Kalın"><strong>B</strong></button>
-            <button type="button" onclick="formatText('italic')" class="p-2 hover:bg-gray-200 rounded" title="İtalik"><em>I</em></button>
-            <button type="button" onclick="formatText('h2')" class="p-2 hover:bg-gray-200 rounded" title="Başlık 2">H2</button>
-            <button type="button" onclick="formatText('h3')" class="p-2 hover:bg-gray-200 rounded" title="Başlık 3">H3</button>
-            <button type="button" onclick="insertLink()" class="p-2 hover:bg-gray-200 rounded" title="Link">🔗</button>
-            <button type="button" onclick="insertImage()" class="p-2 hover:bg-gray-200 rounded" title="Görsel">🖼️</button>
-            <button type="button" onclick="formatText('ul')" class="p-2 hover:bg-gray-200 rounded" title="Liste">• Liste</button>
-            <button type="button" onclick="formatText('ol')" class="p-2 hover:bg-gray-200 rounded" title="Numaralı Liste">1. Liste</button>
-          </div>
-          
-          <textarea
-            id="content"
-            name="content"
-            rows="20"
-            required
-            class="w-full px-4 py-2 focus:ring-0 border-0 font-mono text-sm"
-          >{post.content}</textarea>
-        </div>
-      </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Durum</label>
+ <select name="status" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option value="draft" selected={post.status === 'draft'}>Taslak</option>
+ <option value="published" selected={post.status === 'published'}>Yayında</option>
+ <option value="scheduled" selected={post.status === 'scheduled'}>Planlandı</option>
+ <option value="archived" selected={post.status === 'archived'}>Arşiv</option>
+ </select>
+ </div>
+ </div>
 
-      <!-- Featured Image -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Öne Çıkan Görsel</label>
-        {post.featured_image && (
-          <img src={post.featured_image} alt="" class="w-32 h-20 object-cover rounded-lg mb-2" />
-        )}
-        <input
-          type="url"
-          name="featured_image"
-          value={post.featured_image || ''}
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="https://..."
-        />
-      </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Özet</label>
+ <textarea
+ name="excerpt"
+ rows="2"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ >{post.excerpt}</textarea>
+ </div>
 
-      <!-- Tags -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Etiketler</label>
-        <div class="flex flex-wrap gap-2">
-          {tags.map(tag => (
-            <label class="inline-flex items-center px-3 py-1 bg-gray-100 rounded-full cursor-pointer hover:bg-gray-200">
-              <input 
-                type="checkbox" 
-                name="tag_ids" 
-                value={tag.id} 
-                checked={postTagIds.includes(tag.id)}
-                class="mr-2" 
-              />
-              <span class="text-sm">{tag.name}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">İçerik</label>
+ <div class="border border-[rgba(184,115,51,0.2)] rounded-sm">
+ <div class="flex flex-wrap gap-1 p-2 border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <button type="button" onclick="formatText('bold')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Kalın"><strong>B</strong></button>
+ <button type="button" onclick="formatText('italic')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="İtalik"><em>I</em></button>
+ <button type="button" onclick="formatText('h2')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Başlık 2">H2</button>
+ <button type="button" onclick="formatText('h3')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Başlık 3">H3</button>
+ <button type="button" onclick="insertLink()" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Link">🔗</button>
+ <button type="button" onclick="insertImage()" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Görsel">🖼️</button>
+ <button type="button" onclick="formatText('ul')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Liste">• Liste</button>
+ <button type="button" onclick="formatText('ol')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Numaralı Liste">1. Liste</button>
+ </div>
 
-      <!-- SEO -->
-      <div class="border border-gray-200 rounded-lg p-4 space-y-4">
-        <h3 class="font-medium text-gray-900">SEO Ayarları</h3>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Meta Başlık</label>
-          <input
-            type="text"
-            name="meta_title"
-            value={post.meta_title || ''}
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Meta Açıklama</label>
-          <textarea
-            name="meta_description"
-            rows="2"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >{post.meta_description || ''}</textarea>
-        </div>
-      </div>
+ <textarea
+ id="content"
+ name="content"
+ rows="20"
+ required
+ class="w-full px-3 py-2 focus:outline-none border-0 font-mono text-sm"
+ >{post.content}</textarea>
+ </div>
+ </div>
 
-      <!-- Options -->
-      <div class="flex gap-4">
-        <label class="inline-flex items-center">
-          <input type="checkbox" name="is_featured" checked={post.is_featured} class="mr-2" />
-          <span class="text-sm text-gray-700">Öne Çıkan Yazı</span>
-        </label>
-        <label class="inline-flex items-center">
-          <input type="checkbox" name="is_pinned" checked={post.is_pinned} class="mr-2" />
-          <span class="text-sm text-gray-700">Sabitle</span>
-        </label>
-      </div>
-
-      <!-- Stats -->
-      <div class="bg-gray-50 rounded-lg p-4 text-sm text-gray-600">
-        <div class="grid grid-cols-3 gap-4">
-          <div>
-            <span class="font-medium">Görüntülenme:</span> {post.view_count.toLocaleString('tr-TR')}
-          </div>
-          <div>
-            <span class="font-medium">Beğeni:</span> {post.like_count}
-          </div>
-          <div>
-            <span class="font-medium">Okuma süresi:</span> {post.reading_time} dk
-          </div>
-        </div>
-        <div class="mt-2 text-xs">
-          Oluşturulma: {new Date(post.created_at).toLocaleString('tr-TR')} | 
-          Son güncelleme: {new Date(post.updated_at).toLocaleString('tr-TR')}
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="flex gap-4">
-        <button
-          type="submit"
-          class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-        >
-          Kaydet
-        </button>
-        <button
-          type="button"
-          onclick="deletePost()"
-          class="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium"
-        >
-          Sil
-        </button>
-        <a
-          href="/admin/blog/posts"
-          class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
-        >
-          İptal
-        </a>
-      </div>
-    </form>
-
-    <!-- Revisions -->
-    {revisions.length > 0 && (
-      <div class="mt-8 border-t pt-8">
-        <h3 class="font-medium text-gray-900 mb-4">Revizyon Geçmişi ({revisions.length})</h3>
-        <div class="space-y-2">
-          {revisions.slice(0, 5).map(rev => (
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg text-sm">
-              <div>
-                <span class="font-medium">{rev.editor_name || 'Bilinmiyor'}</span>
-                <span class="text-gray-500"> - {new Date(rev.created_at).toLocaleString('tr-TR')}</span>
-                {rev.change_summary && <span class="text-gray-600"> ({rev.change_summary})</span>}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Öne Çıkan Görsel</label>
+ <div class="flex flex-wrap items-start gap-3">
+  <div class="flex-1 min-w-[240px] space-y-2">
+   <input
+    type="url"
+    name="featured_image"
+    id="featured_image_url"
+    value={post.featured_image || ''}
+    class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+    placeholder="https://... veya yükleyin"
+   />
+   <p class="text-xs text-[#9B8A75]">URL elle yazabilir veya alttaki butonla dosya yükleyebilirsiniz (JPEG/PNG/WebP, maks 5MB).</p>
   </div>
+  <div class="space-y-2">
+   <label class="inline-flex items-center cursor-pointer rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700 transition">
+    <input type="file" id="featured_image_file" accept="image/jpeg,image/png,image/webp" class="hidden" />
+    📷 Dosya Yükle
+   </label>
+   <p id="featured_image_status" class="text-xs text-[#7A6B58] hidden"></p>
+  </div>
+  <img id="featured_image_preview" src={post.featured_image || ''} alt="Önizleme" class={post.featured_image ? "h-20 w-32 rounded-sm border border-[rgba(184,115,51,0.2)] object-cover" : "hidden h-20 w-32 rounded-sm border border-[rgba(184,115,51,0.2)] object-cover"} />
+ </div>
+ </div>
 
-  <script define:vars={{ postId: post.id }} is:inline>
-    // Format text
-    function formatText(command) {
-      const textarea = document.getElementById('content');
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const text = textarea.value;
-      const selected = text.substring(start, end);
-      
-      let formatted = '';
-      switch(command) {
-        case 'bold': formatted = `**${selected}**`; break;
-        case 'italic': formatted = `*${selected}*`; break;
-        case 'h2': formatted = `\n## ${selected}\n`; break;
-        case 'h3': formatted = `\n### ${selected}\n`; break;
-        case 'ul': formatted = selected.split('\n').map(l => `- ${l}`).join('\n'); break;
-        case 'ol': formatted = selected.split('\n').map((l, i) => `${i + 1}. ${l}`).join('\n'); break;
-      }
-      
-      textarea.value = text.substring(0, start) + formatted + text.substring(end);
-      textarea.focus();
+ <script is:inline>
+  (function() {
+   const fileInput = document.getElementById('featured_image_file');
+   const urlInput = document.getElementById('featured_image_url');
+   const preview = document.getElementById('featured_image_preview');
+   const status = document.getElementById('featured_image_status');
+   if (!fileInput || !urlInput || !preview || !status) return;
+
+   urlInput.addEventListener('input', () => {
+    if (urlInput.value) { preview.src = urlInput.value; preview.classList.remove('hidden'); }
+    else { preview.classList.add('hidden'); }
+   });
+
+   fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+     status.textContent = '✗ Maksimum 5MB';
+     status.className = 'text-xs text-red-600';
+     status.classList.remove('hidden');
+     fileInput.value = '';
+     return;
     }
-
-    function insertLink() {
-      const url = prompt('Link URL:');
-      if (url) {
-        const textarea = document.getElementById('content');
-        const start = textarea.selectionStart;
-        textarea.value = textarea.value.substring(0, start) + `[](${url})` + textarea.value.substring(start);
-      }
+    status.textContent = '⏳ Yükleniyor...';
+    status.className = 'text-xs text-[#7A6B58]';
+    status.classList.remove('hidden');
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+     const res = await fetch('/api/admin/blog/upload', { method: 'POST', body: fd });
+     const data = await res.json();
+     if (!res.ok || !data?.data?.url) throw new Error(data?.detail || data?.error || 'Yükleme başarısız');
+     urlInput.value = data.data.url;
+     preview.src = data.data.url;
+     preview.classList.remove('hidden');
+     status.textContent = '✓ Yüklendi';
+     status.className = 'text-xs text-green-700';
+    } catch (err) {
+     status.textContent = '✗ ' + (err instanceof Error ? err.message : 'Hata');
+     status.className = 'text-xs text-red-600';
     }
+   });
+  })();
+ </script>
 
-    function insertImage() {
-      const url = prompt('Görsel URL:');
-      if (url) {
-        const textarea = document.getElementById('content');
-        const start = textarea.selectionStart;
-        textarea.value = textarea.value.substring(0, start) + `\n![Görsel](${url})\n` + textarea.value.substring(start);
-      }
-    }
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Etiketler</label>
+ <div class="flex flex-wrap gap-2">
+ {tags.map(tag => (
+ <label class="inline-flex items-center px-3 py-1 bg-[rgba(184,115,51,0.08)] rounded-sm cursor-pointer hover:bg-[rgba(184,115,51,0.15)]">
+ <input
+ type="checkbox"
+ name="tag_ids"
+ value={tag.id}
+ checked={postTagIds.includes(tag.id)}
+ class="mr-2"
+ />
+ <span class="text-sm text-[#7A6B58]">{tag.name}</span>
+ </label>
+ ))}
+ </div>
+ </div>
+ </div>
 
-    // Form submit
-    document.getElementById('post-form')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const formData = new FormData(e.target);
-      const data = {
-        title: formData.get('title'),
-        slug: formData.get('slug'),
-        excerpt: formData.get('excerpt'),
-        content: formData.get('content'),
-        category_id: formData.get('category_id') || null,
-        status: formData.get('status'),
-        featured_image: formData.get('featured_image'),
-        meta_title: formData.get('meta_title'),
-        meta_description: formData.get('meta_description'),
-        is_featured: formData.has('is_featured'),
-        is_pinned: formData.has('is_pinned'),
-        tag_ids: Array.from(formData.getAll('tag_ids')),
-      };
-      
-      try {
-        const response = await fetch(`/api/admin/blog/${postId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          window.location.reload();
-        } else {
-          alert('Hata: ' + result.error);
-        }
-      } catch (error) {
-        alert('Bir hata oluştu');
-      }
-    });
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 space-y-4">
+ <h3 class="font-medium text-[#1F1410]">SEO Ayarları</h3>
 
-    // Delete post
-    async function deletePost() {
-      if (!confirm('Bu yazıyı silmek istediğinize emin misiniz?')) return;
-      
-      try {
-        const response = await fetch(`/api/admin/blog/${postId}`, {
-          method: 'DELETE',
-        });
-        
-        if (response.ok) {
-          window.location.href = '/admin/blog/posts';
-        } else {
-          alert('Silme işlemi başarısız');
-        }
-      } catch (error) {
-        alert('Bir hata oluştu');
-      }
-    }
-  </script>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Meta Başlık</label>
+ <input
+ type="text"
+ name="meta_title"
+ value={post.meta_title || ''}
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ />
+ </div>
+
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Meta Açıklama</label>
+ <textarea
+ name="meta_description"
+ rows="2"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ >{post.meta_description || ''}</textarea>
+ </div>
+ </div>
+
+ <div class="flex gap-4">
+ <label class="inline-flex items-center">
+ <input type="checkbox" name="is_featured" checked={post.is_featured} class="mr-2" />
+ <span class="text-sm text-[#7A6B58]">Öne Çıkan Yazı</span>
+ </label>
+ <label class="inline-flex items-center">
+ <input type="checkbox" name="is_pinned" checked={post.is_pinned} class="mr-2" />
+ <span class="text-sm text-[#7A6B58]">Sabitle</span>
+ </label>
+ </div>
+
+ <div class="bg-[rgba(184,115,51,0.04)] rounded-sm border border-[rgba(184,115,51,0.1)] p-4 text-sm text-[#7A6B58]">
+ <div class="grid grid-cols-3 gap-4">
+ <div><span class="font-medium text-[#1F1410]">Görüntülenme:</span> {post.view_count.toLocaleString('tr-TR')}</div>
+ <div><span class="font-medium text-[#1F1410]">Beğeni:</span> {post.like_count}</div>
+ <div><span class="font-medium text-[#1F1410]">Okuma süresi:</span> {post.reading_time} dk</div>
+ </div>
+ <div class="mt-2 text-xs text-[#7A6B58]">
+ Oluşturulma: {new Date(post.created_at).toLocaleString('tr-TR')} |
+ Son güncelleme: {new Date(post.updated_at).toLocaleString('tr-TR')}
+ </div>
+ </div>
+
+ <div class="flex gap-4">
+ <button type="submit" class="rounded-sm bg-urfa-600 px-6 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+ Kaydet
+ </button>
+ <button
+ type="button"
+ onclick="deletePost()"
+ class="rounded-sm border border-[rgba(184,115,51,0.2)] px-6 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]"
+ >
+ Sil
+ </button>
+ <a
+ href="/admin/blog/posts"
+ class="rounded-sm border border-[rgba(184,115,51,0.2)] px-6 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]"
+ >
+ İptal
+ </a>
+ </div>
+ </form>
+
+ {revisions.length > 0 && (
+ <div class="mt-8 border-t border-[rgba(184,115,51,0.14)] pt-8">
+ <h3 class="font-medium text-[#1F1410] mb-4">Revizyon Geçmişi ({revisions.length})</h3>
+ <div class="space-y-2">
+ {revisions.slice(0, 5).map(rev => (
+ <div class="flex items-center justify-between p-3 bg-[rgba(184,115,51,0.04)] rounded-sm border border-[rgba(184,115,51,0.1)] text-sm">
+ <div>
+ <span class="font-medium text-[#7A6B58]">{rev.editor_name || 'Bilinmiyor'}</span>
+ <span class="text-[#7A6B58]"> - {new Date(rev.created_at).toLocaleString('tr-TR')}</span>
+ {rev.change_summary && <span class="text-[#7A6B58]"> ({rev.change_summary})</span>}
+ </div>
+ </div>
+ ))}
+ </div>
+ </div>
+ )}
+ </div>
+
+ <script define:vars={{ postId: post.id }} is:inline>
+ function formatText(command) {
+ const textarea = document.getElementById('content');
+ const start = textarea.selectionStart;
+ const end = textarea.selectionEnd;
+ const text = textarea.value;
+ const selected = text.substring(start, end);
+
+ let formatted = '';
+ switch(command) {
+ case 'bold': formatted = `**${selected}**`; break;
+ case 'italic': formatted = `*${selected}*`; break;
+ case 'h2': formatted = `\n## ${selected}\n`; break;
+ case 'h3': formatted = `\n### ${selected}\n`; break;
+ case 'ul': formatted = selected.split('\n').map(l => `- ${l}`).join('\n'); break;
+ case 'ol': formatted = selected.split('\n').map((l, i) => `${i + 1}. ${l}`).join('\n'); break;
+ }
+
+ textarea.value = text.substring(0, start) + formatted + text.substring(end);
+ textarea.focus();
+ }
+
+ async function insertLink() {
+ const url = await window.promptInput('Link URL:');
+ if (url) {
+ const textarea = document.getElementById('content');
+ const start = textarea.selectionStart;
+ textarea.value = textarea.value.substring(0, start) + `[](${url})` + textarea.value.substring(start);
+ }
+ }
+
+ async function insertImage() {
+ const url = await window.promptInput('Görsel URL:');
+ if (url) {
+ const textarea = document.getElementById('content');
+ const start = textarea.selectionStart;
+ textarea.value = textarea.value.substring(0, start) + `\n![Görsel](${url})\n` + textarea.value.substring(start);
+ }
+ }
+
+ document.getElementById('post-form')?.addEventListener('submit', async (e) => {
+ e.preventDefault();
+
+ const formData = new FormData(e.target);
+ const data = {
+ title: formData.get('title'),
+ slug: formData.get('slug'),
+ excerpt: formData.get('excerpt'),
+ content: formData.get('content'),
+ category_id: formData.get('category_id') || null,
+ status: formData.get('status'),
+ featured_image: formData.get('featured_image'),
+ meta_title: formData.get('meta_title'),
+ meta_description: formData.get('meta_description'),
+ is_featured: formData.has('is_featured'),
+ is_pinned: formData.has('is_pinned'),
+ tag_ids: Array.from(formData.getAll('tag_ids')),
+ };
+
+ try {
+ const response = await fetch(`/api/admin/blog/${postId}`, {
+ method: 'PUT',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify(data),
+ });
+
+ const result = await response.json();
+
+ if (result.success) {
+ window.location.reload();
+ } else {
+ window.toast?.error('Hata: ' + (result.error || 'Kaydedilemedi'));
+ }
+ } catch (error) {
+ window.toast?.error('Bir hata oluştu');
+ }
+ });
+
+ async function deletePost() {
+ if (!await window.showConfirm('Bu yazıyı silmek istediğinize emin misiniz?')) return;
+
+ try {
+ const response = await fetch(`/api/admin/blog/${postId}`, {
+ method: 'DELETE',
+ });
+
+ if (response.ok) {
+ window.location.href = '/admin/blog/posts';
+ } else {
+ window.toast?.error('Silme işlemi başarısız');
+ }
+ } catch (error) {
+ window.toast?.error('Bir hata oluştu');
+ }
+ }
+ </script>
 </AdminLayout>

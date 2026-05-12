@@ -6,7 +6,7 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { queryOne } from './postgres';
-import { getRedisClient, prefixKey } from './cache/cache';
+import { getRedisClient, prefixKey, redisToString } from './cache/cache';
 import { logger } from './logging';
 
 function getJwtSecret(): string {
@@ -18,12 +18,18 @@ function getJwtSecret(): string {
 const SESSION_TTL = parseInt(process.env.SESSION_TIMEOUT || '86400', 10); // 24h default
 const BCRYPT_ROUNDS = parseInt(process.env.BCRYPT_ROUNDS || '12', 10);
 const IS_TEST_ENV = process.env.NODE_ENV === 'test';
-const REQUIRE_REDIS_SESSION = process.env.AUTH_REDIS_SESSION_REQUIRED === '1';
+
+// Pre-computed bcrypt hash of "InvalidDummyPassword!" with rounds=12.
+// Used for constant-time login defense: when user not found, we still call
+// bcrypt.compare against this dummy hash to equalize timing with valid users.
+// Hash never matches any real password (different input).
+const DUMMY_BCRYPT_HASH = '$2a$12$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 
 interface JwtPayload {
   userId: string;
   email: string;
   role?: string;
+  purpose?: string;
   iat?: number;
   exp?: number;
 }
@@ -88,6 +94,9 @@ export function validatePasswordStrength(password: string): { valid: boolean; er
   if (password.length < 8) {
     return { valid: false, error: 'Şifre en az 8 karakter olmalıdır.' };
   }
+  if (password.length > 72) {
+    return { valid: false, error: 'Şifre maksimum 72 karakter olmalıdır.' };
+  }
   if (!/[A-Z]/.test(password)) {
     return { valid: false, error: 'Şifre en az bir büyük harf içermelidir.' };
   }
@@ -112,7 +121,9 @@ export function createToken(payload: { userId: string; email: string; role?: str
 
   const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const body = base64url(JSON.stringify({
-    ...payload,
+    userId: payload.userId,
+    email: payload.email,
+    ...(payload.role ? { role: payload.role } : {}),
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL,
   }));
@@ -140,7 +151,12 @@ function decodeToken(token: string): JwtPayload | null {
       .update(`${header}.${body}`)
       .digest('base64url');
 
-    if (signature !== expectedSig) return null;
+    // Constant-time signature comparison — `!==` byte-by-byte timing leak'i.
+    // Buffer'ların farklı uzunlukta olması durumunda timingSafeEqual throw eder, length pre-check şart.
+    const sigBuf = Buffer.from(signature);
+    const expectedBuf = Buffer.from(expectedSig);
+    if (sigBuf.length !== expectedBuf.length) return null;
+    if (!crypto.timingSafeEqual(sigBuf, expectedBuf)) return null;
 
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString()) as Partial<JwtPayload>;
     if (typeof payload.userId !== 'string' || typeof payload.email !== 'string') return null;
@@ -164,18 +180,23 @@ async function setSession(token: string, data: SessionData): Promise<void> {
   }
 }
 
-async function getSession(token: string): Promise<SessionData | null> {
+type SessionCheckResult =
+  | { status: 'found'; data: SessionData }
+  | { status: 'not-found' }    // Redis up, session explicitly absent (user logged out)
+  | { status: 'unavailable' }; // Redis down — fail-open, JWT-only validation allowed
+
+async function getSession(token: string): Promise<SessionCheckResult> {
   try {
     const redis = await getRedisClient();
     const key = prefixKey(`session:${token}`);
     const data = await redis.get(key);
-    if (!data) return null;
+    if (!data) return { status: 'not-found' };
 
     // Sliding window: refresh TTL on access
     await redis.expire(key, SESSION_TTL);
-    return JSON.parse(data) as SessionData;
+    return { status: 'found', data: JSON.parse(redisToString(data)!) as SessionData };
   } catch {
-    return null;
+    return { status: 'unavailable' };
   }
 }
 
@@ -196,14 +217,20 @@ function verifyTokenWithSession(token: string): Promise<JwtPayload | null> {
     const payload = decodeToken(token);
     if (!payload) return null;
 
-    // Optional strict mode: verify session exists in Redis.
-    // Default is fail-open to keep auth stable when Redis is unavailable/misconfigured.
-    if (REQUIRE_REDIS_SESSION) {
-      const session = await getSession(token);
-      if (!session) return null;
+    // HARD RULE #35: always verify Redis session so logout/account-suspension immediately
+    // invalidates tokens. Fail-open on Redis unavailability — service stays up but stolen
+    // tokens can be used during the outage window (acceptable vs. mass logout).
+    const session = await getSession(token);
+    if (session.status === 'not-found') return null; // Explicitly logged out
+    if (session.status === 'unavailable') {
+      logger.warn('[auth] Redis unavailable — JWT-only validation (fail-open)');
     }
 
-    return { userId: payload.userId, email: payload.email, role: payload.role };
+    return {
+      userId: payload.userId,
+      email: payload.email,
+      ...(payload.role ? { role: payload.role } : {}),
+    };
   })();
 }
 
@@ -226,8 +253,8 @@ export async function signIn(
     try {
       const redis = await getRedisClient();
       const failKey = prefixKey(`login_fail:${ip}`);
-      const attempts = await redis.get(failKey);
-      if (attempts && parseInt(attempts) >= 5) {
+      const attempts = redisToString(await redis.get(failKey));
+      if (attempts && parseInt(attempts, 10) >= 5) {
         return { success: false, error: 'Çok fazla başarısız deneme. 15 dakika sonra tekrar deneyin.' };
       }
     } catch { /* continue */ }
@@ -240,6 +267,10 @@ export async function signIn(
   );
 
   if (!user) {
+    // Constant-time defense: bcrypt.compare even when user not found, with a dummy hash.
+    // Without this, attackers can enumerate valid emails by measuring response time
+    // (user-not-found ~10ms vs wrong-password ~100-300ms).
+    await comparePassword(password, DUMMY_BCRYPT_HASH);
     await incrementFailedAttempts(ip);
     return { success: false, error: 'E-posta veya şifre hatalı.' };
   }
@@ -284,7 +315,7 @@ export async function signUp(
 ): Promise<{ success: boolean; error?: string; user?: AuthUser; token?: string }> {
   const strength = validatePasswordStrength(password);
   if (!strength.valid) {
-    return { success: false, error: strength.error };
+    return { success: false, error: strength.error || 'Şifre gereksinimleri karşılanmadı.' };
   }
 
   const normalizedEmail = email.toLowerCase().trim();
@@ -344,8 +375,10 @@ export async function getCurrentUser(token?: string): Promise<SessionUser | null
 
 export async function createSession(userId: string): Promise<{ token: string; expiresAt: Date }> {
   const user = await queryOne<{ id: string; email: string; role: string }>('SELECT id, email, role FROM users WHERE id = $1', [userId]);
-  const token = createToken({ userId, email: user?.email || '', role: user?.role });
-  await setSession(token, { userId, email: user?.email, role: user?.role });
+  const email = user?.email ?? '';
+  const role = user?.role;
+  const token = createToken({ userId, email, ...(role ? { role } : {}) });
+  await setSession(token, { userId, email, ...(role ? { role } : {}) });
 
   const expiresAt = new Date();
   expiresAt.setSeconds(expiresAt.getSeconds() + SESSION_TTL);

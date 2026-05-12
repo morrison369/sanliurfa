@@ -5,7 +5,42 @@
 import { queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 
-export async function getDashboardOverview(days: number = 30): Promise<any> {
+type JsonObject = Record<string, unknown>;
+
+interface DashboardOverview {
+  users: { total: number; new: number; active: number };
+  content: { places: number; reviews: number; comments: number; newReviews: number };
+  flags: { pending: number; resolved: number; total: number };
+  moderation: { totalActions: number; warnings: number; suspensions: number; bans: number };
+  period: number;
+}
+
+interface DashboardWidgetRow {
+  id: string;
+  admin_id: string;
+  widget_type: string;
+  widget_config: string | null;
+  position_order: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface SystemMetrics {
+  database: { totalUsers: number; totalPlaces: number; totalReviews: number };
+  users: { total: number; newThisWeek: number; activeToday: number };
+  moderation: { pendingItems: number; activeCases: number };
+  timestamp: string;
+}
+
+interface RecentActivityRow {
+  type: string;
+  actor_id: string | null;
+  action: string;
+  target: string;
+  created_at: string;
+}
+
+export async function getDashboardOverview(days: number = 30): Promise<DashboardOverview | null> {
   try {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
@@ -49,26 +84,26 @@ export async function getDashboardOverview(days: number = 30): Promise<any> {
 
     return {
       users: {
-        total: parseInt(userStats?.total_users || '0'),
-        new: parseInt(userStats?.new_users || '0'),
-        active: parseInt(userStats?.active_users || '0')
+        total: parseInt(userStats?.total_users || '0', 10),
+        new: parseInt(userStats?.new_users || '0', 10),
+        active: parseInt(userStats?.active_users || '0', 10)
       },
       content: {
-        places: parseInt(contentStats?.total_places || '0'),
-        reviews: parseInt(contentStats?.total_reviews || '0'),
-        comments: parseInt(contentStats?.total_comments || '0'),
-        newReviews: parseInt(contentStats?.new_reviews || '0')
+        places: parseInt(contentStats?.total_places || '0', 10),
+        reviews: parseInt(contentStats?.total_reviews || '0', 10),
+        comments: parseInt(contentStats?.total_comments || '0', 10),
+        newReviews: parseInt(contentStats?.new_reviews || '0', 10)
       },
       flags: {
-        pending: parseInt(flagStats?.pending_flags || '0'),
-        resolved: parseInt(flagStats?.resolved_flags || '0'),
-        total: parseInt(flagStats?.total_flags || '0')
+        pending: parseInt(flagStats?.pending_flags || '0', 10),
+        resolved: parseInt(flagStats?.resolved_flags || '0', 10),
+        total: parseInt(flagStats?.total_flags || '0', 10)
       },
       moderation: {
-        totalActions: parseInt(actionStats?.total_actions || '0'),
-        warnings: parseInt(actionStats?.warnings || '0'),
-        suspensions: parseInt(actionStats?.suspensions || '0'),
-        bans: parseInt(actionStats?.bans || '0')
+        totalActions: parseInt(actionStats?.total_actions || '0', 10),
+        warnings: parseInt(actionStats?.warnings || '0', 10),
+        suspensions: parseInt(actionStats?.suspensions || '0', 10),
+        bans: parseInt(actionStats?.bans || '0', 10)
       },
       period: days
     };
@@ -78,9 +113,9 @@ export async function getDashboardOverview(days: number = 30): Promise<any> {
   }
 }
 
-export async function getAdminDashboardWidgets(adminId: string): Promise<any[]> {
+export async function getAdminDashboardWidgets(adminId: string): Promise<DashboardWidgetRow[]> {
   try {
-    const widgets = await queryMany(`
+    const widgets = await queryMany<DashboardWidgetRow>(`
       SELECT * FROM admin_dashboard_widgets
       WHERE admin_id = $1
       ORDER BY position_order ASC
@@ -92,7 +127,12 @@ export async function getAdminDashboardWidgets(adminId: string): Promise<any[]> 
   }
 }
 
-export async function saveAdminDashboardWidget(adminId: string, widgetType: string, config: any, positionOrder: number): Promise<string> {
+export async function saveAdminDashboardWidget(
+  adminId: string,
+  widgetType: string,
+  config: JsonObject,
+  positionOrder: number,
+): Promise<string> {
   try {
     const id = crypto.randomUUID();
     await insert('admin_dashboard_widgets', {
@@ -109,9 +149,13 @@ export async function saveAdminDashboardWidget(adminId: string, widgetType: stri
   }
 }
 
-export async function updateAdminDashboardWidget(widgetId: string, adminId: string, config: any): Promise<void> {
+export async function updateAdminDashboardWidget(
+  widgetId: string,
+  adminId: string,
+  config: JsonObject,
+): Promise<void> {
   try {
-    await update('admin_dashboard_widgets', { id: widgetId, admin_id: adminId as any }, {
+    await update('admin_dashboard_widgets', { id: widgetId, admin_id: adminId }, {
       widget_config: JSON.stringify(config),
       updated_at: new Date()
     });
@@ -121,7 +165,7 @@ export async function updateAdminDashboardWidget(widgetId: string, adminId: stri
   }
 }
 
-export async function getSystemMetrics(): Promise<any> {
+export async function getSystemMetrics(): Promise<SystemMetrics | null> {
   try {
     const [dbMetrics, userMetrics, modMetrics] = await Promise.all([
       queryOne(`
@@ -147,18 +191,18 @@ export async function getSystemMetrics(): Promise<any> {
 
     return {
       database: {
-        totalUsers: parseInt(dbMetrics?.total_users || '0'),
-        totalPlaces: parseInt(dbMetrics?.total_places || '0'),
-        totalReviews: parseInt(dbMetrics?.total_reviews || '0')
+        totalUsers: parseInt(dbMetrics?.total_users || '0', 10),
+        totalPlaces: parseInt(dbMetrics?.total_places || '0', 10),
+        totalReviews: parseInt(dbMetrics?.total_reviews || '0', 10)
       },
       users: {
-        total: parseInt(userMetrics?.total_users || '0'),
-        newThisWeek: parseInt(userMetrics?.new_users_week || '0'),
-        activeToday: parseInt(userMetrics?.active_today || '0')
+        total: parseInt(userMetrics?.total_users || '0', 10),
+        newThisWeek: parseInt(userMetrics?.new_users_week || '0', 10),
+        activeToday: parseInt(userMetrics?.active_today || '0', 10)
       },
       moderation: {
-        pendingItems: parseInt(modMetrics?.pending_items || '0'),
-        activeCases: parseInt(modMetrics?.active_cases || '0')
+        pendingItems: parseInt(modMetrics?.pending_items || '0', 10),
+        activeCases: parseInt(modMetrics?.active_cases || '0', 10)
       },
       timestamp: new Date().toISOString()
     };
@@ -168,9 +212,9 @@ export async function getSystemMetrics(): Promise<any> {
   }
 }
 
-export async function getRecentActivity(limit: number = 20): Promise<any[]> {
+export async function getRecentActivity(limit: number = 20): Promise<RecentActivityRow[]> {
   try {
-    const activities = await queryMany(`
+    const activities = await queryMany<RecentActivityRow>(`
       SELECT
         'moderation' as type,
         admin_id as actor_id,
@@ -196,22 +240,30 @@ export async function getRecentActivity(limit: number = 20): Promise<any[]> {
   }
 }
 
-export async function getDashboardSetting(adminId: string | null, settingKey: string): Promise<any> {
+export async function getDashboardSetting(
+  adminId: string | null,
+  settingKey: string,
+): Promise<JsonObject | null> {
   try {
-    const setting = await queryOne(`
+    const setting = await queryOne<{ setting_value?: string | null }>(`
       SELECT setting_value FROM admin_dashboard_settings
       WHERE setting_key = $1 AND (admin_id = $2 OR is_global = true)
       ORDER BY is_global ASC
       LIMIT 1
     `, [settingKey, adminId]);
-    return setting?.setting_value ? JSON.parse(setting.setting_value) : null;
+    return setting?.setting_value ? (JSON.parse(setting.setting_value) as JsonObject) : null;
   } catch (error) {
     logger.error('Failed to get dashboard setting', error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }
 
-export async function saveDashboardSetting(adminId: string | null, settingKey: string, settingValue: any, isGlobal: boolean = false): Promise<void> {
+export async function saveDashboardSetting(
+  adminId: string | null,
+  settingKey: string,
+  settingValue: JsonObject,
+  isGlobal: boolean = false,
+): Promise<void> {
   try {
     await insert('admin_dashboard_settings', {
       admin_id: adminId,

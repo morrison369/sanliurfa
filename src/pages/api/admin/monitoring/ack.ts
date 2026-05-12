@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
 import { getSiteSetting } from '../../../../lib/site-content';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, HttpStatus, problemJson, safeIntParam } from '../../../../lib/api';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 async function upsertSetting(
@@ -38,7 +38,7 @@ export const POST: APIRoute = async ({ locals, request }) => {
     });
   }
 
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
@@ -81,10 +81,7 @@ export const POST: APIRoute = async ({ locals, request }) => {
       current as Record<string, unknown>,
       'Monitoring alarm acknowledge kayıtları',
     );
-    return new Response(JSON.stringify({ success: true, alarmKey, mode }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-    });
+    return apiResponse({ success: true, alarmKey, mode }, HttpStatus.OK);
   }
 
   const control = await getSiteSetting<{
@@ -93,10 +90,10 @@ export const POST: APIRoute = async ({ locals, request }) => {
   }>('jobs.monitoring.alarms.control', { maintenanceUntil: null, snooze: {} });
   control.snooze ||= {};
   if (mode === 'snooze') {
-    const snoozeMinutes = Math.max(1, Math.min(1440, Number(body?.snoozeMinutes || 30)));
+    const snoozeMinutes = safeIntParam(body?.snoozeMinutes, 30, 1, 1440);
     control.snooze[alarmKey] = new Date(Date.now() + snoozeMinutes * 60_000).toISOString();
   } else if (mode === 'maintenance') {
-    const maintenanceMinutes = Math.max(1, Math.min(1440, Number(body?.maintenanceMinutes || 60)));
+    const maintenanceMinutes = safeIntParam(body?.maintenanceMinutes, 60, 1, 1440);
     control.maintenanceUntil = new Date(Date.now() + maintenanceMinutes * 60_000).toISOString();
   } else if (mode === 'clear') {
     if (alarmKey) delete control.snooze[alarmKey];
@@ -109,8 +106,5 @@ export const POST: APIRoute = async ({ locals, request }) => {
     'Monitoring alarm maintenance/snooze kontrolü',
   );
 
-  return new Response(JSON.stringify({ success: true, alarmKey: alarmKey || null, mode }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json; charset=utf-8' },
-  });
+  return apiResponse({ success: true, alarmKey: alarmKey || null, mode }, HttpStatus.OK);
 };

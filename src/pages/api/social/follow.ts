@@ -7,9 +7,10 @@ import type { APIRoute } from 'astro';
 import { followUser, unfollowUser } from '../../../lib/social/friendship-db';
 import { requireAuth } from '../../../lib/auth';
 import { auditSiteChange } from '../../../lib/site-content';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../lib/api';
 import { publishSocialEvent } from '../../../lib/social/event-stream';
 import { buildSocialAuditContext, enforceSocialAction } from '../../../lib/social/request-guard';
+import { invalidateFollow } from '../../../lib/cache/invalidation';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -25,10 +26,10 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const auditCtx = buildSocialAuditContext({ request } as any, auth.user as any);
+    const auditCtx = buildSocialAuditContext({ request }, auth.user);
     const guardResponse = await enforceSocialAction(
-      { request } as any,
-      auth.user as any,
+      { request },
+      auth.user,
       'social.follow',
       'follow',
     );
@@ -36,6 +37,17 @@ export const POST: APIRoute = async ({ request }) => {
 
     const body = await request.json();
     const { userId, action = 'follow' } = body;
+
+    const VALID_FOLLOW_ACTIONS = new Set(['follow', 'unfollow']);
+    if (!VALID_FOLLOW_ACTIONS.has(action)) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'action sadece follow veya unfollow olabilir',
+        type: '/problems/social-follow-action-invalid',
+        instance: '/api/social/follow',
+      });
+    }
 
     if (!userId) {
       await auditSiteChange('social.follow', 'social_abuse', auditCtx, {
@@ -67,6 +79,8 @@ export const POST: APIRoute = async ({ request }) => {
           targetUserId: String(userId),
           createdAt: new Date().toISOString(),
         });
+        // Cache invalidation: unfollow followers/following counts'ları etkiler — stale data önler
+        await invalidateFollow(auth.user.id, String(userId));
       }
       return new Response(
         JSON.stringify({ success: result }),
@@ -80,14 +94,16 @@ export const POST: APIRoute = async ({ request }) => {
       actorUserId: auth.user.id,
       targetUserId: String(userId),
       createdAt: new Date().toISOString(),
-      metadata: { pending: Boolean((friendship as any)?.status === 'pending') },
+      metadata: { pending: Boolean(friendship?.is_approved === false) },
     });
+    // Cache invalidation: follow followers/following counts'ları etkiler — stale data önler
+    await invalidateFollow(auth.user.id, String(userId));
     return new Response(
       JSON.stringify({ success: true, friendship }),
       { status: 201, headers: { 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to follow user';
+    const auditMessage = error instanceof Error ? error.message : 'Failed to follow user';
     const auth = await requireAuth(request).catch(() => null);
     if (auth?.user) {
       await auditSiteChange(
@@ -99,11 +115,11 @@ export const POST: APIRoute = async ({ request }) => {
           ipAddress: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
           userAgent: request.headers.get('user-agent') || null,
         },
-        { reason: 'follow_error', message },
+        { reason: 'follow_error', message: auditMessage },
       );
     }
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: safeErrorDetail(error, 'Takip işlemi başarısız') }),
       { status: 400, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
     );
   }

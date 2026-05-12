@@ -25,38 +25,37 @@ export async function getWebhookLogs(
   offset = 0
 ): Promise<{ logs: WebhookLog[]; total: number }> {
   try {
-    // Get total count
-    const countRes = await pool.query(
-      `SELECT COUNT(*) as count FROM webhook_events we
-       JOIN webhooks w ON we.webhook_id = w.id
-       WHERE we.webhook_id = $1 AND w.user_id = $2`,
-      [webhookId, userId]
-    );
-
-    // Get paginated logs
-    const logsRes = await pool.query(
-      `SELECT
-        we.id,
-        we.webhook_id,
-        we.event,
-        we.status,
-        we.response_code,
-        we.delivery_time_ms as response_time,
-        we.error_message,
-        we.attempts,
-        we.created_at,
-        we.updated_at
-       FROM webhook_events we
-       JOIN webhooks w ON we.webhook_id = w.id
-       WHERE we.webhook_id = $1 AND w.user_id = $2
-       ORDER BY we.created_at DESC
-       LIMIT $3 OFFSET $4`,
-      [webhookId, userId, limit, offset]
-    );
+    const [countRes, logsRes] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(*) as count FROM webhook_events we
+         JOIN webhooks w ON we.webhook_id = w.id
+         WHERE we.webhook_id = $1 AND w.user_id = $2`,
+        [webhookId, userId]
+      ),
+      pool.query(
+        `SELECT
+          we.id,
+          we.webhook_id,
+          we.event,
+          we.status,
+          we.response_code,
+          we.delivery_time_ms as response_time,
+          we.error_message,
+          we.attempts,
+          we.created_at,
+          we.updated_at
+         FROM webhook_events we
+         JOIN webhooks w ON we.webhook_id = w.id
+         WHERE we.webhook_id = $1 AND w.user_id = $2
+         ORDER BY we.created_at DESC
+         LIMIT $3 OFFSET $4`,
+        [webhookId, userId, limit, offset]
+      ),
+    ]);
 
     return {
       logs: (logsRes as any).rows || [],
-      total: parseInt((countRes as any).rows?.[0]?.count || '0')
+      total: parseInt((countRes as any).rows?.[0]?.count || '0', 10)
     };
   } catch (error) {
     logger.error('Error getting webhook logs:', error);
@@ -133,10 +132,10 @@ export async function getWebhookLogsSummary(
     );
 
     const row = (result as any).rows?.[0] || {};
-    const total = parseInt(row.total || '0');
-    const delivered = parseInt(row.delivered || '0') || 0;
-    const failed = parseInt(row.failed || '0') || 0;
-    const pending = parseInt(row.pending || '0') || 0;
+    const total = parseInt(row.total || '0', 10);
+    const delivered = parseInt(row.delivered || '0', 10) || 0;
+    const failed = parseInt(row.failed || '0', 10) || 0;
+    const pending = parseInt(row.pending || '0', 10) || 0;
     const successRate = total > 0 ? (delivered / total) * 100 : 0;
 
     return {
@@ -145,7 +144,7 @@ export async function getWebhookLogsSummary(
       failed,
       pending,
       successRate: Math.round(successRate * 100) / 100,
-      avgResponseTime: parseInt(row.avg_response_time) || 0
+      avgResponseTime: parseInt(row.avg_response_time, 10) || 0
     };
   } catch (error) {
     logger.error('Error getting webhook logs summary:', error);

@@ -1,283 +1,294 @@
 ---
-// Content Bot - Automatic Content Generation
 import AdminLayout from '../../../layouts/AdminLayout.astro';
-import { requireRole } from '../../../lib/auth';
-
-const auth = await requireRole(Astro.request, 'admin');
-if (auth instanceof Response) return auth;
 ---
 
-<AdminLayout title="İçerik Botu">
-  <div class="space-y-6">
-    <!-- Header -->
-    <div>
-      <h1 class="text-2xl font-bold text-gray-900">🤖 İçerik Botu</h1>
-      <p class="text-gray-600 mt-1">AI destekli otomatik blog yazısı oluşturucu</p>
-    </div>
+<AdminLayout
+ title="İçerik Botu"
+ subtitle="AI destekli otomatik blog yazısı oluşturucu"
+ seo={{ title: 'İçerik Botu - Yönetim Paneli', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-6xl space-y-5">
+ <div class="mb-2">
+ <a href="/admin/blog" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Blog Yönetimi</a>
+ </div>
 
-    <!-- Features -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-xl text-white">
-        <h3 class="font-semibold text-lg mb-2">Mekan İçerikleri</h3>
-        <p class="text-purple-100 text-sm">Veritabanındaki mekanlar için otomatik blog yazıları oluştur</p>
-      </div>
-      
-      <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-xl text-white">
-        <h3 class="font-semibold text-lg mb-2">Kategori Rehberleri</h3>
-        <p class="text-blue-100 text-sm">Restoran, otel, tarihi yerler için kapsamlı rehberler</p>
-      </div>
-      
-      <div class="bg-gradient-to-br from-green-500 to-green-600 p-6 rounded-xl text-white">
-        <h3 class="font-semibold text-lg mb-2">SEO Optimizasyonu</h3>
-        <p class="text-green-100 text-sm">Otomatik meta başlıklar ve açıklamalar</p>
-      </div>
-    </div>
+ <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#1F1410] mb-2">Mekan İçerikleri</h3>
+ <p class="text-sm text-[#7A6B58]">Veritabanındaki mekanlar için otomatik blog yazıları oluştur</p>
+ </div>
 
-    <!-- Generate by Category -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Kategori Rehberi Oluştur</h2>
-      <p class="text-gray-600 mb-4">Belirli bir kategori için kapsamlı rehber yazısı oluşturun</p>
-      
-      <div class="flex flex-wrap gap-3">
-        <button onclick="generateCategoryGuide('restoran')" class="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium">
-          🍽️ Restoran Rehberi
-        </button>
-        <button onclick="generateCategoryGuide('otel')" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 font-medium">
-          🏨 Otel Rehberi
-        </button>
-        <button onclick="generateCategoryGuide('tarihi-yerler')" class="px-4 py-2 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 font-medium">
-          🏛️ Tarihi Yerler Rehberi
-        </button>
-        <button onclick="generateCategoryGuide('cafe')" class="px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 font-medium">
-          ☕ Kafe Rehberi
-        </button>
-      </div>
-      
-      <div id="category-result" class="mt-4 hidden">
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p class="text-green-800 font-medium">✅ İçerik başarıyla oluşturuldu!</p>
-          <a id="category-link" href="/admin/blog" class="text-blue-600 hover:underline mt-2 inline-block">Yazıyı görüntüle →</a>
-        </div>
-      </div>
-    </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#1F1410] mb-2">Kategori Rehberleri</h3>
+ <p class="text-sm text-[#7A6B58]">Restoran, otel, tarihi yerler için kapsamlı rehberler</p>
+ </div>
 
-    <!-- Generate for Places -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Mekanlar İçin İçerik Oluştur</h2>
-      <p class="text-gray-600 mb-4">İçerik oluşturulmamış mekanlar için otomatik yazılar</p>
-      
-      <button onclick="loadPlacesWithoutContent()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-        Mekanları Listele
-      </button>
-      
-      <div id="places-container" class="mt-4 hidden">
-        <div class="border rounded-lg overflow-hidden">
-          <table class="w-full">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                  <input type="checkbox" id="select-all" onchange="toggleSelectAll()" />
-                </th>
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Mekan</th>
-                <th class="px-4 py-3 text-left text-sm font-medium text-gray-600">Kategori</th>
-              </tr>
-            </thead>
-            <tbody id="places-list" class="divide-y divide-gray-200">
-              <!-- Populated by JS -->
-            </tbody>
-          </table>
-        </div>
-        
-        <button onclick="generateForSelected()" class="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50" id="generate-btn" disabled>
-          Seçili Mekanlar İçin İçerik Oluştur
-        </button>
-      </div>
-    </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#1F1410] mb-2">SEO Optimizasyonu</h3>
+ <p class="text-sm text-[#7A6B58]">Otomatik meta başlıklar ve açıklamalar</p>
+ </div>
+ </div>
 
-    <!-- Oluşturma geçmişi -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">Oluşturma Geçmişi</h2>
-      <div id="history-list" class="space-y-3">
-        <p class="text-gray-500 text-center py-4">Yükleniyor...</p>
-      </div>
-    </div>
-  </div>
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-lg font-semibold text-[#1F1410] mb-2">Kategori Rehberi Oluştur</h2>
+ <p class="text-sm text-[#7A6B58] mb-4">Belirli bir kategori için kapsamlı rehber yazısı oluşturun</p>
 
-  <script is:inline>
-    let placesWithoutContent = [];
-    let selectedPlaces = new Set();
+ <div class="flex flex-wrap gap-3">
+ <button onclick="generateCategoryGuide('restoran')" class="px-4 py-2 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.2)] text-sm font-medium">
+ 🍽️ Restoran Rehberi
+ </button>
+ <button onclick="generateCategoryGuide('otel')" class="px-4 py-2 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.2)] text-sm font-medium">
+ 🏨 Otel Rehberi
+ </button>
+ <button onclick="generateCategoryGuide('tarihi-yerler')" class="px-4 py-2 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.2)] text-sm font-medium">
+ 🏛️ Tarihi Yerler Rehberi
+ </button>
+ <button onclick="generateCategoryGuide('cafe')" class="px-4 py-2 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.2)] text-sm font-medium">
+ ☕ Kafe Rehberi
+ </button>
+ </div>
 
-    // Kategori rehberi oluştur
-    async function generateCategoryGuide(category) {
-      const resultDiv = document.getElementById('category-result');
-      resultDiv.classList.add('hidden');
-      
-      try {
-        const response = await fetch('/api/admin/content-bot/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: 'category-guide', category })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          resultDiv.classList.remove('hidden');
-          document.getElementById('category-link').href = `/admin/blog/edit/${data.post.id}`;
-          loadHistory();
-        } else {
-          alert('Hata: ' + data.error);
-        }
-      } catch (error) {
-        alert('Bir hata oluştu');
-      }
-    }
+ <div id="category-result" class="mt-4 hidden">
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
+ <p class="font-medium">✅ İçerik başarıyla oluşturuldu!</p>
+ <a id="category-link" href="/admin/blog" class="text-urfa-600 hover:text-[#7A6B58] mt-2 inline-block">Yazıyı görüntüle →</a>
+ </div>
+ </div>
+ </div>
 
-    // İçeriği olmayan mekanları yükle
-    async function loadPlacesWithoutContent() {
-      try {
-        const response = await fetch('/api/admin/content-bot/generate');
-        const data = await response.json();
-        
-        placesWithoutContent = data.placesWithoutContent || [];
-        
-        const container = document.getElementById('places-container');
-        const list = document.getElementById('places-list');
-        
-        if (placesWithoutContent.length === 0) {
-          list.innerHTML = '<tr><td colspan="3" class="px-4 py-8 text-center text-gray-500">Tüm mekanlar için içerik oluşturulmuş!</td></tr>';
-        } else {
-          list.innerHTML = placesWithoutContent.map(p => `
-            <tr>
-              <td class="px-4 py-3">
-                <input type="checkbox" value="${p.id}" onchange="togglePlace('${p.id}')" />
-              </td>
-              <td class="px-4 py-3 font-medium">${p.name}</td>
-              <td class="px-4 py-3 text-gray-600">${p.category}</td>
-            </tr>
-          `).join('');
-        }
-        
-        container.classList.remove('hidden');
-      } catch (error) {
-        alert('Mekanlar yüklenirken hata oluştu');
-      }
-    }
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-lg font-semibold text-[#1F1410] mb-2">Mekanlar İçin İçerik Oluştur</h2>
+ <p class="text-sm text-[#7A6B58] mb-4">İçerik oluşturulmamış mekanlar için otomatik yazılar</p>
 
-    // Mekan seçimini değiştir
-    function togglePlace(id) {
-      if (selectedPlaces.has(id)) {
-        selectedPlaces.delete(id);
-      } else {
-        selectedPlaces.add(id);
-      }
-      updateGenerateButton();
-    }
+ <button onclick="loadPlacesWithoutContent()" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+ Mekanları Listele
+ </button>
 
-    // Tümünü seç/kaldır
-    function toggleSelectAll() {
-      const checkboxes = document.querySelectorAll('#places-list input[type="checkbox"]');
-      const selectAll = document.getElementById('select-all').checked;
-      
-      checkboxes.forEach(cb => {
-        cb.checked = selectAll;
-        if (selectAll) {
-          selectedPlaces.add(cb.value);
-        } else {
-          selectedPlaces.delete(cb.value);
-        }
-      });
-      
-      updateGenerateButton();
-    }
+ <div id="places-container" class="mt-4 hidden">
+ <div class="border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <table class="w-full text-sm">
+ <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <tr>
+ <th class="px-4 py-3 text-left text-[#7A6B58]">
+ <input type="checkbox" id="select-all" onchange="toggleSelectAll()" />
+ </th>
+ <th class="px-4 py-3 text-left text-[#7A6B58] font-medium text-xs uppercase">Mekan</th>
+ <th class="px-4 py-3 text-left text-[#7A6B58] font-medium text-xs uppercase">Kategori</th>
+ </tr>
+ </thead>
+ <tbody id="places-list" class="divide-y divide-[rgba(184,115,51,0.08)]">
+ </tbody>
+ </table>
+ </div>
 
-    // Oluşturma butonunu güncelle
-    function updateGenerateButton() {
-      const btn = document.getElementById('generate-btn');
-      btn.disabled = selectedPlaces.size === 0;
-      btn.textContent = `Seçili ${selectedPlaces.size} Mekan İçin İçerik Oluştur`;
-    }
+ <button onclick="generateForSelected()" class="mt-4 rounded-sm bg-urfa-600 px-6 py-2 text-sm font-semibold text-white hover:bg-urfa-700 disabled:opacity-50" id="generate-btn" disabled>
+ Seçili Mekanlar İçin İçerik Oluştur
+ </button>
+ </div>
+ </div>
 
-    // Seçili mekanlar için içerik oluştur
-    async function generateForSelected() {
-      if (selectedPlaces.size === 0) return;
-      
-      const btn = document.getElementById('generate-btn');
-      btn.disabled = true;
-      btn.textContent = 'Oluşturuluyor...';
-      
-      try {
-        const response = await fetch('/api/admin/content-bot/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'places',
-            placeIds: Array.from(selectedPlaces)
-          })
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-          alert(`${data.generated.filter(g => g.status === 'created').length} yazı oluşturuldu!`);
-          selectedPlaces.clear();
-          loadPlacesWithoutContent();
-          loadHistory();
-        } else {
-          alert('Hata: ' + data.error);
-        }
-      } catch (error) {
-        alert('Bir hata oluştu');
-      } finally {
-        updateGenerateButton();
-      }
-    }
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-lg font-semibold text-[#1F1410] mb-4">Oluşturma Geçmişi</h2>
+ <div id="history-list" class="space-y-3">
+ <p class="text-[#7A6B58] text-center py-4 text-sm">Yükleniyor...</p>
+ </div>
+ </div>
+ </div>
 
-    // Oluşturma geçmişini yükle
-    async function loadHistory() {
-      try {
-        const response = await fetch('/api/admin/content-bot/generate');
-        const data = await response.json();
-        
-        const list = document.getElementById('history-list');
-        
-        if (data.jobs?.length === 0) {
-          list.innerHTML = '<p class="text-gray-500 text-center py-4">Henüz oluşturma işlemi yok</p>';
-        } else {
-          list.innerHTML = data.jobs.map(job => `
-            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div class="flex items-center gap-3">
-                <span class="text-2xl">${job.job_type === 'category-guide' ? '📚' : '📝'}</span>
-                <div>
-                  <p class="font-medium text-gray-900">${job.job_type === 'category-guide' ? 'Kategori Rehberi' : 'Mekan İçeriği'}</p>
-                  <p class="text-sm text-gray-500">${new Date(job.created_at).toLocaleString('tr-TR')}</p>
-                </div>
-              </div>
-              <span class="px-3 py-1 text-xs font-medium rounded-full ${
-                job.status === 'completed' ? 'bg-green-100 text-green-800' :
-                job.status === 'failed' ? 'bg-red-100 text-red-800' :
-                'bg-yellow-100 text-yellow-800'
-              }">${
-                job.status === 'completed' ? 'Tamamlandı' :
-                job.status === 'failed' ? 'Başarısız' :
-                job.status === 'running' ? 'Çalışıyor' :
-                job.status === 'queued' ? 'Sırada' :
-                'Beklemede'
-              }</span>
-            </div>
-          `).join('');
-        }
-      } catch (error) {
-        console.error('Oluşturma geçmişi yüklenemedi:', error);
-      }
-    }
+ <script is:inline>
+ let placesWithoutContent = [];
+ let selectedPlaces = new Set();
 
-    // Sayfa açılışında geçmişi yükle
-    window.generateCategoryGuide = generateCategoryGuide;
-    window.loadPlacesWithoutContent = loadPlacesWithoutContent;
-    window.togglePlace = togglePlace;
-    window.toggleSelectAll = toggleSelectAll;
-    window.generateForSelected = generateForSelected;
-    loadHistory();
-  </script>
+ async function generateCategoryGuide(category) {
+ const resultDiv = document.getElementById('category-result');
+ resultDiv.classList.add('hidden');
+
+ try {
+ const response = await fetch('/api/admin/content-bot/generate', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ type: 'category-guide', category })
+ });
+
+ const data = await response.json();
+
+ if (data.success) {
+ resultDiv.classList.remove('hidden');
+ document.getElementById('category-link').href = `/admin/blog/edit/${data.post.id}`;
+ loadHistory();
+ } else {
+ window.toast?.error('Hata: ' + (data.error || 'Hata oluştu'));
+ }
+ } catch (error) {
+ window.toast?.error('Bir hata oluştu');
+ }
+ }
+
+ function buildPlaceRow(p) {
+ const tr = document.createElement('tr');
+ tr.className = 'hover:bg-[rgba(184,115,51,0.04)]';
+ const tdCheck = document.createElement('td');
+ tdCheck.className = 'px-4 py-3';
+ const cb = document.createElement('input');
+ cb.type = 'checkbox';
+ cb.value = String(p.id);
+ cb.addEventListener('change', () => togglePlace(String(p.id)));
+ tdCheck.appendChild(cb);
+ const tdName = document.createElement('td');
+ tdName.className = 'px-4 py-3 font-medium text-[#1F1410]';
+ tdName.textContent = p.name;
+ const tdCat = document.createElement('td');
+ tdCat.className = 'px-4 py-3 text-[#7A6B58]';
+ tdCat.textContent = p.category;
+ tr.appendChild(tdCheck);
+ tr.appendChild(tdName);
+ tr.appendChild(tdCat);
+ return tr;
+ }
+
+ async function loadPlacesWithoutContent() {
+ try {
+ const response = await fetch('/api/admin/content-bot/generate');
+ const data = await response.json();
+
+ placesWithoutContent = data.placesWithoutContent || [];
+ const container = document.getElementById('places-container');
+ const list = document.getElementById('places-list');
+
+ if (placesWithoutContent.length === 0) {
+ const tr = document.createElement('tr');
+ const td = document.createElement('td');
+ td.colSpan = 3;
+ td.className = 'px-4 py-8 text-center text-[#7A6B58] text-sm';
+ td.textContent = 'Tüm mekanlar için içerik oluşturulmuş!';
+ tr.appendChild(td);
+ list.replaceChildren(tr);
+ } else {
+ list.replaceChildren(...placesWithoutContent.map(buildPlaceRow));
+ }
+
+ container.classList.remove('hidden');
+ } catch (error) {
+ window.toast?.error('Mekanlar yüklenirken hata oluştu');
+ }
+ }
+
+ function togglePlace(id) {
+ if (selectedPlaces.has(id)) {
+ selectedPlaces.delete(id);
+ } else {
+ selectedPlaces.add(id);
+ }
+ updateGenerateButton();
+ }
+
+ function toggleSelectAll() {
+ const checkboxes = document.querySelectorAll('#places-list input[type="checkbox"]');
+ const selectAll = document.getElementById('select-all').checked;
+ checkboxes.forEach(cb => {
+ cb.checked = selectAll;
+ if (selectAll) selectedPlaces.add(cb.value);
+ else selectedPlaces.delete(cb.value);
+ });
+ updateGenerateButton();
+ }
+
+ function updateGenerateButton() {
+ const btn = document.getElementById('generate-btn');
+ btn.disabled = selectedPlaces.size === 0;
+ btn.textContent = `Seçili ${selectedPlaces.size} Mekan İçin İçerik Oluştur`;
+ }
+
+ async function generateForSelected() {
+ if (selectedPlaces.size === 0) return;
+
+ const btn = document.getElementById('generate-btn');
+ btn.disabled = true;
+ btn.textContent = 'Oluşturuluyor...';
+
+ try {
+ const response = await fetch('/api/admin/content-bot/generate', {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ type: 'places', placeIds: Array.from(selectedPlaces) })
+ });
+
+ const data = await response.json();
+
+ if (data.success) {
+ window.toast?.success(`${data.generated.filter(g => g.status === 'created').length} yazı oluşturuldu!`);
+ selectedPlaces.clear();
+ loadPlacesWithoutContent();
+ loadHistory();
+ } else {
+ window.toast?.error('Hata: ' + (data.error || 'Hata oluştu'));
+ }
+ } catch (error) {
+ window.toast?.error('Bir hata oluştu');
+ } finally {
+ updateGenerateButton();
+ }
+ }
+
+ const statusMap = {
+ completed: { text: 'Tamamlandı', cls: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
+ failed: { text: 'Başarısız', cls: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' },
+ running: { text: 'Çalışıyor', cls: 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]' },
+ queued: { text: 'Sırada', cls: 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' },
+ };
+
+ function buildJobRow(job) {
+ const div = document.createElement('div');
+ div.className = 'flex items-center justify-between p-4 bg-[rgba(184,115,51,0.04)] rounded-sm border border-[rgba(184,115,51,0.1)]';
+ const left = document.createElement('div');
+ left.className = 'flex items-center gap-3';
+ const icon = document.createElement('span');
+ icon.className = 'text-2xl';
+ icon.textContent = job.job_type === 'category-guide' ? '📚' : '📝';
+ const info = document.createElement('div');
+ const name = document.createElement('p');
+ name.className = 'font-medium text-[#1F1410]';
+ name.textContent = job.job_type === 'category-guide' ? 'Kategori Rehberi' : 'Mekan İçeriği';
+ const date = document.createElement('p');
+ date.className = 'text-sm text-[#7A6B58]';
+ date.textContent = new Date(job.created_at).toLocaleString('tr-TR');
+ info.appendChild(name);
+ info.appendChild(date);
+ left.appendChild(icon);
+ left.appendChild(info);
+ const s = statusMap[job.status] || { text: 'Beklemede', cls: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' };
+ const badge = document.createElement('span');
+ badge.className = 'px-3 py-1 text-xs font-medium rounded-sm ' + s.cls;
+ badge.textContent = s.text;
+ div.appendChild(left);
+ div.appendChild(badge);
+ return div;
+ }
+
+ async function loadHistory() {
+ try {
+ const response = await fetch('/api/admin/content-bot/generate');
+ const data = await response.json();
+ const list = document.getElementById('history-list');
+
+ if (!data.jobs?.length) {
+ const p = document.createElement('p');
+ p.className = 'text-[#7A6B58] text-center py-4 text-sm';
+ p.textContent = 'Henüz oluşturma işlemi yok';
+ list.replaceChildren(p);
+ } else {
+ list.replaceChildren(...data.jobs.map(buildJobRow));
+ }
+ } catch (error) {
+ console.error('Oluşturma geçmişi yüklenemedi:', error);
+ }
+ }
+
+ window.generateCategoryGuide = generateCategoryGuide;
+ window.loadPlacesWithoutContent = loadPlacesWithoutContent;
+ window.togglePlace = togglePlace;
+ window.toggleSelectAll = toggleSelectAll;
+ window.generateForSelected = generateForSelected;
+ loadHistory();
+ </script>
 </AdminLayout>

@@ -8,7 +8,7 @@ import { logger } from '../logger';
 import { getCache, setCache, deleteCache } from '../cache';
 import _crypto from 'crypto';
 
-interface S3File {
+export interface S3File {
   id: string;
   file_key: string;
   original_filename: string;
@@ -17,6 +17,7 @@ interface S3File {
   file_type: string;
   file_size_bytes: number;
   is_public: boolean;
+  uploaded_by_user_id: string;
 }
 
 export async function registerS3File(userId: string, fileKey: string, filename: string, fileSize: number, mimeType: string, s3Url: string, isPublic: boolean = false): Promise<S3File | null> {
@@ -225,24 +226,25 @@ export async function scanFileVirus(fileId: string): Promise<boolean> {
     let status = 'skipped';
 
     if (filePath && process.env.CLAMAV_ENABLED === 'true') {
-      // Attempt ClamAV scan if enabled
-      const { exec } = await import('child_process');
-      const { promisify } = await import('util');
-      const execAsync = promisify(exec);
-      const fullPath = require('path').join(process.cwd(), 'public', filePath);
+      const { join, resolve, sep } = await import('path');
+      const { execFileNoThrow } = await import('../exec-file');
 
-      try {
-        await execAsync(`clamscan --no-summary "${fullPath}"`);
-        status = 'passed'; // exit 0 = clean
-      } catch (scanErr: any) {
-        if (scanErr.code === 1) {
-          // ClamAV exit code 1 = virus found
+      const publicRoot = resolve(join(process.cwd(), 'public'));
+      const fullPath = resolve(join(publicRoot, filePath));
+
+      // HARD RULE #3 containment: path must stay within public/
+      if (!fullPath.startsWith(publicRoot + sep) && fullPath !== publicRoot) {
+        logger.warn('Virus scan skipped: file path outside public/', { fileId, filePath });
+      } else {
+        // HARD RULE #36: execFileNoThrow — no shell, args as array, no metacharacter injection
+        const result = await execFileNoThrow('clamscan', ['--no-summary', fullPath]);
+        if (result.code === 0) {
+          status = 'passed';
+        } else if (result.code === 1) {
           status = 'failed';
           logger.warn('Virus detected in file', Object.assign(new Error('Virus detected'), { fileId, filePath }));
-        } else {
-          // ClamAV not installed or other error — skip scan
-          status = 'skipped';
         }
+        // other exit codes: ClamAV not installed → status stays 'skipped'
       }
     }
 

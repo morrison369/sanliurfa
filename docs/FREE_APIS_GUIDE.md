@@ -1,5 +1,22 @@
 # Ücretsiz API'ler ve Veri Kaynakları Rehberi
 
+> ⚠️ **Bu rehber referans amaçlıdır — tüm önerileri uygulamayın.** Aşağıdaki
+> liste tarihsel olarak araştırılan seçenekleri içerir; **bazıları proje
+> politikasıyla çelişir**:
+>
+> - **SendGrid (madde "📧 Email" altında)** → KULLANILMIYOR. E-posta gönderimi
+>   3-tier pipeline ile yapılır: **Resend (Tier 1) → SMTP/nodemailer (Tier 2)
+>   → dev log (Tier 3)**. Her ikisi de admin panelinden (`/admin/integrations`)
+>   yönetilir. Bkz. CLAUDE.md "Admin-Yönetilen Entegrasyonlar".
+> - **OneSignal** → KULLANILMIYOR. Push notification için Web Push API + VAPID
+>   anahtarları kullanılır (`src/components/PushNotifications.astro`).
+> - Image CDN, Google Maps API, Mapbox, Cloudinary gibi **ücretli servisler
+>   kesinlikle yasak** (CLAUDE.md "Strict Prohibitions" bölümüne bakın).
+>
+> Geçerli ve aktif kullanılan: **Leaflet + OpenStreetMap, Nominatim, OpenWeather,
+> Resend, Unsplash, Pexels, sharp**. Yeni servis eklemeden önce CLAUDE.md
+> "Strict Prohibitions" bölümünü ve admin entegrasyonları pattern'ini okuyun.
+
 Bu dokümanda Şanlıurfa.com projesinde kullanabileceğiniz ücretsiz API'ler ve veri kaynakları listelenmiştir.
 
 ## 📍 Haritalar ve Coğrafi Veriler

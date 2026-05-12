@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeIntParam } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   try {
@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
       });
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
 
     const history = await queryMany(
       `SELECT id, action_type, metadata, points_earned, created_at 
@@ -34,13 +34,13 @@ export const GET: APIRoute = async ({ locals, url }) => {
       [locals.user.id]
     );
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       data: {
         history: history || [],
         summary: summary || []
       }
-    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }, HttpStatus.OK);
   } catch (error) {
     logger.error('Points history error', error);
     return problemJson({

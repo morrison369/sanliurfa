@@ -3,6 +3,9 @@
  * Implements comprehensive security headers for HTTP responses
  */
 
+import { randomBytes } from 'node:crypto';
+import { getPublicAppUrl } from '../public-app-url';
+
 export interface SecurityHeadersConfig {
   contentSecurityPolicy?: boolean;
   frameOptions?: string;
@@ -43,7 +46,8 @@ export function getSecurityHeaders(config: SecurityHeadersConfig = {}): Record<s
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
-      "upgrade-insecure-requests"
+      "upgrade-insecure-requests",
+      "report-uri /api/security/csp-report"
     ].join('; ');
   }
 
@@ -120,9 +124,8 @@ export function validateCSPHeader(cspHeader: string): { valid: boolean; errors: 
  * Check if URL is safe for redirect
  */
 export function isSafeRedirectUrl(url: string, allowedOrigins: string[] = []): boolean {
-  const fallbackOrigin =
-    (typeof process !== 'undefined' && process.env && (process.env.PUBLIC_APP_URL || process.env.SITE_URL || process.env.PUBLIC_SITE_URL)) ||
-    'https://sanliurfa.com';
+  // SSR-safe; in browser process.env is undefined and getPublicAppUrl() returns the prod URL fallback.
+  const fallbackOrigin = getPublicAppUrl();
   try {
     // Block absolute URLs to different origins (open redirect prevention)
     if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -164,13 +167,11 @@ export function isSafeRedirectUrl(url: string, allowedOrigins: string[] = []): b
  */
 export function generateSecurityToken(length: number = 32): string {
   const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = randomBytes(length);
   let token = '';
-
   for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charset.length);
-    token += charset[randomIndex];
+    token += charset[bytes[i] % charset.length];
   }
-
   return token;
 }
 

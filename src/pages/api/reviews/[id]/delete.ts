@@ -1,11 +1,20 @@
 // API: Review delete (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { remove } from '../../../../lib/postgres';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../../lib/api';
 
 export const POST: APIRoute = async ({ params, locals }) => {
   try {
     const { id } = params;
+    if (!id) {
+      return problemJson({
+        status: 400,
+        title: 'Geçersiz İstek',
+        detail: 'Yorum kimliği eksik',
+        type: '/problems/review-delete-id-required',
+        instance: '/api/reviews/{id}/delete',
+      });
+    }
     
     if (!locals.isAdmin) {
       return problemJson({
@@ -27,7 +36,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
     return problemJson({
       status: 500,
       title: 'Yorum Silinemedi',
-      detail: err instanceof Error ? err.message : 'server_error',
+      detail: safeErrorDetail(err, 'server_error'),
       type: '/problems/review-delete-failed',
       instance: '/api/reviews/{id}/delete',
     });

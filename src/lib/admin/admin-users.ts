@@ -2,10 +2,64 @@
  * Admin User Management Library
  * User management, audit logging, and account flags
  */
-import { queryOne, queryMany, insert, update } from '../postgres';
+import { query, queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 
 export type AdminUserStatusAction = 'activate' | 'suspend' | 'delete';
+type JsonObject = Record<string, unknown>;
+
+interface AdminUserListItem {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  role: string | null;
+  created_at: string;
+  updated_at: string;
+  last_login_at?: string | null;
+  last_activity_at?: string | null;
+  post_count?: number | string | null;
+  review_count?: number | string | null;
+  warning_count?: number | string | null;
+  suspension_count?: number | string | null;
+  active_flags?: number | string | null;
+}
+
+interface AdminUserDetails {
+  user: JsonObject | null;
+  activeFlags: JsonObject[];
+  recentModeration: JsonObject[];
+  auditLog: JsonObject[];
+}
+
+interface AdminAuditLogRow {
+  id: string;
+  admin_id: string;
+  action_type: string;
+  changes?: string | null;
+  action_details?: string | null;
+  created_at: string;
+  admin_email?: string | null;
+}
+
+interface AdminSessionRow {
+  id: string;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  location?: string | null;
+  country?: string | null;
+  city?: string | null;
+  last_activity_at?: string | null;
+  logged_out_at?: string | null;
+  created_at: string;
+}
+
+interface AdminSessionMetadata extends JsonObject {
+  ipAddress?: string;
+  userAgent?: string;
+  location?: string;
+  country?: string;
+  city?: string;
+}
 
 const ADMIN_USER_STATUS_MAP: Record<AdminUserStatusAction, string> = {
   activate: 'active',
@@ -83,9 +137,13 @@ export async function updateAdminUsersStatusBulk(
   };
 }
 
-export async function getAllUsers(limit: number = 50, offset: number = 0, searchQuery?: string): Promise<any[]> {
+export async function getAllUsers(
+  limit: number = 50,
+  offset: number = 0,
+  searchQuery?: string,
+): Promise<AdminUserListItem[]> {
   try {
-    let query = `
+    let sql = `
       SELECT
         u.id,
         u.email,
@@ -103,17 +161,17 @@ export async function getAllUsers(limit: number = 50, offset: number = 0, search
       FROM users u
       LEFT JOIN user_activity_summary uas ON u.id = uas.user_id
     `;
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (searchQuery) {
-      query += ` WHERE u.email ILIKE $1 OR u.full_name ILIKE $1`;
+      sql += ` WHERE u.email ILIKE $1 OR u.full_name ILIKE $1`;
       params.push(`%${searchQuery}%`);
     }
 
-    query += ` ORDER BY u.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    sql += ` ORDER BY u.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
-    const users = await queryMany(query, params) as any[];
+    const users = await queryMany<AdminUserListItem>(sql, params);
     return users;
   } catch (error) {
     logger.error('Failed to get all users', error instanceof Error ? error : new Error(String(error)));
@@ -121,10 +179,10 @@ export async function getAllUsers(limit: number = 50, offset: number = 0, search
   }
 }
 
-export async function getUserDetails(userId: string): Promise<any> {
+export async function getUserDetails(userId: string): Promise<AdminUserDetails | null> {
   try {
     const [user, flags, recentActivity, auditLogs] = await Promise.all([
-      queryOne(`
+      queryOne<JsonObject>(`
         SELECT
           u.id,
           u.email,
@@ -144,17 +202,17 @@ export async function getUserDetails(userId: string): Promise<any> {
         LEFT JOIN user_activity_summary uas ON u.id = uas.user_id
         WHERE u.id = $1
       `, [userId]),
-      queryMany(`
+      queryMany<JsonObject>(`
         SELECT * FROM account_flags
         WHERE user_id = $1 AND is_active = true
       `, [userId]),
-      queryMany(`
+      queryMany<JsonObject>(`
         SELECT * FROM moderation_actions
         WHERE target_id = $1 AND target_type = 'user'
         ORDER BY created_at DESC
         LIMIT 10
       `, [userId]),
-      queryMany(`
+      queryMany<JsonObject>(`
         SELECT * FROM user_audit_log
         WHERE target_user_id = $1
         ORDER BY created_at DESC
@@ -239,8 +297,8 @@ export async function logAdminAction(
   adminId: string,
   targetUserId: string,
   actionType: string,
-  changes?: any,
-  metadata?: any
+  changes?: JsonObject,
+  metadata?: AdminSessionMetadata,
 ): Promise<void> {
   try {
     await insert('user_audit_log', {
@@ -257,9 +315,12 @@ export async function logAdminAction(
   }
 }
 
-export async function getUserAuditLog(userId: string, limit: number = 50): Promise<any[]> {
+export async function getUserAuditLog(
+  userId: string,
+  limit: number = 50,
+): Promise<AdminAuditLogRow[]> {
   try {
-    const logs = await queryMany(`
+    const logs = await queryMany<AdminAuditLogRow>(`
       SELECT
         ual.id,
         ual.admin_id,
@@ -281,9 +342,9 @@ export async function getUserAuditLog(userId: string, limit: number = 50): Promi
   }
 }
 
-export async function getUserActivitySummary(userId: string): Promise<any> {
+export async function getUserActivitySummary(userId: string): Promise<JsonObject | null> {
   try {
-    const summary = await queryOne(`
+    const summary = await queryOne<JsonObject>(`
       SELECT * FROM user_activity_summary
       WHERE user_id = $1
     `, [userId]);
@@ -294,9 +355,9 @@ export async function getUserActivitySummary(userId: string): Promise<any> {
   }
 }
 
-export async function getAdminSessions(adminId: string): Promise<any[]> {
+export async function getAdminSessions(adminId: string): Promise<AdminSessionRow[]> {
   try {
-    const sessions = await queryMany(`
+    const sessions = await queryMany<AdminSessionRow>(`
       SELECT
         id,
         ip_address,
@@ -319,7 +380,11 @@ export async function getAdminSessions(adminId: string): Promise<any[]> {
   }
 }
 
-export async function createAdminSession(adminId: string, token: string, metadata?: any): Promise<string> {
+export async function createAdminSession(
+  adminId: string,
+  token: string,
+  metadata?: AdminSessionMetadata,
+): Promise<string> {
   try {
     const id = crypto.randomUUID();
     await insert('admin_sessions', {
@@ -349,24 +414,30 @@ export async function logoutAdminSession(sessionId: string): Promise<void> {
   }
 }
 
-export async function updateUserActivitySummary(userId: string, updates: any): Promise<void> {
+export async function updateUserActivitySummary(userId: string, updates: JsonObject): Promise<void> {
   try {
-    const existing = await queryOne('SELECT id FROM user_activity_summary WHERE user_id = $1', [userId]);
+    const SAFE_COL = /^[a-z][a-z0-9_]*$/;
+    const safe = Object.fromEntries(
+      Object.entries(updates as Record<string, unknown>).filter(([k]) => SAFE_COL.test(k))
+    );
+    const keys = Object.keys(safe);
+    if (keys.length === 0) return;
 
-    if (existing) {
-      await update('user_activity_summary', { user_id: userId }, {
-        ...updates,
-        updated_at: new Date()
-      });
-    } else {
-      await insert('user_activity_summary', {
-        user_id: userId,
-        ...updates
-      });
-    }
+    const cols = ['user_id', ...keys, 'updated_at'];
+    const vals = [userId, ...keys.map(k => safe[k]), new Date()];
+    const placeholders = vals.map((_, i) => `$${i + 1}`).join(', ');
+    const updateSets = keys.map(k => `${k} = EXCLUDED.${k}`).join(', ');
+
+    // HARD RULE #47: atomic upsert — ON CONFLICT eliminates SELECT+INSERT/UPDATE race window
+    await query(
+      `INSERT INTO user_activity_summary (${cols.join(', ')})
+       VALUES (${placeholders})
+       ON CONFLICT (user_id)
+       DO UPDATE SET ${updateSets}, updated_at = EXCLUDED.updated_at`,
+      vals
+    );
   } catch (error) {
     logger.error('Failed to update activity summary', error instanceof Error ? error : new Error(String(error)));
   }
 }
-
 

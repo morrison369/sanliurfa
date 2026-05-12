@@ -1,0 +1,274 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { query } from '../../lib/postgres';
+import { safeIntParam, safeErrorDetail } from '../../lib/api';
+import { logger } from '../../lib/logging';
+
+// HARD RULE #52 — explicit admin role kontrolü (AdminLayout zaten redirect ediyor,
+// defense-in-depth için burada da).
+const user = Astro.locals.user;
+if (!user || user.role !== 'admin') {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+// HARD RULE #17 — URL paramları için safeIntParam (NaN guard + clamp).
+const url = new URL(Astro.request.url);
+const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+const hours = safeIntParam(url.searchParams.get('hours'), 24, 1, 168); // 1h - 7d
+const days = safeIntParam(url.searchParams.get('days'), 7, 1, 30);
+
+type SlowPathRow = {
+  path: string;
+  count: number;
+  avg_ms: number;
+  p95_ms: number;
+  max_ms: number;
+  last_seen: string;
+};
+
+type DailyTrendRow = {
+  day: string;
+  count: number;
+  avg_ms: number;
+  max_ms: number;
+};
+
+type TotalsRow = {
+  total_events: number;
+  unique_paths: number;
+  overall_avg_ms: number;
+  overall_max_ms: number;
+};
+
+let slowPaths: SlowPathRow[] = [];
+let dailyTrend: DailyTrendRow[] = [];
+let totals: TotalsRow = { total_events: 0, unique_paths: 0, overall_avg_ms: 0, overall_max_ms: 0 };
+let loadError: string | null = null;
+
+try {
+  // TOP slow paths — son {hours} saat içinde path bazlı aggregate.
+  const slowRes = await query(
+    `SELECT
+       path,
+       COUNT(*)::int AS count,
+       ROUND(AVG(duration_ms))::int AS avg_ms,
+       percentile_disc(0.95) WITHIN GROUP (ORDER BY duration_ms)::int AS p95_ms,
+       MAX(duration_ms)::int AS max_ms,
+       MAX(created_at) AS last_seen
+     FROM ssr_perf_metrics
+     WHERE created_at >= NOW() - ($1 || ' hours')::interval
+     GROUP BY path
+     ORDER BY count DESC, avg_ms DESC
+     LIMIT $2`,
+    [String(hours), limit],
+  );
+  slowPaths = (slowRes.rows || []).map((r) => ({
+    path: String(r.path || ''),
+    count: Number(r.count || 0),
+    avg_ms: Number(r.avg_ms || 0),
+    p95_ms: Number(r.p95_ms || 0),
+    max_ms: Number(r.max_ms || 0),
+    last_seen: r.last_seen ? new Date(r.last_seen).toISOString() : '',
+  }));
+
+  // Son {days} gün günlük trend.
+  const trendRes = await query(
+    `SELECT
+       to_char(date_trunc('day', created_at), 'YYYY-MM-DD') AS day,
+       COUNT(*)::int AS count,
+       ROUND(AVG(duration_ms))::int AS avg_ms,
+       MAX(duration_ms)::int AS max_ms
+     FROM ssr_perf_metrics
+     WHERE created_at >= NOW() - ($1 || ' days')::interval
+     GROUP BY date_trunc('day', created_at)
+     ORDER BY day ASC`,
+    [String(days)],
+  );
+  dailyTrend = (trendRes.rows || []).map((r) => ({
+    day: String(r.day || ''),
+    count: Number(r.count || 0),
+    avg_ms: Number(r.avg_ms || 0),
+    max_ms: Number(r.max_ms || 0),
+  }));
+
+  // Genel özet (son {hours} saat).
+  const totalsRes = await query(
+    `SELECT
+       COUNT(*)::int AS total_events,
+       COUNT(DISTINCT path)::int AS unique_paths,
+       COALESCE(ROUND(AVG(duration_ms)), 0)::int AS overall_avg_ms,
+       COALESCE(MAX(duration_ms), 0)::int AS overall_max_ms
+     FROM ssr_perf_metrics
+     WHERE created_at >= NOW() - ($1 || ' hours')::interval`,
+    [String(hours)],
+  );
+  if (totalsRes.rows && totalsRes.rows[0]) {
+    const t = totalsRes.rows[0];
+    totals = {
+      total_events: Number(t.total_events || 0),
+      unique_paths: Number(t.unique_paths || 0),
+      overall_avg_ms: Number(t.overall_avg_ms || 0),
+      overall_max_ms: Number(t.overall_max_ms || 0),
+    };
+  }
+} catch (err) {
+  loadError = safeErrorDetail(err, 'Performans verileri yüklenemedi');
+  logger.error('admin/performance: load failed', err instanceof Error ? err : new Error(String(err)));
+}
+
+// Renk için basit threshold helper'i.
+function durationClass(ms: number): string {
+  if (ms >= 3000) return 'text-red-700 font-semibold';
+  if (ms >= 1500) return 'text-amber-600 font-semibold';
+  return 'text-[#1F1410]';
+}
+
+function formatRelative(iso: string): string {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  const diffMs = Date.now() - d.getTime();
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 1) return 'şimdi';
+  if (mins < 60) return `${mins} dk önce`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} sa önce`;
+  const dys = Math.round(hrs / 24);
+  return `${dys} gün önce`;
+}
+
+// Trend için basit text-bar.
+const trendMaxCount = dailyTrend.reduce((acc, r) => Math.max(acc, r.count), 0) || 1;
+---
+
+<AdminLayout
+  title="Performans İzleme"
+  subtitle="SSR yavaş render metrikleri (>800ms) — son 24 saat ve trend"
+  seo={{ title: 'Performans - Yönetim Paneli', description: 'SSR perf dashboard', noIndex: true }}
+>
+  <div class="sf-container py-8">
+    {loadError && (
+      <div class="mb-6 rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        {loadError}
+      </div>
+    )}
+
+    {/* Özet kartları */}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+        <div class="text-sm text-[#7A6B58]">Toplam Yavaş Olay</div>
+        <div class="text-2xl font-bold text-[#1F1410] mt-1">{totals.total_events}</div>
+        <div class="text-xs text-[#7A6B58] mt-1">son {hours} saat</div>
+      </div>
+      <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+        <div class="text-sm text-[#7A6B58]">Etkilenen Path</div>
+        <div class="text-2xl font-bold text-[#1F1410] mt-1">{totals.unique_paths}</div>
+        <div class="text-xs text-[#7A6B58] mt-1">unique URL</div>
+      </div>
+      <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+        <div class="text-sm text-[#7A6B58]">Genel Ortalama</div>
+        <div class={`text-2xl mt-1 ${durationClass(totals.overall_avg_ms)}`}>{totals.overall_avg_ms} ms</div>
+        <div class="text-xs text-[#7A6B58] mt-1">tüm yavaş istekler</div>
+      </div>
+      <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+        <div class="text-sm text-[#7A6B58]">En Yavaş</div>
+        <div class={`text-2xl mt-1 ${durationClass(totals.overall_max_ms)}`}>{totals.overall_max_ms} ms</div>
+        <div class="text-xs text-[#7A6B58] mt-1">tek istek max</div>
+      </div>
+    </div>
+
+    {/* Pencere seçici (basit GET form) */}
+    <form method="get" class="mb-6 flex flex-wrap items-end gap-3 bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+      <div>
+        <label class="block text-xs text-[#7A6B58] mb-1" for="hours">Zaman penceresi (saat)</label>
+        <input id="hours" name="hours" type="number" min="1" max="168" value={hours} class="w-32 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs text-[#7A6B58] mb-1" for="limit">TOP path limiti</label>
+        <input id="limit" name="limit" type="number" min="1" max="100" value={limit} class="w-32 text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs text-[#7A6B58] mb-1" for="days">Trend günleri</label>
+        <input id="days" name="days" type="number" min="1" max="30" value={days} class="w-32 text-sm" />
+      </div>
+      <button type="submit" class="px-4 py-2 text-sm font-medium bg-[#C0571F] text-white rounded-sm hover:bg-[#A04519] transition-colors">
+        Uygula
+      </button>
+    </form>
+
+    {/* TOP slow paths */}
+    <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 mb-6">
+      <h2 class="text-lg font-bold text-[#1F1410] mb-4">
+        Yavaş SSR Sayfaları — Son {hours} Saat (TOP {limit})
+      </h2>
+      {slowPaths.length === 0 ? (
+        <p class="text-sm text-[#7A6B58]">
+          Seçili pencerede {`>800ms`} yavaş render kaydı yok. Sistem sağlıklı.
+        </p>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wide text-[#7A6B58] border-b border-[rgba(184,115,51,0.18)]">
+                <th class="py-2 pr-4">Path</th>
+                <th class="py-2 pr-4 text-right">Olay</th>
+                <th class="py-2 pr-4 text-right">Ortalama</th>
+                <th class="py-2 pr-4 text-right">P95</th>
+                <th class="py-2 pr-4 text-right">Max</th>
+                <th class="py-2 pr-4 text-right">Son</th>
+              </tr>
+            </thead>
+            <tbody>
+              {slowPaths.map((row) => (
+                <tr class="border-b border-[rgba(184,115,51,0.08)] last:border-0">
+                  <td class="py-2 pr-4">
+                    <code class="text-xs text-[#4A3828] break-all">{row.path}</code>
+                  </td>
+                  <td class="py-2 pr-4 text-right tabular-nums text-[#1F1410]">{row.count}</td>
+                  <td class={`py-2 pr-4 text-right tabular-nums ${durationClass(row.avg_ms)}`}>{row.avg_ms} ms</td>
+                  <td class={`py-2 pr-4 text-right tabular-nums ${durationClass(row.p95_ms)}`}>{row.p95_ms} ms</td>
+                  <td class={`py-2 pr-4 text-right tabular-nums ${durationClass(row.max_ms)}`}>{row.max_ms} ms</td>
+                  <td class="py-2 pr-4 text-right text-xs text-[#7A6B58]">{formatRelative(row.last_seen)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+    {/* Günlük trend */}
+    <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+      <h2 class="text-lg font-bold text-[#1F1410] mb-4">Günlük Trend — Son {days} Gün</h2>
+      {dailyTrend.length === 0 ? (
+        <p class="text-sm text-[#7A6B58]">Seçili pencerede günlük veri yok.</p>
+      ) : (
+        <div class="space-y-2">
+          {dailyTrend.map((row) => {
+            const pct = Math.max(2, Math.round((row.count / trendMaxCount) * 100));
+            return (
+              <div class="flex items-center gap-3 text-sm">
+                <span class="w-24 text-xs text-[#4A3828] tabular-nums">{row.day}</span>
+                <div class="flex-1 h-5 bg-[rgba(184,115,51,0.06)] rounded-sm overflow-hidden">
+                  <div
+                    class="h-full bg-[#C0571F]"
+                    style={`width:${pct}%`}
+                    title={`${row.count} olay`}
+                  ></div>
+                </div>
+                <span class="w-14 text-right tabular-nums text-[#1F1410]">{row.count}</span>
+                <span class={`w-20 text-right tabular-nums text-xs ${durationClass(row.avg_ms)}`}>{row.avg_ms} ms ort</span>
+                <span class={`w-20 text-right tabular-nums text-xs ${durationClass(row.max_ms)}`}>{row.max_ms} ms max</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <p class="mt-4 text-xs text-[#7A6B58]">
+        Sadece <strong>{`>800ms`}</strong> SSR render'ları DB'ye yazılır
+        (admin / api / _astro / _server-islands / uploads hariç).
+        <code class="ml-1">Server-Timing: ssr;dur=N</code> response header'ında tüm istekler için görünür.
+      </p>
+    </div>
+  </div>
+</AdminLayout>

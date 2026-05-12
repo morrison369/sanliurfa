@@ -1,28 +1,42 @@
 import type { APIRoute } from 'astro';
 import { query, queryOne } from '../../../../lib/postgres';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail, safeIntParam } from '../../../../lib/api';
 import { consumeExportToken } from '../../../../lib/admin/export-tokens';
 import { renderPdfFromHtml } from '../../../../lib/admin/pdf-render';
 import { sendEmail } from '../../../../lib/email';
 import { auditSiteChange } from '../../../../lib/site-content';
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
-function renderHtmlReport(payload: any): string {
+interface SocialLifecyclePayload {
+  windowHours: number;
+  generatedAt: string;
+  social: {
+    eventsByType: { event_type: string; count: number }[];
+    hourlyTrend: { hour_bucket: string; count: number }[];
+    topTenants: { tenant_id: string; count: number }[];
+  };
+  lifecycle: {
+    transitionsByStatus: { to_status: string; count: number }[];
+    currentSlaSnapshot: { pending_count: number; needs_info_count: number };
+  };
+}
+
+function renderHtmlReport(payload: SocialLifecyclePayload): string {
   const socialRows = (payload?.social?.eventsByType || [])
-    .map((x: any) => `<tr><td>${x.event_type}</td><td>${x.count}</td></tr>`)
+    .map((x) => `<tr><td>${x.event_type}</td><td>${x.count}</td></tr>`)
     .join('');
   const socialTrendRows = (payload?.social?.hourlyTrend || [])
-    .map((x: any) => `<tr><td>${x.hour_bucket}</td><td>${x.count}</td></tr>`)
+    .map((x) => `<tr><td>${x.hour_bucket}</td><td>${x.count}</td></tr>`)
     .join('');
   const socialTenantRows = (payload?.social?.topTenants || [])
-    .map((x: any) => `<tr><td>${x.tenant_id}</td><td>${x.count}</td></tr>`)
+    .map((x) => `<tr><td>${x.tenant_id}</td><td>${x.count}</td></tr>`)
     .join('');
   const lifecycleRows = (payload?.lifecycle?.transitionsByStatus || [])
-    .map((x: any) => `<tr><td>${x.to_status}</td><td>${x.count}</td></tr>`)
+    .map((x) => `<tr><td>${x.to_status}</td><td>${x.count}</td></tr>`)
     .join('');
   return `<!doctype html>
   <html lang="tr">
@@ -57,7 +71,7 @@ function renderHtmlReport(payload: any): string {
   </html>`;
 }
 
-export const GET: APIRoute = async ({ locals, request }) => {
+export const GET: APIRoute = async ({ locals, request, clientAddress }) => {
   const url = new URL(request.url);
   const signedToken = String(url.searchParams.get('token') || '').trim();
   const admin = isAdmin(locals);
@@ -67,7 +81,7 @@ export const GET: APIRoute = async ({ locals, request }) => {
       resourceKey: 'admin.reports.social-lifecycle',
       requestIp:
         request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-        (locals as any)?.clientAddress ||
+        clientAddress ||
         null,
       userAgent: request.headers.get('user-agent') || null,
       requestCountry:
@@ -88,11 +102,12 @@ export const GET: APIRoute = async ({ locals, request }) => {
   }
 
   try {
-    const hoursRaw = Number(url.searchParams.get('hours') || 24);
-    const hours = Number.isFinite(hoursRaw) ? Math.max(1, Math.min(720, hoursRaw)) : 24;
-    const format = String(url.searchParams.get('format') || 'json').toLowerCase();
+    const hours = safeIntParam(url.searchParams.get('hours'), 24, 1, 720);
+    const VALID_FORMATS = new Set(['json', 'html', 'pdf']);
+    const rawFormat = String(url.searchParams.get('format') || 'json').toLowerCase();
+    const format = VALID_FORMATS.has(rawFormat) ? rawFormat : 'json';
     const shouldEmail = url.searchParams.get('email') === '1';
-    const emailTo = String(url.searchParams.get('to') || process.env.ADMIN_EMAIL || '').trim();
+    const emailTo = String(url.searchParams.get('to') || process.env.ADMIN_EMAIL || '').trim().substring(0, 254);
 
     const [eventsByType, hourlyTrend, topTenants, lifecycleByStatus, slaSummary] = await Promise.all([
       query(
@@ -213,15 +228,12 @@ export const GET: APIRoute = async ({ locals, request }) => {
       });
     }
 
-    return new Response(JSON.stringify(payload), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-    });
+    return apiResponse(payload, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Social Lifecycle Raporu Üretilemedi',
-      detail: error instanceof Error ? error.message : 'admin_social_lifecycle_report_failed',
+      detail: safeErrorDetail(error, 'admin_social_lifecycle_report_failed'),
       type: '/problems/admin-social-lifecycle-report-failed',
       instance: '/api/admin/reports/social-lifecycle',
     });

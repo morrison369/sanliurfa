@@ -8,6 +8,7 @@ import { toggleRsvp, hasUserRsvpd } from '../../../../lib/events/events-manageme
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 import { recordRequest } from '../../../../lib/metrics';
+import { invalidateEvent } from '../../../../lib/cache/invalidation';
 
 export const POST: APIRoute = async ({ request, params, locals }) => {
   const requestId = getRequestId(request);
@@ -27,6 +28,16 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     }
 
     const { id } = params;
+    if (!id) {
+      recordRequest('POST', '/api/events/[id]/rsvp', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Event ID is required',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
     const userId = locals.user.id;
 
     const success = await toggleRsvp(id, userId);
@@ -36,6 +47,9 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     }
 
     const nowRsvpd = await hasUserRsvpd(id, userId);
+
+    // Cache invalidation: RSVP toggle event:* detail + attendee count cache'ini etkiler
+    await invalidateEvent(id);
 
     recordRequest('POST', '/api/events/[id]/rsvp', HttpStatus.OK, Date.now() - startTime);
 

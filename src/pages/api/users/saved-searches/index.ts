@@ -100,7 +100,18 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/users/saved-searches', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        'Search name is too long (max 100 characters)',
+        'Arama adı 100 karakterden uzun olamaz',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+
+    if (body.query.length > 500) {
+      recordRequest('POST', '/api/users/saved-searches', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Arama sorgusu 500 karakterden uzun olamaz',
         HttpStatus.BAD_REQUEST,
         undefined,
         requestId

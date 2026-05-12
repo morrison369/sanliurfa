@@ -7,7 +7,7 @@
 
 import type { APIRoute } from 'astro';
 import { getBlockedUsers, blockUser, unblockUser } from '../../../lib/block/blocking';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 import { validateWithSchema } from '../../../lib/validation';
@@ -49,8 +49,8 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       );
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     const blockedUsers = await getBlockedUsers(user.id, limit, offset);
 

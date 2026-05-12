@@ -97,10 +97,10 @@ export const GET: APIRoute = async ({ request, params }) => {
       level: user.level,
       created_at: user.created_at,
       stats: {
-        reviews: parseInt(stats?.review_count || '0'),
-        favorites: parseInt(stats?.favorite_count || '0'),
-        comments: parseInt(stats?.comment_count || '0'),
-        badges: parseInt(stats?.badge_count || '0')
+        reviews: parseInt(stats?.review_count || '0', 10),
+        favorites: parseInt(stats?.favorite_count || '0', 10),
+        comments: parseInt(stats?.comment_count || '0', 10),
+        badges: parseInt(stats?.badge_count || '0', 10)
       }
     };
 

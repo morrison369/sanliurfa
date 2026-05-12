@@ -1,15 +1,14 @@
 import type { APIRoute } from 'astro';
+import { apiResponse, safeErrorDetail } from '../../../lib/api';
 import { query, queryMany, insert } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  return locals?.user?.role === 'admin';
 }
 
 export const GET: APIRoute = async ({ url, locals }) => {
@@ -19,16 +18,15 @@ export const GET: APIRoute = async ({ url, locals }) => {
 
   try {
     if (routeId) {
-      const [route] = await queryMany(
-        `SELECT * FROM bus_routes WHERE id = $1`,
-        [routeId],
-      );
+      const [routeRows, schedules] = await Promise.all([
+        queryMany(`SELECT * FROM bus_routes WHERE id = $1`, [routeId]),
+        queryMany(
+          `SELECT * FROM bus_schedules WHERE route_id = $1 ORDER BY day_type, direction, departure_time`,
+          [routeId],
+        ),
+      ]);
+      const route = routeRows[0];
       if (!route) return json({ error: 'Hat bulunamadı' }, 404);
-
-      const schedules = await queryMany(
-        `SELECT * FROM bus_schedules WHERE route_id = $1 ORDER BY day_type, direction, departure_time`,
-        [routeId],
-      );
       return json({ success: true, route, schedules });
     }
 
@@ -43,15 +41,16 @@ export const GET: APIRoute = async ({ url, locals }) => {
       [],
     );
     return json({ success: true, routes });
-  } catch (err: any) {
-    return json({ error: err.message }, 500);
+  } catch (err) {
+    logger.error('bus-routes GET failed', err instanceof Error ? err : new Error(String(err)));
+    return json({ error: safeErrorDetail(err, 'Hatlar listelenemedi') }, 500);
   }
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!isAdmin(locals)) return json({ error: 'Unauthorized' }, 401);
 
-  let body: any;
+  let body: Record<string, unknown>;
   try { body = await request.json(); } catch { return json({ error: 'Geçersiz JSON' }, 400); }
 
   const { action } = body;
@@ -60,7 +59,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     if (action === 'add_route') {
       const { route_no, name, start_stop, end_stop, notes } = body;
       if (!route_no || !name) return json({ error: 'route_no ve name zorunlu' }, 400);
-      const row = await insert('bus_routes', { route_no, name, start_stop: start_stop || null, end_stop: end_stop || null, notes: notes || null, is_active: true });
+      const routeNoNum = parseInt(String(route_no), 10);
+      if (!Number.isFinite(routeNoNum) || routeNoNum < 1) return json({ error: 'Geçersiz hat numarası' }, 400);
+      if (typeof name === 'string' && name.length > 200) return json({ error: 'Hat adı 200 karakterden uzun olamaz' }, 400);
+      if (typeof notes === 'string' && notes.length > 1000) return json({ error: 'Not 1000 karakterden uzun olamaz' }, 400);
+      const row = await insert('bus_routes', { route_no: routeNoNum, name, start_stop: start_stop || null, end_stop: end_stop || null, notes: notes || null, is_active: true });
       return json({ success: true, route: row });
     }
 
@@ -76,6 +79,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
       if (!routeId || !day_type || !direction || !departure_time) {
         return json({ error: 'routeId, day_type, direction, departure_time zorunlu' }, 400);
       }
+      const VALID_DAY_TYPES = new Set(['weekday', 'weekend']);
+      if (!VALID_DAY_TYPES.has(day_type as string)) return json({ error: 'Geçersiz gün tipi' }, 400);
+      const VALID_DIRECTIONS = new Set(['outbound', 'inbound']);
+      if (!VALID_DIRECTIONS.has(direction as string)) return json({ error: 'Geçersiz yön' }, 400);
       const row = await insert('bus_schedules', { route_id: routeId, day_type, direction, departure_time });
       return json({ success: true, schedule: row });
     }
@@ -93,20 +100,33 @@ export const POST: APIRoute = async ({ request, locals }) => {
       if (!routeId || !day_type || !direction || !Array.isArray(times)) {
         return json({ error: 'routeId, day_type, direction, times zorunlu' }, 400);
       }
+      const VALID_DAY_TYPES_BULK = new Set(['weekday', 'weekend']);
+      if (!VALID_DAY_TYPES_BULK.has(day_type as string)) return json({ error: 'Geçersiz gün tipi' }, 400);
+      const VALID_DIRECTIONS_BULK = new Set(['outbound', 'inbound']);
+      if (!VALID_DIRECTIONS_BULK.has(direction as string)) return json({ error: 'Geçersiz yön' }, 400);
+      if (times.length > 200) return json({ error: 'times dizisi 200 öğeyi geçemez' }, 400);
       await query(
         `DELETE FROM bus_schedules WHERE route_id = $1 AND day_type = $2 AND direction = $3`,
         [routeId, day_type, direction],
       );
-      for (const t of times) {
-        if (typeof t === 'string' && /^\d{2}:\d{2}$/.test(t)) {
-          await insert('bus_schedules', { route_id: routeId, day_type, direction, departure_time: t });
-        }
+      const validTimes = (times as unknown[]).filter(
+        (t): t is string => typeof t === 'string' && /^\d{2}:\d{2}$/.test(t),
+      );
+      if (validTimes.length > 0) {
+        const placeholders = validTimes
+          .map((_, i) => `($1, $2, $3, $${i + 4})`)
+          .join(', ');
+        await query(
+          `INSERT INTO bus_schedules (route_id, day_type, direction, departure_time) VALUES ${placeholders}`,
+          [routeId, day_type, direction, ...validTimes],
+        );
       }
-      return json({ success: true, message: `${times.length} sefer saati kaydedildi` });
+      return json({ success: true, message: `${validTimes.length} sefer saati kaydedildi` });
     }
 
     return json({ error: `Bilinmeyen action: ${action}` }, 400);
-  } catch (err: any) {
-    return json({ error: err.message }, 500);
+  } catch (err) {
+    logger.error('bus-routes POST failed', err instanceof Error ? err : new Error(String(err)));
+    return json({ error: safeErrorDetail(err, 'İşlem başarısız oldu') }, 500);
   }
 };

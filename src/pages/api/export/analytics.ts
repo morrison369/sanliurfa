@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { convertToCSV, convertToJSON, getContentType, getFileExtension, getFormattedDate } from '../../../lib/export/export';
-import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const url = new URL(request.url);
     const format = (url.searchParams.get('format') || 'json') as 'csv' | 'json';
-    const days = Math.max(1, Math.min(365, parseInt(url.searchParams.get('days') || '30') || 30));
+    const days = safeIntParam(url.searchParams.get('days'), 30, 1, 365);
 
     // Popular places
     const placesResult = await pool.query(
@@ -47,11 +47,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
         startDate: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString(),
         endDate: new Date().toISOString()
       },
-      popularPlaces: (placesResult as any).rows?.map((p: any) => ({
+      popularPlaces: placesResult.rows?.map((p) => ({
         placeId: p.place_id,
         viewCount: p.view_count
       })) || [],
-      dailyStats: (statsResult as any).rows?.map((s: any) => ({
+      dailyStats: statsResult.rows?.map((s) => ({
         date: s.date,
         totalEvents: s.total_events,
         uniqueUsers: s.unique_users
@@ -60,8 +60,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     // convertToCSV expects an array, convertToJSON can take any
     const data = format === 'csv' 
-      ? convertToCSV((analytics as any).dailyStats || []) 
-      : convertToJSON(analytics as any);
+      ? convertToCSV(analytics.dailyStats || []) 
+      : convertToJSON([analytics]);
     const extension = getFileExtension(format);
     const filename = `analytics-${getFormattedDate()}.${extension}`;
 

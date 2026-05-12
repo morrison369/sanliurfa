@@ -2,9 +2,24 @@
  * Search Engine Library
  * Full-text search, filtering, and ranking
  */
-import { queryOne, queryMany, insert, update } from '../postgres';
+import { queryOne, queryMany, queryReadOne, queryReadMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { hasColumn, pickFirstExistingColumn } from './schema-compat';
+
+/**
+ * Normalize Turkish chars for accent-insensitive search.
+ * "Balıklıgöl" → "balikligol" — user typing "balik" matches "balıklıgöl".
+ */
+function normalizeTr(s: string): string {
+  return s
+    .toLocaleLowerCase('tr-TR')
+    .replace(/ı/g, 'i')
+    .replace(/ğ/g, 'g')
+    .replace(/ş/g, 's')
+    .replace(/ö/g, 'o')
+    .replace(/ü/g, 'u')
+    .replace(/ç/g, 'c');
+}
 
 export async function searchPlaces(
   query: string,
@@ -14,13 +29,26 @@ export async function searchPlaces(
   offset: number = 0
 ): Promise<any[]> {
   try {
-    const hasPlacesCity = await hasColumn('places', 'city');
-    const hasPlacesDistrict = await hasColumn('places', 'district');
+    const [hasPlacesCity, hasPlacesDistrict, hasSearchVector] = await Promise.all([
+      hasColumn('places', 'city'),
+      hasColumn('places', 'district'),
+      hasColumn('places', 'search_vector'),
+    ]);
+
+    const tsvec = hasSearchVector
+      ? 'p.search_vector'
+      : "to_tsvector('turkish', p.name || ' ' || COALESCE(p.description, ''))";
+
+    // Two-stage match: (1) Turkish unaccent tsvector for stemmed search,
+    // (2) accent-insensitive ILIKE on normalized text — catches "balik" → "Balıklıgöl".
     let sql = `
       SELECT
         p.id,
         p.name,
+        p.slug,
         p.description,
+        p.short_description,
+        p.image_url,
         p.category,
         ${hasPlacesCity ? 'p.city' : 'NULL::text AS city'},
         ${hasPlacesDistrict ? 'p.district' : 'NULL::text AS district'},
@@ -29,17 +57,24 @@ export async function searchPlaces(
         p.rating,
         p.review_count,
         p.created_at,
-        ts_rank(
-          to_tsvector('turkish', p.name || ' ' || COALESCE(p.description, '')),
-          plainto_tsquery('turkish', $1)
-        ) as relevance_score
+        GREATEST(
+          ts_rank(
+            ${tsvec},
+            plainto_tsquery('turkish', $1)
+          ),
+          CASE WHEN LOWER(p.name) LIKE '%' || $1 || '%' THEN 0.9 ELSE 0 END,
+          CASE WHEN translate(LOWER(COALESCE(p.name, '') || ' ' || COALESCE(p.description, '')), 'ığşöüç', 'igsouc') LIKE '%' || $2 || '%' THEN 0.5 ELSE 0 END
+        ) AS relevance_score
       FROM places p
-      WHERE to_tsvector('turkish', p.name || ' ' || COALESCE(p.description, ''))
-            @@ plainto_tsquery('turkish', $1)
+      WHERE p.status = 'active' AND (
+        ${tsvec} @@ plainto_tsquery('turkish', $1)
+        OR LOWER(p.name) LIKE '%' || $1 || '%'
+        OR translate(LOWER(COALESCE(p.name, '') || ' ' || COALESCE(p.description, '')), 'ığşöüç', 'igsouc') LIKE '%' || $2 || '%'
+      )
     `;
 
-    const params: any[] = [query];
-    let paramIndex = 2;
+    const params: any[] = [query.toLocaleLowerCase('tr-TR'), normalizeTr(query)];
+    let paramIndex = 3;
 
     // Add filters
     if (filters?.category) {
@@ -62,19 +97,19 @@ export async function searchPlaces(
 
     // Sorting
     if (sortBy === 'rating') {
-      sql += ' ORDER BY p.rating DESC, p.review_count DESC';
+      sql += ' ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST, relevance_score DESC';
     } else if (sortBy === 'newest') {
       sql += ' ORDER BY p.created_at DESC';
     } else if (sortBy === 'reviews') {
-      sql += ' ORDER BY p.review_count DESC';
+      sql += ' ORDER BY p.review_count DESC NULLS LAST, relevance_score DESC';
     } else {
-      sql += ' ORDER BY relevance_score DESC, p.rating DESC';
+      sql += ' ORDER BY relevance_score DESC, p.rating DESC NULLS LAST';
     }
 
     sql += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
-    const results = await queryMany(sql, params) as any[];
+    const results = await queryReadMany(sql, params) as any[];
     return results;
   } catch (error) {
     logger.error('Search places failed', error instanceof Error ? error : new Error(String(error)));
@@ -129,7 +164,7 @@ export async function searchReviews(
     sql += ` ORDER BY relevance_score DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
-    const results = await queryMany(sql, params) as any[];
+    const results = await queryReadMany(sql, params) as any[];
     return results;
   } catch (error) {
     logger.error('Search reviews failed', error instanceof Error ? error : new Error(String(error)));
@@ -150,7 +185,7 @@ export async function searchEvents(
         e.id,
         e.title,
         e.description,
-        e.event_date,
+        e.start_date,
         ${hasEventsCity ? 'e.city' : 'NULL::text AS city'},
         e.category,
         e.created_at,
@@ -159,7 +194,8 @@ export async function searchEvents(
           plainto_tsquery('turkish', $1)
         ) as relevance_score
       FROM events e
-      WHERE to_tsvector('turkish', e.title || ' ' || COALESCE(e.description, ''))
+      WHERE e.status = 'published'
+        AND to_tsvector('turkish', e.title || ' ' || COALESCE(e.description, ''))
             @@ plainto_tsquery('turkish', $1)
     `;
 
@@ -179,13 +215,13 @@ export async function searchEvents(
     }
 
     if (filters?.upcomingOnly) {
-      sql += ` AND e.event_date >= NOW()`;
+      sql += ` AND e.start_date >= NOW()`;
     }
 
-    sql += ` ORDER BY relevance_score DESC, e.event_date ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    sql += ` ORDER BY relevance_score DESC, e.start_date ASC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit, offset);
 
-    const results = await queryMany(sql, params) as any[];
+    const results = await queryReadMany(sql, params) as any[];
     return results;
   } catch (error) {
     logger.error('Search events failed', error instanceof Error ? error : new Error(String(error)));

@@ -80,9 +80,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     // Request deletion
-    const reason = typeof body.reason === 'string' && body.reason.trim().length > 0
-      ? body.reason.trim()
-      : undefined;
+    const rawReason = typeof body.reason === 'string' ? body.reason.trim() : '';
+    if (rawReason.length > 500) {
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Silme gerekçesi 500 karakteri aşamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    const reason = rawReason.length > 0 ? rawReason : undefined;
     const deletion = await requestAccountDeletion(userId, reason);
 
     logger.info('Account deletion requested', { userId, deletesAt: deletion.deletesAt });

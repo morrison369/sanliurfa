@@ -5,7 +5,6 @@ export * from './analytics-reporting';
 export * from './behavioral-analytics';
 export * from './business-analytics';
 export * from './cohort-analytics';
-export * from './coverage-analytics';
 export * from './funnel-analytics';
 export * from './google-analytics';
 export * from './journey-analytics';
@@ -21,6 +20,6 @@ export {
   generateEngagementReport,
   reportToCSV,
   reportToJSON,
-  getSummaryStats
+  getSummaryStats,
 } from '../reporting/reporting';
 

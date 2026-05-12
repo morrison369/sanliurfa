@@ -7,8 +7,8 @@
 
 import type { APIRoute } from 'astro';
 import { logger } from '../../../../lib/logging';
-import { getRequestId, problemJson } from '../../../../lib/api';
-import { runLoginTwoFactorFlow } from '../../../../lib/auth/auth-flows';
+import { getRequestId, problemJson, safeErrorDetail } from '../../../../lib/api';
+import { runLoginTwoFactorFlow, TwoFactorCodeError, TwoFactorRateLimitError } from '../../../../lib/auth/auth-flows';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const requestId = getRequestId(request);
@@ -55,10 +55,32 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    logger.error('2FA verification error', error instanceof Error ? error : new Error(String(error)), {
-      duration
-    });
 
+    if (error instanceof TwoFactorRateLimitError) {
+      logger.warn('2FA rate limit exceeded', { duration });
+      return problemJson({
+        status: 429,
+        title: 'Çok Fazla Deneme',
+        detail: safeErrorDetail(error, 'Çok fazla başarısız deneme. Lütfen tekrar giriş yapın.'),
+        type: '/problems/auth-2fa-rate-limited',
+        instance: '/api/auth/login/verify-2fa',
+        extensions: { requestId },
+      });
+    }
+
+    if (error instanceof TwoFactorCodeError) {
+      logger.logAuth('login_2fa', 'failed', false, { duration });
+      return problemJson({
+        status: 401,
+        title: 'Geçersiz Kod',
+        detail: safeErrorDetail(error, '2FA kodu geçersiz veya süresi dolmuş.'),
+        type: '/problems/auth-2fa-invalid-code',
+        instance: '/api/auth/login/verify-2fa',
+        extensions: { requestId },
+      });
+    }
+
+    logger.error('2FA verification error', error instanceof Error ? error : new Error(String(error)), { duration });
     return problemJson({
       status: 500,
       title: '2FA Doğrulanamadı',

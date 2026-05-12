@@ -2,9 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Belge Haritası — Önce Buradan Bak
+
+| Konu | Dosya | İçerik |
+|------|-------|--------|
+| **Genel rehber + günlük komutlar** | `CLAUDE.md` (bu dosya) | Stack, commands, architecture, conventions, prohibitions |
+| **Güvenlik kuralları** | [`docs/SECURITY.md`](docs/SECURITY.md) | 53 HARD RULE + 43 static lock test |
+| **Astro detayları** | [`docs/ASTRO_DETAILED.md`](docs/ASTRO_DETAILED.md) | Framework patterns, directives, server islands, SEO |
+| **Production / Deploy** | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) | PM2, CWP, lifecycle, admin integrations |
+| **Operations runbook** | `DEPLOY-OPS-RUNBOOK.md` | SSH/deploy/rollback/health komutları |
+| **DB schema audit** | `DB-INDEX-AUDIT.md` | 18 missing index, Tier 1 öneriler |
+
+> **Önemli**: Bir konuda derin bilgi gerekiyorsa `docs/` altındaki dosyaları aç. Bu dosyayı kısa tutmaya özen göster.
+
+---
+
 ## Project Overview
 
-**Şanlıurfa.com** — Astro 6.1 + React 19 + TypeScript şehir rehberi platformu. PostgreSQL (pg), Redis cache/session/rate-limit, bcrypt auth, SSE real-time, Stripe subscriptions, gamification (loyalty/badges/achievements). ~280 lib modules, ~180 components, ~70 pages.
+**Şanlıurfa.com** — Astro 6.3 + React 19 + TypeScript şehir rehberi platformu. PostgreSQL (raw `pg`), Redis cache/session/rate-limit, bcrypt+JWT auth, SSE real-time, Stripe subscriptions, gamification. ~280 lib modules, ~180 components, ~70 pages.
 
 ## Commands
 
@@ -18,272 +33,249 @@ npm run test:unit        # Vitest
 npm run test:unit:watch  # Vitest watch mode
 npm run test:e2e         # Playwright
 npm run test             # Unit + E2E
-npm run db:migrate       # Run pending migrations (npx tsx scripts/migrate.ts)
+npm run db:migrate       # Run pending migrations
 npm run db:migrate:status # Show migration status
-npm run db:seed          # Load SQL seed files (npx tsx scripts/seed.ts)
-npm run type-check       # astro check (TypeScript validation)
+npm run db:seed          # Load SQL seed files
+npm run type-check       # astro check
 npm run lint:ci          # Full CI: astro check + lint + images + validation
-npm run test:api-contract # API contract tests (Vitest, separate config)
-npm run load:test        # k6 load tests (requires k6 CLI)
 ```
 
 Single test file: `npx vitest run src/lib/__tests__/specific.test.ts`
 
+### TEST.md — Manuel Test Senaryoları
+- **Her kod değişikliğinin SON adımı**: `TEST.md` dosyasını güncelle.
+- Format: özellik başlıklarına göre gruplandırılmış madde madde manuel test senaryoları (golden path + edge case). Kümülatif.
+- **Otomatik test yazma serbest**: Vitest unit/regression + security static lock testleri (`security-*.test.ts`).
+
+### Test Helper Kullanımı
+```typescript
+import { createApiContext, parseJson } from '@/lib/__tests__/helpers';
+const ctx = createApiContext({ method: 'POST', body: { name: 'test' }, locals: { user: testUtils.mockUser() } });
+const resp = await POST(ctx);
+const data = await parseJson(resp);
+
+import { renderAstroComponent } from '@/lib/__tests__/helpers';
+const html = await renderAstroComponent(MyPage, { request: new Request('http://localhost/test'), locals: { user: testUtils.mockUser() } });
+```
+
+---
+
 ## Architecture
 
 ### Stack
-- **Framework**: Astro 6.1 SSR (`output: 'server'`) with file-based routing
-- **UI**: React 19 (client:load/client:idle hydration directives — Islands architecture)
+- **Framework**: Astro 6.3 SSR (`output: 'server'`) with file-based routing
+- **UI**: React 19 (client:load/idle/visible — Islands architecture)
 - **DB**: PostgreSQL via `pg` library (direct pool, NOT an ORM)
 - **Cache/Sessions/Rate-limit**: Redis with `sanliurfa:` namespace prefix
 - **Auth**: bcrypt (12 rounds) + JWT + Redis sessions (24h sliding window)
 - **Real-time**: Server-Sent Events (SSE) via ReadableStream
-- **Payments**: Stripe (checkout sessions, webhooks with HMAC-SHA256)
-- **File Storage**: Local disk only (`public/uploads/` via `src/lib/file/file-storage.ts`) — NO S3, NO cloud storage
-- **Styling**: Tailwind CSS 3.4
+- **Payments**: Stripe (checkout sessions, webhooks HMAC-SHA256)
+- **File Storage**: Local disk only (`public/uploads/`) — NO cloud storage
+- **Styling**: Tailwind CSS 4.3 + `@tailwindcss/vite` (CSS-first config, JS config silindi). Custom palette `urfa-{50-950}` (bakır/altın) + `isot-{50-950}` (kırmızı) + `sand-{50-300}`. Tema "Harran Scripts" — Cormorant Garamond + Jost; obsidiyen bg `#0D0A08`, bakır vurgu `#CE8E38`. CSS vars: `src/styles/global.css` `:root`/`.dark` bloğu.
 
 ### Key Directories
 - `src/pages/` — File-based routing: `.astro` pages + `api/` REST endpoints
 - `src/pages/api/` — All API endpoints return `{ success, data?, error? }` JSON
-- `src/lib/` — Core utilities and business logic (~280 modules in subdirectories)
-- `src/components/` — Astro (.astro) for static, React (.tsx) for interactive
+- `src/lib/` — Core utilities and business logic (~280 modules)
+- `src/components/` — Astro (.astro) static, React (.tsx) interactive
 - `src/middleware.ts` — Auth, CORS, rate limiting, security headers
-- `src/migrations/` — Database migration files (TypeScript)
+- `src/migrations/` — Database migration files
 - `src/lib/__tests__/` — Vitest test suites
 
 ### Path Alias
-`@/*` maps to `src/*` (configured in tsconfig.json)
+`@/*` maps to `src/*` (tsconfig.json)
 
 ---
 
-## Astro Framework Patterns
+## Astro Framework Patterns (özet — detay: [`docs/ASTRO_DETAILED.md`](docs/ASTRO_DETAILED.md))
 
 ### SSR Mode
-This project runs in `output: 'server'` — all pages render on-demand. Key implications:
-- `getStaticPaths()` is **ignored** — use `Astro.params` + DB queries instead
-- Always guard with `Astro.redirect()` on missing/unauthorized resources
-- `Astro.locals` is request-scoped and reset per request
+`output: 'server'` — tüm sayfa runtime render. `getStaticPaths()` ignore edilir, `Astro.params` + DB query kullan. `Astro.locals` request-scoped, her request reset.
 
+### API Routes
+```typescript
+export const GET: APIRoute = async ({ request, locals, params, cookies, url }) => { ... };
+```
+- `apiResponse()` / `apiError()` from `src/lib/api.ts` zorunlu — `X-Request-ID` + consistent shape.
+- `locals.user` middleware'den gelir (auth-token cookie), client'a güvenme.
+
+### React Islands
 ```astro
----
-// SSR dynamic route — params come from URL, not getStaticPaths
-const { slug } = Astro.params;
-const place = await queryOne('SELECT * FROM places WHERE slug = $1', [slug]);
-if (!place) return Astro.redirect('/404');
----
+<Counter client:load />    <!-- Hemen hydrate -->
+<Map client:idle />        <!-- Browser idle -->
+<Gallery client:visible /> <!-- Viewport girişi -->
+<Modal client:only="react" />
 ```
+React props serializable olmalı — Date → ISO string.
 
-### API Routes (Endpoints)
-All endpoints live in `src/pages/api/` and export named HTTP method handlers:
-
-```typescript
-import type { APIRoute } from 'astro';
-
-export const GET: APIRoute = async ({ request, locals, params, cookies, url }) => {
-  return new Response(JSON.stringify({ data }), {
-    headers: { 'Content-Type': 'application/json' }
-  });
-};
-
-export const POST: APIRoute = async ({ request, locals }) => {
-  const body = await request.json();
-  // ...
-};
-```
-
-- Always use `apiResponse()` / `apiError()` from `src/lib/api.ts` — they add `X-Request-ID` and consistent shape
-- `locals.user` is set by middleware from `auth-token` cookie — never trust client-supplied user IDs
-
-### Middleware & locals
-Middleware is in `src/middleware.ts`. The `App.Locals` interface is declared in `src/env.d.ts`:
-
-```typescript
-// src/env.d.ts
-declare namespace App {
-  interface Locals {
-    user?: { id: string; email: string; role: string; fullName?: string };
-    isAdmin?: boolean;
-    requestId?: string;
-  }
-}
-```
-
-Access in pages via `Astro.locals`, in endpoints via `context.locals`. Never reassign the entire `locals` object — mutate its properties.
-
-### React Islands (Client Hydration)
-```astro
-<Counter client:load />    <!-- Hydrate immediately -->
-<Map client:idle />        <!-- Hydrate when browser idle -->
-<Gallery client:visible /> <!-- Hydrate when scrolled into view -->
-<Modal client:only="react" /> <!-- Client-only, no SSR -->
-```
-
-React props must be serializable — no `Date` objects, functions, or Maps. Pass ISO strings for dates.
-
-### Cookies (Auth)
-```typescript
-// Set in API route
-context.cookies.set('auth-token', token, {
-  httpOnly: true, secure: true, sameSite: 'strict', path: '/', maxAge: 86400
-});
-
-// Read in middleware
-const token = context.cookies.get('auth-token')?.value;
-```
-
-### File-Based Routing Summary
-```
-src/pages/index.astro           → /
-src/pages/mekan/[slug].astro    → /mekan/:slug  (SSR: use Astro.params.slug)
-src/pages/api/places/[id].ts    → /api/places/:id
-src/pages/_helpers/util.ts      → NOT a route (underscore prefix)
-```
-
-### Environment Variables
-- `PUBLIC_*` vars are exposed to the browser (baked in at build time)
-- Non-PUBLIC vars are server-only
-- Access via `import.meta.env.VAR_NAME`
-
-### Error Pages
-- `src/pages/404.astro` — rendered when no route matches
-- `src/pages/500.astro` — rendered for unhandled server errors
+### Server Islands (`server:defer`)
+Yavaş DB sorgulu `.astro` componentleri için. Detay: `docs/ASTRO_DETAILED.md` "Server Islands" bölümü.
 
 ---
 
 ## Critical Conventions
 
 ### Database
-- **Always parameterized queries**: `pool.query('SELECT * FROM places WHERE id = $1', [id])` — never string interpolation
-- **Table allowlist**: New tables must be added to `ALLOWED_TABLES` in `src/lib/postgres.ts`
-- **Migrations**: Add timestamped file in `src/migrations/`, run `npm run db:migrate`
+- **Always parameterized**: `pool.query('SELECT * FROM places WHERE id = $1', [id])`
+- **Table allowlist**: Yeni tablo → `ALLOWED_TABLES` in `src/lib/postgres.ts`
+- **Migrations**: Timestamped `src/migrations/` + `npm run db:migrate`
 
 ### Redis Caching
-- **Namespace**: ALL keys must use `sanliurfa:` prefix (via `prefixKey()` helper in `src/lib/cache.ts`)
-- **Isolation is critical**: Shared Redis instance, namespace prevents collision with other projects
-- **Invalidation**: Every mutation (POST/PUT/DELETE) must invalidate related cache patterns via `deleteCache()` or `deleteCachePattern()`
-- Cache helpers: `getCache()`, `setCache(key, value, ttlSeconds)`, `deleteCache()`, `deleteCachePattern()`
+- **Namespace zorunlu**: ALL keys `sanliurfa:` prefix (via `prefixKey()` in `src/lib/cache/cache.ts`)
+- **Mutation = invalidate**: Her POST/PUT/DELETE ilgili cache'i `deleteCache()` / `deleteCachePattern()` ile siler
+- Helper'lar: `getCache()`, `setCache(key, value, ttl)`, `deleteCache()`, `deleteCachePattern()`
 
 ### API Endpoints
-- Response format: `apiResponse(data, status, requestId)` and `apiError(code, message, status, details, requestId)` from `src/lib/api.ts`
-- Every endpoint must: validate input via `validateWithSchema()`, record metrics via `recordRequest()`, include X-Request-ID header
-- Admin endpoints: check `locals.user.role !== 'admin'` or `locals.isAdmin` → return 403 (never redirect)
-- Auth check: `locals.user` set by middleware from `auth-token` cookie
+- Response: `apiResponse(data, status, requestId)` + `apiError(code, message, status, details, requestId)`
+- Her endpoint: `validateWithSchema()` + `recordRequest()` + `X-Request-ID`
+- Admin endpoint: `locals.user.role !== 'admin'` veya `locals.isAdmin` → 403 (asla redirect)
+- Auth: `locals.user` middleware'den
 
 ### File Uploads — LOCAL DISK ONLY
 - **Use**: `saveFile(file, folder)` from `src/lib/file/file-storage.ts`
-- **Saves to**: `public/uploads/photos/<folder>/` — served statically at `/uploads/photos/<folder>/`
-- **FORBIDDEN**: AWS S3, GCS, Azure Blob, Cloudinary, any cloud file storage
-- Uploaded file paths stored in `s3_files` table (legacy name — still used for local files)
-- `UPLOAD_DIR` env var controls base path (default: `public/uploads/photos`)
+- Saves to `public/uploads/photos/<folder>/`
+- **FORBIDDEN**: S3, GCS, Azure, Cloudinary
+- Paths stored in `s3_files` table (legacy name)
+
+### Admin Sayfaları — AdminLayout.astro Zorunlu
+```astro
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+const user = Astro.locals.user;
+if (!user || user.role !== 'admin') return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+---
+<AdminLayout title="...">
+  <!-- içerik -->
+</AdminLayout>
+```
+Auth-protected profil sayfaları `seo={{ noIndex: true }}` almalı.
 
 ### SSE (Real-time)
-- Use `ReadableStream` pattern with `Cache-Control: no-cache`, `Connection: keep-alive` headers
-- Client reconnection: exponential backoff (1s, 2s, 4s... max 60s)
-- Manager singleton in `src/lib/realtime-sse.ts`
+`ReadableStream` + `Cache-Control: no-cache` + `Connection: keep-alive`. Manager: `src/lib/realtime-sse.ts`.
 
 ### Gamification
-- Achievement checks via `checkCommonAchievements(userId)` — always call from event hooks in `src/lib/gamification.ts`, never directly
-- Points: `awardPoints(userId, amount, reason)` from `src/lib/loyalty-points.ts`
-- Badges: `awardBadgeToUser(userId, badgeKey, reason)` from `src/lib/badges.ts`
+- `checkCommonAchievements(userId)` from event hooks (`src/lib/gamification.ts`)
+- `awardPoints(userId, amount, reason)` from `src/lib/loyalty-points.ts`
+- `awardBadgeToUser(userId, badgeKey, reason)` from `src/lib/badges.ts`
 
 ### Validation
-- Schema-based via `validateWithSchema(body, schema)` from `src/lib/validation.ts`
-- Add new schemas to `commonSchemas` object
-- Set `sanitize: true` on user-facing text fields for XSS prevention
+- `validateWithSchema(body, schema)` from `src/lib/validation.ts`
+- Yeni schema → `commonSchemas` object
+- User-facing text: `sanitize: true` (XSS)
 
-### Commit Convention
-Conventional Commits: `feat(scope): description`, `fix(scope): description`, etc.
-Branch naming: `feature/`, `fix/`, `docs/`, `refactor/`, `test/`
+### URL Helpers
+- **Use `getPublicAppUrl()`** from `src/lib/public-app-url.ts` — `PUBLIC_APP_URL` → `SITE_URL` → `PUBLIC_SITE_URL` → fallback zinciri.
+
+### Error Detail Sanitization
+- **Use `safeErrorDetail(err, fallback)`** from `src/lib/api.ts` — production'da fallback, dev'de error.message.
+
+### Internal API Token
+- **Use `verifyInternalToken(request)`** from `src/lib/auth/internal-token.ts` — `/api/metrics`, `/api/emails/process`, `/api/webhooks/trigger`.
+- `INTERNAL_API_TOKEN` env yoksa 401 (security-by-default).
+
+### Vendor/Owner Yetki (3-yol switch zorunlu)
+```ts
+if (auth.user.role === 'admin') { /* tam erişim */ }
+else if (auth.user.role === 'vendor') {
+  const placeCheck = await query('SELECT id FROM places WHERE id = $1 AND owner_id = $2', [placeId, auth.user.id]);
+  if (placeCheck.rows.length === 0) return 403;
+} else { return 403; }
+```
+**ASLA** `if (role === 'vendor')` only check yazma — user/moderator'a açık bırakır (IDOR).
 
 ---
 
-## SEO & Structured Data Architecture
+## SECURITY HARD RULES (özet)
 
-### Bileşenler
-- **`src/components/SEO.astro`** — Tüm meta tag'leri (`<title>`, OG, Twitter Card, robots), hepsinin `<head>`'e Layout.astro üzerinden eklenmesi yeterli. Favicon/manifest/viewport bu dosyada YOKTUR (Layout.astro'dadır).
-- **`src/components/SchemaOrg.astro`** — Yeniden kullanılabilir JSON-LD bileşeni. `places/[slug].astro`'da `LocalBusiness`, `BreadcrumbList`, `FAQPage` tipleri için kullanılır. Desteklenen tipler: `Organization | LocalBusiness | Place | Article | Event | BreadcrumbList | WebSite | FAQPage`.
-- **`src/lib/seo-helpers.ts`** — `generateCanonicalUrl`, `generateOGTags`, `generateSchemaOrg` yardımcı fonksiyonlar. `SITE` constant'ına bağımlı.
-- **`src/components/Image.astro`** — Astro native `<Picture>` wrapper (avif/webp, lazy load). Yetkili remote host'lar: `images.pexels.com`, `images.unsplash.com`. Tüm yerel ve izinli remote görseller için kullan.
+**53 aktif kural** + **43 static lock test** — tam detay: [`docs/SECURITY.md`](docs/SECURITY.md).
 
-### AI & GEO Görünürlüğü
-- **`public/llms.txt`** — AI crawler'lar (Claude, GPT, Perplexity) için yapılandırılmış site haritası. Site içeriği ve bölümleri açıklar.
-- **`public/robots.txt`** — Tüm büyük AI botlara (`GPTBot`, `ClaudeBot`, `PerplexityBot`, `Google-Extended`, `Amazonbot`) izin verilmiş.
-- Yeni sayfa/bölüm eklenince `llms.txt`'i güncelle.
+### En sık ihlal edilen 10 kural (özet):
 
-### Astro 6.1 Aktif Entegrasyonlar (astro.config.mjs)
-- `@astrojs/react` — React 19 islands (`client:load`, `client:idle`, `client:visible`)
-- `@astrojs/mdx` — MDX blog desteği
-- `@astrojs/partytown` — GA ve 3. taraf scriptleri web worker'a taşır
-- `@astrojs/node` — Standalone SSR adapter (PM2 ile production)
-- `astro-compress` — Prod build'da HTML/CSS/JS/SVG sıkıştırma
-- TailwindCSS — `tailwind.config.js` + PostCSS üzerinden çalışır, ayrı `@astrojs/tailwind` paketi GEREKMEZ
-- **`@astrojs/sitemap` package.json'da var ama integrations'a EKLENMEMİŞTİR** — SSR mode'da dynamic route'ları keşfedemez. Sitemap `src/pages/sitemap.xml.ts` custom SSR endpoint ile sağlanır (DB-populated). Entegrasyona ekleme.
+1. **#2 File Upload XSS** — `file.name.split('.').pop()` yasak, MIME→ext mapping zorunlu
+2. **#9 Error Sanitization** — `safeErrorDetail()` kullan, raw `error.message` yasak
+3. **#11 Vendor IDOR** — 3-yol switch (yukarıdaki pattern)
+4. **#17 NaN Guard** — `parseInt(searchParams)` yasak, `safeIntParam()`/`safeFloatParam()`
+5. **#18 Redis Namespace** — raw client yasak, `prefixKey()` zorunlu
+6. **#23 Console Log** — `console.log/info/debug` yasak, `logger.*` kullan
+7. **#26 Raw `<img>`** — `<Image>` from `@/components/Image.astro` zorunlu
+8. **#33 SSRF** — `validateExternalUrl()` olmadan `fetch(db.url)` yasak
+9. **#38 Math.random Security** — token/file/auth dosyalarında `crypto.randomBytes()` zorunlu
+10. **#52 isAdmin Privilege** — `locals.isAdmin` = `admin || moderator` admin paneli erişimi içindir; yüksek-etki operasyonlarda `role !== 'admin'` explicit kontrol kullan
 
-### Astro 6.1 Kullanılan Native Özellikler
-- **`<ClientRouter fallback="animate">`** (`astro:transitions`) — Layout.astro'da `<head>`'de. SPA-benzeri sayfa geçişleri, Astro prefetch ile entegre çalışır. Import: `import { ClientRouter } from 'astro:transitions'`
-- **`astro:env` / `envField`** — astro.config.mjs'de type-safe env schema. `import.meta.env.VAR` yerine bu kullanılır.
-- **`prefetch: { prefetchAll: true, defaultStrategy: 'hover' }`** — Tüm dahili linkler hover'da prefetch edilir.
-- **Content Layer API** (`src/content.config.ts`) — `glob` loader ile `src/content/` koleksiyonları tanımlar.
-- **`Astro.site`** — `astro.config.mjs`'deki `site` değeri; `new URL(Astro.url.pathname, Astro.site)` ile canonical URL üretilebilir (SEO.astro bunu `Astro.url.pathname` fallback ile otomatik yapar).
+**Yeni HARD RULE eklerken**: numerik sıra koru, lock test yaz (`security-<antipattern>.test.ts`), `docs/SECURITY.md` "Static Regression Locks" listesi (#15) güncelle.
 
-### Canonical URL Davranışı
-`SEO.astro` line 40: canonical, verilmezse `Astro.url.pathname` (query string YOK) ile otomatik oluşturulur. SSR mode'da `pathname` query parametresiz doğru canonical üretir. Sayfa seo objesine `canonical` eklemek opsiyonel — sadece alias/redirect durumlarında gereklidir.
+---
 
-### Sitemap
-- **Endpoint**: `src/pages/sitemap.xml.ts` → `/sitemap.xml` (DB-populated, SSR)
-- **Layout referansı**: `<link rel="sitemap" href="/sitemap.xml" />`
-- `/sitemap-index.xml` yok — `@astrojs/sitemap` entegrasyona eklenmemiş (bilerek).
+## SEO & Structured Data (özet)
 
-### Dikkat Edilecekler
-- JSON-LD'yi inline `<script type="application/ld+json" set:html={JSON.stringify(...)} is:inline />` veya `<SchemaOrg>` bileşeni ile ekle — ikisi eşdeğer
-- `SchemaOrg.astro`'ya yeni tip eklenirse burayı güncelle
-- `<Image src="..." alt="..." />` — `src/components/Image.astro`'yu import et, ham `<img>` kullanma
-- `transition:persist` direktifi ile navigasyon boyunca korunması gereken elementleri işaretle (örn. header, müzik player)
+- **`src/components/SEO.astro`** — title, OG, Twitter Card, robots
+- **JSON-LD inline** — `<script type="application/ld+json" set:html={JSON.stringify({...})} is:inline />`
+- **`src/components/Image.astro`** — Astro Picture wrapper (AVIF/WebP/lazy)
+- **`public/llms.txt`** — AI crawler site haritası
+- **`public/robots.txt`** — GPTBot, ClaudeBot, PerplexityBot, Google-Extended izinli
 
-### Astro Actions (`src/actions/index.ts`)
-Form işlemleri için `astro:actions` kullanılır — REST API endpoint'e ihtiyaç yoktur:
-```astro
-const result = Astro.getActionResult(actions.submitContactRequest);
-```
-Mevcut action'lar: `login`, `register`, `submitContactRequest`, `submitPlaceReview`, `submitPlaceApplication`, `requestPasswordReset`, `resetPassword`, `subscribeBlogNewsletter`, `updateProfileSettings`, `changeAccountPassword`, admin event/tarihi yer CRUD.
+Sitemap: `src/pages/sitemap.xml.ts` (DB-populated SSR endpoint). `@astrojs/sitemap` paketi kaldırıldı.
 
-### Önemli env Değişkenleri
-- `ADMIN_EMAIL` — İletişim formu bildirim e-postası (default: `admin@sanliurfa.com`)
-- `RESEND_API_KEY` veya admin paneli `integrations.email` — e-posta gönderimi
-- `GA_TRACKING_ID` veya admin paneli `integrations.analytics.ga_id` — Google Analytics
+Astro Actions form'lar: `src/actions/index.ts` — `login`, `register`, `submitContactRequest`, `submitPlaceReview`, vb.
+
+Detay: [`docs/ASTRO_DETAILED.md`](docs/ASTRO_DETAILED.md) "SEO & Structured Data Architecture" bölümü.
 
 ---
 
 ## Strict Prohibitions
 
 ### Turkish Only — NO i18n
-- This project supports **Turkish language only**
-- **FORBIDDEN**: Multi-language support, language selectors, hreflang tags, language preference APIs, language files (en.json, ar.json, etc.), content switching based on accept-language header
+- Sadece Türkçe. Multi-language, hreflang, language selector, locale JSON dosyaları **YASAK**.
+- HARD RULE #25: `astro:i18n` import + locale JSON + astro.config i18n block yasak.
 
 ### No Paid External Services
-- **FORBIDDEN**: Image CDNs (Cloudinary, Imgix), paid stock photos (Shutterstock, Getty), paid APIs (Google Maps API, SendGrid, AWS SES, AWS S3), third-party mapping (Google Maps, Mapbox), any cloud object storage
-- **ALLOWED**: Free alternatives (OpenStreetMap, free SMTP via nodemailer, local disk file storage, sharp for image processing)
+- **FORBIDDEN**: Cloudinary, Imgix, Shutterstock, Google Maps API, SendGrid, AWS SES, AWS S3, Mapbox
+- **ALLOWED**: OpenStreetMap, nodemailer SMTP, local disk, sharp
 
 ### No Cloud File Storage
-- **FORBIDDEN**: `aws-sdk`, `@aws-sdk/client-s3`, `@google-cloud/storage`, `azure-storage`, `multer-s3`
-- **REQUIRED**: All uploaded files go to local disk via `src/lib/file/file-storage.ts`
-- Backup files also go to local disk (see `src/lib/jobs/scheduler.ts` for pg_dump)
+- **FORBIDDEN**: `aws-sdk`, `@google-cloud/storage`, `azure-storage`, `multer-s3`
+- **REQUIRED**: Local disk via `src/lib/file/file-storage.ts`
 
 ---
 
-## Deployment
+## Production Lifecycle (özet — detay: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md))
 
-- **Production**: CentOS Web Panel, PM2 process manager, Apache reverse proxy (port 4321)
-- **Dev**: Docker Compose (PostgreSQL + Redis + Node.js)
-- **Required env vars**: `DATABASE_URL`, `JWT_SECRET`, `REDIS_URL`
-- **Node**: >=20.0.0
-- See `DEPLOYMENT.md` and `CWP-DEPLOYMENT-GUIDE.md` for production setup
+### Graceful Shutdown
+- PM2 SIGTERM → DB pool + Redis client drain. Helper: `src/lib/lifecycle.ts`
+- Yeni stateful resource: `registerShutdownHandler(async () => { ... })`
+- `kill_timeout: 10000` zorunlu (graceful 8s + buffer)
 
-## TypeScript Configuration
+### Web Vitals
+- `web-vitals` library + `navigator.sendBeacon` → `/api/analytics/performance` → `client_performance_metrics` tablosu
+- `PerformanceMonitor.tsx` Layout'ta
 
-tsconfig extends `astro/tsconfigs/strict` but **strict mode is disabled** (`strict: false`). All strict sub-options (noImplicitAny, strictNullChecks, etc.) are also off. JSX configured for React (`react-jsx`).
+### PWA
+- `public/sw.js`, `public/manifest.json`, `src/components/PWARegister.astro`
+- VAPID push: `VAPID_PUBLIC_KEY` + `PUBLIC_VAPID_PUBLIC_KEY`
 
-Pre-existing TS errors in `src/lib/advanced/`, `src/lib/affiliate/`, `src/lib/ai-moderation/`, and similar deep lib modules are from legacy drizzle-orm imports and do NOT block the Astro build — ignore them. Note: `drizzle-orm` is listed in package.json but is **not used** — all DB access goes through the raw `pg` pool in `src/lib/postgres.ts`.
+### Build & Deploy
+- `npm run build` (~11s) → `dist/`
+- PM2: `pm2 start ecosystem.config.cjs`
+- Required env: `DATABASE_URL`, `JWT_SECRET`, `REDIS_URL`, `INTERNAL_API_TOKEN`
+
+### Admin-Yönetilen Entegrasyonlar
+`/admin/integrations` — Resend, SMTP, GA, Stripe, Unsplash, Pexels, OAuth. DB'den okunur, env fallback. Detay: `docs/DEPLOYMENT.md` "Admin-Yönetilen Entegrasyonlar".
+
+### Browser-side env
+- React/client kod: `import.meta.env.PUBLIC_*` (asla `process.env` — HARD RULE #19)
+- `PUBLIC_` prefix olmayan env sadece server-side görünür
+
+### Commit Convention
+Conventional Commits: `feat(scope):`, `fix(scope):`, `refactor(scope):` vb.
+
+---
+
+## TypeScript
+
+- `tsconfig.json` extends `astro/tsconfigs/strict` + `strict: true` (noImplicitAny, strictNullChecks, vb. tümü aktif)
+- JSX: `react-jsx`
+- DB: raw `pg` pool in `src/lib/postgres.ts` (ORM yok, `drizzle-orm` 2026-04-25 cleanup'ta kaldırıldı)
+- `astro check`: 0 errors / 0 warnings / ~14 hints
 
 ### Read Replica
-`postgres.ts` exports both `pool` (write) and `readReplicaPool` (read). Currently both point to the same database. Use `readReplicaPool` for SELECT-only queries in read-heavy endpoints to be forward-compatible when a replica is configured.
+`postgres.ts` exports `pool` (write) + `readReplicaPool` (read). Şu an aynı DB'ye gidiyor. Read-heavy endpoint'lerde `readReplicaPool` kullan (forward-compatible).

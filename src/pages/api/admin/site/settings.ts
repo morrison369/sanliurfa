@@ -4,6 +4,7 @@ import {
   auditSiteChange,
   getSiteSettingDraft,
   getSiteSetting,
+  type JsonObject,
   listPendingSiteSettingApprovals,
   listSiteSettingHistory,
   publishSiteSetting,
@@ -12,18 +13,15 @@ import {
 } from '../../../../lib/site-content';
 import { validateSiteSetting } from '../../../../lib/site-settings-schema';
 import { validateSiteSettingWithZod } from '../../../../lib/site-settings-zod';
-import { problemJson } from '../../../../lib/api';
+import { apiResponse, problemJson, safeErrorDetail } from '../../../../lib/api';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  if (process.env.E2E_ADMIN_BYPASS === '1') return true;
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  if (process.env.NODE_ENV !== 'production' && process.env.E2E_ADMIN_BYPASS === '1') return true;
+  return locals?.user?.role === 'admin';
 }
 
 export const GET: APIRoute = async ({ url, locals }) => {
@@ -61,7 +59,7 @@ export const GET: APIRoute = async ({ url, locals }) => {
     return problemJson({
       status: 500,
       title: 'Ayar Okunamadı',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-site-settings-read-failed',
       instance: '/api/admin/site/settings',
     });
@@ -79,7 +77,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
@@ -95,12 +93,32 @@ export const PUT: APIRoute = async ({ request, locals }) => {
   const key = String(body?.key || '').trim();
   const value = body?.value;
   const description = body?.description ? String(body.description) : null;
+  const note = body?.note ? String(body.note) : null;
+
+  if (description !== undefined && description !== null && (typeof description !== 'string' || description.length > 500)) {
+    return problemJson({
+      status: 422,
+      title: 'Çok Uzun',
+      detail: 'Açıklama 500 karakteri aşamaz',
+      type: '/problems/admin-site-settings-description-too-long',
+      instance: '/api/admin/site/settings',
+    });
+  }
+  if (note !== undefined && note !== null && (typeof note !== 'string' || note.length > 500)) {
+    return problemJson({
+      status: 422,
+      title: 'Çok Uzun',
+      detail: 'Not 500 karakteri aşamaz',
+      type: '/problems/admin-site-settings-note-too-long',
+      instance: '/api/admin/site/settings',
+    });
+  }
+
   const modeRaw = String(body?.mode || 'publish');
   const mode =
     modeRaw === 'draft' || modeRaw === 'request_approval' || modeRaw === 'approve_publish'
       ? modeRaw
       : 'publish';
-  const note = body?.note ? String(body.note) : null;
   const approvalId = body?.approvalId ? String(body.approvalId) : '';
 
   if (!key) {
@@ -135,6 +153,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 
   try {
     const updatedBy = locals?.user?.id ? String(locals.user.id) : null;
+    const settingValue = value as JsonObject;
     const auditCtx = {
       userId: updatedBy,
       actorEmail: locals?.user?.email ? String(locals.user.email) : null,
@@ -143,13 +162,13 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     };
 
     if (mode === 'draft') {
-      await saveSiteSettingDraft(key, value, note, updatedBy);
+      await saveSiteSettingDraft(key, settingValue, note, updatedBy);
       await auditSiteChange(key, 'draft_save', auditCtx, { note });
       return json({ success: true, key, mode: 'draft' });
     }
 
     if (mode === 'request_approval') {
-      await requestSiteSettingApproval(key, value, note, updatedBy);
+      await requestSiteSettingApproval(key, settingValue, note, updatedBy);
       await auditSiteChange(key, 'draft_save', auditCtx, { note, requestedApproval: true });
       return json({ success: true, key, mode: 'request_approval' });
     }
@@ -168,13 +187,13 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       return json({ success: true, key: approved.key, mode: 'approve_publish', approvalId });
     }
 
-    await publishSiteSetting(key, value, description, note, auditCtx);
+    await publishSiteSetting(key, settingValue, description, note, auditCtx);
     return json({ success: true, key, mode: 'publish' });
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Ayar Kaydedilemedi',
-      detail: error instanceof Error ? error.message : 'unknown',
+      detail: safeErrorDetail(error, 'unknown'),
       type: '/problems/admin-site-settings-save-failed',
       instance: '/api/admin/site/settings',
     });

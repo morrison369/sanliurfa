@@ -73,7 +73,9 @@ export const POST: APIRoute = async ({ request }) => {
       load: body.metrics.loadEventEnd
     }).catch((error) => {
       // Table may not exist yet, log warning but don't fail
-      logger.warn('Client performance metric table not available', { error: error instanceof Error ? error.message : String(error) });
+      logger.warn('Client performance metric table not available', {
+        error: error instanceof Error ? error.name : String(error),
+      });
     });
 
     return apiResponse(

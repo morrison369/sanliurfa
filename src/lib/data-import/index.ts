@@ -144,7 +144,7 @@ export async function exportData(config: ExportConfig): Promise<{
 
   switch (config.format) {
     case 'csv':
-      output = await generateCSV(result.rows);
+      output = generateCSV(result.rows);
       extension = 'csv';
       break;
     case 'json':
@@ -292,38 +292,22 @@ function getTableName(entityType: string): string {
 }
 
 /**
- * Build export query
+ * Build export query.
+ *
+ * **DEPRECATED — DO NOT USE.** Multiple SQL injection vector:
+ * - `${config.fields?.join(', ')}` — arbitrary column list injection
+ * - `${key} = $${paramIndex}` — filter column name (key) injection
+ * - `${config.sort.field} ${config.sort.direction}` — ORDER BY column + direction injection
+ *
+ * Şu anda 0 caller var; runtime guard ile kilitlendi. Yeni export feature
+ * gerekirse `lib/data/data-warehouse.ts:queryOLAP` pattern'ini referans al
+ * (FIELD_ALLOWLIST + FILTER_KEY_ALLOWLIST + SORT_FIELD_ALLOWLIST per entityType).
  */
-function buildExportQuery(config: ExportConfig): { sql: string; params: any[] } {
-  const tableName = getTableName(config.entityType);
-  let sql = `SELECT ${config.fields?.join(', ') || '*'} FROM ${tableName}`;
-  const params: any[] = [];
-  let paramIndex = 1;
-
-  // Apply filters
-  if (config.filters) {
-    const conditions: string[] = [];
-    for (const [key, value] of Object.entries(config.filters)) {
-      if (Array.isArray(value)) {
-        conditions.push(`${key} = ANY($${paramIndex})`);
-        params.push(value);
-      } else {
-        conditions.push(`${key} = $${paramIndex}`);
-        params.push(value);
-      }
-      paramIndex++;
-    }
-    if (conditions.length > 0) {
-      sql += ` WHERE ${conditions.join(' AND ')}`;
-    }
-  }
-
-  // Apply sorting
-  if (config.sort) {
-    sql += ` ORDER BY ${config.sort.field} ${config.sort.direction}`;
-  }
-
-  return { sql, params };
+function buildExportQuery(_config: ExportConfig): { sql: string; params: any[] } {
+  throw new Error(
+    'buildExportQuery is deprecated and disabled — multiple SQL injection vectors. ' +
+    'Use parametrized queries with strict allowlist (see lib/data/data-warehouse.ts:queryOLAP).',
+  );
 }
 
 /**

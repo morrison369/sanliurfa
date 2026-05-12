@@ -1,363 +1,395 @@
 ---
-import Layout from '../../../layouts/Layout.astro';
-
-const icons = {
-  mapPin: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
-  upload: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>`,
-  clock: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-  phone: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
-  globe: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`,
-  mail: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>`,
-};
-
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { query } from '../../../lib/postgres';
-
-if (!Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin');
-}
+import { logger } from '../../../lib/logging';
 
 let categories: any[] = [];
 let districts: any[] = [];
 
 try {
-  const [catResult, distResult] = await Promise.all([
-    query(
-      `SELECT id, name, slug FROM categories WHERE parent_id IS NOT NULL AND is_active = true ORDER BY sort_order`,
-      []
-    ),
-    query(
-      `SELECT id, name FROM districts ORDER BY is_central DESC, sort_order`,
-      []
-    ),
-  ]);
-  categories = catResult.rows;
-  districts = distResult.rows;
+ const [catResult, distResult] = await Promise.all([
+ query(`SELECT id, name, slug FROM categories WHERE parent_id IS NOT NULL AND is_active = true ORDER BY sort_order`, []),
+ query(`SELECT id, name FROM districts ORDER BY is_central DESC, sort_order`, []),
+ ]);
+ categories = catResult.rows;
+ districts = distResult.rows;
 } catch (e) {
-  console.error('Add place load error:', e);
+ logger.error('Add place load error', e instanceof Error ? e : new Error(String(e)));
 }
 
-const seo = {
-  title: 'Mekan Ekle - Yönetim Paneli',
-  description: 'Yeni mekan ekle',
-  noIndex: true,
-};
-
 const amenitiesList = [
-  'Otopark', 'Wifi', 'Klima', 'Bahçe', 'Teras', 'Engelli Erişimi',
-  'Paket Servis', 'Rezervasyon', 'Canlı Müzik', 'Çocuk Oyun Alanı',
-  'Evcil Hayvan Dostu', 'Sigara İçilebilir Alan'
+ 'Otopark', 'Wifi', 'Klima', 'Bahçe', 'Teras', 'Engelli Erişimi',
+ 'Paket Servis', 'Rezervasyon', 'Canlı Müzik', 'Çocuk Oyun Alanı',
+ 'Evcil Hayvan Dostu', 'Sigara İçilebilir Alan'
 ];
 
 const days = [
-  { id: 'monday', label: 'Pazartesi' },
-  { id: 'tuesday', label: 'Salı' },
-  { id: 'wednesday', label: 'Çarşamba' },
-  { id: 'thursday', label: 'Perşembe' },
-  { id: 'friday', label: 'Cuma' },
-  { id: 'saturday', label: 'Cumartesi' },
-  { id: 'sunday', label: 'Pazar' },
+ { id: 'monday', label: 'Pazartesi' },
+ { id: 'tuesday', label: 'Salı' },
+ { id: 'wednesday', label: 'Çarşamba' },
+ { id: 'thursday', label: 'Perşembe' },
+ { id: 'friday', label: 'Cuma' },
+ { id: 'saturday', label: 'Cumartesi' },
+ { id: 'sunday', label: 'Pazar' },
 ];
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Admin Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <a href="/admin" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              ← Geri
-            </a>
-            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Yeni Mekan Ekle</h1>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="container-custom py-8">
-      <form action="/api/admin/places/create" method="POST" class="grid lg:grid-cols-3 gap-8" enctype="multipart/form-data">
-        <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-6">
-          <!-- Basic Info -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
-            <div class="space-y-4">
-              <div>
-                <label for="name" class="label dark:text-gray-300">Mekan Adı *</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name" 
-                  required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Örn: Ciğerci Aziz Usta"
-                />
-              </div>
-              
-              <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label for="category_id" class="label dark:text-gray-300">Kategori *</label>
-                  <select id="category_id" name="category_id" required class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <option value="">Kategori seçin</option>
-                    {categories.map(cat => (
-                      <option value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label for="price_range" class="label dark:text-gray-300">Fiyat Aralığı</label>
-                  <select id="price_range" name="price_range" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    <option value="1">₺ - Ucuz</option>
-                    <option value="2">₺₺ - Orta</option>
-                    <option value="3">₺₺₺ - Pahalı</option>
-                    <option value="4">₺₺₺₺ - Lüks</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div>
-                <label for="description" class="label dark:text-gray-300">Açıklama *</label>
-                <textarea 
-                  id="description" 
-                  name="description" 
-                  rows="4" 
-                  required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
-                  placeholder="Mekan hakkında detaylı açıklama..."
-                ></textarea>
-              </div>
-              
-              <div>
-                <label for="short_description" class="label dark:text-gray-300">Kısa Açıklama</label>
-                <input 
-                  type="text" 
-                  id="short_description" 
-                  name="short_description"
-                  maxlength="150"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Mekanın kısa özeti (150 karakter)"
-                />
-              </div>
-            </div>
-          </div>
-          
-          <!-- Contact Info -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">İletişim Bilgileri</h2>
-            <div class="space-y-4">
-              <div>
-                <label for="address" class="label dark:text-gray-300">Adres *</label>
-                <div class="relative">
-                  <span set:html={icons.mapPin} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                  <input
-                    type="text"
-                    id="address"
-                    name="address"
-                    required
-                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Tam adres"
-                  />
-                </div>
-              </div>
-              
-              <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label for="phone" class="label dark:text-gray-300">Telefon</label>
-                  <div class="relative">
-                    <span set:html={icons.phone} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      placeholder="+90 414 123 45 67"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label for="email" class="label dark:text-gray-300">E-posta</label>
-                  <div class="relative">
-                    <span set:html={icons.mail} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      placeholder="info@ornek.com"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label for="website" class="label dark:text-gray-300">Web Sitesi</label>
-                <div class="relative">
-                  <span set:html={icons.globe} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                  <input
-                    type="url"
-                    id="website"
-                    name="website"
-                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="https://www.ornek.com"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Opening Hours -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Çalışma Saatleri</h2>
-            <div class="space-y-3">
-              {days.map(day => (
-                <div class="flex items-center gap-4">
-                  <span class="w-24 text-sm text-gray-600 dark:text-gray-400">{day.label}</span>
-                  <input 
-                    type="text" 
-                    name={`opening_hours_${day.id}`}
-                    class="input flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="08:00 - 22:00 veya Kapalı"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <!-- Location -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Konum</h2>
-            <div class="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label for="latitude" class="label dark:text-gray-300">Enlem</label>
-                <input 
-                  type="number" 
-                  id="latitude" 
-                  name="latitude"
-                  step="any"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="37.1592"
-                />
-              </div>
-              <div>
-                <label for="longitude" class="label dark:text-gray-300">Boylam</label>
-                <input 
-                  type="number" 
-                  id="longitude" 
-                  name="longitude"
-                  step="any"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="38.7965"
-                />
-              </div>
-            </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              Koordinatları Google Maps'ten alabilirsiniz.
-            </p>
-          </div>
-        </div>
-        
-        <!-- Sidebar -->
-        <aside class="space-y-6">
-          <!-- Publish -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
-            <div class="space-y-3">
-              <label class="flex items-center gap-2">
-                <input type="checkbox" name="is_featured" class="rounded border-gray-300 text-urfa-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan mekan</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input type="checkbox" name="is_verified" class="rounded border-gray-300 text-urfa-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Doğrulanmış mekan</span>
-              </label>
-            </div>
-            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-              <div>
-                <label for="district_id" class="label dark:text-gray-300">İlçe</label>
-                <select id="district_id" name="district_id" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
-                  <option value="">İlçe seçin</option>
-                  {districts.map(d => (
-                    <option value={d.id}>{d.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label for="status" class="label dark:text-gray-300">Durum</label>
-                <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
-                  <option value="active">Aktif</option>
-                  <option value="pending">Beklemede</option>
-                  <option value="inactive">Pasif</option>
-                </select>
-              </div>
-            </div>
-            <div class="flex gap-2 mt-4">
-              <button type="submit" class="btn-primary flex-1">Kaydet</button>
-              <a href="/admin/places" class="btn-secondary">İptal</a>
-            </div>
-          </div>
-          
-          <!-- Images -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
-            <div class="space-y-4">
-              <div>
-                <label for="cover_image" class="label dark:text-gray-300">Kapak Fotoğrafı</label>
-                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-urfa-500 transition-colors">
-                  <div class="space-y-1 text-center">
-                    <span set:html={icons.upload} class="mx-auto h-12 w-12 text-gray-400"></span>
-                    <div class="flex text-sm text-gray-600 dark:text-gray-400">
-                      <label for="cover_image" class="relative cursor-pointer rounded-md font-medium text-urfa-600 hover:text-urfa-500">
-                        <span>Dosya seç</span>
-                        <input id="cover_image" name="cover_image" type="file" accept="image/*" class="sr-only" />
-                      </label>
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG up to 5MB</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div>
-                <label for="gallery" class="label dark:text-gray-300">Galeri Fotoğrafları</label>
-                <input 
-                  type="file" 
-                  id="gallery" 
-                  name="gallery"
-                  accept="image/*"
-                  multiple
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white py-2"
-                />
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Birden fazla seçebilirsiniz</p>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Amenities -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Olanaklar</h3>
-            <div class="space-y-2 max-h-64 overflow-y-auto">
-              {amenitiesList.map(amenity => (
-                <label class="flex items-center gap-2">
-                  <input type="checkbox" name="amenities" value={amenity} class="rounded border-gray-300 text-urfa-600" />
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{amenity}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-          
-          <!-- Tags -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Etiketler</h3>
-            <input 
-              type="text" 
-              name="tags"
-              class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              placeholder="Etiketleri virgülle ayırın"
-            />
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Örn: ciğer kebabı, tarihi, aile</p>
-          </div>
-        </aside>
-      </form>
+<AdminLayout
+ title="Yeni Mekan Ekle"
+ subtitle="Mekan bilgilerini doldurun"
+ seo={{ title: 'Mekan Ekle - Yönetim Paneli', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-6xl space-y-5">
+ <div class="mb-2">
+ <a href="/admin/places" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Mekanlar</a>
+ </div>
+
+ <form action="/api/admin/places/create" method="POST" class="grid lg:grid-cols-3 gap-6" enctype="multipart/form-data">
+ <div class="lg:col-span-2 space-y-5">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Temel Bilgiler</h2>
+ <div class="space-y-4">
+ <div>
+ <label for="name" class="block text-sm font-medium text-[#7A6B58] mb-1">Mekan Adı *</label>
+ <input
+ type="text"
+ id="name"
+ name="name"
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="Örn: Ciğerci Aziz Usta"
+ />
+ </div>
+
+ <div class="grid sm:grid-cols-2 gap-4">
+ <div>
+ <label for="category_id" class="block text-sm font-medium text-[#7A6B58] mb-1">Kategori *</label>
+ <select id="category_id" name="category_id" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option value="">Kategori seçin</option>
+ {categories.map(cat => (
+ <option value={cat.id}>{cat.name}</option>
+ ))}
+ </select>
+ </div>
+ <div>
+ <label for="price_range" class="block text-sm font-medium text-[#7A6B58] mb-1">Fiyat Aralığı</label>
+ <select id="price_range" name="price_range" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option value="1">₺ - Ucuz</option>
+ <option value="2">₺₺ - Orta</option>
+ <option value="3">₺₺₺ - Pahalı</option>
+ <option value="4">₺₺₺₺ - Lüks</option>
+ </select>
+ </div>
+ </div>
+
+ <div>
+ <label for="description" class="block text-sm font-medium text-[#7A6B58] mb-1">Açıklama *</label>
+ <textarea
+ id="description"
+ name="description"
+ rows="4"
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 resize-none"
+ placeholder="Mekan hakkında detaylı açıklama..."
+ ></textarea>
+ </div>
+
+ <div>
+ <label for="short_description" class="block text-sm font-medium text-[#7A6B58] mb-1">Kısa Açıklama</label>
+ <input
+ type="text"
+ id="short_description"
+ name="short_description"
+ maxlength="150"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="Mekanın kısa özeti (150 karakter)"
+ />
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-base font-semibold text-[#7A6B58] mb-4">İletişim Bilgileri</h2>
+ <div class="space-y-4">
+ <div>
+ <label for="address" class="block text-sm font-medium text-[#7A6B58] mb-1">Adres *</label>
+ <div class="relative">
+ <Icon name="lucide:map-pin" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="text"
+ id="address"
+ name="address"
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="Tam adres"
+ />
+ </div>
+ </div>
+
+ <div class="grid sm:grid-cols-2 gap-4">
+ <div>
+ <label for="phone" class="block text-sm font-medium text-[#7A6B58] mb-1">Telefon</label>
+ <div class="relative">
+ <Icon name="lucide:phone" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="tel"
+ id="phone"
+ name="phone"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="+90 414 123 45 67"
+ />
+ </div>
+ </div>
+ <div>
+ <label for="email" class="block text-sm font-medium text-[#7A6B58] mb-1">E-posta</label>
+ <div class="relative">
+ <Icon name="lucide:mail" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="email"
+ id="email"
+ name="email"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="info@ornek.com"
+ />
+ </div>
+ </div>
+ </div>
+
+ <div>
+ <label for="website" class="block text-sm font-medium text-[#7A6B58] mb-1">Web Sitesi</label>
+ <div class="relative">
+ <Icon name="lucide:globe" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="url"
+ id="website"
+ name="website"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="https://www.ornek.com"
+ />
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Çalışma Saatleri</h2>
+ <div class="space-y-3">
+ {days.map(day => (
+ <div class="flex items-center gap-4">
+ <span class="w-24 text-sm text-[#7A6B58]">{day.label}</span>
+ <input
+ type="text"
+ name={`opening_hours_${day.id}`}
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="08:00 - 22:00 veya Kapalı"
+ />
+ </div>
+ ))}
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Konum</h2>
+ <div class="grid sm:grid-cols-2 gap-4">
+ <div>
+ <label for="latitude" class="block text-sm font-medium text-[#7A6B58] mb-1">Enlem</label>
+ <input
+ type="number"
+ id="latitude"
+ name="latitude"
+ step="any"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="37.1592"
+ />
+ </div>
+ <div>
+ <label for="longitude" class="block text-sm font-medium text-[#7A6B58] mb-1">Boylam</label>
+ <input
+ type="number"
+ id="longitude"
+ name="longitude"
+ step="any"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="38.7965"
+ />
+ </div>
+ </div>
+
+ <div class="mt-4">
+  <div class="flex items-center justify-between mb-2">
+    <p class="text-sm text-[#7A6B58]">📍 Haritadan seçin (Şanlıurfa merkez):</p>
+    <div class="flex gap-2">
+      <button type="button" id="map-center-urfa" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Şanlıurfa Merkez</button>
+      <button type="button" id="map-use-current" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Mevcut Konumum</button>
     </div>
   </div>
-</Layout>
+  <div id="place-location-map" style="height:320px;width:100%;border:1px solid rgba(184,115,51,0.2);border-radius:4px;background:#f5edda"></div>
+  <p class="text-xs text-[#9B8A75] mt-2">Haritada istediğiniz yere tıklayın — koordinatlar otomatik dolacak. Alternatif: Google Maps'ten elle yapıştır.</p>
+ </div>
+ </div>
+
+ <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+ <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="" is:inline></script>
+ <script is:inline define:vars={{ urfaCenter: [37.1592, 38.7965] }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const L = (window).L;
+    if (!L) { console.warn('Leaflet not loaded'); return; }
+    const latInput = document.getElementById('latitude');
+    const lonInput = document.getElementById('longitude');
+    const mapEl = document.getElementById('place-location-map');
+    if (!latInput || !lonInput || !mapEl) return;
+
+    // Mevcut koordinat varsa kullan, yoksa Urfa merkez.
+    const initLat = parseFloat(latInput.value) || urfaCenter[0];
+    const initLon = parseFloat(lonInput.value) || urfaCenter[1];
+    const hasCoords = !!(parseFloat(latInput.value) && parseFloat(lonInput.value));
+
+    const map = L.map(mapEl).setView([initLat, initLon], hasCoords ? 15 : 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let marker = null;
+    function setMarker(lat, lon) {
+      if (marker) marker.setLatLng([lat, lon]);
+      else marker = L.marker([lat, lon], { draggable: true }).addTo(map)
+        .on('dragend', (e) => {
+          const p = e.target.getLatLng();
+          latInput.value = p.lat.toFixed(7);
+          lonInput.value = p.lng.toFixed(7);
+        });
+      latInput.value = lat.toFixed(7);
+      lonInput.value = lon.toFixed(7);
+    }
+
+    if (hasCoords) setMarker(initLat, initLon);
+
+    map.on('click', (e) => setMarker(e.latlng.lat, e.latlng.lng));
+
+    // Manuel input değişirse marker'ı senkronla
+    function syncFromInputs() {
+      const la = parseFloat(latInput.value), lo = parseFloat(lonInput.value);
+      if (Number.isFinite(la) && Number.isFinite(lo)) {
+        setMarker(la, lo);
+        map.setView([la, lo], Math.max(map.getZoom(), 14));
+      }
+    }
+    latInput.addEventListener('change', syncFromInputs);
+    lonInput.addEventListener('change', syncFromInputs);
+
+    document.getElementById('map-center-urfa')?.addEventListener('click', () => {
+      setMarker(urfaCenter[0], urfaCenter[1]);
+      map.setView(urfaCenter, 13);
+    });
+    document.getElementById('map-use-current')?.addEventListener('click', () => {
+      if (!navigator.geolocation) { alert('Tarayıcı konum desteği yok'); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => { setMarker(pos.coords.latitude, pos.coords.longitude); map.setView([pos.coords.latitude, pos.coords.longitude], 16); },
+        () => alert('Konum alınamadı'),
+        { timeout: 8000 }
+      );
+    });
+  });
+ </script>
+ </div>
+
+ <aside class="space-y-5">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#7A6B58] mb-4">Yayınla</h3>
+ <div class="space-y-3">
+ <label class="flex items-center gap-2">
+ <input type="checkbox" name="is_featured" class="rounded" />
+ <span class="text-sm text-[#7A6B58]">Öne çıkan mekan</span>
+ </label>
+ <label class="flex items-center gap-2">
+ <input type="checkbox" name="is_verified" class="rounded" />
+ <span class="text-sm text-[#7A6B58]">Doğrulanmış mekan</span>
+ </label>
+ </div>
+ <div class="mt-4 pt-4 border-t border-[rgba(184,115,51,0.14)] space-y-3">
+ <div>
+ <label for="district_id" class="block text-sm font-medium text-[#7A6B58] mb-1">İlçe</label>
+ <select id="district_id" name="district_id" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 mt-1">
+ <option value="">İlçe seçin</option>
+ {districts.map(d => (
+ <option value={d.id}>{d.name}</option>
+ ))}
+ </select>
+ </div>
+ <div>
+ <label for="status" class="block text-sm font-medium text-[#7A6B58] mb-1">Durum</label>
+ <select id="status" name="status" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 mt-1">
+ <option value="active">Aktif</option>
+ <option value="pending">Beklemede</option>
+ <option value="inactive">Pasif</option>
+ </select>
+ </div>
+ </div>
+ <div class="flex gap-2 mt-4">
+ <button type="submit" class="rounded-sm bg-urfa-600 flex-1 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">Kaydet</button>
+ <a href="/admin/places" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)] text-center">İptal</a>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#7A6B58] mb-4">Görseller</h3>
+ <div class="space-y-4">
+ <div>
+ <label for="cover_image" class="block text-sm font-medium text-[#7A6B58] mb-1">Kapak Fotoğrafı</label>
+ <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-[rgba(184,115,51,0.2)] border-dashed rounded-sm hover:border-urfa-400 transition-colors">
+ <div class="space-y-1 text-center">
+ <Icon name="lucide:upload" class="mx-auto h-12 w-12 text-[#7A6B58]" />
+ <div class="flex text-sm text-[#7A6B58]">
+ <label for="cover_image" class="relative cursor-pointer rounded-sm font-medium text-urfa-600 hover:text-urfa-500">
+ <span>Dosya seç</span>
+ <input id="cover_image" name="cover_image" type="file" accept="image/*" class="sr-only" />
+ </label>
+ </div>
+ <p class="text-xs text-[#7A6B58]">PNG, JPG up to 5MB</p>
+ </div>
+ </div>
+ </div>
+
+ <div>
+ <label for="gallery" class="block text-sm font-medium text-[#7A6B58] mb-1">Galeri Fotoğrafları</label>
+ <input
+ type="file"
+ id="gallery"
+ name="gallery"
+ accept="image/*"
+ multiple
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none"
+ />
+ <p class="text-xs text-[#7A6B58] mt-1">Birden fazla seçebilirsiniz</p>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#7A6B58] mb-4">Olanaklar</h3>
+ <div class="space-y-2 max-h-64 overflow-y-auto">
+ {amenitiesList.map(amenity => (
+ <label class="flex items-center gap-2">
+ <input type="checkbox" name="amenities" value={amenity} class="rounded" />
+ <span class="text-sm text-[#7A6B58]">{amenity}</span>
+ </label>
+ ))}
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#7A6B58] mb-4">Etiketler</h3>
+ <input
+ type="text"
+ name="tags"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="Etiketleri virgülle ayırın"
+ />
+ <p class="text-xs text-[#7A6B58] mt-1">Örn: ciğer kebabı, tarihi, aile</p>
+ </div>
+ </aside>
+ </form>
+ </div>
+</AdminLayout>

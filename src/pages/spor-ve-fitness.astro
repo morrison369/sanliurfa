@@ -1,0 +1,68 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CategoryHub from '../components/public/CategoryHub.astro';
+import { CITY_TAXONOMY_CATEGORIES } from '../data/city-taxonomy';
+import { getPublicAppUrl } from '../lib/public-app-url';
+const category = CITY_TAXONOMY_CATEGORIES.find((item) => item.slug === 'spor-ve-fitness')!;
+const baseUrl = getPublicAppUrl();
+
+const faqItems = [
+ {
+  S: "Şanlıurfa'da fitness salonu nasıl bulunur?",
+  C: "Spor ve Fitness kategorisinde Şanlıurfa'daki fitness salonları, jimnastik merkezleri ve crossfit stüdyoları listelenmiştir. Konuma ve üyelik tipine göre filtreleyerek size en yakın salonu bulabilirsiniz.",
+ },
+ {
+  S: "Şanlıurfa'da halı saha kiralama mümkün mü?",
+  C: "Evet. Şanlıurfa genelinde çok sayıda halı saha mevcuttur. Futbol sahası, basketbol kortu ve kapalı spor salonları da bu kategoride yer almaktadır.",
+ },
+ {
+  S: "Şanlıurfa'da açık hava spor aktiviteleri neler?",
+  C: "Göbeklitepe çevresinde doğa yürüyüşü, Atatürk Barajı kıyısında bisiklet ve Fırat Nehri kenarında yürüyüş parkurları Şanlıurfa'nın başlıca açık hava spor seçenekleridir.",
+ },
+];
+---
+<Layout seo={{ title: 'Şanlıurfa Spor ve Fitness Rehberi | Salonlar ve Halı Sahalar', description: category.description, canonical: '/spor-ve-fitness' }}>
+ <style is:inline>
+ details summary{list-style:none}
+ details summary::-webkit-details-marker{display:none}
+ details[open] .faq-arrow{transform:rotate(180deg)}
+ </style>
+ <CategoryHub category={category} />
+ {faqItems.length > 0 && (
+ <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+ <div class="sf-container">
+ <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+ <div style="display:flex;flex-direction:column;gap:.75rem">
+ {faqItems.map((item) => (
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ {item.S}
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ {item.C}
+ </div>
+ </details>
+ ))}
+ </div>
+ </div>
+ </div>
+ )}
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Spor ve Fitness', item: `${baseUrl}/spor-ve-fitness` },
+ ],
+ })} is:inline />
+</Layout>

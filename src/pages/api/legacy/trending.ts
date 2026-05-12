@@ -1,13 +1,12 @@
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
-import { legacyJsonHeaders } from '../../../lib/api/api-legacy';
 import { logger } from '../../../lib/logging';
 import { resolveContentImage } from '../../../lib/content-images';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeIntParam } from '../../../lib/api';
 
 export const GET: APIRoute = async ({ url }) => {
   try {
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
     const type = url.searchParams.get('type') || 'all';
 
     let query = '';
@@ -28,7 +27,7 @@ export const GET: APIRoute = async ({ url }) => {
     }
 
     const result = await queryMany(query, [limit]);
-    const data = (result || []).map((row: any) => ({
+    const data = (result || []).map((row) => ({
       ...row,
       image_url: resolveContentImage({
         category: 'places',
@@ -38,11 +37,11 @@ export const GET: APIRoute = async ({ url }) => {
       }),
     }));
 
-    return new Response(JSON.stringify({
+    return apiResponse({
       success: true,
       data,
       type
-    }), { status: 200, headers: legacyJsonHeaders() });
+    }, HttpStatus.OK);
   } catch (error) {
     logger.error('Trending error', error);
     const response = problemJson({

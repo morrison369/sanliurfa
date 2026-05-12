@@ -2,277 +2,403 @@
 import AdminLayout from '../../layouts/AdminLayout.astro';
 ---
 
-<AdminLayout title="Yemek Tarifleri Yönetimi">
-  <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-slate-950">Yemek Tarifleri</h1>
-        <p class="text-sm text-slate-500 mt-1">Şanlıurfa yöresel tariflerini yönetin</p>
-      </div>
-      <button id="add-btn" class="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-500 transition-colors">
-        + Yeni Tarif
-      </button>
-    </div>
+<AdminLayout
+ title="Yemek Tarifleri"
+ subtitle="Şanlıurfa yöresel tariflerini yönetin"
+ seo={{ title: 'Yemek Tarifleri Yönetimi - Admin', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-5xl space-y-5">
+ <div class="mb-2 flex items-center justify-between">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ <button id="add-btn" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
+ + Yeni Tarif
+ </button>
+ </div>
 
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      <div id="recipe-list" class="divide-y divide-slate-100">
-        <p class="p-6 text-slate-500 text-sm text-center">Yükleniyor...</p>
-      </div>
-    </div>
+ <div class="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
+ <div id="recipe-list" class="divide-y divide-[rgba(184,115,51,0.1)]">
+ <p class="p-6 text-[#7A6B58] text-sm text-center">Yükleniyor...</p>
+ </div>
+ </div>
+ </div>
 
-    <div id="form-modal" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 overflow-y-auto py-8">
-      <div class="w-full max-w-2xl mx-4 rounded-2xl bg-white shadow-xl">
-        <div class="flex items-center justify-between p-5 border-b">
-          <h2 id="form-title" class="text-lg font-bold text-slate-900">Yeni Tarif</h2>
-          <button id="close-modal" class="text-slate-400 hover:text-slate-600 text-2xl leading-none">&times;</button>
-        </div>
-        <form id="recipe-form" class="p-5 space-y-4">
-          <input type="hidden" id="f-slug" name="slug" />
-          <div class="grid grid-cols-2 gap-4">
-            <div class="col-span-2">
-              <label class="block text-sm font-medium text-slate-700 mb-1">Tarif Adı *</label>
-              <input id="f-name" type="text" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">URL Slug *</label>
-              <input id="f-slug-input" type="text" required placeholder="urfa-kebabi" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Zorluk</label>
-              <select id="f-difficulty" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400">
-                <option>Kolay</option>
-                <option selected>Orta</option>
-                <option>Zor</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Hazırlık (dk)</label>
-              <input id="f-prep" type="number" min="0" value="0" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Pişirme (dk)</label>
-              <input id="f-cook" type="number" min="0" value="0" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Porsiyon</label>
-              <input id="f-servings" type="number" min="1" value="4" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Görsel URL</label>
-              <input id="f-image" type="text" placeholder="/images/..." class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400" />
-            </div>
-            <div class="col-span-2">
-              <label class="block text-sm font-medium text-slate-700 mb-1">Kısa Açıklama</label>
-              <textarea id="f-desc" rows="2" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:border-amber-400"></textarea>
-            </div>
-            <div class="col-span-2">
-              <label class="block text-sm font-medium text-slate-700 mb-1">Malzemeler (her satıra bir malzeme)</label>
-              <textarea id="f-ingredients" rows="5" placeholder="500g kuzu kıyması&#10;1 soğan" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono focus:outline-none focus:border-amber-400"></textarea>
-            </div>
-            <div class="col-span-2">
-              <label class="block text-sm font-medium text-slate-700 mb-1">Yapılışı (her satıra bir adım)</label>
-              <textarea id="f-instructions" rows="5" placeholder="Kıymayı hazırlayın.&#10;Baharatları ekleyin." class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono focus:outline-none focus:border-amber-400"></textarea>
-            </div>
-            <div class="flex items-center gap-6">
-              <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                <input id="f-spicy" type="checkbox" class="rounded" /> Acılı
-              </label>
-              <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                <input id="f-vegetarian" type="checkbox" class="rounded" /> Vejetaryen
-              </label>
-              <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                <input id="f-featured" type="checkbox" class="rounded" /> Öne Çıkar
-              </label>
-            </div>
-          </div>
-          <p id="form-error" class="hidden rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-700"></p>
-          <div class="flex justify-end gap-3 pt-2">
-            <button type="button" id="cancel-btn" class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">İptal</button>
-            <button type="submit" class="rounded-lg bg-amber-600 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-500">Kaydet</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+ <div id="form-modal" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 overflow-y-auto py-8">
+ <div class="w-full max-w-2xl mx-4 rounded-sm bg-[var(--bg-card)] shadow-xl">
+ <div class="flex items-center justify-between p-5 border-b border-[rgba(184,115,51,0.14)]">
+ <h2 id="form-title" class="text-lg font-bold text-[#1F1410]">Yeni Tarif</h2>
+ <button id="close-modal" class="text-[#7A6B58] hover:text-[#7A6B58] text-2xl leading-none">&times;</button>
+ </div>
+ <form id="recipe-form" class="p-5 space-y-4">
+ <input type="hidden" id="f-slug" name="slug" />
+ <div class="grid grid-cols-2 gap-4">
+ <div class="col-span-2">
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Tarif Adı *</label>
+ <input id="f-name" type="text" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">URL Slug *</label>
+ <input id="f-slug-input" type="text" required placeholder="urfa-kebabi" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Zorluk</label>
+ <select id="f-difficulty" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option>Kolay</option>
+ <option selected>Orta</option>
+ <option>Zor</option>
+ </select>
+ </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Hazırlık (dk)</label>
+ <input id="f-prep" type="number" min="0" value="0" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Pişirme (dk)</label>
+ <input id="f-cook" type="number" min="0" value="0" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Porsiyon</label>
+ <input id="f-servings" type="number" min="1" value="4" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ </div>
+ <div>
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Görsel URL</label>
+ <input id="f-image" type="text" placeholder="/images/..." class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ </div>
+ <div class="col-span-2">
+ <label class="block text-sm font-medium text-[#7A6B58] mb-1">Kısa Açıklama</label>
+ <textarea id="f-desc" rows="2" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"></textarea>
+ </div>
+ <div class="col-span-2">
+ <div class="flex items-center justify-between mb-1">
+  <label class="block text-sm font-medium text-[#7A6B58]">Malzemeler</label>
+  <button type="button" data-list-target="ingredients" data-list-add class="text-xs font-semibold text-urfa-600 hover:text-urfa-700">+ Malzeme Ekle</button>
+ </div>
+ <div id="list-ingredients" class="space-y-2 mb-2"></div>
+ <details class="text-xs text-[#9B8A75]">
+  <summary class="cursor-pointer">Gelişmiş: ham metin (her satıra bir malzeme)</summary>
+  <textarea id="f-ingredients" rows="5" placeholder="500g kuzu kıyması&#10;1 soğan" class="mt-2 w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm font-mono focus:outline-none focus:border-urfa-400"></textarea>
+ </details>
+ </div>
+ <div class="col-span-2">
+ <div class="flex items-center justify-between mb-1">
+  <label class="block text-sm font-medium text-[#7A6B58]">Yapılış Adımları</label>
+  <button type="button" data-list-target="instructions" data-list-add class="text-xs font-semibold text-urfa-600 hover:text-urfa-700">+ Adım Ekle</button>
+ </div>
+ <div id="list-instructions" class="space-y-2 mb-2"></div>
+ <details class="text-xs text-[#9B8A75]">
+  <summary class="cursor-pointer">Gelişmiş: ham metin (her satıra bir adım)</summary>
+  <textarea id="f-instructions" rows="5" placeholder="Kıymayı hazırlayın.&#10;Baharatları ekleyin." class="mt-2 w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm font-mono focus:outline-none focus:border-urfa-400"></textarea>
+ </details>
+ </div>
+ <div class="flex items-center gap-6">
+ <label class="flex items-center gap-2 text-sm text-[#7A6B58] cursor-pointer">
+ <input id="f-spicy" type="checkbox" class="rounded" /> Acılı
+ </label>
+ <label class="flex items-center gap-2 text-sm text-[#7A6B58] cursor-pointer">
+ <input id="f-vegetarian" type="checkbox" class="rounded" /> Vejetaryen
+ </label>
+ <label class="flex items-center gap-2 text-sm text-[#7A6B58] cursor-pointer">
+ <input id="f-featured" type="checkbox" class="rounded" /> Öne Çıkar
+ </label>
+ </div>
+ </div>
+ <p id="form-error" class="hidden rounded-sm bg-[rgba(184,115,51,0.06)] border border-[rgba(184,115,51,0.2)] p-3 text-sm text-[#7A6B58]"></p>
+ <div class="flex justify-end gap-3 pt-2">
+ <button type="button" id="cancel-btn" class="rounded-sm border border-[rgba(184,115,51,0.14)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">İptal</button>
+ <button type="submit" class="rounded-sm bg-urfa-600 px-5 py-2 text-sm font-semibold text-white hover:bg-urfa-700">Kaydet</button>
+ </div>
+ </form>
+ </div>
+ </div>
 
-  <script>
-    let recipes: any[] = [];
+ <script is:inline>
+  // Dinamik liste builder — ingredients + instructions için ortak.
+  // Textarea-kaynak senkron tutar (form submit zaten textarea'dan okuyor).
+  (function () {
+    function makeRow(target, value, idx) {
+      const wrap = document.createElement('div');
+      wrap.className = 'flex items-center gap-2 group';
+      wrap.dataset.row = '1';
 
-    function esc(str: string) {
-      const d = document.createElement('div');
-      d.textContent = str ?? '';
-      return d.textContent;
+      const numBox = document.createElement('span');
+      numBox.className = 'w-7 h-7 flex items-center justify-center rounded-sm bg-[rgba(184,115,51,0.1)] text-xs font-semibold text-[#7A6B58] shrink-0';
+      numBox.dataset.num = '1';
+      numBox.textContent = String(idx + 1);
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = value || '';
+      input.placeholder = target === 'ingredients' ? 'Örn: 500g kuzu kıyması' : 'Örn: Soğanı doğrayıp kavurun';
+      input.className = 'flex-1 rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-1.5 text-sm focus:outline-none focus:border-urfa-400';
+      input.addEventListener('input', () => syncToTextarea(target));
+
+      const upBtn = document.createElement('button');
+      upBtn.type = 'button';
+      upBtn.title = 'Yukarı taşı';
+      upBtn.className = 'p-1 text-[#9B8A75] hover:text-urfa-600';
+      upBtn.textContent = '↑';
+      upBtn.addEventListener('click', () => moveRow(target, wrap, -1));
+
+      const downBtn = document.createElement('button');
+      downBtn.type = 'button';
+      downBtn.title = 'Aşağı taşı';
+      downBtn.className = 'p-1 text-[#9B8A75] hover:text-urfa-600';
+      downBtn.textContent = '↓';
+      downBtn.addEventListener('click', () => moveRow(target, wrap, +1));
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.title = 'Sil';
+      delBtn.className = 'p-1 text-[#9B8A75] hover:text-red-600';
+      delBtn.textContent = '✕';
+      delBtn.addEventListener('click', () => { wrap.remove(); renumber(target); syncToTextarea(target); });
+
+      wrap.append(numBox, input, upBtn, downBtn, delBtn);
+      return wrap;
     }
 
-    function makeRow(r: any) {
-      const row = document.createElement('div');
-      row.className = 'flex items-center justify-between p-4 hover:bg-slate-50';
-
-      // Left: image + info
-      const left = document.createElement('div');
-      left.className = 'flex items-center gap-4';
-
-      const thumb = document.createElement(r.cover_image ? 'img' : 'div');
-      thumb.className = 'w-12 h-12 rounded-lg object-cover shrink-0';
-      if (r.cover_image) {
-        (thumb as HTMLImageElement).src = r.cover_image;
-        (thumb as HTMLImageElement).alt = r.name;
-        thumb.className += ' bg-amber-100';
-      } else {
-        thumb.className += ' bg-amber-100 flex items-center justify-center text-2xl';
-        thumb.textContent = '🍽️';
-      }
-
-      const info = document.createElement('div');
-      const nameEl = document.createElement('p');
-      nameEl.className = 'font-semibold text-slate-800';
-      nameEl.textContent = r.name;
-      const meta = document.createElement('p');
-      meta.className = 'text-xs text-slate-500';
-      meta.textContent = `${r.slug} · ${r.difficulty || 'Orta'} · ${(r.prep_time||0)+(r.cook_time||0)} dk · ${r.view_count||0} görüntülenme`;
-      info.append(nameEl, meta);
-      left.append(thumb, info);
-
-      // Right: badges + actions
-      const right = document.createElement('div');
-      right.className = 'flex items-center gap-2';
-
-      if (r.is_featured) {
-        const badge = document.createElement('span');
-        badge.className = 'text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full';
-        badge.textContent = '⭐ Öne Çıkan';
-        right.append(badge);
-      }
-
-      const statusBadge = document.createElement('span');
-      statusBadge.className = `text-xs px-2 py-0.5 rounded-full ${r.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`;
-      statusBadge.textContent = r.status === 'published' ? 'Yayında' : 'Taslak';
-      right.append(statusBadge);
-
-      const actions = [
-        { label: 'Düzenle', cls: 'text-blue-600', fn: () => editRecipe(r.slug) },
-        { label: r.status === 'published' ? 'Taslağa Al' : 'Yayınla', cls: 'text-slate-500', fn: () => toggleStatus(r.id) },
-        { label: r.is_featured ? 'Öne Çıkarmayı Kaldır' : 'Öne Çıkar', cls: 'text-amber-600', fn: () => toggleFeatured(r.id) },
-        { label: 'Sil', cls: 'text-red-500', fn: () => deleteRecipe(r.id, r.name) },
-      ];
-
-      for (const a of actions) {
-        const btn = document.createElement('button');
-        btn.className = `text-xs ${a.cls} hover:underline px-2`;
-        btn.textContent = a.label;
-        btn.addEventListener('click', a.fn);
-        right.append(btn);
-      }
-
-      row.append(left, right);
-      return row;
+    function renumber(target) {
+      const container = document.getElementById('list-' + target);
+      if (!container) return;
+      container.querySelectorAll('[data-row]').forEach((row, i) => {
+        const num = row.querySelector('[data-num]');
+        if (num) num.textContent = String(i + 1);
+      });
     }
 
-    async function loadRecipes() {
-      const res = await fetch('/api/admin/recipes');
-      const data = await res.json();
-      recipes = data.data?.recipes || [];
-      renderList();
+    function syncToTextarea(target) {
+      const container = document.getElementById('list-' + target);
+      const textarea = document.getElementById('f-' + target);
+      if (!container || !textarea) return;
+      const values = Array.from(container.querySelectorAll('input[type="text"]'))
+        .map((i) => i.value.trim())
+        .filter(Boolean);
+      textarea.value = values.join('\n');
     }
 
-    function renderList() {
-      const el = document.getElementById('recipe-list')!;
-      el.replaceChildren();
-      if (!recipes.length) {
-        const p = document.createElement('p');
-        p.className = 'p-6 text-slate-500 text-sm text-center';
-        p.textContent = 'Henüz tarif yok.';
-        el.append(p);
-        return;
-      }
-      for (const r of recipes) el.append(makeRow(r));
+    function moveRow(target, row, dir) {
+      const sibling = dir < 0 ? row.previousElementSibling : row.nextElementSibling;
+      if (!sibling || !sibling.dataset.row) return;
+      if (dir < 0) row.parentNode.insertBefore(row, sibling);
+      else row.parentNode.insertBefore(sibling, row);
+      renumber(target);
+      syncToTextarea(target);
     }
 
-    function openModal(data: any = null) {
-      (document.getElementById('form-title') as HTMLElement).textContent = data ? 'Tarifi Düzenle' : 'Yeni Tarif';
-      (document.getElementById('f-slug') as HTMLInputElement).value = data?.slug || '';
-      (document.getElementById('f-name') as HTMLInputElement).value = data?.name || '';
-      (document.getElementById('f-slug-input') as HTMLInputElement).value = data?.slug || '';
-      (document.getElementById('f-difficulty') as HTMLSelectElement).value = data?.difficulty || 'Orta';
-      (document.getElementById('f-prep') as HTMLInputElement).value = data?.prep_time ?? 0;
-      (document.getElementById('f-cook') as HTMLInputElement).value = data?.cook_time ?? 0;
-      (document.getElementById('f-servings') as HTMLInputElement).value = data?.servings ?? 4;
-      (document.getElementById('f-image') as HTMLInputElement).value = data?.cover_image || '';
-      (document.getElementById('f-desc') as HTMLTextAreaElement).value = data?.description || '';
-      (document.getElementById('f-ingredients') as HTMLTextAreaElement).value = (data?.ingredients || []).join('\n');
-      (document.getElementById('f-instructions') as HTMLTextAreaElement).value = (data?.instructions || []).join('\n');
-      (document.getElementById('f-spicy') as HTMLInputElement).checked = data?.is_spicy || false;
-      (document.getElementById('f-vegetarian') as HTMLInputElement).checked = data?.is_vegetarian || false;
-      (document.getElementById('f-featured') as HTMLInputElement).checked = data?.is_featured || false;
-      (document.getElementById('form-error') as HTMLElement).classList.add('hidden');
-      document.getElementById('form-modal')!.classList.remove('hidden');
+    function clearContainer(container) {
+      while (container.firstChild) container.removeChild(container.firstChild);
     }
 
-    async function editRecipe(slug: string) {
-      const res = await fetch('/api/admin/recipes?slug=' + slug);
-      const data = await res.json();
-      openModal(data.data);
+    function loadListFromTextarea(target) {
+      const container = document.getElementById('list-' + target);
+      const textarea = document.getElementById('f-' + target);
+      if (!container || !textarea) return;
+      clearContainer(container);
+      const items = textarea.value.split('\n').map((s) => s.trim()).filter(Boolean);
+      if (items.length === 0) items.push('');
+      items.forEach((v, i) => container.appendChild(makeRow(target, v, i)));
     }
 
-    async function toggleStatus(id: string) {
-      await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'toggle_status', id }) });
-      loadRecipes();
-    }
-
-    async function toggleFeatured(id: string) {
-      await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'toggle_featured', id }) });
-      loadRecipes();
-    }
-
-    async function deleteRecipe(id: string, name: string) {
-      if (!confirm(`"${esc(name)}" tarifini silmek istediğinizden emin misiniz?`)) return;
-      await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'delete', id }) });
-      loadRecipes();
-    }
-
-    document.getElementById('add-btn')!.addEventListener('click', () => openModal());
-    document.getElementById('close-modal')!.addEventListener('click', () => document.getElementById('form-modal')!.classList.add('hidden'));
-    document.getElementById('cancel-btn')!.addEventListener('click', () => document.getElementById('form-modal')!.classList.add('hidden'));
-
-    document.getElementById('recipe-form')!.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const errEl = document.getElementById('form-error') as HTMLElement;
-      errEl.classList.add('hidden');
-
-      const existingSlug = (document.getElementById('f-slug') as HTMLInputElement).value;
-      const newSlug = (document.getElementById('f-slug-input') as HTMLInputElement).value.trim().toLowerCase().replace(/\s+/g, '-');
-
-      const body = {
-        action: 'upsert',
-        slug: existingSlug || newSlug,
-        name: (document.getElementById('f-name') as HTMLInputElement).value.trim(),
-        description: (document.getElementById('f-desc') as HTMLTextAreaElement).value.trim(),
-        difficulty: (document.getElementById('f-difficulty') as HTMLSelectElement).value,
-        prep_time: parseInt((document.getElementById('f-prep') as HTMLInputElement).value) || 0,
-        cook_time: parseInt((document.getElementById('f-cook') as HTMLInputElement).value) || 0,
-        servings: parseInt((document.getElementById('f-servings') as HTMLInputElement).value) || 4,
-        cover_image: (document.getElementById('f-image') as HTMLInputElement).value.trim() || null,
-        ingredients: (document.getElementById('f-ingredients') as HTMLTextAreaElement).value.split('\n').map((s: string) => s.trim()).filter(Boolean),
-        instructions: (document.getElementById('f-instructions') as HTMLTextAreaElement).value.split('\n').map((s: string) => s.trim()).filter(Boolean),
-        is_spicy: (document.getElementById('f-spicy') as HTMLInputElement).checked,
-        is_vegetarian: (document.getElementById('f-vegetarian') as HTMLInputElement).checked,
-        is_featured: (document.getElementById('f-featured') as HTMLInputElement).checked,
-        status: 'published',
-      };
-
-      const res = await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
-      const data = await res.json();
-
-      if (!res.ok) {
-        errEl.textContent = data.error?.message || 'Kaydetme hatası.';
-        errEl.classList.remove('hidden');
-        return;
-      }
-
-      document.getElementById('form-modal')!.classList.add('hidden');
-      loadRecipes();
+    document.querySelectorAll('[data-list-add]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-list-target');
+        if (!target) return;
+        const container = document.getElementById('list-' + target);
+        if (!container) return;
+        const idx = container.querySelectorAll('[data-row]').length;
+        container.appendChild(makeRow(target, '', idx));
+      });
     });
 
-    loadRecipes();
-  </script>
+    // İlk yükleme: boş bir satır göster
+    loadListFromTextarea('ingredients');
+    loadListFromTextarea('instructions');
+
+    // Edit akışı için: textarea değiştiğinde liste re-hidrate olsun.
+    // recipes.astro'nun mevcut JS'i editRecipe()'da textarea.value setliyor.
+    // Custom event ile dinleyelim.
+    ['ingredients', 'instructions'].forEach((t) => {
+      const ta = document.getElementById('f-' + t);
+      if (ta) {
+        ta.addEventListener('recipe-form-loaded', () => loadListFromTextarea(t));
+        ta.addEventListener('change', () => loadListFromTextarea(t));
+      }
+    });
+  })();
+ </script>
+
+ <script>
+ let recipes: any[] = [];
+
+ function makeRow(r: any) {
+ const row = document.createElement('div');
+ row.className = 'flex items-center justify-between p-4 hover:bg-[rgba(184,115,51,0.04)]';
+
+ const left = document.createElement('div');
+ left.className = 'flex items-center gap-4';
+
+ const thumb = document.createElement(r.cover_image ? 'img' : 'div');
+ thumb.className = 'w-12 h-12 rounded-sm object-cover shrink-0 bg-[rgba(184,115,51,0.1)]';
+ if (r.cover_image) {
+ (thumb as HTMLImageElement).src = r.cover_image;
+ (thumb as HTMLImageElement).alt = r.name;
+ } else {
+ thumb.className += ' flex items-center justify-center text-2xl';
+ thumb.textContent = '🍽️';
+ }
+
+ const info = document.createElement('div');
+ const nameEl = document.createElement('p');
+ nameEl.className = 'font-semibold text-[#1F1410]';
+ nameEl.textContent = r.name;
+ const meta = document.createElement('p');
+ meta.className = 'text-xs text-[#7A6B58]';
+ meta.textContent = `${r.slug} · ${r.difficulty || 'Orta'} · ${(r.prep_time||0)+(r.cook_time||0)} dk · ${r.view_count||0} görüntülenme`;
+ info.append(nameEl, meta);
+ left.append(thumb, info);
+
+ const right = document.createElement('div');
+ right.className = 'flex items-center gap-2';
+
+ if (r.is_featured) {
+ const badge = document.createElement('span');
+ badge.className = 'text-xs bg-[rgba(184,115,51,0.15)] text-[#7A6B58] px-2 py-0.5 rounded-sm';
+ badge.textContent = '⭐ Öne Çıkan';
+ right.append(badge);
+ }
+
+ const statusBadge = document.createElement('span');
+ statusBadge.className = `text-xs px-2 py-0.5 rounded-sm ${r.status === 'published' ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'}`;
+ statusBadge.textContent = r.status === 'published' ? 'Yayında' : 'Taslak';
+ right.append(statusBadge);
+
+ const actions = [
+ { label: 'Düzenle', cls: 'text-urfa-600', fn: () => editRecipe(r.slug) },
+ { label: r.status === 'published' ? 'Taslağa Al' : 'Yayınla', cls: 'text-[#7A6B58]', fn: () => toggleStatus(r.id) },
+ { label: r.is_featured ? 'Öne Çıkarmayı Kaldır' : 'Öne Çıkar', cls: 'text-[#7A6B58]', fn: () => toggleFeatured(r.id) },
+ { label: 'Sil', cls: 'text-[#7A6B58]', fn: () => deleteRecipe(r.id, r.name) },
+ ];
+
+ for (const a of actions) {
+ const btn = document.createElement('button');
+ btn.className = `text-xs ${a.cls} hover:underline px-2`;
+ btn.textContent = a.label;
+ btn.addEventListener('click', a.fn);
+ right.append(btn);
+ }
+
+ row.append(left, right);
+ return row;
+ }
+
+ async function loadRecipes() {
+ const res = await fetch('/api/admin/recipes');
+ const data = await res.json();
+ recipes = data.data?.recipes || [];
+ renderList();
+ }
+
+ function renderList() {
+ const el = document.getElementById('recipe-list')!;
+ el.replaceChildren();
+ if (!recipes.length) {
+ const p = document.createElement('p');
+ p.className = 'p-6 text-[#7A6B58] text-sm text-center';
+ p.textContent = 'Henüz tarif yok.';
+ el.append(p);
+ return;
+ }
+ for (const r of recipes) el.append(makeRow(r));
+ }
+
+ function openModal(data: any = null) {
+ (document.getElementById('form-title') as HTMLElement).textContent = data ? 'Tarifi Düzenle' : 'Yeni Tarif';
+ (document.getElementById('f-slug') as HTMLInputElement).value = data?.slug || '';
+ (document.getElementById('f-name') as HTMLInputElement).value = data?.name || '';
+ (document.getElementById('f-slug-input') as HTMLInputElement).value = data?.slug || '';
+ (document.getElementById('f-difficulty') as HTMLSelectElement).value = data?.difficulty || 'Orta';
+ (document.getElementById('f-prep') as HTMLInputElement).value = data?.prep_time ?? 0;
+ (document.getElementById('f-cook') as HTMLInputElement).value = data?.cook_time ?? 0;
+ (document.getElementById('f-servings') as HTMLInputElement).value = data?.servings ?? 4;
+ (document.getElementById('f-image') as HTMLInputElement).value = data?.cover_image || '';
+ (document.getElementById('f-desc') as HTMLTextAreaElement).value = data?.description || '';
+ (document.getElementById('f-ingredients') as HTMLTextAreaElement).value = (data?.ingredients || []).join('\n');
+ (document.getElementById('f-instructions') as HTMLTextAreaElement).value = (data?.instructions || []).join('\n');
+ (document.getElementById('f-spicy') as HTMLInputElement).checked = data?.is_spicy || false;
+ (document.getElementById('f-vegetarian') as HTMLInputElement).checked = data?.is_vegetarian || false;
+ (document.getElementById('f-featured') as HTMLInputElement).checked = data?.is_featured || false;
+ (document.getElementById('form-error') as HTMLElement).classList.add('hidden');
+ // Dinamik liste builder'a textarea'nın yeni içeriğini yükle
+ document.getElementById('f-ingredients')!.dispatchEvent(new Event('recipe-form-loaded'));
+ document.getElementById('f-instructions')!.dispatchEvent(new Event('recipe-form-loaded'));
+ document.getElementById('form-modal')!.classList.remove('hidden');
+ }
+
+ async function editRecipe(slug: string) {
+ const res = await fetch('/api/admin/recipes?slug=' + slug);
+ const data = await res.json();
+ openModal(data.data);
+ }
+
+ async function toggleStatus(id: string) {
+ await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'toggle_status', id }) });
+ loadRecipes();
+ }
+
+ async function toggleFeatured(id: string) {
+ await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'toggle_featured', id }) });
+ loadRecipes();
+ }
+
+ async function deleteRecipe(id: string, name: string) {
+ if (!window.showConfirm) return;
+ if (!await window.showConfirm(`"${name}" tarifini silmek istediğinizden emin misiniz?`)) return;
+ await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'delete', id }) });
+ loadRecipes();
+ }
+
+ document.getElementById('add-btn')!.addEventListener('click', () => openModal());
+ document.getElementById('close-modal')!.addEventListener('click', () => document.getElementById('form-modal')!.classList.add('hidden'));
+ document.getElementById('cancel-btn')!.addEventListener('click', () => document.getElementById('form-modal')!.classList.add('hidden'));
+
+ document.getElementById('recipe-form')!.addEventListener('submit', async (e) => {
+ e.preventDefault();
+ const errEl = document.getElementById('form-error') as HTMLElement;
+ errEl.classList.add('hidden');
+
+ const existingSlug = (document.getElementById('f-slug') as HTMLInputElement).value;
+ const newSlug = (document.getElementById('f-slug-input') as HTMLInputElement).value.trim().toLowerCase().replace(/\s+/g, '-');
+
+ const body = {
+ action: 'upsert',
+ slug: existingSlug || newSlug,
+ name: (document.getElementById('f-name') as HTMLInputElement).value.trim(),
+ description: (document.getElementById('f-desc') as HTMLTextAreaElement).value.trim(),
+ difficulty: (document.getElementById('f-difficulty') as HTMLSelectElement).value,
+ prep_time: parseInt((document.getElementById('f-prep') as HTMLInputElement).value) || 0,
+ cook_time: parseInt((document.getElementById('f-cook') as HTMLInputElement).value) || 0,
+ servings: parseInt((document.getElementById('f-servings') as HTMLInputElement).value) || 4,
+ cover_image: (document.getElementById('f-image') as HTMLInputElement).value.trim() || null,
+ ingredients: (document.getElementById('f-ingredients') as HTMLTextAreaElement).value.split('\n').map((s: string) => s.trim()).filter(Boolean),
+ instructions: (document.getElementById('f-instructions') as HTMLTextAreaElement).value.split('\n').map((s: string) => s.trim()).filter(Boolean),
+ is_spicy: (document.getElementById('f-spicy') as HTMLInputElement).checked,
+ is_vegetarian: (document.getElementById('f-vegetarian') as HTMLInputElement).checked,
+ is_featured: (document.getElementById('f-featured') as HTMLInputElement).checked,
+ status: 'published',
+ };
+
+ const res = await fetch('/api/admin/recipes', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+ const data = await res.json();
+
+ if (!res.ok) {
+ errEl.textContent = data.error?.message || 'Kaydetme hatası.';
+ errEl.classList.remove('hidden');
+ return;
+ }
+
+ document.getElementById('form-modal')!.classList.add('hidden');
+ loadRecipes();
+ });
+
+ loadRecipes();
+ </script>
 </AdminLayout>

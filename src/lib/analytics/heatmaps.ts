@@ -68,9 +68,9 @@ export async function getClickHeatmap(
   );
 
   return result.rows.map(row => ({
-    x: parseInt(row.x),
-    y: parseInt(row.y),
-    intensity: parseInt(row.intensity),
+    x: parseInt(row.x, 10),
+    y: parseInt(row.y, 10),
+    intensity: parseInt(row.intensity, 10),
   }));
 }
 
@@ -104,13 +104,13 @@ export async function getCompleteHeatmap(
 
   const deviceBreakdown: Record<string, number> = {};
   deviceResult.rows.forEach(row => {
-    deviceBreakdown[row.device_type] = parseInt(row.count);
+    deviceBreakdown[row.device_type] = parseInt(row.count, 10);
   });
 
   return {
     pageUrl,
-    totalEvents: parseInt(eventsResult.rows[0].total),
-    uniqueVisitors: parseInt(visitorsResult.rows[0].unique),
+    totalEvents: parseInt(eventsResult.rows[0].total, 10),
+    uniqueVisitors: parseInt(visitorsResult.rows[0].unique, 10),
     clickPoints,
     scrollDepth: [],
     attentionMap: [],
@@ -137,7 +137,7 @@ export async function getTopPagesByInteraction(
 
   return result.rows.map(row => ({
     pageUrl: row.page_url,
-    interactions: parseInt(row.interactions),
+    interactions: parseInt(row.interactions, 10),
   }));
 }
 

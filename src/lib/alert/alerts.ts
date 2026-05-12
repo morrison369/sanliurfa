@@ -87,7 +87,7 @@ export async function recordAlert(alert: Alert): Promise<string | null> {
     // Notify admins
     await notifyAdmins(alert);
 
-    return alertId;
+    return alertId ?? null;
   } catch (error) {
     logger.error('Alert kaydedilirken hata', error instanceof Error ? error : new Error(String(error)));
     return null;
@@ -273,15 +273,16 @@ export async function resolveAlert(alertId: string): Promise<boolean> {
 
 /**
  * Admin'lere bildirim gönder
+ * NOTE: notifications/ modülü generic sendNotification API'sini sağlar; alert-spesifik
+ * bildirim akışı bu sürümde devre dışı bırakıldı (eski notification/ stub'ı kaldırıldı).
+ * Alert'ler zaten DB'ye ve logger'a kaydedilmektedir; admin paneli buradan okur.
  */
 async function notifyAdmins(alert: Alert): Promise<void> {
-  try {
-    // Notifications servisi'ni dynamic olarak import et (circular dependency'yi önle)
-    const { notificationSystem } = await import('../notification');
-    await (notificationSystem as any).notifyAlert?.(alert);
-  } catch (error) {
-    logger.error('Admin notification gonderilirken hata', error instanceof Error ? error : new Error(String(error)));
-  }
+  logger.info('Alert kaydedildi (admin notification akışı pasif)', {
+    alertId: alert.id,
+    type: alert.type,
+    severity: alert.severity,
+  });
 }
 
 /**

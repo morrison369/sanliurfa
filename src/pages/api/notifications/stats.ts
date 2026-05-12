@@ -23,10 +23,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
     ]);
 
     return apiResponse({
-      total: parseInt(totalResult.rows[0].count),
-      unread: parseInt(unreadResult.rows[0].count),
-      sentToday: parseInt(todayResult.rows[0].count),
-      activeSubscriptions: parseInt(subscriptionsResult.rows[0].count),
+      total: parseInt(totalResult.rows[0].count, 10),
+      unread: parseInt(unreadResult.rows[0].count, 10),
+      sentToday: parseInt(todayResult.rows[0].count, 10),
+      activeSubscriptions: parseInt(subscriptionsResult.rows[0].count, 10),
     }, HttpStatus.OK, requestId);
   } catch (error) {
     logger.error('Notification stats failed', error instanceof Error ? error : new Error(String(error)));

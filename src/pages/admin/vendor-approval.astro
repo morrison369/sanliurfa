@@ -1,0 +1,183 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+---
+
+<AdminLayout
+ title="Vendor Onay Paneli"
+ subtitle="Onay bekleyen vendor başvuruları"
+ seo={{ title: 'Vendor Onay Paneli - Admin' }}
+>
+ <div class="sf-container py-8 max-w-5xl space-y-5">
+ <div class="mb-2">
+ <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <div class="p-4 border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] flex items-center justify-between">
+ <h2 class="font-semibold text-[#7A6B58] text-sm">Bekleyen Başvurular</h2>
+ <button id="refreshBtn" class="text-xs text-urfa-600 hover:underline">Yenile</button>
+ </div>
+ <div id="vendorContainer">
+ <div class="p-8 text-center text-[#7A6B58] text-sm">Yükleniyor...</div>
+ </div>
+ </div>
+ </div>
+</AdminLayout>
+
+<script is:inline>
+ function renderPending(items) {
+ const container = document.getElementById('vendorContainer');
+ container.textContent = '';
+
+ if (!items || items.length === 0) {
+ const empty = document.createElement('div');
+ empty.className = 'p-12 text-center text-[#7A6B58] text-sm';
+ empty.textContent = 'Onay bekleyen başvuru yok.';
+ container.appendChild(empty);
+ return;
+ }
+
+ const wrapper = document.createElement('div');
+ wrapper.className = 'overflow-x-auto';
+
+ const table = document.createElement('table');
+ table.className = 'w-full text-sm';
+
+ const thead = document.createElement('thead');
+ thead.className = 'border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]';
+ const theadRow = document.createElement('tr');
+ ['Mekan', 'Başvuran', 'Tarih', 'Yöntem', 'İşlem'].forEach(text => {
+ const th = document.createElement('th');
+ th.className = 'py-3 px-4 text-left font-medium text-[#7A6B58]';
+ th.textContent = text;
+ theadRow.appendChild(th);
+ });
+ thead.appendChild(theadRow);
+ table.appendChild(thead);
+
+ const tbody = document.createElement('tbody');
+
+ items.forEach(v => {
+ const tr = document.createElement('tr');
+ tr.className = 'border-b border-[rgba(184,115,51,0.08)] last:border-0 hover:bg-[rgba(184,115,51,0.04)]';
+
+ const placeTd = document.createElement('td');
+ placeTd.className = 'py-3 px-4';
+ const placeName = document.createElement('div');
+ placeName.className = 'font-medium text-[#1F1410]';
+ placeName.textContent = v.place_name || v.business_name || '—';
+ placeTd.appendChild(placeName);
+ if (v.place_slug) {
+ const slugLink = document.createElement('a');
+ slugLink.className = 'text-xs text-urfa-600 hover:underline';
+ slugLink.href = `/isletme/${v.place_slug}`;
+ slugLink.target = '_blank';
+ slugLink.rel = 'noopener';
+ slugLink.textContent = v.place_slug;
+ placeTd.appendChild(slugLink);
+ }
+
+ const userTd = document.createElement('td');
+ userTd.className = 'py-3 px-4';
+ const userName = document.createElement('div');
+ userName.className = 'text-sm text-[#1F1410]';
+ userName.textContent = v.user_name || v.applicant_name || '—';
+ const userEmail = document.createElement('div');
+ userEmail.className = 'text-xs text-[#7A6B58]';
+ userEmail.textContent = v.user_email || v.email || '—';
+ userTd.appendChild(userName);
+ userTd.appendChild(userEmail);
+
+ const dateTd = document.createElement('td');
+ dateTd.className = 'py-3 px-4 text-[#7A6B58] text-xs';
+ const rawDate = v.submitted_at || v.created_at;
+ dateTd.textContent = rawDate ? new Date(rawDate).toLocaleDateString('tr-TR') : '—';
+
+ const methodTd = document.createElement('td');
+ methodTd.className = 'py-3 px-4 text-[#7A6B58] text-xs';
+ methodTd.textContent = v.documents ? 'Belge var' : (v.verification_method || '—');
+
+ const actionTd = document.createElement('td');
+ actionTd.className = 'py-3 px-4';
+ const actionDiv = document.createElement('div');
+ actionDiv.className = 'flex gap-1';
+
+ const approveBtn = document.createElement('button');
+ approveBtn.className = 'px-2 py-1 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] rounded-sm text-xs hover:bg-[rgba(184,115,51,0.2)]';
+ approveBtn.textContent = 'Onayla';
+ approveBtn.addEventListener('click', async () => {
+ const endpoint = v.place_id
+ ? `/api/admin/vendor/${v.place_id}/approve`
+ : `/api/admin/verifications/${v.id}/approve`;
+ const res = await fetch(endpoint, { method: 'POST' });
+ if (res.ok) loadPending();
+ else window.toast?.error('Onaylama başarısız.');
+ });
+
+ const rejectBtn = document.createElement('button');
+ rejectBtn.className = 'px-2 py-1 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] rounded-sm text-xs hover:bg-[rgba(184,115,51,0.12)]';
+ rejectBtn.textContent = 'Reddet';
+ rejectBtn.addEventListener('click', async () => {
+ const reason = await window.promptInput('Red sebebi (opsiyonel):') ?? '';
+ const endpoint = v.place_id
+ ? `/api/admin/vendor/${v.place_id}/reject`
+ : `/api/admin/verifications/${v.id}/reject`;
+ const res = await fetch(endpoint, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify({ reason }),
+ });
+ if (res.ok) loadPending();
+ else window.toast?.error('Reddetme başarısız.');
+ });
+
+ actionDiv.appendChild(approveBtn);
+ actionDiv.appendChild(rejectBtn);
+ actionTd.appendChild(actionDiv);
+
+ tr.appendChild(placeTd);
+ tr.appendChild(userTd);
+ tr.appendChild(dateTd);
+ tr.appendChild(methodTd);
+ tr.appendChild(actionTd);
+ tbody.appendChild(tr);
+ });
+
+ table.appendChild(tbody);
+ wrapper.appendChild(table);
+ container.appendChild(wrapper);
+ }
+
+ async function loadPending() {
+ const container = document.getElementById('vendorContainer');
+ container.textContent = '';
+ const loading = document.createElement('div');
+ loading.className = 'p-8 text-center text-[#7A6B58] text-sm';
+ loading.textContent = 'Yükleniyor...';
+ container.appendChild(loading);
+
+ try {
+ const res = await fetch('/api/admin/vendor/pending');
+ if (!res.ok) {
+ container.textContent = '';
+ const errDiv = document.createElement('div');
+ errDiv.className = 'p-8 text-center text-[#7A6B58] text-sm';
+ errDiv.textContent = 'Yüklenemedi.';
+ container.appendChild(errDiv);
+ return;
+ }
+ const data = await res.json();
+ const items = data.data || data.verifications || data.pending || [];
+ renderPending(items);
+ } catch {
+ container.textContent = '';
+ const errDiv = document.createElement('div');
+ errDiv.className = 'p-8 text-center text-[#7A6B58] text-sm';
+ errDiv.textContent = 'Hata oluştu.';
+ container.appendChild(errDiv);
+ }
+ }
+
+ document.getElementById('refreshBtn').addEventListener('click', loadPending);
+ loadPending();
+</script>

@@ -1,153 +1,218 @@
 ---
-
+import { Icon } from 'astro-icon/components';
 import Layout from '../layouts/Layout.astro';
-import { getSiteBranding } from '../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
-
-// SVG ikonlar
-const icons = {
-  heart: `<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>`,
-  users: `<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
-  star: `<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
-  globe: `<svg class="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
-};
+import Image from '../components/Image.astro';
+import { getPublicAppUrl } from '../lib/public-app-url';
+const baseUrl = getPublicAppUrl();
 
 const seo = {
-  title: 'Hakkımızda - Sanliurfa.com Ekibi',
-  description: 'Sanliurfa.com, Şanlıurfa\'nın en kapsamlı şehir rehberi olarak 2025 yılında kurulmuştur.',
-  keywords: ['sanliurfa.com hakkında', 'şanlıurfa şehir rehberi', 'urfa dijital rehber', 'sanliurfa.com ekibi'],
-  ogImage: '/images/hero/hero-home.webp',
-  canonical: '/hakkinda',
+ title: 'Hakkımızda - Sanliurfa.com Ekibi',
+ description: "Sanliurfa.com, Şanlıurfa'nın en kapsamlı şehir rehberi olarak 2025 yılında kurulmuştur.",
+ keywords: ['sanliurfa.com hakkında', 'şanlıurfa şehir rehberi', 'urfa dijital rehber', 'sanliurfa.com ekibi'],
+ ogImage: '/images/places/balikligol.jpg',
+ canonical: '/hakkinda',
 };
 
 const values = [
-  { icon: 'heart', title: 'Tutku', description: 'Şanlıurfa\'ya olan sevgimizle her içeriği özenle hazırlıyoruz.' },
-  { icon: 'users', title: 'Topluluk', description: 'Kullanıcılarımızın değerlendirmeleriyle daha iyi hizmet sunuyoruz.' },
-  { icon: 'star', title: 'Kalite', description: 'Sadece en iyi mekanları ve deneyimleri öneriyoruz.' },
-  { icon: 'globe', title: 'Erişilebilirlik', description: 'Şehrin tüm güzelliklerini herkese ulaştırmayı hedefliyoruz.' },
+ { icon: 'heart', title: 'Tutku', description: "Şanlıurfa'ya olan sevgimizle her içeriği özenle hazırlıyoruz." },
+ { icon: 'users', title: 'Topluluk', description: 'Kullanıcılarımızın değerlendirmeleriyle daha iyi hizmet sunuyoruz.' },
+ { icon: 'star', title: 'Kalite', description: 'Sadece en iyi mekanları ve deneyimleri öneriyoruz.' },
+ { icon: 'globe', title: 'Erişilebilirlik', description: "Şehrin tüm güzelliklerini herkese ulaştırmayı hedefliyoruz." },
 ];
 
 const stats = [
-  { value: '500+', label: 'Mekan' },
-  { value: '50K+', label: 'Kullanıcı' },
-  { value: '10K+', label: 'Yorum' },
-  { value: '100+', label: 'Blog Yazısı' },
+ { value: '500+', label: 'Mekan' },
+ { value: '50K+', label: 'Kullanıcı' },
+ { value: '10K+', label: 'Yorum' },
+ { value: '100+', label: 'Blog Yazısı' },
 ];
+
 const faqItems = [
-  { S: "Sanliurfa.com ne zaman kuruldu?", C: "Sanliurfa.com, Şanlıurfa'nın kapsamlı dijital rehberi olarak 2025 yılında kurulmuştur." },
-  { S: 'Siteye mekan ekleyebilir miyim?', C: 'Evet, İşletme Ekle sayfasından mekanınızı ücretsiz olarak kaydedebilirsiniz.' },
-  { S: "Sanliurfa.com'a nasıl iletişim kurabilirim?", C: 'İletişim sayfamız üzerinden mesaj gönderebilir veya sosyal medya kanallarımızdan bize ulaşabilirsiniz.' },
+ { S: "Sanliurfa.com ne zaman kuruldu?", C: "Sanliurfa.com, Şanlıurfa'nın kapsamlı dijital rehberi olarak 2025 yılında kurulmuştur." },
+ { S: 'Siteye mekan ekleyebilir miyim?', C: 'Evet, İşletme Ekle sayfasından mekanınızı ücretsiz olarak kaydedebilirsiniz.' },
+ { S: "Sanliurfa.com'a nasıl iletişim kurabilirim?", C: 'İletişim sayfamız üzerinden mesaj gönderebilir veya sosyal medya kanallarımızdan bize ulaşabilirsiniz.' },
 ];
 ---
 
 <Layout seo={seo}>
-  <section class="relative py-24 bg-urfa-900 overflow-hidden">
-    <div class="absolute inset-0 opacity-10">
-      <img src="/images/historical/balikligol.jpg" alt="" class="w-full h-full object-cover" />
-    </div>
-    <div class="relative container-custom text-center">
-      <h1 class="text-4xl lg:text-6xl font-display font-bold text-white mb-6">Hakkımızda</h1>
-      <p class="text-xl text-urfa-100 max-w-2xl mx-auto">Şanlıurfa’yı keşfetmenin en iyi yolunu sunmak için çalışıyoruz.</p>
-    </div>
-  </section>
+ <style is:inline>
+ .hk-hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(184,115,51,0.12);padding:clamp(3rem,6vw,5rem) 0;background:radial-gradient(circle at 18% 0%,rgba(212,151,24,0.10) 0%,transparent 42%),radial-gradient(circle at 82% 100%,rgba(44,122,82,0.08) 0%,transparent 40%),linear-gradient(180deg,#fbf6ec 0%,#f4ecd8 58%,#fbf6ec 100%);text-align:center}
+ .hk-hero-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--public-text-soft);margin-bottom:.5rem}
+ .hk-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.5rem);font-weight:700;color:var(--public-text);margin:.5rem 0}
+ .hk-hero-desc{color:var(--public-muted);font-size:1rem;max-width:36rem;margin:0 auto}
+ .hk-mission{background:var(--bg);padding:4rem 0}
+ .hk-mission-inner{display:grid;gap:3rem;align-items:center}
+ @media(min-width:64rem){.hk-mission-inner{grid-template-columns:1fr 1fr}}
+ .hk-mission-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--public-accent)}
+ .hk-mission-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3vw,2.2rem);font-weight:700;color:var(--public-text);margin:.5rem 0 1rem}
+ .hk-mission-p{font-size:.88rem;color:var(--public-muted);line-height:1.75;margin-bottom:.75rem}
+ .hk-mission-img{position:relative}
+ .hk-mission-badge{position:absolute;bottom:-1.5rem;right:-1.5rem;background:var(--bg-card);border:1px solid rgba(184,115,51,.2);padding:1.25rem;display:none}
+ @media(min-width:64rem){.hk-mission-badge{display:block}}
+ .hk-mission-badge-val{font-size:2rem;font-weight:700;color:var(--public-accent)}
+ .hk-mission-badge-label{font-size:.8rem;color:var(--public-muted)}
+ .hk-stats{background:rgba(184,115,51,.04);border-top:1px solid rgba(184,115,51,.1);border-bottom:1px solid rgba(184,115,51,.1);padding:3rem 0}
+ .hk-stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2rem;text-align:center}
+ @media(min-width:48rem){.hk-stats-grid{grid-template-columns:repeat(4,1fr)}}
+ .hk-stat-val{font-family:'Cormorant Garamond',serif;font-size:2.25rem;font-weight:700;color:var(--public-accent)}
+ .hk-stat-label{font-size:.82rem;color:var(--public-muted);margin-top:.2rem}
+ .hk-values{background:var(--bg);padding:4rem 0}
+ .hk-values-head{text-align:center;max-width:34rem;margin:0 auto 2.5rem}
+ .hk-values-label{font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--public-accent)}
+ .hk-values-title{font-family:'Cormorant Garamond',serif;font-size:1.75rem;font-weight:700;color:var(--public-text);margin:.4rem 0 .5rem}
+ .hk-values-desc{font-size:.85rem;color:var(--public-muted)}
+ .hk-values-grid{display:grid;gap:1rem}
+ @media(min-width:48rem){.hk-values-grid{grid-template-columns:repeat(2,1fr)}}
+ @media(min-width:64rem){.hk-values-grid{grid-template-columns:repeat(4,1fr)}}
+ .hk-val-card{background:var(--bg-card);border:1px solid rgba(184,115,51,.14);padding:1.5rem;text-align:center;transition:border-color .15s}
+ .hk-val-card:hover{border-color:var(--public-accent)}
+ .hk-val-icon{width:3.5rem;height:3.5rem;background:rgba(184,115,51,.1);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem}
+ .hk-val-title{font-size:.9rem;font-weight:700;color:var(--public-text);margin-bottom:.4rem}
+ .hk-val-desc{font-size:.78rem;color:var(--public-muted);line-height:1.6}
+ .hk-cta{background:linear-gradient(135deg,rgba(184,115,51,.07) 0%,rgba(184,115,51,.03) 100%);border-top:1px solid rgba(184,115,51,.18);padding:4rem 0;text-align:center}
+ .hk-cta-title{font-family:'Cormorant Garamond',serif;font-size:1.75rem;font-weight:700;color:var(--public-text);margin-bottom:.75rem}
+ .hk-cta-desc{font-size:.88rem;color:var(--public-muted);max-width:30rem;margin:0 auto 2rem}
+ .hk-cta-row{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center}
+ .hk-btn-primary{background:var(--public-accent);color:var(--public-text);font-size:.85rem;font-weight:600;padding:.65rem 1.5rem;transition:background .15s}
+ .hk-btn-primary:hover{background:var(--public-accent-strong)}
+ .hk-btn-ghost{border:1px solid rgba(184,115,51,.3);color:var(--public-text);font-size:.85rem;font-weight:500;padding:.65rem 1.5rem;transition:border-color .15s,color .15s}
+ .hk-btn-ghost:hover{border-color:#B87333;color:#B87333}
+ details summary{list-style:none}
+ details summary::-webkit-details-marker{display:none}
+ details[open] .faq-arrow{transform:rotate(180deg)}
+ </style>
 
-  <section class="section bg-white dark:bg-gray-900">
-    <div class="container-custom">
-      <div class="grid lg:grid-cols-2 gap-12 items-center">
-        <div>
-          <span class="text-urfa-600 dark:text-urfa-400 font-medium">Misyonumuz</span>
-          <h2 class="text-3xl lg:text-4xl font-display font-bold text-gray-900 dark:text-white mt-2 mb-4">Şanlıurfa’yı Dünyaya Tanıtmak</h2>
-          <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">Sanliurfa.com, 2025 yılında Şanlıurfa’nın eşsiz güzelliklerini, tarihi zenginliklerini ve lezzetlerini daha geniş kitlelere ulaştırmak amacıyla kurulmuştur.</p>
-          <p class="text-gray-600 dark:text-gray-400 leading-relaxed mb-4">12.000 yıllık tarihe sahip bu kadim şehrin, Göbeklitepe'sinden Balıklıgölü'ne, Harran'ından Halfeti'sine kadar tüm değerlerini modern bir platformda bir araya getiriyoruz.</p>
-          <p class="text-gray-600 leading-relaxed">Amacımız, yerel halk ve ziyaretçiler için en güncel ve doğru bilgiyi sunarak, Şanlıurfa deneyimini en üst seviyeye çıkarmaktır.</p>
-        </div>
-        <div class="relative">
-          <img src="/images/historical/gobeklitepe.jpg" alt="Göbeklitepe" class="rounded-2xl shadow-2xl" />
-          <div class="absolute -bottom-6 -right-6 bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 hidden lg:block">
-            <div class="text-4xl font-bold text-urfa-600 dark:text-urfa-400">2025</div>
-            <div class="text-gray-600 dark:text-gray-400">Kuruluş Yılı</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+ <div class="hk-hero">
+ <div class="sf-container">
+ <p class="hk-hero-label">Hakkımızda</p>
+ <h1 class="hk-h1">Sanliurfa.com</h1>
+ <p class="hk-hero-desc">Şanlıurfa'yı keşfetmenin en iyi yolunu sunmak için çalışıyoruz.</p>
+ </div>
+ </div>
 
-  <section class="py-16 bg-urfa-50 dark:bg-gray-800">
-    <div class="container-custom">
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
-        {stats.map((stat) => (
-          <div class="text-center">
-            <div class="text-4xl font-bold text-urfa-600 dark:text-urfa-400">{stat.value}</div>
-            <div class="text-gray-600 dark:text-gray-400 mt-1">{stat.label}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
+ <div class="hk-mission">
+ <div class="sf-container">
+ <div class="hk-mission-inner">
+ <div>
+ <p class="hk-mission-label">Misyonumuz</p>
+ <h2 class="hk-mission-title">Şanlıurfa'yı Dünyaya Tanıtmak</h2>
+ <p class="hk-mission-p">Sanliurfa.com, 2025 yılında Şanlıurfa'nın eşsiz güzelliklerini, tarihi zenginliklerini ve lezzetlerini daha geniş kitlelere ulaştırmak amacıyla kurulmuştur.</p>
+ <p class="hk-mission-p">12.000 yıllık tarihe sahip bu kadim şehrin, Göbeklitepe'sinden Balıklıgöl'üne, Harran'ından Halfeti'sine kadar tüm değerlerini modern bir platformda bir araya getiriyoruz.</p>
+ <p class="hk-mission-p">Amacımız, yerel halk ve ziyaretçiler için en güncel ve doğru bilgiyi sunarak, Şanlıurfa deneyimini en üst seviyeye çıkarmaktır.</p>
+ </div>
+ <div class="hk-mission-img">
+ <Image
+ src="/images/historical/gobeklitepe.jpg"
+ alt="Göbeklitepe"
+ width={720}
+ height={480}
+ class="w-full"
+ loading="lazy"
+ />
+ <div class="hk-mission-badge">
+ <div class="hk-mission-badge-val">2025</div>
+ <div class="hk-mission-badge-label">Kuruluş Yılı</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
 
-  <section class="section bg-white dark:bg-gray-900">
-    <div class="container-custom">
-      <div class="text-center max-w-2xl mx-auto mb-12">
-        <span class="text-urfa-600 dark:text-urfa-400 font-medium">Değerlerimiz</span>
-        <h2 class="section-title dark:text-white">Bizi Biz Yapanlar</h2>
-        <p class="section-subtitle dark:text-gray-400">Her kararımızda ve her içeriğimizde önceliğimiz kullanıcılarımızdır.</p>
-      </div>
+ <div class="hk-stats">
+ <div class="sf-container">
+ <div class="hk-stats-grid">
+ {stats.map((s) => (
+ <div>
+ <div class="hk-stat-val">{s.value}</div>
+ <div class="hk-stat-label">{s.label}</div>
+ </div>
+ ))}
+ </div>
+ </div>
+ </div>
 
-      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-        {values.map((value) => (
-          <div class="text-center p-6 rounded-2xl bg-gray-50 dark:bg-gray-800 hover:bg-urfa-50 dark:hover:bg-urfa-900/20 transition-colors">
-            <div class="w-14 h-14 bg-urfa-100 dark:bg-urfa-900/30 rounded-xl flex items-center justify-center mx-auto mb-4">
-              <span set:html={icons[value.icon]}></span>
-            </div>
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{value.title}</h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">{value.description}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
+ <div class="hk-values">
+ <div class="sf-container">
+ <div class="hk-values-head">
+ <p class="hk-values-label">Değerlerimiz</p>
+ <h2 class="hk-values-title">Bizi Biz Yapanlar</h2>
+ <p class="hk-values-desc">Her kararımızda ve her içeriğimizde önceliğimiz kullanıcılarımızdır.</p>
+ </div>
+ <div class="hk-values-grid">
+ {values.map((v) => (
+ <div class="hk-val-card">
+ <div class="hk-val-icon">
+ <Icon name={`lucide:${v.icon}`} class="w-6 h-6" style="color:var(--public-accent)" />
+ </div>
+ <h3 class="hk-val-title">{v.title}</h3>
+ <p class="hk-val-desc">{v.description}</p>
+ </div>
+ ))}
+ </div>
+ </div>
+ </div>
 
-  <section class="section bg-urfa-900">
-    <div class="container-custom text-center">
-      <h2 class="text-3xl font-display font-bold text-white mb-4">Bize Katılın</h2>
-      <p class="text-urfa-100 max-w-xl mx-auto mb-8">Sanliurfa.com olarak büyüyen ekibimizin bir parçası olun veya mekanınızı platformumuza ekleyin.</p>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="/iletisim" class="btn-accent">İletişime Geç</a>
-        <a href="/isletme-kayit" class="btn bg-white/10 text-white hover:bg-white/20">Mekan Ekle</a>
-      </div>
-    </div>
-  </section>
+ <div class="hk-cta">
+ <div class="sf-container">
+ <h2 class="hk-cta-title">Bize Katılın</h2>
+ <p class="hk-cta-desc">Sanliurfa.com olarak büyüyen ekibimizin bir parçası olun veya mekanınızı platformumuza ekleyin.</p>
+ <div class="hk-cta-row">
+ <a href="/iletisim" class="hk-btn-primary">İletişime Geç</a>
+ <a href="/isletme-kayit" class="hk-btn-ghost">Mekan Ekle</a>
+ </div>
+ </div>
+ </div>
 
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'AboutPage',
-    name: 'Sanliurfa.com Hakkında',
-    url: `${baseUrl}/hakkinda`,
-    description: 'Sanliurfa.com, Şanlıurfa\'nın en kapsamlı dijital şehir rehberidir.',
-    mainEntity: {
-      '@type': 'Organization',
-      name: 'Sanliurfa.com',
-      url: `${baseUrl}`,
-      description: 'Şanlıurfa\'nın mekan rehberi, etkinlik takvimi ve yaşam platformu.',
-      areaServed: { '@type': 'City', name: 'Şanlıurfa' },
-      foundingLocation: { '@type': 'City', name: 'Şanlıurfa' },
-    },
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Hakkımızda', item: `${baseUrl}/hakkinda` },
-    ],
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
+ {faqItems.length > 0 && (
+ <div style="padding:2rem 0 3rem;border-top:1px solid rgba(184,115,51,.12)">
+ <div class="sf-container">
+ <h2 style="font-size:1.25rem;font-weight:700;color:#1F1410;margin-bottom:1.25rem">Sık Sorulan Sorular</h2>
+ <div style="display:flex;flex-direction:column;gap:.75rem">
+ {faqItems.map((item) => (
+ <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
+ <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
+ {item.S}
+ <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ </summary>
+ <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ {item.C}
+ </div>
+ </details>
+ ))}
+ </div>
+ </div>
+ </div>
+ )}
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'AboutPage',
+ name: 'Sanliurfa.com Hakkında',
+ url: `${baseUrl}/hakkinda`,
+ description: "Sanliurfa.com, Şanlıurfa'nın en kapsamlı dijital şehir rehberidir.",
+ mainEntity: {
+ '@type': 'Organization',
+ name: 'Sanliurfa.com',
+ url: `${baseUrl}`,
+ description: "Şanlıurfa'nın mekan rehberi, etkinlik takvimi ve yaşam platformu.",
+ areaServed: { '@type': 'City', name: 'Şanlıurfa' },
+ foundingLocation: { '@type': 'City', name: 'Şanlıurfa' },
+ },
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Hakkımızda', item: `${baseUrl}/hakkinda` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
 </Layout>

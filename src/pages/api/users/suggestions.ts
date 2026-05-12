@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { queryMany } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
 import { getCache, setCache } from '../../../lib/cache';
@@ -29,14 +29,14 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     }
 
     const userId = locals.user.id;
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 50);
     const cacheKey = `user:suggestions:${userId}`;
 
     // Check cache (30 minutes)
     const cached = await getCache(cacheKey);
     if (cached) {
       recordRequest('GET', '/api/users/suggestions', HttpStatus.OK, Date.now() - startTime);
-      return apiResponse(JSON.parse(cached as string), HttpStatus.OK, requestId);
+      return apiResponse(cached as any, HttpStatus.OK, requestId);
     }
 
     // Get user's interests (places they've interacted with)
@@ -49,7 +49,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       [userId]
     );
 
-    const categories = userPlaces.map((p: any) => p.category).filter(Boolean);
+    const categories = userPlaces.map((p) => p.category).filter(Boolean);
 
     // Find users with similar interests
     // Strategy: Find users who have interacted with similar categories
@@ -79,7 +79,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     // If not enough suggestions, add trending/active users
     if (suggestedUsers.length < limit) {
       const excludedIds = suggestedUsers
-        .map((u: any) => u.id)
+        .map((u) => u.id)
         .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0);
 
       const additionalUsers = await queryMany(
@@ -98,7 +98,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       suggestedUsers = [...suggestedUsers, ...additionalUsers];
     }
 
-    const suggestions = suggestedUsers.map((u: any) => ({
+    const suggestions = suggestedUsers.map((u) => ({
       id: u.id,
       name: u.full_name,
       username: u.username,

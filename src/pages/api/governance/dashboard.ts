@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 interface GovernanceSummaryRow {
   total: string | number;
@@ -27,11 +27,6 @@ interface GovernanceMetricRow {
   count: string | number;
 }
 
-function toInteger(value: string | number | null | undefined): number {
-  if (typeof value === 'number') return Math.trunc(value);
-  if (typeof value === 'string') return parseInt(value, 10) || 0;
-  return 0;
-}
 
 export const GET: APIRoute = async ({ locals }) => {
   if (!locals.user || locals.user.role !== 'admin') {
@@ -92,11 +87,11 @@ export const GET: APIRoute = async ({ locals }) => {
 
     const dashboard = {
       summary: {
-        totalAuditEntries:   toInteger(s.total),
-        entriesLast24h:      toInteger(s.last_24h),
-        entriesLast7d:       toInteger(s.last_7d),
-        sensitiveOperations: toInteger(s.sensitive),
-        piiAccessEvents:     toInteger(s.pii_access),
+        totalAuditEntries:   Number(s.total),
+        entriesLast24h:      Number(s.last_24h),
+        entriesLast7d:       Number(s.last_7d),
+        sensitiveOperations: Number(s.sensitive),
+        piiAccessEvents:     Number(s.pii_access),
       },
       recentEntries: recentResult.rows.map((r) => ({
         id:        r.id,
@@ -108,8 +103,8 @@ export const GET: APIRoute = async ({ locals }) => {
         actorType: r.actor_type,
       })),
       metrics: {
-        byEntity:    byEntityResult.rows.map((r) => ({ entity: r.entity, count: parseInt(String(r.count)) })),
-        byAction:    byActionResult.rows.map((r) => ({ action: r.action, count: parseInt(String(r.count)) })),
+        byEntity:    byEntityResult.rows.map((r) => ({ entity: r.entity, count: parseInt(String(r.count), 10) })),
+        byAction:    byActionResult.rows.map((r) => ({ action: r.action, count: parseInt(String(r.count), 10) })),
         byActorType: [],
       },
       compliance: {
@@ -125,9 +120,7 @@ export const GET: APIRoute = async ({ locals }) => {
       },
     };
 
-    return new Response(JSON.stringify(dashboard), {
-      status: 200, headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse(dashboard, HttpStatus.OK);
   } catch (error) {
     logger.error('Governance dashboard error:', error);
     return problemJson({

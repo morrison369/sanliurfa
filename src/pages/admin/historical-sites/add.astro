@@ -1,273 +1,234 @@
 ---
 import { actions, isInputError } from 'astro:actions';
-import Layout from '../../../layouts/Layout.astro';
-
-const icons = {
-  landmark: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="13"/><path d="M22 20H2"/><path d="m19 9-3.5 1 3.5 7"/><path d="m5 9 3.5 1-3.5 7"/><path d="M8 20V9l4-7 4 7v11"/></svg>`,
-  mapPin: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
-  save: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>`,
-  arrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
-  clock: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
-  dollarSign: `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5c0-1.7-1.3-3-3-3h-4c-1.7 0-3 1.3-3 3 0 2 3 3 3 5 0 1.7-1.3 3-3 3h-4c-1.7 0-3 1.3-3 3 0 1.7 1.3 3 3 3h4c1.7 0 3-1.3 3-3 0-2-3-3-3-5 0-1.7 1.3-3 3-3h4c1.7 0 3-1.3 3-3z"/></svg>`,
-};
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
 
 const periods = [
-  { id: 'tunç-çağı', label: 'Tunç Çağı' },
-  { id: 'hitit', label: 'Hitit Dönemi' },
-  { id: 'asur', label: 'Asur Dönemi' },
-  { id: 'pers', label: 'Pers Dönemi' },
-  { id: 'hellenistik', label: 'Hellenistik Dönem' },
-  { id: 'roma', label: 'Roma Dönemi' },
-  { id: 'bizans', label: 'Bizans Dönemi' },
-  { id: 'islami', label: 'İslami Dönem' },
-  { id: 'osmanlı', label: 'Osmanlı Dönemi' },
-  { id: 'cumhuriyet', label: 'Cumhuriyet Dönemi' },
+ { id: 'tunç-çağı', label: 'Tunç Çağı' },
+ { id: 'hitit', label: 'Hitit Dönemi' },
+ { id: 'asur', label: 'Asur Dönemi' },
+ { id: 'pers', label: 'Pers Dönemi' },
+ { id: 'hellenistik', label: 'Hellenistik Dönem' },
+ { id: 'roma', label: 'Roma Dönemi' },
+ { id: 'bizans', label: 'Bizans Dönemi' },
+ { id: 'islami', label: 'İslami Dönem' },
+ { id: 'osmanlı', label: 'Osmanlı Dönemi' },
+ { id: 'cumhuriyet', label: 'Cumhuriyet Dönemi' },
 ];
-
-const user = Astro.locals.user;
-if (!user || !Astro.locals.isAdmin) {
-  return Astro.redirect('/giris?redirect=/admin/historical-sites/add');
-}
 
 const siteResult = Astro.getActionResult(actions.createAdminHistoricalSite);
 const siteInputErrors = isInputError(siteResult?.error) ? siteResult.error.fields : {};
 const siteActionError =
-  !isInputError(siteResult?.error) && siteResult?.error?.message
-    ? siteResult.error.message
-    : null;
+ !isInputError(siteResult?.error) && siteResult?.error?.message
+ ? siteResult.error.message
+ : null;
 const errorMessage = Astro.url.searchParams.get('error');
 const errorMessages: Record<string, string> = {
-  'missing_fields': 'İsim, açıklama ve konum zorunludur.',
-  'server_error': 'Bir hata oluştu. Lütfen tekrar deneyin.',
+ 'missing_fields': 'İsim, açıklama ve konum zorunludur.',
+ 'server_error': 'Bir hata oluştu. Lütfen tekrar deneyin.',
 };
 
-const seo = {
-  title: 'Yeni Tarihi Yer - Yönetim Paneli',
-  description: 'Yeni tarihi yer ekleme',
-  noIndex: true
-};
 ---
 
-<Layout seo={seo}>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Admin Header -->
-    <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div class="container-custom py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-4">
-            <a href="/admin/historical-sites" class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              <span set:html={icons.arrowLeft}></span>
-            </a>
-            <h1 class="text-2xl font-display font-bold text-gray-900 dark:text-white">Yeni Tarihi Yer</h1>
-          </div>
-        </div>
-      </div>
-    </div>
+<AdminLayout
+ title="Yeni Tarihi Yer"
+ subtitle="Tarihi yer bilgilerini doldurun"
+ seo={{ title: 'Yeni Tarihi Yer - Yönetim Paneli', noIndex: true }}
+>
+ <div class="sf-container py-8 max-w-6xl space-y-5">
+ <div class="mb-2">
+ <a href="/admin/historical-sites" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Tarihi Yerler</a>
+ </div>
 
-    {errorMessage && (
-      <div class="container-custom py-4">
-        <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg">
-          {errorMessages[errorMessage] || 'Bir hata oluştu.'}
-        </div>
-      </div>
-    )}
+ {errorMessage && (
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
+ {errorMessages[errorMessage] || 'Bir hata oluştu.'}
+ </div>
+ )}
 
-    {siteResult?.data?.success && (
-      <div class="container-custom py-4">
-        <div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300">
-          {siteResult.data.message || 'Tarihi yer oluşturuldu.'}
-          <a href="/admin/historical-sites" class="ml-2 font-medium underline">Tarihi yer listesine dön</a>
-        </div>
-      </div>
-    )}
+ {siteResult?.data?.success && (
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
+ {siteResult.data.message || 'Tarihi yer oluşturuldu.'}
+ <a href="/admin/historical-sites" class="ml-2 font-medium underline">Tarihi yer listesine dön</a>
+ </div>
+ )}
 
-    {siteActionError && (
-      <div class="container-custom py-4">
-        <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-          {siteActionError}
-        </div>
-      </div>
-    )}
-    
-    <div class="container-custom py-8">
-      <form action={actions.createAdminHistoricalSite} method="POST" class="grid lg:grid-cols-3 gap-8">
-        <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-6">
-          <!-- Basic Info -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Temel Bilgiler</h2>
-            <div class="space-y-4">
-              <div>
-                <label for="name" class="label dark:text-gray-300">Yer Adı *</label>
-                <input 
-                  type="text" 
-                  id="name" 
-                  name="name" 
-                  required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Örn: Göbeklitepe"
-                />
-                {siteInputErrors.name && <p class="mt-1 text-sm text-red-600">{siteInputErrors.name[0]}</p>}
-              </div>
-              
-              <div>
-                <label for="short_description" class="label dark:text-gray-300">Kısa Açıklama</label>
-                <input 
-                  type="text" 
-                  id="short_description" 
-                  name="short_description"
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  placeholder="Kısa tanıtım metni..."
-                />
-              </div>
-              
-              <div>
-                <label for="description" class="label dark:text-gray-300">Açıklama *</label>
-                <textarea 
-                  id="description" 
-                  name="description" 
-                  rows="5" 
-                  required
-                  class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none"
-                  placeholder="Detaylı açıklama..."
-                ></textarea>
-                {siteInputErrors.description && <p class="mt-1 text-sm text-red-600">{siteInputErrors.description[0]}</p>}
-              </div>
-              
-              <div>
-                <label for="period" class="label dark:text-gray-300">Tarihi Dönem</label>
-                <select id="period" name="period" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                  <option value="">Dönem seçin</option>
-                  {periods.map(p => (
-                    <option value={p.id}>{p.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Location -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Konum</h2>
-            <div class="space-y-4">
-              <div>
-                <label for="location" class="label dark:text-gray-300">Adres *</label>
-                <div class="relative">
-                  <span set:html={icons.mapPin} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                  <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    required
-                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Örn: Örencik Mahallesi, Haliliye/Şanlıurfa"
-                  />
-                  {siteInputErrors.location && <p class="mt-1 text-sm text-red-600">{siteInputErrors.location[0]}</p>}
-                </div>
-              </div>
-              
-              <div class="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label for="latitude" class="label dark:text-gray-300">Enlem</label>
-                  <input 
-                    type="number" 
-                    id="latitude" 
-                    name="latitude"
-                    step="any"
-                    class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="37.2232"
-                  />
-                </div>
-                <div>
-                  <label for="longitude" class="label dark:text-gray-300">Boylam</label>
-                  <input 
-                    type="number" 
-                    id="longitude" 
-                    name="longitude"
-                    step="any"
-                    class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="38.9225"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Visit Info -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ziyaret Bilgileri</h2>
-            <div class="space-y-4">
-              <div>
-                <label for="opening_hours" class="label dark:text-gray-300">Çalışma Saatleri</label>
-                <div class="relative">
-                  <span set:html={icons.clock} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                  <input
-                    type="text"
-                    id="opening_hours"
-                    name="opening_hours"
-                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Örn: 08:00 - 18:00"
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label for="entry_fee" class="label dark:text-gray-300">Giriş Ücreti</label>
-                <div class="relative">
-                  <span set:html={icons.dollarSign} class="absolute left-3 top-3 w-5 h-5 text-gray-400"></span>
-                  <input
-                    type="text"
-                    id="entry_fee"
-                    name="entry_fee"
-                    class="input pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                    placeholder="Örn: 50 TL veya Ücretsiz"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Sidebar -->
-        <aside class="space-y-6">
-          <!-- Publish -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Yayınla</h3>
-            <div class="space-y-3">
-              <label class="flex items-center gap-2">
-                <input type="checkbox" name="is_unesco" class="rounded border-gray-300 text-blue-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">UNESCO Mirası</span>
-              </label>
-              <label class="flex items-center gap-2">
-                <input type="checkbox" name="is_featured" class="rounded border-gray-300 text-urfa-600" />
-                <span class="text-sm text-gray-700 dark:text-gray-300">Öne çıkan yer</span>
-              </label>
-            </div>
-            <label for="status" class="label dark:text-gray-300 mt-4">Durum</label>
-            <select id="status" name="status" class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-1">
-              <option value="draft">Taslak</option>
-              <option value="active">Aktif</option>
-              <option value="inactive">Pasif</option>
-            </select>
-            <button type="submit" class="btn-primary w-full mt-4 flex items-center justify-center gap-2">
-              <span set:html={icons.save}></span>
-              Kaydet
-            </button>
-          </div>
-          
-          <!-- Images -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Görseller</h3>
-            <textarea 
-              name="images"
-              rows="3"
-              class="input dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
-              placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-            ></textarea>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Virgülle ayırarak birden fazla görsel ekleyebilirsiniz</p>
-          </div>
-        </aside>
-      </form>
-    </div>
-  </div>
-</Layout>
+ {siteActionError && (
+ <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
+ {siteActionError}
+ </div>
+ )}
+
+ <form action={actions.createAdminHistoricalSite} method="POST" class="grid lg:grid-cols-3 gap-6">
+ <div class="lg:col-span-2 space-y-5">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Temel Bilgiler</h2>
+ <div class="space-y-4">
+ <div>
+ <label for="name" class="block text-sm font-medium text-[#7A6B58] mb-1">Yer Adı *</label>
+ <input
+ type="text"
+ id="name"
+ name="name"
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="Örn: Göbeklitepe"
+ />
+ {siteInputErrors.name && <p class="mt-1 text-xs text-[#7A6B58]">{siteInputErrors.name[0]}</p>}
+ </div>
+
+ <div>
+ <label for="short_description" class="block text-sm font-medium text-[#7A6B58] mb-1">Kısa Açıklama</label>
+ <input
+ type="text"
+ id="short_description"
+ name="short_description"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="Kısa tanıtım metni..."
+ />
+ </div>
+
+ <div>
+ <label for="description" class="block text-sm font-medium text-[#7A6B58] mb-1">Açıklama *</label>
+ <textarea
+ id="description"
+ name="description"
+ rows="5"
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 resize-none"
+ placeholder="Detaylı açıklama..."
+ ></textarea>
+ {siteInputErrors.description && <p class="mt-1 text-xs text-[#7A6B58]">{siteInputErrors.description[0]}</p>}
+ </div>
+
+ <div>
+ <label for="period" class="block text-sm font-medium text-[#7A6B58] mb-1">Tarihi Dönem</label>
+ <select id="period" name="period" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option value="">Dönem seçin</option>
+ {periods.map(p => (
+ <option value={p.id}>{p.label}</option>
+ ))}
+ </select>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Konum</h2>
+ <div class="space-y-4">
+ <div>
+ <label for="location" class="block text-sm font-medium text-[#7A6B58] mb-1">Adres *</label>
+ <div class="relative">
+ <Icon name="lucide:map-pin" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="text"
+ id="location"
+ name="location"
+ required
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="Örn: Örencik Mahallesi, Haliliye/Şanlıurfa"
+ />
+ {siteInputErrors.location && <p class="mt-1 text-xs text-[#7A6B58]">{siteInputErrors.location[0]}</p>}
+ </div>
+ </div>
+
+ <div class="grid sm:grid-cols-2 gap-4">
+ <div>
+ <label for="latitude" class="block text-sm font-medium text-[#7A6B58] mb-1">Enlem</label>
+ <input
+ type="number"
+ id="latitude"
+ name="latitude"
+ step="any"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="37.2232"
+ />
+ </div>
+ <div>
+ <label for="longitude" class="block text-sm font-medium text-[#7A6B58] mb-1">Boylam</label>
+ <input
+ type="number"
+ id="longitude"
+ name="longitude"
+ step="any"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="38.9225"
+ />
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Ziyaret Bilgileri</h2>
+ <div class="space-y-4">
+ <div>
+ <label for="opening_hours" class="block text-sm font-medium text-[#7A6B58] mb-1">Çalışma Saatleri</label>
+ <div class="relative">
+ <Icon name="lucide:clock" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="text"
+ id="opening_hours"
+ name="opening_hours"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="Örn: 08:00 - 18:00"
+ />
+ </div>
+ </div>
+
+ <div>
+ <label for="entry_fee" class="block text-sm font-medium text-[#7A6B58] mb-1">Giriş Ücreti</label>
+ <div class="relative">
+ <Icon name="lucide:dollar-sign" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
+ <input
+ type="text"
+ id="entry_fee"
+ name="entry_fee"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="Örn: 50 TL veya Ücretsiz"
+ />
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ <aside class="space-y-5">
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#7A6B58] mb-4">Yayınla</h3>
+ <div class="space-y-3">
+ <label class="flex items-center gap-2">
+ <input type="checkbox" name="is_unesco" class="rounded" />
+ <span class="text-sm text-[#7A6B58]">UNESCO Mirası</span>
+ </label>
+ <label class="flex items-center gap-2">
+ <input type="checkbox" name="is_featured" class="rounded" />
+ <span class="text-sm text-[#7A6B58]">Öne çıkan yer</span>
+ </label>
+ </div>
+ <label for="status" class="block text-sm font-medium text-[#7A6B58] mt-4 mb-1">Durum</label>
+ <select id="status" name="status" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <option value="draft">Taslak</option>
+ <option value="active">Aktif</option>
+ <option value="inactive">Pasif</option>
+ </select>
+ <button type="submit" class="rounded-sm bg-urfa-600 w-full mt-4 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700 flex items-center justify-center gap-2">
+ <Icon name="lucide:save" class="w-4 h-4" />
+ Kaydet
+ </button>
+ </div>
+
+ <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <h3 class="font-semibold text-[#7A6B58] mb-4">Görseller</h3>
+ <textarea
+ name="images"
+ rows="3"
+ class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
+ ></textarea>
+ <p class="text-xs text-[#7A6B58] mt-2">Virgülle ayırarak birden fazla görsel ekleyebilirsiniz</p>
+ </div>
+ </aside>
+ </form>
+ </div>
+</AdminLayout>

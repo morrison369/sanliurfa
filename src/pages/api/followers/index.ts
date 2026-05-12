@@ -7,7 +7,7 @@
 
 import type { APIRoute } from 'astro';
 import { getFollowers, getFollowing, getMutualFriends, followUser, unfollowUser } from '../../../lib/followers/followers';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     // Get query parameters
     const userId = url.searchParams.get('userId');
     const type = url.searchParams.get('type') || 'followers'; // followers, following, mutual
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
 
     // Validate parameters
     if (!userId) {

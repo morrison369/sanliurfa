@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { getPlaceBusinessAnalytics } from '../../../../../lib/analytics/business-analytics';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../../lib/api';
 import { logger } from '../../../../../lib/logging';
 import { recordRequest } from '../../../../../lib/metrics';
 import { queryOne } from '../../../../../lib/postgres';
@@ -29,7 +29,17 @@ export const GET: APIRoute = async ({ request, params, locals, url }) => {
     }
 
     const { id: placeId } = params;
-    const days = Math.min(parseInt(url.searchParams.get('days') || '30'), 365);
+    if (!placeId) {
+      recordRequest('GET', '/api/owner/analytics/place/[id]', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Place ID is required',
+        HttpStatus.BAD_REQUEST,
+        undefined,
+        requestId
+      );
+    }
+    const days = safeIntParam(url.searchParams.get('days'), 30, 1, 365);
 
     // Verify ownership
     const place = await queryOne(

@@ -5,7 +5,6 @@
 
 import type { APIRoute } from 'astro';
 import { deletePhoto, getPhotoById } from '../../../../lib/photo';
-import { queryOne } from '../../../../lib/postgres';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
@@ -18,6 +17,10 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
   try {
     const user = locals.user;
     const { id: photoId } = params;
+    if (!photoId) {
+      recordRequest('DELETE', '/api/photos/{id}', HttpStatus.BAD_REQUEST, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Fotoğraf kimliği gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
+    }
 
     // Check authentication
     if (!user) {
@@ -87,7 +90,7 @@ export const DELETE: APIRoute = async ({ request, locals, params }) => {
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('DELETE', `/api/photos/${params.id}`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    recordRequest('DELETE', `/api/photos/${params.id ?? '{id}'}`, HttpStatus.INTERNAL_SERVER_ERROR, duration);
     logger.error('Delete photo failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,

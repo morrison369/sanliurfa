@@ -2,8 +2,7 @@
  * Direct Messages
  */
 import { query, queryOne, queryMany, insert } from '../postgres';
-import { logger } from '../logger';
-import { getCache, setCache, deleteCache, deleteCachePattern } from '../cache';
+import { getCache, setCache, deleteCachePattern } from '../cache';
 
 export async function getOrCreateConversation(userA: string, userB: string) {
   const [p1, p2] = userA < userB ? [userA, userB] : [userB, userA];
@@ -12,8 +11,21 @@ export async function getOrCreateConversation(userA: string, userB: string) {
     const id = crypto.randomUUID();
     await insert('conversations', { id, participant_a: p1, participant_b: p2, last_activity_at: new Date(), created_at: new Date() });
     convo = await queryOne('SELECT * FROM conversations WHERE id = $1', [id]);
-    await deleteCachePattern(`conversations:${p1}:*`);
-    await deleteCachePattern(`conversations:${p2}:*`);
+    await Promise.all([
+      deleteCachePattern(`conversations:${p1}:*`),
+      deleteCachePattern(`conversations:${p2}:*`),
+    ]);
+  }
+  // Sync conversation_participants join table — required by /api/social/messages
+  // (System 2 reads conversation_participants, System 1 reads participant_a/b on conversations).
+  // Idempotent insert keeps both systems consistent for the same conversation.
+  if (convo) {
+    await query(
+      `INSERT INTO conversation_participants (conversation_id, user_id)
+       VALUES ($1, $2), ($1, $3)
+       ON CONFLICT DO NOTHING`,
+      [convo.id, p1, p2],
+    );
   }
   return convo;
 }
@@ -21,7 +33,7 @@ export async function getOrCreateConversation(userA: string, userB: string) {
 export async function getConversations(userId: string, limit = 50, offset = 0) {
   const cacheKey = `conversations:${userId}:inbox:${limit}:${offset}`;
   const cached = await getCache(cacheKey);
-  if (cached) return JSON.parse(cached as string);
+  if (cached) return cached as any;
   const convos = await queryMany(
     `SELECT c.*, u.full_name, u.avatar_url, dm.content, dm.created_at as msg_time,
             COUNT(CASE WHEN dm.read_at IS NULL AND dm.sender_id != $1 THEN 1 END) as unread

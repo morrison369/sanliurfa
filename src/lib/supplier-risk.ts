@@ -215,4 +215,4 @@ export const riskScoreCalculator = new RiskScoreCalculator();
 export const supplierAuditTracker = new SupplierAuditTracker();
 export const riskMitigationManager = new RiskMitigationManager();
 
-export {SupplierProfile, RiskScore, SupplierAudit, RiskMitigation};
+export type {SupplierProfile, RiskScore, SupplierAudit, RiskMitigation};

@@ -5,7 +5,7 @@
 
 import type { APIRoute } from 'astro';
 import { verifyOAuthState, getOAuthProvider, linkOAuthAccount, getOAuthAccountByProvider } from '../../../../lib/oauth';
-import { createUserSession } from '../../../../lib/security';
+import { runOAuthSessionFlow } from '../../../../lib/auth/auth-flows';
 import { queryOne } from '../../../../lib/postgres';
 import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
@@ -36,7 +36,7 @@ type UserIdRow = {
   id: string;
 };
 
-export const GET: APIRoute = async ({ request, url }) => {
+export const GET: APIRoute = async ({ request, url, cookies }) => {
   const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
@@ -110,35 +110,26 @@ export const GET: APIRoute = async ({ request, url }) => {
       });
     }
 
-    // Create session
-    const ipAddress = (request.headers.get('x-forwarded-for') || '127.0.0.1').split(',')[0].trim();
-    const userAgent = request.headers.get('user-agent') || '';
-
-    const session = await createUserSession(
-      userId,
-      'OAuth Login',
-      'web',
-      extractBrowser(userAgent),
-      extractOS(userAgent),
-      ipAddress,
-      request.headers.get('cf-ipcountry') || request.headers.get('x-country-code') || 'unknown',
-      false
+    // Get user email and role for JWT — userId already resolved above
+    const userForToken = await queryOne<{ email: string; role: string }>(
+      'SELECT email, role FROM users WHERE id = $1',
+      [userId],
     );
-
-    if (!session) {
-      return apiError(ErrorCode.INTERNAL_ERROR, 'Oturum oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    if (!userForToken) {
+      return apiError(ErrorCode.INTERNAL_ERROR, 'Kullanıcı bilgisi alınamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
     }
+
+    // Standard JWT session — same as password login (HARD RULE #35 uyumlu)
+    await runOAuthSessionFlow(userId, userForToken.email, userForToken.role, cookies);
 
     logger.info('OAuth login successful', { userId, provider: oauthState.provider_key });
 
-    // Redirect to dashboard
     return new Response(null, {
       status: 302,
       headers: {
         'Location': '/',
-        'Set-Cookie': `auth-token=${session.session_token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=86400`,
-        'X-Request-ID': requestId
-      }
+        'X-Request-ID': requestId,
+      },
     });
   } catch (error) {
     logger.error('OAuth callback failed', error instanceof Error ? error : new Error(String(error)));
@@ -172,7 +163,7 @@ async function exchangeCodeForToken(
 
     return {
       access_token: data.access_token,
-      refresh_token: typeof data.refresh_token === 'string' ? data.refresh_token : undefined,
+      ...(typeof data.refresh_token === 'string' ? { refresh_token: data.refresh_token } : {}),
       expires_at: new Date(Date.now() + expiresIn * 1000),
     };
   } catch (error) {
@@ -199,28 +190,11 @@ async function getUserInfoFromProvider(
     return {
       id,
       email,
-      name: typeof data.name === 'string' ? data.name : undefined,
-      picture: typeof data.picture === 'string' ? data.picture : undefined,
+      ...(typeof data.name === 'string' ? { name: data.name } : {}),
+      ...(typeof data.picture === 'string' ? { picture: data.picture } : {}),
     };
   } catch (error) {
     logger.error('Get user info failed', error instanceof Error ? error : new Error(String(error)));
     return null;
   }
-}
-
-function extractBrowser(userAgent: string): string {
-  if (userAgent.includes('Chrome')) return 'Chrome';
-  if (userAgent.includes('Safari')) return 'Safari';
-  if (userAgent.includes('Firefox')) return 'Firefox';
-  if (userAgent.includes('Edge')) return 'Edge';
-  return 'Unknown';
-}
-
-function extractOS(userAgent: string): string {
-  if (userAgent.includes('Windows')) return 'Windows';
-  if (userAgent.includes('Mac')) return 'macOS';
-  if (userAgent.includes('Linux')) return 'Linux';
-  if (userAgent.includes('Android')) return 'Android';
-  if (userAgent.includes('iOS') || userAgent.includes('iPhone')) return 'iOS';
-  return 'Unknown';
 }

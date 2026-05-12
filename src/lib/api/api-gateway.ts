@@ -4,7 +4,7 @@
  */
 
 import { logger } from '../logger';
-import { createHmac } from 'crypto';
+import { createHmac, randomBytes } from 'crypto';
 
 // ==================== API VERSIONING ====================
 
@@ -140,7 +140,7 @@ export class GatewayAPIKeyManager {
    * Generate new API key
    */
   generateKey(userId: string, name: string, permissions: string[], rateLimit: number = 100): GatewayAPIKey {
-    const key = `sk_${Math.random().toString(36).substring(2, 32)}`;
+    const key = `sk_${randomBytes(24).toString('hex')}`;
     const keyHash = createHmac('sha256', 'api-key-salt').update(key).digest('hex');
 
     const apiKey: GatewayAPIKey = {
@@ -326,7 +326,7 @@ export class RequestValidationPipeline {
 
     return {
       valid: allErrors.length === 0,
-      errors: allErrors.length > 0 ? allErrors : undefined
+      ...(allErrors.length > 0 ? { errors: allErrors } : {})
     };
   }
 }

@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { requireAuth } from '../../../lib/auth';
 import { getMatchCandidates, getSwipeQuota } from '../../../lib/social/matchmaking-db';
 import { getSocialFeatureConfig } from '../../../lib/social/match-features';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail, safeIntParam } from '../../../lib/api';
 import { enforceSocialRateLimit } from '../../../lib/social/abuse-policy';
 
 export const GET: APIRoute = async ({ request, url }) => {
@@ -30,25 +30,19 @@ export const GET: APIRoute = async ({ request, url }) => {
 
     const config = getSocialFeatureConfig();
     if (!config.tinderEnabled) {
-      return new Response(JSON.stringify({ success: true, data: [], quota: null }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return apiResponse({ success: true, data: [], quota: null }, HttpStatus.OK);
     }
 
-    const limit = Number(url.searchParams.get('limit') || '20');
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
     const candidates = await getMatchCandidates(auth.user.id, limit);
     const quota = await getSwipeQuota(auth.user.id);
 
-    return new Response(JSON.stringify({ success: true, data: candidates, quota }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return apiResponse({ success: true, data: candidates, quota }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,
       title: 'Eşleşme Adayları Alınamadı',
-      detail: error instanceof Error ? error.message : 'failed_to_get_match_candidates',
+      detail: safeErrorDetail(error, 'failed_to_get_match_candidates'),
       type: '/problems/social-match-candidates-fetch-failed',
       instance: '/api/social/match-candidates',
     });

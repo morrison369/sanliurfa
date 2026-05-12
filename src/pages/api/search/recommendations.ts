@@ -4,12 +4,12 @@
  */
 import type { APIRoute } from 'astro';
 import { getPersonalizedRecommendations } from '../../../lib/recommendation/recommendations';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, url, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       return apiError(ErrorCode.UNAUTHORIZED, 'Authentication required', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 50);
+    const limit = safeIntParam(url.searchParams.get('limit'), 10, 1, 50);
 
     const recommendations = await getPersonalizedRecommendations(locals.user.id, limit);
 

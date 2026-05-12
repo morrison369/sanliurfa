@@ -93,14 +93,14 @@ export async function auditLog(entry: AuditLogEntry): Promise<string | null> {
     const auditLogId = result?.id;
 
     logger.debug('Audit log kaydedildi', {
-      logId: auditLogId,
+      ...(auditLogId ? { logId: auditLogId } : {}),
       action: entry.action,
       resourceType: entry.resourceType,
-      resourceId: entry.resourceId,
-      userId: entry.userId
+      ...(entry.resourceId ? { resourceId: entry.resourceId } : {}),
+      ...(entry.userId ? { userId: entry.userId } : {})
     });
 
-    return auditLogId;
+    return auditLogId ?? null;
   } catch (error) {
     logger.error('Audit log kaydedilirken hata', error instanceof Error ? error : new Error(String(error)));
     return null;

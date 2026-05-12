@@ -8,7 +8,7 @@ import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
 import { requireRole } from '../../../lib/auth';
 import { logger } from '../../../lib/logging';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
 import { assertPlaceStatusTransition } from '../../../lib/place/lifecycle';
 import { recordPlaceLifecycleEvent } from '../../../lib/place/lifecycle-events';
 
@@ -52,10 +52,7 @@ export const GET: APIRoute = async ({ request, url }) => {
         ),
       ]);
 
-      return new Response(
-        JSON.stringify({ pending: pendingResult.rows, stats: statsResult.rows[0] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return apiResponse({ pending: pendingResult.rows, stats: statsResult.rows[0] }, HttpStatus.OK);
     }
 
     if (type === 'submissions') {
@@ -70,22 +67,16 @@ export const GET: APIRoute = async ({ request, url }) => {
          WHERE owner_id IS NOT NULL`
       );
 
-      return new Response(
-        JSON.stringify({ stats: statsResult.rows[0] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return apiResponse({ stats: statsResult.rows[0] }, HttpStatus.OK);
     }
 
-    return new Response(
-      JSON.stringify({ error: 'type parametresi gereklidir: reviews|submissions' }),
-      { status: 400, headers: { 'Content-Type': 'application/json; charset=utf-8' } }
-    );
+    return apiResponse({ error: 'type parametresi gereklidir: reviews|submissions' }, HttpStatus.BAD_REQUEST);
   } catch (error) {
     logger.error('Moderation GET error:', error);
     return problemJson({
       status: 500,
       title: 'Moderasyon Verisi Alınamadı',
-      detail: error instanceof Error ? error.message : 'moderation_fetch_failed',
+      detail: safeErrorDetail(error, 'moderation_fetch_failed'),
       type: '/problems/admin-moderation-fetch-failed',
       instance: '/api/admin/moderation',
     });
@@ -120,6 +111,13 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
+    if (reason !== undefined && reason !== null && (typeof reason !== 'string' || reason.length > 1000)) {
+      return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'reason 1000 karakterden uzun olamaz', type: '/problems/admin-moderation-reason-too-long', instance: '/api/admin/moderation' });
+    }
+    if (notes !== undefined && notes !== null && (typeof notes !== 'string' || notes.length > 2000)) {
+      return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'notes 2000 karakterden uzun olamaz', type: '/problems/admin-moderation-notes-too-long', instance: '/api/admin/moderation' });
+    }
+
     // ── Review moderation ─────────────────────────────────────────────────────
     if (type === 'review') {
       const statusMap: Record<string, string> = {
@@ -130,15 +128,11 @@ export const POST: APIRoute = async ({ request }) => {
       };
 
       if (!statusMap[action]) {
-        return new Response(JSON.stringify({ error: 'Geçersiz action' }), {
-          status: 400, headers: { 'Content-Type': 'application/json' },
-        });
+        return apiResponse({ error: 'Geçersiz action' }, HttpStatus.BAD_REQUEST);
       }
 
       if (action === 'reject' && !reason) {
-        return new Response(JSON.stringify({ error: 'Reddetme için reason gereklidir' }), {
-          status: 400, headers: { 'Content-Type': 'application/json' },
-        });
+        return apiResponse({ error: 'Reddetme için reason gereklidir' }, HttpStatus.BAD_REQUEST);
       }
 
       const result = await query(
@@ -151,19 +145,18 @@ export const POST: APIRoute = async ({ request }) => {
       );
 
       if (!result.rows[0]) {
-        return new Response(JSON.stringify({ error: 'Yorum bulunamadı' }), {
-          status: 404, headers: { 'Content-Type': 'application/json' },
-        });
+        return apiResponse({ error: 'Yorum bulunamadı' }, HttpStatus.NOT_FOUND);
       }
 
-      return new Response(
-        JSON.stringify({ success: true, review: result.rows[0] }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
+      return apiResponse({ success: true, review: result.rows[0] }, HttpStatus.OK);
     }
 
     // ── Submission (place) moderation ─────────────────────────────────────────
     if (type === 'submission') {
+      const VALID_SUBMISSION_ACTIONS = new Set(['approve', 'reject', 'requestInfo']);
+      if (!VALID_SUBMISSION_ACTIONS.has(action)) {
+        return apiResponse({ error: 'Geçersiz submission action. Beklenen: approve | reject | requestInfo' }, HttpStatus.BAD_REQUEST);
+      }
       if (action === 'approve') {
         const existing = await query(`SELECT status FROM places WHERE id = $1`, [id]);
         const currentStatus = existing.rows[0]?.status;
@@ -184,9 +177,7 @@ export const POST: APIRoute = async ({ request }) => {
           [id]
         );
         if (!result.rows[0]) {
-          return new Response(JSON.stringify({ error: 'Başvuru bulunamadı' }), {
-            status: 404, headers: { 'Content-Type': 'application/json' },
-          });
+          return apiResponse({ error: 'Başvuru bulunamadı' }, HttpStatus.NOT_FOUND);
         }
         await recordPlaceLifecycleEvent({
           placeId: String(id),
@@ -195,17 +186,12 @@ export const POST: APIRoute = async ({ request }) => {
           actorUserId: auth.user.id,
           reason: 'admin_approve',
         }).catch(() => null);
-        return new Response(
-          JSON.stringify({ success: true, submission: result.rows[0] }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
+        return apiResponse({ success: true, submission: result.rows[0] }, HttpStatus.OK);
       }
 
       if (action === 'reject') {
         if (!reason) {
-          return new Response(JSON.stringify({ error: 'Reddetme için reason gereklidir' }), {
-            status: 400, headers: { 'Content-Type': 'application/json' },
-          });
+          return apiResponse({ error: 'Reddetme için reason gereklidir' }, HttpStatus.BAD_REQUEST);
         }
         const existing = await query(`SELECT status FROM places WHERE id = $1`, [id]);
         const currentStatus = existing.rows[0]?.status;
@@ -231,19 +217,14 @@ export const POST: APIRoute = async ({ request }) => {
           toStatus: 'rejected',
           actorUserId: auth.user.id,
           reason: reason || 'admin_reject',
-          metadata: notes ? { notes } : undefined,
+          ...(notes ? { metadata: { notes } } : {}),
         }).catch(() => null);
-        return new Response(
-          JSON.stringify({ success: true, submission: result.rows[0], reason }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
+        return apiResponse({ success: true, submission: result.rows[0], reason }, HttpStatus.OK);
       }
 
       if (action === 'requestInfo') {
         if (!reason) {
-          return new Response(JSON.stringify({ error: 'Bilgi için reason gereklidir' }), {
-            status: 400, headers: { 'Content-Type': 'application/json' },
-          });
+          return apiResponse({ error: 'Bilgi için reason gereklidir' }, HttpStatus.BAD_REQUEST);
         }
         const existing = await query(`SELECT status FROM places WHERE id = $1`, [id]);
         const currentStatus = existing.rows[0]?.status;
@@ -269,24 +250,19 @@ export const POST: APIRoute = async ({ request }) => {
           toStatus: 'needs_info',
           actorUserId: auth.user.id,
           reason: reason || 'admin_request_info',
-          metadata: notes ? { notes } : undefined,
+          ...(notes ? { metadata: { notes } } : {}),
         }).catch(() => null);
-        return new Response(
-          JSON.stringify({ success: true, submission: result.rows[0], requestedInfo: reason }),
-          { status: 200, headers: { 'Content-Type': 'application/json' } }
-        );
+        return apiResponse({ success: true, submission: result.rows[0], requestedInfo: reason }, HttpStatus.OK);
       }
     }
 
-    return new Response(JSON.stringify({ error: 'Geçersiz type veya action' }), {
-      status: 400, headers: { 'Content-Type': 'application/json; charset=utf-8' },
-    });
+    return apiResponse({ error: 'Geçersiz type veya action' }, HttpStatus.BAD_REQUEST);
   } catch (error) {
     logger.error('Moderation POST error:', error);
     return problemJson({
       status: 400,
       title: 'Moderasyon İşlemi Başarısız',
-      detail: error instanceof Error ? error.message : 'moderation_action_failed',
+      detail: safeErrorDetail(error, 'moderation_action_failed'),
       type: '/problems/admin-moderation-action-failed',
       instance: '/api/admin/moderation',
     });

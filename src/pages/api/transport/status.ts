@@ -1,30 +1,24 @@
 import type { APIRoute } from 'astro';
-import { queryOne } from '../../../lib/postgres';
-import { problemJson } from '../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../lib/api';
+import { getTransportStatusSnapshot } from '../../../lib/transport/status';
 
 export const GET: APIRoute = async () => {
   try {
-    const row = await queryOne<{ setting_value: Record<string, any> }>(
-      `SELECT setting_value FROM site_settings WHERE setting_key = 'transport.lastUpdated' LIMIT 1`,
-    );
-    const value = row?.setting_value || {};
-    const updatedAt = typeof value.updatedAt === 'string' ? value.updatedAt : null;
-    const freshnessMinutes = Number(value.freshnessMinutes || 60);
-    const providerSnapshots = Array.isArray(value.providerSnapshots) ? value.providerSnapshots : [];
-    const healthyProviders = Number(value.healthyProviders || 0);
-    const stale =
-      !updatedAt || Date.now() - new Date(updatedAt).getTime() > freshnessMinutes * 60 * 1000;
+    const snapshot = await getTransportStatusSnapshot();
 
     return new Response(
       JSON.stringify({
         success: true,
         data: {
-          updatedAt,
-          freshnessMinutes,
-          stale,
-          sources: Array.isArray(value.sources) ? value.sources : [],
-          healthyProviders,
-          providerSnapshots,
+          updatedAt: snapshot.updatedAt,
+          freshnessMinutes: snapshot.freshnessMinutes,
+          stale: snapshot.stale,
+          sources: snapshot.sources,
+          healthyProviders: snapshot.healthyProviders,
+          providerSnapshots: snapshot.providerSnapshots,
+          busRoutesCount: snapshot.busRoutesCount,
+          busSchedulesCount: snapshot.busSchedulesCount,
+          nextBus: snapshot.nextBus,
         },
       }),
       {
@@ -36,7 +30,7 @@ export const GET: APIRoute = async () => {
     return problemJson({
       status: 500,
       title: 'Transport Status Alınamadı',
-      detail: error instanceof Error ? error.message : 'transport_status_failed',
+      detail: safeErrorDetail(error, 'transport_status_failed'),
       type: '/problems/transport-status-failed',
       instance: '/api/transport/status',
     });

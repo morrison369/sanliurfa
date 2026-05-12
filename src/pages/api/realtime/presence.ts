@@ -9,12 +9,11 @@ import { logger } from '../../../lib/logging';
 export const GET: APIRoute = async ({ request }) => {
   logger.info('Real-time presence connection established');
 
-  // SSE headers
+  // SSE headers — no CORS wildcard; same-origin SSE only (HARD RULE #34)
   const headers = {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*'
   };
 
   // Custom response body handler
@@ -58,20 +57,18 @@ export const GET: APIRoute = async ({ request }) => {
               const keys = await redis.keys('sanliurfa:session:*');
               const onlineCount = keys.length;
 
-              // Get trending searches in last hour
-              const trendingSearches = await (redis as any).zRevRangeByScore(
+              // Get trending searches in last hour (top 5 by score, descending)
+              const trendingSearches = await redis.zRange(
                 'sanliurfa:trending:searches:1h',
-                '+inf',
-                '-inf',
-                { LIMIT: { offset: 0, count: 5 } }
+                0, 4,
+                { REV: true }
               );
 
-              // Get active places (places with recent views)
-              const activePlaces = await (redis as any).zRevRangeByScore(
+              // Get active places (places with recent views, top 5 by score)
+              const activePlaces = await redis.zRange(
                 'sanliurfa:active:places:1h',
-                '+inf',
-                '-inf',
-                { LIMIT: { offset: 0, count: 5 } }
+                0, 4,
+                { REV: true }
               );
 
               const data = {

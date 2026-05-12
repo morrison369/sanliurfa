@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getPointsHistory } from '../../../lib/gamification';
 import { verifyToken } from '../../../lib/auth';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam, safeErrorDetail } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
 
     // Get query parameters
     const url = new URL(request.url);
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
 
     // Get points history
     const history = await getPointsHistory(sessionData.userId, limit);
@@ -50,7 +50,7 @@ export const GET: APIRoute = async ({ request, cookies }) => {
   } catch (error) {
     const duration = Date.now() - startTime;
     recordRequest('GET', '/api/points/history', HttpStatus.INTERNAL_SERVER_ERROR, duration, {
-      error: error instanceof Error ? error.message : String(error)
+      error: safeErrorDetail(error, 'Points history fetch failed')
     });
     logger.error('Points history request failed', error instanceof Error ? error : new Error(String(error)), {
       duration

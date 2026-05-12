@@ -6,7 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { getModerationQueue, assignModerationQueueItem, resolveModerationQueueItem } from '../../../../lib/admin/admin-moderation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../../lib/api';
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
@@ -25,8 +25,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     const url = new URL(request.url);
     const status = url.searchParams.get('status') || 'pending';
-    const limit = Math.min(parseInt(url.searchParams.get('limit') || '20'), 100);
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     const items = await getModerationQueue(status, limit, offset);
 
@@ -82,6 +82,30 @@ export const POST: APIRoute = async ({ request, locals }) => {
       return apiError(
         ErrorCode.VALIDATION_ERROR,
         'queueItemId ve action gereklidir',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        undefined,
+        requestId
+      );
+    }
+
+    const VALID_ACTIONS = new Set(['assign', 'resolve']);
+    if (!VALID_ACTIONS.has(action)) {
+      recordRequest('POST', '/api/admin/moderation/queue', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz action değeri',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        undefined,
+        requestId
+      );
+    }
+
+    const VALID_RESOLUTIONS = new Set(['resolved', 'dismissed', 'escalated', 'no_action']);
+    if (action === 'resolve' && resolution !== undefined && resolution !== null && (typeof resolution !== 'string' || !VALID_RESOLUTIONS.has(resolution))) {
+      recordRequest('POST', '/api/admin/moderation/queue', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçersiz resolution değeri',
         HttpStatus.UNPROCESSABLE_ENTITY,
         undefined,
         requestId

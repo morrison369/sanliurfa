@@ -1,0 +1,63 @@
+---
+interface Props {
+  title?: string;
+  eyebrow?: string;
+  card?: boolean;
+}
+
+const { title, eyebrow, card = true } = Astro.props;
+---
+
+<section class:list={['pcs', card && 'pcs--card']}>
+  {(eyebrow || title) && (
+    <header class="pcs-head">
+      {eyebrow && <p class="pcs-eyebrow">{eyebrow}</p>}
+      {title && <h2 class="pcs-title">{title}</h2>}
+    </header>
+  )}
+  <div class="pcs-body">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .pcs {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pcs--card {
+    padding: 1.4rem;
+    border: 1px solid var(--public-border);
+    border-radius: var(--public-radius);
+    background: var(--public-surface);
+  }
+
+  .pcs-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.32rem;
+  }
+
+  .pcs-eyebrow {
+    margin: 0;
+    color: var(--public-accent);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .pcs-title {
+    margin: 0;
+    color: var(--public-text);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+  }
+
+  .pcs-body {
+    min-width: 0;
+  }
+</style>

@@ -26,7 +26,7 @@ test.describe('Blog Index', () => {
   test('blog list or empty state is displayed', async ({ page }) => {
     const postCount = await page.locator(postSelector).count();
     const emptyStateVisible = await page
-      .locator('text=Henüz yazı yok, text=No posts, text=İçerik bulunamadı')
+      .getByText(/Henüz blog yazısı yok|Henüz yazı yok|No posts|İçerik bulunamadı/i)
       .first()
       .isVisible()
       .catch(() => false);

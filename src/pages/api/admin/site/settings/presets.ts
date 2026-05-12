@@ -1,18 +1,16 @@
 import type { APIRoute } from 'astro';
+import { apiResponse, safeErrorDetail } from '../../../../../lib/api';
 import { auditSiteChange, publishSiteSetting, saveSiteSettingDraft } from '../../../../../lib/site-content';
 import { findSitePresetById, SITE_CONTENT_PRESETS } from '../../../../../lib/site-content-presets';
 import { validateSiteSetting } from '../../../../../lib/site-settings-schema';
 import { validateSiteSettingWithZod } from '../../../../../lib/site-settings-zod';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  return locals?.user?.role === 'admin';
 }
 
 export const GET: APIRoute = async ({ locals }) => {
@@ -32,7 +30,7 @@ export const GET: APIRoute = async ({ locals }) => {
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!isAdmin(locals)) return json({ error: 'Unauthorized' }, 401);
 
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
@@ -98,7 +96,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'preset apply failed',
+        error: safeErrorDetail(error, 'preset apply failed'),
       },
       500,
     );

@@ -13,7 +13,7 @@ import { logger } from '../../../lib/logging';
 import { deleteCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -49,7 +49,7 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
 };
 
 export const PUT: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 
@@ -61,6 +61,31 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
 
     const { contentId } = params;
     const body = await request.json();
+
+    if (body.title !== undefined) {
+      if (typeof body.title !== 'string' || body.title.length < 3 || body.title.length > 500)  {
+        recordRequest('PUT', `/api/content/${contentId}`, HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Başlık 3-500 karakter arasında olmalıdır', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+      }
+    }
+    if (body.description !== undefined && body.description !== null && (typeof body.description !== 'string' || body.description.length > 5000)) {
+      recordRequest('PUT', `/api/content/${contentId}`, HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Açıklama 5000 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    if (body.content !== undefined && body.content !== null && (typeof body.content !== 'string' || body.content.length > 100000)) {
+      recordRequest('PUT', `/api/content/${contentId}`, HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'İçerik 100000 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    const VALID_CONTENT_TYPES = new Set(['article', 'guide', 'news', 'tip', 'review']);
+    if (body.content_type !== undefined && body.content_type !== null && (typeof body.content_type !== 'string' || !VALID_CONTENT_TYPES.has(body.content_type))) {
+      recordRequest('PUT', `/api/content/${contentId}`, HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz içerik tipi', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
+    const VALID_VISIBILITY = new Set(['public', 'private', 'unlisted']);
+    if (body.visibility !== undefined && body.visibility !== null && (typeof body.visibility !== 'string' || !VALID_VISIBILITY.has(body.visibility))) {
+      recordRequest('PUT', `/api/content/${contentId}`, HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz görünürlük değeri', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
+    }
 
     const success = await updateContent(contentId as string, locals.user.id, body);
 
@@ -87,7 +112,7 @@ export const PUT: APIRoute = async ({ request, params, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, params, locals }) => {
-  const requestId = getRequestId(request as any);
+  const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
 

@@ -104,6 +104,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
+    if (typeof reason === 'string' && reason.length > 500) {
+      recordRequest('POST', '/api/users/privacy/block', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Engelleme sebebi 500 karakterden uzun olamaz',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+        undefined,
+        requestId
+      );
+    }
+
     const normalizedBlockedUserId = blockedUserId.trim();
     const normalizedReason = typeof reason === 'string' && reason.trim().length > 0
       ? reason.trim()
@@ -141,7 +152,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       recordRequest('POST', '/api/users/privacy/block', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
-        error.message,
+        'Kendinizi veya zaten engellediğiniz birini engelleyemezsiniz',
         HttpStatus.UNPROCESSABLE_ENTITY,
         undefined,
         requestId

@@ -1,13 +1,23 @@
 ---
 
 import Layout from '../../layouts/Layout.astro';
+import { Icon } from 'astro-icon/components';
+import PublicCollectionHero from '../../components/public/PublicCollectionHero.astro';
+import PublicCollectionBody from '../../components/public/PublicCollectionBody.astro';
+import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
+import PublicFaqList from '../../components/public/PublicFaqList.astro';
+import PlaceCard from '../../components/PlaceCard.astro';
 import { query, queryOne } from '../../lib/postgres';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import { getMediaAsset, getSeoOverride } from '../../lib/site-platform';
-import { getSiteBranding } from '../../lib/site-branding';
-const { baseUrl } = await getSiteBranding();
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import { logger } from '../../lib/logging';
+import { safeIntParam } from '../../lib/api';
+import { resolvePlaceImage } from '../../lib/public-image-resolvers';
+const baseUrl = getPublicAppUrl();
 
 const { kategori } = Astro.params;
-const page = Math.max(1, Number.parseInt(Astro.url.searchParams.get('sayfa') || '1', 10) || 1);
+const page = safeIntParam(Astro.url.searchParams.get('sayfa'), 1, 1, 1_000_000);
 const limit = 12;
 const offset = (page - 1) * limit;
 
@@ -15,316 +25,354 @@ let category: any = null;
 let places: any[] = [];
 let districtBreakdown: any[] = [];
 let relatedCategories: any[] = [];
+let relatedBlogPosts: any[] = [];
 let totalCount = 0;
-let heroImage = '/images/hero/hero-home.webp';
+let heroImage = '/images/places/balikligol.jpg';
 let seoOverridePayload: Record<string, any> | null = null;
 let seoOverrideCanonical = '';
 
 try {
-  category = await queryOne(
-    `SELECT id, name, slug, description
-     FROM categories
-     WHERE slug = $1 AND is_active = true
-     LIMIT 1`,
-    [kategori],
+ const data = await getCachedPublicRouteData(`page:mekanlar:category:${kategori || 'unknown'}:${page}`, async () => {
+  const categoryRow = await queryOne(
+   `SELECT id, name, slug, description, parent_id
+   FROM categories
+   WHERE slug = $1 AND is_active = true
+   LIMIT 1`,
+   [kategori],
   );
 
-  if (!category) {
-    return Astro.redirect('/mekanlar');
+  if (!categoryRow) {
+   return {
+    category: null,
+    places: [],
+    districtBreakdown: [],
+    relatedCategories: [],
+    totalCount: 0,
+   };
   }
 
-  const [countResult, placesResult, districtResult, relatedResult] = await Promise.all([
-    query(
-      `SELECT COUNT(*)::int AS count
-       FROM places
-       WHERE status = 'active' AND category_id = $1`,
-      [category.id],
-    ),
-    query(
-      `SELECT
-         p.*,
-         d.name AS district_name
-       FROM places p
-       LEFT JOIN districts d ON d.id = p.district_id
-       WHERE p.status = 'active' AND p.category_id = $1
-       ORDER BY COALESCE(p.is_featured, false) DESC, COALESCE(p.rating, 0) DESC, COALESCE(p.review_count, 0) DESC, p.created_at DESC
-       LIMIT $2 OFFSET $3`,
-      [category.id, limit, offset],
-    ),
-    query(
-      `SELECT
-         d.name,
-         d.slug,
-         COUNT(*)::int AS place_count
-       FROM places p
-       JOIN districts d ON d.id = p.district_id
-       WHERE p.status = 'active' AND p.category_id = $1
-       GROUP BY d.id, d.name, d.slug
-       ORDER BY COUNT(*) DESC, d.name ASC
-       LIMIT 6`,
-      [category.id],
-    ),
-    query(
-      `SELECT c.name, c.slug
-       FROM categories c
-       WHERE c.parent_id = (SELECT parent_id FROM categories WHERE id = $1)
-         AND c.id <> $1
-         AND c.is_active = true
-       ORDER BY c.sort_order NULLS LAST, c.name ASC
-       LIMIT 6`,
-      [category.id],
-    ),
+  const matchSql = `(p.category_id = $1 OR p.category_id IN (SELECT id FROM categories WHERE parent_id = $1))`;
+
+  const relatedSql = categoryRow.parent_id != null
+   ? `SELECT c.name, c.slug,
+        (SELECT COUNT(*) FROM places pp WHERE pp.category_id = c.id AND pp.status='active') AS p_count
+      FROM categories c
+      WHERE c.parent_id = $2::int AND c.id <> $1::int AND c.is_active = true
+      ORDER BY c.sort_order NULLS LAST, c.name ASC LIMIT 8`
+   : `SELECT c.name, c.slug,
+        (SELECT COUNT(*) FROM places pp WHERE pp.category_id = c.id AND pp.status='active') AS p_count
+      FROM categories c
+      WHERE c.parent_id = $1::int AND c.is_active = true
+      ORDER BY c.sort_order NULLS LAST, c.name ASC LIMIT 8`;
+  const relatedParams = categoryRow.parent_id != null
+   ? [categoryRow.id, categoryRow.parent_id]
+   : [categoryRow.id];
+
+  const blogKeywords = [categoryRow.slug, categoryRow.name?.split(' ')[0]?.toLowerCase()].filter(Boolean);
+  const blogTagCondition = blogKeywords.map((_: string, i: number) => `tags && ARRAY[$${i + 1}]::text[]`).join(' OR ');
+
+  const [countResult, placesResult, districtResult, relatedResult, blogResult] = await Promise.all([
+   query(
+    `SELECT COUNT(*)::int AS count FROM places p
+    WHERE p.status = 'active' AND ${matchSql}`,
+    [categoryRow.id],
+   ),
+   query(
+    `SELECT
+     p.*,
+     d.name AS district_name,
+     d.slug AS district_slug,
+     c.name AS subcategory_name,
+     c.slug AS subcategory_slug
+    FROM places p
+    LEFT JOIN districts d ON d.id = p.district_id
+    LEFT JOIN categories c ON c.id = p.category_id
+    WHERE p.status = 'active' AND ${matchSql}
+    ORDER BY COALESCE(p.is_featured, false) DESC, COALESCE(p.rating, 0) DESC, COALESCE(p.review_count, 0) DESC, p.created_at DESC
+    LIMIT $2 OFFSET $3`,
+    [categoryRow.id, limit, offset],
+   ),
+   query(
+    `SELECT d.name, d.slug, COUNT(*)::int AS place_count
+    FROM places p
+    JOIN districts d ON d.id = p.district_id
+    WHERE p.status = 'active' AND ${matchSql}
+    GROUP BY d.id, d.name, d.slug
+    ORDER BY COUNT(*) DESC, d.name ASC
+    LIMIT 6`,
+    [categoryRow.id],
+   ),
+   query(relatedSql, relatedParams),
+   blogKeywords.length > 0
+    ? query(
+       `SELECT title, slug FROM blog_posts
+       WHERE status = 'published' AND published_at <= CURRENT_DATE + INTERVAL '60 days' AND (${blogTagCondition} OR category_slug = $${blogKeywords.length + 1})
+       ORDER BY published_at ASC LIMIT 4`,
+       [...blogKeywords, categoryRow.slug],
+      ).catch(() => ({ rows: [] }))
+    : Promise.resolve({ rows: [] }),
   ]);
 
-  totalCount = Number(countResult.rows[0]?.count || 0);
-  places = placesResult.rows;
-  districtBreakdown = districtResult.rows;
-  relatedCategories = relatedResult.rows;
+  return {
+   category: categoryRow,
+   places: placesResult.rows,
+   districtBreakdown: districtResult.rows,
+   relatedCategories: relatedResult.rows,
+   relatedBlogPosts: blogResult.rows,
+   totalCount: Number(countResult.rows[0]?.count || 0),
+  };
+ });
+
+ category = data.category;
+ if (!category) {
+  return Astro.redirect('/mekanlar');
+ }
+ places = data.places;
+ districtBreakdown = data.districtBreakdown;
+ relatedCategories = data.relatedCategories;
+ relatedBlogPosts = data.relatedBlogPosts ?? [];
+ totalCount = data.totalCount;
 } catch (error) {
-  console.error('Error loading mekan category page:', error);
+ logger.error('Error loading mekan category page:', error instanceof Error ? error : new Error(String(error)));
 }
 
 try {
-  const [heroAsset, seoOverride] = await Promise.all([
-    getMediaAsset(`category.${String(kategori || '').trim()}.hero`),
-    getSeoOverride('category', String(kategori || '').trim()),
-  ]);
-  heroImage = String(heroAsset?.url || heroImage);
-  seoOverridePayload = seoOverride?.seo_payload || null;
-  seoOverrideCanonical = String(seoOverride?.canonical_path || '').trim();
+ const [heroAsset, seoOverride] = await Promise.all([
+  getMediaAsset(`category.${String(kategori || '').trim()}.hero`),
+  getSeoOverride('category', String(kategori || '').trim()),
+ ]);
+ heroImage = String(heroAsset?.url || heroImage);
+ seoOverridePayload = seoOverride?.seo_payload || null;
+ seoOverrideCanonical = String(seoOverride?.canonical_path || '').trim();
 } catch (error) {
-  console.error('Error loading kategori platform data:', error);
+ logger.error('Error loading kategori platform data:', error instanceof Error ? error : new Error(String(error)));
 }
 
 const totalPages = Math.max(1, Math.ceil(totalCount / limit));
 const categoryName = String(category?.name || kategori || 'Mekanlar');
 const description =
-  String(category?.description || '').trim() ||
-  `${categoryName} kategorisindeki aktif mekanları puan, yorum ve ilçe yoğunluğu ile keşfedin.`;
+ String(category?.description || '').trim() ||
+ `${categoryName} kategorisindeki aktif Şanlıurfa mekanları puan, yorum ve ilçe yoğunluğu ile keşfedilebilir.`;
 
 const seo = {
-  title: `Şanlıurfa ${categoryName} | Sanliurfa.com`,
-  description: `Şanlıurfa ${categoryName.toLowerCase()} rehberi. ${description}`,
-  canonical: `/mekanlar/${kategori}`,
-  keywords: ['şanlıurfa ' + categoryName.toLowerCase(), 'urfa ' + categoryName.toLowerCase(), categoryName, categoryName + ' şanlıurfa', 'şanlıurfa mekanlar'],
-  ogImage: '/images/hero/hero-home.webp',
+ title: `Şanlıurfa ${categoryName} | En İyi Mekanlar, Puanlar ve Yorumlar`,
+ description: `Şanlıurfa ${categoryName.toLowerCase()} rehberi. ${description}`,
+ canonical: `/mekanlar/${kategori}`,
+ keywords: ['şanlıurfa ' + categoryName.toLowerCase(), 'urfa ' + categoryName.toLowerCase(), categoryName, categoryName + ' şanlıurfa', 'şanlıurfa mekanlar'],
+ ogImage: '/images/places/balikligol.jpg',
+ noIndex: totalCount === 0,
 };
 
 if (seoOverridePayload) {
-  Object.assign(seo, seoOverridePayload, {
-    canonical: seoOverrideCanonical || seoOverridePayload.canonical || seo.canonical,
-  });
+ Object.assign(seo, seoOverridePayload, {
+  canonical: seoOverrideCanonical || seoOverridePayload.canonical || seo.canonical,
+ });
 }
 
 const faqItems = [
-  {
-    S: `Şanlıurfa ${categoryName.toLowerCase()} listesi güncel mi?`,
-    C: `${categoryName} sayfası aktif mekan kayıtları üzerinden güncellenir ve öne çıkan işletmeler puan, yorum ve görünürlük sinyallerine göre sıralanır.`,
-  },
-  {
-    S: `${categoryName} mekanları ilçeye göre filtrelenebilir mi?`,
-    C: `Bu sayfadaki ilçe yoğunluğu kartları üzerinden ilgili ilçe rehberine geçebilir ve kategoriye yakın mekan kümelerini inceleyebilirsiniz.`,
-  },
-  {
-    S: `${categoryName} sayfasında hangi veriler gösterilir?`,
-    C: `Mekan adı, kısa açıklama, puan, yorum sayısı ve ilçe bilgisi aynı listede gösterilir.`,
-  },
+ {
+  q: `Şanlıurfa ${categoryName.toLowerCase()} listesi güncel mi?`,
+  a: `${categoryName} sayfası aktif mekan kayıtları üzerinden günlük güncellenir; öne çıkan işletmeler puan, yorum ve görünürlük sinyallerine göre sıralanır. Yeni eklenen mekanlar onay sürecinden geçtikten sonra listede yer alır, kapalı ya da taşınan işletmeler ise pasife alınarak görünümden kaldırılır.`,
+ },
+ {
+  q: `${categoryName} mekanları ilçeye göre filtrelenebilir mi?`,
+  a: `Evet, sayfadaki ilçe yoğunluğu kartları üzerinden istediğiniz ilçe rehberine geçebilir, ${categoryName.toLowerCase()} ile birlikte ilçe bazlı filtreyi kullanabilirsiniz. Eyyübiye, Haliliye, Karaköprü, Harran, Halfeti ve diğer ilçelerdeki mekanları ayrı ayrı incelemek mümkündür.`,
+ },
+ {
+  q: `${categoryName} sayfasında hangi veriler gösterilir?`,
+  a: `Her mekan kartında; mekan adı, kısa açıklama, puan (5 üzerinden), yorum sayısı, ilçe bilgisi ve kapak fotoğrafı yer alır. Mekan detay sayfasında ek olarak adres, telefon numarası, çalışma saatleri ve kullanıcı yorumlarına da ulaşabilirsiniz.`,
+ },
+ {
+  q: `Şanlıurfa ${categoryName.toLowerCase()} için hangi ilçeler öne çıkıyor?`,
+  a: `Şanlıurfa'da ${categoryName.toLowerCase()} alanında en fazla mekan genellikle Eyyübiye, Haliliye ve Karaköprü ilçelerinde yoğunlaşmaktadır. Siverek, Halfeti ve Harran gibi daha uzak ilçelerde de bölgeye özgü mekanlar bulunmaktadır; ilçe yoğunluğu tablosundan bu dağılımı anlık görebilirsiniz.`,
+ },
 ];
+const toAbsoluteImageUrl = (src: string) => (src.startsWith('http') ? src : `${baseUrl}${src}`);
 ---
 
 <Layout seo={seo}>
-  <div class="min-h-screen bg-slate-50">
-    <section class="border-b border-slate-200 bg-[radial-gradient(circle_at_top_left,rgba(248,113,113,0.16),transparent_28%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_24%),linear-gradient(180deg,#fff,#fff)]">
-      <div class="container mx-auto px-4 py-14">
-        <nav class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
-          <a href="/" class="hover:text-red-700">Ana Sayfa</a>
-          <span>/</span>
-          <a href="/mekanlar" class="hover:text-red-700">Mekanlar</a>
-          <span>/</span>
-          <span class="font-medium text-slate-900">{categoryName}</span>
-        </nav>
-        <div class="mt-6 grid gap-8 lg:grid-cols-[1.4fr_0.6fr] lg:items-end">
-          <div>
-            <span class="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-red-700">
-              Kategori Landing
-            </span>
-            <h1 class="mt-4 text-4xl font-extrabold tracking-tight text-slate-950 md:text-5xl">
-              Şanlıurfa {categoryName}
-            </h1>
-            <p class="mt-4 max-w-3xl text-lg leading-8 text-slate-600">{description}</p>
-          </div>
-          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Kategori Özeti</p>
-            <div class="mt-4 grid grid-cols-2 gap-4">
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p class="text-xs text-slate-500">Aktif Mekan</p>
-                <p class="mt-2 text-3xl font-bold text-slate-900">{totalCount}</p>
-              </div>
-              <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p class="text-xs text-slate-500">İlçe Yoğunluğu</p>
-                <p class="mt-2 text-3xl font-bold text-slate-900">{districtBreakdown.length}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+ <style is:inline>
+  .mc-page{background:var(--bg);min-height:100vh}
+  .mc-places-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+
+  /* Empty state */
+  .mc-empty{background:#fff;border:1px dashed rgba(192,87,31,.25);padding:3.5rem 2rem;text-align:center;border-radius:8px}
+  .mc-empty-title{font-family:'Cormorant Garamond',serif;font-size:1.5rem;color:#1F1410;margin:0 0 .65rem;font-weight:700}
+  .mc-empty-text{font-size:.88rem;color:var(--public-muted);margin:0 0 1.5rem;line-height:1.65;max-width:480px;margin-left:auto;margin-right:auto}
+  .mc-empty-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.75rem 1.65rem;background:linear-gradient(135deg,#C0571F,#D49718);color:#fff;font-size:.9rem;font-weight:700;text-decoration:none;border-radius:6px;transition:transform .15s}
+  .mc-empty-btn:hover{transform:translateY(-1px)}
+
+  /* Pagination */
+  .mc-pagination{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.4rem;margin-top:2rem}
+  .mc-page-btn{display:inline-flex;align-items:center;justify-content:center;min-width:2.4rem;padding:.55rem .9rem;background:#fff;border:1px solid rgba(192,87,31,.18);color:var(--public-muted);font-size:.85rem;font-weight:600;text-decoration:none;border-radius:6px;transition:all .15s}
+  .mc-page-btn:hover{border-color:#C0571F;color:#C0571F}
+  .mc-page-btn-active{background:linear-gradient(135deg,#C0571F,#D49718);border-color:#C0571F;color:#fff}
+
+  .mc-district-link{display:flex;align-items:center;justify-content:space-between;padding:.55rem .75rem;font-size:.85rem;font-weight:600;color:#1F1410;text-decoration:none;border-radius:5px;transition:all .15s;margin-bottom:.3rem}
+  .mc-district-link:hover{background:rgba(44,122,82,.08);color:#1F5F40}
+  .mc-district-count{display:inline-flex;align-items:center;justify-content:center;min-width:1.6rem;padding:.1rem .45rem;background:rgba(192,87,31,.10);color:#C0571F;font-size:.72rem;font-weight:700;border-radius:999px}
+
+  .mc-blog-links{display:flex;flex-direction:column;gap:.2rem}
+  .mc-blog-link{font-size:.82rem;color:#1F1410;text-decoration:none;padding:.45rem .5rem;border-radius:4px;line-height:1.35;transition:background .12s}
+  .mc-blog-link:hover{background:rgba(192,87,31,.07);color:#C0571F}
+  .mc-tag-wrap{display:flex;flex-wrap:wrap;gap:.4rem}
+  .mc-tag{display:inline-flex;align-items:center;gap:.25rem;padding:.4rem .75rem;background:rgba(192,87,31,.06);border:1px solid rgba(192,87,31,.15);color:#1F1410;font-size:.78rem;font-weight:600;text-decoration:none;border-radius:999px;transition:all .15s}
+  .mc-tag:hover{background:#C0571F;color:#fff;border-color:#C0571F}
+  .mc-tag-count{font-size:.65rem;color:#7A6448;font-weight:600}
+  .mc-tag:hover .mc-tag-count{color:rgba(255,255,255,.8)}
+ </style>
+
+ <div class="mc-page">
+  <PublicCollectionHero
+   title={`Şanlıurfa ${categoryName}`}
+   description={description}
+   imageSrc={heroImage}
+   imageAlt={`Şanlıurfa ${categoryName}`}
+   eyebrow="Şanlıurfa Kategori Rehberi"
+   breadcrumbItems={[
+    { href: '/', label: 'Ana Sayfa' },
+    { href: '/mekanlar', label: 'Mekanlar' },
+    { label: categoryName },
+   ]}
+   stats={[
+    { label: 'Aktif Mekan', value: totalCount },
+    { label: 'İlçe Sayısı', value: districtBreakdown.length },
+   ]}
+  />
+
+  <PublicCollectionBody compactSidebar>
+    <section>
+     {places.length > 0 ? (
+      <div class="mc-places-grid">
+       {places.map((place) => (
+        <PlaceCard
+         place={{
+          id: String(place.id),
+          name: place.name,
+          slug: place.slug,
+          description:
+           place.short_description || place.description || `${categoryName} kategorisinde aktif mekan.`,
+          image_url: resolvePlaceImage(place),
+          category: place.subcategory_slug || place.category_slug || 'general',
+          rating: place.rating,
+          review_count: place.review_count,
+         }}
+        />
+       ))}
       </div>
+     ) : (
+      <div class="mc-empty">
+       <p class="mc-empty-title">Henüz aktif mekan yok</p>
+       <p class="mc-empty-text">
+        Bu kategori için işletme başvuruları açık. Sanliurfa.com'da ücretsiz işletme profili oluşturarak ilk olun.
+       </p>
+       <a href="/isletme-kayit" class="mc-empty-btn">
+        <Icon name="lucide:plus-circle" style="width:1.05rem;height:1.05rem" />
+        İşletme Kaydı Başlat
+       </a>
+      </div>
+     )}
+
+     {totalPages > 1 && (
+      <nav class="mc-pagination" aria-label="Sayfalama">
+       {page > 1 && (
+        <a href={`/mekanlar/${kategori}?sayfa=${page - 1}`} class="mc-page-btn">← Önceki</a>
+       )}
+       {Array.from({ length: Math.min(totalPages, 8) }, (_, i) => i + 1).map((item) => (
+        <a
+         href={`/mekanlar/${kategori}?sayfa=${item}`}
+         class={`mc-page-btn ${item === page ? 'mc-page-btn-active' : ''}`}
+        >
+         {item}
+        </a>
+       ))}
+       {page < totalPages && (
+        <a href={`/mekanlar/${kategori}?sayfa=${page + 1}`} class="mc-page-btn">Sonraki →</a>
+       )}
+      </nav>
+     )}
     </section>
 
-    <div class="container mx-auto px-4 py-10">
-      <div class="grid gap-6 xl:grid-cols-[0.72fr_0.28fr]">
-        <section class="space-y-6">
-          {places.length > 0 ? (
-            <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {places.map((place) => (
-                <a href={`/isletme/${place.slug}`} class="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-red-300 hover:shadow-lg">
-                  <div class="h-40 overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(248,113,113,0.15),transparent_35%),linear-gradient(180deg,#fff7ed,#fff)]">
-                    <img
-                      src={place.cover_image || place.images?.[0] || heroImage}
-                      alt={place.name}
-                      class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                      loading="lazy"
-                      onerror={`this.setAttribute('src','${heroImage}')`}
-                    />
-                  </div>
-                  <div class="p-5">
-                    <div class="flex items-start justify-between gap-3">
-                      <h2 class="text-lg font-bold text-slate-900 group-hover:text-red-700">{place.name}</h2>
-                      <span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
-                        {place.rating ? Number(place.rating).toFixed(1) : '-'}
-                      </span>
-                    </div>
-                    <p class="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">
-                      {place.short_description || place.description || `${categoryName} kategorisinde aktif mekan kaydı.`}
-                    </p>
-                    <div class="mt-4 flex items-center justify-between text-xs text-slate-500">
-                      <span>{place.district_name || 'Şanlıurfa'}</span>
-                      <span>{Number(place.review_count || 0)} yorum</span>
-                    </div>
-                  </div>
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div class="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-              <h2 class="text-2xl font-bold text-slate-900">Henüz aktif mekan yok</h2>
-              <p class="mt-3 text-sm text-slate-600">
-                Bu kategori için veri eksikse işletme başvuruları ve kategori senkronu ile içerik derinliğini artırabilirsiniz.
-              </p>
-              <a href="/isletme-kayit" class="mt-5 inline-flex rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700">
-                İşletme Kaydı Başlat
-              </a>
-            </div>
-          )}
+    <Fragment slot="sidebar">
+     {districtBreakdown.length > 0 && (
+      <PublicSidebarCard title="İlçe Yoğunluğu">
+       {districtBreakdown.map((item) => (
+        <a href={`/ilceler/${item.slug}`} class="mc-district-link">
+         <span>{item.name}</span>
+         <span class="mc-district-count">{Number(item.place_count || 0)}</span>
+        </a>
+       ))}
+      </PublicSidebarCard>
+     )}
 
-          {totalPages > 1 && (
-            <nav class="flex flex-wrap items-center justify-center gap-2">
-              {page > 1 && (
-                <a href={`/mekanlar/${kategori}?sayfa=${page - 1}`} class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-red-300 hover:text-red-700">
-                  ← Önceki
-                </a>
-              )}
-              {Array.from({ length: Math.min(totalPages, 8) }, (_, index) => index + 1).map((item) => (
-                <a
-                  href={`/mekanlar/${kategori}?sayfa=${item}`}
-                  class={`rounded-xl px-4 py-2 text-sm font-semibold ${
-                    item === page ? 'bg-slate-950 text-white' : 'border border-slate-200 bg-white text-slate-700 hover:border-red-300 hover:text-red-700'
-                  }`}
-                >
-                  {item}
-                </a>
-              ))}
-              {page < totalPages && (
-                <a href={`/mekanlar/${kategori}?sayfa=${page + 1}`} class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-red-300 hover:text-red-700">
-                  Sonraki →
-                </a>
-              )}
-            </nav>
-          )}
-        </section>
+     {relatedCategories.length > 0 && (
+      <PublicSidebarCard title={category?.parent_id ? 'Yakın Kategoriler' : 'Alt Kategoriler'}>
+       <div class="mc-tag-wrap">
+        {relatedCategories.map((item) => (
+         <a href={`/mekanlar/${item.slug}`} class="mc-tag">
+          {item.name}
+          {item.p_count > 0 && <span class="mc-tag-count">({item.p_count})</span>}
+         </a>
+        ))}
+       </div>
+      </PublicSidebarCard>
+     )}
 
-        <aside class="space-y-5">
-          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="text-lg font-bold text-slate-900">İlçe yoğunluğu</h2>
-            <div class="mt-4 space-y-3">
-              {districtBreakdown.length > 0 ? (
-                districtBreakdown.map((item) => (
-                  <a href={`/ilceler/${item.slug}`} class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-red-300 hover:bg-white hover:text-red-700">
-                    <span>{item.name}</span>
-                    <span class="text-slate-500">{Number(item.place_count || 0)}</span>
-                  </a>
-                ))
-              ) : (
-                <p class="text-sm text-slate-500">İlçe kırılımı henüz oluşmadı.</p>
-              )}
-            </div>
-          </div>
+     {relatedBlogPosts.length > 0 && (
+      <PublicSidebarCard title="İlgili Rehber Yazılar">
+       <div class="mc-blog-links">
+        {relatedBlogPosts.map((post: any) => (
+         <a href={`/blog/${post.slug}`} class="mc-blog-link">{post.title}</a>
+        ))}
+       </div>
+      </PublicSidebarCard>
+     )}
 
-          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="text-lg font-bold text-slate-900">Yakın kategoriler</h2>
-            <div class="mt-4 flex flex-wrap gap-2">
-              {relatedCategories.length > 0 ? (
-                relatedCategories.map((item) => (
-                  <a href={`/mekanlar/${item.slug}`} class="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-red-300 hover:bg-white hover:text-red-700">
-                    {item.name}
-                  </a>
-                ))
-              ) : (
-                <p class="text-sm text-slate-500">Yakın kategori bulunamadı.</p>
-              )}
-            </div>
-          </div>
+     <PublicSidebarCard title="Hızlı Cevaplar">
+      <PublicFaqList items={faqItems} />
+     </PublicSidebarCard>
+    </Fragment>
+  </PublicCollectionBody>
+ </div>
 
-          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 class="text-lg font-bold text-slate-900">Hızlı cevaplar</h2>
-            <div class="mt-4 space-y-4">
-              {faqItems.map((item) => (
-                <article class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <h3 class="font-semibold text-slate-900">{item.S}</h3>
-                  <p class="mt-2 text-sm leading-6 text-slate-600">{item.C}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </aside>
-      </div>
-    </div>
-  </div>
-
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: `Şanlıurfa ${categoryName}`,
-    description,
-    url: `${baseUrl}/mekanlar/${kategori}`,
-    about: { '@type': 'City', name: 'Şanlıurfa' },
-    itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'LocalBusiness',
-        '@id': `${baseUrl}/isletme/${p.slug}`,
-        name: p.name,
-        url: `${baseUrl}/isletme/${p.slug}`,
-        ...(p.address ? { address: p.address } : {}),
-      },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqItems.map((item) => ({
-      '@type': 'Question',
-      name: item.S,
-      acceptedAnswer: { '@type': 'Answer', text: item.C },
-    })),
-  })} is:inline />
-  <script type="application/ld+json" set:html={JSON.stringify({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
-      { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
-      { '@type': 'ListItem', position: 3, name: categoryName, item: `${baseUrl}/mekanlar/${kategori}` },
-    ],
-  })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `Şanlıurfa ${categoryName}`,
+  description,
+  url: `${baseUrl}/mekanlar/${kategori}`,
+  about: { '@type': 'City', name: 'Şanlıurfa' },
+  numberOfItems: totalCount,
+  itemListElement: places.slice(0, 10).map((p: any, i: number) => ({
+   '@type': 'ListItem',
+   position: i + 1,
+   item: {
+    '@type': 'LocalBusiness',
+    '@id': `${baseUrl}/isletme/${p.slug}`,
+    name: p.name,
+    url: `${baseUrl}/isletme/${p.slug}`,
+    ...(p.address ? { address: p.address } : {}),
+    ...(resolvePlaceImage(p) ? { image: toAbsoluteImageUrl(resolvePlaceImage(p)) } : {}),
+    ...(p.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: Number(p.rating), reviewCount: p.review_count || 1, bestRating: 5 } } : {}),
+   },
+  })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqItems.map((item) => ({
+   '@type': 'Question',
+   name: item.q,
+   acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+   { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+   { '@type': 'ListItem', position: 2, name: 'Mekanlar', item: `${baseUrl}/mekanlar` },
+   { '@type': 'ListItem', position: 3, name: categoryName, item: `${baseUrl}/mekanlar/${kategori}` },
+  ],
+ })} is:inline />
 </Layout>

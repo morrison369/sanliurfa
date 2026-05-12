@@ -14,7 +14,9 @@ export interface SEOMeta {
   structuredData?: Record<string, any>;
 }
 
-const BASE_URL = process.env.PUBLIC_APP_URL || 'https://sanliurfa.com';
+import { getPublicAppUrl } from '../public-app-url';
+
+const BASE_URL = getPublicAppUrl();
 const DEFAULT_IMAGE = `${BASE_URL}/images/og-default.jpg`;
 const DEFAULT_DESCRIPTION = 'Şanlıurfa\'nın tarihi yerleri, mekanları ve kültürel zenginlikleri hakkında kapsamlı rehber. Göbeklitepe, Balıklıgöl ve daha fazlası.';
 
@@ -28,9 +30,9 @@ export function generateMetaTags(meta: Partial<SEOMeta> = {}): SEOMeta {
     keywords: meta.keywords || ['şanlıurfa', 'göbeklitepe', 'balıklıgöl', 'urfa', 'tarihi yerler'],
     ogImage: meta.ogImage || DEFAULT_IMAGE,
     ogType: meta.ogType || 'website',
-    canonical: meta.canonical,
-    noindex: meta.noindex,
-    structuredData: meta.structuredData,
+    ...(meta.canonical ? { canonical: meta.canonical } : {}),
+    ...(meta.noindex !== undefined ? { noindex: meta.noindex } : {}),
+    ...(meta.structuredData ? { structuredData: meta.structuredData } : {}),
   };
 }
 
@@ -51,7 +53,7 @@ export function generatePlaceMeta(
     title: place.name,
     description: place.description || `${place.name} - Şanlıurfa ${place.category} hakkında bilgi, yorumlar ve fotoğraflar.`,
     keywords: [place.name, 'şanlıurfa', place.category, 'mekan', 'gezi'],
-    ogImage: place.image,
+    ...(place.image ? { ogImage: place.image } : {}),
     ogType: 'place',
     canonical: `${BASE_URL}/mekan/${place.slug}`,
     structuredData: generatePlaceStructuredData(place),
@@ -75,7 +77,7 @@ export function generateBlogMeta(
     title: post.title,
     description: post.excerpt || `${post.title} - Şanlıurfa hakkında detaylı blog yazısı.`,
     keywords: ['şanlıurfa', 'blog', 'gezi', 'tarih', 'kültür'],
-    ogImage: post.coverImage,
+    ...(post.coverImage ? { ogImage: post.coverImage } : {}),
     ogType: 'article',
     canonical: `${BASE_URL}/blog/${post.slug}`,
     structuredData: generateArticleStructuredData(post),
@@ -117,16 +119,18 @@ function generatePlaceStructuredData(
     '@context': 'https://schema.org',
     '@type': 'TouristAttraction',
     name: place.name,
-    description: place.description,
-    image: place.image,
+    ...(place.description ? { description: place.description } : {}),
+    ...(place.image ? { image: place.image } : {}),
     url: `${BASE_URL}/mekan/${place.slug}`,
-    aggregateRating: place.rating
+    ...(place.rating
       ? {
-          '@type': 'AggregateRating',
-          ratingValue: place.rating,
-          bestRating: 5,
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: place.rating,
+            bestRating: 5,
+          },
         }
-      : undefined,
+      : {}),
     address: {
       '@type': 'PostalAddress',
       addressLocality: 'Şanlıurfa',
@@ -152,10 +156,10 @@ function generateArticleStructuredData(
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.title,
-    description: post.excerpt,
-    image: post.coverImage,
+    ...(post.excerpt ? { description: post.excerpt } : {}),
+    ...(post.coverImage ? { image: post.coverImage } : {}),
     url: `${BASE_URL}/blog/${post.slug}`,
-    datePublished: post.publishedAt?.toISOString(),
+    ...(post.publishedAt ? { datePublished: post.publishedAt.toISOString() } : {}),
     author: post.author
       ? {
           '@type': 'Person',

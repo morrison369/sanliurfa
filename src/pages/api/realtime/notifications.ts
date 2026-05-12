@@ -17,12 +17,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   logger.info('Real-time notifications connection established', { userId: user.id });
 
-  // SSE headers
+  // SSE headers — no CORS wildcard; same-origin SSE only (HARD RULE #34)
   const headers = {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
-    'Access-Control-Allow-Origin': '*'
   };
 
   let isClosed = false;

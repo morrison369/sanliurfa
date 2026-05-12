@@ -8,9 +8,10 @@ import { queryOne } from '../../../lib/postgres';
 import { createCheckoutSession } from '../../../lib/stripe/stripe-client';
 import { getSubscriptionTiers } from '../../../lib/subscription/subscription-management';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { getPublicAppUrl } from '../../../lib/public-app-url';
 import { logger } from '../../../lib/logging';
 import { recordRequest } from '../../../lib/metrics';
-import { validateWithSchema } from '../../../lib/validation';
+import { validateWithSchema, type ValidationSchema } from '../../../lib/validation';
 import { PHASE1_FREE_MODE } from '../../../lib/runtime/phase-policy';
 
 const checkoutSchema = {
@@ -33,9 +34,9 @@ const checkoutSchema = {
     type: 'string' as const,
     required: false,
   },
-} as any;
+} as ValidationSchema;
 
-export const POST: APIRoute = async ({ request, locals, url }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId(request);
   const startTime = Date.now();
   logger.setRequestId(requestId);
@@ -84,14 +85,35 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
     const { tierId, billingCycle = 'monthly' } = validation.data;
     let { successUrl, cancelUrl } = validation.data;
 
-    // Set default URLs
-    const baseUrl = `${url.protocol}//${url.host}`;
-    successUrl = successUrl || `${baseUrl}/abonelik?success=true`;
-    cancelUrl = cancelUrl || `${baseUrl}/fiyatlandirma?cancelled=true`;
+    // Set default URLs using canonical domain (HARD RULE #40 — never url.host)
+    const appUrl = getPublicAppUrl();
+    if (successUrl) {
+      // Validate user-supplied URL: must be same-origin to prevent open redirect
+      try {
+        const suppliedOrigin = new URL(successUrl).origin;
+        if (suppliedOrigin !== appUrl) {
+          return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz successUrl', HttpStatus.BAD_REQUEST, undefined, requestId);
+        }
+      } catch {
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz successUrl', HttpStatus.BAD_REQUEST, undefined, requestId);
+      }
+    }
+    if (cancelUrl) {
+      try {
+        const suppliedOrigin = new URL(cancelUrl).origin;
+        if (suppliedOrigin !== appUrl) {
+          return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz cancelUrl', HttpStatus.BAD_REQUEST, undefined, requestId);
+        }
+      } catch {
+        return apiError(ErrorCode.VALIDATION_ERROR, 'Geçersiz cancelUrl', HttpStatus.BAD_REQUEST, undefined, requestId);
+      }
+    }
+    successUrl = successUrl || `${appUrl}/abonelik?success=true`;
+    cancelUrl = cancelUrl || `${appUrl}/fiyatlandirma?cancelled=true`;
 
     // Get tier details
     const tiers = await getSubscriptionTiers();
-    const tier = tiers.find((t: any) => t.id === tierId);
+    const tier = tiers.find((t) => t.id === tierId);
 
     if (!tier) {
       recordRequest('POST', '/api/subscriptions/checkout', HttpStatus.NOT_FOUND, Date.now() - startTime);

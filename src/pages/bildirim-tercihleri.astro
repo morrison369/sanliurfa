@@ -1,19 +1,49 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import NotificationPreferencesManager from '../components/NotificationPreferencesManager';
+import PublicPageIntro from '../components/public/PublicPageIntro.astro';
 
-const { locals } = Astro;
-
-// Redirect if not authenticated
-if (!locals.user) {
-  return Astro.redirect('/giris');
+const user = Astro.locals.user;
+if (!user) {
+ return Astro.redirect('/giris?redirect=/bildirim-tercihleri');
 }
 ---
 
 <Layout seo={{ title: "Bildirim Tercihleri | Sanliurfa.com", noIndex: true }}>
-  <div class="min-h-screen bg-gray-50">
-    <div class="max-w-3xl mx-auto px-4 py-8">
-      <NotificationPreferencesManager client:visible={{ rootMargin: '120px' }} />
-    </div>
-  </div>
+ <div class="bt-page">
+ <PublicPageIntro
+ eyebrow="Hesabım"
+ title="Bildirim Tercihleri"
+ description="E-posta, uygulama ve topluluk bildirimlerini hesabına göre düzenle."
+ quickAnswerTitle="Hızlı cevap"
+ quickAnswerText="Önemli hesap bildirimleri açık kalır; pazarlama ve topluluk bildirimleri tercihe göre yönetilir."
+ actions={[
+ { href: '/bildirimler', label: 'Bildirimler' },
+ { href: '/ayarlar', label: 'Ayarlar' },
+ ]}
+ />
+ <div class="bt-body">
+ <div class="sf-container">
+ <div class="bt-inner">
+ <NotificationPreferencesManager client:visible={{ rootMargin: '120px' }} />
+ </div>
+ </div>
+ </div>
+ </div>
 </Layout>
+
+<style>
+ .bt-page {
+ background: var(--public-bg);
+ min-height: 100vh;
+ }
+
+ .bt-inner {
+ max-width: 48rem;
+ margin: 0 auto;
+ }
+
+ .bt-body {
+ padding: 2rem 0 4rem;
+ }
+</style>

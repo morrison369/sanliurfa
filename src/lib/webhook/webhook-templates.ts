@@ -74,7 +74,7 @@ export async function getUserTemplates(
     const cacheKey = `webhook:templates:${userId}`;
     const cached = await getCache(cacheKey);
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const result = await pool.query(
@@ -131,43 +131,37 @@ export async function applyTemplate(
 
     const webhookId = (webhookRes as any).rows?.[0]?.id;
 
-    // Apply settings
-    await pool.query(
-      `INSERT INTO webhook_settings
-        (webhook_id, timeout_seconds, max_retries, retry_delay_ms,
-         rate_limit, rate_limit_window, enabled)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [
-        webhookId,
-        template?.timeout_seconds,
-        template?.max_retries,
-        template?.retry_delay_ms,
-        template?.rate_limit,
-        template?.rate_limit_window,
-        template?.enabled
-      ]
-    );
-
-    // Apply filters if provided
-    if (filters && Array.isArray(filters)) {
-      for (const filter of filters) {
-        await pool.query(
-          `INSERT INTO webhook_filters
-            (webhook_id, filter_type, filter_key, operator, filter_value)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [webhookId, filter.filterType, filter.filterKey, filter.operator, JSON.stringify(filter.filterValue)]
-        );
-      }
-    }
-
-    // Increment usage count
-    await pool.query(
-      `UPDATE webhook_templates SET usage_count = usage_count + 1 WHERE id = $1`,
-      [templateId]
-    );
-
-    // Invalidate cache
-    await deleteCache(`webhook:templates:${userId}`);
+    // Settings + filter loop + usage increment + cache invalidate paralel — bağımsız işlemler
+    await Promise.all([
+      pool.query(
+        `INSERT INTO webhook_settings
+          (webhook_id, timeout_seconds, max_retries, retry_delay_ms,
+           rate_limit, rate_limit_window, enabled)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          webhookId,
+          template?.timeout_seconds,
+          template?.max_retries,
+          template?.retry_delay_ms,
+          template?.rate_limit,
+          template?.rate_limit_window,
+          template?.enabled
+        ]
+      ),
+      ...(filters && Array.isArray(filters)
+        ? filters.map((filter) => pool.query(
+            `INSERT INTO webhook_filters
+              (webhook_id, filter_type, filter_key, operator, filter_value)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [webhookId, filter.filterType, filter.filterKey, filter.operator, JSON.stringify(filter.filterValue)]
+          ))
+        : []),
+      pool.query(
+        `UPDATE webhook_templates SET usage_count = usage_count + 1 WHERE id = $1`,
+        [templateId]
+      ),
+      deleteCache(`webhook:templates:${userId}`),
+    ]);
 
     return webhookId;
   } catch (error) {
@@ -211,7 +205,7 @@ export async function getPopularTemplates(
     const cacheKey = 'webhook:templates:popular';
     const cached = await getCache(cacheKey);
     if (cached) {
-      return JSON.parse(cached as string);
+      return cached as any;
     }
 
     const result = await pool.query(

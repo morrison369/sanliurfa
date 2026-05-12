@@ -6,7 +6,7 @@
 import type { APIRoute } from 'astro';
 import { insert } from '../../../lib/postgres';
 import { logger } from '../../../lib/logger';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
@@ -40,13 +40,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     logger.warn('Client error reported', Object.assign(new Error(String(message).slice(0, 200)), { url, userId: locals.user?.id }));
 
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200, headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse({ received: true }, HttpStatus.OK);
   } catch {
     // Never fail on error reporting
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200, headers: { 'Content-Type': 'application/json' }
-    });
+    return apiResponse({ received: true }, HttpStatus.OK);
   }
 };

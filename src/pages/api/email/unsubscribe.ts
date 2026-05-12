@@ -8,11 +8,12 @@ import { unsubscribeAll } from '../../../lib/email/email-preferences';
 import { queryOne } from '../../../lib/postgres';
 import { trackCampaignEvent } from '../../../lib/email/email-campaigns';
 import { validateWithSchema } from '../../../lib/validation';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import type { ValidationSchema } from '../../../lib/validation';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-const schema = {
+const schema: ValidationSchema = {
   email: { type: 'string' as const, required: true, pattern: '^[^@]+@[^@]+\\.[^@]+$' },
   token: { type: 'string' as const, required: false }
 };
@@ -24,7 +25,7 @@ export const POST: APIRoute = async ({ request, url }) => {
 
   try {
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/email/unsubscribe', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -49,7 +50,10 @@ export const POST: APIRoute = async ({ request, url }) => {
       // Track campaign unsubscribe if campaign ID provided
       const campaignId = url.searchParams.get('cid');
       if (campaignId && user.id) {
-        await trackCampaignEvent(parseInt(campaignId, 10), user.id, 'unsubscribe');
+        const cid = safeIntParam(campaignId, 0, 1, 1_000_000);
+        if (cid > 0) {
+          await trackCampaignEvent(cid, user.id, 'unsubscribe');
+        }
       }
 
       logger.info('User unsubscribed', { userId: user.id, email });

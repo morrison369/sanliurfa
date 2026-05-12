@@ -3,7 +3,8 @@ import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
 import { resolveContentImage } from '../../../lib/content-images';
-import { problemJson } from '../../../lib/api';
+import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
+import { getCache, setCache } from '../../../lib/cache';
 
 export const GET: APIRoute = async (context) => {
   try {
@@ -17,6 +18,10 @@ export const GET: APIRoute = async (context) => {
         instance: '/api/admin/dashboard',
       });
     }
+
+    const CACHE_KEY = 'admin:dashboard:stats';
+    const cached = await getCache(CACHE_KEY);
+    if (cached) return apiResponse(cached as object, HttpStatus.OK);
 
     // Tarih araligi
     const today = new Date().toISOString().split('T')[0];
@@ -134,7 +139,7 @@ export const GET: APIRoute = async (context) => {
       }),
     }));
 
-    return new Response(JSON.stringify({
+    const payload = {
       success: true,
       stats: {
         users: usersResult.rows[0],
@@ -148,17 +153,16 @@ export const GET: APIRoute = async (context) => {
       },
       topPlaces,
       dailyStats: dailyStatsResult.rows
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    };
+    await setCache(CACHE_KEY, payload, 60).catch(() => null);
+    return apiResponse(payload, HttpStatus.OK);
 
   } catch (error) {
     logger.error('Admin dashboard error:', error);
     return problemJson({
       status: 500,
       title: 'Admin Dashboard Alınamadı',
-      detail: error instanceof Error ? error.message : 'server_error',
+      detail: safeErrorDetail(error, 'server_error'),
       type: '/problems/admin-dashboard-failed',
       instance: '/api/admin/dashboard',
     });

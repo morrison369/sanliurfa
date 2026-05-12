@@ -1,7 +1,6 @@
+import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-
-import { pool, query } from '../../src/lib/postgres';
 
 type UrlGroup = {
   mekanlar: string[];
@@ -12,6 +11,34 @@ type UrlGroup = {
 
 function uniqueSorted(values: string[]): string[] {
   return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, 'tr'));
+}
+
+function loadEnvFile(filePath: string) {
+  if (!existsSync(filePath)) return;
+  const content = readFileSync(filePath, 'utf8');
+  for (const rawLine of content.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('#') || !line.includes('=')) continue;
+    const idx = line.indexOf('=');
+    const key = line.slice(0, idx).trim();
+    let value = line.slice(idx + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"'))
+      || (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+
+function loadRuntimeEnv(repoRoot: string) {
+  const candidates = [
+    path.resolve(repoRoot, '.env.production'),
+    path.resolve(repoRoot, '.env.local'),
+    path.resolve(repoRoot, '.env'),
+  ];
+  for (const candidate of candidates) loadEnvFile(candidate);
 }
 
 function parseRequiredUrls(txtContent: string): UrlGroup {
@@ -55,7 +82,9 @@ function parseRequiredUrls(txtContent: string): UrlGroup {
   };
 }
 
-async function getActiveCategorySlugs(): Promise<string[]> {
+async function getActiveCategorySlugs(
+  query: <T = any>(text: string, params?: any[]) => Promise<{ rows: T[] }>
+): Promise<string[]> {
   const result = await query<{ slug: string }>(
     'SELECT slug FROM categories WHERE is_active = true ORDER BY slug'
   );
@@ -64,9 +93,19 @@ async function getActiveCategorySlugs(): Promise<string[]> {
 
 async function main() {
   const repoRoot = process.cwd();
-  const txtPath = path.resolve(repoRoot, '..', 'kategoriler.txt');
+  loadRuntimeEnv(repoRoot);
+  const { pool, query } = await import('../../src/lib/postgres');
+  const txtCandidates = [
+    path.resolve(repoRoot, 'kategoriler.txt'),
+    path.resolve(repoRoot, '..', 'kategoriler.txt'),
+  ];
+  const txtPath = txtCandidates.find((candidate) => existsSync(candidate));
   const docsDir = path.resolve(repoRoot, 'docs');
   const outputPath = path.resolve(docsDir, 'category-gap-report.json');
+
+  if (!txtPath) {
+    throw new Error(`kategoriler.txt bulunamadı. Denenen yollar: ${txtCandidates.join(', ')}`);
+  }
 
   const txtContent = await readFile(txtPath, 'utf-8');
   const required = parseRequiredUrls(txtContent);
@@ -75,7 +114,7 @@ async function main() {
   let dbError: string | null = null;
 
   try {
-    activeCategorySlugs = await getActiveCategorySlugs();
+    activeCategorySlugs = await getActiveCategorySlugs(query);
   } catch (error) {
     dbError = error instanceof Error ? error.message : String(error);
   }
@@ -138,13 +177,12 @@ async function main() {
   if (dbError) {
     console.log(`- DB notu: ${dbError}`);
   }
+
+  await pool.end();
 }
 
 main()
   .catch((error) => {
     console.error('Kategori gap raporu üretilemedi:', error);
     process.exitCode = 1;
-  })
-  .finally(async () => {
-    await pool.end();
   });

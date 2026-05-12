@@ -1,0 +1,223 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { query, queryOne } from '../../../lib/postgres';
+import { getCachedPublicRouteData } from '../../../lib/public-route-cache';
+import { getPublicAppUrl } from '../../../lib/public-app-url';
+import PublicCollectionHero from '../../../components/public/PublicCollectionHero.astro';
+import PublicCollectionBody from '../../../components/public/PublicCollectionBody.astro';
+import PublicSidebarCard from '../../../components/public/PublicSidebarCard.astro';
+import PublicFaqList from '../../../components/public/PublicFaqList.astro';
+import PlaceCard from '../../../components/PlaceCard.astro';
+import { resolvePlaceImage } from '../../../lib/public-image-resolvers';
+import { logger } from '../../../lib/logging';
+
+const baseUrl = getPublicAppUrl();
+const { ilce } = Astro.params;
+
+const fallbackDistricts: Record<string, any> = {
+ eyyubiye: { slug: 'eyyubiye', name: 'Eyyübiye', description: 'Balıklıgöl, tarihi çarşılar ve inanç turizmi rotalarının merkez ilçesi.' },
+ haliliye: { slug: 'haliliye', name: 'Haliliye', description: 'Şehir merkezi, kamu hizmetleri, alışveriş ve günlük yaşam noktalarının yoğun olduğu ilçe.' },
+ karakopru: { slug: 'karakopru', name: 'Karaköprü', description: 'Modern konut alanları, kafeler ve yeni şehir yaşamıyla öne çıkan merkez ilçe.' },
+ siverek: { slug: 'siverek', name: 'Siverek', description: 'Takoran Vadisi ve güçlü yerel kültürüyle bilinen büyük ilçe.' },
+ viransehir: { slug: 'viransehir', name: 'Viranşehir', description: 'Tarih, tarım ve bölgesel ticaret akslarıyla öne çıkan ilçe.' },
+ birecik: { slug: 'birecik', name: 'Birecik', description: 'Fırat Nehri ve kelaynak kuşlarıyla tanınan ilçe.' },
+ halfeti: { slug: 'halfeti', name: 'Halfeti', description: 'Tekne turları, Fırat kıyısı ve sular altında kalan tarihi dokusuyla bilinen ilçe.' },
+ harran: { slug: 'harran', name: 'Harran', description: 'Kümbet evleri ve Mezopotamya mirasıyla öne çıkan ilçe.' },
+ suruc: { slug: 'suruc', name: 'Suruç', description: 'Yerel kültür, tarım ve sınır hattı yaşamıyla bilinen ilçe.' },
+ akcakale: { slug: 'akcakale', name: 'Akçakale', description: 'Harran Ovası ve sınır ticaretiyle öne çıkan ilçe.' },
+ ceylanpinar: { slug: 'ceylanpinar', name: 'Ceylanpınar', description: 'Geniş tarım arazileri ve sınır hattıyla bilinen ilçe.' },
+ hilvan: { slug: 'hilvan', name: 'Hilvan', description: 'Atatürk Barajı çevresi ve kırsal gezi rotalarıyla bilinen ilçe.' },
+ bozova: { slug: 'bozova', name: 'Bozova', description: 'Atatürk Barajı kıyısı, su sporları ve doğa rotalarıyla öne çıkan ilçe.' },
+};
+
+let district: any = null;
+let neighborhoods: any[] = [];
+let places: any[] = [];
+
+try {
+ const data = await getCachedPublicRouteData(`page:mahalleler:district:${ilce || 'unknown'}`, async () => {
+  const districtRow = await queryOne('SELECT * FROM districts WHERE slug = $1', [ilce]);
+  const resolvedDistrict = districtRow || fallbackDistricts[String(ilce || '')];
+  if (!resolvedDistrict) return { district: null, neighborhoods: [], places: [] };
+
+  if (!resolvedDistrict.id) {
+   return { district: resolvedDistrict, neighborhoods: [], places: [] };
+  }
+
+  const [neighborhoodResult, placesResult] = await Promise.all([
+   query(
+    `SELECT n.*,
+      (SELECT COUNT(*)::int FROM places p WHERE p.neighborhood_id = n.id AND p.status = 'active') AS place_count
+     FROM neighborhoods n
+     WHERE n.district_id = $1
+     ORDER BY n.name ASC`,
+    [resolvedDistrict.id],
+   ),
+   query(
+    `SELECT p.*, c.name AS category_name, c.slug AS category_slug
+     FROM places p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE p.district_id = $1 AND p.status = 'active'
+     ORDER BY p.is_featured DESC, p.rating DESC NULLS LAST
+     LIMIT 8`,
+    [resolvedDistrict.id],
+   ),
+  ]);
+
+  return {
+   district: resolvedDistrict,
+   neighborhoods: neighborhoodResult.rows,
+   places: placesResult.rows,
+  };
+ });
+
+ district = data.district;
+ neighborhoods = data.neighborhoods;
+ places = data.places;
+} catch (e) {
+ logger.error('Error loading district neighborhoods:', e instanceof Error ? e : new Error(String(e)));
+}
+
+if (!district) {
+ return Astro.redirect('/mahalleler');
+}
+
+const districtName = district.name || String(ilce || '');
+const seo = {
+ title: `${districtName} Mahalleleri | Şanlıurfa Mahalle Rehberi`,
+ description: `${districtName} ilçesindeki mahalleler, yakın mekanlar, eczaneler ve yerel hizmet bağlantıları.`,
+ canonical: `/mahalleler/${ilce}`,
+ keywords: [`${districtName} mahalleleri`, `${districtName} mahalle rehberi`, 'Şanlıurfa mahalleler'],
+ ogImage: '/images/places/balikligol.jpg',
+};
+
+const faqItems = [
+ {
+  S: `${districtName} mahalleleri nereden görüntülenir?`,
+  C: `${districtName} ilçesine bağlı mahalleler bu sayfada listelenir; veri güncellenirken ilçe rehberi bağlantıları da kullanılabilir.`,
+ },
+ {
+  S: `${districtName} ilçesinde yakın mekanlar nasıl bulunur?`,
+  C: `${districtName} ilçe rehberi ve mekan kartları üzerinden restoran, eczane, konaklama ve yerel hizmet noktalarına ulaşabilirsiniz.`,
+ },
+ {
+  S: `Mahalle sayfaları ne zaman güncellenir?`,
+  C: 'Mahalle verileri doğrulanan kayıtlarla birlikte güncellenir; doğrulanmamış mahalle detayları sitemap ve smoke listesine alınmaz.',
+ },
+];
+
+const resolveDistrictPlaceImage = (place: any) =>
+ resolvePlaceImage({
+  slug: place?.slug,
+  image_url: place?.image_url ?? place?.cover_image ?? null,
+  cover_image: place?.cover_image ?? null,
+  images: Array.isArray(place?.images) ? place.images : [],
+ });
+---
+
+<Layout seo={seo}>
+ <PublicCollectionHero
+  title={`${districtName} Mahalleleri`}
+  description={district.description || `${districtName} ilçesindeki mahalle ve yerel yaşam bağlantıları.`}
+  imageSrc="/images/places/balikligol.jpg"
+  imageAlt={`${districtName} mahalle rehberi`}
+  eyebrow="Şanlıurfa Mahalle Rehberi"
+  breadcrumbItems={[
+   { href: '/', label: 'Ana Sayfa' },
+   { href: '/mahalleler', label: 'Mahalleler' },
+   { label: districtName },
+  ]}
+  stats={[
+   { label: 'Mahalle', value: neighborhoods.length || 'Güncelleniyor' },
+   { label: 'Yakın Mekan', value: places.length },
+  ]}
+ />
+
+ <PublicCollectionBody compactSidebar>
+  <section class="space-y-6">
+   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    {neighborhoods.length > 0 ? neighborhoods.map((neighborhood) => (
+     <a
+      href={`/mahalleler/${ilce}/${neighborhood.slug}`}
+      class="block rounded-2xl border border-[var(--public-border)] bg-[var(--public-surface)] p-5 transition hover:-translate-y-0.5 hover:border-[var(--public-accent)]"
+     >
+      <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--public-muted)]">{districtName}</p>
+      <h2 class="mt-2 text-lg font-bold text-[var(--public-text)]">{neighborhood.name} Mahallesi</h2>
+      <p class="mt-2 text-sm leading-6 text-[var(--public-muted)]">
+       {neighborhood.description || `${districtName} ilçesinde mahalle ve yakın hizmet rehberi.`}
+      </p>
+      <p class="mt-4 text-sm font-semibold text-[var(--public-accent)]">
+       {Number(neighborhood.place_count || 0)} mekan
+      </p>
+     </a>
+    )) : (
+     <div class="rounded-2xl border border-[var(--public-border)] bg-[var(--public-surface)] p-6 text-[var(--public-muted)] sm:col-span-2 lg:col-span-3">
+      Mahalle kayıtları doğrulanıyor. Bu süreçte {districtName} ilçe rehberinden yakın mekan ve hizmetlere ulaşabilirsiniz.
+     </div>
+    )}
+   </div>
+
+   {places.length > 0 && (
+    <div>
+     <h2 class="mb-4 text-xl font-bold text-[var(--public-text)]">{districtName} Yakın Mekanlar</h2>
+     <div class="grid gap-4 sm:grid-cols-2">
+      {places.map((place) => (
+       <PlaceCard
+        place={{
+         id: String(place.id),
+         name: place.name,
+         slug: place.slug,
+         description: place.short_description || place.address || '',
+         image_url: resolveDistrictPlaceImage(place),
+         category: place.category_slug || 'general',
+         rating: place.rating,
+         review_count: place.review_count,
+        }}
+       />
+      ))}
+     </div>
+    </div>
+   )}
+  </section>
+
+  <Fragment slot="sidebar">
+   <PublicSidebarCard title="İlgili Bağlantılar">
+    <div class="flex flex-col gap-3 text-sm">
+     <a class="text-[var(--public-accent)]" href={`/ilceler/${ilce}`}>{districtName} İlçe Rehberi</a>
+     <a class="text-[var(--public-accent)]" href="/mahalleler">Tüm Mahalleler</a>
+     <a class="text-[var(--public-accent)]" href="/saglik/nobetci-eczaneler">Nöbetçi Eczaneler</a>
+    </div>
+   </PublicSidebarCard>
+   <PublicSidebarCard title="Sık Sorulanlar">
+    <PublicFaqList items={faqItems.map((item) => ({ q: item.S, a: item.C }))} />
+   </PublicSidebarCard>
+  </Fragment>
+ </PublicCollectionBody>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'AdministrativeArea',
+ name: `${districtName} Mahalleleri`,
+ description: seo.description,
+ url: `${baseUrl}/mahalleler/${ilce}`,
+ containedInPlace: { '@type': 'City', name: 'Şanlıurfa', url: baseUrl },
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'BreadcrumbList',
+ itemListElement: [
+ { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+ { '@type': 'ListItem', position: 2, name: 'Mahalleler', item: `${baseUrl}/mahalleler` },
+ { '@type': 'ListItem', position: 3, name: districtName, item: `${baseUrl}/mahalleler/${ilce}` },
+ ],
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+ '@context': 'https://schema.org',
+ '@type': 'FAQPage',
+ mainEntity: faqItems.map((item) => ({
+ '@type': 'Question',
+ name: item.S,
+ acceptedAnswer: { '@type': 'Answer', text: item.C },
+ })),
+ })} is:inline />
+</Layout>

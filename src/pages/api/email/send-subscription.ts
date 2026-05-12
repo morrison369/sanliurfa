@@ -6,11 +6,12 @@ import type { APIRoute } from 'astro';
 import { sendEmail, getSubscriptionEmailHTML } from '../../../lib/email';
 import { queryOne } from '../../../lib/postgres';
 import { validateWithSchema } from '../../../lib/validation';
+import type { ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-const schema = {
+const schema: ValidationSchema = {
   userId: { type: 'string' as const, required: true },
   tier: { type: 'string' as const, required: true, pattern: '^(premium|pro)$' },
   price: { type: 'number' as const, required: true, min: 0 }
@@ -29,7 +30,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, schema as any);
+    const validation = validateWithSchema(body, schema);
 
     if (!validation.valid) {
       recordRequest('POST', '/api/email/send-subscription', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -42,7 +43,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const { userId, tier, price } = validation.data as { userId: string; tier: 'premium' | 'pro'; price: number };
+    const { userId, tier } = validation.data as { userId: string; tier: 'premium' | 'pro'; price: number };
 
     // Get user info
     const user = await queryOne('SELECT email, full_name FROM users WHERE id = $1', [userId]);
@@ -60,7 +61,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       html
     });
 
-    if (!sent) {
+    if (!sent.success) {
       recordRequest('POST', '/api/email/send-subscription', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);
       return apiError(
         ErrorCode.INTERNAL_ERROR,

@@ -28,26 +28,25 @@ class RecommendationEngine {
    */
   async getRecommendationsForUser(userId: string, limit: number = 10): Promise<Recommendation[]> {
     try {
-      // Get places the user has already reviewed or favorited
-      const seen = await pool.query(
-        `SELECT DISTINCT place_id::text FROM reviews WHERE user_id = $1
-         UNION
-         SELECT DISTINCT place_id::text FROM favorites WHERE user_id = $1`,
-        [userId]
-      );
+      const [seen, topCategories] = await Promise.all([
+        pool.query(
+          `SELECT DISTINCT place_id::text FROM reviews WHERE user_id = $1
+           UNION
+           SELECT DISTINCT place_id::text FROM favorites WHERE user_id = $1`,
+          [userId]
+        ),
+        pool.query(
+          `SELECT p.category_id, COUNT(*) as cnt
+           FROM reviews r
+           JOIN places p ON r.place_id = p.id
+           WHERE r.user_id = $1
+           GROUP BY p.category_id
+           ORDER BY cnt DESC
+           LIMIT 3`,
+          [userId]
+        ),
+      ]);
       const seenIds: string[] = seen.rows.map((r: any) => r.place_id);
-
-      // Find categories the user engages with most
-      const topCategories = await pool.query(
-        `SELECT p.category_id, COUNT(*) as cnt
-         FROM reviews r
-         JOIN places p ON r.place_id = p.id
-         WHERE r.user_id = $1
-         GROUP BY p.category_id
-         ORDER BY cnt DESC
-         LIMIT 3`,
-        [userId]
-      );
       const catIds: string[] = topCategories.rows.map((r: any) => r.category_id).filter(Boolean);
 
       // Base query: highly-rated places not yet seen by this user

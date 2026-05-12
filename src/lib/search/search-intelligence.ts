@@ -64,11 +64,14 @@ export class SearchIndex {
       const docIds = this.index.get(term);
       if (!docIds) continue;
 
+      // Escape regex special chars to prevent ReDoS via user-input pattern.
+      // Without this, term="(.+)+" would cause catastrophic backtracking.
+      const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       for (const docId of docIds) {
         const doc = this.documents.get(docId);
         if (!doc) continue;
 
-        const frequency = (doc.content.match(new RegExp(term, 'gi')) || []).length;
+        const frequency = (doc.content.match(new RegExp(escapedTerm, 'gi')) || []).length;
         scores.set(docId, (scores.get(docId) || 0) + frequency * (doc.boost || 1));
       }
     }

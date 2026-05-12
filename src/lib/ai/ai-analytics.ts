@@ -52,7 +52,6 @@ interface QualityAlert {
 
 class EmbeddingAnalytics {
   private metrics: EmbeddingMetrics[] = [];
-  private counter = 0;
 
   recordMetrics(config: {
     modelId: string;
@@ -323,7 +322,7 @@ class LLMMetrics {
     }
 
     return Object.entries(grouped)
-      .map(([time, cost]) => ({ time: parseInt(time), cost }))
+      .map(([time, cost]) => ({ time: parseInt(time, 10), cost }))
       .sort((a, b) => a.time - b.time);
   }
 
@@ -424,4 +423,4 @@ export const retrievalAnalytics = new RetrievalAnalytics();
 export const llmMetrics = new LLMMetrics();
 export const qualityMonitor = new QualityMonitor();
 
-export { EmbeddingMetrics, RetrievalMetrics, LLMMetrics, QualityAlert };
+export type { EmbeddingMetrics, RetrievalMetrics, LLMMetrics, QualityAlert };

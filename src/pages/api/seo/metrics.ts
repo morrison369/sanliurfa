@@ -6,7 +6,7 @@
 
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -88,9 +88,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const from    = url.searchParams.get('from');
     const to      = url.searchParams.get('to');
     const metric  = url.searchParams.get('metric');
-    const limit   = Math.min(parseInt(url.searchParams.get('limit') || '100'), 1000);
+    const limit   = safeIntParam(url.searchParams.get('limit'), 100, 1, 1_000);
 
-    const params: any[] = [];
+    const params: unknown[] = [];
     let where = 'WHERE 1=1';
     let idx = 1;
     if (from) { where += ` AND timestamp >= $${idx++}`; params.push(new Date(from)); }
@@ -131,7 +131,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       data: {
         metrics:    metric ? allMetrics.filter(m => m.name === metric) : allMetrics,
         recent:     recentResult.rows,
-        totalSamples: parseInt(r.total_samples || '0'),
+        totalSamples: parseInt(r.total_samples || '0', 10),
         from,
         to,
       },

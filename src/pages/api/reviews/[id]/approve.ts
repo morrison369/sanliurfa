@@ -1,7 +1,7 @@
 // API: Review approve (Admin only) (PostgreSQL)
 import type { APIRoute } from 'astro';
 import { logger } from '../../../../lib/logging';
-import { problemJson } from '../../../../lib/api';
+import { problemJson, safeErrorDetail } from '../../../../lib/api';
 import { moderateReview } from '../../../../lib/review/admin-review-moderation';
 
 export const POST: APIRoute = async ({ params, locals }) => {
@@ -33,7 +33,7 @@ export const POST: APIRoute = async ({ params, locals }) => {
     return problemJson({
       status: 500,
       title: 'Yorum Onaylanamadı',
-      detail: err instanceof Error ? err.message : 'server_error',
+      detail: safeErrorDetail(err, 'server_error'),
       type: '/problems/review-approve-failed',
       instance: '/api/reviews/{id}/approve',
     });

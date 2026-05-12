@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { pool } from '../../../lib/postgres';
 import { convertToCSV, convertToJSON, getContentType, getFileExtension, getFormattedDate } from '../../../lib/export/export';
-import { apiError, apiResponse, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -18,7 +18,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     // Get user data
     const userResult = await pool.query(`SELECT id, email, full_name, role, created_at FROM users WHERE id = $1`, [locals.user.id]);
-    const user = (userResult as any).rows?.[0];
+    const user = userResult.rows?.[0];
 
     // Get user's reviews
     const reviewsResult = await pool.query(
@@ -47,18 +47,18 @@ export const GET: APIRoute = async ({ request, locals }) => {
         role: user?.role,
         createdAt: user?.created_at
       },
-      reviews: (reviewsResult as any).rows?.map((r: any) => ({
+      reviews: reviewsResult.rows?.map((r) => ({
         id: r.id,
         placeId: r.place_id,
         rating: r.rating,
         text: r.text,
         createdAt: r.created_at
       })),
-      favorites: (favoritesResult as any).rows?.map((f: any) => ({
+      favorites: favoritesResult.rows?.map((f) => ({
         placeId: f.place_id,
         addedAt: f.added_at
       })),
-      activity: (activityResult as any).rows?.map((a: any) => ({
+      activity: activityResult.rows?.map((a) => ({
         action: a.action,
         resourceType: a.resource_type,
         resourceId: a.resource_id,
@@ -66,7 +66,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
       }))
     };
 
-    const data = format === 'csv' ? convertToCSV([export_data] as any[]) : convertToJSON([export_data] as any[]);
+    const data = format === 'csv' ? convertToCSV([export_data]) : convertToJSON([export_data]);
     const extension = getFileExtension(format);
     const filename = `personal-data-${getFormattedDate()}.${extension}`;
 

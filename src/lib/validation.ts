@@ -5,11 +5,17 @@ import { sanitizeInput } from './api';
 /**
  * Validation result
  */
-export interface ValidationResult {
-  valid: boolean;
-  errors?: Record<string, string>;
-  data?: any;
-}
+export type ValidationResult =
+  | {
+      valid: true;
+      data: Record<string, any>;
+      errors?: never;
+    }
+  | {
+      valid: false;
+      errors: Record<string, string>;
+      data?: never;
+    };
 
 /**
  * Field validator function
@@ -38,6 +44,7 @@ export interface ValidationSchema {
  */
 export function validateEmail(email: any): boolean {
   if (typeof email !== 'string') return false;
+  if (email.length > 254) return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
@@ -183,11 +190,12 @@ export function validateWithSchema(data: any, schema: ValidationSchema): Validat
     }
   }
 
-  return {
-    valid: Object.keys(errors).length === 0,
-    errors: Object.keys(errors).length > 0 ? errors : undefined,
-    data: Object.keys(errors).length === 0 ? validatedData : undefined
-  };
+  const hasErrors = Object.keys(errors).length > 0;
+  if (hasErrors) {
+    return { valid: false, errors };
+  }
+
+  return { valid: true, data: validatedData };
 }
 
 /**

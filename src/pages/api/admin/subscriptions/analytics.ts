@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     // Check admin access
-    if (!locals.isAdmin) {
+    if (locals.user?.role !== 'admin') {
       recordRequest('GET', '/api/admin/subscriptions/analytics', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(
         ErrorCode.FORBIDDEN,

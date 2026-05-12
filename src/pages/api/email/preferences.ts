@@ -5,11 +5,12 @@
 import type { APIRoute } from 'astro';
 import { getUserPreferences, updateUserPreferences } from '../../../lib/email/email-preferences';
 import { validateWithSchema } from '../../../lib/validation';
+import type { ValidationSchema } from '../../../lib/validation';
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
-const updateSchema = {
+const updateSchema: ValidationSchema = {
   reviewResponse: { type: 'boolean' as const, required: false },
   newReview: { type: 'boolean' as const, required: false },
   weeklySummary: { type: 'boolean' as const, required: false },
@@ -62,7 +63,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     }
 
     const body = await request.json();
-    const validation = validateWithSchema(body, updateSchema as any);
+    const validation = validateWithSchema(body, updateSchema);
 
     if (!validation.valid) {
       recordRequest('PUT', '/api/email/preferences', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
@@ -75,7 +76,7 @@ export const PUT: APIRoute = async ({ request, locals }) => {
       );
     }
 
-    const updated = await updateUserPreferences(locals.user.id, validation.data as any);
+    const updated = await updateUserPreferences(locals.user.id, validation.data);
 
     if (!updated) {
       recordRequest('PUT', '/api/email/preferences', HttpStatus.INTERNAL_SERVER_ERROR, Date.now() - startTime);

@@ -1,4 +1,5 @@
 import { logger } from './logging';
+import { randomBytes } from 'node:crypto';
 /**
  * Webhooks Module
  * Stub for webhook management
@@ -18,7 +19,7 @@ export class WebhookManager {
   register(webhook: Omit<Webhook, 'id'>): Webhook {
     const newWebhook: Webhook = {
       ...webhook,
-      id: Math.random().toString(36).substring(7)
+      id: randomBytes(6).toString('hex')
     };
     this.webhooks.set(newWebhook.id, newWebhook);
     return newWebhook;

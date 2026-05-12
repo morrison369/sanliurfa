@@ -119,7 +119,7 @@ export async function getRealtimeMetrics(): Promise<RealtimeMetrics> {
 
   const deviceBreakdown: Record<string, number> = {};
   for (const row of deviceResult.rows) {
-    deviceBreakdown[row.device || 'unknown'] = parseInt(row.count);
+    deviceBreakdown[row.device || 'unknown'] = parseInt(row.count, 10);
   }
 
   // Geo data
@@ -134,8 +134,8 @@ export async function getRealtimeMetrics(): Promise<RealtimeMetrics> {
   `);
 
   return {
-    activeUsers: Math.max(activeUsers, parseInt(dbActiveUsers.rows[0]?.count || 0)),
-    pageViews: parseInt(dbPageViews.rows[0]?.count || 0),
+    activeUsers: Math.max(activeUsers, parseInt(dbActiveUsers.rows[0]?.count || 0, 10)),
+    pageViews: parseInt(dbPageViews.rows[0]?.count || 0, 10),
     uniqueVisitors: metricsStore.activeUsers.size,
     topPages,
     topReferrers: [], // Would need referrer tracking
@@ -184,7 +184,7 @@ export async function getTimeSeries(
 
   return result.rows.map(r => ({
     timestamp: new Date(r.timestamp),
-    value: parseInt(r.value)
+    value: parseInt(r.value, 10)
   }));
 }
 
@@ -207,7 +207,7 @@ export async function getConversionFunnel(steps: string[]): Promise<Array<{
       AND created_at >= NOW() - INTERVAL '7 days'
     `, [steps[i]]);
 
-    const count = parseInt(result.rows[0].count);
+    const count = parseInt(result.rows[0].count, 10);
     const conversionRate = previousCount ? (count / previousCount) * 100 : 100;
 
     results.push({

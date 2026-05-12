@@ -103,17 +103,17 @@ export async function getUserStats(userId: string): Promise<UserStats | null> {
 
     const stats: UserStats = {
       userId: user.id,
-      reviewsWritten: parseInt(reviews?.count || '0'),
-      favoriteCount: parseInt(favorites?.count || '0'),
-      followersCount: parseInt(followers?.count || '0'),
-      followingCount: parseInt(following?.count || '0'),
+      reviewsWritten: parseInt(reviews?.count || '0', 10),
+      favoriteCount: parseInt(favorites?.count || '0', 10),
+      followersCount: parseInt(followers?.count || '0', 10),
+      followingCount: parseInt(following?.count || '0', 10),
       points: user.points || 0,
       level: user.level || 1,
-      averageRating: avgRating?.avg_rating ? parseFloat(avgRating.avg_rating) : undefined,
-      collectionsCreated: parseInt(collections?.count || '0'),
+      collectionsCreated: parseInt(collections?.count || '0', 10),
       badgesEarned: 0, // Would need badges table
       joinDate: user.created_at,
-      lastActiveAt: user.last_login_at
+      ...(avgRating?.avg_rating ? { averageRating: parseFloat(avgRating.avg_rating) } : {}),
+      ...(user.last_login_at ? { lastActiveAt: user.last_login_at } : {}),
     };
 
     // Cache for 5 minutes
@@ -164,10 +164,10 @@ export async function getActivityTrends(userId: string): Promise<ActivityStats |
     );
 
     return {
-      thisMonth: parseInt(thisMonth?.count || '0'),
-      lastMonth: parseInt(lastMonth?.count || '0'),
-      thisYear: parseInt(thisYear?.count || '0'),
-      allTime: parseInt(allTime?.count || '0')
+      thisMonth: parseInt(thisMonth?.count || '0', 10),
+      lastMonth: parseInt(lastMonth?.count || '0', 10),
+      thisYear: parseInt(thisYear?.count || '0', 10),
+      allTime: parseInt(allTime?.count || '0', 10)
     };
   } catch (error) {
     logger.error('Failed to get activity trends', error instanceof Error ? error : new Error(String(error)), {

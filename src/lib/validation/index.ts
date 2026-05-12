@@ -5,9 +5,9 @@
 
 import { z } from 'zod';
 
-// Common validators
-const uuidSchema = z.string().uuid();
-const emailSchema = z.string().email('Geçerli bir email adresi giriniz');
+// Common validators (Zod 4 standalone schemas — `.email()`/`.uuid()` deprecated on string)
+const uuidSchema = z.uuid();
+const emailSchema = z.email('Geçerli bir email adresi giriniz');
 
 // User schemas
 export const userRegistrationSchema = z.object({
@@ -44,7 +44,7 @@ export const placeCreateSchema = z.object({
   latitude: z.number().min(37).max(38, 'Geçersiz enlem (Şanlıurfa bölgesi)'),
   longitude: z.number().min(38).max(40, 'Geçersiz boylam (Şanlıurfa bölgesi)'),
   phone: z.string().regex(/^\+?[0-9\s-()]{10,20}$/, 'Geçersiz telefon numarası').optional(),
-  website: z.string().url('Geçerli bir URL giriniz').optional().or(z.literal('')),
+  website: z.url('Geçerli bir URL giriniz').optional().or(z.literal('')),
 });
 
 // Review schemas
@@ -54,7 +54,7 @@ export const reviewCreateSchema = z.object({
   content: z.string()
     .min(10, 'Yorum en az 10 karakter olmalı')
     .max(1000, 'Yorum en fazla 1000 karakter olabilir'),
-  images: z.array(z.string().url()).max(5, 'En fazla 5 fotoğraf eklenebilir').optional(),
+  images: z.array(z.url()).max(5, 'En fazla 5 fotoğraf eklenebilir').optional(),
 });
 
 // Search schemas

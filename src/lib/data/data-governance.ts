@@ -3,6 +3,8 @@
  * Data classification, PII detection, data masking, privacy enforcement
  */
 
+import { randomBytes } from 'node:crypto';
+
 // ==================== TYPES & INTERFACES ====================
 
 export type DataSensitivity = 'public' | 'internal' | 'confidential' | 'restricted';
@@ -216,7 +218,7 @@ export class DataMasker {
       case 'hash':
         return '****' + Math.abs(value.length * 31).toString(16).substring(0, 4);
       case 'tokenize':
-        return 'TOKEN_' + Math.random().toString(36).substring(7).toUpperCase();
+        return 'TOKEN_' + randomBytes(6).toString('hex').toUpperCase();
       default:
         return value;
     }

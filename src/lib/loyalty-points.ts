@@ -3,7 +3,7 @@
  * Manages user loyalty points, transactions, and rewards
  */
 
-import { queryOne, queryMany, insert, update } from './postgres';
+import { queryOne, queryMany, query, insert } from './postgres';
 import { getCache, setCache, deleteCache } from './cache';
 import { logger } from './logging';
 
@@ -52,9 +52,9 @@ export async function getUserPoints(userId: string): Promise<LoyaltyPoints> {
     }
 
     const points: LoyaltyPoints = {
-      lifetimeEarned: parseInt(result.lifetime_earned || '0'),
-      lifetimeSpent: parseInt(result.lifetime_spent || '0'),
-      currentBalance: parseInt(result.current_balance || '0')
+      lifetimeEarned: parseInt(result.lifetime_earned || '0', 10),
+      lifetimeSpent: parseInt(result.lifetime_spent || '0', 10),
+      currentBalance: parseInt(result.current_balance || '0', 10)
     };
 
     // Cache the result
@@ -87,21 +87,15 @@ export async function awardPoints(
       created_at: new Date().toISOString()
     });
 
-    // Update user balance
-    const existing = await queryOne('SELECT id FROM user_loyalty WHERE user_id = $1', [userId]);
-    if (existing) {
-      await update('user_loyalty', existing.id, {
-        current_balance: { sql: 'current_balance + $1', params: [points] },
-        lifetime_earned: { sql: 'lifetime_earned + $1', params: [points] }
-      });
-    } else {
-      await insert('user_loyalty', {
-        user_id: userId,
-        current_balance: points,
-        lifetime_earned: points,
-        lifetime_spent: 0
-      });
-    }
+    await query(
+      `INSERT INTO user_loyalty (user_id, current_balance, lifetime_earned, lifetime_spent)
+       VALUES ($1, $2, $2, 0)
+       ON CONFLICT (user_id) DO UPDATE
+       SET current_balance = user_loyalty.current_balance + $2,
+           lifetime_earned = user_loyalty.lifetime_earned + $2,
+           updated_at = NOW()`,
+      [userId, points]
+    );
 
     // Invalidate cache
     await deleteCache(`${CACHE_PREFIX}:balance:${userId}`);
@@ -124,31 +118,27 @@ export async function spendPoints(
   _referenceId?: string
 ): Promise<boolean> {
   try {
-    // Check balance
-    const balance = await getUserPoints(userId);
-    if (balance.currentBalance < points) {
-      return false;
+    // Atomic deduct — WHERE guard prevents negative balance (HARD RULE #47)
+    const deducted = await queryOne<{ current_balance: number }>(
+      `UPDATE user_loyalty
+       SET current_balance = current_balance - $1,
+           lifetime_spent  = lifetime_spent  + $1,
+           updated_at      = NOW()
+       WHERE user_id = $2 AND current_balance >= $1
+       RETURNING current_balance`,
+      [points, userId]
+    );
+
+    if (!deducted) {
+      return false; // insufficient balance (or user row doesn't exist)
     }
 
-    // Insert transaction
-    await insert('loyalty_transactions', {
-      user_id: userId,
-      points_amount: points,
-      transaction_type: 'spend',
-      transaction_reason: description,
-      created_at: new Date().toISOString()
-    });
+    await query(
+      `INSERT INTO loyalty_transactions (user_id, points_amount, transaction_type, transaction_reason, created_at)
+       VALUES ($1, $2, 'spend', $3, NOW())`,
+      [userId, points, description]
+    );
 
-    // Update user balance
-    const existing = await queryOne('SELECT id FROM user_loyalty WHERE user_id = $1', [userId]);
-    if (existing) {
-      await update('user_loyalty', existing.id, {
-        current_balance: { sql: 'current_balance - $1', params: [points] },
-        lifetime_spent: { sql: 'lifetime_spent + $1', params: [points] }
-      });
-    }
-
-    // Invalidate cache
     await deleteCache(`${CACHE_PREFIX}:balance:${userId}`);
 
     logger.info('Points spent', { userId, points, description });
@@ -176,7 +166,7 @@ export async function getTransactionHistory(userId: string, limit: number = 50):
     return results.map((row: any) => ({
       id: row.id,
       userId: row.user_id,
-      points: Math.abs(parseInt(row.points)),
+      points: Math.abs(parseInt(row.points, 10)),
       type: row.type === 'spend' ? 'spend' : 'earn',
       description: row.description,
       createdAt: new Date(row.created_at)
@@ -203,7 +193,7 @@ export async function getLeaderboard(limit: number = 10): Promise<{ userId: stri
 
     return results.map((row: any) => ({
       userId: row.user_id,
-      balance: parseInt(row.balance)
+      balance: parseInt(row.balance, 10)
     }));
   } catch (error) {
     logger.error('Failed to get leaderboard', Object.assign(new Error('Failed to get leaderboard'), { error: error as Error }));

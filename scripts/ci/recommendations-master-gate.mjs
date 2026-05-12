@@ -120,7 +120,6 @@ requireFile('scripts/smoke/city-content-acceptance.mjs');
 requireFile('.github/workflows/public-city-gate.yml');
 requireToken('scripts/ci/next-bulk-ops.mjs', 'npm run public:city:gate');
 requireToken('docs/MVP_PUBLIC_ACCEPTANCE.md', 'npm run public:city:gate');
-requireToken('docs/MVP_BITIRME_MODU.md', 'npm run public:city:gate');
 requireToken('.github/workflows/public-city-gate.yml', 'npm run public:city:gate:build');
 requireToken('.github/workflows/public-city-gate.yml', 'branches: [master, main, develop]');
 

@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { getConversations, getOrCreateConversation, sendMessage } from '../../../lib/message/messages';
 import { queryOne } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
 
@@ -16,8 +16,8 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
       return apiError(ErrorCode.UNAUTHORIZED, 'Oturum açmanız gerekiyor', HttpStatus.UNAUTHORIZED, undefined, requestId);
     }
 
-    const limit = parseInt(url.searchParams.get('limit') || '50', 10);
-    const offset = parseInt(url.searchParams.get('offset') || '0', 10);
+    const limit = safeIntParam(url.searchParams.get('limit'), 50, 0, 1_000_000);
+    const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
     const convos = await getConversations(locals.user.id, limit, offset);
     const duration = Date.now() - startTime;
@@ -50,7 +50,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     };
     const rawRecipientId = body.recipient_id ?? body.recipientId;
 
-    if (typeof rawRecipientId !== 'string' || rawRecipientId.trim().length === 0) {
+    if (typeof rawRecipientId !== 'string' || rawRecipientId.trim().length === 0 || rawRecipientId.length > 36) {
       recordRequest('POST', '/api/messages', HttpStatus.BAD_REQUEST, Date.now() - startTime);
       return apiError(ErrorCode.VALIDATION_ERROR, 'Alıcı kimliği gereklidir', HttpStatus.BAD_REQUEST, undefined, requestId);
     }

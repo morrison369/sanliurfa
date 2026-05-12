@@ -1,18 +1,16 @@
 import type { APIRoute } from 'astro';
+import { apiResponse, safeErrorDetail } from '../../../../../lib/api';
 import { upsertMediaAsset } from '../../../../../lib/site-platform';
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return apiResponse(data, status);
 }
 
-function isAdmin(locals: any) {
-  return Boolean(locals?.isAdmin || locals?.user?.role === 'admin');
+function isAdmin(locals: App.Locals) {
+  return locals?.user?.role === 'admin';
 }
 
-function auditCtx(request: Request, locals: any) {
+function auditCtx(request: Request, locals: App.Locals) {
   return {
     userId: locals?.user?.id ? String(locals.user.id) : null,
     actorEmail: locals?.user?.email ? String(locals.user.email) : null,
@@ -24,7 +22,7 @@ function auditCtx(request: Request, locals: any) {
 export const POST: APIRoute = async ({ request, locals }) => {
   if (!isAdmin(locals)) return json({ error: 'Unauthorized' }, 401);
 
-  let body: any;
+  let body: Record<string, unknown>;
   try {
     body = await request.json();
   } catch {
@@ -38,6 +36,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   if (!assetKey) return json({ error: 'assetKey zorunlu' }, 400);
   if (!url || !/^https?:\/\//i.test(url)) return json({ error: 'url gecersiz' }, 400);
+  if (assetKey.length > 200) return json({ error: 'assetKey 200 karakterden uzun olamaz' }, 400);
+  if (url.length > 2000) return json({ error: 'url 2000 karakterden uzun olamaz' }, 400);
+  if (alt !== undefined && alt !== null && (typeof alt !== 'string' || alt.length > 500)) return json({ error: 'alt 500 karakterden uzun olamaz' }, 400);
+  if (body.metadata !== undefined && body.metadata !== null) {
+    if (typeof body.metadata !== 'object' || Array.isArray(body.metadata) || JSON.stringify(body.metadata).length > 5000) {
+      return json({ error: 'metadata geçersiz nesne veya 5000 karakteri aşıyor' }, 400);
+    }
+  }
 
   try {
     await upsertMediaAsset(
@@ -52,6 +58,6 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     return json({ success: true, assetKey, url });
   } catch (error) {
-    return json({ success: false, error: error instanceof Error ? error.message : 'import failed' }, 500);
+    return json({ success: false, error: safeErrorDetail(error, 'import failed') }, 500);
   }
 };
