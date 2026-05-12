@@ -146,13 +146,16 @@ const user = Astro.locals.user;
  style="background:linear-gradient(180deg,#1F1410 0%,#15100C 100%);border-top:1px solid rgba(212,151,24,0.30)"
  >
  <div class="sf-container flex flex-col sm:flex-row items-center justify-between gap-3 py-3">
- <p style="font-size:0.8rem;color:#C4A882;margin:0">
- Deneyiminizi geliştirmek için çerezler kullanıyoruz.
- <a href="/gizlilik-politikasi" style="color:#B87333;text-decoration:underline">Politika</a>
+ <p style="font-size:0.8rem;color:#C4A882;margin:0;flex:1;min-width:200px">
+ <strong style="color:#fff">Çerez Onayı (KVKK)</strong> — Site deneyimini iyileştirmek için zorunlu ve analitik çerezler kullanıyoruz. Pazarlama çerezleri ve üçüncü taraf izleme için onay gerekli.
+ <a href="/cerez-politikasi" style="color:#B87333;text-decoration:underline">Çerez Politikası</a>
+ ·
+ <a href="/kvkk" style="color:#B87333;text-decoration:underline">KVKK</a>
  </p>
- <div style="display:flex;gap:0.5rem;flex-shrink:0">
- <button id="sf-cookie-decline" style="padding:0.4rem 1rem;border:1px solid rgba(184,115,51,0.28);border-radius:0.2rem;background:transparent;color:#C4A882;font-size:0.8rem;cursor:pointer">Reddet</button>
- <button id="sf-cookie-accept" style="padding:0.4rem 1rem;background:linear-gradient(135deg,#C0571F 0%,#9F4717 100%);border:none;border-radius:0.4rem;color:#FFFFFF;font-weight:700;font-size:0.8rem;cursor:pointer">Kabul Et</button>
+ <div style="display:flex;gap:0.4rem;flex-shrink:0;flex-wrap:wrap">
+ <button id="sf-cookie-decline" style="padding:0.45rem 0.85rem;border:1px solid rgba(184,115,51,0.28);border-radius:0.25rem;background:transparent;color:#C4A882;font-size:0.78rem;font-weight:600;cursor:pointer">Sadece Gerekli</button>
+ <button id="sf-cookie-customize" style="padding:0.45rem 0.85rem;border:1px solid rgba(212,151,24,0.4);border-radius:0.25rem;background:rgba(212,151,24,0.08);color:#D49718;font-size:0.78rem;font-weight:600;cursor:pointer">Tercihler</button>
+ <button id="sf-cookie-accept" style="padding:0.45rem 1.1rem;background:linear-gradient(135deg,#C0571F 0%,#9F4717 100%);border:none;border-radius:0.3rem;color:#FFFFFF;font-weight:700;font-size:0.78rem;cursor:pointer">Tümünü Kabul Et</button>
  </div>
  </div>
  </div>
@@ -167,18 +170,24 @@ const user = Astro.locals.user;
  </button>
 
  <script>
- // Cookie
+ // Cookie banner — KVKK uyumlu 3-button
  const banner = document.getElementById('sf-cookie');
  if (!localStorage.getItem('sf_cookie')) {
  setTimeout(() => banner && (banner.style.display = 'block'), 1500);
  }
+ // Tümünü kabul
  document.getElementById('sf-cookie-accept')?.addEventListener('click', () => {
- localStorage.setItem('sf_cookie', '1');
+ localStorage.setItem('sf_cookie', JSON.stringify({ essential: true, analytics: true, marketing: true, ts: Date.now() }));
  if (banner) banner.style.display = 'none';
  });
+ // Sadece gerekli
  document.getElementById('sf-cookie-decline')?.addEventListener('click', () => {
- localStorage.setItem('sf_cookie', '0');
+ localStorage.setItem('sf_cookie', JSON.stringify({ essential: true, analytics: false, marketing: false, ts: Date.now() }));
  if (banner) banner.style.display = 'none';
+ });
+ // Tercihler → /cerez-politikasi'ne yönlendir (advanced settings ileride)
+ document.getElementById('sf-cookie-customize')?.addEventListener('click', () => {
+ window.location.href = '/cerez-politikasi#tercihler';
  });
 
  // Back to top

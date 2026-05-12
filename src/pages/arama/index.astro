@@ -52,9 +52,31 @@ const faqItems = [
  value={q}
  aria-label="Arama terimi"
  autocomplete="off"
+ list="ar-suggestions"
  />
+ <datalist id="ar-suggestions">
+  <option value="Göbeklitepe" />
+  <option value="Balıklıgöl" />
+  <option value="Halfeti" />
+  <option value="Harran" />
+  <option value="Urfa kebabı" />
+  <option value="Sıra gecesi" />
+  <option value="Çiğköftecisi" />
+  <option value="Lahmacun" />
+  <option value="Kahvaltı" />
+  <option value="Otel" />
+  <option value="Nöbetçi eczane" />
+ </datalist>
  <button type="submit" class="ar-btn" aria-label="Ara">Ara</button>
  </form>
+ {!q && (
+  <div style="margin-top:1.2rem;display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center">
+   <span style="font-size:.78rem;color:rgba(255,255,255,.7);align-self:center;margin-right:.4rem">Popüler aramalar:</span>
+   {['Urfa kebabı', 'Göbeklitepe', 'Halfeti', 'Çiğköfteci', 'Kahvaltı', 'Sıra gecesi', 'Otel', 'Tatlıcı'].map(term => (
+    <a href={`/arama?q=${encodeURIComponent(term)}`} style="padding:.35rem .8rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:999px;color:#fff;font-size:.78rem;text-decoration:none;transition:background .15s">{term}</a>
+   ))}
+  </div>
+ )}
  </div>
  </div>
 
