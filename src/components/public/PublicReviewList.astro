@@ -1,10 +1,16 @@
 ---
 type ReviewItem = {
+  id?: string;
   rating: number;
   title?: string | null;
   content: string;
   created_at: string;
   helpful_count?: number | null;
+  images?: string[] | null;
+  owner_response?: string | null;
+  owner_responded_at?: string | null;
+  is_verified?: boolean | null;
+  visit_type?: string | null;
   user_name?: string | null;
   user_avatar?: string | null;
 };
@@ -13,9 +19,10 @@ interface Props {
   title?: string;
   items: ReviewItem[];
   emptyText?: string;
+  isAuthenticated?: boolean;
 }
 
-const { title = 'Yorumlar', items = [], emptyText = 'Henüz yorum yok.' } = Astro.props;
+const { title = 'Yorumlar', items = [], emptyText = 'Henüz yorum yok.', isAuthenticated = false } = Astro.props;
 ---
 
 <section class="prv">
@@ -28,21 +35,21 @@ const { title = 'Yorumlar', items = [], emptyText = 'Henüz yorum yok.' } = Astr
   ) : (
     <div class="prv-list">
       {items.map((item) => (
-        <article class="prv-item">
+        <article class="prv-item" data-review-id={item.id}>
           <header class="prv-head">
             {item.user_avatar ? (
-              <img src={item.user_avatar} alt={item.user_name || 'Üye'} loading="lazy" class="prv-avatar" />
+              <img src={item.user_avatar} alt={item.user_name || 'Üye'} loading="lazy" width={36} height={36} class="prv-avatar" />
             ) : (
               <div class="prv-avatar prv-avatar--fallback">{(item.user_name || 'U').charAt(0)}</div>
             )}
             <div class="prv-author">
-              <p class="prv-name">{item.user_name || 'Üye'}</p>
+              <p class="prv-name">
+                {item.user_name || 'Üye'}
+                {item.is_verified && <span class="prv-badge prv-badge--verified" title="Doğrulanmış ziyaret">✓ Doğrulanmış</span>}
+                {item.visit_type && <span class="prv-badge prv-badge--visit">{item.visit_type}</span>}
+              </p>
               <p class="prv-date">
-                {new Date(item.created_at).toLocaleDateString('tr-TR', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                {new Date(item.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
               </p>
             </div>
             <div class="prv-stars" aria-label={`${item.rating} yıldız`}>
@@ -55,125 +62,159 @@ const { title = 'Yorumlar', items = [], emptyText = 'Henüz yorum yok.' } = Astr
           {item.title && <h3 class="prv-item-title">{item.title}</h3>}
           <p class="prv-content">{item.content}</p>
 
-          {Boolean(item.helpful_count) && (
-            <p class="prv-helpful">{item.helpful_count} kişi faydalı buldu</p>
+          {item.images && item.images.length > 0 && (
+            <div class="prv-photos">
+              {item.images.slice(0, 4).map((url, i) => (
+                <a href={url} target="_blank" rel="noopener noreferrer" class="prv-photo">
+                  <img src={url} alt={`Yorum fotoğrafı ${i + 1}`} loading="lazy" width={120} height={120} />
+                </a>
+              ))}
+            </div>
           )}
+
+          {item.owner_response && (
+            <div class="prv-response">
+              <p class="prv-response-head">
+                <strong>İşletme cevabı</strong>
+                {item.owner_responded_at && (
+                  <span class="prv-response-date">
+                    {new Date(item.owner_responded_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </span>
+                )}
+              </p>
+              <p class="prv-response-text">{item.owner_response}</p>
+            </div>
+          )}
+
+          <div class="prv-actions">
+            <button
+              type="button"
+              class="prv-btn prv-btn--helpful"
+              data-review-id={item.id}
+              data-vote="helpful"
+              disabled={!isAuthenticated}
+              title={isAuthenticated ? 'Yararlı oy ver' : 'Yararlı oy vermek için giriş yapın'}
+            >
+              👍 Yararlı <span class="prv-helpful-count">{item.helpful_count || 0}</span>
+            </button>
+
+            {isAuthenticated && (
+              <button
+                type="button"
+                class="prv-btn prv-btn--flag"
+                data-review-id={item.id}
+                title="Yorumu şikayet et"
+              >
+                🚩 Şikayet
+              </button>
+            )}
+
+            <a
+              href={`#yorum-${item.id}`}
+              class="prv-btn prv-btn--share"
+              title="Bu yoruma bağlantı"
+              aria-label="Yoruma kalıcı bağlantı"
+            >
+              🔗 Paylaş
+            </a>
+          </div>
         </article>
       ))}
     </div>
   )}
 </section>
 
+<script>
+  // Helpful + flag butonları için inline behavior
+  document.querySelectorAll('.prv-btn--helpful').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const id = button.dataset.reviewId;
+      if (!id || button.disabled) return;
+      button.disabled = true;
+      try {
+        const res = await fetch(`/api/reviews/${id}/helpful`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vote: 'helpful' }),
+        });
+        const data = await res.json();
+        if (res.ok && data?.data?.helpful_count !== undefined) {
+          const countEl = button.querySelector('.prv-helpful-count');
+          if (countEl) countEl.textContent = String(data.data.helpful_count);
+          button.classList.add('prv-btn--active');
+        }
+      } catch {
+        button.disabled = false;
+      }
+    });
+  });
+
+  document.querySelectorAll('.prv-btn--flag').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const button = e.currentTarget as HTMLButtonElement;
+      const id = button.dataset.reviewId;
+      if (!id) return;
+      const reason = prompt('Neden şikayet ediyorsunuz?\n(spam, taciz, yanıltıcı, küfür, vs.)');
+      if (!reason) return;
+      try {
+        const res = await fetch(`/api/reviews/${id}/flag`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ flag_reason: 'inappropriate', description: reason.slice(0, 500) }),
+        });
+        if (res.ok) {
+          alert('Şikayetiniz alındı, moderasyon ekibimiz inceleyecek.');
+          button.textContent = '✓ Şikayet alındı';
+          button.disabled = true;
+        }
+      } catch {
+        alert('Şikayet gönderilemedi.');
+      }
+    });
+  });
+</script>
+
 <style>
-  .prv-title {
-    margin: 0 0 1rem;
-    color: var(--public-text);
-    font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: 1.45rem;
-    font-weight: 700;
-  }
+  .prv-title { margin: 0 0 1rem; color: var(--public-text); font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.45rem; font-weight: 700; }
+  .prv-count { color: var(--public-accent); font-size: 0.85em; }
+  .prv-empty { margin: 0; color: var(--public-muted); font-size: 1rem; line-height: 1.7; }
+  .prv-list { display: flex; flex-direction: column; gap: 1.1rem; }
+  .prv-item { border-top: 1px solid var(--public-border-soft); padding-top: 1.1rem; }
 
-  .prv-count {
-    color: var(--public-accent);
-    font-size: 0.85em;
-  }
+  .prv-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+  .prv-avatar { width: 2.2rem; height: 2.2rem; flex-shrink: 0; border-radius: 999px; object-fit: cover; border: 1px solid var(--public-border); }
+  .prv-avatar--fallback { display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--public-accent), var(--public-warning)); color: #fff; font-size: 0.85rem; font-weight: 700; }
 
-  .prv-empty {
-    margin: 0;
-    color: var(--public-muted);
-    font-size: 1rem;
-    line-height: 1.7;
-  }
+  .prv-author { flex: 1; min-width: 0; }
+  .prv-name { margin: 0; color: var(--public-text); font-size: 0.88rem; font-weight: 700; line-height: 1.2; display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem; }
+  .prv-date { margin: 0; color: var(--public-muted); font-size: 0.72rem; }
 
-  .prv-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
+  .prv-badge { display: inline-flex; align-items: center; padding: 0.08rem 0.4rem; border-radius: 999px; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.02em; }
+  .prv-badge--verified { background: rgba(44, 122, 82, 0.12); color: #2C7A52; }
+  .prv-badge--visit { background: rgba(192, 87, 31, 0.10); color: #C0571F; }
 
-  .prv-item {
-    border-top: 1px solid var(--public-border-soft);
-    padding-top: 1rem;
-  }
+  .prv-stars { display: inline-flex; gap: 0.12rem; flex-shrink: 0; }
+  .prv-star { color: var(--public-border); font-size: 0.95rem; }
+  .prv-star--filled { color: var(--public-warning); }
 
-  .prv-head {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.6rem;
-  }
+  .prv-item-title { margin: 0 0 0.35rem; color: var(--public-text); font-size: 0.95rem; font-weight: 700; }
+  .prv-content { margin: 0; color: var(--public-text-soft); font-size: 0.88rem; line-height: 1.68; white-space: pre-wrap; }
 
-  .prv-avatar {
-    width: 2.2rem;
-    height: 2.2rem;
-    flex-shrink: 0;
-    border-radius: 999px;
-    object-fit: cover;
-    border: 1px solid var(--public-border);
-  }
+  .prv-photos { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
+  .prv-photo { display: inline-block; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; border: 1px solid var(--public-border-soft); }
+  .prv-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+  .prv-photo:hover img { transform: scale(1.05); }
 
-  .prv-avatar--fallback {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, var(--public-accent), var(--public-warning));
-    color: #fff;
-    font-size: 0.85rem;
-    font-weight: 700;
-  }
+  .prv-response { margin-top: 0.85rem; padding: 0.75rem 1rem; background: rgba(192, 87, 31, 0.05); border-left: 3px solid var(--public-accent); border-radius: 0 4px 4px 0; }
+  .prv-response-head { margin: 0 0 0.3rem; font-size: 0.78rem; color: var(--public-text); display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+  .prv-response-date { color: var(--public-muted); font-size: 0.7rem; font-weight: 400; }
+  .prv-response-text { margin: 0; color: var(--public-text-soft); font-size: 0.85rem; line-height: 1.6; white-space: pre-wrap; }
 
-  .prv-author {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .prv-name {
-    margin: 0;
-    color: var(--public-text);
-    font-size: 0.88rem;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-
-  .prv-date {
-    margin: 0;
-    color: var(--public-muted);
-    font-size: 0.72rem;
-  }
-
-  .prv-stars {
-    display: inline-flex;
-    gap: 0.12rem;
-    flex-shrink: 0;
-  }
-
-  .prv-star {
-    color: var(--public-border);
-    font-size: 0.95rem;
-  }
-
-  .prv-star--filled {
-    color: var(--public-warning);
-  }
-
-  .prv-item-title {
-    margin: 0 0 0.35rem;
-    color: var(--public-text);
-    font-size: 0.95rem;
-    font-weight: 700;
-  }
-
-  .prv-content {
-    margin: 0;
-    color: var(--public-text-soft);
-    font-size: 0.88rem;
-    line-height: 1.68;
-    white-space: pre-wrap;
-  }
-
-  .prv-helpful {
-    margin: 0.5rem 0 0;
-    color: var(--public-muted);
-    font-size: 0.72rem;
-  }
+  .prv-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.7rem; }
+  .prv-btn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.35rem 0.7rem; background: rgba(184, 115, 51, 0.06); border: 1px solid rgba(184, 115, 51, 0.18); border-radius: 5px; color: var(--public-text-soft); font-size: 0.74rem; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.15s; }
+  .prv-btn:hover:not(:disabled) { background: rgba(184, 115, 51, 0.12); border-color: rgba(184, 115, 51, 0.32); color: var(--public-text); }
+  .prv-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .prv-btn--active { background: rgba(44, 122, 82, 0.12); border-color: rgba(44, 122, 82, 0.3); color: #2C7A52; }
+  .prv-helpful-count { background: rgba(184, 115, 51, 0.12); padding: 0.1rem 0.4rem; border-radius: 999px; font-size: 0.7rem; }
 </style>

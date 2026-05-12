@@ -178,13 +178,14 @@ try {
  reviews = await getCachedPublicRouteData(`page:isletme:reviews:${place.id}`, async () => {
   const result = await query(
    `SELECT r.id, r.rating, r.title, r.content, r.created_at, r.helpful_count,
+     r.images, r.owner_response, r.owner_responded_at, r.is_verified, r.visit_type,
      u.full_name AS user_name, u.username AS user_username, u.avatar_url AS user_avatar
     FROM reviews r
     LEFT JOIN users u ON u.id = r.user_id
     WHERE r.place_id = $1
       AND COALESCE(r.is_hidden, false) = false
       AND COALESCE(r.is_approved, true) = true
-    ORDER BY r.created_at DESC
+    ORDER BY COALESCE(r.helpful_count, 0) DESC, r.created_at DESC
     LIMIT 20`,
    [place.id]
   );
@@ -350,6 +351,7 @@ const contactRows = [
        title="Yorumlar"
        items={reviews}
        emptyText={`Henüz yorum yok. ${place.name} hakkındaki ilk deneyimi siz paylaşın.`}
+       isAuthenticated={isAuthenticated}
       />
      </div>
 
