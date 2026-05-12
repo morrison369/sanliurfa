@@ -5,10 +5,26 @@ import Image from '../components/Image.astro';
 import SwipeMatchExperience from '../components/SwipeMatchExperience';
 import { requireAuth } from '../lib/auth';
 import { getPublicAppUrl } from '../lib/public-app-url';
+import { query } from '../lib/postgres';
 
 const auth = await requireAuth(Astro.request);
 const isAuthenticated = Boolean(auth.user);
 const baseUrl = getPublicAppUrl();
+
+// Public social stats (privacy-safe: sadece aggregate sayılar)
+let socialStats = { activeProfiles: 0, matchesLast30Days: 0, swipesLast7Days: 0 };
+try {
+  const [a, b, c] = await Promise.all([
+    query<{ c: string }>(`SELECT COUNT(*) AS c FROM user_match_profiles WHERE is_discoverable = true`).catch(() => ({ rows: [{ c: '0' }] })),
+    query<{ c: string }>(`SELECT COUNT(*) AS c FROM social_matches WHERE created_at > NOW() - INTERVAL '30 days'`).catch(() => ({ rows: [{ c: '0' }] })),
+    query<{ c: string }>(`SELECT COUNT(*) AS c FROM social_swipes WHERE created_at > NOW() - INTERVAL '7 days'`).catch(() => ({ rows: [{ c: '0' }] })),
+  ]);
+  socialStats = {
+    activeProfiles: parseInt(a.rows[0]?.c || '0', 10),
+    matchesLast30Days: parseInt(b.rows[0]?.c || '0', 10),
+    swipesLast7Days: parseInt(c.rows[0]?.c || '0', 10),
+  };
+} catch { /* sessiz */ }
 
 const seo = {
   title: 'Şanlıurfa Eşleşme | Swipe, Profil ve Mesajlaşma',
@@ -81,6 +97,26 @@ const faqItems = [
               <p class="mt-1 text-lg font-black text-[#201711]">Karşılıklı beğeni</p>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Social Proof Stats Bar -->
+  <section class="bg-[#f6ead6] px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-7xl">
+      <div class="grid grid-cols-3 gap-4 rounded-2xl border border-[#e2c79d] bg-white/85 p-4 shadow-sm sm:p-6">
+        <div class="text-center">
+          <p class="font-display text-3xl font-semibold text-[#78331d] sm:text-4xl">{socialStats.activeProfiles}+</p>
+          <p class="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#66513d] sm:text-sm">Aktif Profil</p>
+        </div>
+        <div class="text-center">
+          <p class="font-display text-3xl font-semibold text-[#155344] sm:text-4xl">{socialStats.matchesLast30Days}</p>
+          <p class="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#66513d] sm:text-sm">Son 30 Gün Eşleşme</p>
+        </div>
+        <div class="text-center">
+          <p class="font-display text-3xl font-semibold text-[#8a3d22] sm:text-4xl">{socialStats.swipesLast7Days}</p>
+          <p class="mt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#66513d] sm:text-sm">Son 7 Gün Aktivite</p>
         </div>
       </div>
     </div>
