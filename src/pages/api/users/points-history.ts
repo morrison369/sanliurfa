@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
 
     const history = await queryMany(
       `SELECT id, action_type, metadata, points_earned, created_at 
-       FROM user_activity 
+       FROM user_activities 
        WHERE user_id = $1 AND action_type IN ('review_created', 'comment_posted', 'favorite_added')
        ORDER BY created_at DESC
        LIMIT $2`,
@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
 
     const summary = await queryMany(
       `SELECT action_type, COUNT(*) as count, COALESCE(SUM((metadata->>'points')::int), 0) as total_points
-       FROM user_activity 
+       FROM user_activities 
        WHERE user_id = $1 AND action_type IN ('review_created', 'comment_posted', 'favorite_added')
        GROUP BY action_type`,
       [locals.user.id]

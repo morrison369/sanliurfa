@@ -35,7 +35,7 @@ export const GET: APIRoute = async ({ locals }) => {
       queryOne<CountRow>('SELECT COUNT(*) as count FROM places'),
       queryOne<AvgRow>('SELECT AVG(rating) as avg FROM reviews'),
       queryOne<CountRow>(
-        `SELECT COUNT(DISTINCT user_id) as count FROM user_activity WHERE created_at > NOW() - INTERVAL '24 hours'`
+        `SELECT COUNT(DISTINCT user_id) as count FROM user_activities WHERE created_at > NOW() - INTERVAL '24 hours'`
       ),
       queryMany(
         `SELECT p.id, p.name,

@@ -58,11 +58,11 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
        FROM places p
        WHERE p.status = 'active'
          AND p.id NOT IN (
-           SELECT place_id FROM favorites WHERE user_id = $1
+           SELECT place_id FROM user_favorites WHERE user_id = $1
          )
          AND (
            p.category IN (
-             SELECT pl.category FROM favorites f
+             SELECT pl.category FROM user_favorites f
              JOIN places pl ON pl.id = f.place_id
              WHERE f.user_id = $1
              LIMIT 5

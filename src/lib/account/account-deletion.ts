@@ -161,9 +161,9 @@ export async function executeAccountDeletion(userId: string): Promise<void> {
       query(`UPDATE comments SET user_id = NULL, author_name = 'Silinen Kullanıcı' WHERE user_id = $1`, [userId]),
       query(`DELETE FROM direct_messages WHERE sender_id = $1`, [userId]),
       query(`DELETE FROM conversations WHERE participant_a = $1 OR participant_b = $1`, [userId]),
-      query(`DELETE FROM favorites WHERE user_id = $1`, [userId]),
+      query(`DELETE FROM user_favorites WHERE user_id = $1`, [userId]),
       query(`DELETE FROM notifications WHERE user_id = $1`, [userId]),
-      query(`DELETE FROM followers WHERE follower_id = $1 OR following_id = $1`, [userId]),
+      query(`DELETE FROM user_follows WHERE follower_id = $1 OR following_id = $1`, [userId]),
       query(`DELETE FROM user_blocks WHERE blocker_id = $1 OR blocked_id = $1`, [userId]),
       query(`DELETE FROM user_mutes WHERE muter_id = $1 OR muted_id = $1`, [userId]),
     ]);

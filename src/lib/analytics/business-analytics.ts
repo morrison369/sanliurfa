@@ -388,7 +388,7 @@ export async function getDashboardOverview(placeId: string): Promise<any | null>
         (SELECT SUM(view_count) FROM place_daily_metrics WHERE place_id = $1) as total_views,
         (SELECT COUNT(*) FROM reviews WHERE place_id = $1) as total_reviews,
         (SELECT AVG(rating) FROM reviews WHERE place_id = $1) as avg_rating,
-        (SELECT COUNT(*) FROM favorites WHERE place_id = $1) as total_favorites,
+        (SELECT COUNT(*) FROM user_favorites WHERE place_id = $1) as total_favorites,
         (SELECT COUNT(*) FROM place_interactions WHERE place_id = $1) as total_interactions
     `, [placeId]);
 

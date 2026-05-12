@@ -193,7 +193,7 @@ export class APIListingManager {
   }
 
   /**
-   * Remove from favorites
+   * Remove from user_favorites
    */
   removeFromFavorites(userId: string, listingId: string): void {
     const userFavorites = this.favorites.get(userId);

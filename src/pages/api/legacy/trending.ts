@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ url }) => {
                       COUNT(f.id) as favorite_count
                FROM places p
                LEFT JOIN reviews r ON p.id = r.place_id AND r.created_at > NOW() - INTERVAL '30 days'
-               LEFT JOIN favorites f ON p.id = f.place_id AND f.created_at > NOW() - INTERVAL '30 days'
+               LEFT JOIN user_favorites f ON p.id = f.place_id AND f.created_at > NOW() - INTERVAL '30 days'
                WHERE p.status = 'active'
                GROUP BY p.id
                ORDER BY favorite_count DESC, review_count DESC

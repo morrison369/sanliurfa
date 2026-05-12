@@ -78,7 +78,7 @@ export const GET: APIRoute = async ({ request, url }) => {
         ARRAY_AGG(DISTINCT ua.metadata->>'badgeName' FILTER (WHERE ua.action_type = 'badge_earned')) as badges,
         MAX(CASE WHEN ua.action_type = 'badge_earned' THEN ua.created_at END) as last_badge_earned
       FROM users u
-      LEFT JOIN user_activity ua ON u.id = ua.user_id
+      LEFT JOIN user_activities ua ON u.id = ua.user_id
       WHERE u.role = 'user'
       GROUP BY u.id
       HAVING COUNT(DISTINCT CASE WHEN ua.action_type = 'badge_earned' THEN ua.id END) > 0

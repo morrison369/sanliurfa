@@ -70,7 +70,7 @@ export async function getFollowingFeed(userId: string, limit: number = 50): Prom
        FROM reviews r
        JOIN users u ON r.user_id = u.id
        JOIN places p ON r.place_id = p.id
-       WHERE u.id IN (SELECT following_id FROM followers WHERE follower_id = $1)
+       WHERE u.id IN (SELECT following_id FROM user_follows WHERE follower_id = $1)
        ORDER BY r.created_at DESC
        LIMIT $2`,
       [userId, limit]

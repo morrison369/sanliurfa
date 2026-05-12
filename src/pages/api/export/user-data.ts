@@ -28,7 +28,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     // Get user's favorites
     const favoritesResult = await pool.query(
-      `SELECT place_id, created_at as added_at FROM favorites WHERE user_id = $1 ORDER BY created_at DESC`,
+      `SELECT place_id, created_at as added_at FROM user_favorites WHERE user_id = $1 ORDER BY created_at DESC`,
       [locals.user.id]
     );
 

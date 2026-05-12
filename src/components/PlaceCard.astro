@@ -1,6 +1,7 @@
 ---
 import { Icon } from 'astro-icon/components';
 import Image from './Image.astro';
+import FavoriteButton from './places/FavoriteButton.astro';
 import { resolvePlaceImage } from '../lib/public-image-resolvers';
 
 interface Props {
@@ -26,6 +27,8 @@ interface Props {
  };
  compact?: boolean;
 }
+
+const isAuthenticated = Boolean(Astro.locals.user?.id);
 
 const {
  title, description, image, category, rating, reviewCount, slug,
@@ -79,7 +82,12 @@ const catIcon = categoryIcons[placeCategory] || categoryIcons.general;
 const catLabel = categoryNames[placeCategory] || placeCategory.charAt(0).toUpperCase() + placeCategory.slice(1);
 ---
 
-<article class={`group bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-xl overflow-hidden hover:border-[var(--border)] hover:shadow-lg hover:shadow-[rgba(31,20,16,0.08)] transition-all duration-200 ${compact ? '' : ''}`}>
+<article class={`group relative bg-[var(--bg-card)] border border-[var(--border-soft)] rounded-xl overflow-hidden hover:border-[var(--border)] hover:shadow-lg hover:shadow-[rgba(31,20,16,0.08)] transition-all duration-200 ${compact ? '' : ''}`}>
+ {place?.id && (
+  <div style="position:absolute;top:.65rem;right:.65rem;z-index:10">
+   <FavoriteButton placeId={place.id} placeSlug={placeSlug} isAuthenticated={isAuthenticated} variant="card" />
+  </div>
+ )}
  <a href={`/isletme/${placeSlug}`} class="block">
   <div class="relative overflow-hidden aspect-[4/3] bg-[var(--bg-surface)]">
    <!-- CSS placeholder layer: Picture yüklenemezse arkadan görünür (kategori ikon) -->
@@ -108,7 +116,7 @@ const catLabel = categoryNames[placeCategory] || placeCategory.charAt(0).toUpper
 
    {placeRating > 0 && (
     <div
-     class="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-white"
+     class="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-white"
      style="background:rgba(13,10,8,0.70);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)"
     >
      <Icon name="lucide:star" class="w-3.5 h-3.5 text-[#F5C542]" />

@@ -55,7 +55,7 @@ export const GET: APIRoute = async ({ request, url }) => {
         p.updated_at,
         COUNT(DISTINCT f.id) as favorite_count
       FROM places p
-      LEFT JOIN favorites f ON p.id = f.place_id
+      LEFT JOIN user_favorites f ON p.id = f.place_id
       WHERE p.status = 'active'
       AND to_tsvector('turkish', coalesce(p.name,'') || ' ' || coalesce(p.short_description, p.description, '')) @@ plainto_tsquery('turkish', $1)
       AND COALESCE(p.rating, 0) >= $2

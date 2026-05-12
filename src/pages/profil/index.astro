@@ -119,6 +119,12 @@ const initial = (profile?.full_name || user.email || 'U').charAt(0).toUpperCase(
       <p class="pi-points">
        <Icon name="lucide:award" style="width:.95rem;height:.95rem" />
        {profile?.points || 0} puan
+       {(() => {
+        const p = profile?.points || 0;
+        const tier = p >= 5000 ? 'Platin' : p >= 1500 ? 'Altın' : p >= 500 ? 'Gümüş' : p >= 100 ? 'Bronz' : 'Yeni Üye';
+        const color = tier === 'Platin' ? '#9F8EFF' : tier === 'Altın' ? '#D49718' : tier === 'Gümüş' ? '#9C9C9C' : tier === 'Bronz' ? '#C0571F' : '#7A6B58';
+        return <span style={`margin-left:.5rem;padding:.15rem .55rem;background:${color}15;color:${color};border:1px solid ${color}40;border-radius:999px;font-size:.72rem;font-weight:700`}>{tier}</span>;
+       })()}
       </p>
      </div>
     </ProfileSidebar>

@@ -6,6 +6,7 @@
  */
 import { logger } from '../logging';
 import { query } from '../postgres';
+import { notifyEventSubmissionReceived } from '../email/submission-notifications';
 
 export interface EventApplicationInput {
   title: string;
@@ -105,6 +106,9 @@ export async function submitEventApplication(
     organizerEmail,
     title,
   });
+
+  // Fire-and-forget email notification (request latency'ye etki etmesin)
+  notifyEventSubmissionReceived(organizerEmail, organizerName, title).catch(() => null);
 
   return {
     success: true,

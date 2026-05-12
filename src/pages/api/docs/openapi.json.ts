@@ -1861,14 +1861,14 @@ export const GET: APIRoute = async () => {
           },
         },
         delete: {
-          summary: 'Remove place from favorites',
+          summary: 'Remove place from user_favorites',
           tags: ['Favorites'],
           security: [{ bearerAuth: [] }],
           parameters: [
             { name: 'placeId', in: 'query', required: true, schema: { type: 'string' } },
           ],
           responses: {
-            '200': { description: 'Removed from favorites' },
+            '200': { description: 'Removed from user_favorites' },
             '401': {
               description: 'Unauthorized',
               content: {
@@ -2019,7 +2019,7 @@ export const GET: APIRoute = async () => {
             { name: 'place_id', in: 'query', required: true, schema: { type: 'string' } },
           ],
           responses: {
-            '200': { description: 'Removed from favorites' },
+            '200': { description: 'Removed from user_favorites' },
             '401': {
               description: 'Unauthorized',
               content: {

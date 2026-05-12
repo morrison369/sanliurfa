@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 
 import { logger } from '../logging';
 import { query, transaction } from '../postgres';
+import { notifyPlaceSubmissionReceived } from '../email/submission-notifications';
 
 export interface PlaceApplicationInput {
   name: string;
@@ -170,6 +171,9 @@ export async function submitPlaceApplication(
     placeId: result.id,
     ownerEmail,
   });
+
+  // Fire-and-forget email notification
+  notifyPlaceSubmissionReceived(ownerEmail, ownerName, name).catch(() => null);
 
   return {
     success: true,

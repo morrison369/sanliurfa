@@ -71,7 +71,7 @@ export async function getUserActivity(userId: string, limit: number = 20): Promi
         reference_id,
         metadata,
         created_at
-       FROM user_activity
+       FROM user_activities
        WHERE user_id = $1
        ORDER BY created_at DESC
        LIMIT $2`,

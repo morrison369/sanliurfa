@@ -65,7 +65,7 @@ export const GET: APIRoute = async ({ request, url }) => {
         COUNT(DISTINCT CASE WHEN ua.action_type = 'review_created' THEN 1 END) as review_count,
         COUNT(DISTINCT CASE WHEN ua.action_type = 'favorite_added' THEN 1 END) as favorite_count
       FROM users u
-      LEFT JOIN user_activity ua ON u.id = ua.user_id AND ua.created_at > NOW() - INTERVAL '30 days'
+      LEFT JOIN user_activities ua ON u.id = ua.user_id AND ua.created_at > NOW() - INTERVAL '30 days'
       WHERE u.role = 'user'
     `;
 

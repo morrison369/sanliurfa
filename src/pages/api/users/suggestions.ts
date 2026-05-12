@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     const userPlaces = await queryMany(
       `SELECT DISTINCT p.category FROM places p
        LEFT JOIN reviews r ON p.id = r.place_id
-       LEFT JOIN favorites f ON p.id = f.place_id
+       LEFT JOIN user_favorites f ON p.id = f.place_id
        WHERE (r.user_id = $1 OR f.user_id = $1)
        LIMIT 5`,
       [userId]
@@ -58,7 +58,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
     if (categories.length > 0) {
       suggestedUsers = await queryMany(
         `SELECT DISTINCT u.id, u.full_name, u.username, u.avatar_url,
-                (SELECT COUNT(*) FROM followers WHERE follower_id = $1 AND following_id = u.id) as is_following,
+                (SELECT COUNT(*) FROM user_follows WHERE follower_id = $1 AND following_id = u.id) as is_following,
                 (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as activity_count,
                 (SELECT COUNT(DISTINCT p.category) FROM places p
                  LEFT JOIN reviews r ON p.id = r.place_id
@@ -67,7 +67,7 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
          LEFT JOIN reviews r ON u.id = r.user_id
          LEFT JOIN places p ON r.place_id = p.id
          WHERE u.id != $1
-           AND u.id NOT IN (SELECT following_id FROM followers WHERE follower_id = $1)
+           AND u.id NOT IN (SELECT following_id FROM user_follows WHERE follower_id = $1)
            AND p.category = ANY($2)
          GROUP BY u.id
          ORDER BY matching_interests DESC, activity_count DESC
@@ -84,11 +84,11 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 
       const additionalUsers = await queryMany(
         `SELECT u.id, u.full_name, u.username, u.avatar_url,
-                (SELECT COUNT(*) FROM followers WHERE follower_id = $1 AND following_id = u.id) as is_following,
+                (SELECT COUNT(*) FROM user_follows WHERE follower_id = $1 AND following_id = u.id) as is_following,
                 (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as activity_count
          FROM users u
          WHERE u.id != $1
-           AND u.id NOT IN (SELECT following_id FROM followers WHERE follower_id = $1)
+           AND u.id NOT IN (SELECT following_id FROM user_follows WHERE follower_id = $1)
            AND NOT (u.id = ANY($2::uuid[]))
          ORDER BY activity_count DESC
          LIMIT $3`,

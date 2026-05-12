@@ -98,21 +98,31 @@ async function main() {
   let ok = 0;
   let fail = 0;
   const total = files.length;
+  const CONCURRENCY = 8; // 8 paralel SFTP put — 100 Mbit hattı doyurur
 
-  for (const { local, rel } of files) {
-    const remotePath = `${REMOTE_DIR}/dist/server/${rel}`;
-    try {
-      await sftp.put(local, remotePath);
-      ok++;
-      if (ok % 100 === 0) process.stdout.write(`  ${ok}/${total} yüklendi...\n`);
-    } catch (e) {
-      console.error(`✗ ${rel}: ${e.message}`);
-      fail++;
+  // Concurrent batch processing
+  let cursor = 0;
+  async function worker() {
+    while (cursor < files.length) {
+      const idx = cursor++;
+      const { local, rel } = files[idx];
+      const remotePath = `${REMOTE_DIR}/dist/server/${rel}`;
+      try {
+        await sftp.put(local, remotePath);
+        ok++;
+        if (ok % 100 === 0) process.stdout.write(`  ${ok}/${total} yüklendi...\n`);
+      } catch (e) {
+        console.error(`✗ ${rel}: ${e.message}`);
+        fail++;
+      }
     }
   }
+  const startedAt = Date.now();
+  await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+  const elapsedSec = ((Date.now() - startedAt) / 1000).toFixed(1);
 
   await sftp.end();
-  console.log(`\nSFTP kapatıldı. ${ok} yüklendi, ${fail} hata.`);
+  console.log(`\nSFTP kapatıldı. ${ok} yüklendi (${elapsedSec}s, ${CONCURRENCY}x concurrent), ${fail} hata.`);
 
   if (fail > 0) {
     console.error('Hatalar var, işlem durduruluyor.');

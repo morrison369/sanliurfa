@@ -31,7 +31,7 @@ export async function followUser(followerId: string, followedId: string): Promis
 
     // Atomic INSERT (HARD RULE #47): no SELECT-then-INSERT, no error.message parsing
     const inserted = await queryOne(
-      `INSERT INTO followers (follower_id, following_id, created_at)
+      `INSERT INTO user_follows (follower_id, following_id, created_at)
        VALUES ($1, $2, NOW())
        ON CONFLICT (follower_id, following_id) DO NOTHING
        RETURNING follower_id`,
@@ -68,7 +68,7 @@ export async function followUser(followerId: string, followedId: string): Promis
 export async function unfollowUser(followerId: string, followedId: string): Promise<boolean> {
   try {
     const result = await query(
-      'DELETE FROM followers WHERE follower_id = $1 AND following_id = $2',
+      'DELETE FROM user_follows WHERE follower_id = $1 AND following_id = $2',
       [followerId, followedId]
     );
 
@@ -101,7 +101,7 @@ export async function unfollowUser(followerId: string, followedId: string): Prom
 export async function isFollowing(followerId: string, followedId: string): Promise<boolean> {
   try {
     const result = await queryOne(
-      'SELECT id FROM followers WHERE follower_id = $1 AND following_id = $2 LIMIT 1',
+      'SELECT id FROM user_follows WHERE follower_id = $1 AND following_id = $2 LIMIT 1',
       [followerId, followedId]
     );
     return !!result;
@@ -135,9 +135,9 @@ export async function getFollowers(userId: string, limit: number = 50, offset: n
         u.avatar_url as avatar,
         u.points,
         u.level,
-        (SELECT COUNT(*) FROM followers WHERE following_id = u.id) as followers_count,
-        (SELECT COUNT(*) FROM followers WHERE follower_id = u.id) as following_count
-       FROM followers uf
+        (SELECT COUNT(*) FROM user_follows WHERE following_id = u.id) as followers_count,
+        (SELECT COUNT(*) FROM user_follows WHERE follower_id = u.id) as following_count
+       FROM user_follows uf
        JOIN users u ON uf.follower_id = u.id
        WHERE uf.following_id = $1
        ORDER BY uf.created_at DESC
@@ -187,9 +187,9 @@ export async function getFollowing(userId: string, limit: number = 50, offset: n
         u.avatar_url as avatar,
         u.points,
         u.level,
-        (SELECT COUNT(*) FROM followers WHERE following_id = u.id) as followers_count,
-        (SELECT COUNT(*) FROM followers WHERE follower_id = u.id) as following_count
-       FROM followers uf
+        (SELECT COUNT(*) FROM user_follows WHERE following_id = u.id) as followers_count,
+        (SELECT COUNT(*) FROM user_follows WHERE follower_id = u.id) as following_count
+       FROM user_follows uf
        JOIN users u ON uf.following_id = u.id
        WHERE uf.follower_id = $1
        ORDER BY uf.created_at DESC
@@ -232,7 +232,7 @@ export async function getFollowerCount(userId: string): Promise<number> {
     }
 
     const result = await queryOne(
-      'SELECT COUNT(*) as count FROM followers WHERE following_id = $1',
+      'SELECT COUNT(*) as count FROM user_follows WHERE following_id = $1',
       [userId]
     );
 
@@ -262,7 +262,7 @@ export async function getFollowingCount(userId: string): Promise<number> {
     }
 
     const result = await queryOne(
-      'SELECT COUNT(*) as count FROM followers WHERE follower_id = $1',
+      'SELECT COUNT(*) as count FROM user_follows WHERE follower_id = $1',
       [userId]
     );
 

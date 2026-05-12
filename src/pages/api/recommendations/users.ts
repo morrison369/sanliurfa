@@ -22,7 +22,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
               (SELECT COUNT(*) FROM reviews WHERE user_id = u.id) as review_count
        FROM users u
        WHERE u.id != $1
-       AND u.id NOT IN (SELECT following_id FROM followers WHERE follower_id = $1)
+       AND u.id NOT IN (SELECT following_id FROM user_follows WHERE follower_id = $1)
        AND u.role = 'user'
        ORDER BY u.points DESC, u.level DESC
        LIMIT $2`,

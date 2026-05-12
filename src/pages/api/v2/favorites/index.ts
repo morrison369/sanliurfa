@@ -43,7 +43,7 @@ export const GET: APIRoute = async ({ request }) => {
         p.thumbnail_url, p.rating, p.review_count,
         p.price_range, p.address,
         c.name as category_name, c.icon as category_icon
-      FROM favorites f
+      FROM user_favorites f
       JOIN places p ON f.place_id = p.id
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE f.user_id = $1 AND p.status = 'active'
@@ -125,7 +125,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     await query(
-      `INSERT INTO favorites (user_id, place_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      `INSERT INTO user_favorites (user_id, place_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [user.userId, place_id]
     );
 
@@ -142,7 +142,7 @@ export const POST: APIRoute = async ({ request }) => {
   }
 };
 
-// DELETE /api/v2/favorites - Remove from favorites
+// DELETE /api/v2/favorites - Remove from user_favorites
 export const DELETE: APIRoute = async ({ request, url }) => {
   try {
     const authHeader = request.headers.get('Authorization');
@@ -181,7 +181,7 @@ export const DELETE: APIRoute = async ({ request, url }) => {
     }
 
     await query(
-      `DELETE FROM favorites WHERE user_id = $1 AND place_id = $2`,
+      `DELETE FROM user_favorites WHERE user_id = $1 AND place_id = $2`,
       [user.userId, placeId]
     );
 

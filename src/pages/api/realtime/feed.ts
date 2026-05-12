@@ -63,8 +63,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
               if (isFirstTick) {
                 isFirstTick = false;
                 const baselineResult = await queryOne(
-                  `SELECT ua.id FROM user_activity ua
-                   INNER JOIN followers f ON ua.user_id = f.following_id
+                  `SELECT ua.id FROM user_activities ua
+                   INNER JOIN user_follows f ON ua.user_id = f.following_id
                    WHERE f.follower_id = $1
                    ORDER BY ua.created_at DESC LIMIT 1`,
                   [user.id]
@@ -79,9 +79,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
               let query = `SELECT ua.id, ua.user_id, ua.action_type, ua.reference_type, ua.reference_id,
                                   ua.metadata, ua.created_at,
                                   u.full_name, u.username, u.avatar_url
-                           FROM user_activity ua
+                           FROM user_activities ua
                            INNER JOIN users u ON ua.user_id = u.id
-                           INNER JOIN followers f ON ua.user_id = f.following_id
+                           INNER JOIN user_follows f ON ua.user_id = f.following_id
                            WHERE f.follower_id = $1
                              AND ua.created_at > NOW() - INTERVAL '1 hour'`;
 

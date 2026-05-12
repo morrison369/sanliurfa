@@ -81,7 +81,7 @@ export const GET: APIRoute = async ({ request, params }) => {
         COUNT(CASE WHEN action_type = 'favorite_added' THEN 1 END) as favorite_count,
         COUNT(CASE WHEN action_type = 'comment_posted' THEN 1 END) as comment_count,
         COUNT(CASE WHEN action_type = 'badge_earned' THEN 1 END) as badge_count
-      FROM user_activity
+      FROM user_activities
       WHERE user_id = $1`,
       [id]
     );

@@ -37,7 +37,7 @@ export const GET: APIRoute = async ({ request }) => {
     const result = await query(`
       SELECT 
         u.id, u.name, u.email, u.avatar_url as avatar, u.created_at,
-        (SELECT COUNT(*) FROM favorites WHERE user_id = u.id) as favorites_count,
+        (SELECT COUNT(*) FROM user_favorites WHERE user_id = u.id) as favorites_count,
         (SELECT COUNT(*) FROM reviews WHERE user_id = u.id AND status = 'active') as reviews_count,
         (SELECT COUNT(*) FROM collections WHERE user_id = u.id) as collections_count
       FROM users u

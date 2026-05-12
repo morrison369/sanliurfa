@@ -36,8 +36,8 @@ export const GET: APIRoute = async ({ request, url }) => {
       `SELECT u.id, u.full_name, u.username, u.avatar_url,
               (SELECT COUNT(*) FROM reviews WHERE user_id = u.id AND created_at >= NOW() - (CAST($1 AS INTEGER) || ' days')::INTERVAL) as review_count,
               (SELECT COUNT(*) FROM comments WHERE user_id = u.id AND created_at >= NOW() - (CAST($1 AS INTEGER) || ' days')::INTERVAL) as comment_count,
-              (SELECT COUNT(*) FROM favorites WHERE user_id = u.id AND created_at >= NOW() - (CAST($1 AS INTEGER) || ' days')::INTERVAL) as favorite_count,
-              (SELECT COUNT(*) FROM followers WHERE following_id = u.id) as follower_count,
+              (SELECT COUNT(*) FROM user_favorites WHERE user_id = u.id AND created_at >= NOW() - (CAST($1 AS INTEGER) || ' days')::INTERVAL) as favorite_count,
+              (SELECT COUNT(*) FROM user_follows WHERE following_id = u.id) as follower_count,
               (SELECT COUNT(DISTINCT p.category) FROM places p
                LEFT JOIN reviews r ON p.id = r.place_id
                WHERE r.user_id = u.id) as expertise_count
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ request, url }) => {
        ORDER BY (
          (SELECT COUNT(*) FROM reviews WHERE user_id = u.id AND created_at >= NOW() - (CAST($1 AS INTEGER) || ' days')::INTERVAL) * 2 +
          (SELECT COUNT(*) FROM comments WHERE user_id = u.id AND created_at >= NOW() - (CAST($1 AS INTEGER) || ' days')::INTERVAL) +
-         (SELECT COUNT(*) FROM followers WHERE following_id = u.id) * 0.5
+         (SELECT COUNT(*) FROM user_follows WHERE following_id = u.id) * 0.5
        ) DESC
        LIMIT $2`,
       [safePeriod, limit]

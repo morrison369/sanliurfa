@@ -124,7 +124,7 @@ export const POST: APIRoute = async (context) => {
   }
 };
 
-// Remove from favorites
+// Remove from user_favorites
 export const DELETE: APIRoute = async (context) => {
   try {
     const auth = await authenticateUser(context);
@@ -158,7 +158,7 @@ export const DELETE: APIRoute = async (context) => {
 
     return apiResponse({
       success: true,
-      message: 'Removed from favorites'
+      message: 'Removed from user_favorites'
     }, HttpStatus.OK);
 
   } catch (error) {

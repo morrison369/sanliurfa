@@ -38,7 +38,7 @@ export async function followUser(followerId: string, followingId: string): Promi
     }
 
     const result = await query(
-      `INSERT INTO followers (follower_id, following_id) VALUES ($1, $2)
+      `INSERT INTO user_follows (follower_id, following_id) VALUES ($1, $2)
        ON CONFLICT (follower_id, following_id) DO NOTHING`,
       [followerId, followingId]
     );
@@ -82,7 +82,7 @@ export async function followUser(followerId: string, followingId: string): Promi
 export async function unfollowUser(followerId: string, followingId: string): Promise<boolean> {
   try {
     const result = await query(
-      'DELETE FROM followers WHERE follower_id = $1 AND following_id = $2',
+      'DELETE FROM user_follows WHERE follower_id = $1 AND following_id = $2',
       [followerId, followingId]
     );
 
@@ -128,7 +128,7 @@ export async function getFollowers(userId: string, limit: number = 50): Promise<
         u.level,
         u.created_at
       FROM users u
-      INNER JOIN followers f ON u.id = f.follower_id
+      INNER JOIN user_follows f ON u.id = f.follower_id
       WHERE f.following_id = $1
       ORDER BY f.created_at DESC
       LIMIT $2`,
@@ -181,7 +181,7 @@ export async function getFollowing(userId: string, limit: number = 50): Promise<
         u.level,
         u.created_at
       FROM users u
-      INNER JOIN followers f ON u.id = f.following_id
+      INNER JOIN user_follows f ON u.id = f.following_id
       WHERE f.follower_id = $1
       ORDER BY f.created_at DESC
       LIMIT $2`,
@@ -236,11 +236,11 @@ export async function getMutualFriends(userId: string, limit: number = 50): Prom
       FROM users u
       WHERE EXISTS (
         -- User follows me
-        SELECT 1 FROM followers WHERE follower_id = u.id AND following_id = $1
+        SELECT 1 FROM user_follows WHERE follower_id = u.id AND following_id = $1
       )
       AND EXISTS (
         -- I follow user
-        SELECT 1 FROM followers WHERE follower_id = $1 AND following_id = u.id
+        SELECT 1 FROM user_follows WHERE follower_id = $1 AND following_id = u.id
       )
       ORDER BY u.created_at DESC
       LIMIT $2`,
@@ -277,10 +277,10 @@ export async function getFollowerStats(userId: string, currentUserId?: string): 
   try {
     const result = await queryOne(
       `SELECT
-        (SELECT COUNT(*) FROM followers WHERE following_id = $1) as followers_count,
-        (SELECT COUNT(*) FROM followers WHERE follower_id = $1) as following_count,
-        (SELECT COUNT(*) FROM followers WHERE follower_id = $2 AND following_id = $1) as is_following,
-        (SELECT COUNT(*) FROM followers WHERE follower_id = $1 AND following_id = $2) as is_follower
+        (SELECT COUNT(*) FROM user_follows WHERE following_id = $1) as followers_count,
+        (SELECT COUNT(*) FROM user_follows WHERE follower_id = $1) as following_count,
+        (SELECT COUNT(*) FROM user_follows WHERE follower_id = $2 AND following_id = $1) as is_following,
+        (SELECT COUNT(*) FROM user_follows WHERE follower_id = $1 AND following_id = $2) as is_follower
       FROM users WHERE id = $1`,
       [userId, currentUserId || null]
     );
@@ -305,7 +305,7 @@ export async function getFollowerStats(userId: string, currentUserId?: string): 
 export async function isFollowing(followerId: string, followingId: string): Promise<boolean> {
   try {
     const result = await queryOne(
-      'SELECT id FROM followers WHERE follower_id = $1 AND following_id = $2',
+      'SELECT id FROM user_follows WHERE follower_id = $1 AND following_id = $2',
       [followerId, followingId]
     );
 

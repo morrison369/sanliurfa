@@ -48,10 +48,10 @@ export async function getActivityFeed(userId: string, limit: number = 50, offset
         ua.reference_id,
         ua.metadata,
         ua.created_at
-      FROM user_activity ua
+      FROM user_activities ua
       JOIN users u ON ua.user_id = u.id
       WHERE ua.user_id IN (
-        SELECT following_id FROM followers WHERE follower_id = $1
+        SELECT following_id FROM user_follows WHERE follower_id = $1
       )
       OR ua.user_id = $1
       ORDER BY ua.created_at DESC
@@ -103,7 +103,7 @@ export async function getPersonalActivity(userId: string, limit: number = 30): P
         ua.reference_id,
         ua.metadata,
         ua.created_at
-      FROM user_activity ua
+      FROM user_activities ua
       JOIN users u ON ua.user_id = u.id
       WHERE ua.user_id = $1
       ORDER BY ua.created_at DESC
@@ -150,7 +150,7 @@ export async function getUserActivities(targetUserId: string, limit: number = 20
         ua.reference_id,
         ua.metadata,
         ua.created_at
-      FROM user_activity ua
+      FROM user_activities ua
       JOIN users u ON ua.user_id = u.id
       WHERE ua.user_id = $1
       ORDER BY ua.created_at DESC
@@ -198,7 +198,7 @@ export async function getTrendingActivities(limit: number = 10): Promise<FeedIte
         ua.metadata,
         ua.created_at,
         COUNT(*) as interaction_count
-      FROM user_activity ua
+      FROM user_activities ua
       JOIN users u ON ua.user_id = u.id
       WHERE ua.created_at > NOW() - INTERVAL '7 days'
       GROUP BY ua.id, u.full_name, u.avatar_url
