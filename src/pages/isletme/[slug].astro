@@ -3,6 +3,7 @@ import DetailTemplate from '../../components/templates/DetailTemplate.astro';
 import { Icon } from 'astro-icon/components';
 import PublicDetailBody from '../../components/public/PublicDetailBody.astro';
 import PublicDetailHero from '../../components/public/PublicDetailHero.astro';
+import FavoriteButton from '../../components/places/FavoriteButton.astro';
 import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
 import PublicInfoRows from '../../components/public/PublicInfoRows.astro';
@@ -463,6 +464,7 @@ const contactRows = [
    <a href={isAuthenticated ? `/isletme/${slug}#yorumlar` : `/giris?redirect=/isletme/${slug}#yorumlar`} class="pd-sticky-rev">
     <Icon name="lucide:message-square-plus" style="width:1rem;height:1rem" /> Yorum Yaz
    </a>
+   <FavoriteButton placeId={place.id} placeSlug={slug} isAuthenticated={isAuthenticated} variant="detail" />
   </div>
  </div>
 

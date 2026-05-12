@@ -7,13 +7,13 @@ import { logger } from '../../../lib/logging';
 import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
 
 /**
- * Generate cache key for user favorites
+ * Generate cache key for user user_favorites
  */
 function generateFavoritesCacheKey(userId: string): string {
-  return `favorites:user:${userId}`;
+  return `user_favorites:user:${userId}`;
 }
 
-// Get user favorites
+// Get user user_favorites
 export const GET: APIRoute = async ({ locals }) => {
   try {
     const user = locals.user;
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ locals }) => {
 
     const result = await query(
       `SELECT f.*, p.name as place_name, p.images as place_images, p.rating as place_rating
-       FROM favorites f
+       FROM user_favorites f
        JOIN places p ON f.place_id = p.id
        WHERE f.user_id = $1
        ORDER BY f.created_at DESC`,
@@ -63,7 +63,7 @@ export const GET: APIRoute = async ({ locals }) => {
   }
 };
 
-// Add to favorites
+// Add to user_favorites
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
@@ -92,7 +92,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // Atomic INSERT — ON CONFLICT eliminates SELECT→INSERT race (HARD RULE #47)
     const insertResult = await query(
-      `INSERT INTO favorites (place_id, user_id, created_at)
+      `INSERT INTO user_favorites (place_id, user_id, created_at)
        VALUES ($1, $2, NOW())
        ON CONFLICT (place_id, user_id) DO NOTHING
        RETURNING id, place_id, user_id, created_at`,
@@ -122,7 +122,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       metadata: { placeName: place?.name || 'Mekan', points: 5 }
     });
 
-    // Invalidate user's favorites cache
+    // Invalidate user's user_favorites cache
     const cacheKey = generateFavoritesCacheKey(user.id);
     await deleteCache(cacheKey);
 
@@ -139,7 +139,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 };
 
-// Remove from favorites
+// Remove from user_favorites
 export const DELETE: APIRoute = async ({ request, locals }) => {
   try {
     const user = locals.user;
@@ -166,9 +166,9 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
       });
     }
 
-    await query('DELETE FROM favorites WHERE place_id = $1 AND user_id = $2', [placeId, user.id]);
+    await query('DELETE FROM user_favorites WHERE place_id = $1 AND user_id = $2', [placeId, user.id]);
 
-    // Invalidate user's favorites cache
+    // Invalidate user's user_favorites cache
     const cacheKey = generateFavoritesCacheKey(user.id);
     await deleteCache(cacheKey);
 

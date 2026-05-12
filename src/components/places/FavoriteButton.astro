@@ -1,0 +1,118 @@
+---
+/**
+ * Heart button for places — toggles user_favorites via /api/favorites.
+ * Anonymous user → redirect to login. Authenticated → toggle + count update.
+ *
+ * Inline vanilla JS (no React island) — page-load'da hızlı render.
+ *
+ * Usage:
+ *   <FavoriteButton placeId={place.id} placeSlug={place.slug} isAuthenticated={isAuth} variant="card" />
+ */
+interface Props {
+  placeId: string;
+  placeSlug?: string | undefined;
+  isAuthenticated: boolean;
+  variant?: 'card' | 'detail' | undefined;
+  initialFavorited?: boolean | undefined;
+}
+
+const { placeId, placeSlug, isAuthenticated, variant = 'card', initialFavorited = false } = Astro.props;
+const loginRedirect = placeSlug ? `/giris?redirect=/isletme/${placeSlug}` : '/giris';
+---
+
+{!isAuthenticated ? (
+  <a
+    href={loginRedirect}
+    class:list={['fav-btn', `fav-btn--${variant}`]}
+    title="Favorilere eklemek için giriş yapın"
+    aria-label="Favoriye eklemek için giriş yap"
+    onclick="event.stopPropagation()"
+  >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </svg>
+  </a>
+) : (
+  <button
+    type="button"
+    class:list={['fav-btn', `fav-btn--${variant}`, initialFavorited && 'fav-btn--active']}
+    data-place-id={placeId}
+    aria-pressed={initialFavorited}
+    aria-label={initialFavorited ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+    title={initialFavorited ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+    onclick="event.stopPropagation();event.preventDefault();window.__sfToggleFavorite(this)"
+  >
+    <svg class="fav-btn__icon" width="20" height="20" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+    </svg>
+  </button>
+)}
+
+<style>
+  .fav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(192, 87, 31, 0.18);
+    color: rgba(120, 51, 29, 0.6);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+  .fav-btn:hover { color: #c0571f; border-color: rgba(192, 87, 31, 0.4); transform: scale(1.06); }
+  .fav-btn--active { color: #C0571F; background: #FFF1E5; border-color: #C0571F; }
+  .fav-btn--active .fav-btn__icon { fill: currentColor; }
+  .fav-btn--card { position: absolute; top: 0.65rem; right: 0.65rem; z-index: 5; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12); }
+  .fav-btn--detail { width: 2.6rem; height: 2.6rem; border: 1px solid rgba(192, 87, 31, 0.3); }
+  .fav-btn__icon { width: 18px; height: 18px; fill: none; transition: fill 0.15s; }
+</style>
+
+<script is:inline>
+  // Global heart toggle (page-level reuse, idempotent)
+  if (!window.__sfToggleFavorite) {
+    window.__sfToggleFavorite = async (btn) => {
+      const placeId = btn.dataset.placeId;
+      if (!placeId || btn.dataset.busy === '1') return;
+      btn.dataset.busy = '1';
+      const wasActive = btn.classList.contains('fav-btn--active');
+      // Optimistic UI
+      btn.classList.toggle('fav-btn--active');
+      btn.setAttribute('aria-pressed', String(!wasActive));
+      try {
+        if (wasActive) {
+          // remove via place_id-based DELETE on /api/favorites
+          const res = await fetch('/api/favorites', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ placeId }),
+          });
+          if (!res.ok) throw new Error('Failed');
+          btn.title = 'Favorilere ekle';
+          btn.setAttribute('aria-label', 'Favorilere ekle');
+        } else {
+          const res = await fetch('/api/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ placeId }),
+          });
+          if (!res.ok && res.status !== 400) throw new Error('Failed');
+          // 400 = "zaten favorilerde" — UI is already active, treat as success
+          btn.title = 'Favorilerden çıkar';
+          btn.setAttribute('aria-label', 'Favorilerden çıkar');
+        }
+      } catch (err) {
+        // Revert optimistic update
+        btn.classList.toggle('fav-btn--active');
+        btn.setAttribute('aria-pressed', String(wasActive));
+      } finally {
+        btn.dataset.busy = '0';
+      }
+    };
+  }
+</script>

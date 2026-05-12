@@ -29,7 +29,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     const placeholders = placeIds.map((_, i) => `($1, $${i + 2})`).join(',');
     const result = await pool.query(
-      `INSERT INTO favorites (user_id, place_id) VALUES ${placeholders}
+      `INSERT INTO user_favorites (user_id, place_id) VALUES ${placeholders}
        ON CONFLICT DO NOTHING
        RETURNING place_id`,
       [locals.user.id, ...placeIds]
