@@ -1,0 +1,256 @@
+---
+/**
+ * Vendor Review Response UI
+ * Audit Priority #7: işletme sahiplerinin yorum yanıtlama paneli.
+ *
+ * Auth: vendor + admin (admin tüm yorumları görebilir; vendor sadece kendi places'leri)
+ * Backend: /api/reviews/[id]/responses POST + review_responses + reviews.owner_response
+ */
+import Layout from '../../layouts/Layout.astro';
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/vendor/yorumlar');
+}
+
+const isAdmin = user.role === 'admin';
+const isVendor = user.role === 'vendor';
+
+if (!isAdmin && !isVendor) {
+  return Astro.redirect('/profil?error=vendor-only');
+}
+
+// Kullanıcının mekanlarındaki yorumları çek (admin: tümü, vendor: sadece owner_id=user.id)
+let reviews: any[] = [];
+let placeCount = 0;
+try {
+  const placeFilter = isAdmin ? '' : 'AND p.owner_id = $1';
+  const params = isAdmin ? [] : [user.id];
+
+  const sql = `
+    SELECT r.id, r.rating, r.title, r.content, r.created_at, r.helpful_count,
+           r.owner_response, r.owner_responded_at, r.is_verified,
+           p.id AS place_id, p.name AS place_name, p.slug AS place_slug,
+           u.full_name AS user_name, u.username, u.avatar_url
+    FROM reviews r
+    JOIN places p ON p.id = r.place_id
+    LEFT JOIN users u ON u.id = r.user_id
+    WHERE r.status = 'active'
+      AND COALESCE(r.is_hidden, false) = false
+      ${placeFilter}
+    ORDER BY (r.owner_response IS NULL) DESC, r.created_at DESC
+    LIMIT 50
+  `;
+  const result = await query(sql, params);
+  reviews = result.rows;
+
+  // Sahip olunan place sayısı
+  const placeCountSql = isAdmin
+    ? `SELECT COUNT(*) AS c FROM places WHERE status='active'`
+    : `SELECT COUNT(*) AS c FROM places WHERE owner_id = $1 AND status='active'`;
+  const pc = await query<{ c: string }>(placeCountSql, params);
+  placeCount = parseInt(pc.rows[0]?.c || '0', 10);
+} catch (e) {
+  logger.error('Vendor reviews load failed', e instanceof Error ? e : new Error(String(e)));
+}
+
+const unanswered = reviews.filter((r) => !r.owner_response).length;
+const answered = reviews.length - unanswered;
+
+const seo = {
+  title: 'İşletme Yorumları | Sanliurfa.com',
+  description: 'İşletmenizin yorumlarını görüntüleyin ve yanıt verin.',
+  noIndex: true,
+};
+---
+
+<Layout seo={seo}>
+  <style is:inline>
+    .vy-hero { background: linear-gradient(135deg, #0F0A06 0%, #1F1410 100%); padding: 2.5rem 0 1.5rem; color: #FBF6EC; }
+    .vy-hero h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(1.8rem, 3.5vw, 2.5rem); font-weight: 700; margin: 0 0 0.4rem; color: #fff; }
+    .vy-hero p { font-size: 0.9rem; color: rgba(255, 255, 255, 0.65); margin: 0; }
+    .vy-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; margin-top: 1.2rem; }
+    .vy-stat { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; padding: 0.75rem 1rem; text-align: center; }
+    .vy-stat-n { font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 700; line-height: 1; color: #f4c56e; }
+    .vy-stat-l { font-size: 0.7rem; font-weight: 600; color: rgba(255, 255, 255, 0.6); margin-top: 0.25rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .vy-body { background: var(--bg); padding: 2rem 0 4rem; }
+    .vy-empty { background: #fff; border: 1px dashed rgba(192, 87, 31, 0.3); border-radius: 8px; padding: 2.5rem 1.5rem; text-align: center; color: var(--public-muted); }
+    .vy-empty p { margin: 0; font-size: 0.92rem; line-height: 1.6; }
+    .vy-list { display: flex; flex-direction: column; gap: 1rem; }
+    .vy-item { background: #fff; border: 1px solid rgba(192, 87, 31, 0.14); border-radius: 8px; padding: 1.2rem 1.4rem; }
+    .vy-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+    .vy-place { font-size: 0.78rem; color: #C0571F; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+    .vy-place a { color: inherit; text-decoration: none; border-bottom: 1px dotted; }
+    .vy-stars { color: #d49718; font-size: 1.05rem; letter-spacing: 0.05em; }
+    .vy-stars-empty { color: rgba(212, 151, 24, 0.25); }
+    .vy-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: #7A6B58; }
+    .vy-meta strong { color: #1F1410; font-weight: 700; }
+    .vy-content-title { margin: 0 0 0.35rem; font-size: 0.98rem; font-weight: 700; color: #1F1410; }
+    .vy-content-text { margin: 0; font-size: 0.92rem; line-height: 1.7; color: #4A3C2E; white-space: pre-wrap; }
+    .vy-response { margin-top: 0.85rem; padding: 0.75rem 1rem; background: rgba(192, 87, 31, 0.05); border-left: 3px solid #C0571F; border-radius: 0 4px 4px 0; }
+    .vy-response strong { display: block; margin-bottom: 0.25rem; font-size: 0.78rem; color: #1F1410; }
+    .vy-response p { margin: 0; font-size: 0.88rem; color: #4A3C2E; line-height: 1.6; white-space: pre-wrap; }
+    .vy-form { margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid rgba(192, 87, 31, 0.08); }
+    .vy-textarea { width: 100%; min-height: 4.5rem; padding: 0.55rem 0.75rem; border: 1px solid rgba(192, 87, 31, 0.28); border-radius: 5px; background: #fdfcfa; font-size: 0.9rem; color: #1F1410; resize: vertical; font-family: inherit; line-height: 1.5; }
+    .vy-textarea:focus { outline: none; border-color: #C0571F; background: #fff; }
+    .vy-form-row { display: flex; align-items: center; gap: 0.6rem; margin-top: 0.55rem; }
+    .vy-submit { padding: 0.55rem 1.3rem; background: linear-gradient(135deg, #C0571F 0%, #9F4717 100%); color: #fff; border: none; border-radius: 5px; font-size: 0.85rem; font-weight: 700; cursor: pointer; }
+    .vy-submit:hover { opacity: 0.92; }
+    .vy-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+    .vy-counter { font-size: 0.74rem; color: #7A6B58; margin-left: auto; }
+    .vy-msg { margin-top: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.84rem; }
+    .vy-msg--ok { background: rgba(44, 122, 82, 0.08); color: #1d5e3c; border: 1px solid rgba(44, 122, 82, 0.2); }
+    .vy-msg--err { background: rgba(192, 87, 31, 0.08); color: #7d2410; border: 1px solid rgba(192, 87, 31, 0.2); }
+    .vy-badge { display: inline-block; padding: 0.12rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; }
+    .vy-badge--pending { background: rgba(212, 151, 24, 0.12); color: #8a5a10; }
+    .vy-badge--answered { background: rgba(44, 122, 82, 0.12); color: #2C7A52; }
+  </style>
+
+  <section class="vy-hero">
+    <div class="sf-container">
+      <h1>İşletme Yorumları {isAdmin && <span style="font-size:.8em;color:#f4c56e">— Admin Görünümü</span>}</h1>
+      <p>Müşteri yorumlarına yanıt verin, müşteri ilişkilerini güçlendirin.</p>
+
+      <div class="vy-stats">
+        <div class="vy-stat">
+          <div class="vy-stat-n">{placeCount}</div>
+          <div class="vy-stat-l">İşletme</div>
+        </div>
+        <div class="vy-stat">
+          <div class="vy-stat-n">{unanswered}</div>
+          <div class="vy-stat-l">Yanıtlanmamış</div>
+        </div>
+        <div class="vy-stat">
+          <div class="vy-stat-n">{answered}</div>
+          <div class="vy-stat-l">Yanıtlanmış</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="vy-body">
+    <div class="sf-container">
+      {reviews.length === 0 ? (
+        <div class="vy-empty">
+          <p>Henüz işletmeniz için yorum yok.</p>
+          {!isAdmin && (
+            <p style="margin-top:.5rem">
+              İşletme paneline gitmek için <a href="/isletme/panel" style="color:#C0571F">tıklayın</a>.
+            </p>
+          )}
+        </div>
+      ) : (
+        <div class="vy-list">
+          {reviews.map((r) => (
+            <article class="vy-item" data-review-id={r.id}>
+              <header class="vy-head">
+                <span class="vy-place">
+                  <a href={`/isletme/${r.place_slug}`}>{r.place_name}</a>
+                </span>
+                <span class="vy-stars" aria-label={`${r.rating} yıldız`}>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <span class:list={[i > r.rating && 'vy-stars-empty']}>★</span>
+                  ))}
+                </span>
+              </header>
+
+              <div class="vy-meta">
+                <strong>{r.user_name || 'Üye'}</strong>
+                <span>·</span>
+                <span>{new Date(r.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                <span>·</span>
+                <span class:list={['vy-badge', r.owner_response ? 'vy-badge--answered' : 'vy-badge--pending']}>
+                  {r.owner_response ? '✓ Yanıtlandı' : '⏳ Beklemede'}
+                </span>
+              </div>
+
+              {r.title && <h3 class="vy-content-title" style="margin-top:.55rem">{r.title}</h3>}
+              <p class="vy-content-text">{r.content}</p>
+
+              {r.owner_response ? (
+                <div class="vy-response">
+                  <strong>
+                    Sizin yanıtınız
+                    {r.owner_responded_at && (
+                      <span style="float:right;font-weight:400;font-size:.72rem;color:#7A6B58">
+                        {new Date(r.owner_responded_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
+                    )}
+                  </strong>
+                  <p>{r.owner_response}</p>
+                </div>
+              ) : (
+                <form class="vy-form" data-review-id={r.id} data-place-id={r.place_id} onsubmit="return window.__vyReply(event,this)">
+                  <textarea name="response" required minlength="10" maxlength="2000" placeholder="Yanıtınızı yazın... (10-2000 karakter)" class="vy-textarea"></textarea>
+                  <div class="vy-form-row">
+                    <button type="submit" class="vy-submit">Yanıt Gönder</button>
+                    <span class="vy-counter"><span class="vy-cnt">0</span>/2000</span>
+                  </div>
+                </form>
+              )}
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+
+  <script is:inline>
+    // textarea char counter
+    document.querySelectorAll('.vy-textarea').forEach((t) => {
+      t.addEventListener('input', () => {
+        const form = t.closest('form');
+        const cnt = form?.querySelector('.vy-cnt');
+        if (cnt) cnt.textContent = String(t.value.length);
+      });
+    });
+
+    // Yanıt gönderme
+    window.__vyReply = async (e, form) => {
+      e.preventDefault();
+      const reviewId = form.dataset.reviewId;
+      const placeId = form.dataset.placeId;
+      const textarea = form.querySelector('textarea');
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const responseText = textarea.value.trim();
+      if (responseText.length < 10) {
+        alert('Yanıt en az 10 karakter olmalı.');
+        return false;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Gönderiliyor...';
+      try {
+        const res = await fetch(`/api/reviews/${reviewId}/responses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ place_id: placeId, response_text: responseText }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || err.error || 'Yanıt gönderilemedi');
+        }
+        // Optimistic UI: form'u replace et with response block
+        const item = form.closest('.vy-item');
+        const responseHtml = `
+          <div class="vy-response">
+            <strong>Sizin yanıtınız <span style="float:right;font-weight:400;font-size:.72rem;color:#7A6B58">${new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span></strong>
+            <p>${responseText.replace(/</g, '&lt;')}</p>
+          </div>`;
+        form.outerHTML = responseHtml;
+        // Update badge
+        const badge = item.querySelector('.vy-badge');
+        if (badge) {
+          badge.className = 'vy-badge vy-badge--answered';
+          badge.textContent = '✓ Yanıtlandı';
+        }
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Yanıt Gönder';
+        alert('Hata: ' + (err.message || err));
+      }
+      return false;
+    };
+  </script>
+</Layout>
