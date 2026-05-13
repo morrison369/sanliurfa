@@ -8,17 +8,19 @@ interface Props {
 const { user } = Astro.props;
 const path = Astro.url.pathname;
 
+// Primary nav — 1024-1279px (lg breakpoint): 6 items show
 const navLinks = [
-  { href: '/mekanlar', label: 'Mekanlar' },
-  { href: '/yeme-icme', label: 'Yeme İçme' },
-  { href: '/saglik', label: 'Sağlık' },
-  { href: '/saglik/nobetci-eczaneler', label: 'Eczaneler' },
-  { href: '/konaklama', label: 'Oteller' },
-  { href: '/gezilecek-yerler', label: 'Gezilecek Yerler' },
-  { href: '/etkinlikler', label: 'Etkinlikler' },
-  { href: '/ilceler', label: 'İlçeler' },
-  { href: '/topluluk', label: 'Topluluk' },
-  { href: '/blog', label: 'Blog' },
+  { href: '/mekanlar', label: 'Mekanlar', primary: true },
+  { href: '/yeme-icme', label: 'Yeme İçme', primary: true },
+  { href: '/gezilecek-yerler', label: 'Gezilecek', primary: true },
+  { href: '/etkinlikler', label: 'Etkinlikler', primary: true },
+  { href: '/konaklama', label: 'Oteller', primary: true },
+  { href: '/blog', label: 'Blog', primary: true },
+  // Secondary — only shown at xl breakpoint (1280px+)
+  { href: '/saglik', label: 'Sağlık', primary: false },
+  { href: '/saglik/nobetci-eczaneler', label: 'Eczaneler', primary: false },
+  { href: '/ilceler', label: 'İlçeler', primary: false },
+  { href: '/topluluk', label: 'Topluluk', primary: false },
 ];
 
 const isActive = (href: string) => href !== '/' && path.startsWith(href);
@@ -38,7 +40,8 @@ const isActive = (href: string) => href !== '/' && path.startsWith(href);
         <a
           href={item.href}
           class:list={[
-                'whitespace-nowrap rounded-full px-2.5 py-2 text-xs font-semibold transition xl:px-3 xl:text-sm',
+            'whitespace-nowrap rounded-full px-2 py-2 text-xs font-semibold transition xl:px-3 xl:text-sm',
+            !item.primary && 'hidden xl:inline-flex',
             isActive(item.href)
               ? 'bg-[#f1e3ce] text-[#8a3d22]'
               : 'text-[#604c3a] hover:bg-[#f7ecd9] hover:text-[#24160f]',

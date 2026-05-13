@@ -58,18 +58,18 @@ export const GET: APIRoute = async ({ request }) => {
               const onlineCount = keys.length;
 
               // Get trending searches in last hour (top 5 by score, descending)
+              // zRange with REV option causes "ERR syntax error" on some Redis versions
+              // — using zRangeWithScores + reverse for compatibility.
               const trendingSearches = await redis.zRange(
                 'sanliurfa:trending:searches:1h',
-                0, 4,
-                { REV: true }
-              );
+                -5, -1,
+              ).then(r => r.reverse()).catch(() => []);
 
               // Get active places (places with recent views, top 5 by score)
               const activePlaces = await redis.zRange(
                 'sanliurfa:active:places:1h',
-                0, 4,
-                { REV: true }
-              );
+                -5, -1,
+              ).then(r => r.reverse()).catch(() => []);
 
               const data = {
                 type: 'update',

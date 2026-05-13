@@ -99,7 +99,7 @@ export async function getComments(
         c.id,
         c.user_id,
         u.full_name as user_name,
-        u.avatar_url as avatar as user_avatar,
+        u.avatar_url as user_avatar,
         c.target_type,
         c.target_id,
         c.parent_comment_id,
@@ -107,7 +107,7 @@ export async function getComments(
         c.helpful_count,
         c.unhelpful_count,
         (SELECT vote_type FROM comment_votes
-         WHERE comment_id = c.id AND user_id = $3
+         WHERE comment_id = c.id AND $3::uuid IS NOT NULL AND user_id = $3::uuid
          LIMIT 1) as user_vote,
         c.created_at,
         c.updated_at
@@ -119,7 +119,7 @@ export async function getComments(
          AND c.parent_comment_id IS NULL
        ORDER BY c.created_at DESC
        LIMIT $4`,
-      [targetType, targetId, userId || 'NULL', limit]
+      [targetType, targetId, userId || null, limit]
     );
 
     const comments: Comment[] = results.map((row: any) => ({

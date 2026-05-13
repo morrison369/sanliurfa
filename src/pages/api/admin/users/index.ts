@@ -37,8 +37,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     if (search.length > 200) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'search 200 karakterden uzun olamaz', type: '/problems/admin-users-search-too-long', instance: '/api/admin/users' });
     const VALID_USER_ROLES    = new Set(['user', 'admin', 'moderator', 'vendor']);
     const VALID_USER_STATUSES = new Set(['active', 'banned', 'suspended', 'deleted', 'inactive']);
-    if (role && !VALID_USER_ROLES.has(role)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Geçersiz rol', type: '/problems/admin-users-role-invalid', instance: '/api/admin/users' });
-    if (status && !VALID_USER_STATUSES.has(status)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Geçersiz durum', type: '/problems/admin-users-status-invalid', instance: '/api/admin/users' });
+    if (role !== '' && typeof role === 'string' && !VALID_USER_ROLES.has(role)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Geçersiz rol', type: '/problems/admin-users-role-invalid', instance: '/api/admin/users' });
+    if (status !== '' && typeof status === 'string' && !VALID_USER_STATUSES.has(status)) return problemJson({ status: 400, title: 'Geçersiz İstek', detail: 'Geçersiz durum', type: '/problems/admin-users-status-invalid', instance: '/api/admin/users' });
 
     const params: unknown[] = [];
     let where = `WHERE u.status != 'deleted'`;
