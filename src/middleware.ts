@@ -457,6 +457,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   }
 
+  // Static images & uploads — 30 day immutable (LCP optimization, PageSpeed cache-insight fix)
+  // Content rarely changes; filename rename = effective cache bust. Bandwidth savings + repeat-visit speed.
+  if (
+    (pathname.startsWith('/images/') || pathname.startsWith('/uploads/')) &&
+    /\.(webp|avif|jpe?g|png|svg|gif|ico)$/i.test(pathname)
+  ) {
+    response.headers.set('Cache-Control', 'public, max-age=2592000, immutable');
+  }
+
   // Stale asset hash protection: yeni deploy sonrası eski HTML hala eski CSS/JS hash isteyebilir.
   // _astro/ path'lerinde 404/500 olursa Astro default error HTML render eder → tarayıcı MIME hatası
   // ('Refused to apply style ... text/html'). Asset path'leri için minimal plaintext dön.
