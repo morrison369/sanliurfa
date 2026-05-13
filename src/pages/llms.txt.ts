@@ -91,7 +91,7 @@ Sanliurfa.com, Türkiye'nin Şanlıurfa iline odaklanmış bir şehir rehberi pl
 - [Yemek Tarifleri](${baseUrl}/yemek-tarifleri) — Şanlıurfa mutfağı tarifleri (Urfa Kebabı, Çiğ Köfte, Borani, Şıllık vb.)
 - [Şanlıurfa'da Ne Yenir?](${baseUrl}/sanliurfada-ne-yenir) — Urfa mutfağının öne çıkan lezzetleri
 - [En İyi Kebapçılar](${baseUrl}/en-iyi-kebapcilar) — Urfa kebabı ve ocakbaşı mekanları listesi
-- [En İyi Cigerciler](${baseUrl}/en-iyi-cigerciler) — Tandır ciğeri mekanları
+- [En İyi Ciğerciler](${baseUrl}/en-iyi-cigerciler) — Tandır ciğeri mekanları
 - [Kahvaltı Mekanları](${baseUrl}/sanliurfa-kahvalti-mekanlari) — Yöresel kahvaltı ve çay bahçeleri
 
 ## Turizm ve Gezilecek Yerler

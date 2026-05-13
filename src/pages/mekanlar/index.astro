@@ -45,7 +45,7 @@ try {
      ORDER BY d.name ASC
    `),
    query(`SELECT COUNT(*)::int AS total FROM places WHERE status = 'active'`),
-   query(`SELECT id::text, name, slug, category_name, latitude::float, longitude::float FROM places WHERE status = 'active' AND latitude IS NOT NULL AND longitude IS NOT NULL LIMIT 100`),
+   query(`SELECT p.id::text, p.name, p.slug, COALESCE(c.name, p.category) AS category_name, p.latitude::float, p.longitude::float FROM places p LEFT JOIN categories c ON c.id = p.category_id WHERE p.status = 'active' AND p.latitude IS NOT NULL AND p.longitude IS NOT NULL LIMIT 100`),
   ]);
   return {
    categories: catResult.rows,
