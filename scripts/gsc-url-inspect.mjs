@@ -53,6 +53,8 @@ function inspectUrl(token, inspectionUrl) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(payload),
+        // ADC user creds için zorunlu (gcloud built-in OAuth client)
+        'x-goog-user-project': process.env.GOOGLE_CLOUD_PROJECT || 'sanliurfa-com-2026',
       },
     }, (res) => {
       let data = '';

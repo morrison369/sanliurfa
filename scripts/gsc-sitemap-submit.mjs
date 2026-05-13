@@ -38,6 +38,8 @@ async function gscRequest(method, path, body) {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
+        // ADC user creds için zorunlu (gcloud built-in OAuth client kullanırken)
+        'x-goog-user-project': process.env.GOOGLE_CLOUD_PROJECT || 'sanliurfa-com-2026',
       },
     };
     const req = https.request(opts, (res) => {
