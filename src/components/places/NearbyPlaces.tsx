@@ -59,7 +59,7 @@ export default function NearbyPlaces({ initialPlaces }: Props) {
           .np-prompt { text-align: center; padding: 1.5rem 0; }
           .np-btn {
             padding: .65rem 1.4rem; border-radius: .7rem;
-            background: var(--urfa-600, #b87333); color: #fff;
+            background: #78331d; color: #fff;
             border: none; font-size: .9rem; font-weight: 700; cursor: pointer;
             transition: opacity .15s;
           }

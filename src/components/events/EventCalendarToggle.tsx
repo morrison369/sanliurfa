@@ -124,7 +124,7 @@ export default function EventCalendarToggle({ events }: Props) {
           color: var(--text-primary, #1a1a1a); transition: background .15s, color .15s;
         }
         .ect-active {
-          background: var(--urfa-600, #b87333); color: #fff; border-color: transparent;
+          background: #78331d; color: #fff; border-color: transparent;
         }
         .ect-calendar {
           background: var(--bg-card, #fff);
