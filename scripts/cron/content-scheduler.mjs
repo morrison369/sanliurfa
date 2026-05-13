@@ -11,6 +11,32 @@
  * Cron: `0 3 * * * cd /home/sanliur/public_html && node scripts/cron/content-scheduler.mjs`
  */
 import { Client } from 'pg';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Auto-load .env (cron'da PM2 env propagation yok)
+if (!process.env.DATABASE_URL) {
+ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+ const candidates = [
+  path.resolve(scriptDir, '..', '..', '.env'),
+  '/home/sanliur/public_html/.env',
+ ];
+ for (const f of candidates) {
+  if (!fs.existsSync(f)) continue;
+  for (const raw of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
+   const line = raw.trim();
+   if (!line || line.startsWith('#')) continue;
+   const sep = line.indexOf('=');
+   if (sep < 0) continue;
+   const k = line.slice(0, sep).trim();
+   let v = line.slice(sep + 1).trim();
+   if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+   if (k && !process.env[k]) process.env[k] = v;
+  }
+  if (process.env.DATABASE_URL) break;
+ }
+}
 
 const DATABASE_URL = process.env.DATABASE_URL;
 if (!DATABASE_URL) {
