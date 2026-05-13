@@ -270,10 +270,13 @@ const guidePosts = [
 ];
 ---
 
-<!-- LCP boost: ana sayfa hero collage'ında ilk 2 görseli preload — browser
-     download queue'ya öncelikle gönder (~150-300ms LCP iyileştirmesi). -->
-<link rel="preload" as="image" href="/images/places/balikligol.jpg" fetchpriority="high" />
-<link rel="preload" as="image" href="/images/places/gobeklitepe.jpg" />
+<!-- LCP boost: ana sayfa hero collage'ında ilk 2 görseli preload (AVIF first, WebP fallback).
+     href + type ile browser format negotiation — sadece desteklenen formatı yükler.
+     ~150-300ms LCP iyileştirmesi + JPG fallback eliminated (2026-05-13 perf optimization). -->
+<link rel="preload" as="image" href="/images/places/balikligol.avif" type="image/avif" fetchpriority="high" />
+<link rel="preload" as="image" href="/images/places/balikligol.webp" type="image/webp" fetchpriority="high" />
+<link rel="preload" as="image" href="/images/places/gobeklitepe.avif" type="image/avif" />
+<link rel="preload" as="image" href="/images/places/gobeklitepe.webp" type="image/webp" />
 
 <div class="overflow-hidden bg-[#fff8ec] text-[#201711]">
   <section class="relative overflow-hidden bg-[#120c06]">
