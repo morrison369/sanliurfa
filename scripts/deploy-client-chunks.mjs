@@ -92,6 +92,11 @@ async function main() {
     .filter((f) => existsSync(f.path));
   console.log(`Top-level static dosyalar: ${topLevelExisting.length}`);
 
+  // Vendor klasörü: self-hosted CDN (Swagger UI, Leaflet) — admin CSP için kritik
+  const localVendorDir = resolve(localClientDir, 'vendor');
+  const vendorFiles = existsSync(localVendorDir) ? getAllFiles(localVendorDir) : [];
+  console.log(`Vendor dosyaları: ${vendorFiles.length}`);
+
   // SFTP ile chunk yükleme
   const sftp = new SftpClient();
   await sftp.connect({ host: SSH_HOST, port: SSH_PORT, username: SSH_USER, password: SSH_PASS });
@@ -128,6 +133,30 @@ async function main() {
       fail++;
     }
   }
+
+  // Vendor klasörü (Swagger UI + Leaflet) — admin sayfaları için kritik
+  if (vendorFiles.length > 0) {
+    const remoteVendorDir = `${remoteClientDir}/vendor`;
+    try { await sftp.mkdir(remoteVendorDir, true); } catch {}
+    let vendorOk = 0;
+    for (const localPath of vendorFiles) {
+      const rel = localPath.slice(localVendorDir.length + 1).replace(/\\/g, '/');
+      const remotePath = `${remoteVendorDir}/${rel}`;
+      const remoteParent = remotePath.substring(0, remotePath.lastIndexOf('/'));
+      if (remoteParent !== remoteVendorDir) {
+        try { await sftp.mkdir(remoteParent, true); } catch {}
+      }
+      try {
+        await sftp.put(localPath, remotePath);
+        vendorOk++;
+      } catch (e) {
+        console.error(`  ✗ vendor/${rel}: ${e.message}`);
+        fail++;
+      }
+    }
+    console.log(`  ✓ vendor/ ${vendorOk}/${vendorFiles.length} dosya`);
+  }
+
   await sftp.end();
 
   if (!shouldRestart) {

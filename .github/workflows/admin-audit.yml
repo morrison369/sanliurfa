@@ -1,0 +1,91 @@
+name: Admin Audit Suite
+
+# Production /admin sayfalarını Playwright ile dört audit'ten geçirir:
+#   - Browser audit (DOM/console/API errors)
+#   - Mobile audit (iPhone SE viewport, table overflow, tap size)
+#   - A11y audit (aXe WCAG 2.1 AA)
+#   - Performance audit (TTFB/DOM/Load/transferSize)
+#
+# Tetikleyiciler: admin path'inde değişiklik içeren PR + manuel + günlük cron
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/admin/**'
+      - 'src/components/admin/**'
+      - 'src/components/Admin*'
+      - 'src/components/Moderation*'
+      - 'src/layouts/AdminLayoutV2.astro'
+      - 'src/middleware.ts'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *' # Her gün UTC 06:00 (TR 09:00)
+
+concurrency:
+  group: admin-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: A11y Audit (aXe WCAG 2.1 AA)
+        run: node scripts/admin-a11y-audit.mjs 2>&1 | tee /tmp/a11y.txt
+        continue-on-error: false
+
+      - name: Mobile Audit (iPhone SE)
+        run: node scripts/admin-mobile-audit.mjs 2>&1 | tee /tmp/mobile.txt
+        continue-on-error: false
+
+      - name: Browser Audit (60 admin pages)
+        run: node scripts/admin-browser-audit.mjs 2>&1 | tee /tmp/browser.txt
+        continue-on-error: false
+
+      - name: Performance Audit
+        run: node scripts/admin-perf-audit.mjs 2>&1 | tee /tmp/perf.txt
+        continue-on-error: true # perf non-blocking, sadece raporla
+
+      - name: Upload audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-audit-reports-${{ github.run_number }}
+          path: /tmp/*.txt
+          retention-days: 30
+
+      - name: Comment PR with summary
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const summaries = ['a11y', 'mobile', 'browser', 'perf']
+              .map(name => {
+                try {
+                  const content = fs.readFileSync(`/tmp/${name}.txt`, 'utf8');
+                  const lines = content.split('\n');
+                  const summary = lines.slice(-15).join('\n');
+                  return `### ${name.toUpperCase()}\n\`\`\`\n${summary}\n\`\`\``;
+                } catch { return `### ${name.toUpperCase()}\nFailed to read report`; }
+              })
+              .join('\n\n');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔍 Admin Audit Suite Results\n\n${summaries}`,
+            });

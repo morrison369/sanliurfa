@@ -32,6 +32,7 @@ function getAllowedOriginsFromEnv(raw?: string): string[] {
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
   '/', '/giris', '/kayit', '/places', '/tarihi-yerler', '/blog',
+  '/vendor', // self-hosted CDN: Swagger UI + Leaflet (public/vendor/*)
   '/gastronomi', '/arama', '/hakkinda', '/iletisim', '/kunye', '/yazarlar', '/etkinlikler',
   '/gizlilik-politikasi', '/kullanim-kosullari', '/kvkk',
   '/fiyatlandirma', '/sss', '/cerez-politikasi', '/404', '/500', '/loading',
@@ -425,15 +426,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
   });
 
   // Content Security Policy
-  // Admin pages need extra hosts for Swagger UI (/admin/api-docs) and Leaflet (/admin/places/add)
-  const isAdminCsp = pathname.startsWith('/admin');
-  const adminExtraScript = isAdminCsp ? ' https://unpkg.com' : '';
-  const adminExtraStyle = isAdminCsp ? ' https://unpkg.com' : '';
+  // Swagger UI ve Leaflet artık public/vendor/ altında self-host — unpkg.com whitelist gerekmez
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com${adminExtraScript}`,
-    `script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com${adminExtraScript}`,
-    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com${adminExtraStyle}`,
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com",
+    "script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https: https://mc.yandex.ru https://mc.yandex.com",
     "font-src 'self' https://fonts.gstatic.com",
     "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com",
