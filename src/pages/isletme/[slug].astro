@@ -16,6 +16,7 @@ import ReviewForm from '../../components/places/ReviewForm';
 import { logger } from '../../lib/logging';
 import { buildPageSeo } from '../../lib/seo/pageSeo';
 import { normalizeGalleryImages, resolvePlaceImage } from '../../lib/public-image-resolvers';
+import { linkifyContent } from '../../lib/seo/internal-linker';
 import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import LeafletMap from '../../components/map/LeafletMap.astro';
 
@@ -302,6 +303,8 @@ const contactRows = [
     .pd-sticky a{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.3rem;padding:.7rem .5rem;font-size:.82rem;font-weight:700;text-decoration:none;border-radius:6px}
     .pd-sticky-call{background:#2C7A52;color:#fff}
     .pd-sticky-rev{background:linear-gradient(135deg,#C0571F,#D49718);color:#fff}
+    .pd-sticky-share{background:#fff;color:#1F1410;border:1px solid rgba(184,115,51,.25);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:.35rem;padding:.6rem .85rem;border-radius:6px;font-size:.85rem;font-weight:600;transition:border-color .15s,color .15s}
+    .pd-sticky-share:hover{border-color:#C0571F;color:#C0571F}
     .pd-page{padding-bottom:5rem}
   }
 
@@ -328,7 +331,7 @@ const contactRows = [
      {(place.description || place.short_description) && (
      <div class="pd-card">
        <p class="pd-lbl">Hakkında</p>
-       <p class="pd-txt">{place.description || place.short_description}</p>
+       <p class="pd-txt" set:html={linkifyContent(String(place.description || place.short_description || ''), `/isletme/${slug}`)} />
       </div>
      )}
 
@@ -473,7 +476,12 @@ const contactRows = [
   <!-- Mobile sticky CTA -->
   <div class="pd-sticky" aria-hidden="false">
    {place.phone ? (
-    <a href={`tel:${place.phone}`} class="pd-sticky-call">
+    <a
+     href={`tel:${place.phone}`}
+     class="pd-sticky-call"
+     data-place-id={place.id}
+     onclick="window.sfTrack && window.sfTrack('place_call', { place_id: this.dataset.placeId })"
+    >
      <Icon name="lucide:phone" style="width:1rem;height:1rem" /> Ara
     </a>
    ) : (
@@ -484,9 +492,48 @@ const contactRows = [
    <a href={isAuthenticated ? `/isletme/${slug}#yorumlar` : `/giris?redirect=/isletme/${slug}#yorumlar`} class="pd-sticky-rev">
     <Icon name="lucide:message-square-plus" style="width:1rem;height:1rem" /> Yorum Yaz
    </a>
+   <button
+    type="button"
+    class="pd-sticky-share"
+    id="pd-share-btn"
+    data-share-title={place.name}
+    data-share-url={`https://sanliurfa.com/isletme/${slug}`}
+    aria-label="Paylaş">
+    <Icon name="lucide:share-2" style="width:1rem;height:1rem" /> Paylaş
+   </button>
    <FavoriteButton placeId={place.id} placeSlug={slug} isAuthenticated={isAuthenticated} variant="detail" />
   </div>
  </div>
+
+ <script is:inline>
+  (function() {
+   var btn = document.getElementById('pd-share-btn');
+   if (!btn) return;
+   btn.addEventListener('click', async function() {
+    var title = btn.dataset.shareTitle || document.title;
+    var url = btn.dataset.shareUrl || location.href;
+    var method = 'unknown';
+    try {
+     if (navigator.share) {
+      method = 'web_share';
+      await navigator.share({ title: title, url: url });
+     } else if (navigator.clipboard) {
+      method = 'clipboard';
+      await navigator.clipboard.writeText(url);
+      var orig = btn.innerText;
+      btn.innerText = '✓ Kopyalandı';
+      setTimeout(function() { btn.innerText = orig; }, 1600);
+     } else {
+      method = 'prompt';
+      window.prompt('Bu bağlantıyı kopyalayın:', url);
+     }
+     if (typeof window.sfTrack === 'function') {
+      window.sfTrack('place_share', { method: method, slug: btn.dataset.shareUrl });
+     }
+    } catch (e) { /* iptal */ }
+   });
+  })();
+ </script>
 
  <script type="application/ld+json" set:html={JSON.stringify({
   '@context': 'https://schema.org',
@@ -503,6 +550,21 @@ const contactRows = [
   ...(ohParsed?.schema && ohParsed.schema.length > 0 ? { openingHours: ohParsed.schema } : {}),
   ...(place.price_range ? { priceRange: place.price_range } : {}),
   ...(place.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: Number(place.rating), bestRating: 5, worstRating: 1, reviewCount: place.review_count || 1 } } : {}),
+  ...(reviews.length > 0 ? {
+   review: reviews.slice(0, 5).map((r: any) => ({
+    '@type': 'Review',
+    author: { '@type': 'Person', name: r.user_name || 'Anonim Ziyaretçi' },
+    reviewRating: {
+     '@type': 'Rating',
+     ratingValue: Math.max(1, Math.min(5, Number(r.rating) || 5)),
+     bestRating: 5,
+     worstRating: 1,
+    },
+    datePublished: r.created_at ? new Date(r.created_at).toISOString().slice(0, 10) : undefined,
+    ...(r.title ? { name: String(r.title).slice(0, 100) } : {}),
+    reviewBody: String(r.content || '').slice(0, 500),
+   })),
+  } : {}),
   ...(place.category_name?.toLowerCase().includes('restoran') || place.category_name?.toLowerCase().includes('kebap') || place.category_name?.toLowerCase().includes('yemek')
    ? { servesCuisine: 'Türk Mutfağı', hasMenu: `https://sanliurfa.com/isletme/${slug}` }
    : {}),

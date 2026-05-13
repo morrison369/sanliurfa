@@ -1,21 +1,131 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import IntegrationsSettings from '../../components/admin/IntegrationsSettings';
+
+const services = [
+ { icon: 'lucide:mail', label: 'Resend', desc: 'Transaksiyonel e-posta', color: 'indigo' },
+ { icon: 'lucide:server', label: 'SMTP', desc: 'Yedek e-posta', color: 'slate' },
+ { icon: 'lucide:bar-chart-3', label: 'Analytics', desc: 'GA4 / Clarity / Yandex', color: 'emerald' },
+ { icon: 'lucide:credit-card', label: 'Stripe', desc: 'Abonelik ödemeleri', color: 'violet' },
+ { icon: 'lucide:image', label: 'Resim API', desc: 'Unsplash + Pexels', color: 'amber' },
+ { icon: 'lucide:log-in', label: 'OAuth', desc: 'Google / Facebook / Twitter', color: 'sky' },
+];
+
+const colorMap: Record<string, { bg: string; fg: string }> = {
+ indigo: { bg: 'rgba(99,102,241,0.12)', fg: 'rgb(99,102,241)' },
+ slate: { bg: 'rgba(100,116,139,0.12)', fg: 'rgb(100,116,139)' },
+ emerald: { bg: 'rgba(16,185,129,0.12)', fg: 'rgb(16,185,129)' },
+ violet: { bg: 'rgba(139,92,246,0.12)', fg: 'rgb(139,92,246)' },
+ amber: { bg: 'rgba(217,119,6,0.12)', fg: 'rgb(217,119,6)' },
+ sky: { bg: 'rgba(2,132,199,0.12)', fg: 'rgb(2,132,199)' },
+};
 ---
 
 <AdminLayout
  title="Entegrasyon Ayarları"
  subtitle="Resend, SMTP, Analytics, Stripe, resim sağlayıcıları ve sosyal giriş yönetimi"
+ seo={{ title: 'Entegrasyon Ayarları - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-4xl">
- <div class="mb-6">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
+ <div class="ig-page">
+  <div class="ig-info">
+   <div class="ig-info-icon" aria-hidden="true">
+    <Icon name="lucide:info" />
+   </div>
+   <div class="ig-info-body">
+    <strong>6 servis tek panelden yönetilir.</strong>
+    Değişiklikler rebuild gerektirmeden anında aktif olur — DB'den okunur, env fallback olarak korunur. Hassas anahtarlar şifreli saklanır.
+   </div>
+  </div>
 
- <div class="bg-[rgba(184,115,51,0.06)] border border-[rgba(184,115,51,0.2)] rounded-sm p-4 mb-6 text-sm text-[#7A6B58]">
- 6 servis tek panelden: Resend (e-posta) → SMTP (yedek), Google Analytics, Stripe ödeme, resim sağlayıcıları (Unsplash/Pexels) ve sosyal giriş (Google/Facebook/Twitter). Değişiklikler rebuild gerektirmeden aktif olur.
- </div>
+  <div class="ig-services">
+   {services.map(s => {
+    const c = colorMap[s.color];
+    return (
+     <div class="ig-service" style={`--ig-c-bg: ${c.bg}; --ig-c-fg: ${c.fg};`}>
+      <div class="ig-service-icon" aria-hidden="true">
+       <Icon name={s.icon} class="w-4 h-4" />
+      </div>
+      <div class="ig-service-text">
+       <div class="ig-service-label">{s.label}</div>
+       <div class="ig-service-desc">{s.desc}</div>
+      </div>
+     </div>
+    );
+   })}
+  </div>
 
- <IntegrationsSettings client:idle />
+  <div class="ig-panel">
+   <IntegrationsSettings client:idle />
+  </div>
  </div>
 </AdminLayout>
+
+<style>
+ .ig-page { display: flex; flex-direction: column; gap: 1.25rem; max-width: 1100px; }
+
+ .ig-info {
+  display: flex; gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: rgba(2,132,199,0.06);
+  border: 1px solid rgba(2,132,199,0.18);
+  border-radius: 10px;
+  color: var(--adm-text);
+  font-size: 0.88rem;
+  line-height: 1.55;
+ }
+ .ig-info-icon {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: rgba(2,132,199,0.12);
+  color: rgb(2,132,199);
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+ }
+ .ig-info-icon svg { width: 18px; height: 18px; }
+ .ig-info-body strong { color: var(--adm-text); font-weight: 600; }
+
+ .ig-services {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.65rem;
+ }
+ .ig-service {
+  display: flex; align-items: center; gap: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 10px;
+  transition: border-color 0.15s, transform 0.15s;
+ }
+ .ig-service:hover {
+  border-color: var(--ig-c-fg);
+  transform: translateY(-1px);
+ }
+ .ig-service-icon {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  background: var(--ig-c-bg);
+  color: var(--ig-c-fg);
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+ }
+ .ig-service-text { min-width: 0; }
+ .ig-service-label {
+  font-size: 0.86rem; font-weight: 600;
+  color: var(--adm-text);
+  line-height: 1.2;
+ }
+ .ig-service-desc {
+  font-size: 0.72rem;
+  color: var(--adm-text-soft);
+  margin-top: 0.15rem;
+ }
+
+ .ig-panel {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+ }
+</style>

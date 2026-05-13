@@ -2,6 +2,7 @@
 import Layout from "../../layouts/Layout.astro";
 import NotificationsCenter from "../../components/NotificationsCenter";
 import PublicPageIntro from "../../components/public/PublicPageIntro.astro";
+import PushSubscribeButton from "../../components/PushSubscribeButton.astro";
 
 const user = Astro.locals.user;
 if (!user) {
@@ -25,6 +26,7 @@ if (!user) {
  <div class="bn-body">
  <div class="sf-container">
  <div class="bn-inner">
+ <PushSubscribeButton />
  <NotificationsCenter client:visible={{ rootMargin: '120px' }} />
  </div>
  </div>

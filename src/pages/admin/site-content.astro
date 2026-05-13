@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import SiteContentManager from '../../components/admin/SiteContentManager';
 import SiteOperationsOverview from '../../components/admin/SiteOperationsOverview';
 import SitePlatformBlueprint from '../../components/admin/SitePlatformBlueprint';
@@ -7,12 +7,28 @@ import SitePlatformBlueprint from '../../components/admin/SitePlatformBlueprint'
 
 <AdminLayout
  title="Site İçerik Yönetimi"
- subtitle="Tüm kritik içerik alanları admin paneli üzerinden database kaynaklı yönetim modeline geçirildi."
- seo={{ title: 'Site İçerik Yönetimi - Sanliurfa.com', description: 'Ana sayfa hero ve site içerik bloklarını database üzerinden yönetin.', noIndex: true }}
+ subtitle="Ana sayfa hero ve site içerik blokları — DB-kaynaklı management"
+ seo={{ title: 'Site İçerik Yönetimi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8">
- <SiteOperationsOverview client:visible />
- <SitePlatformBlueprint client:visible />
- <SiteContentManager client:visible />
+ <div class="sc-page">
+  <div class="sc-panel">
+   <SiteOperationsOverview client:visible />
+  </div>
+  <div class="sc-panel">
+   <SitePlatformBlueprint client:visible />
+  </div>
+  <div class="sc-panel">
+   <SiteContentManager client:visible />
+  </div>
  </div>
 </AdminLayout>
+
+<style>
+ .sc-page { display: flex; flex-direction: column; gap: 1.25rem; }
+ .sc-panel {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+ }
+</style>

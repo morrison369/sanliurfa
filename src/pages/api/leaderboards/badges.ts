@@ -64,8 +64,20 @@ export const GET: APIRoute = async ({ request, url }) => {
       );
     }
 
-    // Get users with badge achievements
+    // Get users with badge achievements (subquery for badge stats — avoids complex GROUP BY)
     const sql = `
+      WITH badge_stats AS (
+        SELECT
+          ua.user_id,
+          COUNT(DISTINCT ua.metadata->>'badgeName') AS badge_count,
+          COUNT(DISTINCT ua.id) AS total_badges_earned,
+          ARRAY_AGG(DISTINCT ua.metadata->>'badgeName') AS badges,
+          MAX(ua.created_at) AS last_badge_earned
+        FROM user_activities ua
+        WHERE COALESCE(ua.type, ua.activity_type) = 'badge_earned'
+          AND ua.metadata->>'badgeName' IS NOT NULL
+        GROUP BY ua.user_id
+      )
       SELECT
         u.id,
         u.full_name,
@@ -73,16 +85,14 @@ export const GET: APIRoute = async ({ request, url }) => {
         u.avatar_url,
         u.points,
         u.level,
-        COUNT(DISTINCT CASE WHEN ua.action_type = 'badge_earned' THEN ua.metadata->>'badgeName' END) as badge_count,
-        COUNT(DISTINCT CASE WHEN ua.action_type = 'badge_earned' THEN ua.id END) as total_badges_earned,
-        ARRAY_AGG(DISTINCT ua.metadata->>'badgeName' FILTER (WHERE ua.action_type = 'badge_earned')) as badges,
-        MAX(CASE WHEN ua.action_type = 'badge_earned' THEN ua.created_at END) as last_badge_earned
+        bs.badge_count,
+        bs.total_badges_earned,
+        bs.badges,
+        bs.last_badge_earned
       FROM users u
-      LEFT JOIN user_activities ua ON u.id = ua.user_id
+      INNER JOIN badge_stats bs ON bs.user_id = u.id
       WHERE u.role = 'user'
-      GROUP BY u.id
-      HAVING COUNT(DISTINCT CASE WHEN ua.action_type = 'badge_earned' THEN ua.id END) > 0
-      ORDER BY badge_count DESC, total_badges_earned DESC, u.points DESC
+      ORDER BY bs.badge_count DESC, bs.total_badges_earned DESC, u.points DESC
       LIMIT $1
     `;
 

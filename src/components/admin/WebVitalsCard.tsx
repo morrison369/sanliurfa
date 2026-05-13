@@ -59,7 +59,7 @@ function ratingClass(r: Rating): string {
  case 'good': return 'bg-[rgba(34,197,94,0.12)] text-green-400 border-green-300 ';
  case 'needs-improvement': return 'bg-[rgba(234,179,8,0.12)] text-yellow-300 border-[rgba(234,179,8,0.3)] ';
  case 'poor': return 'bg-[rgba(239,68,68,0.1)] text-red-400 border-[rgba(239,68,68,0.3)] ';
- default: return 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58] border-[rgba(184,115,51,0.25)] #4A3828]';
+ default: return 'bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] border-[var(--adm-border-strong)] #4A3828]';
  }
 }
 
@@ -124,43 +124,43 @@ export default function WebVitalsCard() {
  const supplementary = metrics.filter(m => !CORE_VITALS.has(m.name));
 
  return (
- <section className="bg-[var(--bg-card)] rounded-sm ring-1 ring-[rgba(184,115,51,0.1)] p-6">
+ <section className="bg-[var(--adm-bg-elev)] rounded-sm ring-1 ring-[var(--adm-bg-active)] p-6">
  <header className="flex items-center justify-between mb-6 flex-wrap gap-3">
  <div>
- <h3 className="text-xl font-bold text-[#1F1410]">
+ <h3 className="text-xl font-bold text-[var(--adm-text)]">
  Web Vitals
  </h3>
- <p className="text-sm text-[#7A6B58] mt-1">
+ <p className="text-sm text-[var(--adm-text-muted)] mt-1">
  Real User Monitoring (RUM) — Google Core Web Vitals + ek metrikler. p75 değerleri threshold'a göre değerlendirilir.
  </p>
  </div>
  <div className="flex items-center gap-3 flex-wrap">
  <label className="flex items-center gap-2 text-sm">
- <span className="text-[#7A6B58]">Başlangıç:</span>
+ <span className="text-[var(--adm-text-muted)]">Başlangıç:</span>
  <input
  type="date"
  value={fromDate}
  onChange={(e) => setFromDate(e.target.value)}
  max={toDate}
- className="px-3 py-1.5 rounded-sm border border-[rgba(184,115,51,0.25)] text-sm"
+ className="px-3 py-1.5 rounded-sm border border-[var(--adm-border-strong)] text-sm"
  />
  </label>
  <label className="flex items-center gap-2 text-sm">
- <span className="text-[#7A6B58]">Bitiş:</span>
+ <span className="text-[var(--adm-text-muted)]">Bitiş:</span>
  <input
  type="date"
  value={toDate}
  onChange={(e) => setToDate(e.target.value)}
  min={fromDate}
- className="px-3 py-1.5 rounded-sm border border-[rgba(184,115,51,0.25)] text-sm"
+ className="px-3 py-1.5 rounded-sm border border-[var(--adm-border-strong)] text-sm"
  />
  </label>
  </div>
  </header>
 
  {loading && (
- <div className="py-8 text-center text-[#7A6B58]">
- Yükleniyor...
+ <div className="py-8 text-center text-[var(--adm-text-muted)]">
+ Yükleniyor…
  </div>
  )}
 
@@ -171,7 +171,7 @@ export default function WebVitalsCard() {
  )}
 
  {!loading && !error && metrics.length === 0 && (
- <div className="py-8 text-center text-[#7A6B58]">
+ <div className="py-8 text-center text-[var(--adm-text-muted)]">
  Bu tarih aralığında metric kaydı yok.
  </div>
  )}
@@ -180,7 +180,7 @@ export default function WebVitalsCard() {
  <>
  {/* Core Web Vitals */}
  <div className="mb-6">
- <h4 className="text-sm font-semibold text-[#7A6B58] mb-3 uppercase tracking-wide">
+ <h4 className="text-sm font-semibold text-[var(--adm-text-muted)] mb-3 uppercase tracking-wide">
  Core Web Vitals
  </h4>
  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -209,7 +209,7 @@ export default function WebVitalsCard() {
  {/* Supplementary metrics (FCP, TTFB, DCL, Load) */}
  {supplementary.length > 0 && (
  <div className="mb-6">
- <h4 className="text-sm font-semibold text-[#7A6B58] mb-3 uppercase tracking-wide">
+ <h4 className="text-sm font-semibold text-[var(--adm-text-muted)] mb-3 uppercase tracking-wide">
  Ek Metrikler
  </h4>
  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -233,31 +233,31 @@ export default function WebVitalsCard() {
  {/* Slowest Pages — per-URL LCP p75 breakdown */}
  {urlBreakdown.length > 0 && (
  <div>
- <h4 className="text-sm font-semibold text-[#7A6B58] mb-3 uppercase tracking-wide">
+ <h4 className="text-sm font-semibold text-[var(--adm-text-muted)] mb-3 uppercase tracking-wide">
  En Yavaş Sayfalar (LCP p75'e göre, en az 5 örnek)
  </h4>
- <div className="overflow-x-auto rounded-sm border border-[rgba(184,115,51,0.14)]">
+ <div className="overflow-x-auto rounded-sm border border-[var(--adm-border)]">
  <table className="w-full text-sm">
- <thead className="bg-[rgba(184,115,51,0.04)]/50">
+ <thead className="bg-[var(--adm-bg-hover)]/50">
  <tr>
- <th className="px-4 py-2 text-left font-semibold text-[#7A6B58]">URL</th>
- <th className="px-3 py-2 text-right font-semibold text-[#7A6B58]">Örnek</th>
- <th className="px-3 py-2 text-right font-semibold text-[#7A6B58]">LCP</th>
- <th className="px-3 py-2 text-right font-semibold text-[#7A6B58]">INP</th>
- <th className="px-3 py-2 text-right font-semibold text-[#7A6B58]">CLS</th>
+ <th className="px-4 py-2 text-left font-semibold text-[var(--adm-text-muted)]">URL</th>
+ <th className="px-3 py-2 text-right font-semibold text-[var(--adm-text-muted)]">Örnek</th>
+ <th className="px-3 py-2 text-right font-semibold text-[var(--adm-text-muted)]">LCP</th>
+ <th className="px-3 py-2 text-right font-semibold text-[var(--adm-text-muted)]">INP</th>
+ <th className="px-3 py-2 text-right font-semibold text-[var(--adm-text-muted)]">CLS</th>
  </tr>
  </thead>
- <tbody className="divide-y divide-[rgba(184,115,51,0.14)]">
+ <tbody className="divide-y divide-[var(--adm-border)]">
  {urlBreakdown.map((row) => {
  const lcpRating = classifyMetric('LCP', row.lcp_p75);
  const inpRating = classifyMetric('INP', row.inp_p75);
  const clsRating = classifyMetric('CLS', row.cls_p75);
  return (
- <tr key={row.url} className="bg-[var(--bg-card)]">
- <td className="px-4 py-2 text-[#1F1410] max-w-md">
+ <tr key={row.url} className="bg-[var(--adm-bg-elev)]">
+ <td className="px-4 py-2 text-[var(--adm-text)] max-w-md">
  <code className="text-xs truncate block">{row.url}</code>
  </td>
- <td className="px-3 py-2 text-right text-[#7A6B58] tabular-nums">
+ <td className="px-3 py-2 text-right text-[var(--adm-text-muted)] tabular-nums">
  {row.samples.toLocaleString('tr-TR')}
  </td>
  <td className={`px-3 py-2 text-right font-semibold tabular-nums ${ratingClass(lcpRating)}`}>

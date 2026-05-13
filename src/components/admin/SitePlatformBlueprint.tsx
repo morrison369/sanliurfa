@@ -267,8 +267,8 @@ export default function SitePlatformBlueprint() {
 
  if (status === 'loading') {
  return (
- <section className="mb-6 rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 shadow-sm">
- <p className="text-sm text-[#7A6B58]">DB-first platform yönetimi yükleniyor...</p>
+ <section className="mb-6 rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5 shadow-sm">
+ <p className="text-sm text-[var(--adm-text-muted)]">DB-first platform yönetimi yükleniyor...</p>
  </section>
  );
  }
@@ -285,23 +285,23 @@ export default function SitePlatformBlueprint() {
  }
 
  return (
- <section className="mb-6 rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-6 shadow-sm">
+ <section className="mb-6 rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-6 shadow-sm">
  <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
  <div>
  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#4A3828]">
  DB-First Platform
  </p>
- <h2 className="mt-2 text-2xl font-bold text-[#1F1410]">
+ <h2 className="mt-2 text-2xl font-bold text-[var(--adm-text)]">
  Homepage, şehir servisleri ve SEO override yönetimi
  </h2>
- <p className="mt-1 max-w-3xl text-sm text-[#7A6B58]">
+ <p className="mt-1 max-w-3xl text-sm text-[var(--adm-text-muted)]">
  Ana sayfa section registry, şehir servis kayıtları ve entity bazlı SEO override
  verileri bu panelden yönetilir. Public Astro sayfaları artık bu verileri doğrudan tüketir.
  </p>
  </div>
  <button
  onClick={() => void loadAll()}
- className="rounded-full border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] px-4 py-2 text-sm font-semibold text-[#7A6B58]"
+ className="rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] px-4 py-2 text-sm font-semibold text-[var(--adm-text-muted)]"
  >
  Yenile
  </button>
@@ -336,8 +336,8 @@ export default function SitePlatformBlueprint() {
  </div>
 
  <div className="mt-6 grid gap-6 xl:grid-cols-3">
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-5">
- <h3 className="text-lg font-bold text-[#1F1410]">Homepage Section Formu</h3>
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-5">
+ <h3 className="text-lg font-bold text-[var(--adm-text)]">Homepage Section Formu</h3>
  <FormText
  label="Section Key"
  value={sectionDraft.section_key}
@@ -378,7 +378,7 @@ export default function SitePlatformBlueprint() {
  />
  <button
  onClick={() => void saveSection()}
- className="mt-4 rounded-sm bg-[rgba(184,115,51,0.08)] px-4 py-2 text-sm font-semibold text-[#1F1410]"
+ className="mt-4 rounded-sm bg-[var(--adm-bg-hover)] px-4 py-2 text-sm font-semibold text-[var(--adm-text)]"
  >
  Homepage Section Kaydet
  </button>
@@ -398,8 +398,8 @@ export default function SitePlatformBlueprint() {
  />
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-5">
- <h3 className="text-lg font-bold text-[#1F1410]">Şehir Servisi Formu</h3>
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-5">
+ <h3 className="text-lg font-bold text-[var(--adm-text)]">Şehir Servisi Formu</h3>
  <FormText
  label="Service Key"
  value={serviceDraft.service_key}
@@ -467,7 +467,7 @@ export default function SitePlatformBlueprint() {
  />
  <button
  onClick={() => void saveService()}
- className="mt-4 rounded-sm bg-[rgba(184,115,51,0.08)] px-4 py-2 text-sm font-semibold text-[#1F1410]"
+ className="mt-4 rounded-sm bg-[var(--adm-bg-hover)] px-4 py-2 text-sm font-semibold text-[var(--adm-text)]"
  >
  Servis Kaydet
  </button>
@@ -475,7 +475,7 @@ export default function SitePlatformBlueprint() {
  {serviceGroups.map((group) => (
  <span
  key={group}
- className="rounded-full border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-3 py-1 text-xs font-semibold text-[#7A6B58]"
+ className="rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-3 py-1 text-xs font-semibold text-[var(--adm-text-muted)]"
  >
  {group}
  </span>
@@ -497,8 +497,8 @@ export default function SitePlatformBlueprint() {
  />
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-5">
- <h3 className="text-lg font-bold text-[#1F1410]">SEO Override Formu</h3>
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-5">
+ <h3 className="text-lg font-bold text-[var(--adm-text)]">SEO Override Formu</h3>
  <FormText
  label="Entity Type"
  value={seoDraft.entity_type}
@@ -534,7 +534,7 @@ export default function SitePlatformBlueprint() {
  />
  <button
  onClick={() => void saveSeo()}
- className="mt-4 rounded-sm bg-[rgba(184,115,51,0.08)] px-4 py-2 text-sm font-semibold text-[#1F1410]"
+ className="mt-4 rounded-sm bg-[var(--adm-bg-hover)] px-4 py-2 text-sm font-semibold text-[var(--adm-text)]"
  >
  SEO Override Kaydet
  </button>
@@ -553,17 +553,17 @@ export default function SitePlatformBlueprint() {
  </div>
  </div>
 
- {message ? <p className="mt-4 text-sm font-medium text-[#7A6B58]">{message}</p> : null}
+ {message ? <p className="mt-4 text-sm font-medium text-[var(--adm-text-muted)]">{message}</p> : null}
  </section>
  );
 }
 
 function MetricCard({ label, value, hint }: { label: string; value: string; hint: string }) {
  return (
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-4">
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-4">
  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#4A3828]">{label}</p>
- <p className="mt-2 text-2xl font-bold text-[#1F1410]">{value}</p>
- <p className="mt-1 text-sm text-[#7A6B58]">{hint}</p>
+ <p className="mt-2 text-2xl font-bold text-[var(--adm-text)]">{value}</p>
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">{hint}</p>
  </div>
  );
 }
@@ -583,7 +583,7 @@ function FormText({
  {label}
  </span>
  <input
- className="w-full rounded-sm border border-slate-300 bg-[var(--bg-card)] px-3 py-2 text-sm text-[#1F1410]"
+ className="w-full rounded-sm border border-slate-300 bg-[var(--adm-bg-elev)] px-3 py-2 text-sm text-[var(--adm-text)]"
  value={value}
  onChange={(e) => onChange(e.target.value)}
  />
@@ -606,7 +606,7 @@ function JsonArea({
  {label}
  </span>
  <textarea
- className="min-h-[120px] w-full rounded-sm border border-slate-300 bg-[var(--bg-card)] px-3 py-2 font-mono text-xs text-[#1F1410]"
+ className="min-h-[120px] w-full rounded-sm border border-slate-300 bg-[var(--adm-bg-elev)] px-3 py-2 font-mono text-xs text-[var(--adm-text)]"
  value={value}
  onChange={(e) => onChange(e.target.value)}
  />
@@ -624,7 +624,7 @@ function ToggleRow({
  onChange: (checked: boolean) => void;
 }) {
  return (
- <label className="mt-3 flex items-center gap-2 text-sm text-[#7A6B58]">
+ <label className="mt-3 flex items-center gap-2 text-sm text-[var(--adm-text-muted)]">
  <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
  <span>{label}</span>
  </label>
@@ -653,13 +653,13 @@ function RowCard({
  onDelete: () => void;
 }) {
  return (
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-3">
- <p className="font-semibold text-[#1F1410]">{title}</p>
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-3">
+ <p className="font-semibold text-[var(--adm-text)]">{title}</p>
  <p className="mt-1 text-xs text-[#4A3828]">{subtitle}</p>
  <div className="mt-3 flex gap-2">
  <button
  onClick={onEdit}
- className="rounded-sm bg-[rgba(184,115,51,0.08)] px-3 py-1.5 text-xs font-semibold text-[#1F1410]"
+ className="rounded-sm bg-[var(--adm-bg-hover)] px-3 py-1.5 text-xs font-semibold text-[var(--adm-text)]"
  >
  Düzenle
  </button>

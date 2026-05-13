@@ -43,9 +43,9 @@ export async function getActivityFeed(userId: string, limit: number = 50, offset
         ua.user_id,
         u.full_name as user_name,
         u.avatar_url as user_avatar,
-        ua.action_type,
-        ua.reference_type,
-        ua.reference_id,
+        COALESCE(ua.type, ua.activity_type) AS action_type,
+        COALESCE(ua.entity_type, ua.object_type) AS reference_type,
+        COALESCE(ua.entity_id::text, ua.object_id::text) AS reference_id,
         ua.metadata,
         ua.created_at
       FROM user_activities ua
@@ -98,9 +98,9 @@ export async function getPersonalActivity(userId: string, limit: number = 30): P
         ua.user_id,
         u.full_name as user_name,
         u.avatar_url as user_avatar,
-        ua.action_type,
-        ua.reference_type,
-        ua.reference_id,
+        COALESCE(ua.type, ua.activity_type) AS action_type,
+        COALESCE(ua.entity_type, ua.object_type) AS reference_type,
+        COALESCE(ua.entity_id::text, ua.object_id::text) AS reference_id,
         ua.metadata,
         ua.created_at
       FROM user_activities ua
@@ -145,9 +145,9 @@ export async function getUserActivities(targetUserId: string, limit: number = 20
         ua.user_id,
         u.full_name as user_name,
         u.avatar_url as user_avatar,
-        ua.action_type,
-        ua.reference_type,
-        ua.reference_id,
+        COALESCE(ua.type, ua.activity_type) AS action_type,
+        COALESCE(ua.entity_type, ua.object_type) AS reference_type,
+        COALESCE(ua.entity_id::text, ua.object_id::text) AS reference_id,
         ua.metadata,
         ua.created_at
       FROM user_activities ua
@@ -192,9 +192,9 @@ export async function getTrendingActivities(limit: number = 10): Promise<FeedIte
         ua.user_id,
         u.full_name as user_name,
         u.avatar_url as user_avatar,
-        ua.action_type,
-        ua.reference_type,
-        ua.reference_id,
+        COALESCE(ua.type, ua.activity_type) AS action_type,
+        COALESCE(ua.entity_type, ua.object_type) AS reference_type,
+        COALESCE(ua.entity_id::text, ua.object_id::text) AS reference_id,
         ua.metadata,
         ua.created_at,
         COUNT(*) as interaction_count

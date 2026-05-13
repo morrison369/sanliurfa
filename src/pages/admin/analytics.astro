@@ -1,36 +1,143 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import AnalyticsPanel from '../../components/AnalyticsPanel';
 import AdminAnalyticsDashboard from '../../components/AdminAnalyticsDashboard';
 import AdminPerformanceDashboard from '../../components/AdminPerformanceDashboard';
 import WebVitalsCard from '../../components/admin/WebVitalsCard';
+
+const sections = [
+ { id: 'vitals', icon: 'lucide:activity', title: 'Web Vitals', sub: 'Gerçek kullanıcı performans verileri (LCP, CLS, INP)' },
+ { id: 'perf', icon: 'lucide:gauge', title: 'Performans İzleme', sub: 'API gecikme, cache hit oranı, hata yüzdesi' },
+ { id: 'platform', icon: 'lucide:bar-chart-3', title: 'Platform Analitiği', sub: 'Kullanıcı davranışları ve dönüşüm akışı' },
+ { id: 'system', icon: 'lucide:cpu', title: 'Sistem Metrikleri', sub: 'CPU, bellek, DB, Redis sağlık göstergeleri' },
+];
 ---
 
 <AdminLayout
  title="Analitikler"
  subtitle="Platform çapında istatistikler ve içgörüler"
- seo={{ title: 'Analitik - Admin', description: 'Sistem analitikleri ve istatistikleri' }}
+ seo={{ title: 'Analitik - Admin', noIndex: true }}
 >
- <div class="sf-container py-8">
- <div class="space-y-12">
- <section>
- <h2 class="text-2xl font-bold mb-6 text-[#1F1410]">Web Vitals (Real User Monitoring)</h2>
- <WebVitalsCard client:visible />
- </section>
- <hr class="border-[rgba(184,115,51,0.2)]" />
- <section>
- <h2 class="text-2xl font-bold mb-6 text-[#1F1410]">Performans İzleme</h2>
- <AdminPerformanceDashboard client:visible />
- </section>
- <hr class="border-[rgba(184,115,51,0.2)]" />
- <section>
- <h2 class="text-2xl font-bold mb-6 text-[#1F1410]">Platform Analitiği</h2>
- <AdminAnalyticsDashboard client:visible />
- </section>
- <hr class="border-[rgba(184,115,51,0.2)]" />
- <section>
- <h2 class="text-2xl font-bold mb-6 text-[#1F1410]">Sistem Metrikleri</h2>
- <AnalyticsPanel client:visible />
- </section>
+ <div class="ax-page">
+  <nav class="ax-jump" aria-label="Bölüm atlama">
+   {sections.map(s => (
+    <a href={`#${s.id}`} class="ax-jump-link">
+     <Icon name={s.icon} class="w-3.5 h-3.5" /> {s.title}
+    </a>
+   ))}
+  </nav>
+
+  <section id="vitals" class="ax-section">
+   <header class="ax-section-head">
+    <div class="ax-section-icon"><Icon name="lucide:activity" class="w-5 h-5" /></div>
+    <div>
+     <h2 class="ax-section-title">Web Vitals (Real User Monitoring)</h2>
+     <p class="ax-section-sub">Gerçek kullanıcı performans verileri — LCP, CLS, INP</p>
+    </div>
+   </header>
+   <div class="ax-section-body">
+    <WebVitalsCard client:visible />
+   </div>
+  </section>
+
+  <section id="perf" class="ax-section">
+   <header class="ax-section-head">
+    <div class="ax-section-icon"><Icon name="lucide:gauge" class="w-5 h-5" /></div>
+    <div>
+     <h2 class="ax-section-title">Performans İzleme</h2>
+     <p class="ax-section-sub">API gecikme, cache hit oranı, hata yüzdesi</p>
+    </div>
+   </header>
+   <div class="ax-section-body">
+    <AdminPerformanceDashboard client:visible />
+   </div>
+  </section>
+
+  <section id="platform" class="ax-section">
+   <header class="ax-section-head">
+    <div class="ax-section-icon"><Icon name="lucide:bar-chart-3" class="w-5 h-5" /></div>
+    <div>
+     <h2 class="ax-section-title">Platform Analitiği</h2>
+     <p class="ax-section-sub">Kullanıcı davranışları ve dönüşüm akışı</p>
+    </div>
+   </header>
+   <div class="ax-section-body">
+    <AdminAnalyticsDashboard client:visible />
+   </div>
+  </section>
+
+  <section id="system" class="ax-section">
+   <header class="ax-section-head">
+    <div class="ax-section-icon"><Icon name="lucide:cpu" class="w-5 h-5" /></div>
+    <div>
+     <h2 class="ax-section-title">Sistem Metrikleri</h2>
+     <p class="ax-section-sub">CPU, bellek, DB, Redis sağlık göstergeleri</p>
+    </div>
+   </header>
+   <div class="ax-section-body">
+    <AnalyticsPanel client:visible />
+   </div>
+  </section>
  </div>
+
+ <style>
+  .ax-page { display: flex; flex-direction: column; gap: 1.25rem; }
+  .ax-jump {
+   display: flex; flex-wrap: wrap; gap: 0.4rem;
+   padding: 0.75rem;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   position: sticky; top: 80px; z-index: 20;
+   backdrop-filter: saturate(150%) blur(8px);
+  }
+  .ax-jump-link {
+   display: inline-flex; align-items: center; gap: 0.35rem;
+   padding: 0.4rem 0.75rem;
+   font-size: 0.78rem; font-weight: 600;
+   color: var(--adm-text-muted);
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 999px;
+   text-decoration: none;
+   transition: all 0.15s;
+  }
+  .ax-jump-link:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+
+  .ax-section {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+   scroll-margin-top: 140px;
+  }
+  .ax-section-head {
+   display: flex; align-items: center; gap: 0.85rem;
+   padding: 1rem 1.25rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .ax-section-icon {
+   width: 40px; height: 40px;
+   border-radius: 10px;
+   background: var(--adm-bg-active);
+   color: var(--adm-accent);
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .ax-section-title {
+   font-family: 'Cormorant Garamond', serif;
+   font-size: 1.35rem; font-weight: 700;
+   color: var(--adm-text);
+   margin: 0;
+   line-height: 1.2;
+  }
+  .ax-section-sub {
+   font-size: 0.82rem;
+   color: var(--adm-text-soft);
+   margin: 0.15rem 0 0;
+  }
+  .ax-section-body { padding: 1.25rem; }
+ </style>
 </AdminLayout>

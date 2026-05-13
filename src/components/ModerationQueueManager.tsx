@@ -95,7 +95,7 @@ export default function ModerationQueueManager() {
  };
 
  if (loading) {
- return <div className="text-center py-8 text-[#7A6B58]">Yükleniyor...</div>;
+ return <div className="text-center py-8 text-[var(--adm-text-muted)]">Yükleniyor…</div>;
  }
 
  return (
@@ -119,7 +119,7 @@ export default function ModerationQueueManager() {
  className={`px-4 py-2 rounded-sm font-medium text-sm transition-colors ${
  status === s
  ? 'bg-urfa-600 text-white'
- : 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.18)]'
+ : 'bg-[var(--adm-bg-active)] text-[var(--adm-text-muted)] hover:bg-[rgba(184,115,51,0.18)]'
  }`}
  >
  {s === 'pending' ? 'Beklemede' : s === 'in_review' ? 'İncelemede' : 'Çözüldü'}
@@ -130,30 +130,30 @@ export default function ModerationQueueManager() {
  {/* Queue Items */}
  <div className="space-y-2">
  {items.length === 0 ? (
- <div className="text-center py-8 text-[#7A6B58]">Kuyruk boş</div>
+ <div className="text-center py-8 text-[var(--adm-text-muted)]">Kuyruk boş</div>
  ) : (
  items.map((item) => (
  <div
  key={item.id}
- className="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4 flex items-start justify-between"
+ className="bg-[var(--adm-bg-elev)] border border-[var(--adm-border)] rounded-sm p-4 flex items-start justify-between"
  >
  <div className="flex-1">
  <div className="flex items-center gap-2 mb-2">
- <span className="text-sm font-medium text-[#1F1410]">{item.queue_type}</span>
+ <span className="text-sm font-medium text-[var(--adm-text)]">{item.queue_type}</span>
  <span
  className={`text-xs px-2 py-1 rounded-full font-medium ${
  item.priority === 'high'
  ? 'bg-[rgba(239,68,68,0.1)] text-red-700'
  : item.priority === 'medium'
  ? 'bg-[rgba(249,115,22,0.12)] text-orange-700'
- : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'
+ : 'bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)]'
  }`}
  >
  {item.priority === 'high' ? 'Yüksek' : item.priority === 'medium' ? 'Orta' : 'Düşük'}
  </span>
  </div>
- <p className="text-sm text-[#7A6B58] mb-1">{item.reason}</p>
- <div className="flex items-center gap-4 text-xs text-[#7A6B58]">
+ <p className="text-sm text-[var(--adm-text-muted)] mb-1">{item.reason}</p>
+ <div className="flex items-center gap-4 text-xs text-[var(--adm-text-muted)]">
  <span>{item.submitted_count} bildirim</span>
  <span>{new Date(item.created_at).toLocaleDateString('tr-TR')}</span>
  </div>

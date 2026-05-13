@@ -1,250 +1,616 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+import AdmStatGrid from '../../components/admin/AdmStatGrid.astro';
+import AdmEmptyState from '../../components/admin/AdmEmptyState.astro';
 import Image from '../../components/Image.astro';
 import { Icon } from 'astro-icon/components';
-import { queryMany, queryOne } from '../../lib/postgres';
+import { queryMany, queryOne, query } from '../../lib/postgres';
 import { safeIntParam } from '../../lib/api';
+import { logger } from '../../lib/logging';
 
 const user = Astro.locals.user;
 if (!user || user.role !== 'admin') return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
 
 const status = Astro.url.searchParams.get('status') || 'pending';
 const page = safeIntParam(Astro.url.searchParams.get('page'), 1, 1, 1000);
-const limit = 20;
+const limit = 24;
 const offset = (page - 1) * limit;
 
 const VALID_STATUSES = new Set(['pending', 'approved', 'rejected', 'all']);
 const safeStatus = VALID_STATUSES.has(status) ? status : 'pending';
-
 const whereClause = safeStatus === 'all' ? '' : `WHERE cp.status = '${safeStatus}'`;
 
-let photos: any[] = [];
+interface CommunityPhoto {
+ id: string;
+ file_path: string;
+ caption?: string;
+ location?: string;
+ status: 'pending' | 'approved' | 'rejected';
+ rejection_reason?: string;
+ created_at: string;
+ user_id: string;
+ full_name: string;
+ username: string;
+ email: string;
+ approved_by_name?: string;
+}
+
+let photos: CommunityPhoto[] = [];
 let total = 0;
+let stats = { pending: 0, approved: 0, rejected: 0, total: 0 };
 
 try {
-  const [photosResult, countRow] = await Promise.all([
-    queryMany(
-      `SELECT cp.*, u.full_name, u.username, u.email,
-              ab.full_name AS approved_by_name
-       FROM community_photos cp
-       JOIN users u ON u.id = cp.user_id
-       LEFT JOIN users ab ON ab.id = cp.approved_by
-       ${whereClause}
-       ORDER BY cp.created_at ${safeStatus === 'approved' ? 'DESC' : 'ASC'}
-       LIMIT $1 OFFSET $2`,
-      [limit, offset]
-    ),
-    queryOne<{ count: number }>(
-      `SELECT COUNT(*)::int AS count FROM community_photos cp ${whereClause}`,
-      []
-    ),
-  ]);
-  photos = photosResult;
-  total = countRow?.count || 0;
-} catch {}
+ const [photosResult, countRow] = await Promise.all([
+  queryMany<CommunityPhoto>(
+   `SELECT cp.id, cp.file_path, cp.caption, cp.location, cp.status, cp.rejection_reason,
+           cp.created_at, cp.user_id,
+           u.full_name, u.username, u.email,
+           ab.full_name AS approved_by_name
+    FROM community_photos cp
+    JOIN users u ON u.id = cp.user_id
+    LEFT JOIN users ab ON ab.id = cp.approved_by
+    ${whereClause}
+    ORDER BY cp.created_at ${safeStatus === 'approved' ? 'DESC' : 'ASC'}
+    LIMIT $1 OFFSET $2`,
+   [limit, offset]
+  ),
+  queryOne<{ count: number }>(
+   `SELECT COUNT(*)::int AS count FROM community_photos cp ${whereClause}`,
+   []
+  ),
+ ]);
+ photos = photosResult;
+ total = countRow?.count || 0;
+} catch (e) {
+ logger.error('community-photos query failed', e instanceof Error ? e : new Error(String(e)));
+}
+
+try {
+ const r = await query<{ status: string; cnt: number }>(
+  `SELECT status, COUNT(*)::int AS cnt FROM community_photos GROUP BY status`
+ );
+ for (const row of r.rows) {
+  const k = row.status as keyof typeof stats;
+  if (k in stats) stats[k] = row.cnt;
+  stats.total += row.cnt;
+ }
+} catch (e) {
+ logger.error('community-photos stats failed', e instanceof Error ? e : new Error(String(e)));
+}
 
 const tabs = [
-  { key: 'pending', label: 'Bekleyen', icon: 'lucide:clock' },
-  { key: 'approved', label: 'Onaylı', icon: 'lucide:check-circle' },
-  { key: 'rejected', label: 'Reddedilmiş', icon: 'lucide:x-circle' },
-  { key: 'all', label: 'Tümü', icon: 'lucide:image' },
+ { key: 'pending',  label: 'Bekleyen',    icon: 'lucide:clock',         count: stats.pending },
+ { key: 'approved', label: 'Onaylı',      icon: 'lucide:check-circle',  count: stats.approved },
+ { key: 'rejected', label: 'Reddedilmiş', icon: 'lucide:x-circle',      count: stats.rejected },
+ { key: 'all',      label: 'Tümü',        icon: 'lucide:image',         count: stats.total },
 ];
+
+const totalPages = Math.ceil(total / limit);
+
+function initials(name: string): string {
+ if (!name) return '?';
+ return name.split(' ').filter(Boolean).slice(0,2).map(s => s[0]?.toUpperCase() || '').join('') || '?';
+}
 ---
 
 <AdminLayout
-  title="Topluluk Fotoğrafları"
-  subtitle="Üye fotoğraflarını onaylayın veya reddedin"
-  seo={{ title: 'Topluluk Fotoğrafları - Admin', noIndex: true }}
+ title="Topluluk Fotoğrafları"
+ subtitle={`${stats.pending} onay bekliyor • ${stats.total.toLocaleString('tr-TR')} toplam`}
+ seo={{ title: 'Topluluk Fotoğrafları - Admin', noIndex: true }}
 >
-  <style is:inline>
-  .cp-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
-  .cp-tab{display:inline-flex;align-items:center;gap:.35rem;padding:.45rem 1rem;border-radius:.375rem;font-size:.82rem;font-weight:600;text-decoration:none;border:1px solid transparent;transition:all .15s}
-  .cp-tab-active{background:#78331d;color:white;border-color:#78331d}
-  .cp-tab:not(.cp-tab-active){background:rgba(255,255,255,.04);color:#B87333;border-color:rgba(184,115,51,.2)}
-  .cp-tab:not(.cp-tab-active):hover{background:rgba(184,115,51,.08)}
-  .cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem}
-  .cp-card{border-radius:.75rem;overflow:hidden;border:1px solid rgba(184,115,51,.14);background:var(--bg-card);box-shadow:0 2px 8px rgba(0,0,0,.12)}
-  .cp-img-wrap{position:relative;aspect-ratio:4/3;overflow:hidden;background:#1a1208}
-  .cp-img{width:100%;height:100%;object-fit:cover}
-  .cp-body{padding:.75rem}
-  .cp-user{font-size:.8rem;font-weight:600;color:#1F1410;margin-bottom:.25rem}
-  .cp-email{font-size:.72rem;color:#7A6B58;margin-bottom:.35rem}
-  .cp-caption{font-size:.8rem;color:#B87333;line-height:1.5;margin-bottom:.5rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .cp-location{font-size:.72rem;color:#7A6B58;margin-bottom:.5rem}
-  .cp-date{font-size:.7rem;color:#7A6B58;margin-bottom:.75rem}
-  .cp-actions{display:flex;gap:.5rem;flex-wrap:wrap}
-  .cp-btn-approve{padding:.35rem .75rem;background:#166534;color:white;font-size:.78rem;font-weight:600;border:none;border-radius:.3rem;cursor:pointer;transition:background .15s}
-  .cp-btn-approve:hover{background:#15803d}
-  .cp-btn-reject{padding:.35rem .75rem;background:#991b1b;color:white;font-size:.78rem;font-weight:600;border:none;border-radius:.3rem;cursor:pointer;transition:background .15s}
-  .cp-btn-reject:hover{background:#7f1d1d}
-  .cp-btn-delete{padding:.35rem .75rem;background:rgba(184,115,51,.1);color:#B87333;font-size:.78rem;font-weight:600;border:1px solid rgba(184,115,51,.2);border-radius:.3rem;cursor:pointer;transition:background .15s}
-  .cp-btn-delete:hover{background:rgba(184,115,51,.18)}
-  .cp-status{display:inline-flex;align-items:center;gap:.25rem;font-size:.72rem;font-weight:600;padding:.2rem .45rem;border-radius:.25rem;margin-bottom:.5rem}
-  .cp-status-pending{background:#fef9c3;color:#854d0e}
-  .cp-status-approved{background:#dcfce7;color:#166534}
-  .cp-status-rejected{background:#fee2e2;color:#991b1b}
-  .cp-pagination{display:flex;gap:.5rem;margin-top:2rem;justify-content:center}
-  .cp-page-btn{padding:.4rem .85rem;border-radius:.3rem;font-size:.82rem;border:1px solid rgba(184,115,51,.2);background:rgba(255,255,255,.04);color:#B87333;text-decoration:none;transition:background .15s}
-  .cp-page-btn:hover,.cp-page-btn.active{background:rgba(184,115,51,.14)}
-  .cp-empty{text-align:center;padding:3rem 1rem;color:#7A6B58}
-  .cp-empty-title{font-size:1.2rem;color:#1F1410;margin-bottom:.5rem}
-  .cp-reject-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
-  .cp-reject-modal.open{display:flex}
-  .cp-reject-box{background:var(--bg-card);border:1px solid rgba(184,115,51,.2);border-radius:.75rem;padding:1.5rem;max-width:480px;width:90%}
-  .cp-reject-box h3{font-size:1rem;font-weight:700;color:#1F1410;margin-bottom:.75rem}
-  .cp-reject-textarea{width:100%;padding:.5rem;border:1px solid rgba(184,115,51,.25);border-radius:.375rem;background:transparent;color:#1F1410;font-size:.85rem;resize:vertical;margin-bottom:.75rem}
-  .cp-reject-btns{display:flex;gap:.5rem;justify-content:flex-end}
-  </style>
+ <div class="cp-page">
+  <AdmStatGrid stats={[
+   { label: 'Onay Bekleyen', value: stats.pending, icon: 'lucide:clock', color: 'amber' },
+   { label: 'Onaylı', value: stats.approved, icon: 'lucide:check-circle', color: 'emerald' },
+   { label: 'Reddedilen', value: stats.rejected, icon: 'lucide:x-circle', color: 'rose' },
+   { label: 'Toplam', value: stats.total, icon: 'lucide:image', color: 'indigo' },
+  ]} />
 
-  <div class="mb-4">
-    <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+  <div class="cp-tabs" role="tablist">
+   {tabs.map((tab) => (
+    <a
+     href={`/admin/community-photos?status=${tab.key}`}
+     class:list={['cp-tab', safeStatus === tab.key && 'cp-tab--active']}
+     role="tab"
+    >
+     <Icon name={tab.icon} class="w-3.5 h-3.5" />
+     <span>{tab.label}</span>
+     <span class="cp-tab-count">{tab.count.toLocaleString('tr-TR')}</span>
+    </a>
+   ))}
   </div>
 
-  <!-- Tabs -->
-  <div class="cp-tabs">
-    {tabs.map((tab) => (
-      <a
-        href={`/admin/community-photos?status=${tab.key}`}
-        class={`cp-tab ${safeStatus === tab.key ? 'cp-tab-active' : ''}`}
-      >
-        <Icon name={tab.icon} style="width:.85rem;height:.85rem" />
-        {tab.label}
-        {safeStatus === tab.key && total > 0 && ` (${total})`}
-      </a>
-    ))}
-  </div>
+  <p id="action-feedback" class="cp-feedback" hidden></p>
 
-  <p id="action-feedback" style="display:none;margin-bottom:1rem;font-size:.85rem;padding:.5rem 1rem;border-radius:.375rem"></p>
-
-  <!-- Photo grid -->
   {photos.length === 0 ? (
-    <div class="cp-empty">
-      <Icon name="lucide:image" style="width:3rem;height:3rem;margin:0 auto .75rem" />
-      <p class="cp-empty-title">Bu durumda fotoğraf yok</p>
-      <p>"{tabs.find(t => t.key === safeStatus)?.label}" kategorisinde görüntülenecek fotoğraf bulunmuyor.</p>
-    </div>
+   <AdmEmptyState
+    icon="lucide:image"
+    title="Bu durumda fotoğraf yok"
+    description={`"${tabs.find(t => t.key === safeStatus)?.label}" kategorisinde görüntülenecek fotoğraf bulunmuyor.`}
+    size="md"
+   />
   ) : (
-    <div class="cp-grid" id="cp-grid">
-      {photos.map((photo) => (
-        <div class="cp-card" id={`card-${photo.id}`}>
-          <div class="cp-img-wrap">
-            <Image
-              src={photo.file_path}
-              alt={photo.caption || `${photo.full_name} fotoğrafı`}
-              class="cp-img"
-              width={560}
-              height={420}
-              loading="lazy"
-            />
-          </div>
-          <div class="cp-body">
-            <span class={`cp-status cp-status-${photo.status}`}>
-              {photo.status === 'pending' ? 'Bekliyor' : photo.status === 'approved' ? 'Onaylandı' : 'Reddedildi'}
-            </span>
-            <p class="cp-user">{photo.full_name || photo.username}</p>
-            <p class="cp-email">{photo.email}</p>
-            {photo.caption && <p class="cp-caption">{photo.caption}</p>}
-            {photo.location && <p class="cp-location"><Icon name="lucide:map-pin" style="width:.7rem;height:.7rem;vertical-align:middle" /> {photo.location}</p>}
-            <p class="cp-date">{new Date(photo.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-            {photo.status === 'rejected' && photo.rejection_reason && (
-              <p style="font-size:.72rem;color:#991b1b;margin-bottom:.5rem">Ret: {photo.rejection_reason}</p>
-            )}
-            <div class="cp-actions">
-              {photo.status !== 'approved' && (
-                <button class="cp-btn-approve" onclick={`adminAction('${photo.id}','approve')`}>
-                  <Icon name="lucide:check" style="width:.75rem;height:.75rem;vertical-align:middle" /> Onayla
-                </button>
-              )}
-              {photo.status !== 'rejected' && (
-                <button class="cp-btn-reject" onclick={`openRejectModal('${photo.id}')`}>
-                  <Icon name="lucide:x" style="width:.75rem;height:.75rem;vertical-align:middle" /> Reddet
-                </button>
-              )}
-              <button class="cp-btn-delete" onclick={`adminAction('${photo.id}','delete')`}>
-                <Icon name="lucide:trash-2" style="width:.75rem;height:.75rem;vertical-align:middle" /> Sil
-              </button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
-
-  <!-- Pagination -->
-  {total > limit && (
-    <div class="cp-pagination">
-      {page > 1 && (
-        <a href={`/admin/community-photos?status=${safeStatus}&page=${page - 1}`} class="cp-page-btn">← Önceki</a>
-      )}
-      <span class="cp-page-btn" style="pointer-events:none;opacity:.7">{page} / {Math.ceil(total / limit)}</span>
-      {page * limit < total && (
-        <a href={`/admin/community-photos?status=${safeStatus}&page=${page + 1}`} class="cp-page-btn">Sonraki →</a>
-      )}
-    </div>
-  )}
-
-  <!-- Reject Modal -->
-  <div class="cp-reject-modal" id="reject-modal">
-    <div class="cp-reject-box">
-      <h3>Reddetme Sebebi</h3>
-      <textarea class="cp-reject-textarea" id="reject-reason" rows={3} placeholder="İsteğe bağlı — üyeye gösterilecek"></textarea>
-      <div class="cp-reject-btns">
-        <button class="cp-btn-delete" onclick="closeRejectModal()">İptal</button>
-        <button class="cp-btn-reject" onclick="submitReject()">Reddet</button>
+   <div class="cp-grid" id="cp-grid">
+    {photos.map((photo) => (
+     <article class="cp-card" id={`card-${photo.id}`}>
+      <div class="cp-img-wrap">
+       <Image
+        src={photo.file_path}
+        alt={photo.caption || `${photo.full_name} fotoğrafı`}
+        class="cp-img"
+        width={560}
+        height={420}
+        loading="lazy"
+       />
+       <span class:list={['cp-status-badge', `cp-status-badge--${photo.status}`]}>
+        {photo.status === 'pending' ? 'Bekliyor' : photo.status === 'approved' ? 'Onaylı' : 'Reddedildi'}
+       </span>
       </div>
-    </div>
-  </div>
+      <div class="cp-body">
+       <div class="cp-user-row">
+        <div class="cp-avatar" aria-hidden="true">{initials(photo.full_name || photo.username || '')}</div>
+        <div class="cp-user-info">
+         <div class="cp-user-name">{photo.full_name || photo.username}</div>
+         <div class="cp-user-email">{photo.email}</div>
+        </div>
+       </div>
 
-  <script is:inline>
+       {photo.caption && <p class="cp-caption">{photo.caption}</p>}
+
+       <div class="cp-meta">
+        {photo.location && (
+         <span class="cp-meta-item">
+          <Icon name="lucide:map-pin" class="w-3 h-3" />
+          {photo.location}
+         </span>
+        )}
+        <span class="cp-meta-item">
+         <Icon name="lucide:calendar" class="w-3 h-3" />
+         {new Date(photo.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
+        </span>
+       </div>
+
+       {photo.status === 'rejected' && photo.rejection_reason && (
+        <div class="cp-reject-reason">
+         <Icon name="lucide:alert-circle" class="w-3 h-3" />
+         <span><strong>Ret:</strong> {photo.rejection_reason}</span>
+        </div>
+       )}
+
+       <div class="cp-actions">
+        {photo.status !== 'approved' && (
+         <button class="cp-action cp-action--ok" data-photo-id={photo.id} data-action="approve" type="button">
+          <Icon name="lucide:check" class="w-3.5 h-3.5" /> Onayla
+         </button>
+        )}
+        {photo.status !== 'rejected' && (
+         <button class="cp-action cp-action--reject" data-photo-id={photo.id} data-action="open-reject" type="button">
+          <Icon name="lucide:x" class="w-3.5 h-3.5" /> Reddet
+         </button>
+        )}
+        <button class="cp-action cp-action--ghost" data-photo-id={photo.id} data-action="delete" type="button">
+         <Icon name="lucide:trash-2" class="w-3.5 h-3.5" />
+        </button>
+       </div>
+      </div>
+     </article>
+    ))}
+   </div>
+  )}
+
+  {total > limit && (
+   <div class="cp-pagination">
+    {page > 1 && (
+     <a href={`/admin/community-photos?status=${safeStatus}&page=${page - 1}`} class="cp-page-btn">
+      <Icon name="lucide:chevron-left" class="w-4 h-4" /> Önceki
+     </a>
+    )}
+    <span class="cp-page-current">{page} / {totalPages}</span>
+    {page * limit < total && (
+     <a href={`/admin/community-photos?status=${safeStatus}&page=${page + 1}`} class="cp-page-btn">
+      Sonraki <Icon name="lucide:chevron-right" class="w-4 h-4" />
+     </a>
+    )}
+   </div>
+  )}
+
+  <div class="cp-modal" id="reject-modal" hidden>
+   <div class="cp-modal-backdrop" data-close></div>
+   <div class="cp-modal-box" role="dialog" aria-labelledby="reject-title">
+    <header class="cp-modal-head">
+     <h3 id="reject-title" class="cp-modal-title">
+      <Icon name="lucide:x-circle" class="w-4 h-4" /> Reddetme Sebebi
+     </h3>
+     <button class="cp-modal-close" type="button" data-close>×</button>
+    </header>
+    <div class="cp-modal-body">
+     <p class="cp-modal-hint">İsteğe bağlı — üyeye email bildirimi ile gönderilecek.</p>
+     <textarea
+      class="cp-modal-textarea"
+      id="reject-reason"
+      rows="3"
+      placeholder="örn: Fotoğraf bulanık, lütfen daha net bir görsel yükleyin."
+     ></textarea>
+    </div>
+    <footer class="cp-modal-foot">
+     <button type="button" class="cp-action cp-action--ghost" data-close>İptal</button>
+     <button type="button" class="cp-action cp-action--reject" id="submit-reject">
+      <Icon name="lucide:x" class="w-3.5 h-3.5" /> Reddet
+     </button>
+    </footer>
+   </div>
+  </div>
+ </div>
+
+ <script is:inline>
   let rejectPhotoId = null;
+  const modal = document.getElementById('reject-modal');
+  const feedback = document.getElementById('action-feedback');
 
   function openRejectModal(photoId) {
-    rejectPhotoId = photoId;
-    document.getElementById('reject-reason').value = '';
-    document.getElementById('reject-modal').classList.add('open');
+   rejectPhotoId = photoId;
+   document.getElementById('reject-reason').value = '';
+   modal.hidden = false;
+   setTimeout(() => document.getElementById('reject-reason').focus(), 50);
   }
-
   function closeRejectModal() {
-    rejectPhotoId = null;
-    document.getElementById('reject-modal').classList.remove('open');
-  }
-
-  async function submitReject() {
-    const reason = document.getElementById('reject-reason').value.trim();
-    closeRejectModal();
-    await adminAction(rejectPhotoId, 'reject', reason);
+   rejectPhotoId = null;
+   modal.hidden = true;
   }
 
   function showFeedback(msg, ok) {
-    const el = document.getElementById('action-feedback');
-    if (!el) return;
-    el.textContent = msg;
-    el.style.display = 'block';
-    el.style.background = ok ? 'rgba(20,83,45,.25)' : 'rgba(153,27,27,.25)';
-    el.style.color = ok ? '#86efac' : '#fca5a5';
-    el.style.border = `1px solid ${ok ? 'rgba(134,239,172,.3)' : 'rgba(252,165,165,.3)'}`;
-    setTimeout(() => { el.style.display = 'none'; }, 4000);
+   if (!feedback) return;
+   feedback.textContent = msg;
+   feedback.hidden = false;
+   feedback.classList.toggle('cp-feedback--ok', !!ok);
+   feedback.classList.toggle('cp-feedback--err', !ok);
+   setTimeout(() => { feedback.hidden = true; }, 4000);
   }
 
   async function adminAction(photoId, action, reason) {
-    if (action === 'delete' && !confirm('Bu fotoğrafı kalıcı olarak silmek istediğinizden emin misiniz?')) return;
-    try {
-      const res = await fetch(`/api/admin/community/photos?id=${photoId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, reason }),
-      });
-      const data = await res.json();
-      if (!res.ok) { showFeedback(data?.error || 'İşlem başarısız', false); return; }
-      showFeedback(data?.data?.message || 'İşlem tamamlandı', true);
-      const card = document.getElementById(`card-${photoId}`);
-      if (card) { card.style.transition = 'opacity .3s'; card.style.opacity = '0'; setTimeout(() => card.remove(), 300); }
-    } catch { showFeedback('Bağlantı hatası', false); }
+   if (action === 'delete' && !await window.showConfirm('Bu fotoğrafı kalıcı olarak silmek istediğinizden emin misiniz?')) return;
+   try {
+    const res = await fetch('/api/admin/community/photos?id=' + photoId, {
+     method: 'PUT',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({ action, reason }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showFeedback(data?.error || 'İşlem başarısız', false); return; }
+    showFeedback(data?.data?.message || 'İşlem tamamlandı', true);
+    const card = document.getElementById('card-' + photoId);
+    if (card) {
+     card.style.transition = 'opacity .3s, transform .3s';
+     card.style.opacity = '0';
+     card.style.transform = 'scale(0.95)';
+     setTimeout(() => card.remove(), 300);
+    }
+   } catch { showFeedback('Bağlantı hatası', false); }
   }
 
-  // Close modal on backdrop click
-  document.getElementById('reject-modal')?.addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeRejectModal();
+  document.querySelectorAll('[data-photo-id]').forEach(btn => {
+   btn.addEventListener('click', () => {
+    const id = btn.dataset.photoId;
+    const action = btn.dataset.action;
+    if (action === 'open-reject') openRejectModal(id);
+    else adminAction(id, action);
+   });
   });
-  </script>
+
+  document.querySelectorAll('#reject-modal [data-close]').forEach(el => {
+   el.addEventListener('click', closeRejectModal);
+  });
+
+  document.getElementById('submit-reject').addEventListener('click', () => {
+   const reason = document.getElementById('reject-reason').value.trim();
+   const id = rejectPhotoId;
+   closeRejectModal();
+   adminAction(id, 'reject', reason);
+  });
+
+  document.addEventListener('keydown', (e) => {
+   if (e.key === 'Escape' && !modal.hidden) closeRejectModal();
+  });
+ </script>
+
+ <style>
+  .cp-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .cp-tabs {
+   display: flex; flex-wrap: wrap; gap: 0.35rem;
+   padding: 0.35rem;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   width: fit-content;
+   max-width: 100%;
+  }
+  .cp-tab {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.5rem 0.85rem;
+   font-size: 0.84rem; font-weight: 600;
+   color: var(--adm-text-muted);
+   background: transparent;
+   border-radius: 8px;
+   text-decoration: none;
+   transition: all 0.15s;
+  }
+  .cp-tab:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+  .cp-tab--active {
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff !important;
+   box-shadow: 0 4px 12px -2px rgba(192,87,31,0.3);
+  }
+  .cp-tab-count {
+   background: rgba(0,0,0,0.12);
+   padding: 0.1rem 0.45rem;
+   border-radius: 999px;
+   font-size: 0.72rem;
+   font-weight: 700;
+  }
+  .cp-tab--active .cp-tab-count {
+   background: rgba(255,255,255,0.2);
+  }
+
+  .cp-feedback {
+   margin: 0;
+   padding: 0.65rem 1rem;
+   border-radius: 10px;
+   font-size: 0.86rem;
+   font-weight: 500;
+  }
+  .cp-feedback[hidden] { display: none; }
+  .cp-feedback--ok { background: rgba(16,185,129,0.1); color: rgb(5,150,105); border: 1px solid rgba(16,185,129,0.25); }
+  .cp-feedback--err { background: rgba(225,29,72,0.1); color: rgb(190,18,60); border: 1px solid rgba(225,29,72,0.25); }
+
+  .cp-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+   gap: 1.1rem;
+  }
+
+  .cp-card {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+   display: flex; flex-direction: column;
+   transition: transform 0.18s, box-shadow 0.18s;
+  }
+  .cp-card:hover {
+   transform: translateY(-2px);
+   box-shadow: 0 8px 20px -6px rgba(31,20,16,0.12);
+  }
+
+  .cp-img-wrap {
+   position: relative;
+   aspect-ratio: 4/3;
+   overflow: hidden;
+   background: var(--adm-bg);
+  }
+  .cp-img {
+   width: 100%;
+   height: 100%;
+   object-fit: cover;
+   transition: transform 0.4s;
+  }
+  .cp-card:hover .cp-img { transform: scale(1.04); }
+
+  .cp-status-badge {
+   position: absolute;
+   top: 0.65rem; right: 0.65rem;
+   padding: 0.25rem 0.6rem;
+   font-size: 0.7rem; font-weight: 700;
+   border-radius: 999px;
+   backdrop-filter: blur(8px);
+  }
+  .cp-status-badge--pending { background: rgba(217,119,6,0.92); color: #fff; }
+  .cp-status-badge--approved { background: rgba(5,150,105,0.92); color: #fff; }
+  .cp-status-badge--rejected { background: rgba(190,18,60,0.92); color: #fff; }
+
+  .cp-body {
+   padding: 0.85rem 0.95rem 0.95rem;
+   display: flex; flex-direction: column; gap: 0.55rem;
+   flex: 1;
+  }
+  .cp-user-row { display: flex; align-items: center; gap: 0.55rem; }
+  .cp-avatar {
+   width: 32px; height: 32px;
+   border-radius: 50%;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff;
+   display: inline-flex; align-items: center; justify-content: center;
+   font-weight: 700; font-size: 0.72rem;
+   flex-shrink: 0;
+  }
+  .cp-user-info { min-width: 0; flex: 1; }
+  .cp-user-name {
+   font-weight: 600;
+   color: var(--adm-text);
+   font-size: 0.86rem;
+   line-height: 1.2;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+  }
+  .cp-user-email {
+   font-size: 0.7rem;
+   color: var(--adm-text-soft);
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+  }
+
+  .cp-caption {
+   font-size: 0.84rem;
+   color: var(--adm-text);
+   line-height: 1.5;
+   margin: 0;
+   display: -webkit-box;
+   -webkit-line-clamp: 2;
+   -webkit-box-orient: vertical;
+   overflow: hidden;
+  }
+
+  .cp-meta {
+   display: flex; flex-wrap: wrap; gap: 0.55rem;
+  }
+  .cp-meta-item {
+   display: inline-flex; align-items: center; gap: 0.25rem;
+   font-size: 0.7rem;
+   color: var(--adm-text-soft);
+  }
+
+  .cp-reject-reason {
+   display: flex; gap: 0.4rem;
+   padding: 0.45rem 0.6rem;
+   background: rgba(225,29,72,0.06);
+   border: 1px solid rgba(225,29,72,0.18);
+   border-radius: 6px;
+   font-size: 0.74rem;
+   color: rgb(190,18,60);
+   align-items: flex-start;
+  }
+  .cp-reject-reason strong { font-weight: 700; }
+
+  .cp-actions {
+   display: flex; gap: 0.35rem;
+   margin-top: auto;
+   padding-top: 0.5rem;
+   border-top: 1px dashed var(--adm-border);
+  }
+  .cp-action {
+   display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;
+   padding: 0.42rem 0.65rem;
+   font-size: 0.78rem; font-weight: 600;
+   border-radius: 6px;
+   border: 1px solid transparent;
+   cursor: pointer;
+   transition: all 0.15s;
+   flex: 1;
+  }
+  .cp-action--ok {
+   background: linear-gradient(135deg, rgb(16,185,129), rgb(5,150,105));
+   color: #fff;
+  }
+  .cp-action--ok:hover { filter: brightness(0.95); transform: translateY(-1px); }
+  .cp-action--reject {
+   background: transparent;
+   color: rgb(190,18,60);
+   border-color: rgba(225,29,72,0.3);
+  }
+  .cp-action--reject:hover { background: rgba(225,29,72,0.08); border-color: rgb(190,18,60); }
+  .cp-action--ghost {
+   background: transparent;
+   color: var(--adm-text-muted);
+   border-color: var(--adm-border);
+   flex: 0 0 auto;
+   padding-left: 0.55rem;
+   padding-right: 0.55rem;
+  }
+  .cp-action--ghost:hover { border-color: var(--adm-text-muted); color: var(--adm-text); }
+
+  .cp-pagination {
+   display: flex; align-items: center; justify-content: center; gap: 0.55rem;
+   padding: 0.5rem;
+  }
+  .cp-page-btn {
+   display: inline-flex; align-items: center; gap: 0.25rem;
+   padding: 0.45rem 0.85rem;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   color: var(--adm-text-muted);
+   font-size: 0.84rem; font-weight: 600;
+   text-decoration: none;
+   transition: all 0.15s;
+  }
+  .cp-page-btn:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+  .cp-page-current {
+   font-size: 0.84rem;
+   color: var(--adm-text-soft);
+   font-weight: 500;
+   padding: 0 0.5rem;
+  }
+
+  /* Modal */
+  .cp-modal {
+   position: fixed;
+   inset: 0;
+   z-index: 100;
+   display: flex; align-items: center; justify-content: center;
+   padding: 1rem;
+  }
+  .cp-modal[hidden] { display: none; }
+  .cp-modal-backdrop {
+   position: absolute;
+   inset: 0;
+   background: rgba(0,0,0,0.55);
+   backdrop-filter: blur(4px);
+  }
+  .cp-modal-box {
+   position: relative;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 14px;
+   width: 100%;
+   max-width: 480px;
+   overflow: hidden;
+   box-shadow: 0 24px 60px -16px rgba(0,0,0,0.4);
+   animation: cpModalIn 0.18s ease-out;
+  }
+  @keyframes cpModalIn {
+   from { opacity: 0; transform: translateY(8px) scale(0.96); }
+   to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .cp-modal-head {
+   display: flex; align-items: center; justify-content: space-between;
+   padding: 0.9rem 1.1rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .cp-modal-title {
+   display: inline-flex; align-items: center; gap: 0.45rem;
+   margin: 0;
+   font-size: 1rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .cp-modal-close {
+   background: transparent;
+   border: none;
+   font-size: 1.4rem;
+   line-height: 1;
+   color: var(--adm-text-soft);
+   cursor: pointer;
+   padding: 0.15rem 0.5rem;
+   border-radius: 6px;
+  }
+  .cp-modal-close:hover { background: var(--adm-bg); color: var(--adm-text); }
+  .cp-modal-body { padding: 1rem 1.15rem; display: flex; flex-direction: column; gap: 0.65rem; }
+  .cp-modal-hint {
+   margin: 0;
+   font-size: 0.82rem;
+   color: var(--adm-text-soft);
+  }
+  .cp-modal-textarea {
+   width: 100%;
+   padding: 0.6rem 0.8rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   font-size: 0.88rem;
+   color: var(--adm-text);
+   font-family: inherit;
+   resize: vertical;
+   min-height: 90px;
+  }
+  .cp-modal-textarea:focus { outline: none; border-color: var(--adm-accent); box-shadow: 0 0 0 3px var(--adm-bg-active); }
+  .cp-modal-foot {
+   display: flex; gap: 0.5rem; justify-content: flex-end;
+   padding: 0.85rem 1.15rem;
+   border-top: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .cp-modal-foot .cp-action { flex: 0 0 auto; min-width: 100px; }
+ </style>
 </AdminLayout>

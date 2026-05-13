@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
 import { getBlogCategories } from '../../../lib/blog/blog';
 
 const categories = await getBlogCategories();
@@ -16,26 +16,26 @@ const categories = await getBlogCategories();
  </div>
 
  <form id="blogForm" class="space-y-5">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 space-y-4">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6 space-y-4">
  <div>
  <label for="title" class="block text-sm font-medium text-[#7A6B58] mb-1">Başlık</label>
- <input type="text" id="title" name="title" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ <input type="text" id="title" name="title" required class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
  </div>
 
  <div>
  <label for="content" class="block text-sm font-medium text-[#7A6B58] mb-1">İçerik</label>
- <textarea id="content" name="content" rows="10" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"></textarea>
+ <textarea id="content" name="content" rows="10" required class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"></textarea>
  </div>
 
  <div>
  <label for="excerpt" class="block text-sm font-medium text-[#7A6B58] mb-1">Özet</label>
- <textarea id="excerpt" name="excerpt" rows="3" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"></textarea>
+ <textarea id="excerpt" name="excerpt" rows="3" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"></textarea>
  </div>
 
  <div class="grid md:grid-cols-2 gap-4">
  <div>
  <label for="categoryId" class="block text-sm font-medium text-[#7A6B58] mb-1">Kategori</label>
- <select id="categoryId" name="categoryId" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <select id="categoryId" name="categoryId" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
  <option value="">Seçiniz</option>
  {categories.map(cat => (
  <option value={cat.id}>{cat.name}</option>
@@ -45,7 +45,7 @@ const categories = await getBlogCategories();
 
  <div>
  <label for="status" class="block text-sm font-medium text-[#7A6B58] mb-1">Durum</label>
- <select id="status" name="status" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <select id="status" name="status" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
  <option value="draft">Taslak</option>
  <option value="published">Yayınla</option>
  </select>
@@ -54,7 +54,7 @@ const categories = await getBlogCategories();
  </div>
 
  <div class="flex justify-end gap-4">
- <button type="button" onclick="history.back()" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">İptal</button>
+ <button type="button" onclick="history.back()" class="rounded-sm border border-[var(--adm-border-strong)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[var(--adm-bg-hover)]">İptal</button>
  <button type="submit" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">Kaydet</button>
  </div>
  </form>

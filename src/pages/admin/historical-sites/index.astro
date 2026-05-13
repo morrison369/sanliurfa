@@ -1,7 +1,9 @@
 ---
 import { actions } from 'astro:actions';
 import { Icon } from 'astro-icon/components';
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
+import AdmStatGrid from '../../../components/admin/AdmStatGrid.astro';
+import AdmEmptyState from '../../../components/admin/AdmEmptyState.astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
 
@@ -17,10 +19,10 @@ interface HistoricalSiteRow {
 }
 
 interface HistoricalSiteStats {
- total: string | number;
- unesco: string | number;
- featured: string | number;
- active: string | number;
+ total: number;
+ unesco: number;
+ featured: number;
+ active: number;
 }
 
 let sites: HistoricalSiteRow[] = [];
@@ -30,154 +32,257 @@ const deleteResult = Astro.getActionResult(actions.deleteAdminHistoricalSite);
 
 try {
  const [sitesResult, statsResult] = await Promise.all([
- query('SELECT * FROM historical_sites ORDER BY name ASC'),
- query(
- `SELECT
- COUNT(*) as total,
- COUNT(*) FILTER (WHERE is_unesco = true) as unesco,
- COUNT(*) FILTER (WHERE is_featured = true) as featured,
- COUNT(*) FILTER (WHERE status = 'active') as active
- FROM historical_sites`
- ),
+  query<HistoricalSiteRow>('SELECT * FROM historical_sites ORDER BY name ASC'),
+  query<HistoricalSiteStats>(
+   `SELECT
+     COUNT(*)::int as total,
+     COUNT(*) FILTER (WHERE is_unesco = true)::int as unesco,
+     COUNT(*) FILTER (WHERE is_featured = true)::int as featured,
+     COUNT(*) FILTER (WHERE status = 'active' OR status = 'published')::int as active
+    FROM historical_sites`
+  ),
  ]);
  sites = sitesResult.rows;
  stats = statsResult.rows[0] || stats;
 } catch (e) {
  logger.error('Error loading admin historical sites', e instanceof Error ? e : new Error(String(e)));
 }
+
+const statusLabels: Record<string, { text: string; cls: string }> = {
+ active:    { text: 'Aktif',  cls: 'hs-badge--ok' },
+ published: { text: 'Aktif',  cls: 'hs-badge--ok' },
+ draft:     { text: 'Taslak', cls: 'hs-badge--muted' },
+ inactive:  { text: 'Pasif',  cls: 'hs-badge--err' },
+};
 ---
 
 <AdminLayout
  title="Tarihi Yerler"
- subtitle="Tarihi yerleri listeleyin ve yönetin"
+ subtitle={`${stats.total.toLocaleString('tr-TR')} yer • ${stats.unesco} UNESCO • ${stats.featured} öne çıkan`}
  seo={{ title: 'Tarihi Yerler Yönetimi - Yönetim Paneli', noIndex: true }}
 >
- <a slot="hero-action" href="/admin/historical-sites/add" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700 flex items-center gap-2">
- <Icon name="lucide:plus" class="w-4 h-4" />
- Yeni Yer Ekle
+ <a slot="page-actions" href="/admin/historical-sites/add" class="hs-cta">
+  <Icon name="lucide:plus" class="w-4 h-4" /> Yeni Yer Ekle
  </a>
 
- <div class="sf-container py-8 max-w-6xl space-y-5">
- <div class="mb-2">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ <div class="hs-page">
+  <AdmStatGrid stats={[
+   { label: 'Toplam Yer', value: stats.total, icon: 'lucide:landmark', color: 'indigo' },
+   { label: 'UNESCO', value: stats.unesco, icon: 'lucide:star', color: 'amber', detail: 'Dünya mirası' },
+   { label: 'Öne Çıkan', value: stats.featured, icon: 'lucide:sparkles', color: 'violet' },
+   { label: 'Aktif', value: stats.active, icon: 'lucide:check-circle', color: 'emerald' },
+  ]} />
+
+  {deleteResult?.data?.success && (
+   <div class="hs-toast hs-toast--ok">
+    <Icon name="lucide:check-circle" class="w-4 h-4" />
+    {deleteResult.data.message || 'Tarihi yer silindi.'}
+   </div>
+  )}
+  {deleteResult?.error && (
+   <div class="hs-toast hs-toast--err">
+    <Icon name="lucide:alert-circle" class="w-4 h-4" />
+    {deleteResult.error.message || 'Tarihi yer silinemedi.'}
+   </div>
+  )}
+
+  <div class="hs-table-wrap">
+   {!sites || sites.length === 0 ? (
+    <AdmEmptyState
+     icon="lucide:landmark"
+     title="Henüz tarihi yer yok"
+     description="Şanlıurfa'nın tarihi yerlerini buraya ekleyebilirsiniz. Göbeklitepe, Halil-ür Rahman, Balıklıgöl…"
+     actionLabel="İlk Yeri Ekle"
+     actionHref="/admin/historical-sites/add"
+     size="md"
+    />
+   ) : (
+    <table class="hs-table">
+     <thead>
+      <tr>
+       <th class="hs-th">Tarihi Yer</th>
+       <th class="hs-th">Dönem</th>
+       <th class="hs-th">Konum</th>
+       <th class="hs-th">Durum</th>
+       <th class="hs-th hs-th-actions">İşlemler</th>
+      </tr>
+     </thead>
+     <tbody>
+      {sites.map(site => {
+       const meta = statusLabels[site.status || ''] || { text: site.status || '—', cls: 'hs-badge--muted' };
+       return (
+        <tr>
+         <td class="hs-td">
+          <div class="hs-site-cell">
+           <div class:list={['hs-site-icon', site.is_unesco && 'hs-site-icon--unesco']} aria-hidden="true">
+            <Icon name={site.is_unesco ? 'lucide:award' : 'lucide:landmark'} class="w-5 h-5" />
+           </div>
+           <div>
+            <div class="hs-site-name">{site.name}</div>
+            <div class="hs-site-meta">
+             {site.is_unesco && (
+              <span class="hs-tag hs-tag--unesco">
+               <Icon name="lucide:globe" class="w-3 h-3" /> UNESCO
+              </span>
+             )}
+             {site.is_featured && (
+              <span class="hs-tag hs-tag--featured">
+               <Icon name="lucide:star" class="w-3 h-3" /> Öne Çıkan
+              </span>
+             )}
+            </div>
+           </div>
+          </div>
+         </td>
+         <td class="hs-td hs-td-soft">{site.period || '—'}</td>
+         <td class="hs-td">
+          <div class="hs-location">
+           <Icon name="lucide:map-pin" class="w-3.5 h-3.5" />
+           <span>{site.location || '—'}</span>
+          </div>
+         </td>
+         <td class="hs-td">
+          <span class:list={['hs-badge', meta.cls]}>{meta.text}</span>
+         </td>
+         <td class="hs-td hs-td-actions">
+          <a href={`/tarihi-yerler/${site.slug}`} target="_blank" rel="noopener" class="hs-icon-btn" title="Görüntüle" aria-label="Görüntüle">
+           <Icon name="lucide:eye" class="w-4 h-4" />
+          </a>
+          <a href={`/admin/historical-sites/edit/${site.id}`} class="hs-icon-btn" title="Düzenle" aria-label="Düzenle">
+           <Icon name="lucide:pencil" class="w-4 h-4" />
+          </a>
+          <form method="POST" action={actions.deleteAdminHistoricalSite} class="hs-form-inline" data-confirm="Bu tarihi yeri silmek istediğinize emin misiniz?">
+           <input type="hidden" name="id" value={site.id} />
+           <button type="submit" class="hs-icon-btn hs-icon-btn--danger" title="Sil" aria-label="Sil">
+            <Icon name="lucide:trash-2" class="w-4 h-4" />
+           </button>
+          </form>
+         </td>
+        </tr>
+       );
+      })}
+     </tbody>
+    </table>
+   )}
+  </div>
  </div>
 
- {deleteResult?.data?.success && (
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
- {deleteResult.data.message || 'Tarihi yer silindi.'}
- </div>
- )}
+ <style>
+  .hs-page { display: flex; flex-direction: column; gap: 1.25rem; }
 
- {deleteResult?.error && (
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
- {deleteResult.error.message || 'Tarihi yer silinemedi.'}
- </div>
- )}
+  .hs-cta {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.55rem 1.1rem;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff; font-weight: 600; font-size: 0.85rem;
+   border-radius: 8px; text-decoration: none;
+   transition: transform 0.15s;
+  }
+  .hs-cta:hover { transform: translateY(-1px); }
 
- <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <p class="text-sm text-[#7A6B58]">Toplam Yer</p>
- <p class="text-2xl font-bold text-[#1F1410]">{stats.total}</p>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <p class="text-sm text-[#7A6B58]">UNESCO</p>
- <p class="text-2xl font-bold text-[#7A6B58]">{stats.unesco}</p>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <p class="text-sm text-[#7A6B58]">Öne Çıkan</p>
- <p class="text-2xl font-bold text-[#7A6B58]">{stats.featured}</p>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <p class="text-sm text-[#7A6B58]">Aktif</p>
- <p class="text-2xl font-bold text-[#7A6B58]">{stats.active}</p>
- </div>
- </div>
+  .hs-toast {
+   display: flex; align-items: center; gap: 0.55rem;
+   padding: 0.7rem 1rem;
+   border-radius: 10px;
+   font-size: 0.86rem; font-weight: 500;
+  }
+  .hs-toast--ok { background: rgba(16,185,129,0.08); color: rgb(5,150,105); border: 1px solid rgba(16,185,129,0.18); }
+  .hs-toast--err { background: rgba(225,29,72,0.08); color: rgb(190,18,60); border: 1px solid rgba(225,29,72,0.18); }
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div class="overflow-x-auto">
- <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <tr>
- <th class="text-left py-3 px-4 font-medium text-[#7A6B58]">Yer</th>
- <th class="text-left py-3 px-4 font-medium text-[#7A6B58]">Dönem</th>
- <th class="text-left py-3 px-4 font-medium text-[#7A6B58]">Konum</th>
- <th class="text-left py-3 px-4 font-medium text-[#7A6B58]">Durum</th>
- <th class="text-right py-3 px-4 font-medium text-[#7A6B58]">İşlemler</th>
- </tr>
- </thead>
- <tbody>
- {sites.map(site => (
- <tr class="border-b border-[rgba(184,115,51,0.08)] last:border-0 hover:bg-[rgba(184,115,51,0.04)]">
- <td class="py-4 px-4">
- <div class="flex items-start gap-3">
- <div class="w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center flex-shrink-0">
- <Icon name="lucide:landmark" class="w-5 h-5 text-urfa-600" />
- </div>
- <div>
- <p class="font-medium text-[#1F1410] text-sm">{site.name}</p>
- {site.is_unesco && (
- <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[rgba(184,115,51,0.15)] text-[#7A6B58] text-xs rounded-sm mt-1">
- <Icon name="lucide:star" class="w-3 h-3" /> UNESCO
- </span>
- )}
- {site.is_featured && !site.is_unesco && (
- <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] text-xs rounded-sm mt-1">
- ⭐ Öne Çıkan
- </span>
- )}
- </div>
- </div>
- </td>
- <td class="py-4 px-4">
- <span class="text-sm text-[#7A6B58]">{site.period || '-'}</span>
- </td>
- <td class="py-4 px-4">
- <div class="flex items-center gap-1 text-sm text-[#7A6B58]">
- <Icon name="lucide:map-pin" class="w-4 h-4" />
- <span class="truncate max-w-[150px]">{site.location}</span>
- </div>
- </td>
- <td class="py-4 px-4">
- <span class={`inline-flex px-2 py-0.5 rounded-sm text-xs font-medium ${
- site.status === 'active'
- ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]'
- : site.status === 'draft'
- ? 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]'
- : 'bg-[rgba(184,115,51,0.04)] text-[#7A6B58]'
- }`}>
- {site.status === 'active' ? 'Aktif' : site.status === 'draft' ? 'Taslak' : 'Pasif'}
- </span>
- </td>
- <td class="py-4 px-4">
- <div class="flex items-center justify-end gap-1">
- <a href={`/tarihi-yerler/${site.slug}`} target="_blank" rel="noopener" class="p-2 text-[#7A6B58] hover:text-urfa-600 transition-colors" title="Görüntüle">
- <Icon name="lucide:eye" class="w-4 h-4" />
- </a>
- <a href={`/admin/historical-sites/edit/${site.id}`} class="p-2 text-[#7A6B58] hover:text-urfa-600 transition-colors" title="Düzenle">
- <Icon name="lucide:pencil" class="w-4 h-4" />
- </a>
- <form method="POST" action={actions.deleteAdminHistoricalSite} class="inline" data-confirm="Bu tarihi yeri silmek istediğinize emin misiniz?">
- <input type="hidden" name="id" value={site.id} />
- <button type="submit" class="p-2 text-[#7A6B58] hover:text-[#7A6B58] transition-colors" title="Sil">
- <Icon name="lucide:trash-2" class="w-4 h-4" />
- </button>
- </form>
- </div>
- </td>
- </tr>
- ))}
+  .hs-table-wrap {
+   overflow-x: auto;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+  }
+  .hs-table { width: 100%; border-collapse: collapse; }
+  .hs-th {
+   text-align: left;
+   font-size: 0.7rem;
+   font-weight: 700;
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   color: var(--adm-text-soft);
+   padding: 0.85rem 1rem;
+   background: var(--adm-bg-hover);
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .hs-th-actions { text-align: right; width: 160px; }
+  .hs-table tbody tr { border-bottom: 1px solid var(--adm-border); }
+  .hs-table tbody tr:last-child { border-bottom: none; }
+  .hs-table tbody tr:hover { background: var(--adm-bg-hover); }
+  .hs-td { padding: 0.85rem 1rem; font-size: 0.86rem; color: var(--adm-text); vertical-align: middle; }
+  .hs-td-soft { color: var(--adm-text-muted); }
+  .hs-td-actions { text-align: right; white-space: nowrap; }
 
- {(!sites || sites.length === 0) && (
- <tr>
- <td colspan="5" class="py-8 text-center text-[#7A6B58]">
- Henüz tarihi yer bulunmuyor.
- <a href="/admin/historical-sites/add" class="text-urfa-600 hover:underline ml-1">İlk yeri ekle</a>
- </td>
- </tr>
- )}
- </tbody>
- </table>
- </div>
- </div>
- </div>
+  .hs-site-cell { display: flex; align-items: center; gap: 0.75rem; }
+  .hs-site-icon {
+   width: 42px; height: 42px;
+   background: var(--adm-bg-active);
+   color: var(--adm-accent);
+   border-radius: 10px;
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .hs-site-icon--unesco {
+   background: linear-gradient(135deg, rgba(217,119,6,0.2), rgba(180,83,9,0.15));
+   color: rgb(180,83,9);
+  }
+  .hs-site-name {
+   font-weight: 600;
+   color: var(--adm-text);
+   line-height: 1.3;
+   margin-bottom: 0.25rem;
+  }
+  .hs-site-meta {
+   display: flex; flex-wrap: wrap; gap: 0.3rem;
+  }
+  .hs-tag {
+   display: inline-flex; align-items: center; gap: 0.2rem;
+   padding: 0.15rem 0.5rem;
+   border-radius: 999px;
+   font-size: 0.68rem;
+   font-weight: 700;
+  }
+  .hs-tag--unesco { background: linear-gradient(135deg, rgba(217,119,6,0.18), rgba(180,83,9,0.12)); color: rgb(180,83,9); }
+  .hs-tag--featured { background: rgba(139,92,246,0.12); color: rgb(124,58,237); }
+
+  .hs-location {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   color: var(--adm-text-muted);
+   max-width: 200px;
+  }
+  .hs-location span {
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+  }
+
+  .hs-badge {
+   display: inline-flex; align-items: center;
+   padding: 0.22rem 0.6rem;
+   font-size: 0.72rem; font-weight: 600;
+   border-radius: 999px;
+  }
+  .hs-badge--ok    { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+  .hs-badge--muted { background: rgba(100,116,139,0.12); color: rgb(71,85,105); }
+  .hs-badge--err   { background: rgba(225,29,72,0.12); color: rgb(190,18,60); }
+
+  .hs-icon-btn {
+   display: inline-flex; align-items: center; justify-content: center;
+   width: 32px; height: 32px;
+   color: var(--adm-text-soft);
+   background: transparent;
+   border: 1px solid var(--adm-border);
+   border-radius: 6px;
+   text-decoration: none;
+   margin-left: 0.25rem;
+   cursor: pointer;
+   transition: all 0.15s;
+  }
+  .hs-icon-btn:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+  .hs-icon-btn--danger:hover { border-color: rgb(190,18,60); color: rgb(190,18,60); background: rgba(225,29,72,0.06); }
+
+  .hs-form-inline { display: inline; }
+ </style>
 </AdminLayout>

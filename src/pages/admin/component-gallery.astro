@@ -1,61 +1,64 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
  title="Bileşen Galerisi"
- subtitle="Harran Scripts tasarım sistemi referansı"
+ subtitle="Harran Scripts tasarım sistemi — public site bileşenleri referansı"
+ seo={{ title: 'Bileşen Galerisi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-4xl space-y-8">
- <div class="mb-2">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
+ <div class="cg-page space-y-8">
+  <div class="cg-info">
+   <Icon name="lucide:info" class="w-4 h-4 cg-info-icon" />
+   <span>Bu galeri <strong>public site</strong> bileşenleri içindir. Admin panel kendi tasarım sistemini (<code>--adm-*</code> tokens) kullanır.</span>
+  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-xl font-bold text-[#1F1410] mb-4">Butonlar</h2>
  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
- <div class="p-4 border border-[rgba(184,115,51,0.14)] rounded-sm">
+ <div class="p-4 border border-[var(--adm-border)] rounded-sm">
  <p class="text-xs text-[#7A6B58] mb-2">Birincil</p>
  <button class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
  Birincil
  </button>
  </div>
- <div class="p-4 border border-[rgba(184,115,51,0.14)] rounded-sm">
+ <div class="p-4 border border-[var(--adm-border)] rounded-sm">
  <p class="text-xs text-[#7A6B58] mb-2">İkincil</p>
- <button class="rounded-sm border border-[rgba(184,115,51,0.2)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">
+ <button class="rounded-sm border border-[var(--adm-border-strong)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[var(--adm-bg-hover)]">
  İkincil
  </button>
  </div>
- <div class="p-4 border border-[rgba(184,115,51,0.14)] rounded-sm">
+ <div class="p-4 border border-[var(--adm-border)] rounded-sm">
  <p class="text-xs text-[#7A6B58] mb-2">Koyu</p>
  <button class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5c4839]">
  Koyu
  </button>
  </div>
- <div class="p-4 border border-[rgba(184,115,51,0.14)] rounded-sm">
+ <div class="p-4 border border-[var(--adm-border)] rounded-sm">
  <p class="text-xs text-[#7A6B58] mb-2">Devre Dışı</p>
- <button class="rounded-sm bg-[rgba(184,115,51,0.1)] px-4 py-2 text-sm text-[#7A6B58]" disabled>
+ <button class="rounded-sm bg-[var(--adm-bg-active)] px-4 py-2 text-sm text-[#7A6B58]" disabled>
  Devre Dışı
  </button>
  </div>
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-xl font-bold text-[#1F1410] mb-4">Durum Rozetleri</h2>
  <div class="flex flex-wrap gap-2">
  <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[rgba(184,115,51,0.15)] text-[#7A6B58]">Yayında</span>
- <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58]">Taslak</span>
- <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[rgba(184,115,51,0.06)] text-[#7A6B58]">Pasif</span>
- <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[rgba(184,115,51,0.1)] text-[#7A6B58]">Beklemede</span>
+ <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[var(--adm-bg-hover)] text-[#7A6B58]">Taslak</span>
+ <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[var(--adm-bg-hover)] text-[#7A6B58]">Pasif</span>
+ <span class="px-2 py-0.5 text-xs font-medium rounded-sm bg-[var(--adm-bg-active)] text-[#7A6B58]">Beklemede</span>
  <span class="px-2 py-0.5 text-xs font-medium rounded-sm border border-[rgba(184,115,51,0.3)] text-[#7A6B58]">Arşiv</span>
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-xl font-bold text-[#1F1410] mb-4">Kartlar</h2>
  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h3 class="text-base font-semibold text-[#1F1410] mb-2">Standart Kart</h3>
  <p class="text-sm text-[#7A6B58]">Gölge + bakır kenarlık kullanan temel kart örneği.</p>
  </div>
@@ -63,24 +66,24 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  <h3 class="text-base font-semibold text-[#7A6B58] mb-2">Aktif Kart</h3>
  <p class="text-sm text-[#7A6B58]">Güçlü bakır kenarlık ile öne çıkan kart.</p>
  </div>
- <div class="bg-[rgba(184,115,51,0.06)] rounded-sm border border-[rgba(184,115,51,0.2)] p-6">
+ <div class="bg-[var(--adm-bg-hover)] rounded-sm border border-[var(--adm-border-strong)] p-6">
  <h3 class="text-base font-semibold text-[#1F1410] mb-2">Bilgi Kutusu</h3>
  <p class="text-sm text-[#7A6B58]">Arka plan tonlu bilgilendirme kartı.</p>
  </div>
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-xl font-bold text-[#1F1410] mb-4">Form Elemanları</h2>
  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
  <div class="space-y-4">
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Metin Alanı</label>
- <input type="text" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" placeholder="Metin girin..." />
+ <input type="text" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" placeholder="Metin girin..." />
  </div>
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Seçim</label>
- <select class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <select class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
  <option>Seçenek 1</option>
  <option>Seçenek 2</option>
  <option>Seçenek 3</option>
@@ -90,7 +93,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  <div class="space-y-4">
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Uzun Metin</label>
- <textarea class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" rows="3" placeholder="Uzun metin girin..."></textarea>
+ <textarea class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" rows="3" placeholder="Uzun metin girin..."></textarea>
  </div>
  <div class="flex items-center gap-2">
  <input type="checkbox" id="checkbox" class="rounded-sm" />
@@ -100,7 +103,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-xl font-bold text-[#1F1410] mb-4">Tipografi</h2>
  <div class="space-y-4">
  <h1 class="text-4xl font-bold text-[#1F1410]">Başlık 1</h1>
@@ -112,7 +115,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-xl font-bold text-[#1F1410] mb-4">Renk Paleti</h2>
  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
  <div class="space-y-2">
@@ -134,4 +137,28 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  </div>
  </div>
  </div>
+
+ <style>
+  .cg-page { display: flex; flex-direction: column; gap: 1.25rem; max-width: 920px; }
+  .cg-info {
+   display: flex; gap: 0.55rem; align-items: center;
+   padding: 0.75rem 1rem;
+   background: rgba(2,132,199,0.06);
+   border: 1px solid rgba(2,132,199,0.18);
+   border-radius: 10px;
+   color: var(--adm-text);
+   font-size: 0.86rem;
+   line-height: 1.5;
+  }
+  .cg-info-icon { color: rgb(2,132,199); flex-shrink: 0; }
+  .cg-info strong { color: var(--adm-text); font-weight: 700; }
+  .cg-info code {
+   background: var(--adm-bg);
+   padding: 0.1rem 0.3rem;
+   border-radius: 3px;
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.78rem;
+   color: var(--adm-accent);
+  }
+ </style>
 </AdminLayout>

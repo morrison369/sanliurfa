@@ -1,136 +1,283 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
  title="Gelir Yönetimi"
  subtitle="Abonelik geliri, MRR ve kayıp oranı analitikleri"
+ seo={{ title: 'Gelir Yönetimi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8">
- <div class="mb-6">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
+ <div class="rv-page">
+  <div class="rv-stats">
+   <div class="rv-stat rv-stat--emerald">
+    <div class="rv-stat-ico"><Icon name="lucide:trending-up" class="w-5 h-5" /></div>
+    <div>
+     <p class="rv-stat-val" id="totalMRR">$0.00</p>
+     <p class="rv-stat-lbl">Aylık Gelir (MRR)</p>
+     <p class="rv-stat-detail">Aktif aboneliklerden</p>
+    </div>
+   </div>
+   <div class="rv-stat rv-stat--indigo">
+    <div class="rv-stat-ico"><Icon name="lucide:users" class="w-5 h-5" /></div>
+    <div>
+     <p class="rv-stat-val" id="activeSubscriptions">0</p>
+     <p class="rv-stat-lbl">Aktif Abonelikler</p>
+     <p class="rv-stat-detail">Tüm katmanlar</p>
+    </div>
+   </div>
+   <div class="rv-stat rv-stat--rose">
+    <div class="rv-stat-ico"><Icon name="lucide:trending-down" class="w-5 h-5" /></div>
+    <div>
+     <p class="rv-stat-val" id="churnRate">0%</p>
+     <p class="rv-stat-lbl">Kayıp Oranı (30g)</p>
+     <p class="rv-stat-detail">Kaybedilen abonelikler</p>
+    </div>
+   </div>
+   <div class="rv-stat rv-stat--amber">
+    <div class="rv-stat-ico"><Icon name="lucide:dollar-sign" class="w-5 h-5" /></div>
+    <div>
+     <p class="rv-stat-val" id="totalRevenue">$0.00</p>
+     <p class="rv-stat-lbl">Toplam Gelir</p>
+     <p class="rv-stat-detail">Tüm zamanlar</p>
+    </div>
+   </div>
+  </div>
 
- <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <div class="flex items-center justify-between mb-4">
- <h3 class="text-sm font-medium text-[#7A6B58]">Aylık Gelir (MRR)</h3>
- </div>
- <div class="text-3xl font-bold text-[#1F1410]" id="totalMRR">$0.00</div>
- <p class="text-sm text-[#7A6B58] mt-2">Aktif aboneliklerden</p>
- </div>
+  <div class="rv-tiers">
+   <div class="rv-tier rv-tier--free">
+    <div class="rv-tier-head">
+     <span class="rv-tier-badge">Ücretsiz</span>
+     <span class="rv-tier-price">$0</span>
+    </div>
+    <p class="rv-tier-desc">Ücretsiz hesaplar — temel platform özellikleri.</p>
+    <div class="rv-tier-count">
+     <span id="freeTierCount">0</span>
+     <small>kullanıcı</small>
+    </div>
+   </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <div class="flex items-center justify-between mb-4">
- <h3 class="text-sm font-medium text-[#7A6B58]">Aktif Abonelikler</h3>
- </div>
- <div class="text-3xl font-bold text-[#1F1410]" id="activeSubscriptions">0</div>
- <p class="text-sm text-[#7A6B58] mt-2">Tüm katmanlar</p>
- </div>
+   <div class="rv-tier rv-tier--premium">
+    <div class="rv-tier-head">
+     <span class="rv-tier-badge rv-tier-badge--featured">
+      <Icon name="lucide:star" class="w-3 h-3" /> Premium
+     </span>
+     <span class="rv-tier-price">$2.99/ay</span>
+    </div>
+    <p class="rv-tier-desc">Premium özelliklere erişim — favori limitleri kaldırıldı.</p>
+    <div class="rv-tier-count">
+     <span id="premiumTierCount">0</span>
+     <small>aktif abone</small>
+    </div>
+    <div class="rv-tier-revenue">
+     <span id="premiumTierRevenue">$0.00</span> / ay
+    </div>
+   </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <div class="flex items-center justify-between mb-4">
- <h3 class="text-sm font-medium text-[#7A6B58]">Kayıp Oranı (30g)</h3>
- </div>
- <div class="text-3xl font-bold text-urfa-600" id="churnRate">0%</div>
- <p class="text-sm text-[#7A6B58] mt-2">Kaybedilen abonelikler</p>
- </div>
+   <div class="rv-tier rv-tier--pro">
+    <div class="rv-tier-head">
+     <span class="rv-tier-badge rv-tier-badge--pro">
+      <Icon name="lucide:zap" class="w-3 h-3" /> Pro
+     </span>
+     <span class="rv-tier-price">$5.99/ay</span>
+    </div>
+    <p class="rv-tier-desc">Vendor / ticari kullanım — gelişmiş analitik ve öncelik.</p>
+    <div class="rv-tier-count">
+     <span id="proTierCount">0</span>
+     <small>aktif abone</small>
+    </div>
+    <div class="rv-tier-revenue">
+     <span id="proTierRevenue">$0.00</span> / ay
+    </div>
+   </div>
+  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <div class="flex items-center justify-between mb-4">
- <h3 class="text-sm font-medium text-[#7A6B58]">Toplam Gelir</h3>
- </div>
- <div class="text-3xl font-bold text-[#1F1410]" id="totalRevenue">$0.00</div>
- <p class="text-sm text-[#7A6B58] mt-2">Tüm zamanlar</p>
- </div>
- </div>
-
- <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
- {['free', 'premium', 'pro'].map((tier) => (
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h3 class="text-lg font-semibold text-[#1F1410] mb-4 capitalize">
- {tier === 'free' && 'Ücretsiz'}
- {tier === 'premium' && '⭐ Premium'}
- {tier === 'pro' && 'Pro'}
- </h3>
-
- {tier === 'free' && (
- <div class="text-sm text-[#7A6B58]">
- <p class="mb-4">Ücretli olmayan hesaplar. Ücretsiz özellikler sunarlar.</p>
- <div class="text-2xl font-bold text-[#1F1410] mb-2">
- <span id="freeTierCount">0</span> kullanıcı
- </div>
- </div>
- )}
-
- {tier === 'premium' && (
- <div class="text-sm text-[#7A6B58]">
- <p class="mb-4">$2.99/ay fiyatlandırma.</p>
- <div class="mb-4">
- <div class="text-2xl font-bold text-[#1F1410]">
- <span id="premiumTierCount">0</span> aktif abone
- </div>
- <div class="text-lg text-urfa-600 mt-2">
- <span id="premiumTierRevenue">$0.00</span>/ay
- </div>
- </div>
- </div>
- )}
-
- {tier === 'pro' && (
- <div class="text-sm text-[#7A6B58]">
- <p class="mb-4">$5.99/ay fiyatlandırma.</p>
- <div class="mb-4">
- <div class="text-2xl font-bold text-[#1F1410]">
- <span id="proTierCount">0</span> aktif abone
- </div>
- <div class="text-lg text-urfa-600 mt-2">
- <span id="proTierRevenue">$0.00</span>/ay
- </div>
- </div>
- </div>
- )}
- </div>
- ))}
- </div>
-
- <div class="bg-[rgba(184,115,51,0.06)] border border-[rgba(184,115,51,0.2)] rounded-sm p-6">
- <h3 class="font-semibold text-[#1F1410] mb-2">Grafik Yükleniyor</h3>
- <p class="text-sm text-[#7A6B58]">
- Günlük gelir grafiği burada gösterilecek (Chart.js ile). Son 30 günün gelir trendini takip et.
- </p>
- </div>
+  <div class="rv-chart-placeholder">
+   <Icon name="lucide:line-chart" class="w-6 h-6 rv-chart-icon" />
+   <div>
+    <h3 class="rv-chart-title">Günlük Gelir Grafiği</h3>
+    <p class="rv-chart-sub">Son 30 günün gelir trendi yakında bu alana eklenecek (Chart.js entegrasyonu beklemede).</p>
+   </div>
+  </div>
  </div>
 
  <script>
- async function loadRevenueData() {
- try {
- const response = await fetch('/api/admin/revenue');
- if (!response.ok) throw new Error('Gelir verisi alınamadı.');
+  async function loadRevenueData() {
+   try {
+    const response = await fetch('/api/admin/revenue');
+    if (!response.ok) throw new Error('Gelir verisi alınamadı.');
+    const result = await response.json();
+    const payload = result?.data?.data || result?.data || result || {};
+    const { summary, byTier } = payload;
+    if (!summary || !byTier) return;
 
- const result = await response.json();
- const { summary, byTier } = result.data;
+    const fmt = (v: unknown) => Number(v || 0).toFixed(2);
+    const num = (v: unknown) => String(Number(v || 0));
+    document.getElementById('totalMRR')!.textContent = `$${fmt(summary.totalMRR)}`;
+    document.getElementById('activeSubscriptions')!.textContent = num(summary.totalActiveSubscriptions);
+    document.getElementById('churnRate')!.textContent = `${Number(summary.churnRatePercent || 0)}%`;
+    document.getElementById('totalRevenue')!.textContent = `$${fmt(summary.totalRevenueAllTime)}`;
 
- document.getElementById('totalMRR')!.textContent = `$${summary.totalMRR.toFixed(2)}`;
- document.getElementById('activeSubscriptions')!.textContent = summary.totalActiveSubscriptions.toString();
- document.getElementById('churnRate')!.textContent = `${summary.churnRatePercent}%`;
- document.getElementById('totalRevenue')!.textContent = `$${summary.totalRevenueAllTime.toFixed(2)}`;
+    if (byTier.free) {
+     document.getElementById('freeTierCount')!.textContent = num(byTier.free.count);
+    }
+    if (byTier.premium) {
+     document.getElementById('premiumTierCount')!.textContent = num(byTier.premium.count);
+     document.getElementById('premiumTierRevenue')!.textContent = `$${fmt(byTier.premium.monthlyRevenue)}`;
+    }
+    if (byTier.pro) {
+     document.getElementById('proTierCount')!.textContent = num(byTier.pro.count);
+     document.getElementById('proTierRevenue')!.textContent = `$${fmt(byTier.pro.monthlyRevenue)}`;
+    }
+   } catch (error) {
+    console.error('Gelir verisi yüklenemedi:', error);
+   }
+  }
 
- if (byTier.premium) {
- document.getElementById('premiumTierCount')!.textContent = byTier.premium.count.toString();
- document.getElementById('premiumTierRevenue')!.textContent = `$${byTier.premium.monthlyRevenue.toFixed(2)}`;
- }
-
- if (byTier.pro) {
- document.getElementById('proTierCount')!.textContent = byTier.pro.count.toString();
- document.getElementById('proTierRevenue')!.textContent = `$${byTier.pro.monthlyRevenue.toFixed(2)}`;
- }
- } catch (error) {
- console.error('Gelir verisi yüklenemedi:', error);
- }
- }
-
- loadRevenueData();
- setInterval(loadRevenueData, 5 * 60 * 1000);
+  loadRevenueData();
+  setInterval(loadRevenueData, 5 * 60 * 1000);
  </script>
+
+ <style>
+  .rv-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .rv-stats {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+   gap: 1rem;
+  }
+  .rv-stat {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   padding: 1.15rem 1.25rem;
+   display: flex; align-items: flex-start; gap: 0.95rem;
+  }
+  .rv-stat-ico {
+   width: 44px; height: 44px;
+   border-radius: 11px;
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .rv-stat--indigo .rv-stat-ico { background: rgba(99,102,241,0.12); color: rgb(99,102,241); }
+  .rv-stat--emerald .rv-stat-ico { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+  .rv-stat--rose .rv-stat-ico { background: rgba(225,29,72,0.12); color: rgb(190,18,60); }
+  .rv-stat--amber .rv-stat-ico { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+  .rv-stat-val {
+   font-family: 'Cormorant Garamond', serif;
+   font-size: 1.9rem; font-weight: 700;
+   line-height: 1; margin: 0;
+   color: var(--adm-text);
+   letter-spacing: -0.02em;
+  }
+  .rv-stat-lbl {
+   margin: 0.35rem 0 0;
+   font-size: 0.82rem; font-weight: 600;
+   color: var(--adm-text-muted);
+  }
+  .rv-stat-detail {
+   margin: 0.15rem 0 0;
+   font-size: 0.7rem;
+   color: var(--adm-text-soft);
+  }
+
+  .rv-tiers {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+   gap: 1rem;
+  }
+  .rv-tier {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   padding: 1.25rem;
+   display: flex; flex-direction: column; gap: 0.75rem;
+   transition: border-color 0.18s, transform 0.18s;
+  }
+  .rv-tier:hover { transform: translateY(-2px); }
+  .rv-tier--premium { border-color: rgba(184,115,51,0.3); }
+  .rv-tier--premium:hover { border-color: var(--adm-accent); }
+  .rv-tier--pro { border-color: rgba(139,92,246,0.3); }
+  .rv-tier--pro:hover { border-color: rgb(139,92,246); }
+
+  .rv-tier-head {
+   display: flex; align-items: center; justify-content: space-between;
+  }
+  .rv-tier-badge {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.3rem 0.7rem;
+   font-size: 0.78rem; font-weight: 700;
+   background: rgba(100,116,139,0.12);
+   color: rgb(71,85,105);
+   border-radius: 999px;
+  }
+  .rv-tier-badge--featured {
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff;
+  }
+  .rv-tier-badge--pro {
+   background: linear-gradient(135deg, rgb(139,92,246), rgb(99,102,241));
+   color: #fff;
+  }
+  .rv-tier-price {
+   font-size: 0.82rem; font-weight: 700;
+   color: var(--adm-text-muted);
+  }
+  .rv-tier-desc {
+   font-size: 0.84rem;
+   color: var(--adm-text-muted);
+   margin: 0;
+   line-height: 1.5;
+  }
+  .rv-tier-count {
+   display: flex; align-items: baseline; gap: 0.4rem;
+   margin-top: auto;
+  }
+  .rv-tier-count > span {
+   font-family: 'Cormorant Garamond', serif;
+   font-size: 2rem; font-weight: 700;
+   color: var(--adm-text);
+   line-height: 1;
+  }
+  .rv-tier-count small {
+   font-size: 0.78rem;
+   color: var(--adm-text-soft);
+   font-weight: 500;
+  }
+  .rv-tier-revenue {
+   padding: 0.55rem 0.75rem;
+   background: var(--adm-bg);
+   border-radius: 8px;
+   font-size: 0.86rem;
+   color: var(--adm-text);
+  }
+  .rv-tier-revenue > span {
+   font-weight: 700;
+   color: var(--adm-accent);
+  }
+
+  .rv-chart-placeholder {
+   display: flex; align-items: center; gap: 1rem;
+   padding: 1.25rem;
+   background: var(--adm-accent-soft);
+   border: 1px dashed rgba(184,115,51,0.3);
+   border-radius: 12px;
+  }
+  .rv-chart-icon {
+   color: var(--adm-accent);
+   flex-shrink: 0;
+  }
+  .rv-chart-title {
+   font-family: 'Cormorant Garamond', serif;
+   font-size: 1.1rem; font-weight: 700;
+   color: var(--adm-text);
+   margin: 0 0 0.2rem;
+  }
+  .rv-chart-sub {
+   font-size: 0.84rem;
+   color: var(--adm-text-muted);
+   margin: 0;
+   line-height: 1.5;
+  }
+ </style>
 </AdminLayout>

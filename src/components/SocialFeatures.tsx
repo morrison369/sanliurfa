@@ -480,7 +480,7 @@ export function SocialFeatures() {
  ))}
  </div>
 
- {loading && <div className="text-sm text-[#7A6B58]">Yükleniyor...</div>}
+ {loading && <div className="text-sm text-[#7A6B58]">Yükleniyor…</div>}
 
  {!loading && activeTab === 'overview' && (
  <div className="space-y-4">

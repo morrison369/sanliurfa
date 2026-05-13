@@ -2,8 +2,30 @@
 import Layout from '../layouts/Layout.astro';
 import CategoryHub from '../components/public/CategoryHub.astro';
 import { CITY_TAXONOMY_CATEGORIES } from '../data/city-taxonomy';
+import { getPublicAppUrl } from '../lib/public-app-url';
+const baseUrl = getPublicAppUrl();
 const category = CITY_TAXONOMY_CATEGORIES.find((item) => item.slug === 'acil-durum')!;
 ---
 <Layout seo={{ title: 'Şanlıurfa Acil Durum Rehberi | Eczane, Polis ve Yol Yardım', description: category.description, canonical: '/acil-durum' }}>
   <CategoryHub category={category} />
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: baseUrl },
+      { '@type': 'ListItem', position: 2, name: category.title, item: `${baseUrl}${category.href}` },
+    ],
+  })} is:inline />
+  {category.faq.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: category.faq.map(({ q, a }) => ({
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a },
+      })),
+    })} is:inline />
+  )}
 </Layout>

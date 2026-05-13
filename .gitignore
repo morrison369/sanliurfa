@@ -73,3 +73,7 @@ scripts/__pycache__/
 # Memory & local-only paths
 memory/
 .claude/memory/
+
+# IndexNow key (secret, keep local)
+.indexnow-key
+scripts/.gsc-sa-key.json

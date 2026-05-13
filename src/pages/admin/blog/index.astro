@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
@@ -16,15 +16,15 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-4">
  <div class="flex flex-wrap gap-4">
  <input
  type="text"
  id="searchInput"
  placeholder="Yazı ara..."
- class="px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400 flex-1 min-w-[200px]"
+ class="px-3 py-2 border border-[var(--adm-border-strong)] rounded-sm text-sm focus:outline-none focus:border-urfa-400 flex-1 min-w-[200px]"
  />
- <select id="statusFilter" class="px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400">
+ <select id="statusFilter" class="px-3 py-2 border border-[var(--adm-border-strong)] rounded-sm text-sm focus:outline-none focus:border-urfa-400">
  <option value="">Tüm Durumlar</option>
  <option value="published">Yayında</option>
  <option value="draft">Taslak</option>
@@ -36,10 +36,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm overflow-hidden">
  <div class="overflow-x-auto">
  <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <thead class="border-b border-[var(--adm-border)] bg-[var(--adm-bg-hover)]">
  <tr>
  <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Yazı</th>
  <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Yazar</th>
@@ -49,17 +49,17 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İşlemler</th>
  </tr>
  </thead>
- <tbody id="postsTableBody" class="divide-y divide-[rgba(184,115,51,0.08)]">
+ <tbody id="postsTableBody" class="divide-y divide-[var(--adm-bg-hover)]">
  <tr>
  <td colspan="6" class="px-6 py-12 text-center text-[#7A6B58]">
- Yükleniyor...
+ Yükleniyor…
  </td>
  </tr>
  </tbody>
  </table>
  </div>
 
- <div class="px-6 py-4 border-t border-[rgba(184,115,51,0.14)] flex items-center justify-between">
+ <div class="px-6 py-4 border-t border-[var(--adm-border)] flex items-center justify-between">
  <div class="text-sm text-[#7A6B58]">
  <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
  </div>
@@ -73,8 +73,8 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
  const statusLabels = {
  published: { text: 'Yayında', class: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
- draft: { text: 'Taslak', class: 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' },
- scheduled: { text: 'Zamanlanmış', class: 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]' },
+ draft: { text: 'Taslak', class: 'bg-[var(--adm-bg-hover)] text-[#7A6B58]' },
+ scheduled: { text: 'Zamanlanmış', class: 'bg-[var(--adm-bg-active)] text-[#7A6B58]' },
  };
 
  function setTbodyMsg(tbody, colSpan, text, cls) {
@@ -89,7 +89,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
  function buildPostRow(post) {
  const tr = document.createElement('tr');
- tr.className = 'hover:bg-[rgba(184,115,51,0.04)]';
+ tr.className = 'hover:bg-[var(--adm-bg-hover)]';
 
  // Col 1: image + title + slug
  const td1 = document.createElement('td');
@@ -104,7 +104,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  wrap.appendChild(img);
  } else {
  const ph = document.createElement('div');
- ph.className = 'w-12 h-12 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center text-[#7A6B58]';
+ ph.className = 'w-12 h-12 bg-[var(--adm-bg-active)] rounded-sm flex items-center justify-center text-[#7A6B58]';
  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
  svg.setAttribute('class', 'w-6 h-6');
  svg.setAttribute('fill', 'none');
@@ -143,7 +143,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  const td3 = document.createElement('td');
  td3.className = 'px-6 py-4';
  const badge = document.createElement('span');
- badge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (statusLabel?.class || 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]');
+ badge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (statusLabel?.class || 'bg-[var(--adm-bg-hover)] text-[#7A6B58]');
  badge.textContent = statusLabel?.text || post.status;
  td3.appendChild(badge);
  if (post.featured) {
@@ -203,7 +203,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
  async function loadPosts() {
  const tbody = document.getElementById('postsTableBody');
- setTbodyMsg(tbody, 6, 'Yükleniyor...', 'px-6 py-12 text-center text-[#7A6B58]');
+ setTbodyMsg(tbody, 6, 'Yükleniyor…', 'px-6 py-12 text-center text-[#7A6B58]');
 
  const params = new URLSearchParams({ page: currentPage.toString() });
  const search = document.getElementById('searchInput').value;
@@ -242,7 +242,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  for (let i = 1; i <= pagination.totalPages; i++) {
  if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
  const btn = document.createElement('button');
- btn.className = 'px-3 py-1 rounded-sm text-sm ' + (i === pagination.page ? 'bg-urfa-600 text-white' : 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.15)]');
+ btn.className = 'px-3 py-1 rounded-sm text-sm ' + (i === pagination.page ? 'bg-urfa-600 text-white' : 'bg-[var(--adm-bg-hover)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.15)]');
  btn.textContent = String(i);
  btn.addEventListener('click', () => goToPage(i));
  nodes.push(btn);

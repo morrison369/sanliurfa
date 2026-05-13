@@ -93,6 +93,9 @@ const loginRedirect = placeSlug ? `/giris?redirect=/isletme/${placeSlug}` : '/gi
           if (!res.ok) throw new Error('Failed');
           btn.title = 'Favorilere ekle';
           btn.setAttribute('aria-label', 'Favorilere ekle');
+          if (typeof window.sfTrack === 'function') {
+            window.sfTrack('place_unfavorite', { place_id: placeId });
+          }
         } else {
           const res = await fetch('/api/favorites', {
             method: 'POST',
@@ -103,6 +106,9 @@ const loginRedirect = placeSlug ? `/giris?redirect=/isletme/${placeSlug}` : '/gi
           // 400 = "zaten favorilerde" — UI is already active, treat as success
           btn.title = 'Favorilerden çıkar';
           btn.setAttribute('aria-label', 'Favorilerden çıkar');
+          if (typeof window.sfTrack === 'function') {
+            window.sfTrack('place_favorite', { place_id: placeId });
+          }
         }
       } catch (err) {
         // Revert optimistic update

@@ -8,6 +8,7 @@ import { getPublicAppUrl } from '../../lib/public-app-url';
 import { logger } from '../../lib/logging';
 import { buildPageSeo } from '../../lib/seo/pageSeo';
 import { resolveHistoricalImage } from '../../lib/public-image-resolvers';
+import PublicFaqList from '../../components/public/PublicFaqList.astro';
 const baseUrl = getPublicAppUrl();
 
 let subcategories: any[] = [];
@@ -177,6 +178,12 @@ const getTravelIcon = (slug: string) => {
  ))}
  </div>
  </div>
+ )}
+
+ {faqItems.length > 0 && (
+  <div class="sf-container" style="margin-top:3rem">
+   <PublicFaqList items={faqItems} />
+  </div>
  )}
  </div>
  </div>

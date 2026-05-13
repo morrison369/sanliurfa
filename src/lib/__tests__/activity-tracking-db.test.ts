@@ -43,9 +43,9 @@ describe('logActivity', () => {
     await logActivity('u-1', 'review_created', 'place', 'p-1', { placeName: 'X' });
     expect(insertMock).toHaveBeenCalled();
     const call = insertMock.mock.calls[0];
-    expect(call[0]).toBe('user_activity');
+    expect(call[0]).toBe('user_activities');
     expect(call[1].user_id).toBe('u-1');
-    expect(call[1].action_type).toBe('review_created');
+    expect(call[1].type).toBe('review_created');
     expect(call[1].metadata).toBe(JSON.stringify({ placeName: 'X' }));
     expect(setCacheMock).toHaveBeenCalledWith('activity:u-1', null, 0);
   });
@@ -54,8 +54,8 @@ describe('logActivity', () => {
     insertMock.mockResolvedValueOnce({});
     await logActivity('u-1', 'level_up');
     expect(insertMock.mock.calls[0][1].metadata).toBeNull();
-    expect(insertMock.mock.calls[0][1].reference_type).toBeNull();
-    expect(insertMock.mock.calls[0][1].reference_id).toBeNull();
+    expect(insertMock.mock.calls[0][1].entity_type).toBeNull();
+    expect(insertMock.mock.calls[0][1].entity_id).toBeNull();
   });
 
   it('insert failure swallowed (fire-and-forget)', async () => {

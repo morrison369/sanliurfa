@@ -1,18 +1,26 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
 import AdminLoyaltyPanel from '../../../components/AdminLoyaltyPanel';
 ---
 
 <AdminLayout
  title="Sadakat Yönetimi"
- subtitle="Ödüller, puanlar ve rozetleri yönetin"
+ subtitle="Ödüller, puanlar ve rozetleri yönet"
  seo={{ title: 'Sadakat Yönetimi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-6xl">
- <div class="mb-6">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
-
- <AdminLoyaltyPanel client:visible />
+ <div class="ly-page">
+  <div class="ly-panel">
+   <AdminLoyaltyPanel client:visible />
+  </div>
  </div>
 </AdminLayout>
+
+<style>
+ .ly-page { display: flex; flex-direction: column; gap: 1rem; }
+ .ly-panel {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+ }
+</style>

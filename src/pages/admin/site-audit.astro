@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
@@ -12,31 +12,31 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
  </div>
 
- <div class="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 shadow-sm">
+ <div class="rounded-sm border border-[var(--adm-border)] bg-[var(--bg-card)] p-5 shadow-sm">
  <h2 class="font-semibold text-[#7A6B58] mb-3">Anomaly Özeti (24s)</h2>
- <div id="anomalyCard" class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] p-3 text-sm text-[#7A6B58]">
- Yükleniyor...
+ <div id="anomalyCard" class="rounded-sm border border-[var(--adm-border-strong)] bg-[var(--adm-bg-hover)] p-3 text-sm text-[#7A6B58]">
+ Yükleniyor…
  </div>
  </div>
 
- <div class="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 shadow-sm">
+ <div class="rounded-sm border border-[var(--adm-border)] bg-[var(--bg-card)] p-5 shadow-sm">
  <div class="grid gap-3 md:grid-cols-5">
- <input id="filterKey" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm" placeholder="key filtresi" />
- <input id="filterAction" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm" placeholder="action filtresi" />
- <input id="filterLimit" type="number" value="50" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm" />
+ <input id="filterKey" class="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm" placeholder="key filtresi" />
+ <input id="filterAction" class="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm" placeholder="action filtresi" />
+ <input id="filterLimit" type="number" value="50" class="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm" />
  <button id="btnLoad" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">Timeline Getir</button>
  <a id="btnExport" class="rounded-sm bg-[#6B5540] px-4 py-2 text-center text-sm font-semibold text-white hover:bg-[#4A3A28]" href="/api/admin/site/audit/export?limit=50">CSV Dışa Aktar</a>
  </div>
 
  <div class="mt-4 flex items-center gap-3">
- <button id="prevPage" class="rounded-sm border border-[rgba(184,115,51,0.14)] px-3 py-1 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">Önceki</button>
- <button id="nextPage" class="rounded-sm border border-[rgba(184,115,51,0.14)] px-3 py-1 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">Sonraki</button>
+ <button id="prevPage" class="rounded-sm border border-[var(--adm-border)] px-3 py-1 text-sm text-[#7A6B58] hover:bg-[var(--adm-bg-hover)]">Önceki</button>
+ <button id="nextPage" class="rounded-sm border border-[var(--adm-border)] px-3 py-1 text-sm text-[#7A6B58] hover:bg-[var(--adm-bg-hover)]">Sonraki</button>
  <span id="pageInfo" class="text-sm text-[#7A6B58]"></span>
  </div>
 
  <div class="mt-4 overflow-x-auto">
  <table class="min-w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <thead class="border-b border-[var(--adm-border)] bg-[var(--adm-bg-hover)]">
  <tr>
  <th class="px-3 py-3 text-left font-medium text-[#7A6B58]">Tarih</th>
  <th class="px-3 py-3 text-left font-medium text-[#7A6B58]">Key</th>
@@ -47,7 +47,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  </tr>
  </thead>
  <tbody id="auditBody">
- <tr><td colspan="6" class="px-3 py-6 text-center text-[#7A6B58]">Yükleniyor...</td></tr>
+ <tr><td colspan="6" class="px-3 py-6 text-center text-[#7A6B58]">Yükleniyor…</td></tr>
  </tbody>
  </table>
  </div>
@@ -112,7 +112,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function buildAuditRow(r: any): HTMLTableRowElement {
  const tr = document.createElement('tr');
- tr.className = 'border-b border-[rgba(184,115,51,0.08)] hover:bg-[rgba(184,115,51,0.04)]';
+ tr.className = 'border-b border-[var(--adm-bg-hover)] hover:bg-[var(--adm-bg-hover)]';
  const cells: [string, string][] = [
  ['px-3 py-2 text-xs text-[#7A6B58]', new Date(r.created_at).toLocaleString('tr-TR')],
  ['px-3 py-2 text-xs font-mono text-[#7A6B58]', r.setting_key || '-'],

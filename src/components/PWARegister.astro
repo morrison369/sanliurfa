@@ -46,12 +46,52 @@
  }
  }
  
+ // Install prompt handler — yakalayıp daha sonra göstermek için sakla
+ let deferredInstallPrompt: any = null;
+ window.addEventListener('beforeinstallprompt', (e) => {
+   e.preventDefault();
+   deferredInstallPrompt = e;
+   // Custom install butonu visible yap
+   document.querySelectorAll<HTMLButtonElement>('[data-pwa-install]').forEach((btn) => {
+     btn.hidden = false;
+     btn.disabled = false;
+   });
+ });
+
+ // Bir install butonuna tıklandığında deferred prompt'u tetikle
+ document.addEventListener('click', async (e) => {
+   const target = (e.target as HTMLElement)?.closest<HTMLButtonElement>('[data-pwa-install]');
+   if (!target) return;
+   if (!deferredInstallPrompt) return;
+   target.disabled = true;
+   deferredInstallPrompt.prompt();
+   try {
+     const choice = await deferredInstallPrompt.userChoice;
+     if ((window as any).sfTrack) {
+       (window as any).sfTrack('pwa_install_prompt', { outcome: choice?.outcome || 'unknown' });
+     }
+     if (choice?.outcome !== 'accepted') {
+       target.disabled = false;
+     }
+   } catch {
+     target.disabled = false;
+   } finally {
+     deferredInstallPrompt = null;
+     // Diğer install butonlarını gizle
+     document.querySelectorAll<HTMLButtonElement>('[data-pwa-install]').forEach((btn) => {
+       btn.hidden = true;
+     });
+   }
+ });
+
  // App installed
  window.addEventListener('appinstalled', () => {
  if (import.meta.env.DEV) {
  console.debug('[PWA] App installed');
  }
- 
+ if ((window as any).sfTrack) {
+   (window as any).sfTrack('pwa_installed', {});
+ }
  const toast = (window as any).toast;
  if (toast) {
  toast.success('Sanliurfa.com ana ekranınıza eklendi!');

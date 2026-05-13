@@ -1,30 +1,85 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+import { query } from '../../lib/postgres';
+import { logger } from '../../lib/logging';
+
+let stats = { total: 0, easy: 0, medium: 0, hard: 0 };
+try {
+ const r = await query<{ difficulty: string; cnt: number }>(
+  `SELECT COALESCE(difficulty, 'Orta') as difficulty, COUNT(*)::int AS cnt FROM recipes GROUP BY difficulty`
+ );
+ for (const row of r.rows) {
+  const k = (row.difficulty || '').toLowerCase();
+  stats.total += row.cnt;
+  if (k === 'kolay') stats.easy = row.cnt;
+  else if (k === 'orta') stats.medium = row.cnt;
+  else if (k === 'zor') stats.hard = row.cnt;
+ }
+} catch (e) {
+ logger.error('recipes stats failed', e instanceof Error ? e : new Error(String(e)));
+}
 ---
 
 <AdminLayout
  title="Yemek Tarifleri"
- subtitle="Şanlıurfa yöresel tariflerini yönetin"
+ subtitle={`${stats.total.toLocaleString('tr-TR')} tarif • Şanlıurfa mutfağı`}
  seo={{ title: 'Yemek Tarifleri Yönetimi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-5xl space-y-5">
- <div class="mb-2 flex items-center justify-between">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- <button id="add-btn" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
- + Yeni Tarif
- </button>
- </div>
+ <a slot="page-actions" id="add-btn-hero" class="rc-cta">
+  <Icon name="lucide:plus" class="w-4 h-4" /> Yeni Tarif
+ </a>
 
- <div class="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
- <div id="recipe-list" class="divide-y divide-[rgba(184,115,51,0.1)]">
- <p class="p-6 text-[#7A6B58] text-sm text-center">Yükleniyor...</p>
- </div>
- </div>
+ <div class="rc-page">
+  <div class="rc-stats">
+   <div class="rc-stat rc-stat--amber">
+    <div class="rc-stat-ico"><Icon name="lucide:chef-hat" class="w-5 h-5" /></div>
+    <div>
+     <p class="rc-stat-val">{stats.total.toLocaleString('tr-TR')}</p>
+     <p class="rc-stat-lbl">Toplam Tarif</p>
+    </div>
+   </div>
+   <div class="rc-stat rc-stat--emerald">
+    <div class="rc-stat-ico"><Icon name="lucide:smile" class="w-5 h-5" /></div>
+    <div>
+     <p class="rc-stat-val">{stats.easy.toLocaleString('tr-TR')}</p>
+     <p class="rc-stat-lbl">Kolay</p>
+    </div>
+   </div>
+   <div class="rc-stat rc-stat--indigo">
+    <div class="rc-stat-ico"><Icon name="lucide:flame" class="w-5 h-5" /></div>
+    <div>
+     <p class="rc-stat-val">{stats.medium.toLocaleString('tr-TR')}</p>
+     <p class="rc-stat-lbl">Orta</p>
+    </div>
+   </div>
+   <div class="rc-stat rc-stat--rose">
+    <div class="rc-stat-ico"><Icon name="lucide:zap" class="w-5 h-5" /></div>
+    <div>
+     <p class="rc-stat-val">{stats.hard.toLocaleString('tr-TR')}</p>
+     <p class="rc-stat-lbl">Zor</p>
+    </div>
+   </div>
+  </div>
+
+  <div class="rc-list-wrap">
+   <header class="rc-list-head">
+    <h2 class="rc-list-title">
+     <Icon name="lucide:list" class="w-4 h-4" /> Tarif Listesi
+    </h2>
+    <button id="add-btn" type="button" class="rc-add-btn">
+     <Icon name="lucide:plus" class="w-3.5 h-3.5" /> Yeni Tarif
+    </button>
+   </header>
+   <div id="recipe-list" class="rc-list">
+    <p class="rc-list-loading">Yükleniyor…</p>
+   </div>
+  </div>
  </div>
 
  <div id="form-modal" class="hidden fixed inset-0 z-50 flex items-start justify-center bg-black/50 overflow-y-auto py-8">
  <div class="w-full max-w-2xl mx-4 rounded-sm bg-[var(--bg-card)] shadow-xl">
- <div class="flex items-center justify-between p-5 border-b border-[rgba(184,115,51,0.14)]">
+ <div class="flex items-center justify-between p-5 border-b border-[var(--adm-border)]">
  <h2 id="form-title" class="text-lg font-bold text-[#1F1410]">Yeni Tarif</h2>
  <button id="close-modal" class="text-[#7A6B58] hover:text-[#7A6B58] text-2xl leading-none">&times;</button>
  </div>
@@ -33,15 +88,15 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  <div class="grid grid-cols-2 gap-4">
  <div class="col-span-2">
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Tarif Adı *</label>
- <input id="f-name" type="text" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ <input id="f-name" type="text" required class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
  </div>
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">URL Slug *</label>
- <input id="f-slug-input" type="text" required placeholder="urfa-kebabi" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ <input id="f-slug-input" type="text" required placeholder="urfa-kebabi" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
  </div>
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Zorluk</label>
- <select id="f-difficulty" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <select id="f-difficulty" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
  <option>Kolay</option>
  <option selected>Orta</option>
  <option>Zor</option>
@@ -49,23 +104,23 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  </div>
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Hazırlık (dk)</label>
- <input id="f-prep" type="number" min="0" value="0" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ <input id="f-prep" type="number" min="0" value="0" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
  </div>
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Pişirme (dk)</label>
- <input id="f-cook" type="number" min="0" value="0" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ <input id="f-cook" type="number" min="0" value="0" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
  </div>
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Porsiyon</label>
- <input id="f-servings" type="number" min="1" value="4" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ <input id="f-servings" type="number" min="1" value="4" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
  </div>
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Görsel URL</label>
- <input id="f-image" type="text" placeholder="/images/..." class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
+ <input id="f-image" type="text" placeholder="/images/..." class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" />
  </div>
  <div class="col-span-2">
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Kısa Açıklama</label>
- <textarea id="f-desc" rows="2" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"></textarea>
+ <textarea id="f-desc" rows="2" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"></textarea>
  </div>
  <div class="col-span-2">
  <div class="flex items-center justify-between mb-1">
@@ -75,7 +130,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  <div id="list-ingredients" class="space-y-2 mb-2"></div>
  <details class="text-xs text-[#9B8A75]">
   <summary class="cursor-pointer">Gelişmiş: ham metin (her satıra bir malzeme)</summary>
-  <textarea id="f-ingredients" rows="5" placeholder="500g kuzu kıyması&#10;1 soğan" class="mt-2 w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm font-mono focus:outline-none focus:border-urfa-400"></textarea>
+  <textarea id="f-ingredients" rows="5" placeholder="500g kuzu kıyması&#10;1 soğan" class="mt-2 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm font-mono focus:outline-none focus:border-urfa-400"></textarea>
  </details>
  </div>
  <div class="col-span-2">
@@ -86,7 +141,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  <div id="list-instructions" class="space-y-2 mb-2"></div>
  <details class="text-xs text-[#9B8A75]">
   <summary class="cursor-pointer">Gelişmiş: ham metin (her satıra bir adım)</summary>
-  <textarea id="f-instructions" rows="5" placeholder="Kıymayı hazırlayın.&#10;Baharatları ekleyin." class="mt-2 w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm font-mono focus:outline-none focus:border-urfa-400"></textarea>
+  <textarea id="f-instructions" rows="5" placeholder="Kıymayı hazırlayın.&#10;Baharatları ekleyin." class="mt-2 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm font-mono focus:outline-none focus:border-urfa-400"></textarea>
  </details>
  </div>
  <div class="flex items-center gap-6">
@@ -101,9 +156,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  </label>
  </div>
  </div>
- <p id="form-error" class="hidden rounded-sm bg-[rgba(184,115,51,0.06)] border border-[rgba(184,115,51,0.2)] p-3 text-sm text-[#7A6B58]"></p>
+ <p id="form-error" class="hidden rounded-sm bg-[var(--adm-bg-hover)] border border-[var(--adm-border-strong)] p-3 text-sm text-[#7A6B58]"></p>
  <div class="flex justify-end gap-3 pt-2">
- <button type="button" id="cancel-btn" class="rounded-sm border border-[rgba(184,115,51,0.14)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">İptal</button>
+ <button type="button" id="cancel-btn" class="rounded-sm border border-[var(--adm-border)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[var(--adm-bg-hover)]">İptal</button>
  <button type="submit" class="rounded-sm bg-urfa-600 px-5 py-2 text-sm font-semibold text-white hover:bg-urfa-700">Kaydet</button>
  </div>
  </form>
@@ -120,7 +175,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       wrap.dataset.row = '1';
 
       const numBox = document.createElement('span');
-      numBox.className = 'w-7 h-7 flex items-center justify-center rounded-sm bg-[rgba(184,115,51,0.1)] text-xs font-semibold text-[#7A6B58] shrink-0';
+      numBox.className = 'w-7 h-7 flex items-center justify-center rounded-sm bg-[var(--adm-bg-active)] text-xs font-semibold text-[#7A6B58] shrink-0';
       numBox.dataset.num = '1';
       numBox.textContent = String(idx + 1);
 
@@ -128,7 +183,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       input.type = 'text';
       input.value = value || '';
       input.placeholder = target === 'ingredients' ? 'Örn: 500g kuzu kıyması' : 'Örn: Soğanı doğrayıp kavurun';
-      input.className = 'flex-1 rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-1.5 text-sm focus:outline-none focus:border-urfa-400';
+      input.className = 'flex-1 rounded-sm border border-[var(--adm-border-strong)] px-3 py-1.5 text-sm focus:outline-none focus:border-urfa-400';
       input.addEventListener('input', () => syncToTextarea(target));
 
       const upBtn = document.createElement('button');
@@ -231,16 +286,18 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function makeRow(r: any) {
  const row = document.createElement('div');
- row.className = 'flex items-center justify-between p-4 hover:bg-[rgba(184,115,51,0.04)]';
+ row.className = 'flex items-center justify-between p-4 hover:bg-[var(--adm-bg-hover)]';
 
  const left = document.createElement('div');
  left.className = 'flex items-center gap-4';
 
  const thumb = document.createElement(r.cover_image ? 'img' : 'div');
- thumb.className = 'w-12 h-12 rounded-sm object-cover shrink-0 bg-[rgba(184,115,51,0.1)]';
+ thumb.className = 'w-12 h-12 rounded-sm object-cover shrink-0 bg-[var(--adm-bg-active)]';
  if (r.cover_image) {
  (thumb as HTMLImageElement).src = r.cover_image;
  (thumb as HTMLImageElement).alt = r.name;
+ (thumb as HTMLImageElement).loading = 'lazy';
+ (thumb as HTMLImageElement).decoding = 'async';
  } else {
  thumb.className += ' flex items-center justify-center text-2xl';
  thumb.textContent = '🍽️';
@@ -267,7 +324,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  }
 
  const statusBadge = document.createElement('span');
- statusBadge.className = `text-xs px-2 py-0.5 rounded-sm ${r.status === 'published' ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'}`;
+ statusBadge.className = `text-xs px-2 py-0.5 rounded-sm ${r.status === 'published' ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' : 'bg-[var(--adm-bg-hover)] text-[#7A6B58]'}`;
  statusBadge.textContent = r.status === 'published' ? 'Yayında' : 'Taslak';
  right.append(statusBadge);
 
@@ -399,6 +456,105 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  loadRecipes();
  });
 
+ // Hero CTA mirror — sayfa üst sağda admin layout slot
+ document.getElementById('add-btn-hero')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('add-btn')?.click();
+ });
+
  loadRecipes();
  </script>
+
+ <style>
+  .rc-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .rc-cta {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.55rem 1.1rem;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff; font-weight: 600; font-size: 0.85rem;
+   border-radius: 8px; text-decoration: none;
+   cursor: pointer;
+   transition: transform 0.15s;
+  }
+  .rc-cta:hover { transform: translateY(-1px); }
+
+  .rc-stats {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+   gap: 1rem;
+  }
+  .rc-stat {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   padding: 1.1rem 1.25rem;
+   display: flex; align-items: center; gap: 0.95rem;
+  }
+  .rc-stat-ico {
+   width: 42px; height: 42px;
+   border-radius: 11px;
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .rc-stat--amber .rc-stat-ico { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+  .rc-stat--emerald .rc-stat-ico { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+  .rc-stat--indigo .rc-stat-ico { background: rgba(99,102,241,0.12); color: rgb(99,102,241); }
+  .rc-stat--rose .rc-stat-ico { background: rgba(225,29,72,0.12); color: rgb(190,18,60); }
+  .rc-stat-val {
+   font-family: 'Cormorant Garamond', serif;
+   font-size: 1.85rem; font-weight: 700;
+   line-height: 1; margin: 0;
+   color: var(--adm-text);
+  }
+  .rc-stat-lbl {
+   margin: 0.3rem 0 0;
+   font-size: 0.78rem;
+   color: var(--adm-text-muted);
+   font-weight: 500;
+  }
+
+  .rc-list-wrap {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .rc-list-head {
+   display: flex; align-items: center; justify-content: space-between;
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .rc-list-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .rc-add-btn {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.4rem 0.85rem;
+   background: var(--adm-accent);
+   color: #fff;
+   border: none;
+   border-radius: 6px;
+   font-size: 0.78rem; font-weight: 600;
+   cursor: pointer;
+  }
+  .rc-add-btn:hover { filter: brightness(0.93); }
+
+  .rc-list { display: flex; flex-direction: column; }
+  .rc-list > div {
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .rc-list > div:last-child { border-bottom: none; }
+  .rc-list-loading {
+   padding: 2.5rem 1rem;
+   text-align: center;
+   color: var(--adm-text-soft);
+   font-size: 0.86rem;
+   margin: 0;
+  }
+ </style>
 </AdminLayout>

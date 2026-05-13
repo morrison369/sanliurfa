@@ -48,10 +48,24 @@ const groups = [
     ],
   },
   {
+    title: 'Gezi Rehberleri',
+    links: [
+      { label: 'Şanlıurfa Rehberi', href: '/sanliurfa-gezi-rehberi' },
+      { label: 'Göbeklitepe', href: '/gobeklitepe-gezi-rehberi' },
+      { label: 'Balıklıgöl', href: '/balikligol-gezi-rehberi' },
+      { label: 'Halfeti', href: '/halfeti-gezi-rehberi' },
+      { label: 'Harran', href: '/harran-gezi-rehberi' },
+      { label: 'En İyi Kebapçılar', href: '/en-iyi-kebapcilar' },
+      { label: 'Kahvaltı Mekanları', href: '/sanliurfa-kahvalti-mekanlari' },
+    ],
+  },
+  {
     title: 'Kurumsal',
     links: [
       { label: 'Hakkımızda', href: '/hakkinda' },
+      { label: 'Yazarlar', href: '/yazarlar' },
       { label: 'İletişim', href: '/iletisim' },
+      { label: 'Künye', href: '/kunye' },
       { label: 'İşletme Ekle', href: '/isletme-kayit' },
       { label: 'Gizlilik', href: '/gizlilik-politikasi' },
     ],
@@ -82,6 +96,32 @@ const groups = [
         </div>
 
         <div class="mt-7">
+          <p class="text-xs font-black uppercase tracking-[0.13em] text-[#f4c56e]/80">E-Bülten</p>
+          <p class="mt-2 max-w-sm text-xs leading-6 text-white/45">Yeni rehberler, etkinlikler ve mekanlar — haftada bir gelen kutusunda.</p>
+          <form id="footer-newsletter" class="mt-3 flex gap-2 max-w-sm">
+            <input
+              type="email"
+              name="email"
+              required
+              autocomplete="email"
+              placeholder="ornek@email.com"
+              class="flex-1 min-w-0 rounded-md border border-white/15 bg-white/6 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:border-[#f4c56e]/60 focus:outline-none"
+            />
+            <button type="submit" class="rounded-md bg-[#f4c56e] px-3 py-2 text-xs font-bold text-[#1a0f08] transition hover:opacity-90 disabled:opacity-60">Abone Ol</button>
+          </form>
+          <p id="footer-newsletter-msg" class="mt-2 text-xs text-white/55" hidden></p>
+        </div>
+
+        <div class="mt-7">
+          <p class="text-xs font-black uppercase tracking-[0.13em] text-[#f4c56e]/80">İletişim</p>
+          <address class="mt-3 not-italic text-sm leading-7 text-white/55">
+            <p>📧 <a href="mailto:iletisim@sanliurfa.com" class="hover:text-[#f4c56e]">iletisim@sanliurfa.com</a></p>
+            <p>📍 Eyyübiye, Şanlıurfa, Türkiye</p>
+            <p>📄 <a href="/kunye" class="hover:text-[#f4c56e]">Yayın bilgileri (Künye)</a></p>
+          </address>
+        </div>
+
+        <div class="mt-7">
           <p class="text-xs font-black uppercase tracking-[0.13em] text-[#f4c56e]/80">Sosyal medya</p>
           <p class="mt-2 max-w-sm text-xs leading-6 text-white/45">Sanliurfa.com güncellemeleri, mekanlar ve etkinlikler için takip edin.</p>
           <div class="mt-3 flex flex-wrap gap-2">
@@ -100,7 +140,7 @@ const groups = [
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-7 sm:grid-cols-4">
+      <div class="grid grid-cols-2 gap-7 sm:grid-cols-3 lg:grid-cols-5">
         {groups.map((group) => (
           <div>
             <p class="text-xs font-black uppercase tracking-[0.13em] text-[#f4c56e]/80">{group.title}</p>
@@ -128,3 +168,47 @@ const groups = [
     </div>
   </div>
 </footer>
+
+<script is:inline>
+  (function() {
+    var form = document.getElementById('footer-newsletter');
+    if (!form) return;
+    var msg = document.getElementById('footer-newsletter-msg');
+    var input = form.querySelector('input[name="email"]');
+    var btn = form.querySelector('button');
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      if (!input.value || btn.disabled) return;
+      btn.disabled = true;
+      var originalText = btn.textContent;
+      btn.textContent = 'Gönderiliyor...';
+      msg.hidden = true;
+      try {
+        var res = await fetch('/api/newsletter/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: input.value })
+        });
+        var data = await res.json();
+        if (res.ok || res.status === 409) {
+          msg.textContent = '✓ Abone olundu. Teşekkürler!';
+          msg.style.color = '#86efac';
+          input.value = '';
+          if (typeof window.sfTrack === 'function') {
+            window.sfTrack('newsletter_subscribe', { source: 'footer', duplicate: res.status === 409 });
+          }
+        } else {
+          msg.textContent = data?.detail || data?.error || 'Abonelik gerçekleşmedi.';
+          msg.style.color = '#fca5a5';
+        }
+      } catch (err) {
+        msg.textContent = 'Bağlantı hatası. Lütfen tekrar deneyin.';
+        msg.style.color = '#fca5a5';
+      } finally {
+        msg.hidden = false;
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    });
+  })();
+</script>

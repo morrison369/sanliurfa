@@ -61,9 +61,9 @@ export const GET: APIRoute = async ({ request, url }) => {
         u.level,
         u.created_at,
         COUNT(DISTINCT ua.id) as activity_count,
-        COUNT(DISTINCT CASE WHEN ua.action_type = 'badge_earned' THEN 1 END) as badge_count,
-        COUNT(DISTINCT CASE WHEN ua.action_type = 'review_created' THEN 1 END) as review_count,
-        COUNT(DISTINCT CASE WHEN ua.action_type = 'favorite_added' THEN 1 END) as favorite_count
+        COUNT(DISTINCT CASE WHEN COALESCE(ua.type, ua.activity_type) = 'badge_earned' THEN 1 END) as badge_count,
+        COUNT(DISTINCT CASE WHEN COALESCE(ua.type, ua.activity_type) = 'review_created' THEN 1 END) as review_count,
+        COUNT(DISTINCT CASE WHEN COALESCE(ua.type, ua.activity_type) = 'favorite_added' THEN 1 END) as favorite_count
       FROM users u
       LEFT JOIN user_activities ua ON u.id = ua.user_id AND ua.created_at > NOW() - INTERVAL '30 days'
       WHERE u.role = 'user'

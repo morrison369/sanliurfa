@@ -1,13 +1,26 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import GovernanceDashboard from '../../components/GovernanceDashboard';
 ---
 
 <AdminLayout
  title="Yönetişim Paneli"
  subtitle="Veri yönetimi, denetim ve uyumluluk takibi"
+ seo={{ title: 'Yönetişim Paneli - Admin', noIndex: true }}
 >
- <div class="sf-container py-8">
- <GovernanceDashboard client:visible />
+ <div class="gov-page">
+  <div class="gov-panel">
+   <GovernanceDashboard client:visible />
+  </div>
  </div>
 </AdminLayout>
+
+<style>
+ .gov-page { display: flex; flex-direction: column; gap: 1rem; }
+ .gov-panel {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+ }
+</style>

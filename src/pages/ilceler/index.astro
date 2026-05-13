@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import PublicPageIntro from '../../components/public/PublicPageIntro.astro';
+import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import { query } from '../../lib/postgres';
 import { getPublicAppUrl } from '../../lib/public-app-url';
 import { logger } from '../../lib/logging';
@@ -122,6 +123,12 @@ const faqItems = [
  </a>
  ))}
  </div>
+
+ {faqItems.length > 0 && (
+  <div style="margin-top:3rem">
+   <PublicFaqList items={faqItems} />
+  </div>
+ )}
  </div>
 
  <script type="application/ld+json" set:html={JSON.stringify({

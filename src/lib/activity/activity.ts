@@ -28,12 +28,13 @@ export async function logActivity(
   metadata?: Record<string, any>
 ): Promise<void> {
   try {
-    await insert('user_activity', {
+    await insert('user_activities', {
       user_id: userId,
-      action_type: actionType,
-      reference_type: referenceType || null,
-      reference_id: referenceId || null,
+      type: actionType,
+      entity_type: referenceType || null,
+      entity_id: referenceId || null,
       metadata: metadata ? JSON.stringify(metadata) : null,
+      visibility: 'public',
       created_at: new Date().toISOString()
     });
 
@@ -66,9 +67,9 @@ export async function getUserActivity(userId: string, limit: number = 20): Promi
       `SELECT
         id,
         user_id,
-        action_type,
-        reference_type,
-        reference_id,
+        COALESCE(type, activity_type) AS action_type,
+        COALESCE(entity_type, object_type) AS reference_type,
+        COALESCE(entity_id::text, object_id::text) AS reference_id,
         metadata,
         created_at
        FROM user_activities

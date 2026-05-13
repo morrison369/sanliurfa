@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
 import { getCategories, getTags } from '../../../lib/blog/db';
 
 const [categories, tags] = await Promise.all([
@@ -19,14 +19,14 @@ const [categories, tags] = await Promise.all([
  </div>
 
  <form id="post-form" class="space-y-5">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 space-y-4">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6 space-y-4">
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Başlık</label>
  <input
  type="text"
  name="title"
  required
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="Yazı başlığı..."
  />
  </div>
@@ -37,7 +37,7 @@ const [categories, tags] = await Promise.all([
  type="text"
  name="slug"
  required
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="ornek-yazi-url"
  />
  <p class="text-xs text-[#7A6B58] mt-1">SEO dostu URL. Örn: sanliurfa-rehberi</p>
@@ -46,7 +46,7 @@ const [categories, tags] = await Promise.all([
  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Kategori</label>
- <select name="category_id" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <select name="category_id" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
  <option value="">Kategori Seçin</option>
  {categories.map(cat => (
  <option value={cat.id}>{cat.name}</option>
@@ -56,7 +56,7 @@ const [categories, tags] = await Promise.all([
 
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Durum</label>
- <select name="status" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <select name="status" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
  <option value="draft">Taslak</option>
  <option value="published">Yayınla</option>
  <option value="scheduled">Planla</option>
@@ -69,23 +69,23 @@ const [categories, tags] = await Promise.all([
  <textarea
  name="excerpt"
  rows="2"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="Yazının kısa özeti..."
  ></textarea>
  </div>
 
  <div>
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">İçerik</label>
- <div class="border border-[rgba(184,115,51,0.2)] rounded-sm">
- <div class="flex flex-wrap gap-1 p-2 border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <button type="button" onclick="formatText('bold')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Kalın"><strong>B</strong></button>
- <button type="button" onclick="formatText('italic')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="İtalik"><em>I</em></button>
- <button type="button" onclick="formatText('h2')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Başlık 2">H2</button>
- <button type="button" onclick="formatText('h3')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Başlık 3">H3</button>
- <button type="button" onclick="insertLink()" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Link">🔗</button>
- <button type="button" onclick="insertImage()" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Görsel">🖼️</button>
- <button type="button" onclick="formatText('ul')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Liste">• Liste</button>
- <button type="button" onclick="formatText('ol')" class="p-2 hover:bg-[rgba(184,115,51,0.08)] rounded-sm text-sm" title="Numaralı Liste">1. Liste</button>
+ <div class="border border-[var(--adm-border-strong)] rounded-sm">
+ <div class="flex flex-wrap gap-1 p-2 border-b border-[var(--adm-border)] bg-[var(--adm-bg-hover)]">
+ <button type="button" onclick="formatText('bold')" class="p-2 hover:bg-[var(--adm-bg-hover)] rounded-sm text-sm" title="Kalın"><strong>B</strong></button>
+ <button type="button" onclick="formatText('italic')" class="p-2 hover:bg-[var(--adm-bg-hover)] rounded-sm text-sm" title="İtalik"><em>I</em></button>
+ <button type="button" onclick="formatText('h2')" class="p-2 hover:bg-[var(--adm-bg-hover)] rounded-sm text-sm" title="Başlık 2">H2</button>
+ <button type="button" onclick="formatText('h3')" class="p-2 hover:bg-[var(--adm-bg-hover)] rounded-sm text-sm" title="Başlık 3">H3</button>
+ <button type="button" onclick="insertLink()" class="p-2 hover:bg-[var(--adm-bg-hover)] rounded-sm text-sm" title="Link">🔗</button>
+ <button type="button" onclick="insertImage()" class="p-2 hover:bg-[var(--adm-bg-hover)] rounded-sm text-sm" title="Görsel">🖼️</button>
+ <button type="button" onclick="formatText('ul')" class="p-2 hover:bg-[var(--adm-bg-hover)] rounded-sm text-sm" title="Liste">• Liste</button>
+ <button type="button" onclick="formatText('ol')" class="p-2 hover:bg-[var(--adm-bg-hover)] rounded-sm text-sm" title="Numaralı Liste">1. Liste</button>
  </div>
 
  <textarea
@@ -107,7 +107,7 @@ const [categories, tags] = await Promise.all([
     type="url"
     name="featured_image"
     id="featured_image_url"
-    class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+    class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
     placeholder="https://... veya yükleyin"
    />
    <p class="text-xs text-[#9B8A75]">URL elle yazabilir veya alttaki butonla dosya yükleyebilirsiniz (JPEG/PNG/WebP, maks 5MB).</p>
@@ -119,7 +119,7 @@ const [categories, tags] = await Promise.all([
    </label>
    <p id="featured_image_status" class="text-xs text-[#7A6B58] hidden"></p>
   </div>
-  <img id="featured_image_preview" src="" alt="Önizleme" class="hidden h-20 w-32 rounded-sm border border-[rgba(184,115,51,0.2)] object-cover" />
+  <img id="featured_image_preview" src="" alt="Önizleme" class="hidden h-20 w-32 rounded-sm border border-[var(--adm-border-strong)] object-cover" />
  </div>
  </div>
 
@@ -146,7 +146,7 @@ const [categories, tags] = await Promise.all([
      fileInput.value = '';
      return;
     }
-    status.textContent = '⏳ Yükleniyor...';
+    status.textContent = '⏳ Yükleniyor…';
     status.className = 'text-xs text-[#7A6B58]';
     status.classList.remove('hidden');
     const fd = new FormData();
@@ -172,7 +172,7 @@ const [categories, tags] = await Promise.all([
  <label class="block text-sm font-medium text-[#7A6B58] mb-1">Etiketler</label>
  <div class="flex flex-wrap gap-2">
  {tags.map(tag => (
- <label class="inline-flex items-center px-3 py-1 bg-[rgba(184,115,51,0.08)] rounded-sm cursor-pointer hover:bg-[rgba(184,115,51,0.15)]">
+ <label class="inline-flex items-center px-3 py-1 bg-[var(--adm-bg-hover)] rounded-sm cursor-pointer hover:bg-[rgba(184,115,51,0.15)]">
  <input type="checkbox" name="tag_ids" value={tag.id} class="mr-2" />
  <span class="text-sm text-[#7A6B58]">{tag.name}</span>
  </label>
@@ -181,7 +181,7 @@ const [categories, tags] = await Promise.all([
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 space-y-4">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6 space-y-4">
  <h3 class="font-medium text-[#1F1410]">SEO Ayarları</h3>
 
  <div>
@@ -189,7 +189,7 @@ const [categories, tags] = await Promise.all([
  <input
  type="text"
  name="meta_title"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="SEO başlığı (boş bırakılırsa yazı başlığı kullanılır)"
  />
  </div>
@@ -199,7 +199,7 @@ const [categories, tags] = await Promise.all([
  <textarea
  name="meta_description"
  rows="2"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="SEO açıklaması..."
  ></textarea>
  </div>
@@ -220,7 +220,7 @@ const [categories, tags] = await Promise.all([
  <button type="submit" class="rounded-sm bg-urfa-600 px-6 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
  Kaydet
  </button>
- <a href="/admin/blog/posts" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-6 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">
+ <a href="/admin/blog/posts" class="rounded-sm border border-[var(--adm-border-strong)] px-6 py-2 text-sm text-[#7A6B58] hover:bg-[var(--adm-bg-hover)]">
  İptal
  </a>
  </div>

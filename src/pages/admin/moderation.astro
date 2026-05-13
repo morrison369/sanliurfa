@@ -1,110 +1,208 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import ModerationDashboard from '../../components/ModerationDashboard';
 ---
 
 <AdminLayout
  title="Moderasyon Yönetimi"
- subtitle="Raporları inceleyin ve moderasyon işlemleri gerçekleştirin"
+ subtitle="Raporları inceleyin, swipe/follow/messages abuse kayıtlarını izleyin"
  seo={{ title: 'Moderasyon Yönetimi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-6xl space-y-5">
- <div class="mb-2">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
+ <div class="md-page">
+  <div class="md-panel">
+   <ModerationDashboard client:visible />
+  </div>
 
- <ModerationDashboard client:visible />
-
- <div class="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 shadow-sm">
- <h2 class="text-xl font-bold text-[#1F1410] mb-2">Social Abuse Kayıtları</h2>
- <p class="text-sm text-[#7A6B58] mb-4">
- Swipe/follow/messages uçlarında yakalanan abuse ihlallerini gösterir.
- </p>
- <div class="flex flex-wrap items-center gap-3 mb-4">
- <button id="loadSocialAbuse" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
- Social Abuse Yükle
- </button>
- <a
- id="exportSocialAbuse"
- href="/api/admin/site/audit/export?action=social_abuse&limit=2000"
- class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4A3A28]"
- >
- CSV Dışa Aktar
- </a>
- </div>
- <div class="overflow-x-auto">
- <table class="min-w-full text-sm">
- <thead>
- <tr class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] text-left text-[#7A6B58]">
- <th class="px-2 py-3 font-medium">Tarih</th>
- <th class="px-2 py-3 font-medium">Key</th>
- <th class="px-2 py-3 font-medium">Action</th>
- <th class="px-2 py-3 font-medium">Email</th>
- <th class="px-2 py-3 font-medium">IP</th>
- <th class="px-2 py-3 font-medium">Metadata</th>
- </tr>
- </thead>
- <tbody id="socialAbuseBody">
- <tr><td colspan="6" class="px-2 py-6 text-center text-[#7A6B58]">Henüz yüklenmedi</td></tr>
- </tbody>
- </table>
- </div>
- </div>
+  <section class="md-section">
+   <header class="md-section-head">
+    <div>
+     <h2 class="md-section-title">
+      <Icon name="lucide:shield-alert" class="w-4 h-4" /> Social Abuse Kayıtları
+     </h2>
+     <p class="md-section-sub">Swipe / follow / messages uçlarında yakalanan abuse ihlalleri</p>
+    </div>
+    <div class="md-section-actions">
+     <button id="loadSocialAbuse" type="button" class="md-btn">
+      <Icon name="lucide:refresh-cw" class="w-3.5 h-3.5" /> Yükle
+     </button>
+     <a
+      id="exportSocialAbuse"
+      href="/api/admin/site/audit/export?action=social_abuse&limit=2000"
+      class="md-btn md-btn--ghost"
+     >
+      <Icon name="lucide:download" class="w-3.5 h-3.5" /> CSV Dışa Aktar
+     </a>
+    </div>
+   </header>
+   <div class="md-table-wrap">
+    <table class="md-table">
+     <thead>
+      <tr>
+       <th class="md-th">Tarih</th>
+       <th class="md-th">Key</th>
+       <th class="md-th">Action</th>
+       <th class="md-th">Email</th>
+       <th class="md-th">IP</th>
+       <th class="md-th">Metadata</th>
+      </tr>
+     </thead>
+     <tbody id="socialAbuseBody">
+      <tr><td colspan="6" class="md-empty">"Yükle" butonuna basarak verileri çekin.</td></tr>
+     </tbody>
+    </table>
+   </div>
+  </section>
  </div>
 
  <script>
- function setBodyText(tbody: HTMLElement, colSpan: number, text: string, cls: string) {
- const tr = document.createElement('tr');
- const td = document.createElement('td');
- td.colSpan = colSpan;
- td.className = cls;
- td.textContent = text;
- tr.appendChild(td);
- tbody.replaceChildren(tr);
- }
+  function setBodyText(tbody: HTMLElement, colSpan: number, text: string) {
+   const tr = document.createElement('tr');
+   const td = document.createElement('td');
+   td.colSpan = colSpan;
+   td.className = 'md-empty';
+   td.textContent = text;
+   tr.appendChild(td);
+   tbody.replaceChildren(tr);
+  }
 
- function buildAuditRow(r: any): HTMLTableRowElement {
- const tr = document.createElement('tr');
- tr.className = 'border-b border-[rgba(184,115,51,0.08)]';
- const cells: [string, string][] = [
- ['px-2 py-2 text-xs text-[#7A6B58]', new Date(r.created_at).toLocaleString('tr-TR')],
- ['px-2 py-2 text-xs font-mono text-[#7A6B58]', r.setting_key || '-'],
- ['px-2 py-2 text-xs text-urfa-600', r.action || '-'],
- ['px-2 py-2 text-xs text-[#7A6B58]', r.actor_email || '-'],
- ['px-2 py-2 text-xs text-[#7A6B58]', r.ip_address || '-'],
- ['px-2 py-2 text-xs font-mono text-[#7A6B58]', JSON.stringify(r.metadata || {}).slice(0, 140)],
- ];
- cells.forEach(([cls, text]) => {
- const td = document.createElement('td');
- td.className = cls;
- td.textContent = text;
- tr.appendChild(td);
- });
- return tr;
- }
+  function buildAuditRow(r: any): HTMLTableRowElement {
+   const tr = document.createElement('tr');
+   const cells: [string, string][] = [
+    ['md-td md-td-soft', new Date(r.created_at).toLocaleString('tr-TR')],
+    ['md-td md-td-mono', r.setting_key || '-'],
+    ['md-td md-td-action', r.action || '-'],
+    ['md-td md-td-soft', r.actor_email || '-'],
+    ['md-td md-td-mono', r.ip_address || '-'],
+    ['md-td md-td-mono md-td-truncate', JSON.stringify(r.metadata || {}).slice(0, 140)],
+   ];
+   cells.forEach(([cls, text]) => {
+    const td = document.createElement('td');
+    td.className = cls;
+    td.textContent = text;
+    tr.appendChild(td);
+   });
+   return tr;
+  }
 
- const btn = document.getElementById('loadSocialAbuse');
- const body = document.getElementById('socialAbuseBody') as HTMLElement;
+  const btn = document.getElementById('loadSocialAbuse');
+  const body = document.getElementById('socialAbuseBody') as HTMLElement;
 
- async function loadSocialAbuse() {
- try {
- const res = await fetch('/api/admin/site/audit?action=social_abuse&limit=80');
- const data = await res.json();
- if (!res.ok || !data.success) {
- setBodyText(body, 6, data.error || 'Hata', 'px-2 py-6 text-center text-[#7A6B58]');
- return;
- }
- const rows: any[] = Array.isArray(data.items) ? data.items : [];
- if (rows.length === 0) {
- setBodyText(body, 6, 'Kayıt bulunamadı', 'px-2 py-6 text-center text-[#7A6B58]');
- return;
- }
- body.replaceChildren(...rows.map(buildAuditRow));
- } catch (err) {
- setBodyText(body, 6, 'Yükleme hatası', 'px-2 py-6 text-center text-[#7A6B58]');
- }
- }
+  async function loadSocialAbuse() {
+   setBodyText(body, 6, 'Yükleniyor…');
+   try {
+    const res = await fetch('/api/admin/site/audit?action=social_abuse&limit=80');
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+     setBodyText(body, 6, data.error || 'Hata');
+     return;
+    }
+    const rows: any[] = Array.isArray(data.items) ? data.items : [];
+    if (rows.length === 0) {
+     setBodyText(body, 6, 'Kayıt bulunamadı');
+     return;
+    }
+    body.replaceChildren(...rows.map(buildAuditRow));
+   } catch {
+    setBodyText(body, 6, 'Yükleme hatası');
+   }
+  }
 
- btn?.addEventListener('click', loadSocialAbuse);
+  btn?.addEventListener('click', loadSocialAbuse);
  </script>
+
+ <style>
+  .md-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .md-panel {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   padding: 1.25rem;
+  }
+
+  .md-section {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .md-section-head {
+   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+   gap: 1rem;
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .md-section-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .md-section-sub {
+   font-size: 0.78rem;
+   color: var(--adm-text-soft);
+   margin: 0.2rem 0 0;
+  }
+  .md-section-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .md-btn {
+   display: inline-flex; align-items: center; gap: 0.35rem;
+   padding: 0.45rem 0.85rem;
+   background: var(--adm-accent);
+   color: #fff;
+   border: 1px solid var(--adm-accent);
+   border-radius: 8px;
+   font-weight: 600; font-size: 0.78rem;
+   cursor: pointer;
+   text-decoration: none;
+  }
+  .md-btn:hover { filter: brightness(0.92); }
+  .md-btn--ghost {
+   background: transparent;
+   color: var(--adm-text-muted);
+   border-color: var(--adm-border);
+  }
+  .md-btn--ghost:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+
+  .md-table-wrap { overflow-x: auto; }
+  .md-table { width: 100%; border-collapse: collapse; min-width: 720px; }
+  .md-th {
+   text-align: left;
+   font-size: 0.68rem;
+   font-weight: 700;
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   color: var(--adm-text-soft);
+   padding: 0.7rem 0.85rem;
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .md-table tbody tr { border-bottom: 1px solid var(--adm-border); }
+  .md-table tbody tr:last-child { border-bottom: none; }
+  .md-table tbody tr:hover { background: var(--adm-bg-hover); }
+  .md-td { padding: 0.55rem 0.85rem; font-size: 0.78rem; color: var(--adm-text); vertical-align: top; }
+  .md-td-soft { color: var(--adm-text-muted); }
+  .md-td-mono {
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.74rem;
+   color: var(--adm-text-soft);
+  }
+  .md-td-action {
+   font-weight: 600;
+   color: var(--adm-accent);
+  }
+  .md-td-truncate {
+   max-width: 240px;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+  }
+  .md-empty {
+   text-align: center !important;
+   padding: 2rem 1rem !important;
+   color: var(--adm-text-soft) !important;
+   font-size: 0.86rem !important;
+   font-style: italic;
+  }
+ </style>
 </AdminLayout>

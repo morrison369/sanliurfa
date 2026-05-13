@@ -124,7 +124,7 @@ export default function UserProfile() {
  if (isLoading || !user) {
  return (
  <div className="container-custom py-12 text-center text-[#7A6B58]">
- Yükleniyor...
+ Yükleniyor…
  </div>
  );
  }

@@ -1,0 +1,196 @@
+---
+/**
+ * PushSubscribeButton — Web Push notifications subscribe/unsubscribe.
+ *
+ * Akış:
+ *  1. SW kayıtlı mı kontrol et (PWARegister.astro tarafından yapılıyor)
+ *  2. Notification.permission durumuna göre buton state
+ *  3. Subscribe → /api/notifications/push/subscribe (VAPID public key + endpoint)
+ *  4. Unsubscribe → DELETE /api/notifications/push/subscribe
+ */
+---
+
+<div class="psb" id="psb-root">
+  <button type="button" id="psb-btn" class="psb-btn" hidden>
+    <span class="psb-icon" aria-hidden="true">🔔</span>
+    <span id="psb-label">Bildirimleri Aç</span>
+  </button>
+  <p class="psb-msg" id="psb-msg" hidden></p>
+</div>
+
+<style>
+  .psb { margin: 1.5rem 0; }
+  .psb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.1rem;
+    background: linear-gradient(135deg, #C0571F, #D49718);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .psb-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px -4px rgba(192, 87, 31, 0.35); }
+  .psb-btn[data-state="active"] {
+    background: rgba(192, 87, 31, 0.08);
+    color: #C0571F;
+    border: 1px solid rgba(192, 87, 31, 0.3);
+  }
+  .psb-btn[data-state="denied"] {
+    background: rgba(220, 38, 38, 0.08);
+    color: #B91C1C;
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    cursor: not-allowed;
+  }
+  .psb-icon { font-size: 1.1rem; line-height: 1; }
+  .psb-msg {
+    margin: 0.65rem 0 0;
+    font-size: 0.78rem;
+    color: var(--public-muted);
+  }
+  .psb-msg[data-tone="error"] { color: #B91C1C; }
+  .psb-msg[data-tone="success"] { color: #1F5F40; }
+</style>
+
+<script>
+  type State = 'default' | 'active' | 'denied' | 'unsupported';
+
+  const btn = document.getElementById('psb-btn') as HTMLButtonElement | null;
+  const label = document.getElementById('psb-label');
+  const msg = document.getElementById('psb-msg') as HTMLParagraphElement | null;
+
+  function setMsg(text: string, tone: 'info' | 'error' | 'success' = 'info') {
+    if (!msg) return;
+    msg.textContent = text;
+    msg.dataset.tone = tone;
+    msg.hidden = !text;
+  }
+
+  function setState(state: State) {
+    if (!btn || !label) return;
+    btn.dataset.state = state;
+    btn.hidden = false;
+    btn.disabled = false;
+    switch (state) {
+      case 'active':
+        label.textContent = 'Bildirimler Açık — Kapat';
+        break;
+      case 'denied':
+        label.textContent = 'Tarayıcı İzni Reddetti';
+        btn.disabled = true;
+        break;
+      case 'unsupported':
+        btn.hidden = true;
+        setMsg('Bu tarayıcı push bildirim desteklemiyor.', 'error');
+        break;
+      default:
+        label.textContent = 'Bildirimleri Aç';
+    }
+  }
+
+  function urlBase64ToUint8Array(base64String: string): BufferSource {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    const buf = new ArrayBuffer(rawData.length);
+    const view = new Uint8Array(buf);
+    for (let i = 0; i < rawData.length; i++) view[i] = rawData.charCodeAt(i);
+    return buf;
+  }
+
+  async function init() {
+    if (!btn) return;
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      setState('unsupported');
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      setState('denied');
+      return;
+    }
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      setState(sub ? 'active' : 'default');
+    } catch {
+      setState('default');
+    }
+  }
+
+  async function subscribe() {
+    if (!btn) return;
+    btn.disabled = true;
+    setMsg('İzin isteniyor...', 'info');
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        setState(permission === 'denied' ? 'denied' : 'default');
+        setMsg('Bildirim izni verilmedi.', 'error');
+        return;
+      }
+      const vapidRes = await fetch('/api/notifications/vapid-key');
+      const vapidData = await vapidRes.json();
+      const vapidKey = vapidData?.data?.publicKey || vapidData?.publicKey;
+      if (!vapidKey) throw new Error('VAPID anahtarı alınamadı');
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+      const res = await fetch('/api/notifications/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON()),
+      });
+      if (!res.ok && res.status !== 409) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d?.detail || 'Abonelik kaydedilemedi');
+      }
+      setState('active');
+      setMsg('Bildirimler artık tarayıcı izinli. Yeni etkileşim olduğunda haberdar olacaksınız.', 'success');
+      if ((window as any).sfTrack) (window as any).sfTrack('push_subscribe', {});
+    } catch (err: any) {
+      setMsg(err?.message || 'Abonelik başarısız oldu.', 'error');
+      setState('default');
+    }
+  }
+
+  async function unsubscribe() {
+    if (!btn) return;
+    btn.disabled = true;
+    setMsg('Abonelik iptal ediliyor...', 'info');
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch('/api/notifications/push/subscribe', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe();
+      }
+      setState('default');
+      setMsg('Bildirimler kapatıldı.', 'success');
+      if ((window as any).sfTrack) (window as any).sfTrack('push_unsubscribe', {});
+    } catch (err: any) {
+      setMsg(err?.message || 'İşlem başarısız oldu.', 'error');
+      setState('active');
+    }
+  }
+
+  btn?.addEventListener('click', () => {
+    const state = btn.dataset.state;
+    if (state === 'active') {
+      void unsubscribe();
+    } else if (state !== 'denied' && state !== 'unsupported') {
+      void subscribe();
+    }
+  });
+
+  void init();
+</script>

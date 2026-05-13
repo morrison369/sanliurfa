@@ -219,6 +219,9 @@
     const next = [v, ...items.filter((x: string) => x !== v)].slice(0, MAX_RECENT);
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
    } catch {}
+   if (typeof (window as any).sfTrack === 'function') {
+    (window as any).sfTrack('search_submit', { query: v.slice(0, 100), source: 'smart_search_bar' });
+   }
   });
  }
 </script>

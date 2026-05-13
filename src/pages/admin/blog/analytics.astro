@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
 import { queryOne, queryMany } from '../../../lib/postgres';
 
 interface CountRow {
@@ -104,7 +104,7 @@ try {
  </div>
 
  {error && (
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
+ <div class="rounded-sm border border-[var(--adm-border-strong)] bg-[var(--adm-bg-hover)] px-4 py-3 text-sm text-[#7A6B58]">
  {error}
  </div>
  )}
@@ -112,25 +112,25 @@ try {
  {analytics && (
  <>
  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <p class="text-sm text-[#7A6B58] mb-2">Toplam Yazı</p>
  <p class="text-3xl font-bold text-[#1F1410]">{analytics.posts.total}</p>
  <p class="text-xs text-[#7A6B58] mt-2">{analytics.posts.published} yayınlı, {analytics.posts.draft} taslak</p>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <p class="text-sm text-[#7A6B58] mb-2">Toplam Görüntüleme</p>
  <p class="text-3xl font-bold text-[#7A6B58]">{analytics.posts.totalViews.toLocaleString('tr-TR')}</p>
  <p class="text-xs text-[#7A6B58] mt-2">⌀ {analytics.posts.avgViews} ort./yazı</p>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <p class="text-sm text-[#7A6B58] mb-2">Yorumlar</p>
  <p class="text-3xl font-bold text-[#7A6B58]">{analytics.comments.approved}</p>
  <p class="text-xs text-[#7A6B58] mt-2">⏳ {analytics.comments.pending} bekleme</p>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <p class="text-sm text-[#7A6B58] mb-2">Abone</p>
  <p class="text-3xl font-bold text-[#7A6B58]">{analytics.subscribers.active}</p>
  <p class="text-xs text-[#7A6B58] mt-2">{analytics.subscribers.total} toplam</p>
@@ -138,7 +138,7 @@ try {
  </div>
 
  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h3 class="font-semibold text-[#1F1410] mb-4">Okuyucu Katılımı</h3>
  <div class="space-y-3">
  <div>
@@ -156,11 +156,11 @@ try {
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 lg:col-span-2">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6 lg:col-span-2">
  <h3 class="font-semibold text-[#1F1410] mb-4">En Çok Okunan Yazılar</h3>
  <div class="space-y-2">
  {analytics.topPosts.slice(0, 5).map((post: any) => (
- <div class="flex items-center justify-between p-3 bg-[rgba(184,115,51,0.04)] rounded-sm">
+ <div class="flex items-center justify-between p-3 bg-[var(--adm-bg-hover)] rounded-sm">
  <div class="flex-1 min-w-0">
  <a href={`/blog/${post.slug}`} target="_blank" rel="noopener" class="text-sm font-medium text-[#1F1410] hover:text-urfa-600 truncate block">
  {post.title}
@@ -173,22 +173,22 @@ try {
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div class="p-6 border-b border-[rgba(184,115,51,0.14)]">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm overflow-hidden">
+ <div class="p-6 border-b border-[var(--adm-border)]">
  <h3 class="font-semibold text-[#1F1410]">Kategori Performansı</h3>
  </div>
  <div class="overflow-x-auto">
  <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <thead class="border-b border-[var(--adm-border)] bg-[var(--adm-bg-hover)]">
  <tr>
  <th class="px-4 py-2 text-left text-[#7A6B58]">Kategori</th>
  <th class="px-4 py-2 text-right text-[#7A6B58]">Yazı</th>
  <th class="px-4 py-2 text-right text-[#7A6B58]">Görüntüleme</th>
  </tr>
  </thead>
- <tbody class="divide-y divide-[rgba(184,115,51,0.08)]">
+ <tbody class="divide-y divide-[var(--adm-bg-hover)]">
  {analytics.categories.map((cat: any) => (
- <tr class="hover:bg-[rgba(184,115,51,0.04)]">
+ <tr class="hover:bg-[var(--adm-bg-hover)]">
  <td class="px-4 py-3 font-medium text-[#1F1410]">{cat.name}</td>
  <td class="px-4 py-3 text-right text-[#7A6B58]">{cat.postCount}</td>
  <td class="px-4 py-3 text-right font-semibold text-[#7A6B58]">{(cat.totalViews || 0).toLocaleString('tr-TR')}</td>
@@ -199,18 +199,18 @@ try {
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h3 class="font-semibold text-[#1F1410] mb-4">Son Yazılar</h3>
  <div class="space-y-2">
  {analytics.recentPosts.map((post: any) => (
- <div class="flex items-center justify-between p-3 bg-[rgba(184,115,51,0.04)] rounded-sm">
+ <div class="flex items-center justify-between p-3 bg-[var(--adm-bg-hover)] rounded-sm">
  <a href={`/blog/${post.slug}`} target="_blank" rel="noopener" class="text-sm font-medium text-[#1F1410] hover:text-urfa-600">
  {post.title}
  </a>
  <span class={`px-2 py-0.5 text-xs rounded-sm font-medium ${
  post.status === 'published' ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' :
- post.status === 'draft' ? 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' :
- 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'
+ post.status === 'draft' ? 'bg-[var(--adm-bg-hover)] text-[#7A6B58]' :
+ 'bg-[var(--adm-bg-hover)] text-[#7A6B58]'
  }`}>
  {post.status === 'published' ? 'Yayında' : post.status === 'draft' ? 'Taslak' : 'Arşiv'}
  </span>

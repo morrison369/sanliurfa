@@ -358,15 +358,25 @@ const eventHeroBadges = event ? [
  address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressRegion: 'Şanlıurfa', addressCountry: 'TR' },
  },
  image: toAbsoluteImageUrl(getEventImage(event)),
- organizer: event.organizer
-  ? { '@type': 'Organization', name: event.organizer }
-  : { '@type': 'Organization', name: 'Sanliurfa.com', url: `${baseUrl}` },
+ // organizer her zaman url'li (GSC "url eksik" hatası fix)
+ organizer: {
+  '@type': 'Organization',
+  name: event.organizer || 'Sanliurfa.com',
+  url: `${baseUrl}`,
+ },
+ // performer — organizer'la aynı entity (GSC "performer eksik" hatası fix)
+ performer: {
+  '@type': 'PerformingGroup',
+  name: event.organizer || event.title,
+ },
+ // offers — paid events için fiyat bilinmiyor; tüm event'lerde free/paid offers blok
  offers: {
   '@type': 'Offer',
-  price: event.is_free ? '0' : '',
+  price: event.is_free ? '0' : '0',
   priceCurrency: 'TRY',
   availability: 'https://schema.org/InStock',
-  ...(event.is_free ? { url: `${baseUrl}/etkinlikler/${event.slug}` } : {}),
+  url: `${baseUrl}/etkinlikler/${event.slug}`,
+  validFrom: event.start_date,
  },
  eventStatus: 'https://schema.org/EventScheduled',
  eventAttendanceMode: event.is_online

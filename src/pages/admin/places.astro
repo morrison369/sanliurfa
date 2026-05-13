@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
@@ -7,83 +7,110 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  subtitle="Tüm işletmeleri görüntüleyin ve yönetin"
  seo={{ title: 'İşletme Yönetimi - Yönetim Paneli', description: 'İşletmeleri yönetin', noIndex: true }}
 >
- <a slot="hero-action" href="/isletme-kayit" class="px-4 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 transition-colors">
- + Yeni İşletme
+ <a slot="page-actions" href="/admin/places/add" class="pl-cta-new">
+  <span aria-hidden="true">＋</span> Yeni İşletme
  </a>
 
- <div class="sf-container py-8">
- {/* Stats */}
- <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="stats">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <div class="text-2xl font-bold text-[#1F1410]" id="statTotal">-</div>
- <div class="text-sm text-[#7A6B58]">Toplam</div>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <div class="text-2xl font-bold text-[#7A6B58]" id="statActive">-</div>
- <div class="text-sm text-[#7A6B58]">Aktif</div>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <div class="text-2xl font-bold text-urfa-600" id="statPending">-</div>
- <div class="text-sm text-[#7A6B58]">Onay Bekleyen</div>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <div class="text-2xl font-bold text-[#7A6B58]" id="statSuspended">-</div>
- <div class="text-sm text-[#7A6B58]">Askıya Alınmış</div>
- </div>
- </div>
+ <div class="pl-page">
+  <!-- Stat cards (4 color-coded) -->
+  <div class="pl-stats">
+   <div class="pl-stat pl-stat--total">
+    <div class="pl-stat-ico" aria-hidden="true">🏪</div>
+    <div>
+     <p class="pl-stat-val" id="statTotal">—</p>
+     <p class="pl-stat-lbl">Toplam İşletme</p>
+    </div>
+   </div>
+   <div class="pl-stat pl-stat--active">
+    <div class="pl-stat-ico" aria-hidden="true">✓</div>
+    <div>
+     <p class="pl-stat-val" id="statActive">—</p>
+     <p class="pl-stat-lbl">Aktif</p>
+    </div>
+   </div>
+   <div class="pl-stat pl-stat--pending">
+    <div class="pl-stat-ico" aria-hidden="true">◷</div>
+    <div>
+     <p class="pl-stat-val" id="statPending">—</p>
+     <p class="pl-stat-lbl">Onay Bekliyor</p>
+    </div>
+   </div>
+   <div class="pl-stat pl-stat--suspended">
+    <div class="pl-stat-ico" aria-hidden="true">⊘</div>
+    <div>
+     <p class="pl-stat-val" id="statSuspended">—</p>
+     <p class="pl-stat-lbl">Askıda</p>
+    </div>
+   </div>
+  </div>
 
- {/* Filters */}
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4 mb-6">
- <div class="flex flex-wrap gap-4">
- <input type="text" id="searchInput" placeholder="İşletme ara..."
- class="px-4 py-2 border border-[rgba(184,115,51,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-500 flex-1 min-w-[200px]" />
- <select id="statusFilter" class="px-4 py-2 border border-[rgba(184,115,51,0.3)] rounded-sm focus:ring-2 focus:ring-urfa-500">
- <option value="all">Tüm Durumlar</option>
- <option value="active">Aktif</option>
- <option value="pending">Onay Bekleyen</option>
- <option value="suspended">Askıya Alınmış</option>
- <option value="rejected">Reddedilmiş</option>
- </select>
- <button id="searchBtn" class="px-4 py-2 bg-[#B87333] text-white rounded-sm hover:bg-[#9A6528]">Ara</button>
- </div>
- </div>
+  <!-- Filter toolbar -->
+  <div class="pl-toolbar">
+   <div class="pl-search">
+    <span class="pl-search-ico" aria-hidden="true">⌕</span>
+    <input type="text" id="searchInput" placeholder="İşletme ara..." aria-label="İşletme ara" />
+   </div>
+   <div class="pl-chips" role="group" aria-label="Durum filtresi">
+    <button type="button" class="pl-chip pl-chip--active" data-status-chip="all">Tümü</button>
+    <button type="button" class="pl-chip" data-status-chip="active">Aktif</button>
+    <button type="button" class="pl-chip" data-status-chip="pending">Bekliyor</button>
+    <button type="button" class="pl-chip" data-status-chip="suspended">Askıda</button>
+    <button type="button" class="pl-chip" data-status-chip="rejected">Reddedildi</button>
+   </div>
+   <select id="statusFilter" hidden>
+    <option value="all">Tümü</option>
+    <option value="active">Aktif</option>
+    <option value="pending">Bekliyor</option>
+    <option value="suspended">Askıda</option>
+    <option value="rejected">Reddedildi</option>
+   </select>
+   <button id="searchBtn" class="pl-search-btn">Ara</button>
+  </div>
 
- {/* Table */}
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <table class="w-full">
- <thead class="bg-[rgba(184,115,51,0.04)] border-b border-[rgba(184,115,51,0.14)]">
- <tr>
- <th class="px-4 py-3 text-left"><input type="checkbox" id="selectAll" class="rounded-sm" /></th>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İşletme</th>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Sahip</th>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Durum</th>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İstatistik</th>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İşlemler</th>
- </tr>
- </thead>
- <tbody id="placesTable" class="divide-y divide-[rgba(184,115,51,0.1)]">
- <tr><td colspan="6" class="px-6 py-12 text-center text-[#7A6B58]">Yükleniyor...</td></tr>
- </tbody>
- </table>
+  <!-- DataTable -->
+  <div class="pl-table-wrap">
+   <table class="pl-table">
+    <thead>
+     <tr>
+      <th class="pl-th pl-th-cb"><input type="checkbox" id="selectAll" aria-label="Tümünü seç" /></th>
+      <th class="pl-th">İşletme</th>
+      <th class="pl-th">Sahip</th>
+      <th class="pl-th">Durum</th>
+      <th class="pl-th">İstatistik</th>
+      <th class="pl-th pl-th-actions">İşlemler</th>
+     </tr>
+    </thead>
+    <tbody id="placesTable">
+     {Array.from({ length: 5 }).map(() => (
+      <tr class="pl-skel-row">
+       <td class="pl-td"><span class="pl-skel-pill" style="width:16px;height:16px"></span></td>
+       <td class="pl-td"><span class="pl-skel-bar"></span><span class="pl-skel-bar pl-skel-bar--narrow"></span></td>
+       <td class="pl-td"><span class="pl-skel-bar"></span><span class="pl-skel-bar pl-skel-bar--narrow"></span></td>
+       <td class="pl-td"><span class="pl-skel-pill"></span></td>
+       <td class="pl-td"><span class="pl-skel-bar pl-skel-bar--narrow"></span></td>
+       <td class="pl-td"><span class="pl-skel-pill"></span></td>
+      </tr>
+     ))}
+    </tbody>
+   </table>
+   <div class="pl-pagination">
+    <p class="pl-pag-info">
+     <span id="showingFrom">0</span>–<span id="showingTo">0</span> / <strong id="totalCount">0</strong> kayıt
+    </p>
+    <div class="pl-pag-buttons" id="pagination"></div>
+   </div>
+  </div>
 
- <div class="px-6 py-4 border-t border-[rgba(184,115,51,0.14)] flex items-center justify-between">
- <div class="text-sm text-[#7A6B58]">
- <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
- </div>
- <div class="flex gap-2" id="pagination"></div>
- </div>
- </div>
-
- {/* Bulk Actions */}
- <div id="bulkActions" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#0D0A08] text-white px-6 py-3 rounded-sm shadow-lg border border-[rgba(184,115,51,0.14)] hidden">
- <span id="selectedCount">0</span> secildi
- <div class="inline-flex gap-2 ml-4">
- <button onclick="bulkAction('approve')" class="px-3 py-1 bg-[#6B5540] rounded-sm text-sm">Onayla</button>
- <button onclick="bulkAction('suspend')" class="px-3 py-1 bg-urfa-600 rounded-sm text-sm">Askıya Al</button>
- <button onclick="bulkAction('reject')" class="px-3 py-1 bg-[#9A8470] rounded-sm text-sm">Reddet</button>
- <button onclick="bulkAction('feature')" class="px-3 py-1 bg-[#CE8E38] rounded-sm text-sm">Öne Çıkar</button>
- </div>
- </div>
+  <!-- Floating bulk action panel -->
+  <div id="bulkActions" class="pl-bulk" hidden>
+   <span class="pl-bulk-count"><strong id="selectedCount">0</strong> seçildi</span>
+   <div class="pl-bulk-actions">
+    <button onclick="bulkAction('approve')" class="pl-bulk-btn pl-bulk-btn--ok">✓ Onayla</button>
+    <button onclick="bulkAction('suspend')" class="pl-bulk-btn pl-bulk-btn--warn">⏸ Askıya Al</button>
+    <button onclick="bulkAction('reject')" class="pl-bulk-btn pl-bulk-btn--danger">✕ Reddet</button>
+    <button onclick="bulkAction('feature')" class="pl-bulk-btn pl-bulk-btn--gold">★ Öne Çıkar</button>
+   </div>
+  </div>
  </div>
 
  <script is:inline>
@@ -92,14 +119,14 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  const statusLabels = {
  active: { text: 'Aktif', class: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
- pending: { text: 'Bekliyor', class: 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]' },
- suspended: { text: 'Askıda', class: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' },
- rejected: { text: 'Reddedildi', class: 'bg-[rgba(184,115,51,0.04)] text-[#7A6B58]' },
+ pending: { text: 'Bekliyor', class: 'bg-[var(--adm-bg-active)] text-[#7A6B58]' },
+ suspended: { text: 'Askıda', class: 'bg-[var(--adm-bg-hover)] text-[#7A6B58]' },
+ rejected: { text: 'Reddedildi', class: 'bg-[var(--adm-bg-hover)] text-[#7A6B58]' },
  };
 
  async function loadPlaces() {
  const tbody = document.getElementById('placesTable');
- setTbodyMsg(tbody, 6, 'Yükleniyor...', 'px-6 py-12 text-center');
+ // Skeleton zaten SSR'de render edildi; ilk çağrıda re-render etmiyoruz
 
  const params = new URLSearchParams({ page: currentPage.toString() });
  const search = document.getElementById('searchInput').value;
@@ -131,7 +158,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function buildPlaceRow(place) {
  const tr = document.createElement('tr');
- tr.className = 'hover:bg-[rgba(184,115,51,0.04)]';
+ tr.className = 'hover:bg-[var(--adm-bg-hover)]';
  // Col 1: checkbox
  const td1 = document.createElement('td'); td1.className = 'px-4 py-3';
  const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = place.id;
@@ -148,7 +175,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  flex.appendChild(img);
  } else {
  const ph = document.createElement('div');
- ph.className = 'w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-sm flex items-center justify-center';
+ ph.className = 'w-10 h-10 bg-[var(--adm-bg-active)] rounded-sm flex items-center justify-center';
  ph.textContent = '🏪'; flex.appendChild(ph);
  }
  const textDiv = document.createElement('div');
@@ -164,7 +191,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  // Col 4: status
  const td4 = document.createElement('td'); td4.className = 'px-4 py-3';
  const badge = document.createElement('span');
- badge.className = 'px-2 py-1 rounded-sm text-xs font-medium ' + (statusLabels[place.status]?.class || 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]');
+ badge.className = 'px-2 py-1 rounded-sm text-xs font-medium ' + (statusLabels[place.status]?.class || 'bg-[var(--adm-bg-hover)] text-[#7A6B58]');
  badge.textContent = statusLabels[place.status]?.text || place.status;
  td4.appendChild(badge);
  if (place.featured) {
@@ -223,7 +250,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  const pageButtons = [];
  for (let i = 1; i <= Math.min(pagination.totalPages, 10); i++) {
  const btn = document.createElement('button');
- btn.className = 'px-3 py-1 rounded-sm ' + (i === pagination.page ? 'bg-urfa-600 text-white' : 'bg-[rgba(184,115,51,0.06)]');
+ btn.className = 'px-3 py-1 rounded-sm ' + (i === pagination.page ? 'bg-urfa-600 text-white' : 'bg-[var(--adm-bg-hover)]');
  btn.textContent = String(i);
  btn.addEventListener('click', () => goToPage(i));
  pageButtons.push(btn);
@@ -239,7 +266,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  function updateBulkActions() {
  const el = document.getElementById('bulkActions');
  document.getElementById('selectedCount').textContent = selectedPlaces.size;
- el.classList.toggle('hidden', selectedPlaces.size === 0);
+ el.hidden = selectedPlaces.size === 0;
  }
 
  async function bulkAction(action) {
@@ -280,6 +307,228 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  document.getElementById('searchBtn').addEventListener('click', () => { currentPage = 1; loadPlaces(); });
 
+ // Status chip filter
+ document.querySelectorAll('[data-status-chip]').forEach((chip) => {
+  chip.addEventListener('click', () => {
+   const target = chip.dataset.statusChip;
+   document.querySelectorAll('[data-status-chip]').forEach((c) => c.classList.toggle('pl-chip--active', c === chip));
+   const sel = document.getElementById('statusFilter');
+   sel.value = target;
+   currentPage = 1;
+   loadPlaces();
+  });
+ });
+
+ // Enter on search
+ document.getElementById('searchInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { currentPage = 1; loadPlaces(); }
+ });
+
  loadPlaces();
  </script>
+
+<style>
+ .pl-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+ .pl-cta-new {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+  color: #fff; font-weight: 600; font-size: 0.85rem;
+  border-radius: 8px; text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+ }
+ .pl-cta-new:hover { transform: translateY(-1px); box-shadow: var(--adm-shadow); }
+
+ .pl-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+ }
+ .pl-stat {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  display: flex; align-items: center; gap: 1rem;
+ }
+ .pl-stat-ico {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+ }
+ .pl-stat--total .pl-stat-ico { background: rgba(59,130,246,0.1); color: rgb(59,130,246); }
+ .pl-stat--active .pl-stat-ico { background: rgba(44,122,82,0.12); color: var(--adm-success); }
+ .pl-stat--pending .pl-stat-ico { background: rgba(212,151,24,0.15); color: var(--adm-warning); }
+ .pl-stat--suspended .pl-stat-ico { background: rgba(199,57,71,0.10); color: var(--adm-danger); }
+ .pl-stat-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.85rem; font-weight: 700;
+  line-height: 1; margin: 0;
+  color: var(--adm-text);
+ }
+ .pl-stat-lbl {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: var(--adm-text-muted);
+  font-weight: 500;
+ }
+
+ .pl-toolbar {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center;
+ }
+ .pl-search { flex: 1; min-width: 220px; position: relative; }
+ .pl-search-ico {
+  position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%);
+  color: var(--adm-text-soft);
+  font-size: 1rem;
+ }
+ .pl-search input {
+  width: 100%;
+  padding: 0.5rem 0.7rem 0.5rem 2rem !important;
+  font-size: 0.88rem;
+ }
+ .pl-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+ .pl-chip {
+  padding: 0.42rem 0.85rem;
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--adm-text-muted);
+  background: transparent;
+  border: 1px solid var(--adm-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.15s;
+ }
+ .pl-chip:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+ .pl-chip--active {
+  background: var(--adm-accent);
+  color: #fff;
+  border-color: var(--adm-accent);
+ }
+ .pl-search-btn {
+  padding: 0.5rem 1.1rem;
+  background: var(--adm-accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600; font-size: 0.82rem;
+  cursor: pointer;
+ }
+ .pl-search-btn:hover { filter: brightness(0.92); }
+
+ .pl-table-wrap {
+   overflow-x: auto;
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 10px;
+ }
+ .pl-table { width: 100%; border-collapse: collapse; }
+ .pl-th {
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--adm-text-soft);
+  padding: 0.85rem 1rem;
+  background: var(--adm-bg-hover);
+  border-bottom: 1px solid var(--adm-border);
+ }
+ .pl-th-cb { width: 44px; }
+ .pl-th-actions { text-align: right; }
+ .pl-table tbody tr {
+  border-bottom: 1px solid var(--adm-border);
+  transition: background 0.12s;
+ }
+ .pl-table tbody tr:hover { background: var(--adm-bg-hover); }
+ .pl-table tbody td { padding: 0.85rem 1rem; font-size: 0.86rem; color: var(--adm-text); }
+ .pl-td-empty {
+  text-align: center;
+  padding: 3rem 1rem !important;
+  color: var(--adm-text-soft);
+ }
+ .pl-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-top: 1px solid var(--adm-border);
+ }
+ .pl-pag-info { font-size: 0.82rem; color: var(--adm-text-muted); margin: 0; }
+ .pl-pag-info strong { color: var(--adm-text); }
+ .pl-pag-buttons { display: flex; gap: 0.3rem; }
+
+ /* Floating bulk panel */
+ .pl-bulk[hidden] { display: none !important; }
+ .pl-bulk {
+  position: fixed;
+  bottom: 1.5rem; left: 50%;
+  transform: translateX(-50%);
+  background: var(--adm-text);
+  color: var(--adm-bg);
+  padding: 0.65rem 0.85rem 0.65rem 1.1rem;
+  border-radius: 999px;
+  display: flex; align-items: center; gap: 1rem;
+  box-shadow: 0 12px 32px -4px rgba(0,0,0,0.35);
+  z-index: 50;
+  font-size: 0.86rem;
+  animation: plBulkIn 0.18s ease-out;
+ }
+ @keyframes plBulkIn {
+  from { transform: translate(-50%, 10px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+ }
+ .pl-bulk-count strong { color: var(--adm-accent); font-weight: 700; margin-right: 0.25rem; }
+ .pl-bulk-actions { display: flex; gap: 0.35rem; }
+ .pl-bulk-btn {
+  padding: 0.4rem 0.85rem;
+  border: none; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+ }
+ .pl-bulk-btn--ok { background: var(--adm-success); }
+ .pl-bulk-btn--warn { background: var(--adm-warning); color: #1F1410; }
+ .pl-bulk-btn--danger { background: var(--adm-danger); }
+ .pl-bulk-btn--gold { background: var(--adm-accent); }
+ .pl-bulk-btn:hover { filter: brightness(0.93); }
+
+ /* Skeleton loaders */
+ .pl-skel-row { pointer-events: none; }
+ .pl-skel-bar {
+  display: block;
+  height: 14px;
+  width: 80%;
+  background: var(--adm-bg-hover);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  margin: 4px 0;
+ }
+ .pl-skel-bar--narrow { width: 50%; }
+ .pl-skel-bar::after, .pl-skel-pill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--adm-bg-active), transparent);
+  animation: plShimmer 1.4s infinite;
+ }
+ .pl-skel-pill {
+  display: inline-block;
+  width: 64px;
+  height: 18px;
+  background: var(--adm-bg-hover);
+  border-radius: 999px;
+  position: relative;
+  overflow: hidden;
+ }
+ @keyframes plShimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+ }
+</style>
 </AdminLayout>

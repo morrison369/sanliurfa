@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
@@ -12,31 +12,31 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-5">
  <div class="grid md:grid-cols-5 gap-3">
- <input id="eventType" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm" placeholder="Olay tipi (örn: swipe.match)" />
- <input id="actorUserId" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm" placeholder="İşlem yapan kullanıcı ID" />
- <input id="targetUserId" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm" placeholder="Hedef kullanıcı ID" />
+ <input id="eventType" class="border border-[var(--adm-border-strong)] rounded-sm px-3 py-2 text-sm" placeholder="Olay tipi (örn: swipe.match)" />
+ <input id="actorUserId" class="border border-[var(--adm-border-strong)] rounded-sm px-3 py-2 text-sm" placeholder="İşlem yapan kullanıcı ID" />
+ <input id="targetUserId" class="border border-[var(--adm-border-strong)] rounded-sm px-3 py-2 text-sm" placeholder="Hedef kullanıcı ID" />
  <button id="applyBtn" class="rounded-sm bg-urfa-600 text-white px-4 py-2 text-sm font-semibold hover:bg-urfa-700">Filtrele</button>
  <button id="liveBtn" class="rounded-sm bg-[#6B5540] text-white px-4 py-2 text-sm font-semibold hover:bg-[#4A3A28]">Canlı Aç/Kapat</button>
- <a id="exportLink" class="rounded-sm border border-[rgba(184,115,51,0.14)] px-4 py-2 text-center text-sm font-medium text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)] md:col-span-5" href="/api/admin/social/events/export">
+ <a id="exportLink" class="rounded-sm border border-[var(--adm-border)] px-4 py-2 text-center text-sm font-medium text-[#7A6B58] hover:bg-[var(--adm-bg-hover)] md:col-span-5" href="/api/admin/social/events/export">
  CSV Dışa Aktar
  </a>
- <button id="signedLinkBtn" class="rounded-sm border border-[rgba(184,115,51,0.14)] px-4 py-2 text-center text-sm font-medium text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)] md:col-span-5" type="button">
+ <button id="signedLinkBtn" class="rounded-sm border border-[var(--adm-border)] px-4 py-2 text-center text-sm font-medium text-[#7A6B58] hover:bg-[var(--adm-bg-hover)] md:col-span-5" type="button">
  5dk İmzalı Link Üret
  </button>
- <input id="signedLinkOut" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 md:col-span-5 text-xs text-[#7A6B58]" readonly placeholder="İmzalı link burada görünecek" />
+ <input id="signedLinkOut" class="border border-[var(--adm-border-strong)] rounded-sm px-3 py-2 md:col-span-5 text-xs text-[#7A6B58]" readonly placeholder="İmzalı link burada görünecek" />
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div class="p-4 border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] flex items-center justify-between">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm overflow-hidden">
+ <div class="p-4 border-b border-[var(--adm-border)] bg-[var(--adm-bg-hover)] flex items-center justify-between">
  <h2 class="font-semibold text-[#7A6B58] text-sm">Olaylar</h2>
- <span id="statusText" class="text-xs px-2 py-1 rounded-sm bg-[rgba(184,115,51,0.06)] text-[#7A6B58]">pasif</span>
+ <span id="statusText" class="text-xs px-2 py-1 rounded-sm bg-[var(--adm-bg-hover)] text-[#7A6B58]">pasif</span>
  </div>
  <div class="overflow-x-auto">
  <table class="min-w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <thead class="border-b border-[var(--adm-border)] bg-[var(--adm-bg-hover)]">
  <tr>
  <th class="px-3 py-3 text-left font-medium text-[#7A6B58]">Zaman</th>
  <th class="px-3 py-3 text-left font-medium text-[#7A6B58]">Olay</th>
@@ -47,7 +47,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  </tr>
  </thead>
  <tbody id="rows">
- <tr><td class="px-3 py-4 text-[#7A6B58]" colspan="6">Yükleniyor...</td></tr>
+ <tr><td class="px-3 py-4 text-[#7A6B58]" colspan="6">Yükleniyor…</td></tr>
  </tbody>
  </table>
  </div>
@@ -64,7 +64,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function buildEventRow(item) {
  const tr = document.createElement('tr');
- tr.className = 'border-b border-[rgba(184,115,51,0.08)] align-top hover:bg-[rgba(184,115,51,0.04)]';
+ tr.className = 'border-b border-[var(--adm-bg-hover)] align-top hover:bg-[var(--adm-bg-hover)]';
 
  const cells = [
  ['px-3 py-2 text-xs whitespace-nowrap text-[#7A6B58]', item.created_at ? new Date(item.created_at).toLocaleString('tr-TR') : '-'],
@@ -145,7 +145,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  }
  live = false;
  statusEl.textContent = 'pasif';
- statusEl.className = 'text-xs px-2 py-1 rounded-sm bg-[rgba(184,115,51,0.06)] text-[#7A6B58]';
+ statusEl.className = 'text-xs px-2 py-1 rounded-sm bg-[var(--adm-bg-hover)] text-[#7A6B58]';
  }
 
  function startLive() {

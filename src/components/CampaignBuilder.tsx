@@ -84,7 +84,7 @@ export function CampaignBuilder() {
  };
 
  if (loading) {
- return <div className="p-4 text-center">Yükleniyor...</div>;
+ return <div className="p-4 text-center">Yükleniyor…</div>;
  }
 
  return (

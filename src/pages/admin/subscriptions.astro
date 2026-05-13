@@ -1,29 +1,68 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import SubscriptionAdminDashboard from '../../components/SubscriptionAdminDashboard';
+
+const relatedLinks = [
+ { href: '/admin/users', label: 'Kullanıcılar', icon: 'lucide:users' },
+ { href: '/admin/analytics', label: 'Analitik', icon: 'lucide:bar-chart-3' },
+ { href: '/admin/revenue', label: 'Gelir', icon: 'lucide:trending-up' },
+ { href: '/admin/audit-logs', label: 'Denetim Logları', icon: 'lucide:list-checks' },
+];
 ---
 
 <AdminLayout
  title="Abonelik Yönetimi"
  subtitle="Tüm abonelik sistemi, ödemeler ve müşteri verilerini yönetin"
- seo={{ title: 'Abonelik Yönetimi - Admin' }}
+ seo={{ title: 'Abonelik Yönetimi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8">
- <SubscriptionAdminDashboard client:visible />
+ <div class="sb-page">
+  <div class="sb-panel">
+   <SubscriptionAdminDashboard client:visible />
+  </div>
 
- <div class="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
- <a href="/admin" class="p-4 bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm hover:shadow-sm transition">
- <h3 class="font-semibold text-[#1F1410]">← Yönetim Paneli</h3>
- </a>
- <a href="/admin/users" class="p-4 bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm hover:shadow-sm transition">
- <h3 class="font-semibold text-[#1F1410]">Kullanıcılar</h3>
- </a>
- <a href="/admin/analytics" class="p-4 bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm hover:shadow-sm transition">
- <h3 class="font-semibold text-[#1F1410]">Analitik</h3>
- </a>
- <a href="/admin/audit-logs" class="p-4 bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm hover:shadow-sm transition">
- <h3 class="font-semibold text-[#1F1410]">Denetim Logları</h3>
- </a>
- </div>
+  <div class="sb-related">
+   {relatedLinks.map(link => (
+    <a href={link.href} class="sb-related-card">
+     <Icon name={link.icon} class="w-4 h-4 sb-related-icon" />
+     <span>{link.label}</span>
+     <Icon name="lucide:arrow-right" class="w-3.5 h-3.5 sb-related-arrow" />
+    </a>
+   ))}
+  </div>
  </div>
 </AdminLayout>
+
+<style>
+ .sb-page { display: flex; flex-direction: column; gap: 1.25rem; }
+ .sb-panel {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+ }
+ .sb-related {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.65rem;
+ }
+ .sb-related-card {
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.75rem 1rem;
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 10px;
+  color: var(--adm-text);
+  font-size: 0.86rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s;
+ }
+ .sb-related-card:hover {
+  border-color: var(--adm-accent);
+  transform: translateY(-1px);
+ }
+ .sb-related-icon { color: var(--adm-accent); flex-shrink: 0; }
+ .sb-related-arrow { margin-left: auto; color: var(--adm-text-soft); }
+ .sb-related-card:hover .sb-related-arrow { color: var(--adm-accent); }
+</style>

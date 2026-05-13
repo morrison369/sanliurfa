@@ -15,6 +15,12 @@ interface Props {
  formats?: ('avif' | 'webp' | 'jpeg' | 'png' | 'svg')[];
  fallbackFormat?: 'jpeg' | 'png' | 'svg';
  quality?: number;
+ /** LQIP shimmer placeholder — img-lqip class eklenir, görsel onload'da görünür */
+ withShimmer?: boolean;
+ /** Responsive sizes hint (örn. "(max-width: 768px) 100vw, 50vw") — srcset doğru kaynağı seçer */
+ sizes?: string;
+ /** Astro Picture için widths breakpoint array; verilirse srcset bu genişliklerde üretilir */
+ widths?: number[];
 }
 
 const {
@@ -30,8 +36,13 @@ const {
  fetchpriority = 'auto',
  formats = ['avif', 'webp'],
  fallbackFormat = 'jpeg',
- quality = 80
+ quality = 80,
+ withShimmer = true,
+ sizes,
+ widths,
 } = Astro.props;
+
+const finalClass = withShimmer ? `${className} img-lqip`.trim() : className;
 
 // Remote image kontrolü
 const isRemote = src.startsWith('http');
@@ -53,7 +64,7 @@ const shouldUseFallbackImg = Boolean(fallbackSrc);
  alt={alt}
  width={width}
  height={height}
- class={className}
+ class={finalClass}
  style={style}
  formats={formats}
  fallbackFormat={fallbackFormat}
@@ -61,6 +72,9 @@ const shouldUseFallbackImg = Boolean(fallbackSrc);
  loading={loading}
  decoding={decoding}
  fetchpriority={fetchpriority}
+ onload={withShimmer ? 'this.classList.add(\'img-lqip-loaded\')' : undefined}
+ {...(sizes ? { sizes } : {})}
+ {...(widths ? { widths } : {})}
  />
 ) : (
  <img
@@ -68,11 +82,13 @@ const shouldUseFallbackImg = Boolean(fallbackSrc);
  alt={alt}
  width={width}
  height={height}
- class={className}
+ class={finalClass}
  style={style}
  loading={loading}
  decoding={decoding}
  fetchpriority={fetchpriority}
- onerror={`this.setAttribute('src',${JSON.stringify(fallbackSrc || '/images/placeholder.jpg')})`}
+ sizes={sizes}
+ onload={withShimmer ? 'this.classList.add(\'img-lqip-loaded\')' : undefined}
+ onerror={`this.setAttribute('src',${JSON.stringify(fallbackSrc || '/images/placeholder.jpg')});this.classList.add('img-lqip-loaded')`}
  />
 )}

@@ -66,10 +66,45 @@ export const POST: APIRoute = async ({ request }) => {
       return problemJson({ status: 400, title: 'Geçersiz Bio', detail: 'Bio 2000 karakterden uzun olamaz', type: '/problems/social-match-profile-bio-too-long', instance: '/api/social/match-profile' });
     }
 
+    const interests = Array.isArray(body?.interests)
+      ? body.interests.filter((i: unknown): i is string => typeof i === 'string' && i.trim().length > 0).slice(0, 12)
+      : undefined;
+
+    const parseAge = (v: unknown): number | null | undefined => {
+      if (v === null) return null;
+      if (typeof v === 'number' && Number.isFinite(v)) return v;
+      return undefined;
+    };
+    const ageRangeMin = parseAge(body?.ageRangeMin);
+    const ageRangeMax = parseAge(body?.ageRangeMax);
+
+    if (typeof ageRangeMin === 'number' && (ageRangeMin < 18 || ageRangeMin > 99)) {
+      return problemJson({ status: 400, title: 'Geçersiz Yaş', detail: 'Minimum yaş 18-99 aralığında olmalı', type: '/problems/social-match-profile-age-invalid', instance: '/api/social/match-profile' });
+    }
+    if (typeof ageRangeMax === 'number' && (ageRangeMax < 18 || ageRangeMax > 99)) {
+      return problemJson({ status: 400, title: 'Geçersiz Yaş', detail: 'Maksimum yaş 18-99 aralığında olmalı', type: '/problems/social-match-profile-age-invalid', instance: '/api/social/match-profile' });
+    }
+    if (typeof ageRangeMin === 'number' && typeof ageRangeMax === 'number' && ageRangeMin > ageRangeMax) {
+      return problemJson({ status: 400, title: 'Geçersiz Yaş Aralığı', detail: 'Minimum yaş, maksimum yaştan büyük olamaz', type: '/problems/social-match-profile-age-range', instance: '/api/social/match-profile' });
+    }
+
+    const preferredDistrict = typeof body?.preferredDistrict === 'string' && body.preferredDistrict.trim().length > 0
+      ? body.preferredDistrict.trim().slice(0, 80)
+      : null;
+
+    const ALLOWED_LOOKING_FOR = ['arkadaslik', 'iliskili', 'sohbet', 'aktivite', 'kahve'];
+    const rawLookingFor = typeof body?.lookingFor === 'string' ? body.lookingFor.trim() : '';
+    const lookingFor = ALLOWED_LOOKING_FOR.includes(rawLookingFor) ? rawLookingFor : null;
+
     const profile = await upsertMatchProfile(auth.user.id, {
       bio,
       photos,
       isDiscoverable: body?.isDiscoverable !== false,
+      interests,
+      ageRangeMin,
+      ageRangeMax,
+      preferredDistrict,
+      lookingFor,
     });
 
     return apiResponse({ success: true, data: profile }, HttpStatus.OK);

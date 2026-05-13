@@ -225,6 +225,10 @@ const seo = buildPageSeo({
  .bl-updated{font-size:.78rem;color:var(--public-muted)}
  .bl-updated time{color:var(--public-text-soft)}
  .bl-source{font-size:.75rem;color:var(--public-muted);opacity:.7}
+ .bl-byline{font-size:.82rem;color:var(--public-text);line-height:1.7;margin:0 0 .35rem}
+ .bl-byline strong{color:var(--public-accent);font-weight:600}
+ .bl-byline time{color:var(--public-text)}
+ .bl-source a{color:var(--public-accent)}.bl-source a:hover{text-decoration:underline}
  </style>
 
  <Fragment slot="hero">
@@ -285,7 +289,6 @@ const seo = buildPageSeo({
  {post.tags && post.tags.length > 0 && (
  <PublicContentSection title="Etiketler">
  <div class="bl-tags">
- <p class="bl-tags-title">Etiketler</p>
  <div>
  {post.tags.map((tag: any) => {
   const label = typeof tag === 'string' ? tag : (tag.name || tag.slug || String(tag));
@@ -298,12 +301,17 @@ const seo = buildPageSeo({
  )}
 
  <div class="bl-meta-footer">
- {post.updated_at && post.updated_at !== post.published_at && (
-  <p class="bl-updated">
-   Son güncelleme: <time datetime={post.updated_at}>{new Date(post.updated_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+  <p class="bl-byline">
+   <strong>Yazar:</strong> {post.author_name || 'Sanliurfa.com Editöryel Ekibi'}
+   {' · '}
+   <strong>Yayın:</strong> <time datetime={post.published_at}>{new Date(post.published_at!).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+   {post.updated_at && post.updated_at !== post.published_at && (
+    <>
+     {' · '}<strong>Son güncelleme:</strong> <time datetime={post.updated_at}>{new Date(post.updated_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+    </>
+   )}
   </p>
- )}
- <p class="bl-source">Kaynak: Sanliurfa.com Editöryel — Yerel araştırma ve yerinde derleme.</p>
+  <p class="bl-source">Kaynak: Sanliurfa.com Editöryel — Yerel araştırma ve yerinde derleme. Hata bildirimi: <a href="mailto:iletisim@sanliurfa.com">iletisim@sanliurfa.com</a>. <a href="/kunye">Yayın bilgileri</a></p>
  </div>
 
  <div class="bl-share">
@@ -402,9 +410,9 @@ const seo = buildPageSeo({
  wordCount: post.content ? post.content.replace(/<[^>]+>/g, '').split(/\s+/).length : undefined,
  keywords: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
  author: {
- '@type': 'Person',
- name: post.author_name || 'Şanlıurfa Rehberi Editörü',
- url: `${baseUrl}/blog`,
+ '@type': post.author_name ? 'Person' : 'Organization',
+ name: post.author_name || 'Sanliurfa.com Editöryel Ekibi',
+ url: `${baseUrl}/yazarlar#editoryel-ekip`,
  },
  '@id': `${baseUrl}/blog/${post.slug}`,
  publisher: {

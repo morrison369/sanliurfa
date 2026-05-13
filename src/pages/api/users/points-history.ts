@@ -18,19 +18,19 @@ export const GET: APIRoute = async ({ locals, url }) => {
     const limit = safeIntParam(url.searchParams.get('limit'), 50, 1, 100);
 
     const history = await queryMany(
-      `SELECT id, action_type, metadata, points_earned, created_at 
-       FROM user_activities 
-       WHERE user_id = $1 AND action_type IN ('review_created', 'comment_posted', 'favorite_added')
+      `SELECT id, COALESCE(type, activity_type) AS action_type, metadata, points_earned, created_at
+       FROM user_activities
+       WHERE user_id = $1 AND COALESCE(type, activity_type) IN ('review_created', 'comment_posted', 'favorite_added')
        ORDER BY created_at DESC
        LIMIT $2`,
       [locals.user.id, limit]
     );
 
     const summary = await queryMany(
-      `SELECT action_type, COUNT(*) as count, COALESCE(SUM((metadata->>'points')::int), 0) as total_points
-       FROM user_activities 
-       WHERE user_id = $1 AND action_type IN ('review_created', 'comment_posted', 'favorite_added')
-       GROUP BY action_type`,
+      `SELECT COALESCE(type, activity_type) AS action_type, COUNT(*) as count, COALESCE(SUM((metadata->>'points')::int), 0) as total_points
+       FROM user_activities
+       WHERE user_id = $1 AND COALESCE(type, activity_type) IN ('review_created', 'comment_posted', 'favorite_added')
+       GROUP BY COALESCE(type, activity_type)`,
       [locals.user.id]
     );
 

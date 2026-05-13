@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
@@ -8,23 +8,23 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  seo={{ title: 'Webhook Yönetimi - Yönetim Paneli', description: 'Webhook entegrasyonları, güvenlik ve teslimat izleme rehberi' }}
 >
  <div class="sf-container py-8">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 space-y-8">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6 space-y-8">
  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
- <div class="bg-[rgba(184,115,51,0.06)] rounded-sm p-4 border border-[rgba(184,115,51,0.2)]">
+ <div class="bg-[var(--adm-bg-hover)] rounded-sm p-4 border border-[var(--adm-border-strong)]">
  <h3 class="font-semibold text-[#1F1410] mb-2">Webhook Nedir?</h3>
  <p class="text-sm text-[#7A6B58]">
  Webhooks, belirli olaylar gerçekleştiğinde dış uygulamalara HTTP POST istekleri göndererek entegrasyonlar sağlar.
  </p>
  </div>
 
- <div class="bg-[rgba(184,115,51,0.06)] rounded-sm p-4 border border-[rgba(184,115,51,0.2)]">
+ <div class="bg-[var(--adm-bg-hover)] rounded-sm p-4 border border-[var(--adm-border-strong)]">
  <h3 class="font-semibold text-[#1F1410] mb-2">Güvenlik</h3>
  <p class="text-sm text-[#7A6B58]">
  Her webhook isteği HMAC-SHA256 imzası ile doğrulanır. Secret sağlarsanız imza denetlenebilir.
  </p>
  </div>
 
- <div class="bg-[rgba(184,115,51,0.06)] rounded-sm p-4 border border-[rgba(184,115,51,0.2)]">
+ <div class="bg-[var(--adm-bg-hover)] rounded-sm p-4 border border-[var(--adm-border-strong)]">
  <h3 class="font-semibold text-[#1F1410] mb-2">İzleme</h3>
  <p class="text-sm text-[#7A6B58]">
  Teslim oranlarını, başarısız olayları ve performans metriklerini gerçek zamanlı izleyin.
@@ -32,7 +32,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  </div>
  </div>
 
- <div class="border-t border-[rgba(184,115,51,0.14)] pt-6">
+ <div class="border-t border-[var(--adm-border)] pt-6">
  <h2 class="text-xl font-bold text-[#1F1410] mb-4">Webhook Ayarları</h2>
  <div class="text-[#7A6B58] space-y-2">
  <p><strong>Desteklenen Olaylar:</strong></p>
@@ -49,9 +49,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  </div>
  </div>
 
- <div class="border-t border-[rgba(184,115,51,0.14)] pt-6">
+ <div class="border-t border-[var(--adm-border)] pt-6">
  <h2 class="text-xl font-bold text-[#1F1410] mb-4">API Referansı</h2>
- <div class="bg-[rgba(184,115,51,0.04)] rounded-sm p-4 space-y-4 font-mono text-sm">
+ <div class="bg-[var(--adm-bg-hover)] rounded-sm p-4 space-y-4 font-mono text-sm">
  <div>
  <p class="font-semibold text-[#1F1410]">POST /api/webhooks</p>
  <p class="text-[#7A6B58] text-xs mt-1">Yeni webhook oluştur</p>
@@ -79,7 +79,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  </div>
  </div>
 
- <div class="border-t border-[rgba(184,115,51,0.14)] pt-6">
+ <div class="border-t border-[var(--adm-border)] pt-6">
  <h2 class="text-xl font-bold text-[#1F1410] mb-4">İmza Örneği</h2>
  <div class="bg-[#0D0A08] text-[#C4B49A] rounded-sm p-4 overflow-x-auto text-sm font-mono">
  <code>{`// X-Signature header'ı HMAC-SHA256'dır

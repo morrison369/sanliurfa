@@ -1,0 +1,206 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getPublicAppUrl } from '../lib/public-app-url';
+const baseUrl = getPublicAppUrl();
+
+const seo = {
+ title: 'Künye - Sanliurfa.com Yayın Bilgileri',
+ description: "Sanliurfa.com'un yasal künye bilgileri: yayıncı, kuruluş, adres, iletişim, içerik sorumluluğu ve yayın politikası.",
+ keywords: ['sanliurfa.com künye', 'imprint', 'sanliurfa.com yayıncı', 'yayın bilgileri', 'iletişim'],
+ canonical: '/kunye',
+};
+
+const lastUpdated = new Date().toISOString().slice(0, 10);
+---
+
+<Layout seo={seo}>
+ <style is:inline>
+  .ky-page { background: var(--public-bg); padding: 3rem 0 5rem; min-height: 100vh; }
+  .ky-hero { max-width: 48rem; margin: 0 auto 2rem; }
+  .ky-lbl { font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--public-accent); margin-bottom: .5rem; }
+  .ky-h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 4vw, 2.6rem); font-weight: 700; color: var(--public-text); margin: 0 0 .75rem; }
+  .ky-desc { font-size: .95rem; line-height: 1.7; color: var(--public-muted); margin: 0; }
+  .ky-meta { display: inline-flex; align-items: center; gap: .5rem; margin-top: 1.25rem; padding: .35rem .75rem; background: rgba(184,115,51,.08); border: 1px solid rgba(184,115,51,.18); border-radius: 999px; font-size: .76rem; color: var(--public-muted); }
+  .ky-sections { max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+  .ky-card { background: var(--bg-card); border: 1px solid rgba(184,115,51,.18); padding: 1.75rem; border-radius: .5rem; }
+  .ky-section-h { font-family: 'Cormorant Garamond', serif; font-size: 1.45rem; font-weight: 700; color: var(--public-text); margin: 0 0 1rem; }
+  .ky-row { display: grid; grid-template-columns: 1fr; gap: .5rem .75rem; padding: .65rem 0; border-bottom: 1px solid rgba(184,115,51,.08); }
+  .ky-row:last-child { border-bottom: none; }
+  @media (min-width: 640px) { .ky-row { grid-template-columns: 12rem 1fr; align-items: baseline; } }
+  .ky-k { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--public-text-soft); }
+  .ky-v { font-size: .92rem; color: var(--public-text); line-height: 1.6; }
+  .ky-v a { color: var(--public-accent); }
+  .ky-v a:hover { text-decoration: underline; }
+  .ky-p { font-size: .92rem; color: var(--public-muted); line-height: 1.75; margin: 0 0 .85rem; }
+  .ky-p:last-child { margin-bottom: 0; }
+  .ky-ul { padding-left: 1.25rem; margin: 0; }
+  .ky-ul li { font-size: .9rem; color: var(--public-muted); line-height: 1.7; margin-bottom: .35rem; }
+ </style>
+
+ <main class="ky-page">
+  <div class="sf-container">
+   <div class="ky-hero">
+    <p class="ky-lbl">Yasal Bilgi</p>
+    <h1 class="ky-h1">Künye</h1>
+    <p class="ky-desc">
+     Bu sayfa, Sanliurfa.com platformunun yayıncı bilgilerini, içerik sorumluluğunu, iletişim kanallarını ve yayın politikasını içerir.
+     Google Yayıncı Politikası şeffaflık gerekliliklerine uygun olarak hazırlanmıştır.
+    </p>
+    <span class="ky-meta">📅 Son güncelleme: {new Date(lastUpdated).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+   </div>
+
+   <div class="ky-sections">
+
+    <section class="ky-card" id="yayinci">
+     <h2 class="ky-section-h">Yayıncı Bilgileri</h2>
+     <div class="ky-row">
+      <span class="ky-k">Yayın Adı</span>
+      <span class="ky-v">Sanliurfa.com — Şanlıurfa Şehir Rehberi</span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">Yayıncı / İşletici</span>
+      <span class="ky-v">Sanliurfa.com Editöryel Ekibi</span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">Kuruluş Yılı</span>
+      <span class="ky-v">2025</span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">Yayın Türü</span>
+      <span class="ky-v">İnternet Yayıncılığı — Şehir rehberi, turizm, gastronomi, kültür ve etkinlik içerikleri</span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">Faaliyet Alanı</span>
+      <span class="ky-v">Şanlıurfa, Türkiye — şehir kapsamlı dijital rehber</span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">Web Adresi</span>
+      <span class="ky-v"><a href={baseUrl}>{baseUrl.replace(/^https?:\/\//, '')}</a></span>
+     </div>
+    </section>
+
+    <section class="ky-card" id="iletisim">
+     <h2 class="ky-section-h">İletişim Bilgileri</h2>
+     <div class="ky-row">
+      <span class="ky-k">E-posta (Genel)</span>
+      <span class="ky-v"><a href="mailto:iletisim@sanliurfa.com">iletisim@sanliurfa.com</a></span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">E-posta (İşletme)</span>
+      <span class="ky-v"><a href="mailto:isletme@sanliurfa.com">isletme@sanliurfa.com</a></span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">E-posta (Hukuk/KVKK)</span>
+      <span class="ky-v"><a href="mailto:kvkk@sanliurfa.com">kvkk@sanliurfa.com</a></span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">Adres</span>
+      <span class="ky-v">Eyyübiye, Şanlıurfa, Türkiye</span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">İletişim Formu</span>
+      <span class="ky-v"><a href="/iletisim">sanliurfa.com/iletisim</a></span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">Sosyal Medya</span>
+      <span class="ky-v">
+       <a href="https://www.instagram.com/sanliurfacom" target="_blank" rel="noopener noreferrer">Instagram</a> ·
+       <a href="https://www.facebook.com/sanliurfacom" target="_blank" rel="noopener noreferrer">Facebook</a> ·
+       <a href="https://x.com/sanliurfacom" target="_blank" rel="noopener noreferrer">X</a> ·
+       <a href="https://www.youtube.com/@sanliurfacom" target="_blank" rel="noopener noreferrer">YouTube</a>
+      </span>
+     </div>
+    </section>
+
+    <section class="ky-card" id="icerik">
+     <h2 class="ky-section-h">İçerik & Yayın Politikası</h2>
+     <p class="ky-p">
+      Sanliurfa.com içerikleri, editöryel ekibimiz tarafından yerinde inceleme, yerel kaynak araştırması ve resmi belgeler kullanılarak hazırlanır.
+      Her blog yazısı, mekan kaydı, etkinlik ve yemek tarifi <strong>yayınlanma ve güncellenme tarihi</strong> ile imzalanır.
+     </p>
+     <p class="ky-p">
+      Topluluk katkıları (yorumlar, kullanıcı eklediği mekanlar, etkinlikler) moderasyon ekibimiz tarafından incelendikten sonra yayına alınır.
+      Yanıltıcı, sponsorlu görünmemesine rağmen ücretli olan veya tüketici aldatıcı içeriklere izin verilmez.
+     </p>
+     <p class="ky-p">
+      Üçüncü taraf reklamlar (varsa) sayfa üzerinde açıkça <em>Reklam</em> ibaresiyle işaretlenir. Editöryel içerikler bağımsızdır.
+     </p>
+     <ul class="ky-ul">
+      <li>Tüm yazılar bir yazar adı veya “Sanliurfa.com Editöryel Ekibi” imzasıyla yayınlanır.</li>
+      <li>Yayın tarihi her sayfada açıkça görüntülenir; içerik güncellenirse “Son güncelleme” bilgisi eklenir.</li>
+      <li>Hata bildirimi: <a href="mailto:iletisim@sanliurfa.com">iletisim@sanliurfa.com</a> üzerinden bildirilen hatalar 5 iş günü içinde incelenir ve gerekli düzeltmeler yapılır.</li>
+      <li>Telif hakkı: Sanliurfa.com içerikleri © 2026 Sanliurfa.com tarafından korunmaktadır; alıntı yapılırken kaynak gösterimi zorunludur.</li>
+     </ul>
+    </section>
+
+    <section class="ky-card" id="sorumluluk">
+     <h2 class="ky-section-h">İçerik Sorumluluğu</h2>
+     <p class="ky-p">
+      Sanliurfa.com editöryel ekibi, sunduğu bilgilerin doğruluğu, güncelliği ve eksiksizliği için makul özen gösterir.
+      Ancak mekan çalışma saatleri, fiyatlar ve etkinlik takvimi gibi sürekli değişen bilgiler için ziyaret öncesi <strong>doğrudan işletmeyle iletişime geçilmesi</strong> önerilir.
+     </p>
+     <p class="ky-p">
+      Topluluk katkısı olan içeriklerde (kullanıcı yorumları, mekan başvuruları) yazar/sahibi açıkça belirtilir. Bu içerikler yayınlandıkları kullanıcının görüş ve sorumluluğundadır.
+     </p>
+    </section>
+
+    <section class="ky-card" id="hukuki">
+     <h2 class="ky-section-h">Hukuki Belgeler</h2>
+     <ul class="ky-ul">
+      <li><a href="/gizlilik-politikasi">Gizlilik Politikası</a> — kişisel veri işleme, çerez kullanımı, üçüncü taraf entegrasyonları</li>
+      <li><a href="/kullanim-kosullari">Kullanım Koşulları</a> — site kullanımı, üyelik, içerik kuralları</li>
+      <li><a href="/kvkk">KVKK Aydınlatma Metni</a> — 6698 sayılı kanun kapsamında veri sahibi hakları</li>
+      <li><a href="/cerez-politikasi">Çerez Politikası</a> — çerez türleri, amaçları, yönetimi</li>
+     </ul>
+    </section>
+
+    <section class="ky-card" id="reklam">
+     <h2 class="ky-section-h">Reklam & İşbirliği</h2>
+     <p class="ky-p">
+      İşletme tanıtımı, sponsorlu içerik ve reklam görüntüleme talepleri için <a href="mailto:isletme@sanliurfa.com">isletme@sanliurfa.com</a> adresinden iletişime geçilebilir.
+      İşletmeniz Sanliurfa.com'da ücretsiz olarak yer alabilir; <a href="/isletme-kayit">İşletme Kayıt</a> sayfasından başvuru formu doldurabilirsiniz.
+     </p>
+     <p class="ky-p">
+      Reklam kapsamına alınan içeriklerde sayfa içinde <strong>“Reklam”</strong> veya <strong>“Sponsor”</strong> ibaresi açıkça görüntülenir.
+     </p>
+    </section>
+
+   </div>
+  </div>
+ </main>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: 'Sanliurfa.com Künye',
+  description: "Sanliurfa.com yayıncı bilgileri, içerik sorumluluğu ve iletişim kanalları.",
+  url: `${baseUrl}/kunye`,
+  dateModified: lastUpdated,
+  publisher: {
+   '@type': 'Organization',
+   name: 'Sanliurfa.com',
+   url: baseUrl,
+   email: 'iletisim@sanliurfa.com',
+   foundingDate: '2025',
+   address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressRegion: 'Şanlıurfa', addressCountry: 'TR', streetAddress: 'Eyyübiye' },
+   contactPoint: [
+    { '@type': 'ContactPoint', contactType: 'customer service', email: 'iletisim@sanliurfa.com', availableLanguage: 'Turkish' },
+    { '@type': 'ContactPoint', contactType: 'business inquiry', email: 'isletme@sanliurfa.com', availableLanguage: 'Turkish' },
+    { '@type': 'ContactPoint', contactType: 'privacy', email: 'kvkk@sanliurfa.com', availableLanguage: 'Turkish' },
+   ],
+   sameAs: [
+    'https://www.instagram.com/sanliurfacom',
+    'https://www.facebook.com/sanliurfacom',
+    'https://x.com/sanliurfacom',
+    'https://www.youtube.com/@sanliurfacom',
+   ],
+  },
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+  itemListElement: [
+   { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+   { '@type': 'ListItem', position: 2, name: 'Künye', item: `${baseUrl}/kunye` },
+  ],
+ })} is:inline />
+</Layout>

@@ -30,7 +30,8 @@ const twoFactorState = loginResult?.data?.requiresTwoFactor
  : null;
 
 if (loginResult?.data?.success && !loginResult.data.requiresTwoFactor) {
- return Astro.redirect(redirectTarget);
+ const target = redirectTarget.includes('?') ? `${redirectTarget}&auth_success=login` : `${redirectTarget}?auth_success=login`;
+ return Astro.redirect(target);
 }
 if (verifyResult?.data?.success) {
  return Astro.redirect(redirectTarget);
@@ -65,7 +66,7 @@ if (verifyResult?.data?.success) {
  .auth-forgot{font-size:.78rem;color:var(--public-accent)}
  .auth-forgot:hover{color:var(--public-text)}
  .auth-footer{text-align:center;font-size:.8rem;color:var(--public-muted);margin-top:1.25rem}
- .auth-footer a{color:var(--public-accent)}.auth-footer a:hover{color:var(--public-text)}
+ .auth-footer a{color:var(--public-accent);text-decoration:underline;text-underline-offset:2px}.auth-footer a:hover{color:var(--public-text)}
  .auth-back{text-align:center;font-size:.78rem;color:var(--public-text-soft);margin-top:1.25rem}
  .auth-back a{color:var(--public-muted);transition:color .15s}.auth-back a:hover{color:var(--public-accent)}
  </style>

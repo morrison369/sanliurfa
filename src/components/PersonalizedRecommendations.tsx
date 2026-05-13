@@ -40,7 +40,7 @@ export default function PersonalizedRecommendations() {
  });
  };
 
- if (loading) return <div className="p-4">Yükleniyor...</div>;
+ if (loading) return <div className="p-4">Yükleniyor…</div>;
  if (recs.length === 0) return <div className="p-4 text-[#7A6B58]">Henüz tavsiye yok</div>;
 
  return (

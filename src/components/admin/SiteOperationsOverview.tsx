@@ -104,8 +104,8 @@ export default function SiteOperationsOverview() {
 
  if (status === 'loading') {
  return (
- <section className="mb-6 rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 shadow-sm">
- <p className="text-sm text-[#7A6B58]">Operasyon özeti yükleniyor...</p>
+ <section className="mb-6 rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5 shadow-sm">
+ <p className="text-sm text-[var(--adm-text-muted)]">Operasyon özeti yükleniyor...</p>
  </section>
  );
  }
@@ -127,20 +127,20 @@ export default function SiteOperationsOverview() {
  const weatherUpdated = formatDate(monitoring.upstreamHealth?.weather?.at || monitoring.upstreamHealth?.weather?.updatedAt || null);
 
  return (
- <section className="mb-6 rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-6 shadow-sm">
+ <section className="mb-6 rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-6 shadow-sm">
  <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
  <div>
  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#4A3828]">Admin Ops</p>
- <h2 className="mt-2 text-2xl font-bold text-[#1F1410]">İçerik ve operasyon komuta özeti</h2>
- <p className="mt-1 max-w-3xl text-sm text-[#7A6B58]">
+ <h2 className="mt-2 text-2xl font-bold text-[var(--adm-text)]">İçerik ve operasyon komuta özeti</h2>
+ <p className="mt-1 max-w-3xl text-sm text-[var(--adm-text-muted)]">
  Landing tazeliği, cron sağlığı, anti-spam ve audit sinyalleri tek ekranda.
  </p>
  </div>
  <div className="flex flex-wrap gap-2 text-xs">
- <span className="rounded-full border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] px-3 py-1 font-semibold text-[#7A6B58]">
+ <span className="rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] px-3 py-1 font-semibold text-[var(--adm-text-muted)]">
  Ulaşım: {transportUpdated}
  </span>
- <span className="rounded-full border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] px-3 py-1 font-semibold text-[#7A6B58]">
+ <span className="rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] px-3 py-1 font-semibold text-[var(--adm-text-muted)]">
  Hava durumu: {weatherUpdated}
  </span>
  </div>
@@ -170,23 +170,23 @@ export default function SiteOperationsOverview() {
  </div>
 
  <div className="mt-6 grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
  <div className="flex items-center justify-between">
- <h3 className="text-lg font-bold text-[#1F1410]">Cron ve görev görünümü</h3>
+ <h3 className="text-lg font-bold text-[var(--adm-text)]">Cron ve görev görünümü</h3>
  <a href="/admin/monitoring" className="text-sm font-semibold text-red-700 hover:text-red-400">
  Detay izleme →
  </a>
  </div>
  <div className="mt-4 grid gap-3 md:grid-cols-2">
  {topCronItems.map((item) => (
- <div key={item.key} className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-4">
+ <div key={item.key} className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-4">
  <div className="flex items-center justify-between gap-3">
- <p className="font-semibold text-[#1F1410]">{item.key}</p>
+ <p className="font-semibold text-[var(--adm-text)]">{item.key}</p>
  <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${severityClass(item.severity)}`}>
  {severityLabel(item.severity)}
  </span>
  </div>
- <p className="mt-2 text-sm text-[#7A6B58]">
+ <p className="mt-2 text-sm text-[var(--adm-text-muted)]">
  {item.updatedAt ? `Son çalışma: ${formatDate(item.updatedAt)}` : 'Henüz görev kaydı yok'}
  </p>
  <p className="mt-1 text-xs text-[#4A3828]">
@@ -197,8 +197,8 @@ export default function SiteOperationsOverview() {
  </div>
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
- <h3 className="text-lg font-bold text-[#1F1410]">Hızlı aksiyonlar</h3>
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
+ <h3 className="text-lg font-bold text-[var(--adm-text)]">Hızlı aksiyonlar</h3>
  <div className="mt-4 space-y-3">
  <QuickLink
  href="/admin/site-content"
@@ -224,19 +224,19 @@ export default function SiteOperationsOverview() {
 
 function MetricCard(props: { label: string; value: string; hint: string }) {
  return (
- <article className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 shadow-sm">
+ <article className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5 shadow-sm">
  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#4A3828]">{props.label}</p>
- <p className="mt-3 text-2xl font-bold tracking-tight text-[#1F1410]">{props.value}</p>
- <p className="mt-2 text-sm text-[#7A6B58]">{props.hint}</p>
+ <p className="mt-3 text-2xl font-bold tracking-tight text-[var(--adm-text)]">{props.value}</p>
+ <p className="mt-2 text-sm text-[var(--adm-text-muted)]">{props.hint}</p>
  </article>
  );
 }
 
 function QuickLink(props: { href: string; title: string; text: string }) {
  return (
- <a href={props.href} className="block rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-4 transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[var(--bg-card)]">
- <p className="font-semibold text-[#1F1410]">{props.title}</p>
- <p className="mt-1 text-sm text-[#7A6B58]">{props.text}</p>
+ <a href={props.href} className="block rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-4 transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[var(--adm-bg-elev)]">
+ <p className="font-semibold text-[var(--adm-text)]">{props.title}</p>
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">{props.text}</p>
  </a>
  );
 }

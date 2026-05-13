@@ -6,7 +6,9 @@
 import type { APIRoute } from 'astro';
 import { verifyOAuthState, getOAuthProvider, linkOAuthAccount, getOAuthAccountByProvider } from '../../../../lib/oauth';
 import { runOAuthSessionFlow } from '../../../../lib/auth/auth-flows';
-import { queryOne } from '../../../../lib/postgres';
+import { hashPassword } from '../../../../lib/auth';
+import { queryOne, query } from '../../../../lib/postgres';
+import { randomBytes } from 'node:crypto';
 import { apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';
 
@@ -93,7 +95,23 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
       if (existingUser) {
         userId = existingUser.id;
       } else {
-        return apiError(ErrorCode.AUTHENTICATION_FAILED, 'Kullanıcı bulunamadı. Önce kayıt olun.', HttpStatus.NOT_FOUND, undefined, requestId);
+        // Auto-register: OAuth provider doğrulanmış email + isim → yeni user yarat.
+        // Password unused olduğu için random placeholder hash; gerçek auth OAuth ile.
+        const placeholderPassword = randomBytes(32).toString('hex');
+        const passwordHash = await hashPassword(placeholderPassword);
+        const fullName = userInfo.name || userInfo.email.split('@')[0] || 'Yeni Üye';
+        const avatarUrl = userInfo.picture || null;
+        const inserted = await query<UserIdRow>(
+          `INSERT INTO users (full_name, email, password_hash, role, avatar_url, email_verified)
+           VALUES ($1, $2, $3, 'user', $4, true)
+           RETURNING id`,
+          [fullName, userInfo.email, passwordHash, avatarUrl],
+        );
+        userId = inserted.rows[0]?.id;
+        if (!userId) {
+          return apiError(ErrorCode.INTERNAL_ERROR, 'Yeni kullanıcı oluşturulamadı', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+        }
+        logger.info('OAuth auto-register', { userId, provider: oauthState.provider_key, email: userInfo.email });
       }
     }
 
@@ -124,10 +142,24 @@ export const GET: APIRoute = async ({ request, url, cookies }) => {
 
     logger.info('OAuth login successful', { userId, provider: oauthState.provider_key });
 
+    // Post-login redirect: authorize endpoint'te cookie'ye yazdığımız path'e dön.
+    // Allowlist: same-origin relative path, // ile başlayamaz (open-redirect koruması).
+    const postRedirect = cookies.get('oauth_post_redirect')?.value;
+    const baseTarget =
+      postRedirect && postRedirect.startsWith('/') && !postRedirect.startsWith('//')
+        ? postRedirect
+        : '/';
+    cookies.delete('oauth_post_redirect', { path: '/' });
+
+    // Auth success signal — client-side sfTrack tetiklenir
+    const target = baseTarget.includes('?')
+      ? `${baseTarget}&auth_success=oauth_${oauthState.provider_key}`
+      : `${baseTarget}?auth_success=oauth_${oauthState.provider_key}`;
+
     return new Response(null, {
       status: 302,
       headers: {
-        'Location': '/',
+        'Location': target,
         'X-Request-ID': requestId,
       },
     });

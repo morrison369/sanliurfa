@@ -1,0 +1,62 @@
+---
+/**
+ * AdmCard — admin sayfaları için reusable kart container.
+ *
+ * Kullanım:
+ *   <AdmCard title="Başlık" subtitle="Açıklama">
+ *     <a slot="action" href="...">Detay →</a>
+ *     içerik
+ *   </AdmCard>
+ */
+interface Props {
+ title?: string;
+ subtitle?: string;
+ padding?: 'sm' | 'md' | 'lg' | 'none';
+ elevated?: boolean;
+ class?: string;
+}
+
+const { title, subtitle, padding = 'md', elevated = false, class: extraClass = '' } = Astro.props;
+---
+
+<section class:list={['adm-c', `adm-c--p-${padding}`, elevated && 'adm-c--elev', extraClass]}>
+ {(title || subtitle || Astro.slots.has('action')) && (
+  <header class="adm-c-head">
+   <div>
+    {title && <h2 class="adm-c-title">{title}</h2>}
+    {subtitle && <p class="adm-c-sub">{subtitle}</p>}
+   </div>
+   <slot name="action" />
+  </header>
+ )}
+ <slot />
+</section>
+
+<style is:global>
+ .adm-c {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 14px;
+  transition: border-color 0.18s, box-shadow 0.18s;
+ }
+ .adm-c--elev {
+  box-shadow: 0 2px 4px rgba(31,20,16,0.04), 0 8px 24px -6px rgba(31,20,16,0.06);
+ }
+ .adm-c--p-sm { padding: 0.85rem 1rem; }
+ .adm-c--p-md { padding: 1.4rem; }
+ .adm-c--p-lg { padding: 1.75rem 2rem; }
+ .adm-c--p-none { padding: 0; }
+ .adm-c-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 0.75rem; margin-bottom: 1rem;
+ }
+ .adm-c-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem; font-weight: 700;
+  color: var(--adm-text); margin: 0; line-height: 1.1;
+ }
+ .adm-c-sub {
+  font-size: 0.82rem; color: var(--adm-text-muted);
+  margin: 0.22rem 0 0;
+ }
+</style>

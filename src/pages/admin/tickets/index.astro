@@ -1,140 +1,297 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
+import AdmStatGrid from '../../../components/admin/AdmStatGrid.astro';
+import { query } from '../../../lib/postgres';
+import { logger } from '../../../lib/logging';
+
+let stats = { open: 0, in_progress: 0, resolved: 0, closed: 0, total: 0 };
+try {
+ const r = await query<{ status: string; cnt: number }>(
+  `SELECT status, COUNT(*)::int AS cnt FROM support_tickets GROUP BY status`
+ );
+ for (const row of r.rows) {
+  const k = row.status as keyof typeof stats;
+  if (k in stats) stats[k] = row.cnt;
+  stats.total += row.cnt;
+ }
+} catch (e) {
+ logger.error('tickets stats failed', e instanceof Error ? e : new Error(String(e)));
+}
 ---
 
 <AdminLayout
  title="Destek Talepleri"
- subtitle="Müşteri destek taleplerini yönetin"
+ subtitle={`${stats.open} açık • ${stats.in_progress} işlemde • ${stats.total} toplam`}
  seo={{ title: 'Destek Talepleri - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-6xl space-y-5">
- <div class="mb-2 flex items-center justify-between">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- <div class="flex gap-3">
- <div class="bg-[rgba(184,115,51,0.1)] text-[#7A6B58] px-4 py-2 rounded-sm text-sm"><span class="font-bold" id="openCount">0</span> Açık</div>
- <div class="bg-[rgba(184,115,51,0.06)] text-[#7A6B58] px-4 py-2 rounded-sm text-sm"><span class="font-bold" id="inProgressCount">0</span> İşlemde</div>
- </div>
- </div>
+ <div class="tk-page">
+  <AdmStatGrid stats={[
+   { label: 'Açık', value: stats.open, icon: 'lucide:inbox', color: 'amber' },
+   { label: 'İşlemde', value: stats.in_progress, icon: 'lucide:clock', color: 'sky' },
+   { label: 'Çözüldü', value: stats.resolved, icon: 'lucide:check-circle', color: 'emerald' },
+   { label: 'Kapandı', value: stats.closed, icon: 'lucide:x-circle', color: 'slate' },
+  ]} />
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div class="overflow-x-auto">
- <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <tr>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">Ticket</th>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">Gönderen</th>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">Konu</th>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">Durum</th>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">Tarih</th>
- <th class="px-4 py-3 text-left text-xs font-medium text-[#7A6B58]">İşlem</th>
- </tr>
- </thead>
- <tbody id="ticketsTable" class="divide-y divide-[rgba(184,115,51,0.08)]">
- <tr><td colspan="6" class="px-6 py-12 text-center text-[#7A6B58]">Yükleniyor...</td></tr>
- </tbody>
- </table>
- </div>
- </div>
+  <div class="tk-table-wrap">
+   <table class="tk-table">
+    <thead>
+     <tr>
+      <th class="tk-th">Ticket</th>
+      <th class="tk-th">Gönderen</th>
+      <th class="tk-th">Konu</th>
+      <th class="tk-th">Durum</th>
+      <th class="tk-th">Tarih</th>
+      <th class="tk-th tk-th-actions">İşlem</th>
+     </tr>
+    </thead>
+    <tbody id="ticketsTable">
+     {Array.from({ length: 4 }).map(() => (
+      <tr class="tk-skel-row">
+       <td class="tk-td"><span class="tk-skel-bar tk-skel-bar--narrow"></span></td>
+       <td class="tk-td"><span class="tk-skel-bar"></span><span class="tk-skel-bar tk-skel-bar--narrow"></span></td>
+       <td class="tk-td"><span class="tk-skel-bar"></span></td>
+       <td class="tk-td"><span class="tk-skel-pill"></span></td>
+       <td class="tk-td"><span class="tk-skel-bar tk-skel-bar--narrow"></span></td>
+       <td class="tk-td tk-td-actions"><span class="tk-skel-pill"></span></td>
+      </tr>
+     ))}
+    </tbody>
+   </table>
+  </div>
  </div>
 
  <script>
- const statusLabels: Record<string, { text: string; class: string }> = {
- open: { text: 'Açık', class: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
- in_progress: { text: 'İşlemde', class: 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]' },
- resolved: { text: 'Çözüldü', class: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' },
- closed: { text: 'Kapandı', class: 'bg-[rgba(184,115,51,0.04)] text-[#7A6B58]' },
- };
+  const statusLabels: Record<string, { text: string; cls: string }> = {
+   open:        { text: 'Açık',     cls: 'tk-badge tk-badge--warn' },
+   in_progress: { text: 'İşlemde',  cls: 'tk-badge tk-badge--info' },
+   resolved:    { text: 'Çözüldü',  cls: 'tk-badge tk-badge--ok' },
+   closed:      { text: 'Kapandı',  cls: 'tk-badge tk-badge--muted' },
+   spam:        { text: 'Spam',     cls: 'tk-badge tk-badge--danger' },
+  };
 
- function buildTicketRow(t: any) {
- const tr = document.createElement('tr');
- tr.className = 'hover:bg-[rgba(184,115,51,0.04)]';
+  function setEmpty(text: string) {
+   const tbody = document.getElementById('ticketsTable')!;
+   const tr = document.createElement('tr');
+   const td = document.createElement('td');
+   td.colSpan = 6;
+   td.className = 'tk-empty';
+   td.textContent = text;
+   tr.appendChild(td);
+   tbody.replaceChildren(tr);
+  }
 
- const td1 = document.createElement('td');
- td1.className = 'px-4 py-3 font-mono text-sm text-[#7A6B58]';
- td1.textContent = t.ticket_number;
+  function buildTicketRow(t: any) {
+   const tr = document.createElement('tr');
 
- const td2 = document.createElement('td');
- td2.className = 'px-4 py-3';
- const nameDiv = document.createElement('div');
- nameDiv.className = 'font-medium text-[#1F1410]';
- nameDiv.textContent = t.name;
- const emailDiv = document.createElement('div');
- emailDiv.className = 'text-sm text-[#7A6B58]';
- emailDiv.textContent = t.email;
- td2.appendChild(nameDiv);
- td2.appendChild(emailDiv);
+   const td1 = document.createElement('td');
+   td1.className = 'tk-td';
+   const code = document.createElement('code');
+   code.className = 'tk-ticket-no';
+   code.textContent = t.ticket_number || '—';
+   td1.appendChild(code);
 
- const td3 = document.createElement('td');
- td3.className = 'px-4 py-3 text-sm text-[#7A6B58]';
- td3.textContent = t.subject;
+   const td2 = document.createElement('td');
+   td2.className = 'tk-td';
+   const nameDiv = document.createElement('div');
+   nameDiv.className = 'tk-name';
+   nameDiv.textContent = t.name || 'İsimsiz';
+   const emailDiv = document.createElement('div');
+   emailDiv.className = 'tk-email';
+   emailDiv.textContent = t.email || '';
+   td2.appendChild(nameDiv);
+   td2.appendChild(emailDiv);
 
- const td4 = document.createElement('td');
- td4.className = 'px-4 py-3';
- const badge = document.createElement('span');
- badge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (statusLabels[t.status]?.class || 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]');
- badge.textContent = statusLabels[t.status]?.text || t.status;
- td4.appendChild(badge);
+   const td3 = document.createElement('td');
+   td3.className = 'tk-td tk-subject';
+   td3.textContent = t.subject || t.title || '—';
 
- const td5 = document.createElement('td');
- td5.className = 'px-4 py-3 text-sm text-[#7A6B58]';
- td5.textContent = new Date(t.created_at).toLocaleDateString('tr-TR');
+   const td4 = document.createElement('td');
+   td4.className = 'tk-td';
+   const meta = statusLabels[t.status] || { text: t.status, cls: 'tk-badge tk-badge--muted' };
+   const badge = document.createElement('span');
+   badge.className = meta.cls;
+   badge.textContent = meta.text;
+   td4.appendChild(badge);
 
- const td6 = document.createElement('td');
- td6.className = 'px-4 py-3';
- const actionBtn = document.createElement('button');
- actionBtn.className = 'text-[#7A6B58] hover:text-urfa-600 text-sm';
- actionBtn.textContent = 'İşleme Al';
- actionBtn.addEventListener('click', () => updateStatus(t.id, 'in_progress'));
- td6.appendChild(actionBtn);
+   const td5 = document.createElement('td');
+   td5.className = 'tk-td tk-td-soft';
+   td5.textContent = t.created_at ? new Date(t.created_at).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
- tr.appendChild(td1);
- tr.appendChild(td2);
- tr.appendChild(td3);
- tr.appendChild(td4);
- tr.appendChild(td5);
- tr.appendChild(td6);
- return tr;
- }
+   const td6 = document.createElement('td');
+   td6.className = 'tk-td tk-td-actions';
+   if (t.status === 'open') {
+    const actionBtn = document.createElement('button');
+    actionBtn.type = 'button';
+    actionBtn.className = 'tk-row-btn tk-row-btn--primary';
+    actionBtn.textContent = 'İşleme Al';
+    actionBtn.addEventListener('click', () => updateStatus(t.id, 'in_progress'));
+    td6.appendChild(actionBtn);
+   } else if (t.status === 'in_progress') {
+    const resolveBtn = document.createElement('button');
+    resolveBtn.type = 'button';
+    resolveBtn.className = 'tk-row-btn tk-row-btn--ok';
+    resolveBtn.textContent = 'Çözüldü';
+    resolveBtn.addEventListener('click', () => updateStatus(t.id, 'resolved'));
+    td6.appendChild(resolveBtn);
+   } else {
+    const dash = document.createElement('span');
+    dash.className = 'tk-dash';
+    dash.textContent = '—';
+    td6.appendChild(dash);
+   }
 
- async function loadTickets() {
- try {
- const response = await fetch('/api/contact?status=open');
- const data = await response.json();
+   tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+   tr.appendChild(td4); tr.appendChild(td5); tr.appendChild(td6);
+   return tr;
+  }
 
- if (data.success) {
- const tbody = document.getElementById('ticketsTable') as HTMLElement;
- if (data.tickets.length === 0) {
- const tr = document.createElement('tr');
- const td = document.createElement('td');
- td.colSpan = 6;
- td.className = 'px-6 py-12 text-center text-[#7A6B58]';
- td.textContent = 'Destek talebi bulunamadı.';
- tr.appendChild(td);
- tbody.replaceChildren(tr);
- } else {
- tbody.replaceChildren(...data.tickets.map(buildTicketRow));
- }
+  async function loadTickets() {
+   try {
+    const response = await fetch('/api/contact?status=open');
+    const data = await response.json();
+    if (!data.success) { setEmpty('Yüklenemedi'); return; }
+    const tickets = Array.isArray(data.tickets) ? data.tickets : [];
+    if (tickets.length === 0) { setEmpty('Açık destek talebi yok'); return; }
+    const tbody = document.getElementById('ticketsTable')!;
+    tbody.replaceChildren(...tickets.map(buildTicketRow));
+   } catch (err) {
+    console.error('Tickets load error:', err);
+    setEmpty('Bağlantı hatası');
+   }
+  }
 
- const openEl = document.getElementById('openCount');
- const inProgressEl = document.getElementById('inProgressCount');
- if (openEl) openEl.textContent = data.tickets.filter((t: any) => t.status === 'open').length;
- if (inProgressEl) inProgressEl.textContent = data.tickets.filter((t: any) => t.status === 'in_progress').length;
- }
- } catch (err) {
- console.error('Tickets load error:', err);
- }
- }
+  async function updateStatus(id: string, status: string) {
+   await fetch('/api/contact/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+   });
+   loadTickets();
+  }
 
- async function updateStatus(id: string, status: string) {
- await fetch(`/api/contact/${id}`, {
- method: 'PUT',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ status })
- });
- loadTickets();
- }
-
- (window as any).updateStatus = updateStatus;
- loadTickets();
+  (window as any).updateStatus = updateStatus;
+  loadTickets();
  </script>
+
+ <style>
+  .tk-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .tk-table-wrap {
+   overflow-x: auto;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+  }
+  .tk-table { width: 100%; border-collapse: collapse; }
+  .tk-th {
+   text-align: left;
+   font-size: 0.7rem;
+   font-weight: 700;
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   color: var(--adm-text-soft);
+   padding: 0.85rem 1rem;
+   background: var(--adm-bg-hover);
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .tk-th-actions { text-align: right; width: 140px; }
+  .tk-table tbody tr {
+   border-bottom: 1px solid var(--adm-border);
+   transition: background 0.12s;
+  }
+  .tk-table tbody tr:last-child { border-bottom: none; }
+  .tk-table tbody tr:hover:not(.tk-skel-row) { background: var(--adm-bg-hover); }
+  .tk-td { padding: 0.85rem 1rem; font-size: 0.86rem; color: var(--adm-text); vertical-align: middle; }
+  .tk-td-soft { color: var(--adm-text-muted); font-size: 0.82rem; }
+  .tk-td-actions { text-align: right; white-space: nowrap; }
+  .tk-empty {
+   text-align: center !important;
+   padding: 3rem 1rem !important;
+   color: var(--adm-text-soft) !important;
+   font-style: italic;
+  }
+
+  .tk-ticket-no {
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.74rem;
+   background: var(--adm-bg);
+   padding: 0.2rem 0.45rem;
+   border-radius: 4px;
+   border: 1px solid var(--adm-border);
+   color: var(--adm-accent);
+  }
+  .tk-name { font-weight: 600; color: var(--adm-text); line-height: 1.3; }
+  .tk-email { font-size: 0.76rem; color: var(--adm-text-soft); margin-top: 0.15rem; }
+  .tk-subject {
+   color: var(--adm-text);
+   max-width: 280px;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+  }
+
+  .tk-badge {
+   display: inline-flex; align-items: center;
+   padding: 0.22rem 0.6rem;
+   font-size: 0.72rem; font-weight: 600;
+   border-radius: 999px;
+  }
+  .tk-badge--ok    { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+  .tk-badge--warn  { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+  .tk-badge--info  { background: rgba(2,132,199,0.12); color: rgb(2,132,199); }
+  .tk-badge--muted { background: rgba(100,116,139,0.12); color: rgb(71,85,105); }
+  .tk-badge--danger { background: rgba(225,29,72,0.12); color: rgb(190,18,60); }
+
+  .tk-row-btn {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.4rem 0.85rem;
+   font-size: 0.78rem; font-weight: 600;
+   color: var(--adm-text-muted);
+   background: transparent;
+   border: 1px solid var(--adm-border);
+   border-radius: 6px;
+   cursor: pointer;
+   transition: all 0.15s;
+  }
+  .tk-row-btn--primary { color: var(--adm-accent); border-color: rgba(184,115,51,0.3); }
+  .tk-row-btn--primary:hover { background: rgba(184,115,51,0.08); border-color: var(--adm-accent); }
+  .tk-row-btn--ok { color: rgb(5,150,105); border-color: rgba(16,185,129,0.3); }
+  .tk-row-btn--ok:hover { background: rgba(16,185,129,0.08); border-color: rgb(5,150,105); }
+  .tk-dash { color: var(--adm-text-soft); }
+
+  /* Skeleton */
+  .tk-skel-row { pointer-events: none; }
+  .tk-skel-bar {
+   display: block;
+   height: 14px;
+   width: 80%;
+   background: var(--adm-bg-hover);
+   border-radius: 4px;
+   position: relative;
+   overflow: hidden;
+   margin: 4px 0;
+  }
+  .tk-skel-bar--narrow { width: 50%; }
+  .tk-skel-bar::after, .tk-skel-pill::after {
+   content: '';
+   position: absolute;
+   inset: 0;
+   background: linear-gradient(90deg, transparent, var(--adm-bg-active), transparent);
+   animation: tkShimmer 1.4s infinite;
+  }
+  .tk-skel-pill {
+   display: inline-block;
+   width: 64px;
+   height: 18px;
+   background: var(--adm-bg-hover);
+   border-radius: 999px;
+   position: relative;
+   overflow: hidden;
+  }
+  @keyframes tkShimmer {
+   from { transform: translateX(-100%); }
+   to { transform: translateX(100%); }
+  }
+ </style>
 </AdminLayout>

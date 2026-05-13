@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import { query } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
 
@@ -43,13 +43,13 @@ const deletionRowsHtml = deletionRequestRows
  .map((req) => {
  const badgeClass =
  req.daysLeft <= 0
- ? 'bg-[rgba(184,115,51,0.2)] text-[#7A6B58]'
+ ? 'bg-[var(--adm-border-strong)] text-[#7A6B58]'
  : req.isUrgent
- ? 'bg-[rgba(184,115,51,0.12)] text-[#7A6B58]'
- : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]';
+ ? 'bg-[var(--adm-bg-active)] text-[#7A6B58]'
+ : 'bg-[var(--adm-bg-hover)] text-[#7A6B58]';
  const badgeText = req.daysLeft <= 0 ? 'Bugün silinecek' : `${req.daysLeft} gün`;
  return `
- <tr class="border-b border-[rgba(184,115,51,0.08)] last:border-0 hover:bg-[rgba(184,115,51,0.04)]">
+ <tr class="border-b border-[var(--adm-bg-hover)] last:border-0 hover:bg-[var(--adm-bg-hover)]">
  <td class="py-3 px-4">
  <div class="font-medium text-[#1F1410]">${escapeHtml(req.full_name || '—')}</div>
  <div class="text-xs text-[#7A6B58]">${escapeHtml(req.email)}</div>
@@ -79,17 +79,17 @@ const deletionRowsHtml = deletionRequestRows
  </div>
 
  {deletionRequests.length > 0 && (
- <div class="bg-[rgba(184,115,51,0.06)] border border-[rgba(184,115,51,0.2)] rounded-sm p-4 text-sm text-[#7A6B58]">
+ <div class="bg-[var(--adm-bg-hover)] border border-[var(--adm-border-strong)] rounded-sm p-4 text-sm text-[#7A6B58]">
  Silme tarihi geçmiş veya yaklaşan talepler dikkat ister. Hesaplar belirtilen tarihte otomatik silinir.
  </div>
  )}
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm overflow-hidden">
  {deletionRequests.length === 0 ? (
  <div class="p-12 text-center text-[#7A6B58] text-sm">Aktif hesap silme talebi yok.</div>
  ) : (
  <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <thead class="border-b border-[var(--adm-border)] bg-[var(--adm-bg-hover)]">
  <tr>
  <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Kullanıcı</th>
  <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Talep Tarihi</th>

@@ -19,24 +19,8 @@ const districts = Object.entries(CITY_DISTRICT_LABELS).map(([slug, label]) => ({
   href: `/ilceler/${slug}`,
 }));
 
-const faqSchema = category.faq.length > 0 ? {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: category.faq.map(({ q, a }) => ({
-    '@type': 'Question',
-    name: q,
-    acceptedAnswer: { '@type': 'Answer', text: a },
-  })),
-} : null;
-
-const breadcrumbSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'BreadcrumbList',
-  itemListElement: [
-    { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: baseUrl },
-    { '@type': 'ListItem', position: 2, name: category.title, item: `${baseUrl}${category.href}` },
-  ],
-};
+// Not: FAQPage + BreadcrumbList schema sayfa içinde tanımlanır (drift önleme).
+// CategoryHub'dan kaldırıldı çünkü sayfa scripti ile çakışıyordu (GSC duplicate FAQPage hatası).
 
 function slugifyChild(text: string): string {
   return text
@@ -46,9 +30,6 @@ function slugifyChild(text: string): string {
     .replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 ---
-
-<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} is:inline />
-{faqSchema && <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} is:inline />}
 
 <!-- HERO -->
 <section class="relative border-b border-[#eadcc4] bg-[radial-gradient(ellipse_at_top_left,#f0d5b0_0%,#fff8ec_40%,#f5ead4_100%)] px-4 py-16 sm:px-6 lg:px-8">

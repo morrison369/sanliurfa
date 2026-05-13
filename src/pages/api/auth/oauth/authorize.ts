@@ -14,7 +14,11 @@ import { logger } from '../../../../lib/logging';
 const ALLOWED_REDIRECT_URIS = [`${getPublicAppUrl()}/api/auth/oauth/callback`];
 const DEFAULT_REDIRECT_URI = ALLOWED_REDIRECT_URIS[0];
 
-export const GET: APIRoute = async ({ request, url, locals }) => {
+// Post-login redirect cookie: kullanıcının giriş öncesi bulunduğu sayfaya geri dön.
+// Same-site Lax + 15dk TTL — OAuth round trip için yeterli.
+const POST_LOGIN_COOKIE = 'oauth_post_redirect';
+
+export const GET: APIRoute = async ({ request, url, locals, cookies }) => {
   const requestId = getRequestId(request);
   logger.setRequestId(requestId);
 
@@ -26,6 +30,18 @@ export const GET: APIRoute = async ({ request, url, locals }) => {
       requestedUri && ALLOWED_REDIRECT_URIS.includes(requestedUri)
         ? requestedUri
         : DEFAULT_REDIRECT_URI;
+
+    // Kullanıcının post-login redirect tercihini cookie'ye yaz (sadece same-origin path)
+    const postRedirect = url.searchParams.get('redirect');
+    if (postRedirect && postRedirect.startsWith('/') && !postRedirect.startsWith('//')) {
+      cookies.set(POST_LOGIN_COOKIE, postRedirect, {
+        path: '/',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: url.protocol === 'https:',
+        maxAge: 15 * 60, // 15 dakika
+      });
+    }
 
     if (!providerKey) {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Sağlayıcı anahtarı gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);

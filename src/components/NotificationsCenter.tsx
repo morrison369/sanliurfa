@@ -85,7 +85,7 @@ export default function NotificationsCenter() {
  </div>
 
  {isLoading ? (
- <p className="text-center text-[#7A6B58]">Yükleniyor...</p>
+ <p className="text-center text-[#7A6B58]">Yükleniyor…</p>
  ) : notifications.length === 0 ? (
  <p className="text-center text-[#7A6B58]">Bildirim yok</p>
  ) : (

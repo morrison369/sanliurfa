@@ -1,165 +1,360 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
  title="Mekan Yaşam Döngüsü"
- subtitle="Durum geçişlerini ve SLA ihlallerini izleyin."
+ subtitle="Durum geçişleri, SLA ihlalleri ve audit timeline"
  seo={{ title: 'Mekan Yaşam Döngüsü - Yönetim Paneli', noIndex: true }}
 >
- <div class="sf-container py-8 space-y-5">
- <div class="mb-2">
- <a href="/admin/places" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Mekan Yönetimi</a>
- </div>
-
- <div class="grid md:grid-cols-4 gap-4" id="slaCards">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
- <p class="text-sm text-[#7A6B58]">SLA Saat</p>
- <p class="text-2xl font-bold text-[#1F1410] mt-1" id="slaHours">-</p>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
- <p class="text-sm text-[#7A6B58]">Beklemede</p>
- <p class="text-2xl font-bold text-[#1F1410] mt-1" id="pendingCount">-</p>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
- <p class="text-sm text-[#7A6B58]">Bilgi Gerekli</p>
- <p class="text-2xl font-bold text-[#1F1410] mt-1" id="needsInfoCount">-</p>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
- <p class="text-sm text-[#7A6B58]">SLA İhlali</p>
- <p class="text-2xl font-bold text-red-700 mt-1" id="breachedCount">-</p>
- </div>
- </div>
-
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <div class="flex items-center justify-between mb-3">
- <h2 class="text-lg font-semibold text-[#1F1410]">Son Geçişler</h2>
- <div class="flex items-center gap-2">
- <a
- id="exportLink"
- href="/api/admin/places/lifecycle/export"
- class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-1.5 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]"
- >
- CSV Dışa Aktar
+ <a slot="page-actions" href="/admin/places" class="lc-back">
+  <Icon name="lucide:arrow-left" class="w-4 h-4" /> Mekan Yönetimi
  </a>
- <button id="signedLinkBtn" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-1.5 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]" type="button">
- 5dk İmzalı Link
- </button>
- <button id="refreshBtn" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-1.5 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">Yenile</button>
- </div>
- </div>
- <input id="signedLinkOut" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 mb-3 w-full text-xs" readonly placeholder="İmzalı export linki burada" />
- <div class="overflow-x-auto">
- <table class="min-w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <tr>
- <th class="px-2 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">Zaman</th>
- <th class="px-2 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">Mekan</th>
- <th class="px-2 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">Önceki Durum</th>
- <th class="px-2 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">Yeni Durum</th>
- <th class="px-2 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">İşlem Yapan</th>
- <th class="px-2 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">Gerekçe</th>
- </tr>
- </thead>
- <tbody id="timelineRows">
- <tr><td class="px-2 py-3 text-[#7A6B58]" colspan="6">Yükleniyor...</td></tr>
- </tbody>
- </table>
- </div>
- </div>
+
+ <div class="lc-page">
+  <div class="lc-stats" id="slaCards">
+   <div class="lc-stat lc-stat--indigo">
+    <div class="lc-stat-ico"><Icon name="lucide:clock" class="w-5 h-5" /></div>
+    <div>
+     <p class="lc-stat-val" id="slaHours">—</p>
+     <p class="lc-stat-lbl">SLA Saat</p>
+    </div>
+   </div>
+   <div class="lc-stat lc-stat--amber">
+    <div class="lc-stat-ico"><Icon name="lucide:hourglass" class="w-5 h-5" /></div>
+    <div>
+     <p class="lc-stat-val" id="pendingCount">—</p>
+     <p class="lc-stat-lbl">Beklemede</p>
+    </div>
+   </div>
+   <div class="lc-stat lc-stat--sky">
+    <div class="lc-stat-ico"><Icon name="lucide:help-circle" class="w-5 h-5" /></div>
+    <div>
+     <p class="lc-stat-val" id="needsInfoCount">—</p>
+     <p class="lc-stat-lbl">Bilgi Gerekli</p>
+    </div>
+   </div>
+   <div class="lc-stat lc-stat--rose">
+    <div class="lc-stat-ico"><Icon name="lucide:alert-triangle" class="w-5 h-5" /></div>
+    <div>
+     <p class="lc-stat-val" id="breachedCount">—</p>
+     <p class="lc-stat-lbl">SLA İhlali</p>
+    </div>
+   </div>
+  </div>
+
+  <section class="lc-card">
+   <header class="lc-card-head">
+    <div>
+     <h2 class="lc-card-title">
+      <Icon name="lucide:git-branch" class="w-4 h-4" /> Son Geçişler
+     </h2>
+     <p class="lc-card-sub">Status değişiklik audit timeline'ı</p>
+    </div>
+    <div class="lc-actions">
+     <a id="exportLink" href="/api/admin/places/lifecycle/export" class="lc-btn lc-btn--ghost">
+      <Icon name="lucide:download" class="w-3.5 h-3.5" /> CSV
+     </a>
+     <button id="signedLinkBtn" type="button" class="lc-btn lc-btn--ghost">
+      <Icon name="lucide:key" class="w-3.5 h-3.5" /> 5dk İmzalı Link
+     </button>
+     <button id="refreshBtn" type="button" class="lc-btn">
+      <Icon name="lucide:refresh-cw" class="w-3.5 h-3.5" /> Yenile
+     </button>
+    </div>
+   </header>
+
+   <div class="lc-signed-row">
+    <input id="signedLinkOut" class="lc-signed-input" readonly placeholder="İmzalı export linki burada görünecek (5 dk geçerli, tek kullanım)" />
+   </div>
+
+   <div class="lc-table-wrap">
+    <table class="lc-table">
+     <thead>
+      <tr>
+       <th class="lc-th">Zaman</th>
+       <th class="lc-th">Mekan</th>
+       <th class="lc-th">Önceki</th>
+       <th class="lc-th">Yeni</th>
+       <th class="lc-th">Aktör</th>
+       <th class="lc-th">Gerekçe</th>
+      </tr>
+     </thead>
+     <tbody id="timelineRows">
+      <tr><td colspan="6" class="lc-empty">Yükleniyor…</td></tr>
+     </tbody>
+    </table>
+   </div>
+  </section>
  </div>
 
  <script is:inline>
- async function loadSla() {
- const res = await fetch('/api/admin/places/lifecycle/sla');
- const json = await res.json();
- if (!res.ok || !json?.success) return;
- document.getElementById('slaHours').textContent = String(json.slaHours || '-');
- document.getElementById('pendingCount').textContent = String(json.summary?.pending_count ?? '-');
- document.getElementById('needsInfoCount').textContent = String(json.summary?.needs_info_count ?? '-');
- document.getElementById('breachedCount').textContent = String(json.summary?.pending_breached_count ?? '-');
- }
+  async function loadSla() {
+   try {
+    const res = await fetch('/api/admin/places/lifecycle/sla');
+    const json = await res.json();
+    if (!res.ok || !json?.success) return;
+    document.getElementById('slaHours').textContent = String(json.slaHours || '—');
+    document.getElementById('pendingCount').textContent = String(json.summary?.pending_count ?? '—');
+    document.getElementById('needsInfoCount').textContent = String(json.summary?.needs_info_count ?? '—');
+    document.getElementById('breachedCount').textContent = String(json.summary?.pending_breached_count ?? '—');
+   } catch {}
+  }
 
- async function loadTimeline() {
- const rows = document.getElementById('timelineRows');
- const res = await fetch('/api/admin/places/lifecycle?limit=100&offset=0');
- const json = await res.json();
- if (!res.ok || !json?.success) {
- const tr = document.createElement('tr');
- const td = document.createElement('td');
- td.colSpan = 6;
- td.className = 'px-2 py-3 text-[#7A6B58]';
- td.textContent = 'Yüklenemedi';
- tr.appendChild(td);
- rows.replaceChildren(tr);
- return;
- }
- const items = Array.isArray(json.items) ? json.items : [];
- if (!items.length) {
- const tr = document.createElement('tr');
- const td = document.createElement('td');
- td.colSpan = 6;
- td.className = 'px-2 py-3 text-[#7A6B58]';
- td.textContent = 'Kayıt yok';
- tr.appendChild(td);
- rows.replaceChildren(tr);
- return;
- }
- function buildLifecycleRow(x) {
- const tr = document.createElement('tr');
- tr.className = 'border-b border-[rgba(184,115,51,0.08)] hover:bg-[rgba(184,115,51,0.04)]';
- const monoTd = (cls, text) => {
- const td = document.createElement('td'); td.className = cls;
- const span = document.createElement('span'); span.className = 'font-mono text-[#7A6B58]'; span.textContent = text;
- td.appendChild(span); return td;
- };
- const plainTd = (cls, text) => {
- const td = document.createElement('td'); td.className = cls + ' text-[#7A6B58]'; td.textContent = text; return td;
- };
- tr.appendChild(plainTd('px-2 py-2 whitespace-nowrap', x.created_at ? new Date(x.created_at).toLocaleString('tr-TR') : '-'));
- tr.appendChild(plainTd('px-2 py-2', x.place_name || x.place_id));
- tr.appendChild(monoTd('px-2 py-2', x.from_status || '-'));
- tr.appendChild(monoTd('px-2 py-2', x.to_status || '-'));
- tr.appendChild(monoTd('px-2 py-2', x.actor_email || x.actor_user_id || '-'));
- tr.appendChild(plainTd('px-2 py-2', x.reason || '-'));
- return tr;
- }
- rows.replaceChildren(...items.map(buildLifecycleRow));
- const firstStatus = items[0]?.to_status || '';
- document.getElementById('exportLink').setAttribute(
- 'href',
- `/api/admin/places/lifecycle/export?${new URLSearchParams({
- ...(firstStatus ? { toStatus: firstStatus } : {}),
- limit: '1000',
- }).toString()}`,
- );
- }
+  function setEmpty(text) {
+   const tr = document.createElement('tr');
+   const td = document.createElement('td');
+   td.colSpan = 6;
+   td.className = 'lc-empty';
+   td.textContent = text;
+   tr.appendChild(td);
+   document.getElementById('timelineRows').replaceChildren(tr);
+  }
 
- document.getElementById('refreshBtn').addEventListener('click', () => {
- void loadSla();
- void loadTimeline();
- });
- document.getElementById('signedLinkBtn').addEventListener('click', async () => {
- const res = await fetch('/api/admin/exports/token', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({
- resourceKey: 'admin.places.lifecycle.export',
- payload: {},
- ttlSeconds: 300,
- maxDownloads: 1,
- }),
- });
- const json = await res.json();
- const out = document.getElementById('signedLinkOut');
- if (!res.ok || !json?.success) {
- out.value = 'Token üretilemedi';
- return;
- }
- out.value = `${location.origin}/api/admin/places/lifecycle/export?token=${encodeURIComponent(json.token)}`;
- });
+  function buildLifecycleRow(x) {
+   const tr = document.createElement('tr');
 
- void loadSla();
- void loadTimeline();
+   const td1 = document.createElement('td');
+   td1.className = 'lc-td lc-td-soft';
+   td1.textContent = x.created_at ? new Date(x.created_at).toLocaleString('tr-TR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—';
+
+   const td2 = document.createElement('td');
+   td2.className = 'lc-td lc-td-strong';
+   td2.textContent = x.place_name || x.place_id || '—';
+
+   const td3 = document.createElement('td');
+   td3.className = 'lc-td';
+   const fromBadge = document.createElement('span');
+   fromBadge.className = 'lc-status lc-status--' + (x.from_status || 'unknown');
+   fromBadge.textContent = x.from_status || '—';
+   td3.appendChild(fromBadge);
+
+   const td4 = document.createElement('td');
+   td4.className = 'lc-td';
+   const toBadge = document.createElement('span');
+   toBadge.className = 'lc-status lc-status--' + (x.to_status || 'unknown');
+   toBadge.textContent = x.to_status || '—';
+   td4.appendChild(toBadge);
+
+   const td5 = document.createElement('td');
+   td5.className = 'lc-td lc-td-mono';
+   td5.textContent = x.actor_email || x.actor_user_id || '—';
+
+   const td6 = document.createElement('td');
+   td6.className = 'lc-td lc-td-soft lc-td-truncate';
+   td6.textContent = x.reason || '—';
+
+   tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+   tr.appendChild(td4); tr.appendChild(td5); tr.appendChild(td6);
+   return tr;
+  }
+
+  async function loadTimeline() {
+   const rows = document.getElementById('timelineRows');
+   try {
+    const res = await fetch('/api/admin/places/lifecycle?limit=100&offset=0');
+    const json = await res.json();
+    if (!res.ok || !json?.success) { setEmpty('Yüklenemedi'); return; }
+    const items = Array.isArray(json.items) ? json.items : [];
+    if (!items.length) { setEmpty('Kayıt yok'); return; }
+    rows.replaceChildren(...items.map(buildLifecycleRow));
+    const firstStatus = items[0]?.to_status || '';
+    document.getElementById('exportLink').setAttribute(
+     'href',
+     '/api/admin/places/lifecycle/export?' + new URLSearchParams({
+      ...(firstStatus ? { toStatus: firstStatus } : {}),
+      limit: '1000',
+     }).toString(),
+    );
+   } catch { setEmpty('Bağlantı hatası'); }
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', () => {
+   void loadSla();
+   void loadTimeline();
+  });
+
+  document.getElementById('signedLinkBtn').addEventListener('click', async () => {
+   const out = document.getElementById('signedLinkOut');
+   out.value = '⏳ Token üretiliyor…';
+   try {
+    const res = await fetch('/api/admin/exports/token', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({
+      resourceKey: 'admin.places.lifecycle.export',
+      payload: {},
+      ttlSeconds: 300,
+      maxDownloads: 1,
+     }),
+    });
+    const json = await res.json();
+    if (!res.ok || !json?.success) { out.value = '✕ Token üretilemedi'; return; }
+    out.value = location.origin + '/api/admin/places/lifecycle/export?token=' + encodeURIComponent(json.token);
+    out.select();
+   } catch { out.value = '✕ Bağlantı hatası'; }
+  });
+
+  void loadSla();
+  void loadTimeline();
  </script>
+
+ <style>
+  .lc-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .lc-back {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.5rem 1rem;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   color: var(--adm-text-muted);
+   font-weight: 600; font-size: 0.84rem;
+   border-radius: 8px; text-decoration: none;
+  }
+  .lc-back:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+
+  .lc-stats {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+   gap: 1rem;
+  }
+  .lc-stat {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   padding: 1.1rem 1.25rem;
+   display: flex; align-items: center; gap: 0.95rem;
+  }
+  .lc-stat-ico {
+   width: 42px; height: 42px;
+   border-radius: 11px;
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .lc-stat--indigo .lc-stat-ico { background: rgba(99,102,241,0.12); color: rgb(99,102,241); }
+  .lc-stat--amber .lc-stat-ico { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+  .lc-stat--sky .lc-stat-ico { background: rgba(2,132,199,0.12); color: rgb(2,132,199); }
+  .lc-stat--rose .lc-stat-ico { background: rgba(225,29,72,0.12); color: rgb(190,18,60); }
+  .lc-stat-val {
+   font-family: 'Cormorant Garamond', serif;
+   font-size: 1.85rem; font-weight: 700;
+   line-height: 1; margin: 0;
+   color: var(--adm-text);
+  }
+  .lc-stat-lbl {
+   margin: 0.3rem 0 0;
+   font-size: 0.78rem;
+   color: var(--adm-text-muted);
+   font-weight: 500;
+  }
+
+  .lc-card {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .lc-card-head {
+   display: flex; align-items: center; justify-content: space-between;
+   gap: 1rem;
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+   flex-wrap: wrap;
+  }
+  .lc-card-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .lc-card-sub {
+   font-size: 0.78rem;
+   color: var(--adm-text-soft);
+   margin: 0.2rem 0 0;
+  }
+  .lc-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  .lc-btn {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.4rem 0.8rem;
+   background: var(--adm-accent);
+   color: #fff;
+   border: 1px solid var(--adm-accent);
+   border-radius: 6px;
+   font-size: 0.78rem; font-weight: 600;
+   cursor: pointer;
+   text-decoration: none;
+  }
+  .lc-btn:hover { filter: brightness(0.93); }
+  .lc-btn--ghost {
+   background: transparent;
+   color: var(--adm-text-muted);
+   border-color: var(--adm-border);
+  }
+  .lc-btn--ghost:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+
+  .lc-signed-row { padding: 0 1.15rem; margin-top: 0.85rem; }
+  .lc-signed-input {
+   width: 100%;
+   padding: 0.55rem 0.75rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.74rem;
+   color: var(--adm-text);
+  }
+  .lc-signed-input:focus { outline: none; border-color: var(--adm-accent); box-shadow: 0 0 0 3px var(--adm-bg-active); }
+
+  .lc-table-wrap {
+   overflow-x: auto;
+   margin-top: 0.85rem;
+  }
+  .lc-table { width: 100%; border-collapse: collapse; }
+  .lc-th {
+   text-align: left;
+   font-size: 0.68rem;
+   font-weight: 700;
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   color: var(--adm-text-soft);
+   padding: 0.7rem 0.85rem;
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .lc-table tbody tr {
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .lc-table tbody tr:last-child { border-bottom: none; }
+  .lc-table tbody tr:hover { background: var(--adm-bg-hover); }
+  .lc-td { padding: 0.6rem 0.85rem; font-size: 0.82rem; color: var(--adm-text); vertical-align: top; }
+  .lc-td-soft { color: var(--adm-text-muted); font-size: 0.78rem; }
+  .lc-td-strong { font-weight: 600; }
+  .lc-td-mono { font-family: 'Menlo', 'Monaco', monospace; font-size: 0.74rem; color: var(--adm-text-soft); }
+  .lc-td-truncate { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .lc-status {
+   display: inline-flex; align-items: center;
+   padding: 0.2rem 0.55rem;
+   border-radius: 999px;
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.7rem;
+   font-weight: 600;
+  }
+  .lc-status--active, .lc-status--published { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+  .lc-status--pending { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+  .lc-status--needs_info { background: rgba(2,132,199,0.12); color: rgb(2,132,199); }
+  .lc-status--suspended { background: rgba(100,116,139,0.12); color: rgb(71,85,105); }
+  .lc-status--rejected { background: rgba(225,29,72,0.12); color: rgb(190,18,60); }
+  .lc-status--deleted { background: rgba(100,116,139,0.08); color: rgb(100,116,139); }
+  .lc-status--unknown { background: var(--adm-bg); color: var(--adm-text-soft); }
+
+  .lc-empty {
+   text-align: center !important;
+   padding: 2.5rem 1rem !important;
+   color: var(--adm-text-soft) !important;
+   font-size: 0.86rem !important;
+   font-style: italic;
+  }
+ </style>
 </AdminLayout>

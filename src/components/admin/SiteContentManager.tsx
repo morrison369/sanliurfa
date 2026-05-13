@@ -292,14 +292,14 @@ const DEFAULT_FOOTER_BOTTOM: FooterBottomConfig = {
 };
 
 const DEFAULT_HERO_META: HeroMetaConfig = {
- heroSectionClass: 'relative overflow-hidden border-b border-[rgba(184,115,51,0.1)]',
+ heroSectionClass: 'relative overflow-hidden border-b border-[var(--adm-bg-active)]',
  heroOverlayClass:
  'absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(248,113,113,0.18),transparent_45%),radial-gradient(circle_at_80%_10%,rgba(56,189,248,0.16),transparent_45%),linear-gradient(180deg,#020617,#0f172a)]',
  heroContainerClass: 'relative container mx-auto px-4 pt-28 pb-20',
  heroGridClass: 'grid lg:grid-cols-2 gap-10 items-center',
  heroStatsPanelClass: 'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[rgba(13,10,8,0.70)] p-6 backdrop-blur',
  heroStatsPanelTitleClass: 'text-lg font-bold text-white',
- heroStatsPanelSubtitleClass: 'mt-1 text-sm text-[#7A6B58]',
+ heroStatsPanelSubtitleClass: 'mt-1 text-sm text-[var(--adm-text-muted)]',
  heroStatsUpdatedClass: 'mt-4 text-xs text-[#4A3828]',
  heroImageAlt: 'Şanlıurfa Hero',
  searchButtonLabel: 'Ara',
@@ -317,24 +317,24 @@ const DEFAULT_HERO_META: HeroMetaConfig = {
  statsEventsLabel: 'Etkinlik',
  statsUpdatedPrefix: 'Güncelleme:',
  statsCardClass: 'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[rgba(13,10,8,0.80)] p-4',
- statsLabelClass: 'text-xs text-[#7A6B58]',
+ statsLabelClass: 'text-xs text-[var(--adm-text-muted)]',
  statsValueClass: 'mt-1 text-2xl font-bold text-white',
  heroQuickLinkClass:
  'rounded-full border border-[rgba(184,115,51,0.35)] bg-[rgba(13,10,8,0.70)] px-4 py-2 text-sm font-semibold',
- heroQuickLinkHoverClass: 'hover:border-[rgba(184,115,51,0.6)] hover:text-[#1F1410]',
- searchFormClass: 'mt-7 max-w-2xl rounded-sm bg-[var(--bg-card)] p-2 shadow-2xl shadow-black/40',
+ heroQuickLinkHoverClass: 'hover:border-[rgba(184,115,51,0.6)] hover:text-[var(--adm-text)]',
+ searchFormClass: 'mt-7 max-w-2xl rounded-sm bg-[var(--adm-bg-elev)] p-2 shadow-2xl shadow-black/40',
  searchRowClass: 'flex gap-2',
- searchInputClass: 'flex-1 rounded-sm px-5 py-4 text-[#1F1410] focus:outline-none',
+ searchInputClass: 'flex-1 rounded-sm px-5 py-4 text-[var(--adm-text)] focus:outline-none',
  searchButtonClass:
  'rounded-sm bg-red-600 px-6 py-4 font-semibold text-white transition hover:bg-red-700',
  businessCardClass:
  'rounded-sm border border-red-400/50 bg-[rgba(239,68,68,0.06)] p-4 transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[rgba(239,68,68,0.1)]',
  communityCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.3)] bg-[rgba(184,115,51,0.08)] p-4 transition hover:border-[rgba(184,115,51,0.5)] hover:bg-[rgba(184,115,51,0.12)]',
+ 'rounded-sm border border-[rgba(184,115,51,0.3)] bg-[var(--adm-bg-hover)] p-4 transition hover:border-[rgba(184,115,51,0.5)] hover:bg-[var(--adm-bg-active)]',
  heroBadgeClass:
- 'inline-flex items-center rounded-full border border-[rgba(184,115,51,0.15)] bg-[rgba(13,10,8,0.60)] px-3 py-1 text-xs font-semibold tracking-wide text-[#7A6B58]',
+ 'inline-flex items-center rounded-full border border-[rgba(184,115,51,0.15)] bg-[rgba(13,10,8,0.60)] px-3 py-1 text-xs font-semibold tracking-wide text-[var(--adm-text-muted)]',
  heroTitleClass: 'mt-5 text-4xl md:text-6xl font-extrabold leading-tight text-white',
- heroDescriptionClass: 'mt-5 text-lg text-[#7A6B58] max-w-2xl',
+ heroDescriptionClass: 'mt-5 text-lg text-[var(--adm-text-muted)] max-w-2xl',
 };
 
 const DEFAULT_MAIN_CTA: MainCtaConfig = {
@@ -476,42 +476,42 @@ const EDITOR_JSON_TEMPLATES: Record<string, string> = {
  sectionHeadingSpacedClass: 'text-2xl md:text-3xl font-bold mb-6',
  sectionHeadingSpacedLgClass: 'text-2xl md:text-3xl font-bold mb-8',
  sectionCtaLinkClass: 'text-red-600 font-semibold hover:text-red-700',
- sectionMutedTextLineClampClass: 'text-sm text-[#7A6B58] mt-1 line-clamp-2',
+ sectionMutedTextLineClampClass: 'text-sm text-[var(--adm-text-muted)] mt-1 line-clamp-2',
  mvpQuickStartSectionClass: 'relative z-10 -mt-8 px-4',
  mvpQuickStartContainerClass: 'container mx-auto',
  mvpQuickStartPanelClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-4 shadow-2xl shadow-slate-950/20 md:p-6',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-4 shadow-2xl shadow-slate-950/20 md:p-6',
  mvpQuickStartHeaderClass:
- 'flex flex-col gap-3 border-b border-[rgba(184,115,51,0.14)] pb-5 md:flex-row md:items-end md:justify-between',
+ 'flex flex-col gap-3 border-b border-[var(--adm-border)] pb-5 md:flex-row md:items-end md:justify-between',
  mvpQuickStartBadgeClass: 'text-xs font-bold uppercase tracking-[0.26em] text-red-600',
- mvpQuickStartTitleClass: 'mt-2 text-2xl font-extrabold text-[#1F1410] md:text-3xl',
- mvpQuickStartDescriptionClass: 'mt-2 max-w-3xl text-sm text-[#7A6B58] md:text-base',
+ mvpQuickStartTitleClass: 'mt-2 text-2xl font-extrabold text-[var(--adm-text)] md:text-3xl',
+ mvpQuickStartDescriptionClass: 'mt-2 max-w-3xl text-sm text-[var(--adm-text-muted)] md:text-base',
  mvpQuickStartCtaClass:
  'inline-flex items-center justify-center rounded-sm bg-[#0D0A08] px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700',
  mvpQuickStartGridClass: 'mt-5 grid gap-4 lg:grid-cols-3',
  mvpQuickStartCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-xl',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-xl',
  mvpQuickStartCardLinkClass: 'block',
  mvpQuickStartCardBadgeClass:
  'inline-flex rounded-full bg-[rgba(239,68,68,0.12)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-red-400',
- mvpQuickStartCardTitleClass: 'mt-4 text-xl font-extrabold text-[#1F1410]',
- mvpQuickStartCardDescriptionClass: 'mt-2 text-sm leading-6 text-[#7A6B58]',
+ mvpQuickStartCardTitleClass: 'mt-4 text-xl font-extrabold text-[var(--adm-text)]',
+ mvpQuickStartCardDescriptionClass: 'mt-2 text-sm leading-6 text-[var(--adm-text-muted)]',
  mvpQuickStartLinksWrapClass: 'mt-5 flex flex-wrap gap-2',
  mvpQuickStartLinkClass:
- 'rounded-full border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-3 py-2 text-xs font-bold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- quickActionsSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12',
+ 'rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-3 py-2 text-xs font-bold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ quickActionsSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12',
  quickActionsContainerClass: 'container mx-auto px-4',
  quickActionsHeaderWrapClass: 'flex items-end justify-between mb-6',
  quickActionsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-4',
  quickActionsCardClass:
- 'group rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- liveStatusSectionClass: 'bg-[#0D0A08] text-white py-12 border-y border-[rgba(184,115,51,0.1)]',
+ 'group rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ liveStatusSectionClass: 'bg-[#0D0A08] text-white py-12 border-y border-[var(--adm-bg-active)]',
  liveStatusContainerClass: 'container mx-auto px-4',
  liveStatusHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6',
  liveStatusGridClass: 'grid lg:grid-cols-3 gap-4',
  liveStatusCardClass: 'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[rgba(13,10,8,0.80)] p-5',
- districtServiceSectionClass: 'bg-[rgba(13,10,8,0.97)] text-white py-12 border-t border-[rgba(184,115,51,0.1)]',
+ districtServiceSectionClass: 'bg-[rgba(13,10,8,0.97)] text-white py-12 border-t border-[var(--adm-bg-active)]',
  districtServiceContainerClass: 'container mx-auto px-4',
  districtServiceHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 mb-6',
@@ -520,116 +520,116 @@ const EDITOR_JSON_TEMPLATES: Record<string, string> = {
  'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[rgba(13,10,8,0.80)] p-5 transition',
  districtServiceChipsWrapClass: 'mt-6 flex flex-wrap gap-2',
  districtServiceChipClass:
- 'rounded-full border border-[rgba(184,115,51,0.15)] bg-[#0D0A08] px-4 py-2 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[#1F1410]',
- popularCategoriesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-full border border-[rgba(184,115,51,0.15)] bg-[#0D0A08] px-4 py-2 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[var(--adm-text)]',
+ popularCategoriesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  popularCategoriesContainerClass: 'container mx-auto px-4',
  popularCategoriesHeaderWrapClass: 'flex items-center justify-between mb-6',
  popularCategoriesGridClass: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3',
  popularCategoriesCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-4 py-4 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- trendDensitySectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12 border-t border-[rgba(184,115,51,0.14)]',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-4 py-4 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ trendDensitySectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12 border-t border-[var(--adm-border)]',
  trendDensityContainerClass: 'container mx-auto px-4',
  trendDensityGridClass: 'grid lg:grid-cols-2 gap-6',
- trendDensityCardClass: 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-6',
+ trendDensityCardClass: 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-6',
  trendDensityHeaderWrapClass: 'flex items-center justify-between mb-4',
  trendDensityTrendGridClass: 'grid sm:grid-cols-2 gap-2',
  trendDensityTrendItemClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-3 py-2 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-3 py-2 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
  trendDensityDensityWrapClass: 'space-y-3',
  trendDensityDensityItemClass:
- 'block rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-3 hover:border-[rgba(239,68,68,0.3)] transition',
- districtsSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12',
+ 'block rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-3 hover:border-[rgba(239,68,68,0.3)] transition',
+ districtsSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12',
  districtsContainerClass: 'container mx-auto px-4',
  districtsHeaderWrapClass: 'flex items-center justify-between mb-6',
  districtsGridClass: 'grid md:grid-cols-3 gap-4',
  districtsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- audiencePlansSectionClass: 'bg-[#0D0A08] text-white py-14 border-t border-[rgba(184,115,51,0.1)]',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ audiencePlansSectionClass: 'bg-[#0D0A08] text-white py-14 border-t border-[var(--adm-bg-active)]',
  audiencePlansContainerClass: 'container mx-auto px-4',
  audiencePlansHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8',
  audiencePlansGridClass: 'grid lg:grid-cols-3 gap-5',
  audiencePlansCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.1)] bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.96))] p-6 shadow-xl shadow-black/20',
+ 'rounded-sm border border-[var(--adm-bg-active)] bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.96))] p-6 shadow-xl shadow-black/20',
  audiencePlansBadgeClass:
  'inline-flex items-center rounded-full border border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.04)] px-3 py-1 text-xs font-semibold tracking-wide text-red-200',
- audiencePlansListClass: 'mt-5 space-y-3 text-sm text-[#7A6B58]',
+ audiencePlansListClass: 'mt-5 space-y-3 text-sm text-[var(--adm-text-muted)]',
  audiencePlansActionClass:
- 'mt-6 inline-flex items-center rounded-full border border-[rgba(184,115,51,0.35)] px-4 py-2 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[#1F1410]',
- districtSpotlightsSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-14 border-t border-[rgba(184,115,51,0.14)]',
+ 'mt-6 inline-flex items-center rounded-full border border-[rgba(184,115,51,0.35)] px-4 py-2 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[var(--adm-text)]',
+ districtSpotlightsSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-14 border-t border-[var(--adm-border)]',
  districtSpotlightsContainerClass: 'container mx-auto px-4',
  districtSpotlightsHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8',
  districtSpotlightsGridClass: 'grid md:grid-cols-2 lg:grid-cols-4 gap-5',
  districtSpotlightsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[linear-gradient(180deg,#fff,#f8fafc)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- historicalSitesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[linear-gradient(180deg,#fff,#f8fafc)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ historicalSitesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  historicalSitesContainerClass: 'container mx-auto px-4',
  historicalSitesHeaderWrapClass: 'flex items-center justify-between mb-6',
  historicalSitesGridClass: 'grid md:grid-cols-3 gap-5',
  historicalSitesCardClass:
- 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--bg-card)] transition hover:shadow-xl',
- historicalSitesImageWrapClass: 'h-44 overflow-hidden bg-[rgba(184,115,51,0.08)]',
+ 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--adm-bg-elev)] transition hover:shadow-xl',
+ historicalSitesImageWrapClass: 'h-44 overflow-hidden bg-[var(--adm-bg-hover)]',
  historicalSitesImageClass:
  'h-full w-full object-cover transition duration-300 group-hover:scale-105',
- featuredPlacesSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-14',
+ featuredPlacesSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-14',
  featuredPlacesContainerClass: 'container mx-auto px-4',
  featuredPlacesHeaderWrapClass: 'flex items-center justify-between mb-8',
  featuredPlacesGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-6',
- recentPlacesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-14',
+ recentPlacesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-14',
  recentPlacesContainerClass: 'container mx-auto px-4',
  recentPlacesGridClass: 'grid md:grid-cols-2 lg:grid-cols-4 gap-6',
- recentReviewsSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-14 border-t border-[rgba(184,115,51,0.14)]',
+ recentReviewsSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-14 border-t border-[var(--adm-border)]',
  recentReviewsContainerClass: 'container mx-auto px-4',
  recentReviewsHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8',
  recentReviewsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-5',
  recentReviewsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- trustSignalsSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12 border-t border-[rgba(184,115,51,0.14)]',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ trustSignalsSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12 border-t border-[var(--adm-border)]',
  trustSignalsContainerClass: 'container mx-auto px-4',
  trustSignalsHeaderWrapClass: 'flex items-center justify-between mb-6',
  trustSignalsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-4',
  trustSignalsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-4 transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[var(--bg-card)] hover:shadow-md',
- guidesCommunitySectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-4 transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[var(--adm-bg-elev)] hover:shadow-md',
+ guidesCommunitySectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12',
  guidesCommunityContainerClass: 'container mx-auto px-4',
  guidesCommunityPanelClass: 'mb-6 rounded-sm border border-[rgba(234,179,8,0.25)] bg-[rgba(234,179,8,0.08)] p-5',
  guidesCommunityLinksWrapClass: 'mt-3 flex flex-wrap gap-2',
  guidesCommunityLinkClass:
- 'rounded-sm border border-amber-300 bg-[var(--bg-card)] px-4 py-2 text-sm font-semibold text-amber-400 hover:bg-[rgba(234,179,8,0.12)]',
+ 'rounded-sm border border-amber-300 bg-[var(--adm-bg-elev)] px-4 py-2 text-sm font-semibold text-amber-400 hover:bg-[rgba(234,179,8,0.12)]',
  guidesCommunityGridClass: 'grid sm:grid-cols-2 lg:grid-cols-3 gap-4',
  guidesCommunityGuideCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] px-5 py-4 font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- mainCategoriesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] px-5 py-4 font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ mainCategoriesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  mainCategoriesContainerClass: 'container mx-auto px-4',
  mainCategoriesGridClass: 'grid grid-cols-2 md:grid-cols-4 gap-3',
  mainCategoriesCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-4 py-3 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- recipesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-4 py-3 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ recipesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  recipesContainerClass: 'container mx-auto px-4',
  recipesHeaderWrapClass: 'flex items-center justify-between mb-6',
  recipesGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-5',
  recipesCardClass:
- 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--bg-card)] transition hover:shadow-lg',
- recipesImageWrapClass: 'h-44 overflow-hidden bg-[rgba(184,115,51,0.08)]',
+ 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--adm-bg-elev)] transition hover:shadow-lg',
+ recipesImageWrapClass: 'h-44 overflow-hidden bg-[var(--adm-bg-hover)]',
  recipesImageClass: 'h-full w-full object-cover transition duration-300 group-hover:scale-105',
- blogSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-14',
+ blogSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-14',
  blogContainerClass: 'container mx-auto px-4',
  blogHeaderWrapClass: 'flex items-center justify-between mb-8',
  blogGridClass: 'grid md:grid-cols-3 gap-6',
  blogCardClass:
- 'group block overflow-hidden rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] transition hover:shadow-lg',
+ 'group block overflow-hidden rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] transition hover:shadow-lg',
  blogImageClass: 'h-48 w-full object-cover transition group-hover:scale-105',
- blogImageFallbackClass: 'h-48 w-full bg-[rgba(184,115,51,0.08)]',
- faqSectionClass: 'bg-[rgba(13,10,8,0.97)] text-white py-14 border-t border-[rgba(184,115,51,0.1)]',
+ blogImageFallbackClass: 'h-48 w-full bg-[var(--adm-bg-hover)]',
+ faqSectionClass: 'bg-[rgba(13,10,8,0.97)] text-white py-14 border-t border-[var(--adm-bg-active)]',
  faqContainerClass: 'container mx-auto px-4',
  faqIntroWrapClass: 'max-w-4xl',
  faqGridClass: 'mt-6 grid md:grid-cols-2 gap-4',
  faqCardClass: 'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[#0D0A08] p-5',
- mainCtaSectionClass: 'bg-[#0D0A08] text-white py-16 border-t border-[rgba(184,115,51,0.1)]',
+ mainCtaSectionClass: 'bg-[#0D0A08] text-white py-16 border-t border-[var(--adm-bg-active)]',
  mainCtaContainerClass: 'container mx-auto px-4 text-center',
- mainCtaDescriptionClass: 'mt-3 text-[#7A6B58] max-w-2xl mx-auto',
+ mainCtaDescriptionClass: 'mt-3 text-[var(--adm-text-muted)] max-w-2xl mx-auto',
  mainCtaActionsWrapClass: 'mt-7 flex flex-col sm:flex-row gap-3 justify-center',
  mainCtaPrimaryButtonClass:
  'rounded-sm bg-red-600 px-7 py-3 font-bold text-white transition hover:bg-red-700',
@@ -1236,43 +1236,43 @@ useEffect(() => {
  sectionHeadingSpacedClass: 'text-2xl md:text-3xl font-bold mb-6',
  sectionHeadingSpacedLgClass: 'text-2xl md:text-3xl font-bold mb-8',
  sectionCtaLinkClass: 'text-red-600 font-semibold hover:text-red-700',
- sectionMutedTextLineClampClass: 'text-sm text-[#7A6B58] mt-1 line-clamp-2',
+ sectionMutedTextLineClampClass: 'text-sm text-[var(--adm-text-muted)] mt-1 line-clamp-2',
  mvpQuickStartSectionClass: 'relative z-10 -mt-8 px-4',
  mvpQuickStartContainerClass: 'container mx-auto',
  mvpQuickStartPanelClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-4 shadow-2xl shadow-slate-950/20 md:p-6',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-4 shadow-2xl shadow-slate-950/20 md:p-6',
  mvpQuickStartHeaderClass:
- 'flex flex-col gap-3 border-b border-[rgba(184,115,51,0.14)] pb-5 md:flex-row md:items-end md:justify-between',
+ 'flex flex-col gap-3 border-b border-[var(--adm-border)] pb-5 md:flex-row md:items-end md:justify-between',
  mvpQuickStartBadgeClass: 'text-xs font-bold uppercase tracking-[0.26em] text-red-600',
- mvpQuickStartTitleClass: 'mt-2 text-2xl font-extrabold text-[#1F1410] md:text-3xl',
- mvpQuickStartDescriptionClass: 'mt-2 max-w-3xl text-sm text-[#7A6B58] md:text-base',
+ mvpQuickStartTitleClass: 'mt-2 text-2xl font-extrabold text-[var(--adm-text)] md:text-3xl',
+ mvpQuickStartDescriptionClass: 'mt-2 max-w-3xl text-sm text-[var(--adm-text-muted)] md:text-base',
  mvpQuickStartCtaClass:
  'inline-flex items-center justify-center rounded-sm bg-[#0D0A08] px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700',
  mvpQuickStartGridClass: 'mt-5 grid gap-4 lg:grid-cols-3',
  mvpQuickStartCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-xl',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-xl',
  mvpQuickStartCardLinkClass: 'block',
  mvpQuickStartCardBadgeClass:
  'inline-flex rounded-full bg-[rgba(239,68,68,0.12)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-red-400',
- mvpQuickStartCardTitleClass: 'mt-4 text-xl font-extrabold text-[#1F1410]',
- mvpQuickStartCardDescriptionClass: 'mt-2 text-sm leading-6 text-[#7A6B58]',
+ mvpQuickStartCardTitleClass: 'mt-4 text-xl font-extrabold text-[var(--adm-text)]',
+ mvpQuickStartCardDescriptionClass: 'mt-2 text-sm leading-6 text-[var(--adm-text-muted)]',
  mvpQuickStartLinksWrapClass: 'mt-5 flex flex-wrap gap-2',
  mvpQuickStartLinkClass:
- 'rounded-full border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-3 py-2 text-xs font-bold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- quickActionsSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12',
+ 'rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-3 py-2 text-xs font-bold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ quickActionsSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12',
  quickActionsContainerClass: 'container mx-auto px-4',
  quickActionsHeaderWrapClass: 'flex items-end justify-between mb-6',
  quickActionsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-4',
  quickActionsCardClass:
- 'group rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- liveStatusSectionClass: 'bg-[#0D0A08] text-white py-12 border-y border-[rgba(184,115,51,0.1)]',
+ 'group rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ liveStatusSectionClass: 'bg-[#0D0A08] text-white py-12 border-y border-[var(--adm-bg-active)]',
  liveStatusContainerClass: 'container mx-auto px-4',
  liveStatusHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6',
  liveStatusGridClass: 'grid lg:grid-cols-3 gap-4',
  liveStatusCardClass: 'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[rgba(13,10,8,0.80)] p-5',
  districtServiceSectionClass:
- 'bg-[rgba(13,10,8,0.97)] text-white py-12 border-t border-[rgba(184,115,51,0.1)]',
+ 'bg-[rgba(13,10,8,0.97)] text-white py-12 border-t border-[var(--adm-bg-active)]',
  districtServiceContainerClass: 'container mx-auto px-4',
  districtServiceHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 mb-6',
@@ -1281,119 +1281,119 @@ useEffect(() => {
  'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[rgba(13,10,8,0.80)] p-5 transition',
  districtServiceChipsWrapClass: 'mt-6 flex flex-wrap gap-2',
  districtServiceChipClass:
- 'rounded-full border border-[rgba(184,115,51,0.15)] bg-[#0D0A08] px-4 py-2 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[#1F1410]',
- popularCategoriesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-full border border-[rgba(184,115,51,0.15)] bg-[#0D0A08] px-4 py-2 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[var(--adm-text)]',
+ popularCategoriesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  popularCategoriesContainerClass: 'container mx-auto px-4',
  popularCategoriesHeaderWrapClass: 'flex items-center justify-between mb-6',
  popularCategoriesGridClass: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3',
  popularCategoriesCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-4 py-4 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- trendDensitySectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12 border-t border-[rgba(184,115,51,0.14)]',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-4 py-4 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ trendDensitySectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12 border-t border-[var(--adm-border)]',
  trendDensityContainerClass: 'container mx-auto px-4',
  trendDensityGridClass: 'grid lg:grid-cols-2 gap-6',
- trendDensityCardClass: 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-6',
+ trendDensityCardClass: 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-6',
  trendDensityHeaderWrapClass: 'flex items-center justify-between mb-4',
  trendDensityTrendGridClass: 'grid sm:grid-cols-2 gap-2',
  trendDensityTrendItemClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-3 py-2 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-3 py-2 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
  trendDensityDensityWrapClass: 'space-y-3',
  trendDensityDensityItemClass:
- 'block rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-3 hover:border-[rgba(239,68,68,0.3)] transition',
- districtsSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12',
+ 'block rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-3 hover:border-[rgba(239,68,68,0.3)] transition',
+ districtsSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12',
  districtsContainerClass: 'container mx-auto px-4',
  districtsHeaderWrapClass: 'flex items-center justify-between mb-6',
  districtsGridClass: 'grid md:grid-cols-3 gap-4',
  districtsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- audiencePlansSectionClass: 'bg-[#0D0A08] text-white py-14 border-t border-[rgba(184,115,51,0.1)]',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ audiencePlansSectionClass: 'bg-[#0D0A08] text-white py-14 border-t border-[var(--adm-bg-active)]',
  audiencePlansContainerClass: 'container mx-auto px-4',
  audiencePlansHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8',
  audiencePlansGridClass: 'grid lg:grid-cols-3 gap-5',
  audiencePlansCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.1)] bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.96))] p-6 shadow-xl shadow-black/20',
+ 'rounded-sm border border-[var(--adm-bg-active)] bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.96))] p-6 shadow-xl shadow-black/20',
  audiencePlansBadgeClass:
  'inline-flex items-center rounded-full border border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.04)] px-3 py-1 text-xs font-semibold tracking-wide text-red-200',
- audiencePlansListClass: 'mt-5 space-y-3 text-sm text-[#7A6B58]',
+ audiencePlansListClass: 'mt-5 space-y-3 text-sm text-[var(--adm-text-muted)]',
  audiencePlansActionClass:
- 'mt-6 inline-flex items-center rounded-full border border-[rgba(184,115,51,0.35)] px-4 py-2 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[#1F1410]',
+ 'mt-6 inline-flex items-center rounded-full border border-[rgba(184,115,51,0.35)] px-4 py-2 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[var(--adm-text)]',
  districtSpotlightsSectionClass:
- 'bg-[var(--bg-card)] text-[#1F1410] py-14 border-t border-[rgba(184,115,51,0.14)]',
+ 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-14 border-t border-[var(--adm-border)]',
  districtSpotlightsContainerClass: 'container mx-auto px-4',
  districtSpotlightsHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8',
  districtSpotlightsGridClass: 'grid md:grid-cols-2 lg:grid-cols-4 gap-5',
  districtSpotlightsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[linear-gradient(180deg,#fff,#f8fafc)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- historicalSitesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[linear-gradient(180deg,#fff,#f8fafc)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ historicalSitesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  historicalSitesContainerClass: 'container mx-auto px-4',
  historicalSitesHeaderWrapClass: 'flex items-center justify-between mb-6',
  historicalSitesGridClass: 'grid md:grid-cols-3 gap-5',
  historicalSitesCardClass:
- 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--bg-card)] transition hover:shadow-xl',
- historicalSitesImageWrapClass: 'h-44 overflow-hidden bg-[rgba(184,115,51,0.08)]',
+ 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--adm-bg-elev)] transition hover:shadow-xl',
+ historicalSitesImageWrapClass: 'h-44 overflow-hidden bg-[var(--adm-bg-hover)]',
  historicalSitesImageClass:
  'h-full w-full object-cover transition duration-300 group-hover:scale-105',
- featuredPlacesSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-14',
+ featuredPlacesSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-14',
  featuredPlacesContainerClass: 'container mx-auto px-4',
  featuredPlacesHeaderWrapClass: 'flex items-center justify-between mb-8',
  featuredPlacesGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-6',
- recentPlacesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-14',
+ recentPlacesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-14',
  recentPlacesContainerClass: 'container mx-auto px-4',
  recentPlacesGridClass: 'grid md:grid-cols-2 lg:grid-cols-4 gap-6',
  recentReviewsSectionClass:
- 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-14 border-t border-[rgba(184,115,51,0.14)]',
+ 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-14 border-t border-[var(--adm-border)]',
  recentReviewsContainerClass: 'container mx-auto px-4',
  recentReviewsHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8',
  recentReviewsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-5',
  recentReviewsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- trustSignalsSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12 border-t border-[rgba(184,115,51,0.14)]',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ trustSignalsSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12 border-t border-[var(--adm-border)]',
  trustSignalsContainerClass: 'container mx-auto px-4',
  trustSignalsHeaderWrapClass: 'flex items-center justify-between mb-6',
  trustSignalsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-4',
  trustSignalsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-4 transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[var(--bg-card)] hover:shadow-md',
- guidesCommunitySectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-4 transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[var(--adm-bg-elev)] hover:shadow-md',
+ guidesCommunitySectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12',
  guidesCommunityContainerClass: 'container mx-auto px-4',
  guidesCommunityPanelClass: 'mb-6 rounded-sm border border-[rgba(234,179,8,0.25)] bg-[rgba(234,179,8,0.08)] p-5',
  guidesCommunityLinksWrapClass: 'mt-3 flex flex-wrap gap-2',
  guidesCommunityLinkClass:
- 'rounded-sm border border-amber-300 bg-[var(--bg-card)] px-4 py-2 text-sm font-semibold text-amber-400 hover:bg-[rgba(234,179,8,0.12)]',
+ 'rounded-sm border border-amber-300 bg-[var(--adm-bg-elev)] px-4 py-2 text-sm font-semibold text-amber-400 hover:bg-[rgba(234,179,8,0.12)]',
  guidesCommunityGridClass: 'grid sm:grid-cols-2 lg:grid-cols-3 gap-4',
  guidesCommunityGuideCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] px-5 py-4 font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- mainCategoriesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] px-5 py-4 font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ mainCategoriesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  mainCategoriesContainerClass: 'container mx-auto px-4',
  mainCategoriesGridClass: 'grid grid-cols-2 md:grid-cols-4 gap-3',
  mainCategoriesCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-4 py-3 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- recipesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-4 py-3 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ recipesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  recipesContainerClass: 'container mx-auto px-4',
  recipesHeaderWrapClass: 'flex items-center justify-between mb-6',
  recipesGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-5',
  recipesCardClass:
- 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--bg-card)] transition hover:shadow-lg',
- recipesImageWrapClass: 'h-44 overflow-hidden bg-[rgba(184,115,51,0.08)]',
+ 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--adm-bg-elev)] transition hover:shadow-lg',
+ recipesImageWrapClass: 'h-44 overflow-hidden bg-[var(--adm-bg-hover)]',
  recipesImageClass:
  'h-full w-full object-cover transition duration-300 group-hover:scale-105',
- blogSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-14',
+ blogSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-14',
  blogContainerClass: 'container mx-auto px-4',
  blogHeaderWrapClass: 'flex items-center justify-between mb-8',
  blogGridClass: 'grid md:grid-cols-3 gap-6',
  blogCardClass:
- 'group block overflow-hidden rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] transition hover:shadow-lg',
+ 'group block overflow-hidden rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] transition hover:shadow-lg',
  blogImageClass: 'h-48 w-full object-cover transition group-hover:scale-105',
- blogImageFallbackClass: 'h-48 w-full bg-[rgba(184,115,51,0.08)]',
- faqSectionClass: 'bg-[rgba(13,10,8,0.97)] text-white py-14 border-t border-[rgba(184,115,51,0.1)]',
+ blogImageFallbackClass: 'h-48 w-full bg-[var(--adm-bg-hover)]',
+ faqSectionClass: 'bg-[rgba(13,10,8,0.97)] text-white py-14 border-t border-[var(--adm-bg-active)]',
  faqContainerClass: 'container mx-auto px-4',
  faqIntroWrapClass: 'max-w-4xl',
  faqGridClass: 'mt-6 grid md:grid-cols-2 gap-4',
  faqCardClass: 'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[#0D0A08] p-5',
- mainCtaSectionClass: 'bg-[#0D0A08] text-white py-16 border-t border-[rgba(184,115,51,0.1)]',
+ mainCtaSectionClass: 'bg-[#0D0A08] text-white py-16 border-t border-[var(--adm-bg-active)]',
  mainCtaContainerClass: 'container mx-auto px-4 text-center',
- mainCtaDescriptionClass: 'mt-3 text-[#7A6B58] max-w-2xl mx-auto',
+ mainCtaDescriptionClass: 'mt-3 text-[var(--adm-text-muted)] max-w-2xl mx-auto',
  mainCtaActionsWrapClass: 'mt-7 flex flex-col sm:flex-row gap-3 justify-center',
  mainCtaPrimaryButtonClass:
  'rounded-sm bg-red-600 px-7 py-3 font-bold text-white transition hover:bg-red-700',
@@ -2284,7 +2284,7 @@ useEffect(() => {
  statusText: '',
  href: '/',
  cta: '',
- badgeClass: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58] border-[rgba(184,115,51,0.2)]',
+ badgeClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] border-[var(--adm-border-strong)]',
  },
  ]);
  };
@@ -2875,42 +2875,42 @@ useEffect(() => {
  sectionHeadingSpacedClass: 'text-2xl md:text-3xl font-bold mb-6',
  sectionHeadingSpacedLgClass: 'text-2xl md:text-3xl font-bold mb-8',
  sectionCtaLinkClass: 'text-red-600 font-semibold hover:text-red-700',
- sectionMutedTextLineClampClass: 'text-sm text-[#7A6B58] mt-1 line-clamp-2',
+ sectionMutedTextLineClampClass: 'text-sm text-[var(--adm-text-muted)] mt-1 line-clamp-2',
  mvpQuickStartSectionClass: 'relative z-10 -mt-8 px-4',
  mvpQuickStartContainerClass: 'container mx-auto',
  mvpQuickStartPanelClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-4 shadow-2xl shadow-slate-950/20 md:p-6',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-4 shadow-2xl shadow-slate-950/20 md:p-6',
  mvpQuickStartHeaderClass:
- 'flex flex-col gap-3 border-b border-[rgba(184,115,51,0.14)] pb-5 md:flex-row md:items-end md:justify-between',
+ 'flex flex-col gap-3 border-b border-[var(--adm-border)] pb-5 md:flex-row md:items-end md:justify-between',
  mvpQuickStartBadgeClass: 'text-xs font-bold uppercase tracking-[0.26em] text-red-600',
- mvpQuickStartTitleClass: 'mt-2 text-2xl font-extrabold text-[#1F1410] md:text-3xl',
- mvpQuickStartDescriptionClass: 'mt-2 max-w-3xl text-sm text-[#7A6B58] md:text-base',
+ mvpQuickStartTitleClass: 'mt-2 text-2xl font-extrabold text-[var(--adm-text)] md:text-3xl',
+ mvpQuickStartDescriptionClass: 'mt-2 max-w-3xl text-sm text-[var(--adm-text-muted)] md:text-base',
  mvpQuickStartCtaClass:
  'inline-flex items-center justify-center rounded-sm bg-[#0D0A08] px-5 py-3 text-sm font-bold text-white transition hover:bg-red-700',
  mvpQuickStartGridClass: 'mt-5 grid gap-4 lg:grid-cols-3',
  mvpQuickStartCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-xl',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-xl',
  mvpQuickStartCardLinkClass: 'block',
  mvpQuickStartCardBadgeClass:
  'inline-flex rounded-full bg-[rgba(239,68,68,0.12)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.22em] text-red-400',
- mvpQuickStartCardTitleClass: 'mt-4 text-xl font-extrabold text-[#1F1410]',
- mvpQuickStartCardDescriptionClass: 'mt-2 text-sm leading-6 text-[#7A6B58]',
+ mvpQuickStartCardTitleClass: 'mt-4 text-xl font-extrabold text-[var(--adm-text)]',
+ mvpQuickStartCardDescriptionClass: 'mt-2 text-sm leading-6 text-[var(--adm-text-muted)]',
  mvpQuickStartLinksWrapClass: 'mt-5 flex flex-wrap gap-2',
  mvpQuickStartLinkClass:
- 'rounded-full border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-3 py-2 text-xs font-bold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- quickActionsSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12',
+ 'rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-3 py-2 text-xs font-bold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ quickActionsSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12',
  quickActionsContainerClass: 'container mx-auto px-4',
  quickActionsHeaderWrapClass: 'flex items-end justify-between mb-6',
  quickActionsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-4',
  quickActionsCardClass:
- 'group rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- liveStatusSectionClass: 'bg-[#0D0A08] text-white py-12 border-y border-[rgba(184,115,51,0.1)]',
+ 'group rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ liveStatusSectionClass: 'bg-[#0D0A08] text-white py-12 border-y border-[var(--adm-bg-active)]',
  liveStatusContainerClass: 'container mx-auto px-4',
  liveStatusHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6',
  liveStatusGridClass: 'grid lg:grid-cols-3 gap-4',
  liveStatusCardClass: 'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[rgba(13,10,8,0.80)] p-5',
- districtServiceSectionClass: 'bg-[rgba(13,10,8,0.97)] text-white py-12 border-t border-[rgba(184,115,51,0.1)]',
+ districtServiceSectionClass: 'bg-[rgba(13,10,8,0.97)] text-white py-12 border-t border-[var(--adm-bg-active)]',
  districtServiceContainerClass: 'container mx-auto px-4',
  districtServiceHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 mb-6',
@@ -2919,119 +2919,119 @@ useEffect(() => {
  'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[rgba(13,10,8,0.80)] p-5 transition',
  districtServiceChipsWrapClass: 'mt-6 flex flex-wrap gap-2',
  districtServiceChipClass:
- 'rounded-full border border-[rgba(184,115,51,0.15)] bg-[#0D0A08] px-4 py-2 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[#1F1410]',
- popularCategoriesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-full border border-[rgba(184,115,51,0.15)] bg-[#0D0A08] px-4 py-2 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[var(--adm-text)]',
+ popularCategoriesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  popularCategoriesContainerClass: 'container mx-auto px-4',
  popularCategoriesHeaderWrapClass: 'flex items-center justify-between mb-6',
  popularCategoriesGridClass: 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3',
  popularCategoriesCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-4 py-4 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- trendDensitySectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12 border-t border-[rgba(184,115,51,0.14)]',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-4 py-4 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ trendDensitySectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12 border-t border-[var(--adm-border)]',
  trendDensityContainerClass: 'container mx-auto px-4',
  trendDensityGridClass: 'grid lg:grid-cols-2 gap-6',
- trendDensityCardClass: 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-6',
+ trendDensityCardClass: 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-6',
  trendDensityHeaderWrapClass: 'flex items-center justify-between mb-4',
  trendDensityTrendGridClass: 'grid sm:grid-cols-2 gap-2',
  trendDensityTrendItemClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-3 py-2 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-3 py-2 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
  trendDensityDensityWrapClass: 'space-y-3',
  trendDensityDensityItemClass:
- 'block rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-3 hover:border-[rgba(239,68,68,0.3)] transition',
- districtsSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12',
+ 'block rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-3 hover:border-[rgba(239,68,68,0.3)] transition',
+ districtsSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12',
  districtsContainerClass: 'container mx-auto px-4',
  districtsHeaderWrapClass: 'flex items-center justify-between mb-6',
  districtsGridClass: 'grid md:grid-cols-3 gap-4',
  districtsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- audiencePlansSectionClass: 'bg-[#0D0A08] text-white py-14 border-t border-[rgba(184,115,51,0.1)]',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ audiencePlansSectionClass: 'bg-[#0D0A08] text-white py-14 border-t border-[var(--adm-bg-active)]',
  audiencePlansContainerClass: 'container mx-auto px-4',
  audiencePlansHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8',
  audiencePlansGridClass: 'grid lg:grid-cols-3 gap-5',
  audiencePlansCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.1)] bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.96))] p-6 shadow-xl shadow-black/20',
+ 'rounded-sm border border-[var(--adm-bg-active)] bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.96))] p-6 shadow-xl shadow-black/20',
  audiencePlansBadgeClass:
  'inline-flex items-center rounded-full border border-[rgba(239,68,68,0.25)] bg-[rgba(239,68,68,0.04)] px-3 py-1 text-xs font-semibold tracking-wide text-red-200',
- audiencePlansListClass: 'mt-5 space-y-3 text-sm text-[#7A6B58]',
+ audiencePlansListClass: 'mt-5 space-y-3 text-sm text-[var(--adm-text-muted)]',
  audiencePlansActionClass:
- 'mt-6 inline-flex items-center rounded-full border border-[rgba(184,115,51,0.35)] px-4 py-2 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[#1F1410]',
+ 'mt-6 inline-flex items-center rounded-full border border-[rgba(184,115,51,0.35)] px-4 py-2 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(184,115,51,0.6)] hover:text-[var(--adm-text)]',
  districtSpotlightsSectionClass:
- 'bg-[var(--bg-card)] text-[#1F1410] py-14 border-t border-[rgba(184,115,51,0.14)]',
+ 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-14 border-t border-[var(--adm-border)]',
  districtSpotlightsContainerClass: 'container mx-auto px-4',
  districtSpotlightsHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8',
  districtSpotlightsGridClass: 'grid md:grid-cols-2 lg:grid-cols-4 gap-5',
  districtSpotlightsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[linear-gradient(180deg,#fff,#f8fafc)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- historicalSitesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[linear-gradient(180deg,#fff,#f8fafc)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ historicalSitesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  historicalSitesContainerClass: 'container mx-auto px-4',
  historicalSitesHeaderWrapClass: 'flex items-center justify-between mb-6',
  historicalSitesGridClass: 'grid md:grid-cols-3 gap-5',
  historicalSitesCardClass:
- 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--bg-card)] transition hover:shadow-xl',
- historicalSitesImageWrapClass: 'h-44 overflow-hidden bg-[rgba(184,115,51,0.08)]',
+ 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--adm-bg-elev)] transition hover:shadow-xl',
+ historicalSitesImageWrapClass: 'h-44 overflow-hidden bg-[var(--adm-bg-hover)]',
  historicalSitesImageClass:
  'h-full w-full object-cover transition duration-300 group-hover:scale-105',
- featuredPlacesSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-14',
+ featuredPlacesSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-14',
  featuredPlacesContainerClass: 'container mx-auto px-4',
  featuredPlacesHeaderWrapClass: 'flex items-center justify-between mb-8',
  featuredPlacesGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-6',
- recentPlacesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-14',
+ recentPlacesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-14',
  recentPlacesContainerClass: 'container mx-auto px-4',
  recentPlacesGridClass: 'grid md:grid-cols-2 lg:grid-cols-4 gap-6',
  recentReviewsSectionClass:
- 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-14 border-t border-[rgba(184,115,51,0.14)]',
+ 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-14 border-t border-[var(--adm-border)]',
  recentReviewsContainerClass: 'container mx-auto px-4',
  recentReviewsHeaderWrapClass:
  'flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-8',
  recentReviewsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-5',
  recentReviewsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
- trustSignalsSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12 border-t border-[rgba(184,115,51,0.14)]',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5 transition hover:border-[rgba(239,68,68,0.3)] hover:shadow-lg',
+ trustSignalsSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12 border-t border-[var(--adm-border)]',
  trustSignalsContainerClass: 'container mx-auto px-4',
  trustSignalsHeaderWrapClass: 'flex items-center justify-between mb-6',
  trustSignalsGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-4',
  trustSignalsCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-4 transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[var(--bg-card)] hover:shadow-md',
- guidesCommunitySectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-4 transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[var(--adm-bg-elev)] hover:shadow-md',
+ guidesCommunitySectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-12',
  guidesCommunityContainerClass: 'container mx-auto px-4',
  guidesCommunityPanelClass: 'mb-6 rounded-sm border border-[rgba(234,179,8,0.25)] bg-[rgba(234,179,8,0.08)] p-5',
  guidesCommunityLinksWrapClass: 'mt-3 flex flex-wrap gap-2',
  guidesCommunityLinkClass:
- 'rounded-sm border border-amber-300 bg-[var(--bg-card)] px-4 py-2 text-sm font-semibold text-amber-400 hover:bg-[rgba(234,179,8,0.12)]',
+ 'rounded-sm border border-amber-300 bg-[var(--adm-bg-elev)] px-4 py-2 text-sm font-semibold text-amber-400 hover:bg-[rgba(234,179,8,0.12)]',
  guidesCommunityGridClass: 'grid sm:grid-cols-2 lg:grid-cols-3 gap-4',
  guidesCommunityGuideCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] px-5 py-4 font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- mainCategoriesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] px-5 py-4 font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ mainCategoriesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  mainCategoriesContainerClass: 'container mx-auto px-4',
  mainCategoriesGridClass: 'grid grid-cols-2 md:grid-cols-4 gap-3',
  mainCategoriesCardClass:
- 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-4 py-3 text-sm font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
- recipesSectionClass: 'bg-[rgba(184,115,51,0.06)] text-[#1F1410] py-12',
+ 'rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-4 py-3 text-sm font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:text-red-700',
+ recipesSectionClass: 'bg-[var(--adm-bg-hover)] text-[var(--adm-text)] py-12',
  recipesContainerClass: 'container mx-auto px-4',
  recipesHeaderWrapClass: 'flex items-center justify-between mb-6',
  recipesGridClass: 'grid md:grid-cols-2 lg:grid-cols-3 gap-5',
  recipesCardClass:
- 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--bg-card)] transition hover:shadow-lg',
- recipesImageWrapClass: 'h-44 overflow-hidden bg-[rgba(184,115,51,0.08)]',
+ 'group overflow-hidden rounded-sm border border-[rgba(234,179,8,0.25)] bg-[var(--adm-bg-elev)] transition hover:shadow-lg',
+ recipesImageWrapClass: 'h-44 overflow-hidden bg-[var(--adm-bg-hover)]',
  recipesImageClass:
  'h-full w-full object-cover transition duration-300 group-hover:scale-105',
- blogSectionClass: 'bg-[var(--bg-card)] text-[#1F1410] py-14',
+ blogSectionClass: 'bg-[var(--adm-bg-elev)] text-[var(--adm-text)] py-14',
  blogContainerClass: 'container mx-auto px-4',
  blogHeaderWrapClass: 'flex items-center justify-between mb-8',
  blogGridClass: 'grid md:grid-cols-3 gap-6',
  blogCardClass:
- 'group block overflow-hidden rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] transition hover:shadow-lg',
+ 'group block overflow-hidden rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] transition hover:shadow-lg',
  blogImageClass: 'h-48 w-full object-cover transition group-hover:scale-105',
- blogImageFallbackClass: 'h-48 w-full bg-[rgba(184,115,51,0.08)]',
- faqSectionClass: 'bg-[rgba(13,10,8,0.97)] text-white py-14 border-t border-[rgba(184,115,51,0.1)]',
+ blogImageFallbackClass: 'h-48 w-full bg-[var(--adm-bg-hover)]',
+ faqSectionClass: 'bg-[rgba(13,10,8,0.97)] text-white py-14 border-t border-[var(--adm-bg-active)]',
  faqContainerClass: 'container mx-auto px-4',
  faqIntroWrapClass: 'max-w-4xl',
  faqGridClass: 'mt-6 grid md:grid-cols-2 gap-4',
  faqCardClass: 'rounded-sm border border-[rgba(184,115,51,0.15)] bg-[#0D0A08] p-5',
- mainCtaSectionClass: 'bg-[#0D0A08] text-white py-16 border-t border-[rgba(184,115,51,0.1)]',
+ mainCtaSectionClass: 'bg-[#0D0A08] text-white py-16 border-t border-[var(--adm-bg-active)]',
  mainCtaContainerClass: 'container mx-auto px-4 text-center',
- mainCtaDescriptionClass: 'mt-3 text-[#7A6B58] max-w-2xl mx-auto',
+ mainCtaDescriptionClass: 'mt-3 text-[var(--adm-text-muted)] max-w-2xl mx-auto',
  mainCtaActionsWrapClass: 'mt-7 flex flex-col sm:flex-row gap-3 justify-center',
  mainCtaPrimaryButtonClass:
  'rounded-sm bg-red-600 px-7 py-3 font-bold text-white transition hover:bg-red-700',
@@ -3486,14 +3486,14 @@ useEffect(() => {
  addAllowlistIdentity(identity);
  };
 
- if (loading) return <div className="p-6 text-sm text-[#7A6B58]">Yükleniyor...</div>;
+ if (loading) return <div className="p-6 text-sm text-[var(--adm-text-muted)]">Yükleniyor…</div>;
 
  const sectionButtons = (onDraft: () => void, onPublish: () => void) => (
  <div className="mt-4 flex items-center gap-3">
  <button
  onClick={onDraft}
  disabled={saving}
- className="rounded-sm bg-[rgba(184,115,51,0.14)] px-4 py-2 text-sm font-semibold text-[#1F1410] hover:bg-[rgba(184,115,51,0.22)] disabled:opacity-60"
+ className="rounded-sm bg-[var(--adm-border)] px-4 py-2 text-sm font-semibold text-[var(--adm-text)] hover:bg-[rgba(184,115,51,0.22)] disabled:opacity-60"
  >
  {saving ? 'Kaydediliyor...' : 'Taslak Kaydet'}
  </button>
@@ -3586,10 +3586,10 @@ useEffect(() => {
 
  return (
  <div className="space-y-6">
- <div className="sticky top-20 z-20 rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)]/95 p-4 shadow-sm backdrop-blur">
+ <div className="sticky top-20 z-20 rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)]/95 p-4 shadow-sm backdrop-blur">
  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
  <div>
- <h2 className="text-base font-bold text-[#1F1410]">Admin Hızlı Geçiş</h2>
+ <h2 className="text-base font-bold text-[var(--adm-text)]">Admin Hızlı Geçiş</h2>
  <p className="text-xs text-[#4A3828]">
  Uzun içerik yönetim ekranında doğrudan ilgili form grubuna atlar.
  </p>
@@ -3597,12 +3597,12 @@ useEffect(() => {
  <button
  type="button"
  onClick={toggleJsonEditors}
- className="rounded-full border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] px-3 py-1 text-xs font-semibold text-[#7A6B58] transition hover:border-[rgba(184,115,51,0.4)] hover:bg-[rgba(184,115,51,0.08)]"
+ className="rounded-full border border-[var(--adm-border-strong)] bg-[var(--adm-bg-elev)] px-3 py-1 text-xs font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(184,115,51,0.4)] hover:bg-[var(--adm-bg-hover)]"
  >
  {jsonEditorsExpanded ? 'JSON fallback gizle' : 'JSON fallback göster'}
  </button>
  <input
- className="rounded-full border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] px-3 py-1 text-xs font-semibold text-[#7A6B58] outline-none transition placeholder:text-[#7A6B58] focus:border-[rgba(239,68,68,0.3)] focus:ring-2 focus:ring-[rgba(239,68,68,0.15)]"
+ className="rounded-full border border-[var(--adm-border-strong)] bg-[var(--adm-bg-elev)] px-3 py-1 text-xs font-semibold text-[var(--adm-text-muted)] outline-none transition placeholder:text-[var(--adm-text-muted)] focus:border-[rgba(239,68,68,0.3)] focus:ring-2 focus:ring-[rgba(239,68,68,0.15)]"
  value={adminQuickFilter}
  onChange={(event) => setAdminQuickFilter(event.target.value)}
  placeholder="Form ara..."
@@ -3610,7 +3610,7 @@ useEffect(() => {
  <button
  type="button"
  onClick={clearAdminQuickFilters}
- className="rounded-full border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] px-3 py-1 text-xs font-semibold text-[#7A6B58] transition hover:border-[rgba(184,115,51,0.2)] hover:bg-[var(--bg-card)]"
+ className="rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] px-3 py-1 text-xs font-semibold text-[var(--adm-text-muted)] transition hover:border-[var(--adm-border-strong)] hover:bg-[var(--adm-bg-elev)]"
  >
  Filtreleri temizle
  </button>
@@ -3623,28 +3623,28 @@ useEffect(() => {
  className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
  adminQuickGroupFilter === group
  ? 'border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.1)] text-red-400'
- : 'border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] text-[#7A6B58] hover:border-[rgba(184,115,51,0.2)] hover:bg-[var(--bg-card)]'
+ : 'border-[var(--adm-border)] bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] hover:border-[var(--adm-border-strong)] hover:bg-[var(--adm-bg-elev)]'
  }`}
  >
  {group}
- <span className="ml-1 rounded-full bg-[var(--bg-card)]/80 px-1.5 py-0.5 text-[9px] text-[#4A3828]">
+ <span className="ml-1 rounded-full bg-[var(--adm-bg-elev)]/80 px-1.5 py-0.5 text-[9px] text-[#4A3828]">
  {countAdminQuickGroup(group)}
  </span>
  </button>
  ))}
  </div>
  <div className="flex max-h-24 flex-wrap gap-2 overflow-auto lg:max-h-20 lg:max-w-4xl">
- <span className="rounded-full border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] px-3 py-1 text-xs font-semibold text-[#4A3828]">
+ <span className="rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] px-3 py-1 text-xs font-semibold text-[#4A3828]">
  {filteredAdminQuickSections.length}/{adminQuickSections.length} form
  </span>
  {filteredAdminQuickSections.map((title) => (
  <a
  key={title}
  href={`#${createAdminAnchorId(title)}`}
- className="inline-flex items-center gap-2 rounded-full border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] px-3 py-1 text-xs font-semibold text-[#7A6B58] transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[rgba(239,68,68,0.08)] hover:text-red-400"
+ className="inline-flex items-center gap-2 rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] px-3 py-1 text-xs font-semibold text-[var(--adm-text-muted)] transition hover:border-[rgba(239,68,68,0.3)] hover:bg-[rgba(239,68,68,0.08)] hover:text-red-400"
  >
  <span>{title.replace(' Form Editörü', '')}</span>
- <span className="rounded-full bg-[var(--bg-card)] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#4A3828]">
+ <span className="rounded-full bg-[var(--adm-bg-elev)] px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-[#4A3828]">
  {getAdminSectionGroup(title)}
  </span>
  </a>
@@ -3662,13 +3662,13 @@ useEffect(() => {
  id={createAdminAnchorId('Landing Şablon Kütüphanesi')}
  className="scroll-mt-32 rounded-sm border border-[rgba(99,102,241,0.2)] bg-[rgba(99,102,241,0.08)] p-5"
  >
- <h2 className="text-xl font-bold text-[#1F1410]">Landing Şablon Kütüphanesi</h2>
- <p className="mt-1 text-sm text-[#1F1410]">
+ <h2 className="text-xl font-bold text-[var(--adm-text)]">Landing Şablon Kütüphanesi</h2>
+ <p className="mt-1 text-sm text-[var(--adm-text)]">
  Hero dahil tüm landing bloklarını tek işlemle taslak veya canlıya uygula.
  </p>
  <div className="mt-4 grid gap-3 md:grid-cols-4">
  <select
- className="rounded-sm border border-[rgba(99,102,241,0.3)] bg-[var(--bg-card)] px-3 py-2 text-sm"
+ className="rounded-sm border border-[rgba(99,102,241,0.3)] bg-[var(--adm-bg-elev)] px-3 py-2 text-sm"
  value={presetScopeFilter}
  onChange={(e) => setPresetScopeFilter((e.target.value as PresetScopeFilter) || 'all')}
  >
@@ -3678,7 +3678,7 @@ useEffect(() => {
  <option value="ops">Ops / Service</option>
  </select>
  <select
- className="rounded-sm border border-[rgba(99,102,241,0.3)] bg-[var(--bg-card)] px-3 py-2 text-sm"
+ className="rounded-sm border border-[rgba(99,102,241,0.3)] bg-[var(--adm-bg-elev)] px-3 py-2 text-sm"
  value={presetTagFilter}
  onChange={(e) => setPresetTagFilter(e.target.value)}
  >
@@ -3690,7 +3690,7 @@ useEffect(() => {
  ))}
  </select>
  <select
- className="rounded-sm border border-[rgba(99,102,241,0.3)] bg-[var(--bg-card)] px-3 py-2 text-sm"
+ className="rounded-sm border border-[rgba(99,102,241,0.3)] bg-[var(--adm-bg-elev)] px-3 py-2 text-sm"
  value={selectedPresetId}
  onChange={(e) => setSelectedPresetId(e.target.value)}
  >
@@ -3701,7 +3701,7 @@ useEffect(() => {
  ))}
  </select>
  <select
- className="rounded-sm border border-[rgba(99,102,241,0.3)] bg-[var(--bg-card)] px-3 py-2 text-sm"
+ className="rounded-sm border border-[rgba(99,102,241,0.3)] bg-[var(--adm-bg-elev)] px-3 py-2 text-sm"
  value={presetMode}
  onChange={(e) => setPresetMode((e.target.value as SaveMode) || 'draft')}
  >
@@ -3717,22 +3717,22 @@ useEffect(() => {
  </button>
  <button
  onClick={() => void loadPresetPreview()}
- className="rounded-sm border border-[rgba(99,102,241,0.4)] bg-[var(--bg-card)] px-4 py-2 text-sm font-semibold text-[#7A6B58] hover:bg-[rgba(99,102,241,0.12)] disabled:opacity-60"
+ className="rounded-sm border border-[rgba(99,102,241,0.4)] bg-[var(--adm-bg-elev)] px-4 py-2 text-sm font-semibold text-[var(--adm-text-muted)] hover:bg-[rgba(99,102,241,0.12)] disabled:opacity-60"
  disabled={presetPreviewLoading || !selectedPresetId}
  >
  {presetPreviewLoading ? 'Hazırlanıyor...' : 'Şablon Fark Önizleme'}
  </button>
  </div>
  <div className="mt-3 flex flex-wrap gap-2">
- <span className="rounded-full border border-[rgba(99,102,241,0.2)] bg-[var(--bg-card)] px-3 py-1 text-xs font-semibold text-[#7A6B58]">
+ <span className="rounded-full border border-[rgba(99,102,241,0.2)] bg-[var(--adm-bg-elev)] px-3 py-1 text-xs font-semibold text-[var(--adm-text-muted)]">
  {filteredPresets.length}/{presets.length} şablon
  </span>
  <button
   onClick={() => setPresetScopeFilter('all')}
   className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
    presetScopeFilter === 'all'
-    ? 'border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.16)] text-[#1F1410]'
-    : 'border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.05)] text-[#7A6B58] hover:bg-[rgba(99,102,241,0.1)]'
+    ? 'border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.16)] text-[var(--adm-text)]'
+    : 'border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.05)] text-[var(--adm-text-muted)] hover:bg-[rgba(99,102,241,0.1)]'
   }`}
  >
   Tümü {presetScopeCounts.all}
@@ -3741,8 +3741,8 @@ useEffect(() => {
   onClick={() => setPresetScopeFilter('landing')}
   className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
    presetScopeFilter === 'landing'
-    ? 'border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.16)] text-[#1F1410]'
-    : 'border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.05)] text-[#7A6B58] hover:bg-[rgba(99,102,241,0.1)]'
+    ? 'border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.16)] text-[var(--adm-text)]'
+    : 'border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.05)] text-[var(--adm-text-muted)] hover:bg-[rgba(99,102,241,0.1)]'
   }`}
  >
   Landing {presetScopeCounts.landing}
@@ -3751,8 +3751,8 @@ useEffect(() => {
   onClick={() => setPresetScopeFilter('style')}
   className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
    presetScopeFilter === 'style'
-    ? 'border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.16)] text-[#1F1410]'
-    : 'border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.05)] text-[#7A6B58] hover:bg-[rgba(99,102,241,0.1)]'
+    ? 'border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.16)] text-[var(--adm-text)]'
+    : 'border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.05)] text-[var(--adm-text-muted)] hover:bg-[rgba(99,102,241,0.1)]'
   }`}
  >
   Style {presetScopeCounts.style}
@@ -3761,8 +3761,8 @@ useEffect(() => {
   onClick={() => setPresetScopeFilter('ops')}
   className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
    presetScopeFilter === 'ops'
-    ? 'border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.16)] text-[#1F1410]'
-    : 'border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.05)] text-[#7A6B58] hover:bg-[rgba(99,102,241,0.1)]'
+    ? 'border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.16)] text-[var(--adm-text)]'
+    : 'border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.05)] text-[var(--adm-text-muted)] hover:bg-[rgba(99,102,241,0.1)]'
   }`}
  >
   Ops {presetScopeCounts.ops}
@@ -3773,8 +3773,8 @@ useEffect(() => {
   onClick={() => setPresetTagFilter(tag)}
  className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
   presetTagFilter === tag
-   ? 'border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.16)] text-[#1F1410]'
-   : 'border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.05)] text-[#7A6B58] hover:bg-[rgba(99,102,241,0.1)]'
+   ? 'border-[rgba(99,102,241,0.45)] bg-[rgba(99,102,241,0.16)] text-[var(--adm-text)]'
+   : 'border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.05)] text-[var(--adm-text-muted)] hover:bg-[rgba(99,102,241,0.1)]'
  }`}
  >
  {tag}
@@ -3783,7 +3783,7 @@ useEffect(() => {
  {presetTagFilter !== 'all' && (
   <button
    onClick={() => setPresetTagFilter('all')}
-   className="rounded-full border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-3 py-1 text-xs font-semibold text-[#7A6B58] hover:bg-[rgba(184,115,51,0.12)]"
+   className="rounded-full border border-[var(--adm-border-strong)] bg-[var(--adm-bg-hover)] px-3 py-1 text-xs font-semibold text-[var(--adm-text-muted)] hover:bg-[var(--adm-bg-active)]"
   >
    Filtreyi Temizle
   </button>
@@ -3791,7 +3791,7 @@ useEffect(() => {
  {presetScopeFilter !== 'all' && (
   <button
    onClick={() => setPresetScopeFilter('all')}
-   className="rounded-full border border-[rgba(99,102,241,0.2)] bg-[rgba(99,102,241,0.08)] px-3 py-1 text-xs font-semibold text-[#7A6B58] hover:bg-[rgba(99,102,241,0.14)]"
+   className="rounded-full border border-[rgba(99,102,241,0.2)] bg-[rgba(99,102,241,0.08)] px-3 py-1 text-xs font-semibold text-[var(--adm-text-muted)] hover:bg-[rgba(99,102,241,0.14)]"
   >
    Kapsamı Sıfırla
   </button>
@@ -3802,50 +3802,50 @@ useEffect(() => {
     setPresetScopeFilter('all');
     setPresetTagFilter('all');
    }}
-   className="rounded-full border border-[rgba(239,68,68,0.22)] bg-[rgba(239,68,68,0.08)] px-3 py-1 text-xs font-semibold text-[#1F1410] hover:bg-[rgba(239,68,68,0.14)]"
+   className="rounded-full border border-[rgba(239,68,68,0.22)] bg-[rgba(239,68,68,0.08)] px-3 py-1 text-xs font-semibold text-[var(--adm-text)] hover:bg-[rgba(239,68,68,0.14)]"
   >
    Tüm Filtreleri Sıfırla
   </button>
  )}
  </div>
- <p className="mt-3 text-xs text-[#7A6B58]">
-  Aktif kapsam: <span className="font-semibold text-[#1F1410]">{presetScopeLabel}</span>
+ <p className="mt-3 text-xs text-[var(--adm-text-muted)]">
+  Aktif kapsam: <span className="font-semibold text-[var(--adm-text)]">{presetScopeLabel}</span>
   {presetTagFilter !== 'all' && (
    <>
     {' '}
-    · aktif etiket: <span className="font-semibold text-[#1F1410]">{presetTagFilter}</span>
+    · aktif etiket: <span className="font-semibold text-[var(--adm-text)]">{presetTagFilter}</span>
    </>
   )}
  </p>
- <p className="mt-1 text-xs text-[#7A6B58]">{presetScopeDescription}</p>
+ <p className="mt-1 text-xs text-[var(--adm-text-muted)]">{presetScopeDescription}</p>
  {filteredPresets.length === 0 && (
-  <div className="mt-4 rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.08)] p-3 text-sm text-[#1F1410]">
+  <div className="mt-4 rounded-sm border border-[var(--adm-border-strong)] bg-[var(--adm-bg-hover)] p-3 text-sm text-[var(--adm-text)]">
    Bu filtre kombinasyonunda şablon bulunamadı. Kapsamı veya etiketi sıfırlayıp tekrar deneyin.
   </div>
  )}
  {selectedPreset && (
- <div className="mt-4 rounded-sm border border-[rgba(99,102,241,0.2)] bg-[var(--bg-card)] p-3 text-sm text-[#1F1410]">
+ <div className="mt-4 rounded-sm border border-[rgba(99,102,241,0.2)] bg-[var(--adm-bg-elev)] p-3 text-sm text-[var(--adm-text)]">
  {(() => {
  const keyBreakdown = getPresetKeyBreakdown(selectedPreset);
  return (
  <div>
  <div className="flex flex-wrap items-center gap-2">
   <p className="font-semibold">{selectedPreset.label}</p>
-  <span className="rounded-full border border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.08)] px-2 py-1 text-[10px] uppercase tracking-wide text-[#7A6B58]">
+  <span className="rounded-full border border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.08)] px-2 py-1 text-[10px] uppercase tracking-wide text-[var(--adm-text-muted)]">
    Aktif preset
   </span>
  </div>
- <p className="mt-1 text-xs text-[#7A6B58]">{selectedPreset.description}</p>
- <p className="mt-2 text-xs text-[#7A6B58]">
-  Eşleşen preset: <span className="font-semibold text-[#1F1410]">{filteredPresets.length}</span>
-  {' '}· Kapsam: <span className="font-semibold text-[#1F1410]">{getPresetCardScopeLabel(selectedPreset)}</span>
-  {' '}· Anahtar sayısı: <span className="font-semibold text-[#1F1410]">{selectedPreset.keys.length}</span>
+ <p className="mt-1 text-xs text-[var(--adm-text-muted)]">{selectedPreset.description}</p>
+ <p className="mt-2 text-xs text-[var(--adm-text-muted)]">
+  Eşleşen preset: <span className="font-semibold text-[var(--adm-text)]">{filteredPresets.length}</span>
+  {' '}· Kapsam: <span className="font-semibold text-[var(--adm-text)]">{getPresetCardScopeLabel(selectedPreset)}</span>
+  {' '}· Anahtar sayısı: <span className="font-semibold text-[var(--adm-text)]">{selectedPreset.keys.length}</span>
  </p>
  <div className="mt-2 flex flex-wrap gap-2">
-  <span className="rounded-full border border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.08)] px-2 py-1 text-[10px] uppercase tracking-wide text-[#7A6B58]">
+  <span className="rounded-full border border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.08)] px-2 py-1 text-[10px] uppercase tracking-wide text-[var(--adm-text-muted)]">
    Landing anahtarı {keyBreakdown.homepageKeys}
   </span>
-  <span className="rounded-full border border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.08)] px-2 py-1 text-[10px] uppercase tracking-wide text-[#7A6B58]">
+  <span className="rounded-full border border-[rgba(99,102,241,0.18)] bg-[rgba(99,102,241,0.08)] px-2 py-1 text-[10px] uppercase tracking-wide text-[var(--adm-text-muted)]">
    Diğer anahtar {keyBreakdown.otherKeys}
   </span>
  </div>
@@ -3853,13 +3853,13 @@ useEffect(() => {
  {selectedPreset.tags.map((tag) => (
   <span
    key={`${selectedPreset.id}-${tag}`}
-   className="rounded-full border border-[rgba(99,102,241,0.2)] bg-[rgba(99,102,241,0.08)] px-2 py-1 text-[10px] uppercase tracking-wide text-[#7A6B58]"
+   className="rounded-full border border-[rgba(99,102,241,0.2)] bg-[rgba(99,102,241,0.08)] px-2 py-1 text-[10px] uppercase tracking-wide text-[var(--adm-text-muted)]"
   >
    {tag}
   </span>
  ))}
  </div>
- <p className="mt-1 text-xs text-[#7A6B58]">
+ <p className="mt-1 text-xs text-[var(--adm-text-muted)]">
  Anahtarlar: {selectedPreset.keys.join(', ')}
  </p>
  </div>
@@ -3868,14 +3868,14 @@ useEffect(() => {
  </div>
  )}
  {presetPreview && (
- <div className="mt-4 rounded-sm border border-[rgba(99,102,241,0.2)] bg-[var(--bg-card)] p-3">
- <p className="text-sm font-semibold text-[#1F1410]">
+ <div className="mt-4 rounded-sm border border-[rgba(99,102,241,0.2)] bg-[var(--adm-bg-elev)] p-3">
+ <p className="text-sm font-semibold text-[var(--adm-text)]">
  {presetPreview.presetLabel} için fark özeti
  </p>
- <div className="mt-2 space-y-2 text-xs text-[#1F1410]">
+ <div className="mt-2 space-y-2 text-xs text-[var(--adm-text)]">
  {presetPreview.keyDiffs.map((item) => (
  <div key={item.key} className="rounded border border-[rgba(99,102,241,0.15)] bg-[rgba(99,102,241,0.08)] p-2">
- <p className="font-mono text-[#1F1410]">{item.key}</p>
+ <p className="font-mono text-[var(--adm-text)]">{item.key}</p>
  <p>
  +{item.summary.added} / -{item.summary.removed} / ~{item.summary.changed}
  </p>
@@ -3895,7 +3895,7 @@ useEffect(() => {
  </div>
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
  <JsonEditorCard
  title="Ana Sayfa Yapılandırılmış Veri JSON (DB)"
  description="`homepage.schema` anahtarı (WebSite/Organization/WebPage script değerleri)"
@@ -3924,25 +3924,25 @@ useEffect(() => {
  <FormEditorCard title="Ana Sayfa Yapılandırılmış Veri Form Editörü">
  <div className="grid gap-2 md:grid-cols-2">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSchema().siteName || ''}
  onChange={(event) => updateHomepageSchemaField('siteName', event.target.value)}
  placeholder="Site adı"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSchema().alternateName || ''}
  onChange={(event) => updateHomepageSchemaField('alternateName', event.target.value)}
  placeholder="Alternatif ad"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSchema().baseUrl || ''}
  onChange={(event) => updateHomepageSchemaField('baseUrl', event.target.value)}
  placeholder="Base URL"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSchema().searchPathTemplate || ''}
  onChange={(event) =>
  updateHomepageSchemaField('searchPathTemplate', event.target.value)
@@ -3950,37 +3950,37 @@ useEffect(() => {
  placeholder="/arama?q={search_term_string}"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSchema().organizationId || ''}
  onChange={(event) => updateHomepageSchemaField('organizationId', event.target.value)}
  placeholder="/#organization"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSchema().webpageId || ''}
  onChange={(event) => updateHomepageSchemaField('webpageId', event.target.value)}
  placeholder="/#webpage"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSchema().cityName || ''}
  onChange={(event) => updateHomepageSchemaField('cityName', event.target.value)}
  placeholder="Şanlıurfa"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSchema().webpageName || ''}
  onChange={(event) => updateHomepageSchemaField('webpageName', event.target.value)}
  placeholder="WebPage adı"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSchema().trendingListName || ''}
  onChange={(event) => updateHomepageSchemaField('trendingListName', event.target.value)}
  placeholder="Trend liste adı"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSchema().servicesListName || ''}
  onChange={(event) => updateHomepageSchemaField('servicesListName', event.target.value)}
  placeholder="Servis liste adı"
@@ -3988,7 +3988,7 @@ useEffect(() => {
  </div>
  </FormEditorCard>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
  <JsonEditorCard
  title="Ana Sayfa SEO JSON (DB)"
  description="`homepage.seo` anahtarı (title, description, canonical, ogImage, keywords)"
@@ -4017,32 +4017,32 @@ useEffect(() => {
  <FormEditorCard title="Ana Sayfa SEO Form Editörü">
  <div className="grid gap-2 md:grid-cols-2">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSeo().title || ''}
  onChange={(event) => updateHomepageSeoField('title', event.target.value)}
  placeholder="SEO title"
  />
  <textarea
- className="min-h-24 rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="min-h-24 rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSeo().description || ''}
  onChange={(event) => updateHomepageSeoField('description', event.target.value)}
  placeholder="Meta description"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSeo().canonical || ''}
  onChange={(event) => updateHomepageSeoField('canonical', event.target.value)}
  placeholder="Canonical (/)"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHomepageSeo().ogImage || ''}
  onChange={(event) => updateHomepageSeoField('ogImage', event.target.value)}
  placeholder="OG görsel (/images/...)"
  />
  </div>
  <div className="mt-3 space-y-2">
- <p className="text-sm font-semibold text-[#1F1410]">Odak anahtar kelimeler</p>
+ <p className="text-sm font-semibold text-[var(--adm-text)]">Odak anahtar kelimeler</p>
  {(getHomepageSeo().keywords || []).map((keyword, idx) => (
  <div key={`homepage-seo-keyword-${idx}`} className="grid gap-2 md:grid-cols-[auto_1fr]">
  <div className="flex flex-wrap gap-2">
@@ -4066,7 +4066,7 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={keyword || ''}
  onChange={(event) => updateHomepageSeoKeyword(idx, event.target.value)}
  placeholder="Şanlıurfa"
@@ -4084,51 +4084,51 @@ useEffect(() => {
 
  <div
  id={createAdminAnchorId('Ana Sayfa Hero Yönetimi')}
- className="scroll-mt-32 rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5"
+ className="scroll-mt-32 rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5"
  >
- <h2 className="text-xl font-bold text-[#1F1410]">Ana Sayfa Hero Yönetimi (DB)</h2>
- <p className="mt-1 text-sm text-[#7A6B58]">
+ <h2 className="text-xl font-bold text-[var(--adm-text)]">Ana Sayfa Hero Yönetimi (DB)</h2>
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
  Hero metinleri ve görsel URL&apos;si database üzerinden yönetilir.
  </p>
  <div className="mt-5 grid gap-4 md:grid-cols-2">
  <label className="block">
- <span className="text-sm font-medium text-[#7A6B58]">Badge</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">Badge</span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={hero.badge}
  onChange={onField('badge')}
  />
  </label>
  <label className="block">
- <span className="text-sm font-medium text-[#7A6B58]">Arama Placeholder</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">Arama Placeholder</span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={hero.searchPlaceholder}
  onChange={onField('searchPlaceholder')}
  />
  </label>
  </div>
  <label className="mt-4 block">
- <span className="text-sm font-medium text-[#7A6B58]">Başlık</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">Başlık</span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={hero.title}
  onChange={onField('title')}
  />
  </label>
  <label className="mt-4 block">
- <span className="text-sm font-medium text-[#7A6B58]">Açıklama</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">Açıklama</span>
  <textarea
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  rows={4}
  value={hero.description}
  onChange={onField('description')}
  />
  </label>
  <label className="mt-4 block">
- <span className="text-sm font-medium text-[#7A6B58]">Arka Plan Görsel URL</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">Arka Plan Görsel URL</span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={hero.backgroundImage}
  onChange={onField('backgroundImage')}
  />
@@ -4165,49 +4165,49 @@ useEffect(() => {
  <FormEditorCard title="Hero Meta Form Editörü">
  <div className="grid gap-2 md:grid-cols-2">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().heroImageAlt || ''}
  onChange={(event) => updateHeroMetaField('heroImageAlt', event.target.value)}
  placeholder="Hero görsel alt metni"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().searchButtonLabel || ''}
  onChange={(event) => updateHeroMetaField('searchButtonLabel', event.target.value)}
  placeholder="Arama butonu"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().businessCardBadge || ''}
  onChange={(event) => updateHeroMetaField('businessCardBadge', event.target.value)}
  placeholder="İşletme kart rozeti"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().businessCardTitle || ''}
  onChange={(event) => updateHeroMetaField('businessCardTitle', event.target.value)}
  placeholder="İşletme kart başlığı"
  />
  <textarea
- className="min-h-20 rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="min-h-20 rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().businessCardDescription || ''}
  onChange={(event) => updateHeroMetaField('businessCardDescription', event.target.value)}
  placeholder="İşletme kart açıklaması"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().communityCardBadge || ''}
  onChange={(event) => updateHeroMetaField('communityCardBadge', event.target.value)}
  placeholder="Topluluk kart rozeti"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().communityCardTitle || ''}
  onChange={(event) => updateHeroMetaField('communityCardTitle', event.target.value)}
  placeholder="Topluluk kart başlığı"
  />
  <textarea
- className="min-h-20 rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="min-h-20 rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().communityCardDescription || ''}
  onChange={(event) =>
  updateHeroMetaField('communityCardDescription', event.target.value)
@@ -4215,50 +4215,50 @@ useEffect(() => {
  placeholder="Topluluk kart açıklaması"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().statsPanelTitle || ''}
  onChange={(event) => updateHeroMetaField('statsPanelTitle', event.target.value)}
  placeholder="İstatistik panel başlığı"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().statsPanelSubtitle || ''}
  onChange={(event) => updateHeroMetaField('statsPanelSubtitle', event.target.value)}
  placeholder="İstatistik panel açıklaması"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().statsActivePlacesLabel || ''}
  onChange={(event) => updateHeroMetaField('statsActivePlacesLabel', event.target.value)}
  placeholder="Aktif mekan etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().statsPharmacyLabel || ''}
  onChange={(event) => updateHeroMetaField('statsPharmacyLabel', event.target.value)}
  placeholder="Eczane etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().statsBusRouteLabel || ''}
  onChange={(event) => updateHeroMetaField('statsBusRouteLabel', event.target.value)}
  placeholder="Otobüs etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().statsEventsLabel || ''}
  onChange={(event) => updateHeroMetaField('statsEventsLabel', event.target.value)}
  placeholder="Etkinlik etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeroMeta().statsUpdatedPrefix || ''}
  onChange={(event) => updateHeroMetaField('statsUpdatedPrefix', event.target.value)}
  placeholder="Güncelleme ön eki"
  />
  </div>
- <details className="rounded border border-[rgba(184,115,51,0.14)] p-3">
- <summary className="cursor-pointer text-sm font-semibold text-[#1F1410]">
+ <details className="rounded border border-[var(--adm-border)] p-3">
+ <summary className="cursor-pointer text-sm font-semibold text-[var(--adm-text)]">
  Hero stil sınıfları
  </summary>
  <div className="mt-3 grid gap-2 md:grid-cols-2">
@@ -4288,7 +4288,7 @@ useEffect(() => {
  ].map((field) => (
  <input
  key={field}
- className="rounded border border-[rgba(184,115,51,0.25)] px-2 py-1 font-mono text-xs"
+ className="rounded border border-[var(--adm-border-strong)] px-2 py-1 font-mono text-xs"
  value={String(getHeroMeta()[field as keyof HeroMetaConfig] || '')}
  onChange={(event) =>
  updateHeroMetaField(field as keyof HeroMetaConfig, event.target.value)
@@ -4302,24 +4302,24 @@ useEffect(() => {
 
  <div
  id={createAdminAnchorId('Ana Sayfa Ana CTA Yönetimi')}
- className="scroll-mt-32 rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5"
+ className="scroll-mt-32 rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5"
  >
- <h2 className="text-xl font-bold text-[#1F1410]">Ana Sayfa Ana CTA Yönetimi (DB)</h2>
- <p className="mt-1 text-sm text-[#7A6B58]">
+ <h2 className="text-xl font-bold text-[var(--adm-text)]">Ana Sayfa Ana CTA Yönetimi (DB)</h2>
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
  Hero altı dönüşüm çağrısını database üzerinden yönetin.
  </p>
  <label className="mt-4 block">
- <span className="text-sm font-medium text-[#7A6B58]">Başlık</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">Başlık</span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={mainCta.title}
  onChange={(e) => setMainCta((p) => ({ ...p, title: e.target.value }))}
  />
  </label>
  <label className="mt-4 block">
- <span className="text-sm font-medium text-[#7A6B58]">Açıklama</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">Açıklama</span>
  <textarea
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  rows={3}
  value={mainCta.description}
  onChange={(e) => setMainCta((p) => ({ ...p, description: e.target.value }))}
@@ -4327,33 +4327,33 @@ useEffect(() => {
  </label>
  <div className="mt-4 grid gap-4 md:grid-cols-2">
  <label className="block">
- <span className="text-sm font-medium text-[#7A6B58]">Birincil Buton Metni</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">Birincil Buton Metni</span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={mainCta.primaryLabel}
  onChange={(e) => setMainCta((p) => ({ ...p, primaryLabel: e.target.value }))}
  />
  </label>
  <label className="block">
- <span className="text-sm font-medium text-[#7A6B58]">Birincil Buton Linki</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">Birincil Buton Linki</span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={mainCta.primaryHref}
  onChange={(e) => setMainCta((p) => ({ ...p, primaryHref: e.target.value }))}
  />
  </label>
  <label className="block">
- <span className="text-sm font-medium text-[#7A6B58]">İkincil Buton Metni</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">İkincil Buton Metni</span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={mainCta.secondaryLabel}
  onChange={(e) => setMainCta((p) => ({ ...p, secondaryLabel: e.target.value }))}
  />
  </label>
  <label className="block">
- <span className="text-sm font-medium text-[#7A6B58]">İkincil Buton Linki</span>
+ <span className="text-sm font-medium text-[var(--adm-text-muted)]">İkincil Buton Linki</span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={mainCta.secondaryHref}
  onChange={(e) => setMainCta((p) => ({ ...p, secondaryHref: e.target.value }))}
  />
@@ -4393,7 +4393,7 @@ useEffect(() => {
  }>(primaryActionsText, { items: [] }).items.map((item, idx) => (
  <div
  key={`pa-${idx}`}
- className="grid gap-2 rounded border border-[rgba(184,115,51,0.14)] p-2 md:grid-cols-2"
+ className="grid gap-2 rounded border border-[var(--adm-border)] p-2 md:grid-cols-2"
  >
  <div className="md:col-span-2 flex gap-2">
  <button
@@ -4416,25 +4416,25 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.title || ''}
  onChange={(e) => updatePrimaryActionItem(idx, 'title', e.target.value)}
  placeholder="Başlık"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.stat || ''}
  onChange={(e) => updatePrimaryActionItem(idx, 'stat', e.target.value)}
  placeholder="İstatistik"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.description || ''}
  onChange={(e) => updatePrimaryActionItem(idx, 'description', e.target.value)}
  placeholder="Açıklama"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(e) => updatePrimaryActionItem(idx, 'href', e.target.value)}
  placeholder="Bağlantı (/...)"
@@ -4474,7 +4474,7 @@ useEffect(() => {
 
  <FormEditorCard title="MVP Hızlı Başlangıç Form Editörü">
  {getMvpQuickStartCards().items.map((item, idx) => (
- <div key={`mvp-card-${idx}`} className="space-y-3 rounded border border-[rgba(184,115,51,0.14)] p-3">
+ <div key={`mvp-card-${idx}`} className="space-y-3 rounded border border-[var(--adm-border)] p-3">
  <div className="flex flex-wrap gap-2">
  <button
  className="rounded border px-2 py-1 text-xs"
@@ -4497,33 +4497,33 @@ useEffect(() => {
  </div>
  <div className="grid gap-2 md:grid-cols-2">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.badge || ''}
  onChange={(e) => updateMvpQuickStartCard(idx, 'badge', e.target.value)}
  placeholder="Rozet (Günlük İhtiyaç)"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(e) => updateMvpQuickStartCard(idx, 'href', e.target.value)}
  placeholder="Kart linki (/kesfet)"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.title || ''}
  onChange={(e) => updateMvpQuickStartCard(idx, 'title', e.target.value)}
  placeholder="Kart başlığı"
  />
  <textarea
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  rows={2}
  value={item.description || ''}
  onChange={(e) => updateMvpQuickStartCard(idx, 'description', e.target.value)}
  placeholder="Kart açıklaması"
  />
  </div>
- <div className="space-y-2 rounded-sm bg-[rgba(184,115,51,0.04)] p-3">
- <p className="text-xs font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <div className="space-y-2 rounded-sm bg-[var(--adm-bg-hover)] p-3">
+ <p className="text-xs font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  Kart Linkleri
  </p>
  {(item.links || []).map((link, linkIdx) => (
@@ -4544,13 +4544,13 @@ useEffect(() => {
  Aşağı
  </button>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={link.label || ''}
  onChange={(e) => updateMvpQuickStartLink(idx, linkIdx, 'label', e.target.value)}
  placeholder="Link etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={link.href || ''}
  onChange={(e) => updateMvpQuickStartLink(idx, linkIdx, 'href', e.target.value)}
  placeholder="Link (/...)"
@@ -4609,7 +4609,7 @@ useEffect(() => {
  }).items.map((item, idx) => (
  <div
  key={`featured-guide-${idx}`}
- className="grid gap-2 rounded-sm border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-2"
+ className="grid gap-2 rounded-sm border border-[var(--adm-border)] p-3 md:grid-cols-2"
  >
  <div className="flex flex-wrap gap-2 md:col-span-2">
  <button
@@ -4632,13 +4632,13 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.title || ''}
  onChange={(event) => updateFeaturedGuideItem(idx, 'title', event.target.value)}
  placeholder="Rehber başlığı"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(event) => updateFeaturedGuideItem(idx, 'href', event.target.value)}
  placeholder="Bağlantı (/...)"
@@ -4682,7 +4682,7 @@ useEffect(() => {
  }).items.map((item, idx) => (
  <div
  key={`qc-${idx}`}
- className="grid gap-2 rounded border border-[rgba(184,115,51,0.14)] p-2 md:grid-cols-2"
+ className="grid gap-2 rounded border border-[var(--adm-border)] p-2 md:grid-cols-2"
  >
  <div className="md:col-span-2 flex gap-2">
  <button
@@ -4705,13 +4705,13 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.slug || ''}
  onChange={(e) => updateQuickCategoryItem(idx, 'slug', e.target.value)}
  placeholder="slug (kebapcilar)"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.name || ''}
  onChange={(e) => updateQuickCategoryItem(idx, 'name', e.target.value)}
  placeholder="Görünen ad (Kebapçılar)"
@@ -4768,7 +4768,7 @@ useEffect(() => {
  }).items.map((item, idx) => (
  <div
  key={`hero-quick-link-${idx}`}
- className="grid gap-2 rounded-sm border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-2"
+ className="grid gap-2 rounded-sm border border-[var(--adm-border)] p-3 md:grid-cols-2"
  >
  <div className="flex flex-wrap gap-2 md:col-span-2">
  <button
@@ -4791,13 +4791,13 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.label || ''}
  onChange={(event) => updateHeroQuickLinkItem(idx, 'label', event.target.value)}
  placeholder="Link etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(event) => updateHeroQuickLinkItem(idx, 'href', event.target.value)}
  placeholder="Bağlantı (/...)"
@@ -4839,7 +4839,7 @@ useEffect(() => {
  {getLiveStatusCards().items.map((item, idx) => (
  <div
  key={`live-status-${idx}`}
- className="grid gap-2 rounded-sm border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-2"
+ className="grid gap-2 rounded-sm border border-[var(--adm-border)] p-3 md:grid-cols-2"
  >
  <div className="flex flex-wrap gap-2 md:col-span-2">
  <button
@@ -4862,43 +4862,43 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.key || ''}
  onChange={(e) => updateLiveStatusCard(idx, 'key', e.target.value)}
  placeholder="Anahtar (pharmacy)"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(e) => updateLiveStatusCard(idx, 'href', e.target.value)}
  placeholder="Link (/saglik/...)"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.title || ''}
  onChange={(e) => updateLiveStatusCard(idx, 'title', e.target.value)}
  placeholder="Başlık"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.metricLabel || ''}
  onChange={(e) => updateLiveStatusCard(idx, 'metricLabel', e.target.value)}
  placeholder="Metrik etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.statusText || ''}
  onChange={(e) => updateLiveStatusCard(idx, 'statusText', e.target.value)}
  placeholder="Durum metni"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.cta || ''}
  onChange={(e) => updateLiveStatusCard(idx, 'cta', e.target.value)}
  placeholder="CTA metni"
  />
  <input
- className="rounded border border-[rgba(184,115,51,0.25)] px-2 py-1 font-mono text-xs"
+ className="rounded border border-[var(--adm-border-strong)] px-2 py-1 font-mono text-xs"
  value={item.badgeClass || ''}
  onChange={(e) => updateLiveStatusCard(idx, 'badgeClass', e.target.value)}
  placeholder="Badge class"
@@ -4940,7 +4940,7 @@ useEffect(() => {
  {getServiceQuickLinks().items.map((item, idx) => (
  <div
  key={`service-quick-link-${idx}`}
- className="grid gap-2 rounded-sm border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-2"
+ className="grid gap-2 rounded-sm border border-[var(--adm-border)] p-3 md:grid-cols-2"
  >
  <div className="flex flex-wrap gap-2 md:col-span-2">
  <button
@@ -4963,37 +4963,37 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.key || ''}
  onChange={(event) => updateServiceQuickLink(idx, 'key', event.target.value)}
  placeholder="Anahtar (pharmacy)"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(event) => updateServiceQuickLink(idx, 'href', event.target.value)}
  placeholder="Link (/nobetci-eczaneler)"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.categoryLabel || ''}
  onChange={(event) => updateServiceQuickLink(idx, 'categoryLabel', event.target.value)}
  placeholder="Kategori etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.title || ''}
  onChange={(event) => updateServiceQuickLink(idx, 'title', event.target.value)}
  placeholder="Başlık"
  />
  <textarea
- className="min-h-20 rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="min-h-20 rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.description || ''}
  onChange={(event) => updateServiceQuickLink(idx, 'description', event.target.value)}
  placeholder="Açıklama"
  />
  <input
- className="rounded border border-[rgba(184,115,51,0.25)] px-2 py-1 font-mono text-xs"
+ className="rounded border border-[var(--adm-border-strong)] px-2 py-1 font-mono text-xs"
  value={item.hoverBorderClass || ''}
  onChange={(event) =>
  updateServiceQuickLink(idx, 'hoverBorderClass', event.target.value)
@@ -5001,7 +5001,7 @@ useEffect(() => {
  placeholder="Hover border class"
  />
  <input
- className="rounded border border-[rgba(184,115,51,0.25)] px-2 py-1 font-mono text-xs"
+ className="rounded border border-[var(--adm-border-strong)] px-2 py-1 font-mono text-xs"
  value={item.categoryLabelClass || ''}
  onChange={(event) =>
  updateServiceQuickLink(idx, 'categoryLabelClass', event.target.value)
@@ -5044,13 +5044,13 @@ useEffect(() => {
  <FormEditorCard title="Topluluk Paneli Form Editörü">
  <div className="grid gap-2 md:grid-cols-2">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getCommunityPanel().title || ''}
  onChange={(event) => updateCommunityPanelField('title', event.target.value)}
  placeholder="Panel başlığı"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getCommunityPanel().description || ''}
  onChange={(event) => updateCommunityPanelField('description', event.target.value)}
  placeholder="Panel açıklaması"
@@ -5060,7 +5060,7 @@ useEffect(() => {
  {getCommunityPanel().items.map((item, idx) => (
  <div
  key={`community-panel-item-${idx}`}
- className="grid gap-2 rounded-sm border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-2"
+ className="grid gap-2 rounded-sm border border-[var(--adm-border)] p-3 md:grid-cols-2"
  >
  <div className="flex flex-wrap gap-2 md:col-span-2">
  <button
@@ -5083,13 +5083,13 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.label || ''}
  onChange={(event) => updateCommunityPanelItem(idx, 'label', event.target.value)}
  placeholder="Link etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(event) => updateCommunityPanelItem(idx, 'href', event.target.value)}
  placeholder="Link (/topluluk)"
@@ -5132,7 +5132,7 @@ useEffect(() => {
  {getTrendingFallbackQueries().items.map((item, idx) => (
  <div
  key={`trending-fallback-query-${idx}`}
- className="grid gap-2 rounded border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-[auto_1fr]"
+ className="grid gap-2 rounded border border-[var(--adm-border)] p-3 md:grid-cols-[auto_1fr]"
  >
  <div className="flex flex-wrap gap-2">
  <button
@@ -5155,7 +5155,7 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.query || ''}
  onChange={(event) => updateTrendingFallbackQuery(idx, event.target.value)}
  placeholder="Şanlıurfa nöbetçi eczane"
@@ -5233,7 +5233,7 @@ useEffect(() => {
  return (
  <div
  key={`homepage-section-${sectionId}`}
- className="grid gap-2 rounded border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-[auto_auto_1fr_auto] md:items-center"
+ className="grid gap-2 rounded border border-[var(--adm-border)] p-3 md:grid-cols-[auto_auto_1fr_auto] md:items-center"
  >
  <button
  className="rounded border px-2 py-1 text-xs"
@@ -5248,12 +5248,12 @@ useEffect(() => {
  Aşağı
  </button>
  <div>
- <p className="text-sm font-semibold text-[#1F1410]">
+ <p className="text-sm font-semibold text-[var(--adm-text)]">
  {HOMEPAGE_SECTION_LABELS[sectionId] || sectionId}
  </p>
- <p className="text-xs text-[#7A6B58]">{sectionId}</p>
+ <p className="text-xs text-[var(--adm-text-muted)]">{sectionId}</p>
  </div>
- <label className="inline-flex items-center gap-2 text-sm text-[#7A6B58]">
+ <label className="inline-flex items-center gap-2 text-sm text-[var(--adm-text-muted)]">
  <input
  type="checkbox"
  checked={visible}
@@ -5297,11 +5297,11 @@ useEffect(() => {
  return (
  <div className="grid gap-3 md:grid-cols-2">
  <label className="block">
- <span className="text-xs font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <span className="text-xs font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  Rozet
  </span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={copy.mvpQuickStartBadge || ''}
  onChange={(e) =>
  updateHomepageSectionCopyField('mvpQuickStartBadge', e.target.value)
@@ -5309,11 +5309,11 @@ useEffect(() => {
  />
  </label>
  <label className="block">
- <span className="text-xs font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <span className="text-xs font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  CTA Linki
  </span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={copy.mvpQuickStartCtaHref || ''}
  onChange={(e) =>
  updateHomepageSectionCopyField('mvpQuickStartCtaHref', e.target.value)
@@ -5322,11 +5322,11 @@ useEffect(() => {
  />
  </label>
  <label className="block md:col-span-2">
- <span className="text-xs font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <span className="text-xs font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  Başlık
  </span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={copy.mvpQuickStartTitle || ''}
  onChange={(e) =>
  updateHomepageSectionCopyField('mvpQuickStartTitle', e.target.value)
@@ -5334,11 +5334,11 @@ useEffect(() => {
  />
  </label>
  <label className="block md:col-span-2">
- <span className="text-xs font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <span className="text-xs font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  Açıklama
  </span>
  <textarea
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  rows={3}
  value={copy.mvpQuickStartDescription || ''}
  onChange={(e) =>
@@ -5347,11 +5347,11 @@ useEffect(() => {
  />
  </label>
  <label className="block md:col-span-2">
- <span className="text-xs font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <span className="text-xs font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  CTA Metni
  </span>
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={copy.mvpQuickStartCtaLabel || ''}
  onChange={(e) =>
  updateHomepageSectionCopyField('mvpQuickStartCtaLabel', e.target.value)
@@ -5364,7 +5364,7 @@ useEffect(() => {
  </FormEditorCard>
 
  <FormEditorCard title="Ana Sayfa Section Metinleri Genel Form Editörü">
- <p className="text-sm text-[#7A6B58]">
+ <p className="text-sm text-[var(--adm-text-muted)]">
  MVP hızlı başlangıç dışındaki tüm ana sayfa başlık, açıklama ve CTA metinleri.
  </p>
  <div className="grid gap-3 md:grid-cols-2">
@@ -5377,12 +5377,12 @@ useEffect(() => {
  const multiline = /description|subtitle/i.test(field);
  return (
  <label key={field} className={multiline ? 'block md:col-span-2' : 'block'}>
- <span className="text-xs font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <span className="text-xs font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  {field}
  </span>
  {multiline ? (
  <textarea
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  rows={3}
  value={String(value || '')}
  onChange={(event) =>
@@ -5394,7 +5394,7 @@ useEffect(() => {
  />
  ) : (
  <input
- className="mt-1 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-1 w-full rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={String(value || '')}
  onChange={(event) =>
  updateHomepageSectionCopyField(
@@ -5487,11 +5487,11 @@ useEffect(() => {
  const styles = getHomepageSectionStyles();
  return (
  <label key={`mvp-style-${styleKey}`} className="block">
- <span className="text-xs font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <span className="text-xs font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  {styleKey}
  </span>
  <textarea
- className="mt-1 w-full rounded border border-[rgba(184,115,51,0.25)] px-2 py-1 font-mono text-xs"
+ className="mt-1 w-full rounded border border-[var(--adm-border-strong)] px-2 py-1 font-mono text-xs"
  rows={2}
  value={styles[styleKey] || ''}
  onChange={(event) =>
@@ -5505,12 +5505,12 @@ useEffect(() => {
  </FormEditorCard>
 
  <FormEditorCard title="Ana Sayfa Section Style Genel Form Editörü">
- <p className="text-sm text-[#7A6B58]">
+ <p className="text-sm text-[var(--adm-text-muted)]">
  MVP hızlı başlangıç dışındaki section class tokenlarını düzenler. Görsel sistemi bozmamak
  için JSON fallback korunur.
  </p>
- <details className="rounded border border-[rgba(184,115,51,0.14)] p-3">
- <summary className="cursor-pointer text-sm font-semibold text-[#1F1410]">
+ <details className="rounded border border-[var(--adm-border)] p-3">
+ <summary className="cursor-pointer text-sm font-semibold text-[var(--adm-text)]">
  Tüm genel style tokenları
  </summary>
  <div className="mt-3 space-y-2">
@@ -5521,11 +5521,11 @@ useEffect(() => {
  )
  .map(([field, value]) => (
  <label key={`section-style-${field}`} className="block">
- <span className="text-xs font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <span className="text-xs font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  {field}
  </span>
  <textarea
- className="mt-1 w-full rounded border border-[rgba(184,115,51,0.25)] px-2 py-1 font-mono text-xs"
+ className="mt-1 w-full rounded border border-[var(--adm-border-strong)] px-2 py-1 font-mono text-xs"
  rows={2}
  value={String(value || '')}
  onChange={(event) => updateHomepageSectionStyleField(field, event.target.value)}
@@ -5540,7 +5540,7 @@ useEffect(() => {
  {parseJsonSafe<{ items: Array<{ q: string; a: string }> }>(faqText, {
  items: [],
  }).items.map((item, idx) => (
- <div key={`faq-${idx}`} className="grid gap-2 rounded border border-[rgba(184,115,51,0.14)] p-2">
+ <div key={`faq-${idx}`} className="grid gap-2 rounded border border-[var(--adm-border)] p-2">
  <div className="flex gap-2">
  <button
  className="rounded border px-2 py-1 text-xs"
@@ -5562,13 +5562,13 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.q || ''}
  onChange={(e) => updateFaqItem(idx, 'q', e.target.value)}
  placeholder="Soru"
  />
  <textarea
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  rows={3}
  value={item.a || ''}
  onChange={(e) => updateFaqItem(idx, 'a', e.target.value)}
@@ -5623,19 +5623,19 @@ useEffect(() => {
  <FormEditorCard title="Header Marka Form Editörü">
  <div className="grid gap-2 md:grid-cols-3">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410] md:col-span-3"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] md:col-span-3"
  value={getHeaderBrand().topStripText || ''}
  onChange={(event) => updateHeaderBrandField('topStripText', event.target.value)}
  placeholder="Üst şerit metni"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeaderBrand().logoTitle || ''}
  onChange={(event) => updateHeaderBrandField('logoTitle', event.target.value)}
  placeholder="Logo ana metni"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeaderBrand().logoHighlight || ''}
  onChange={(event) => updateHeaderBrandField('logoHighlight', event.target.value)}
  placeholder="Logo vurgu metni"
@@ -5670,25 +5670,25 @@ useEffect(() => {
  <FormEditorCard title="Header Metin Etiketleri Form Editörü">
  <div className="grid gap-2 md:grid-cols-2">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeaderLabels().viewAllLabel || ''}
  onChange={(event) => updateHeaderLabelsField('viewAllLabel', event.target.value)}
  placeholder="Tümünü gör etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeaderLabels().loginLabel || ''}
  onChange={(event) => updateHeaderLabelsField('loginLabel', event.target.value)}
  placeholder="Giriş etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeaderLabels().registerLabel || ''}
  onChange={(event) => updateHeaderLabelsField('registerLabel', event.target.value)}
  placeholder="Kayıt etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getHeaderLabels().mobileBusinessCtaLabel || ''}
  onChange={(event) =>
  updateHeaderLabelsField('mobileBusinessCtaLabel', event.target.value)
@@ -5722,7 +5722,7 @@ useEffect(() => {
  />
 
  <FormEditorCard title="Sosyal Profil Form Editörü">
- <p className="text-sm text-[#7A6B58]">
+ <p className="text-sm text-[var(--adm-text-muted)]">
  Hesap yoksa kapalı bırakın; kapalı kanallar footer veya görünür alanda listelenmez.
  </p>
  <div className="space-y-3">
@@ -5731,9 +5731,9 @@ useEffect(() => {
  return (
  <div
  key={channel}
- className="grid gap-2 rounded border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-[auto_1fr_1fr] md:items-center"
+ className="grid gap-2 rounded border border-[var(--adm-border)] p-3 md:grid-cols-[auto_1fr_1fr] md:items-center"
  >
- <label className="inline-flex items-center gap-2 text-sm font-semibold text-[#1F1410]">
+ <label className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--adm-text)]">
  <input
  type="checkbox"
  checked={Boolean(profile.enabled)}
@@ -5744,13 +5744,13 @@ useEffect(() => {
  {SOCIAL_PROFILE_LABELS[channel]}
  </label>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={profile.handle || ''}
  onChange={(event) => updateSocialProfile(channel, 'handle', event.target.value)}
  placeholder="@kullaniciadi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={profile.url || ''}
  onChange={(event) => updateSocialProfile(channel, 'url', event.target.value)}
  placeholder="https://..."
@@ -5786,12 +5786,12 @@ useEffect(() => {
  />
 
  <FormEditorCard title="Header Mega Menü Form Editörü">
- <p className="text-sm text-[#7A6B58]">
+ <p className="text-sm text-[var(--adm-text-muted)]">
  Üst menü ve doğrudan alt linkleri yönetir. Gelişmiş grup yapısı gerekiyorsa JSON editör
  fallback olarak korunur.
  </p>
  {getHeaderMegaMenu().items.map((item, idx) => (
- <div key={`header-mega-${idx}`} className="space-y-3 rounded border border-[rgba(184,115,51,0.14)] p-3">
+ <div key={`header-mega-${idx}`} className="space-y-3 rounded border border-[var(--adm-border)] p-3">
  <div className="flex flex-wrap gap-2">
  <button
  className="rounded border px-2 py-1 text-xs"
@@ -5820,13 +5820,13 @@ useEffect(() => {
  </div>
  <div className="grid gap-2 md:grid-cols-2">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.label || ''}
  onChange={(event) => updateHeaderMegaMenuItem(idx, 'label', event.target.value)}
  placeholder="Menü etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(event) => updateHeaderMegaMenuItem(idx, 'href', event.target.value)}
  placeholder="Menü linki (/...)"
@@ -5836,7 +5836,7 @@ useEffect(() => {
  {(item.sub || []).map((link, linkIdx) => (
  <div
  key={`header-mega-${idx}-sub-${linkIdx}`}
- className="grid gap-2 rounded border border-[rgba(184,115,51,0.1)] p-2 md:grid-cols-2"
+ className="grid gap-2 rounded border border-[var(--adm-bg-active)] p-2 md:grid-cols-2"
  >
  <div className="flex flex-wrap gap-2 md:col-span-2">
  <button
@@ -5859,7 +5859,7 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={link.label || ''}
  onChange={(event) =>
  updateHeaderMegaSubLink(idx, linkIdx, 'label', event.target.value)
@@ -5867,7 +5867,7 @@ useEffect(() => {
  placeholder="Alt link etiketi"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={link.href || ''}
  onChange={(event) =>
  updateHeaderMegaSubLink(idx, linkIdx, 'href', event.target.value)
@@ -5917,7 +5917,7 @@ useEffect(() => {
  {getHeaderMobileLinks('quick').items.map((item, idx) => (
  <div
  key={`header-mobile-quick-${idx}`}
- className="grid gap-2 rounded-sm border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-2"
+ className="grid gap-2 rounded-sm border border-[var(--adm-border)] p-3 md:grid-cols-2"
  >
  <div className="flex flex-wrap gap-2 md:col-span-2">
  <button
@@ -5940,7 +5940,7 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.label || ''}
  onChange={(event) =>
  updateHeaderMobileLink('quick', idx, 'label', event.target.value)
@@ -5948,7 +5948,7 @@ useEffect(() => {
  placeholder="Etiket"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(event) => updateHeaderMobileLink('quick', idx, 'href', event.target.value)}
  placeholder="Bağlantı (/...)"
@@ -5992,7 +5992,7 @@ useEffect(() => {
  {getHeaderMobileLinks('all').items.map((item, idx) => (
  <div
  key={`header-mobile-all-${idx}`}
- className="grid gap-2 rounded-sm border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-2"
+ className="grid gap-2 rounded-sm border border-[var(--adm-border)] p-3 md:grid-cols-2"
  >
  <div className="flex flex-wrap gap-2 md:col-span-2">
  <button
@@ -6015,13 +6015,13 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.label || ''}
  onChange={(event) => updateHeaderMobileLink('all', idx, 'label', event.target.value)}
  placeholder="Etiket"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(event) => updateHeaderMobileLink('all', idx, 'href', event.target.value)}
  placeholder="Bağlantı (/...)"
@@ -6041,7 +6041,7 @@ useEffect(() => {
  }).items.map((item, idx) => (
  <div
  key={`h-${idx}`}
- className="grid gap-2 rounded border border-[rgba(184,115,51,0.14)] p-2 md:grid-cols-2"
+ className="grid gap-2 rounded border border-[var(--adm-border)] p-2 md:grid-cols-2"
  >
  <div className="md:col-span-2 flex gap-2">
  <button
@@ -6064,13 +6064,13 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.label || ''}
  onChange={(e) => updateHeaderItem(idx, 'label', e.target.value)}
  placeholder="Etiket"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(e) => updateHeaderItem(idx, 'href', e.target.value)}
  placeholder="Bağlantı (/...)"
@@ -6099,9 +6099,9 @@ useEffect(() => {
  />
  <FormEditorCard title="Footer Link Form Editörü">
  {(['explore', 'districts', 'popular', 'company', 'services'] as const).map((group) => (
- <div key={group} className="space-y-2 rounded border border-[rgba(184,115,51,0.14)] p-2">
+ <div key={group} className="space-y-2 rounded border border-[var(--adm-border)] p-2">
  <div className="flex items-center justify-between">
- <p className="text-xs font-semibold uppercase text-[#7A6B58]">{group}</p>
+ <p className="text-xs font-semibold uppercase text-[var(--adm-text-muted)]">{group}</p>
  <button
  className="rounded border border-[rgba(34,197,94,0.45)] px-2 py-1 text-[10px] text-emerald-400"
  onClick={() => addFooterItem(group)}
@@ -6143,13 +6143,13 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.label || ''}
  onChange={(e) => updateFooterItem(group, idx, 'label', e.target.value)}
  placeholder="Etiket"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(e) => updateFooterItem(group, idx, 'href', e.target.value)}
  placeholder="Bağlantı (/...)"
@@ -6181,25 +6181,25 @@ useEffect(() => {
  <FormEditorCard title="Footer Marka/Intro Form Editörü">
  <div className="grid gap-2 md:grid-cols-2">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getFooterBrand().title || ''}
  onChange={(event) => updateFooterBrandField('title', event.target.value)}
  placeholder="Marka başlığı"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getFooterBrand().highlight || ''}
  onChange={(event) => updateFooterBrandField('highlight', event.target.value)}
  placeholder="Marka vurgu metni"
  />
  <textarea
- className="min-h-24 rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="min-h-24 rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getFooterBrand().description || ''}
  onChange={(event) => updateFooterBrandField('description', event.target.value)}
  placeholder="Footer açıklaması"
  />
  <textarea
- className="min-h-20 rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm md:col-span-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="min-h-20 rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm md:col-span-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getFooterBrand().infoNote || ''}
  onChange={(event) => updateFooterBrandField('infoNote', event.target.value)}
  placeholder="Bilgi notu"
@@ -6232,7 +6232,7 @@ useEffect(() => {
 
  <FormEditorCard title="Footer Alt Satır Form Editörü">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={getFooterBottom().copyrightLabel || ''}
  onChange={(event) => updateFooterBottomField('copyrightLabel', event.target.value)}
  placeholder="Copyright metni"
@@ -6241,7 +6241,7 @@ useEffect(() => {
  {(getFooterBottom().legalLinks || []).map((item, idx) => (
  <div
  key={`footer-legal-${idx}`}
- className="grid gap-2 rounded-sm border border-[rgba(184,115,51,0.14)] p-3 md:grid-cols-2"
+ className="grid gap-2 rounded-sm border border-[var(--adm-border)] p-3 md:grid-cols-2"
  >
  <div className="flex flex-wrap gap-2 md:col-span-2">
  <button
@@ -6264,13 +6264,13 @@ useEffect(() => {
  </button>
  </div>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.label || ''}
  onChange={(event) => updateFooterLegalLink(idx, 'label', event.target.value)}
  placeholder="Etiket"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={item.href || ''}
  onChange={(event) => updateFooterLegalLink(idx, 'href', event.target.value)}
  placeholder="Bağlantı (/...)"
@@ -6310,10 +6310,10 @@ useEffect(() => {
  />
  <FormEditorCard title="Mekan Yaşam Döngüsü SLA Form Editörü">
  <div className="grid gap-3 md:grid-cols-3">
- <label className="text-xs text-[#7A6B58]">
+ <label className="text-xs text-[var(--adm-text-muted)]">
  <span className="mb-1 block font-semibold">Varsayılan Saat</span>
  <input
- className="w-full rounded border border-[rgba(184,115,51,0.25)] px-2 py-1"
+ className="w-full rounded border border-[var(--adm-border-strong)] px-2 py-1"
  type="number"
  value={getSlaTargets().defaultHours}
  onChange={(e) => updateSlaDefaultHours(Number(e.target.value || 48))}
@@ -6323,7 +6323,7 @@ useEffect(() => {
  <div className="grid gap-4 md:grid-cols-2">
  <div className="space-y-2">
  <div className="flex items-center justify-between">
- <p className="text-xs font-semibold uppercase text-[#7A6B58]">İlçeye Göre</p>
+ <p className="text-xs font-semibold uppercase text-[var(--adm-text-muted)]">İlçeye Göre</p>
  <button
  className="rounded border border-[rgba(34,197,94,0.45)] px-2 py-1 text-[10px] text-emerald-400"
  onClick={async () => {
@@ -6340,12 +6340,12 @@ useEffect(() => {
  {Object.entries(getSlaTargets().byDistrict || {}).map(([key, val]) => (
  <div key={`district-${key}`} className="grid gap-2 md:grid-cols-3">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={key}
  disabled
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={val}
  onChange={(e) => upsertSlaBucket('byDistrict', key, Number(e.target.value || 48))}
@@ -6362,7 +6362,7 @@ useEffect(() => {
 
  <div className="space-y-2">
  <div className="flex items-center justify-between">
- <p className="text-xs font-semibold uppercase text-[#7A6B58]">byTeam</p>
+ <p className="text-xs font-semibold uppercase text-[var(--adm-text-muted)]">byTeam</p>
  <button
  className="rounded border border-[rgba(34,197,94,0.45)] px-2 py-1 text-[10px] text-emerald-400"
  onClick={async () => {
@@ -6379,12 +6379,12 @@ useEffect(() => {
  {Object.entries(getSlaTargets().byTeam || {}).map(([key, val]) => (
  <div key={`team-${key}`} className="grid gap-2 md:grid-cols-3">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={key}
  disabled
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={val}
  onChange={(e) => upsertSlaBucket('byTeam', key, Number(e.target.value || 48))}
@@ -6462,32 +6462,32 @@ useEffect(() => {
  <div className="space-y-2">
  <div className="grid gap-2 md:grid-cols-4">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.scoreAlert}
  onChange={(e) => setRoot({ scoreAlert: Number(e.target.value || 70) })}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.zScoreAlert}
  onChange={(e) => setRoot({ zScoreAlert: Number(e.target.value || 2) })}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.minLastHour}
  onChange={(e) => setRoot({ minLastHour: Number(e.target.value || 2) })}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.minTotal}
  onChange={(e) => setRoot({ minTotal: Number(e.target.value || 5) })}
  />
  </div>
  <div className="flex items-center justify-between">
- <p className="text-xs font-semibold text-[#7A6B58]">Tenant Bazlı Özel Ayar</p>
+ <p className="text-xs font-semibold text-[var(--adm-text-muted)]">Tenant Bazlı Özel Ayar</p>
  <button
  className="rounded border border-[rgba(34,197,94,0.45)] px-2 py-1 text-[10px] text-emerald-400"
  onClick={async () => {
@@ -6502,15 +6502,15 @@ useEffect(() => {
  {Object.entries(cfg.byTenant || {}).map(([tenantId, t]) => (
  <div
  key={`tenant-th-${tenantId}`}
- className="grid gap-2 rounded border border-[rgba(184,115,51,0.14)] p-2 md:grid-cols-5"
+ className="grid gap-2 rounded border border-[var(--adm-border)] p-2 md:grid-cols-5"
  >
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410] md:col-span-1"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)] md:col-span-1"
  value={tenantId}
  disabled
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={t.scoreAlert ?? ''}
  onChange={(e) =>
@@ -6519,7 +6519,7 @@ useEffect(() => {
  placeholder="skor"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={t.zScoreAlert ?? ''}
  onChange={(e) =>
@@ -6528,7 +6528,7 @@ useEffect(() => {
  placeholder="z skoru"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={t.minLastHour ?? ''}
  onChange={(e) =>
@@ -6538,7 +6538,7 @@ useEffect(() => {
  />
  <div className="flex gap-2">
  <input
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={t.minTotal ?? ''}
  onChange={(e) =>
@@ -6599,7 +6599,7 @@ useEffect(() => {
  setSocialRiskWebhookText(JSON.stringify({ ...cfg, ...patch }, null, 2));
  return (
  <div className="grid gap-2 md:grid-cols-4">
- <label className="inline-flex items-center gap-2 text-xs text-[#7A6B58]">
+ <label className="inline-flex items-center gap-2 text-xs text-[var(--adm-text-muted)]">
  <input
  type="checkbox"
  checked={cfg.enabled}
@@ -6608,18 +6608,18 @@ useEffect(() => {
  Aktif
  </label>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={cfg.eventName}
  onChange={(e) => setCfg({ eventName: e.target.value })}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={cfg.userId || ''}
  onChange={(e) => setCfg({ userId: e.target.value })}
  placeholder="userId (opsiyonel)"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.cooldownMinutes}
  onChange={(e) => setCfg({ cooldownMinutes: Number(e.target.value || 30) })}
@@ -6688,7 +6688,7 @@ useEffect(() => {
  );
  return (
  <div className="grid gap-2 md:grid-cols-4">
- <label className="inline-flex items-center gap-2 text-xs text-[#7A6B58]">
+ <label className="inline-flex items-center gap-2 text-xs text-[var(--adm-text-muted)]">
  <input
  type="checkbox"
  checked={cfg.enabled}
@@ -6697,17 +6697,17 @@ useEffect(() => {
  Aktif
  </label>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.cooldownMinutes}
  onChange={(e) => setCfg({ cooldownMinutes: Number(e.target.value || 60) })}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410] md:col-span-2"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)] md:col-span-2"
  value={cfg.note}
  onChange={(e) => setCfg({ note: e.target.value })}
  />
- <label className="inline-flex items-center gap-2 text-xs text-[#7A6B58]">
+ <label className="inline-flex items-center gap-2 text-xs text-[var(--adm-text-muted)]">
  <input
  type="checkbox"
  checked={cfg.rollbackToDefaultWhenHealthy}
@@ -6716,37 +6716,37 @@ useEffect(() => {
  Sağlıklı durumda otomatik geri dönüş
  </label>
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.profile.swipeLimit}
  onChange={(e) => setProfile({ swipeLimit: Number(e.target.value || 60) })}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.profile.swipeWindowSeconds}
  onChange={(e) => setProfile({ swipeWindowSeconds: Number(e.target.value || 60) })}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.profile.followLimit}
  onChange={(e) => setProfile({ followLimit: Number(e.target.value || 30) })}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.profile.followWindowSeconds}
  onChange={(e) => setProfile({ followWindowSeconds: Number(e.target.value || 60) })}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.profile.messageWriteLimit}
  onChange={(e) => setProfile({ messageWriteLimit: Number(e.target.value || 40) })}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  type="number"
  value={cfg.profile.messageWriteWindowSeconds}
  onChange={(e) =>
@@ -6829,7 +6829,7 @@ useEffect(() => {
  placeholder="şüpheli kelimeler (virgülle)"
  />
  </div>
- <div className="mt-3 rounded border border-[rgba(239,68,68,0.25)] bg-[var(--bg-card)] p-3">
+ <div className="mt-3 rounded border border-[rgba(239,68,68,0.25)] bg-[var(--adm-bg-elev)] p-3">
  <p className="text-sm font-semibold text-rose-400">
  Allowlist (otomatik moderasyon dışı)
  </p>
@@ -6856,7 +6856,7 @@ useEffect(() => {
  {identity}
  <button
  onClick={() => removeAllowlistIdentity(identity)}
- className="rounded bg-[var(--bg-card)] px-1 text-[10px] font-semibold text-rose-400"
+ className="rounded bg-[var(--adm-bg-elev)] px-1 text-[10px] font-semibold text-rose-400"
  >
  Kaldır
  </button>
@@ -6867,14 +6867,14 @@ useEffect(() => {
  )}
  </div>
  </div>
- <div className="mt-3 rounded border border-[rgba(239,68,68,0.25)] bg-[var(--bg-card)] p-3">
+ <div className="mt-3 rounded border border-[rgba(239,68,68,0.25)] bg-[var(--adm-bg-elev)] p-3">
  <div className="flex items-center justify-between gap-2">
  <p className="text-sm font-semibold text-rose-400">Son anti-spam olayları</p>
  <button
  onClick={() => void loadAntiSpamEvents()}
  className="rounded bg-rose-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-800"
  >
- {antiSpamEventsLoading ? 'Yükleniyor...' : 'Yenile'}
+ {antiSpamEventsLoading ? 'Yükleniyor…' : 'Yenile'}
  </button>
  </div>
  <div className="mt-2 max-h-64 overflow-auto rounded border border-[rgba(239,68,68,0.15)]">
@@ -6908,7 +6908,7 @@ useEffect(() => {
  <td className="px-2 py-2">
  <button
  onClick={() => addAllowlistFromEvent(item)}
- className="rounded bg-[var(--bg-card)] px-2 py-1 text-[10px] font-semibold text-rose-400 border border-[rgba(239,68,68,0.35)]"
+ className="rounded bg-[var(--adm-bg-elev)] px-2 py-1 text-[10px] font-semibold text-rose-400 border border-[rgba(239,68,68,0.35)]"
  >
  Allowlist'e al
  </button>
@@ -6943,22 +6943,22 @@ useEffect(() => {
  </div>
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
- <h2 className="text-xl font-bold text-[#1F1410]">
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
+ <h2 className="text-xl font-bold text-[var(--adm-text)]">
  Görsel API Arama ve İçe Aktarma (Unsplash + Pexels)
  </h2>
- <p className="mt-1 text-sm text-[#7A6B58]">
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
  Arama yap, uygun görseli seç ve `site_media_assets` tablosuna kaydet.
  </p>
  <div className="mt-4 grid gap-3 md:grid-cols-3">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  placeholder="Arama (örn: Göbeklitepe gün batımı)"
  value={imageQuery}
  onChange={(e) => setImageQuery(e.target.value)}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  placeholder="Görsel anahtarı (örn: homepage.hero.background)"
  value={assetKey}
  onChange={(e) => setAssetKey(e.target.value)}
@@ -6975,14 +6975,14 @@ useEffect(() => {
  {imageResults.map((img, idx) => (
  <div
  key={`${img.provider}-${img.id}-${idx}`}
- className="rounded-sm border border-[rgba(184,115,51,0.14)] p-3"
+ className="rounded-sm border border-[var(--adm-border)] p-3"
  >
  <img
  src={img.thumb || img.url}
  alt={img.author || 'görsel'}
  className="h-40 w-full rounded object-cover"
  />
- <p className="mt-2 text-xs text-[#7A6B58]">
+ <p className="mt-2 text-xs text-[var(--adm-text-muted)]">
  {img.provider} / {img.author || 'Bilinmeyen'}
  </p>
  <button
@@ -6997,67 +6997,67 @@ useEffect(() => {
  )}
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
- <h2 className="text-xl font-bold text-[#1F1410]">Medya Kütüphanesi (DB)</h2>
- <p className="mt-1 text-sm text-[#7A6B58]">
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
+ <h2 className="text-xl font-bold text-[var(--adm-text)]">Medya Kütüphanesi (DB)</h2>
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
  Kaydedilen görselleri filtrele, hero alanına uygula veya gereksiz kayıtları temizle.
  </p>
  <div className="mt-4 grid gap-3 md:grid-cols-3">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  placeholder="Klasör filtresi (örn: places, blog)"
  value={mediaBucketFilter}
  onChange={(e) => setMediaBucketFilter(e.target.value)}
  />
  <button
  onClick={() => void loadMediaLibrary()}
- className="rounded-sm bg-[rgba(184,115,51,0.14)] px-4 py-2 text-sm font-semibold text-[#1F1410] hover:bg-[rgba(184,115,51,0.22)]"
+ className="rounded-sm bg-[var(--adm-border)] px-4 py-2 text-sm font-semibold text-[var(--adm-text)] hover:bg-[rgba(184,115,51,0.22)]"
  >
- {mediaLoading ? 'Yükleniyor...' : 'Kütüphaneyi Yenile'}
+ {mediaLoading ? 'Yükleniyor…' : 'Kütüphaneyi Yenile'}
  </button>
  </div>
 
  {mediaItems.length > 0 && (
  <div className="mt-4 grid gap-4 md:grid-cols-2">
  {mediaItems.map((item) => (
- <div key={item.asset_key} className="rounded-sm border border-[rgba(184,115,51,0.14)] p-3">
+ <div key={item.asset_key} className="rounded-sm border border-[var(--adm-border)] p-3">
  <img
  src={item.url}
  alt={item.alt || item.asset_key}
  className="h-40 w-full rounded object-cover"
  />
- <p className="mt-2 text-xs text-[#7A6B58] break-all">{item.asset_key}</p>
- <p className="mt-1 text-xs text-[#7A6B58]">
+ <p className="mt-2 text-xs text-[var(--adm-text-muted)] break-all">{item.asset_key}</p>
+ <p className="mt-1 text-xs text-[var(--adm-text-muted)]">
  {item.metadata?.provider || 'yerel'} / {item.metadata?.bucket || '-'}
  </p>
  <div className="mt-3 grid gap-2 md:grid-cols-2">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={mediaDrafts[item.asset_key]?.alt || ''}
  onChange={updateMediaDraftField(item.asset_key, 'alt')}
  placeholder="alt metni"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={mediaDrafts[item.asset_key]?.bucket || ''}
  onChange={updateMediaDraftField(item.asset_key, 'bucket')}
  placeholder="klasör"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={mediaDrafts[item.asset_key]?.provider || ''}
  onChange={updateMediaDraftField(item.asset_key, 'provider')}
  placeholder="sağlayıcı"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={mediaDrafts[item.asset_key]?.mimeType || ''}
  onChange={updateMediaDraftField(item.asset_key, 'mimeType')}
  placeholder="MIME tipi"
  />
  </div>
  <input
- className="mt-2 w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-2 py-1 text-xs bg-[var(--bg-card)] text-[#1F1410]"
+ className="mt-2 w-full rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={mediaDrafts[item.asset_key]?.url || item.url}
  onChange={updateMediaDraftField(item.asset_key, 'url')}
  placeholder="görsel URL"
@@ -7088,14 +7088,14 @@ useEffect(() => {
  )}
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
- <h2 className="text-xl font-bold text-[#1F1410]">Schema Tabanlı Alan Rehberi</h2>
- <p className="mt-1 text-sm text-[#7A6B58]">
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
+ <h2 className="text-xl font-bold text-[var(--adm-text)]">Schema Tabanlı Alan Rehberi</h2>
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
  Admin form alanlarının zorunlu şema yapısı. JSON editörden önce alan tiplerini doğrular.
  </p>
  <div className="mt-4 flex gap-3">
  <select
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={schemaKey}
  onChange={(e) => setSchemaKey(e.target.value)}
  >
@@ -7110,24 +7110,24 @@ useEffect(() => {
  {(schemaMap[schemaKey] || []).map((field) => (
  <div
  key={`${schemaKey}-${field.key}`}
- className="rounded border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-2 text-xs"
+ className="rounded border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-2 text-xs"
  >
- <p className="font-mono text-[#1F1410]">{field.key}</p>
- <p className="text-[#7A6B58]">
+ <p className="font-mono text-[var(--adm-text)]">{field.key}</p>
+ <p className="text-[var(--adm-text-muted)]">
  tip: {field.type} | zorunlu: {field.required ? 'evet' : 'hayır'}
  </p>
- {field.note && <p className="text-[#7A6B58]">{field.note}</p>}
+ {field.note && <p className="text-[var(--adm-text-muted)]">{field.note}</p>}
  </div>
  ))}
  </div>
  {schemaKey === 'homepage.hero' && (
  <div className="mt-4 rounded-sm border border-[rgba(99,102,241,0.2)] bg-[rgba(99,102,241,0.08)] p-3">
- <p className="text-sm font-semibold text-[#1F1410]">Otomatik Form (homepage.hero)</p>
+ <p className="text-sm font-semibold text-[var(--adm-text)]">Otomatik Form (homepage.hero)</p>
  <div className="mt-2 grid gap-2 md:grid-cols-2">
  {(schemaMap['homepage.hero'] || [])
  .filter((f) => f.type === 'string')
  .map((f) => (
- <label key={`auto-hero-${f.key}`} className="text-xs text-[#1F1410]">
+ <label key={`auto-hero-${f.key}`} className="text-xs text-[var(--adm-text)]">
  <span className="mb-1 block font-mono">{f.key}</span>
  <input
  className="w-full rounded border border-[rgba(99,102,241,0.3)] px-2 py-1"
@@ -7153,18 +7153,18 @@ useEffect(() => {
  )}
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
- <h2 className="text-xl font-bold text-[#1F1410]">Sürüm Geri Alma</h2>
- <p className="mt-1 text-sm text-[#7A6B58]">Yayınlanmış bir ayarı eski sürüme geri döndür.</p>
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
+ <h2 className="text-xl font-bold text-[var(--adm-text)]">Sürüm Geri Alma</h2>
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">Yayınlanmış bir ayarı eski sürüme geri döndür.</p>
  <div className="mt-4 grid gap-3 md:grid-cols-3">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={rollbackKey}
  onChange={(e) => setRollbackKey(e.target.value)}
  placeholder="ayar anahtarı"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={rollbackVersion}
  onChange={(e) => setRollbackVersion(e.target.value)}
  placeholder="sürüm no"
@@ -7200,14 +7200,14 @@ useEffect(() => {
  )}
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
- <h2 className="text-xl font-bold text-[#1F1410]">Ayar Sürüm Geçmişi</h2>
- <p className="mt-1 text-sm text-[#7A6B58]">
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
+ <h2 className="text-xl font-bold text-[var(--adm-text)]">Ayar Sürüm Geçmişi</h2>
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
  Belirli bir `setting_key` için son sürümleri listele.
  </p>
  <div className="mt-4 grid gap-3 md:grid-cols-3">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={historyKey}
  onChange={(e) => setHistoryKey(e.target.value)}
  placeholder="ayar anahtarı (örn: homepage.hero)"
@@ -7216,7 +7216,7 @@ useEffect(() => {
  onClick={() => void loadSettingHistory()}
  className="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700"
  >
- {historyLoading ? 'Yükleniyor...' : 'Geçmişi Getir'}
+ {historyLoading ? 'Yükleniyor…' : 'Geçmişi Getir'}
  </button>
  </div>
 
@@ -7224,7 +7224,7 @@ useEffect(() => {
  <div className="mt-4 overflow-x-auto">
  <table className="min-w-full text-sm">
  <thead>
- <tr className="border-b border-[rgba(184,115,51,0.14)] text-left text-[#7A6B58]">
+ <tr className="border-b border-[var(--adm-border)] text-left text-[var(--adm-text-muted)]">
  <th className="px-2 py-2">Sürüm</th>
  <th className="px-2 py-2">Not</th>
  <th className="px-2 py-2">Değiştiren</th>
@@ -7235,12 +7235,12 @@ useEffect(() => {
  {historyItems.map((item) => (
  <tr
  key={`${item.version_no}-${item.created_at || ''}`}
- className="border-b border-[rgba(184,115,51,0.1)]"
+ className="border-b border-[var(--adm-bg-active)]"
  >
- <td className="px-2 py-2 font-medium text-[#1F1410]">v{item.version_no}</td>
- <td className="px-2 py-2 text-[#7A6B58]">{item.note || '-'}</td>
- <td className="px-2 py-2 text-[#7A6B58]">{item.changed_by || '-'}</td>
- <td className="px-2 py-2 text-[#7A6B58]">
+ <td className="px-2 py-2 font-medium text-[var(--adm-text)]">v{item.version_no}</td>
+ <td className="px-2 py-2 text-[var(--adm-text-muted)]">{item.note || '-'}</td>
+ <td className="px-2 py-2 text-[var(--adm-text-muted)]">{item.changed_by || '-'}</td>
+ <td className="px-2 py-2 text-[var(--adm-text-muted)]">
  {item.created_at ? new Date(item.created_at).toLocaleString('tr-TR') : '-'}
  </td>
  </tr>
@@ -7251,26 +7251,26 @@ useEffect(() => {
  )}
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
- <h2 className="text-xl font-bold text-[#1F1410]">Ayar Sürüm Karşılaştırma</h2>
- <p className="mt-1 text-sm text-[#7A6B58]">
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
+ <h2 className="text-xl font-bold text-[var(--adm-text)]">Ayar Sürüm Karşılaştırma</h2>
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
  İki sürüm arasındaki alan bazlı farkları gösterir.
  </p>
  <div className="mt-4 grid gap-3 md:grid-cols-4">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={diffKey}
  onChange={(e) => setDiffKey(e.target.value)}
  placeholder="ayar anahtarı"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={diffFromVersion}
  onChange={(e) => setDiffFromVersion(e.target.value)}
  placeholder="önceki sürüm"
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  value={diffToVersion}
  onChange={(e) => setDiffToVersion(e.target.value)}
  placeholder="sonraki sürüm"
@@ -7279,27 +7279,27 @@ useEffect(() => {
  onClick={() => void loadSettingDiff()}
  className="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700"
  >
- {diffLoading ? 'Yükleniyor...' : 'Farkı Getir'}
+ {diffLoading ? 'Yükleniyor…' : 'Farkı Getir'}
  </button>
  </div>
 
  {diffResult && (
  <div className="mt-4 space-y-3 text-sm">
- <p className="text-[#7A6B58]">
+ <p className="text-[var(--adm-text-muted)]">
  Özet: +{diffResult.summary.added} / -{diffResult.summary.removed} / ~
  {diffResult.summary.changed}
  </p>
 
  {diffResult.diff.changed.length > 0 && (
  <div>
- <h3 className="font-semibold text-[#1F1410]">Değişen Alanlar</h3>
+ <h3 className="font-semibold text-[var(--adm-text)]">Değişen Alanlar</h3>
  <div className="mt-2 space-y-2">
  {diffResult.diff.changed.slice(0, 50).map((item) => (
  <div
  key={`chg-${item.path}`}
- className="rounded border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-2"
+ className="rounded border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-2"
  >
- <p className="font-mono text-xs text-[#1F1410]">{item.path}</p>
+ <p className="font-mono text-xs text-[var(--adm-text)]">{item.path}</p>
  <p className="text-xs text-rose-400">Eski: {item.prev}</p>
  <p className="text-xs text-emerald-400">Yeni: {item.next}</p>
  </div>
@@ -7310,7 +7310,7 @@ useEffect(() => {
 
  {diffResult.diff.added.length > 0 && (
  <div>
- <h3 className="font-semibold text-[#1F1410]">Eklenen Alanlar</h3>
+ <h3 className="font-semibold text-[var(--adm-text)]">Eklenen Alanlar</h3>
  <ul className="mt-2 list-disc pl-5 text-xs text-emerald-400">
  {diffResult.diff.added.slice(0, 50).map((item) => (
  <li key={`add-${item.path}`} className="font-mono">
@@ -7323,7 +7323,7 @@ useEffect(() => {
 
  {diffResult.diff.removed.length > 0 && (
  <div>
- <h3 className="font-semibold text-[#1F1410]">Silinen Alanlar</h3>
+ <h3 className="font-semibold text-[var(--adm-text)]">Silinen Alanlar</h3>
  <ul className="mt-2 list-disc pl-5 text-xs text-amber-400">
  {diffResult.diff.removed.slice(0, 50).map((item) => (
  <li key={`rem-${item.path}`} className="font-mono">
@@ -7337,29 +7337,29 @@ useEffect(() => {
  )}
  </div>
 
- <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5">
- <h2 className="text-xl font-bold text-[#1F1410]">Denetim Zaman Akışı</h2>
- <p className="mt-1 text-sm text-[#7A6B58]">
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
+ <h2 className="text-xl font-bold text-[var(--adm-text)]">Denetim Zaman Akışı</h2>
+ <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
  İçerik/görsel değişikliklerinin kim-ne-zaman kaydını filtreleyerek görüntüleyin.
  </p>
  <div className="mt-4 grid gap-3 md:grid-cols-4">
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  placeholder="anahtar filtresi (örn: homepage.hero)"
  value={auditKeyFilter}
  onChange={(e) => setAuditKeyFilter(e.target.value)}
  />
  <input
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 bg-[var(--bg-card)] text-[#1F1410]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
  placeholder="işlem filtresi (draft_save/publish/rollback/media_import)"
  value={auditActionFilter}
  onChange={(e) => setAuditActionFilter(e.target.value)}
  />
  <button
  onClick={() => void loadAuditTimeline()}
- className="rounded-sm bg-[rgba(184,115,51,0.1)] px-4 py-2 text-sm font-semibold text-[#1F1410] hover:bg-[rgba(184,115,51,0.18)]"
+ className="rounded-sm bg-[var(--adm-bg-active)] px-4 py-2 text-sm font-semibold text-[var(--adm-text)] hover:bg-[rgba(184,115,51,0.18)]"
  >
- {auditLoading ? 'Yükleniyor...' : 'Zaman Akışını Getir'}
+ {auditLoading ? 'Yükleniyor…' : 'Zaman Akışını Getir'}
  </button>
  <a
  href={`/api/admin/site/audit/export?${new URLSearchParams({
@@ -7377,7 +7377,7 @@ useEffect(() => {
  <div className="mt-4 overflow-x-auto">
  <table className="min-w-full text-sm">
  <thead>
- <tr className="border-b border-[rgba(184,115,51,0.14)] text-left text-[#7A6B58]">
+ <tr className="border-b border-[var(--adm-border)] text-left text-[var(--adm-text-muted)]">
  <th className="px-2 py-2">Tarih</th>
  <th className="px-2 py-2">Anahtar</th>
  <th className="px-2 py-2">İşlem</th>
@@ -7388,17 +7388,17 @@ useEffect(() => {
  </thead>
  <tbody>
  {auditItems.map((item) => (
- <tr key={item.id} className="border-b border-[rgba(184,115,51,0.1)]">
- <td className="px-2 py-2 text-xs text-[#7A6B58]">
+ <tr key={item.id} className="border-b border-[var(--adm-bg-active)]">
+ <td className="px-2 py-2 text-xs text-[var(--adm-text-muted)]">
  {item.created_at ? new Date(item.created_at).toLocaleString('tr-TR') : '-'}
  </td>
- <td className="px-2 py-2 font-mono text-xs text-[#1F1410]">
+ <td className="px-2 py-2 font-mono text-xs text-[var(--adm-text)]">
  {item.setting_key}
  </td>
  <td className="px-2 py-2 text-xs text-blue-300">{item.action}</td>
- <td className="px-2 py-2 text-xs text-[#7A6B58]">{item.actor_email || '-'}</td>
- <td className="px-2 py-2 text-xs text-[#7A6B58]">{item.ip_address || '-'}</td>
- <td className="px-2 py-2 text-xs text-[#7A6B58] font-mono">
+ <td className="px-2 py-2 text-xs text-[var(--adm-text-muted)]">{item.actor_email || '-'}</td>
+ <td className="px-2 py-2 text-xs text-[var(--adm-text-muted)]">{item.ip_address || '-'}</td>
+ <td className="px-2 py-2 text-xs text-[var(--adm-text-muted)] font-mono">
  {item.metadata ? JSON.stringify(item.metadata).slice(0, 140) : '-'}
  </td>
  </tr>
@@ -7409,7 +7409,7 @@ useEffect(() => {
  )}
  </div>
 
- {status && <p className="text-sm font-medium text-[#7A6B58]">{status}</p>}
+ {status && <p className="text-sm font-medium text-[var(--adm-text-muted)]">{status}</p>}
  </div>
  );
 }
@@ -7424,16 +7424,16 @@ function JsonEditorCard(props: {
  onPublish: () => void;
 }) {
  return (
- <details data-json-editor-card className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-5">
+ <details data-json-editor-card className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-5">
  <summary className="cursor-pointer select-none">
- <span className="text-base font-bold text-[#1F1410]">{props.title}</span>
- <span className="ml-2 rounded-full bg-[rgba(184,115,51,0.14)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <span className="text-base font-bold text-[var(--adm-text)]">{props.title}</span>
+ <span className="ml-2 rounded-full bg-[var(--adm-border)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  JSON fallback
  </span>
- <span className="mt-1 block text-sm text-[#7A6B58]">{props.description}</span>
+ <span className="mt-1 block text-sm text-[var(--adm-text-muted)]">{props.description}</span>
  </summary>
  <textarea
- className="mt-3 w-full rounded-sm border border-[rgba(184,115,51,0.25)] bg-[var(--bg-card)] px-3 py-2 font-mono text-xs"
+ className="mt-3 w-full rounded-sm border border-[var(--adm-border-strong)] bg-[var(--adm-bg-elev)] px-3 py-2 font-mono text-xs"
  rows={12}
  value={props.value}
  onChange={(e) => props.onChange(e.target.value)}
@@ -7442,14 +7442,14 @@ function JsonEditorCard(props: {
  {props.onLoadTemplate && (
  <button
  onClick={props.onLoadTemplate}
- className="rounded-sm border border-[rgba(99,102,241,0.3)] bg-[rgba(99,102,241,0.08)] px-4 py-2 text-sm font-semibold text-[#7A6B58] hover:bg-[rgba(99,102,241,0.12)]"
+ className="rounded-sm border border-[rgba(99,102,241,0.3)] bg-[rgba(99,102,241,0.08)] px-4 py-2 text-sm font-semibold text-[var(--adm-text-muted)] hover:bg-[rgba(99,102,241,0.12)]"
  >
  Şablon Yükle
  </button>
  )}
  <button
  onClick={props.onDraft}
- className="rounded-sm bg-[rgba(184,115,51,0.14)] px-4 py-2 text-sm font-semibold text-[#1F1410] hover:bg-[rgba(184,115,51,0.22)]"
+ className="rounded-sm bg-[var(--adm-border)] px-4 py-2 text-sm font-semibold text-[var(--adm-text)] hover:bg-[rgba(184,115,51,0.22)]"
  >
  Taslak Kaydet
  </button>
@@ -7504,11 +7504,11 @@ function FormEditorCard(props: { title: string; children: ReactNode }) {
  return (
  <div
  id={createAdminAnchorId(props.title)}
- className="scroll-mt-32 rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5"
+ className="scroll-mt-32 rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5"
  >
- <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[rgba(184,115,51,0.1)] pb-3">
- <h3 className="text-base font-bold text-[#1F1410]">{props.title}</h3>
- <span className="rounded-full border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#7A6B58]">
+ <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--adm-bg-active)] pb-3">
+ <h3 className="text-base font-bold text-[var(--adm-text)]">{props.title}</h3>
+ <span className="rounded-full border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[var(--adm-text-muted)]">
  {group}
  </span>
  </div>

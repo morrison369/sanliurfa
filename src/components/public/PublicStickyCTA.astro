@@ -85,14 +85,21 @@ const { shareUrl, shareTitle, commentAnchor, customLabel, customHref, customIcon
   // Web Share API + clipboard fallback
   if (!window.__sfShare) {
     window.__sfShare = async (title, url) => {
+      let method = 'unknown';
       try {
         if (navigator.share) {
+          method = 'web_share';
           await navigator.share({ title, url });
         } else if (navigator.clipboard) {
+          method = 'clipboard';
           await navigator.clipboard.writeText(url);
           alert('Bağlantı kopyalandı: ' + url);
         } else {
+          method = 'prompt';
           window.prompt('Bu bağlantıyı kopyalayın:', url);
+        }
+        if (typeof window.sfTrack === 'function') {
+          window.sfTrack('content_share', { method, url });
         }
       } catch (e) {
         // user cancelled — no-op

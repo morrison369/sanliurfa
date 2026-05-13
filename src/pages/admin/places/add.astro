@@ -1,6 +1,6 @@
 ---
 import { Icon } from 'astro-icon/components';
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
 
@@ -37,17 +37,17 @@ const days = [
 
 <AdminLayout
  title="Yeni Mekan Ekle"
- subtitle="Mekan bilgilerini doldurun"
+ subtitle="Mekan bilgilerini doldurun, taslak veya aktif olarak kaydedin"
  seo={{ title: 'Mekan Ekle - Yönetim Paneli', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-6xl space-y-5">
- <div class="mb-2">
- <a href="/admin/places" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Mekanlar</a>
- </div>
+ <a slot="page-actions" href="/admin/places" class="plf-back">
+  <Icon name="lucide:arrow-left" class="w-4 h-4" /> Mekanlar
+ </a>
 
+ <div class="plf-wrap">
  <form action="/api/admin/places/create" method="POST" class="grid lg:grid-cols-3 gap-6" enctype="multipart/form-data">
  <div class="lg:col-span-2 space-y-5">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Temel Bilgiler</h2>
  <div class="space-y-4">
  <div>
@@ -57,7 +57,7 @@ const days = [
  id="name"
  name="name"
  required
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="Örn: Ciğerci Aziz Usta"
  />
  </div>
@@ -65,7 +65,7 @@ const days = [
  <div class="grid sm:grid-cols-2 gap-4">
  <div>
  <label for="category_id" class="block text-sm font-medium text-[#7A6B58] mb-1">Kategori *</label>
- <select id="category_id" name="category_id" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <select id="category_id" name="category_id" required class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
  <option value="">Kategori seçin</option>
  {categories.map(cat => (
  <option value={cat.id}>{cat.name}</option>
@@ -74,7 +74,7 @@ const days = [
  </div>
  <div>
  <label for="price_range" class="block text-sm font-medium text-[#7A6B58] mb-1">Fiyat Aralığı</label>
- <select id="price_range" name="price_range" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
+ <select id="price_range" name="price_range" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
  <option value="1">₺ - Ucuz</option>
  <option value="2">₺₺ - Orta</option>
  <option value="3">₺₺₺ - Pahalı</option>
@@ -90,7 +90,7 @@ const days = [
  name="description"
  rows="4"
  required
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 resize-none"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 resize-none"
  placeholder="Mekan hakkında detaylı açıklama..."
  ></textarea>
  </div>
@@ -102,14 +102,14 @@ const days = [
  id="short_description"
  name="short_description"
  maxlength="150"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="Mekanın kısa özeti (150 karakter)"
  />
  </div>
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-base font-semibold text-[#7A6B58] mb-4">İletişim Bilgileri</h2>
  <div class="space-y-4">
  <div>
@@ -121,7 +121,7 @@ const days = [
  id="address"
  name="address"
  required
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="Tam adres"
  />
  </div>
@@ -136,7 +136,7 @@ const days = [
  type="tel"
  id="phone"
  name="phone"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="+90 414 123 45 67"
  />
  </div>
@@ -149,7 +149,7 @@ const days = [
  type="email"
  id="email"
  name="email"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="info@ornek.com"
  />
  </div>
@@ -164,7 +164,7 @@ const days = [
  type="url"
  id="website"
  name="website"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="https://www.ornek.com"
  />
  </div>
@@ -172,7 +172,7 @@ const days = [
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Çalışma Saatleri</h2>
  <div class="space-y-3">
  {days.map(day => (
@@ -181,7 +181,7 @@ const days = [
  <input
  type="text"
  name={`opening_hours_${day.id}`}
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="08:00 - 22:00 veya Kapalı"
  />
  </div>
@@ -189,7 +189,7 @@ const days = [
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Konum</h2>
  <div class="grid sm:grid-cols-2 gap-4">
  <div>
@@ -199,7 +199,7 @@ const days = [
  id="latitude"
  name="latitude"
  step="any"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="37.1592"
  />
  </div>
@@ -210,7 +210,7 @@ const days = [
  id="longitude"
  name="longitude"
  step="any"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="38.7965"
  />
  </div>
@@ -220,11 +220,11 @@ const days = [
   <div class="flex items-center justify-between mb-2">
     <p class="text-sm text-[#7A6B58]">📍 Haritadan seçin (Şanlıurfa merkez):</p>
     <div class="flex gap-2">
-      <button type="button" id="map-center-urfa" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Şanlıurfa Merkez</button>
-      <button type="button" id="map-use-current" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Mevcut Konumum</button>
+      <button type="button" id="map-center-urfa" class="text-xs px-2.5 py-1 rounded-sm bg-[var(--adm-bg-hover)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Şanlıurfa Merkez</button>
+      <button type="button" id="map-use-current" class="text-xs px-2.5 py-1 rounded-sm bg-[var(--adm-bg-hover)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Mevcut Konumum</button>
     </div>
   </div>
-  <div id="place-location-map" style="height:320px;width:100%;border:1px solid rgba(184,115,51,0.2);border-radius:4px;background:#f5edda"></div>
+  <div id="place-location-map" style="height:320px;width:100%;border:1px solid var(--adm-border-strong);border-radius:4px;background:#f5edda"></div>
   <p class="text-xs text-[#9B8A75] mt-2">Haritada istediğiniz yere tıklayın — koordinatlar otomatik dolacak. Alternatif: Google Maps'ten elle yapıştır.</p>
  </div>
  </div>
@@ -296,7 +296,7 @@ const days = [
  </div>
 
  <aside class="space-y-5">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h3 class="font-semibold text-[#7A6B58] mb-4">Yayınla</h3>
  <div class="space-y-3">
  <label class="flex items-center gap-2">
@@ -308,10 +308,10 @@ const days = [
  <span class="text-sm text-[#7A6B58]">Doğrulanmış mekan</span>
  </label>
  </div>
- <div class="mt-4 pt-4 border-t border-[rgba(184,115,51,0.14)] space-y-3">
+ <div class="mt-4 pt-4 border-t border-[var(--adm-border)] space-y-3">
  <div>
  <label for="district_id" class="block text-sm font-medium text-[#7A6B58] mb-1">İlçe</label>
- <select id="district_id" name="district_id" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 mt-1">
+ <select id="district_id" name="district_id" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 mt-1">
  <option value="">İlçe seçin</option>
  {districts.map(d => (
  <option value={d.id}>{d.name}</option>
@@ -320,7 +320,7 @@ const days = [
  </div>
  <div>
  <label for="status" class="block text-sm font-medium text-[#7A6B58] mb-1">Durum</label>
- <select id="status" name="status" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 mt-1">
+ <select id="status" name="status" class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 mt-1">
  <option value="active">Aktif</option>
  <option value="pending">Beklemede</option>
  <option value="inactive">Pasif</option>
@@ -329,16 +329,16 @@ const days = [
  </div>
  <div class="flex gap-2 mt-4">
  <button type="submit" class="rounded-sm bg-urfa-600 flex-1 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">Kaydet</button>
- <a href="/admin/places" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)] text-center">İptal</a>
+ <a href="/admin/places" class="rounded-sm border border-[var(--adm-border-strong)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[var(--adm-bg-hover)] text-center">İptal</a>
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h3 class="font-semibold text-[#7A6B58] mb-4">Görseller</h3>
  <div class="space-y-4">
  <div>
  <label for="cover_image" class="block text-sm font-medium text-[#7A6B58] mb-1">Kapak Fotoğrafı</label>
- <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-[rgba(184,115,51,0.2)] border-dashed rounded-sm hover:border-urfa-400 transition-colors">
+ <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-[var(--adm-border-strong)] border-dashed rounded-sm hover:border-urfa-400 transition-colors">
  <div class="space-y-1 text-center">
  <Icon name="lucide:upload" class="mx-auto h-12 w-12 text-[#7A6B58]" />
  <div class="flex text-sm text-[#7A6B58]">
@@ -360,14 +360,14 @@ const days = [
  name="gallery"
  accept="image/*"
  multiple
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none"
  />
  <p class="text-xs text-[#7A6B58] mt-1">Birden fazla seçebilirsiniz</p>
  </div>
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h3 class="font-semibold text-[#7A6B58] mb-4">Olanaklar</h3>
  <div class="space-y-2 max-h-64 overflow-y-auto">
  {amenitiesList.map(amenity => (
@@ -379,12 +379,12 @@ const days = [
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h3 class="font-semibold text-[#7A6B58] mb-4">Etiketler</h3>
  <input
  type="text"
  name="tags"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
+ class="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
  placeholder="Etiketleri virgülle ayırın"
  />
  <p class="text-xs text-[#7A6B58] mt-1">Örn: ciğer kebabı, tarihi, aile</p>
@@ -392,4 +392,20 @@ const days = [
  </aside>
  </form>
  </div>
+
+ <style>
+  .plf-wrap { display: flex; flex-direction: column; gap: 1.25rem; }
+  .plf-back {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.5rem 1rem;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   color: var(--adm-text-muted);
+   font-weight: 600; font-size: 0.84rem;
+   border-radius: 8px;
+   text-decoration: none;
+   transition: all 0.15s;
+  }
+  .plf-back:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+ </style>
 </AdminLayout>

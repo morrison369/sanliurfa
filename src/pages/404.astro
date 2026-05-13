@@ -1,6 +1,28 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
+// Defense in depth: Asset path 404'lerinde middleware'da plaintext dönülmesi gerek;
+// ama middleware bypass durumunda burada da minimum yanıt verelim ki tarayıcı
+// CSS/JS'i HTML olarak parse etmeye çalışıp MIME hatası vermesin.
+const path = Astro.url.pathname;
+const isAssetPath =
+ path.startsWith('/_astro/') ||
+ path.startsWith('/_server-islands/') ||
+ path.endsWith('.css') ||
+ path.endsWith('.js') ||
+ path.endsWith('.map') ||
+ path.endsWith('.woff') ||
+ path.endsWith('.woff2');
+if (isAssetPath) {
+ return new Response('Not Found', {
+  status: 404,
+  headers: {
+   'Content-Type': 'text/plain; charset=utf-8',
+   'Cache-Control': 'no-store',
+  },
+ });
+}
+
 const seo = {
  title: '404 — Sayfa Bulunamadı | Sanliurfa.com',
  description: 'Aradığınız sayfa bulunamadı. Ana sayfaya dönün veya Şanlıurfa\'nın mekanlarını keşfedin.',

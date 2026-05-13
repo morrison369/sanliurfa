@@ -48,7 +48,7 @@ export default function WebhookAnalyticsDashboard({ token }: DashboardProps) {
  };
 
  if (loading) {
- return <div className="text-center py-8 text-[#7A6B58]">Yükleniyor...</div>;
+ return <div className="text-center py-8 text-[#7A6B58]">Yükleniyor…</div>;
  }
 
  if (error || !metrics) {

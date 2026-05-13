@@ -1,62 +1,84 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
  title="Şehir İçerik Ajanları"
- subtitle="Şanlıurfa içerikleri admin onayıyla yayınlanır"
+ subtitle="Otomatik kaynak takip + admin onaylı taslak yayın"
  seo={{ title: 'Şehir İçerik Ajanları - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-6xl space-y-5">
- <div class="mb-2">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
+ <div class="ca-page">
+  <div class="ca-policy">
+   <div class="ca-policy-icon">
+    <Icon name="lucide:shield-check" class="w-5 h-5" />
+   </div>
+   <div class="ca-policy-body">
+    <p class="ca-policy-eyebrow">Yayın Politikası</p>
+    <h2 class="ca-policy-title">Şanlıurfa içerikleri admin onayıyla yayınlanır</h2>
+    <p class="ca-policy-desc">
+     Nöbetçi eczane, ulaşım, uçak saatleri, etkinlik, mekan, yemek tarifi, görsel ve SEO taslakları için.
+     <strong>Ajanlar otomatik yayın yapmaz</strong> — tüm çıktılar taslak kuyruğuna düşer ve onay bekler.
+    </p>
+   </div>
+  </div>
 
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] p-5">
- <p class="text-sm font-semibold uppercase tracking-widest text-[#7A6B58] mb-1">Yayın Politikası</p>
- <p class="font-bold text-[#1F1410]">Şanlıurfa içerikleri admin onayıyla yayınlanır</p>
- <p class="mt-2 max-w-4xl text-sm leading-6 text-[#7A6B58]">
- Bu ekran Şanlıurfa nöbetçi eczane, ulaşım, uçak saatleri, etkinlik, mekan, yemek tarifi,
- görsel ve SEO içerik taslakları içindir. Ajanlar otomatik yayın yapmaz, tüm çıktılar taslak kuyruğuna düşer.
- </p>
- </div>
+  <div id="agent-policy" class="ca-policy-grid"></div>
 
- <div id="agent-policy" class="grid gap-3 md:grid-cols-4"></div>
+  <div class="ca-two-col">
+   <section class="ca-card">
+    <header class="ca-card-head">
+     <div>
+      <h2 class="ca-card-title">
+       <Icon name="lucide:bot" class="w-4 h-4" /> Ajanlar
+      </h2>
+      <p class="ca-card-sub">Kaynakları izler ve taslak üretir</p>
+     </div>
+     <button id="refresh-btn" type="button" class="ca-btn">
+      <Icon name="lucide:refresh-cw" class="w-3.5 h-3.5" /> Yenile
+     </button>
+    </header>
+    <div id="agents-list" class="ca-list"></div>
+   </section>
 
- <div class="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
- <div class="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 shadow-sm">
- <div class="flex items-center justify-between gap-3">
- <div>
- <h2 class="font-bold text-[#1F1410]">Ajanlar</h2>
- <p class="text-sm text-[#7A6B58]">Kaynakları kontrol eder ve yayınlanmadan önce taslak üretir.</p>
- </div>
- <button id="refresh-btn" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
- Yenile
- </button>
- </div>
- <div id="agents-list" class="mt-5 grid gap-4"></div>
- </div>
+   <section class="ca-card">
+    <header class="ca-card-head">
+     <div>
+      <h2 class="ca-card-title">
+       <Icon name="lucide:link" class="w-4 h-4" /> Resmi Kaynaklar
+      </h2>
+      <p class="ca-card-sub">Öncelik: resmi kaynak → lisanslı görsel sağlayıcı</p>
+     </div>
+    </header>
+    <div id="sources-list" class="ca-list"></div>
+   </section>
+  </div>
 
- <div class="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 shadow-sm">
- <h2 class="font-bold text-[#1F1410]">Resmi / izinli kaynaklar</h2>
- <p class="text-sm text-[#7A6B58]">Öncelik resmi kaynak, sonra lisanslı görsel sağlayıcılarıdır.</p>
- <div id="sources-list" class="mt-5 space-y-3"></div>
- </div>
- </div>
+  <div class="ca-two-col">
+   <section class="ca-card">
+    <header class="ca-card-head">
+     <div>
+      <h2 class="ca-card-title">
+       <Icon name="lucide:inbox" class="w-4 h-4" /> Taslak Kuyruğu
+      </h2>
+      <p class="ca-card-sub">Onaylanan taslaklar yayına geçer; reddedilenler canlıya çıkmaz</p>
+     </div>
+    </header>
+    <div id="drafts-list" class="ca-list"></div>
+   </section>
 
- <div class="grid gap-5 xl:grid-cols-2">
- <div class="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 shadow-sm">
- <h2 class="font-bold text-[#1F1410]">Taslak kuyruğu</h2>
- <p class="text-sm text-[#7A6B58]">Onaylanan taslaklar yayın sistemine kaynak olur; reddedilenler canlıya çıkmaz.</p>
- <div id="drafts-list" class="mt-5 space-y-3"></div>
- </div>
-
- <div class="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-5 shadow-sm">
- <h2 class="font-bold text-[#1F1410]">Ajan iş geçmişi</h2>
- <p class="text-sm text-[#7A6B58]">Her çalışma loglanır; hata alırsa public site etkilenmez.</p>
- <div id="jobs-list" class="mt-5 space-y-3"></div>
- </div>
- </div>
+   <section class="ca-card">
+    <header class="ca-card-head">
+     <div>
+      <h2 class="ca-card-title">
+       <Icon name="lucide:list-checks" class="w-4 h-4" /> İş Geçmişi
+      </h2>
+      <p class="ca-card-sub">Her çalışma loglanır — hata alırsa public site etkilenmez</p>
+     </div>
+    </header>
+    <div id="jobs-list" class="ca-list"></div>
+   </section>
+  </div>
  </div>
 
  <script is:inline>
@@ -64,9 +86,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function statusBadgeClass(status) {
  if (status === 'completed' || status === 'approved') return 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]';
- if (status === 'failed' || status === 'rejected') return 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]';
- if (status === 'running') return 'bg-[rgba(184,115,51,0.2)] text-[#7A6B58]';
- return 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]';
+ if (status === 'failed' || status === 'rejected') return 'bg-[var(--adm-bg-hover)] text-[#7A6B58]';
+ if (status === 'running') return 'bg-[var(--adm-border-strong)] text-[#7A6B58]';
+ return 'bg-[var(--adm-bg-active)] text-[#7A6B58]';
  }
 
  async function apiPost(payload) {
@@ -115,7 +137,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function makePolicyCard(label, value) {
  const div = document.createElement('div');
- div.className = 'rounded-sm border border-[rgba(184,115,51,0.14)] bg-[var(--bg-card)] p-4';
+ div.className = 'rounded-sm border border-[var(--adm-border)] bg-[var(--bg-card)] p-4';
  const p1 = document.createElement('p');
  p1.className = 'text-xs font-semibold uppercase tracking-widest text-[#7A6B58]';
  p1.textContent = label;
@@ -141,7 +163,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function makeAgentCard(agent) {
  const article = document.createElement('article');
- article.className = 'rounded-sm border border-[rgba(184,115,51,0.14)] p-4';
+ article.className = 'rounded-sm border border-[var(--adm-border)] p-4';
  const row = document.createElement('div');
  row.className = 'flex items-start justify-between gap-3';
  const info = document.createElement('div');
@@ -182,7 +204,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function makeSourceCard(source) {
  const article = document.createElement('article');
- article.className = 'rounded-sm border border-[rgba(184,115,51,0.14)] p-4';
+ article.className = 'rounded-sm border border-[var(--adm-border)] p-4';
  const row = document.createElement('div');
  row.className = 'flex items-start justify-between gap-3';
  const info = document.createElement('div');
@@ -205,7 +227,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  actions.className = 'flex shrink-0 flex-col items-end gap-2';
  const badge = document.createElement('span');
  badge.className = 'rounded-full px-2 py-0.5 text-xs font-medium ' +
- (source.is_active ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]');
+ (source.is_active ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' : 'bg-[var(--adm-bg-hover)] text-[#7A6B58]');
  badge.textContent = source.is_active ? 'Aktif' : 'Kapalı';
  const btn = document.createElement('button');
  btn.dataset.sourceRun = source.source_key;
@@ -234,7 +256,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function makeDraftCard(draft) {
  const article = document.createElement('article');
- article.className = 'rounded-sm border border-[rgba(184,115,51,0.14)] p-4';
+ article.className = 'rounded-sm border border-[var(--adm-border)] p-4';
  const row = document.createElement('div');
  row.className = 'flex items-start justify-between gap-3';
  const info = document.createElement('div');
@@ -263,7 +285,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  approveBtn.textContent = 'Onayla';
  approveBtn.addEventListener('click', () => updateDraft('approve-draft', draft.id));
  const rejectBtn = document.createElement('button');
- rejectBtn.className = 'rounded-sm bg-[rgba(184,115,51,0.06)] px-3 py-2 text-xs font-semibold text-[#7A6B58] hover:bg-[rgba(184,115,51,0.12)]';
+ rejectBtn.className = 'rounded-sm bg-[var(--adm-bg-hover)] px-3 py-2 text-xs font-semibold text-[#7A6B58] hover:bg-[var(--adm-bg-active)]';
  rejectBtn.textContent = 'Reddet';
  rejectBtn.addEventListener('click', () => updateDraft('reject-draft', draft.id));
  btns.appendChild(approveBtn);
@@ -286,7 +308,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function makeJobCard(job) {
  const article = document.createElement('article');
- article.className = 'rounded-sm border border-[rgba(184,115,51,0.14)] p-4';
+ article.className = 'rounded-sm border border-[var(--adm-border)] p-4';
  const row = document.createElement('div');
  row.className = 'flex items-start justify-between gap-3';
  const info = document.createElement('div');
@@ -346,4 +368,106 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  if (el) el.replaceChildren(p);
  });
  </script>
+
+ <style>
+  .ca-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .ca-policy {
+   display: flex; gap: 1rem; align-items: flex-start;
+   padding: 1.15rem 1.25rem;
+   background: linear-gradient(135deg, var(--adm-bg-hover), rgba(217,119,6,0.05));
+   border: 1px solid var(--adm-border-strong);
+   border-radius: 12px;
+  }
+  .ca-policy-icon {
+   width: 44px; height: 44px;
+   border-radius: 11px;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff;
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+   box-shadow: 0 4px 12px -2px rgba(192,87,31,0.3);
+  }
+  .ca-policy-eyebrow {
+   margin: 0 0 0.2rem;
+   font-size: 0.68rem; font-weight: 700;
+   text-transform: uppercase;
+   letter-spacing: 0.1em;
+   color: var(--adm-accent);
+  }
+  .ca-policy-title {
+   font-family: 'Cormorant Garamond', serif;
+   font-size: 1.3rem; font-weight: 700;
+   color: var(--adm-text);
+   margin: 0 0 0.4rem;
+  }
+  .ca-policy-desc {
+   font-size: 0.86rem;
+   color: var(--adm-text-muted);
+   margin: 0;
+   line-height: 1.55;
+  }
+  .ca-policy-desc strong { color: var(--adm-text); font-weight: 700; }
+
+  .ca-policy-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+   gap: 0.65rem;
+  }
+
+  .ca-two-col {
+   display: grid;
+   grid-template-columns: 1fr;
+   gap: 1.25rem;
+  }
+  @media (min-width: 1024px) {
+   .ca-two-col { grid-template-columns: 1.1fr 0.9fr; }
+   .ca-two-col + .ca-two-col { grid-template-columns: 1fr 1fr; }
+  }
+
+  .ca-card {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .ca-card-head {
+   display: flex; align-items: center; justify-content: space-between;
+   gap: 0.75rem;
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .ca-card-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .ca-card-sub {
+   font-size: 0.78rem;
+   color: var(--adm-text-soft);
+   margin: 0.2rem 0 0;
+  }
+
+  .ca-btn {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.4rem 0.85rem;
+   background: var(--adm-accent);
+   color: #fff;
+   border: none;
+   border-radius: 6px;
+   font-size: 0.78rem; font-weight: 600;
+   cursor: pointer;
+   flex-shrink: 0;
+  }
+  .ca-btn:hover { filter: brightness(0.93); }
+
+  .ca-list {
+   padding: 1rem 1.15rem;
+   display: flex; flex-direction: column;
+   gap: 0.65rem;
+   min-height: 80px;
+  }
+ </style>
 </AdminLayout>

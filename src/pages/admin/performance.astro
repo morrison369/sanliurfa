@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import { query } from '../../lib/postgres';
 import { safeIntParam, safeErrorDetail } from '../../lib/api';
 import { logger } from '../../lib/logging';
@@ -155,22 +155,22 @@ const trendMaxCount = dailyTrend.reduce((acc, r) => Math.max(acc, r.count), 0) |
 
     {/* Özet kartları */}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+      <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-5">
         <div class="text-sm text-[#7A6B58]">Toplam Yavaş Olay</div>
         <div class="text-2xl font-bold text-[#1F1410] mt-1">{totals.total_events}</div>
         <div class="text-xs text-[#7A6B58] mt-1">son {hours} saat</div>
       </div>
-      <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+      <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-5">
         <div class="text-sm text-[#7A6B58]">Etkilenen Path</div>
         <div class="text-2xl font-bold text-[#1F1410] mt-1">{totals.unique_paths}</div>
         <div class="text-xs text-[#7A6B58] mt-1">unique URL</div>
       </div>
-      <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+      <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-5">
         <div class="text-sm text-[#7A6B58]">Genel Ortalama</div>
         <div class={`text-2xl mt-1 ${durationClass(totals.overall_avg_ms)}`}>{totals.overall_avg_ms} ms</div>
         <div class="text-xs text-[#7A6B58] mt-1">tüm yavaş istekler</div>
       </div>
-      <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+      <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-5">
         <div class="text-sm text-[#7A6B58]">En Yavaş</div>
         <div class={`text-2xl mt-1 ${durationClass(totals.overall_max_ms)}`}>{totals.overall_max_ms} ms</div>
         <div class="text-xs text-[#7A6B58] mt-1">tek istek max</div>
@@ -178,7 +178,7 @@ const trendMaxCount = dailyTrend.reduce((acc, r) => Math.max(acc, r.count), 0) |
     </div>
 
     {/* Pencere seçici (basit GET form) */}
-    <form method="get" class="mb-6 flex flex-wrap items-end gap-3 bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+    <form method="get" class="mb-6 flex flex-wrap items-end gap-3 bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-4">
       <div>
         <label class="block text-xs text-[#7A6B58] mb-1" for="hours">Zaman penceresi (saat)</label>
         <input id="hours" name="hours" type="number" min="1" max="168" value={hours} class="w-32 text-sm" />
@@ -197,7 +197,7 @@ const trendMaxCount = dailyTrend.reduce((acc, r) => Math.max(acc, r.count), 0) |
     </form>
 
     {/* TOP slow paths */}
-    <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 mb-6">
+    <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6 mb-6">
       <h2 class="text-lg font-bold text-[#1F1410] mb-4">
         Yavaş SSR Sayfaları — Son {hours} Saat (TOP {limit})
       </h2>
@@ -220,7 +220,7 @@ const trendMaxCount = dailyTrend.reduce((acc, r) => Math.max(acc, r.count), 0) |
             </thead>
             <tbody>
               {slowPaths.map((row) => (
-                <tr class="border-b border-[rgba(184,115,51,0.08)] last:border-0">
+                <tr class="border-b border-[var(--adm-bg-hover)] last:border-0">
                   <td class="py-2 pr-4">
                     <code class="text-xs text-[#4A3828] break-all">{row.path}</code>
                   </td>
@@ -238,7 +238,7 @@ const trendMaxCount = dailyTrend.reduce((acc, r) => Math.max(acc, r.count), 0) |
     </div>
 
     {/* Günlük trend */}
-    <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+    <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
       <h2 class="text-lg font-bold text-[#1F1410] mb-4">Günlük Trend — Son {days} Gün</h2>
       {dailyTrend.length === 0 ? (
         <p class="text-sm text-[#7A6B58]">Seçili pencerede günlük veri yok.</p>
@@ -249,7 +249,7 @@ const trendMaxCount = dailyTrend.reduce((acc, r) => Math.max(acc, r.count), 0) |
             return (
               <div class="flex items-center gap-3 text-sm">
                 <span class="w-24 text-xs text-[#4A3828] tabular-nums">{row.day}</span>
-                <div class="flex-1 h-5 bg-[rgba(184,115,51,0.06)] rounded-sm overflow-hidden">
+                <div class="flex-1 h-5 bg-[var(--adm-bg-hover)] rounded-sm overflow-hidden">
                   <div
                     class="h-full bg-[#C0571F]"
                     style={`width:${pct}%`}

@@ -123,14 +123,14 @@ export default function PharmacyManager() {
  }
 
  const tabCls = (t: string) =>
- `px-4 py-2 text-sm font-medium rounded-sm transition-colors ${tab === t ? 'bg-[var(--bg-card)] shadow text-[#1F1410]' : 'text-[#7A6B58] hover:text-[#7A6B58]'}`;
+ `px-4 py-2 text-sm font-medium rounded-sm transition-colors ${tab === t ? 'bg-[var(--adm-bg-elev)] shadow text-[var(--adm-text)]' : 'text-[var(--adm-text-muted)] hover:text-[var(--adm-text-muted)]'}`;
 
  return (
  <div className="space-y-6">
  {/* Header */}
- <div className="bg-[var(--bg-card)] rounded-sm p-6">
- <h1 className="text-2xl font-bold text-[#1F1410]">Nöbetçi Eczane Yönetimi</h1>
- <p className="text-[#7A6B58] mt-1">Günlük nöbetçi eczaneleri belirle, eczane ekle veya düzenle.</p>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6">
+ <h1 className="text-2xl font-bold text-[var(--adm-text)]">Nöbetçi Eczane Yönetimi</h1>
+ <p className="text-[var(--adm-text-muted)] mt-1">Günlük nöbetçi eczaneleri belirle, eczane ekle veya düzenle.</p>
  </div>
 
  {msg && (
@@ -141,7 +141,7 @@ export default function PharmacyManager() {
  )}
 
  {/* Tabs */}
- <div className="bg-[rgba(184,115,51,0.06)] p-1 rounded-sm inline-flex gap-1">
+ <div className="bg-[var(--adm-bg-hover)] p-1 rounded-sm inline-flex gap-1">
  <button onClick={() => setTab('duty')} className={tabCls('duty')}>📋 Nöbet Ata</button>
  <button onClick={() => setTab('all')} className={tabCls('all')}>🏥 Tüm Eczaneler</button>
  <button onClick={() => setTab('add')} className={tabCls('add')}>➕ Eczane Ekle</button>
@@ -149,18 +149,18 @@ export default function PharmacyManager() {
 
  {/* DUTY TAB */}
  {tab === 'duty' && (
- <div className="bg-[var(--bg-card)] rounded-sm p-6">
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6">
  <div className="flex flex-wrap items-end gap-4 mb-6">
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Nöbet Tarihi</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Nöbet Tarihi</label>
  <input
  type="date"
  value={selectedDate}
  onChange={e => setSelectedDate(e.target.value)}
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
- <p className="text-sm text-[#7A6B58] pb-2">{fmt(selectedDate)}</p>
+ <p className="text-sm text-[var(--adm-text-muted)] pb-2">{fmt(selectedDate)}</p>
  </div>
 
  {loading ? (
@@ -168,22 +168,22 @@ export default function PharmacyManager() {
  ) : allPharmacies.length === 0 ? (
  <div className="text-center py-8 text-[#4A3828]">
  <p className="text-lg mb-2">Henüz eczane yok.</p>
- <button onClick={() => setTab('add')} className="text-[#7A6B58] underline text-sm">Eczane ekleyin</button>
+ <button onClick={() => setTab('add')} className="text-[var(--adm-text-muted)] underline text-sm">Eczane ekleyin</button>
  </div>
  ) : (
  <>
- <p className="text-sm text-[#7A6B58] mb-3">{selectedIds.size} eczane seçili (nöbetçi). İşaretlileri kaydet butonuyla onaylayın.</p>
+ <p className="text-sm text-[var(--adm-text-muted)] mb-3">{selectedIds.size} eczane seçili (nöbetçi). İşaretlileri kaydet butonuyla onaylayın.</p>
  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
  {allPharmacies.map(p => {
  const on = selectedIds.has(p.id);
  return (
- <label key={p.id} className={`flex items-start gap-3 p-3 rounded-sm border-2 cursor-pointer transition-colors ${on ? 'border-[rgba(34,197,94,0.4)] bg-[rgba(34,197,94,0.08)]' : 'border-[rgba(184,115,51,0.14)] hover:border-[rgba(184,115,51,0.25)]'}`}>
+ <label key={p.id} className={`flex items-start gap-3 p-3 rounded-sm border-2 cursor-pointer transition-colors ${on ? 'border-[rgba(34,197,94,0.4)] bg-[rgba(34,197,94,0.08)]' : 'border-[var(--adm-border)] hover:border-[var(--adm-border-strong)]'}`}>
  <input type="checkbox" checked={on} onChange={() => toggleId(p.id)} className="mt-1 h-4 w-4 accent-green-600" />
  <div className="min-w-0">
- <p className="font-medium text-[#1F1410] text-sm">{p.name}</p>
- <p className="text-xs text-[#7A6B58] truncate">{p.address}</p>
- {p.phone && <p className="text-xs text-[#7A6B58]">{p.phone}</p>}
- {p.district_name && <span className="text-xs bg-[rgba(184,115,51,0.06)] px-1.5 py-0.5 rounded mt-1 inline-block">{p.district_name}</span>}
+ <p className="font-medium text-[var(--adm-text)] text-sm">{p.name}</p>
+ <p className="text-xs text-[var(--adm-text-muted)] truncate">{p.address}</p>
+ {p.phone && <p className="text-xs text-[var(--adm-text-muted)]">{p.phone}</p>}
+ {p.district_name && <span className="text-xs bg-[var(--adm-bg-hover)] px-1.5 py-0.5 rounded mt-1 inline-block">{p.district_name}</span>}
  </div>
  </label>
  );
@@ -203,23 +203,23 @@ export default function PharmacyManager() {
 
  {/* ALL TAB */}
  {tab === 'all' && (
- <div className="bg-[var(--bg-card)] rounded-sm overflow-hidden">
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm overflow-hidden">
  <table className="w-full text-sm">
- <thead className="bg-[rgba(184,115,51,0.04)] border-b border-[rgba(184,115,51,0.14)]">
+ <thead className="bg-[var(--adm-bg-hover)] border-b border-[var(--adm-border)]">
  <tr>
- <th className="text-left px-4 py-3 font-medium text-[#7A6B58]">Eczane</th>
- <th className="text-left px-4 py-3 font-medium text-[#7A6B58] hidden md:table-cell">Adres</th>
- <th className="text-left px-4 py-3 font-medium text-[#7A6B58] hidden sm:table-cell">Telefon</th>
- <th className="text-left px-4 py-3 font-medium text-[#7A6B58]">İlçe</th>
+ <th className="text-left px-4 py-3 font-medium text-[var(--adm-text-muted)]">Eczane</th>
+ <th className="text-left px-4 py-3 font-medium text-[var(--adm-text-muted)] hidden md:table-cell">Adres</th>
+ <th className="text-left px-4 py-3 font-medium text-[var(--adm-text-muted)] hidden sm:table-cell">Telefon</th>
+ <th className="text-left px-4 py-3 font-medium text-[var(--adm-text-muted)]">İlçe</th>
  </tr>
  </thead>
- <tbody className="divide-y divide-[rgba(184,115,51,0.1)]">
+ <tbody className="divide-y divide-[var(--adm-bg-active)]">
  {allPharmacies.map(p => (
- <tr key={p.id} className="hover:bg-[rgba(184,115,51,0.04)]">
- <td className="px-4 py-3 font-medium text-[#1F1410]">{p.name}</td>
- <td className="px-4 py-3 text-[#7A6B58] hidden md:table-cell max-w-xs truncate">{p.address}</td>
- <td className="px-4 py-3 text-[#7A6B58] hidden sm:table-cell">{p.phone || '—'}</td>
- <td className="px-4 py-3 text-[#7A6B58]">{p.district_name || '—'}</td>
+ <tr key={p.id} className="hover:bg-[var(--adm-bg-hover)]">
+ <td className="px-4 py-3 font-medium text-[var(--adm-text)]">{p.name}</td>
+ <td className="px-4 py-3 text-[var(--adm-text-muted)] hidden md:table-cell max-w-xs truncate">{p.address}</td>
+ <td className="px-4 py-3 text-[var(--adm-text-muted)] hidden sm:table-cell">{p.phone || '—'}</td>
+ <td className="px-4 py-3 text-[var(--adm-text-muted)]">{p.district_name || '—'}</td>
  </tr>
  ))}
  {allPharmacies.length === 0 && (
@@ -232,46 +232,46 @@ export default function PharmacyManager() {
 
  {/* ADD TAB */}
  {tab === 'add' && (
- <div className="bg-[var(--bg-card)] rounded-sm p-6 max-w-lg">
- <h2 className="text-lg font-semibold text-[#1F1410] mb-5">Yeni Eczane Ekle</h2>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 max-w-lg">
+ <h2 className="text-lg font-semibold text-[var(--adm-text)] mb-5">Yeni Eczane Ekle</h2>
  <div className="space-y-4">
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Eczane Adı *</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Eczane Adı *</label>
  <input
  type="text"
  value={newForm.name}
  onChange={e => setNewForm(f => ({ ...f, name: e.target.value }))}
  placeholder="Örn: Güven Eczanesi"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Adres *</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Adres *</label>
  <textarea
  value={newForm.address}
  onChange={e => setNewForm(f => ({ ...f, address: e.target.value }))}
  rows={2}
  placeholder="Mahalle, sokak, bina no..."
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Telefon</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Telefon</label>
  <input
  type="tel"
  value={newForm.phone}
  onChange={e => setNewForm(f => ({ ...f, phone: e.target.value }))}
  placeholder="0414 xxx xx xx"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">İlçe</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">İlçe</label>
  <select
  value={newForm.district_id}
  onChange={e => setNewForm(f => ({ ...f, district_id: e.target.value }))}
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  >
  <option value="">Seçin</option>
  {districts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}

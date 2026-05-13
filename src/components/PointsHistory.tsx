@@ -38,7 +38,7 @@ export default function PointsHistory() {
  }
  };
 
- if (isLoading) return <div className="text-center py-8">Yükleniyor...</div>;
+ if (isLoading) return <div className="text-center py-8">Yükleniyor…</div>;
  if (!history) return <div>Veri yüklenemedi</div>;
 
  const getActivityIcon = (type: string) => {

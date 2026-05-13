@@ -4,6 +4,7 @@ import SEO from '../components/SEO.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import MobileBottomNav from '../components/MobileBottomNav.astro';
+import BackToTop from '../components/BackToTop.astro';
 import ThemeScript from '../components/ThemeScript.astro';
 import Toast from '../components/ui/Toast.astro';
 import ErrorBoundary from '../components/ErrorBoundary.astro';
@@ -30,10 +31,17 @@ export interface Props {
  };
  hideHeader?: boolean;
  hideFooter?: boolean;
+ disableViewTransitions?: boolean;
  class?: string;
 }
 
-const { seo, hideHeader = false, hideFooter = false, class: className = '' } = Astro.props;
+const { seo, hideHeader = false, hideFooter = false, disableViewTransitions = false, class: className = '' } = Astro.props;
+
+// Admin sayfalarda View Transitions devre dışı — inline script re-execute sorununu önler
+const isAdminPath = Astro.url.pathname.startsWith('/admin');
+const isAuthPath = ['/giris', '/kayit', '/sifre'].some(p => Astro.url.pathname.startsWith(p));
+const skipPerfMonitor = isAdminPath || isAuthPath;
+const skipViewTransitions = disableViewTransitions || isAdminPath;
 
 let GA_MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
  || import.meta.env.GA_TRACKING_ID
@@ -51,6 +59,31 @@ try {
  siteName = String((schema as any)?.siteName || 'Sanliurfa.com');
 } catch { /* sessiz */ }
 
+// GSC + Bing webmaster verification meta tag'leri (admin panel veya env var ile)
+let gscVerification = process.env.GSC_VERIFICATION || import.meta.env.GSC_VERIFICATION || '';
+let bingVerification = process.env.BING_VERIFICATION || import.meta.env.BING_VERIFICATION || '';
+if (!gscVerification) {
+ try {
+  const verify = await getSiteSetting<{ gsc?: string; bing?: string }>('integrations.verification', {});
+  gscVerification = (verify as any)?.gsc || '';
+  bingVerification = (verify as any)?.bing || bingVerification;
+ } catch { /* sessiz */ }
+}
+
+// Microsoft Clarity heatmap/session recording (admin panel veya env)
+let clarityProjectId = process.env.CLARITY_PROJECT_ID || import.meta.env.CLARITY_PROJECT_ID || 'wq08o4hm02';
+try {
+ const clarity = await getSiteSetting<{ clarity_id?: string }>('integrations.clarity', {});
+ if ((clarity as any)?.clarity_id) clarityProjectId = String((clarity as any).clarity_id);
+} catch { /* sessiz */ }
+
+// Yandex Metrica (TR + RU pazarı; bot/click metrics tamamlayıcı)
+let yandexMetricaId = process.env.YANDEX_METRICA_ID || import.meta.env.YANDEX_METRICA_ID || '';
+try {
+ const ym = await getSiteSetting<{ metrica_id?: string }>('integrations.yandex', {});
+ if ((ym as any)?.metrica_id) yandexMetricaId = String((ym as any).metrica_id);
+} catch { /* sessiz */ }
+
 const user = Astro.locals.user;
 ---
 
@@ -58,17 +91,23 @@ const user = Astro.locals.user;
 <html lang="tr" class="scroll-smooth" data-theme="light">
  <head>
  <meta charset="UTF-8" />
- <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
  <meta name="google-adsense-account" content="ca-pub-7160871802649062" />
+ {gscVerification && <meta name="google-site-verification" content={gscVerification} />}
+ {bingVerification && <meta name="msvalidate.01" content={bingVerification} />}
 
  <!-- Favicons -->
  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
  <link rel="manifest" href="/manifest.json" />
- <meta name="theme-color" content="#B87333" />
+ <meta name="theme-color" content="#FBF6EC" media="(prefers-color-scheme: light)" />
+ <meta name="theme-color" content="#1F1410" media="(prefers-color-scheme: dark)" />
  <meta name="mobile-web-app-capable" content="yes" />
+ <meta name="apple-mobile-web-app-capable" content="yes" />
+ <meta name="apple-mobile-web-app-status-bar-style" content="default" />
  <meta name="apple-mobile-web-app-title" content={siteName} />
+ <meta name="format-detection" content="telephone=no" />
 
  <!-- SEO -->
  {seo && <SEO {...seo} />}
@@ -80,6 +119,9 @@ const user = Astro.locals.user;
  <!-- Fonts -->
  <link rel="preconnect" href="https://fonts.googleapis.com" />
  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+ <!-- Remote image CDN (Pexels/Unsplash) — LCP iyileştirmesi için DNS+TLS önceden açılır -->
+ <link rel="dns-prefetch" href="https://images.pexels.com" />
+ <link rel="dns-prefetch" href="https://images.unsplash.com" />
  <!-- Preload the CSS itself with high priority — fonts load asap without guessing woff2 hashes -->
  <link rel="preload" as="style"
    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600;0,700&family=Jost:wght@300;400;500;600;700&display=swap" />
@@ -113,7 +155,66 @@ const user = Astro.locals.user;
  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
  </style>
  <ThemeScript />
- <ClientRouter />
+ {!skipViewTransitions && <ClientRouter />}
+ {clarityProjectId && (
+  <script is:inline define:vars={{ clarityProjectId }}>
+   (function(c,l,a,r,i,t,y){
+    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
+    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+   })(window, document, "clarity", "script", clarityProjectId);
+  </script>
+ )}
+ {yandexMetricaId && (
+  <script is:inline define:vars={{ yandexMetricaId }}>
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+   ym(Number(yandexMetricaId), "init", { clickmap:true, trackLinks:true, accurateTrackBounce:true, webvisor:true });
+  </script>
+  <noscript><div><img src={`https://mc.yandex.ru/watch/${yandexMetricaId}`} style="position:absolute;left:-9999px" alt="" /></div></noscript>
+ )}
+
+ <!-- Merkezi event tracking: window.sfTrack(name, params) → GA4 + Yandex + Clarity -->
+ <script is:inline define:vars={{ yandexMetricaId }}>
+  window.sfTrack = function(eventName, params) {
+   if (!eventName) return;
+   try {
+    // Google Analytics 4
+    if (typeof window.gtag === 'function') {
+     window.gtag('event', eventName, params || {});
+    }
+    // Yandex Metrica
+    if (typeof window.ym === 'function' && yandexMetricaId) {
+     window.ym(Number(yandexMetricaId), 'reachGoal', eventName, params || {});
+    }
+    // Microsoft Clarity
+    if (typeof window.clarity === 'function') {
+     window.clarity('event', eventName);
+     if (params) {
+      Object.entries(params).forEach(function(entry) {
+       try { window.clarity('set', String(entry[0]), String(entry[1])); } catch (_) {}
+      });
+     }
+    }
+   } catch (_) { /* sessiz */ }
+  };
+
+  // auth_success query param varsa login/register event ate + URL'i temizle (history replace)
+  try {
+   var sp = new URLSearchParams(window.location.search);
+   var as = sp.get('auth_success');
+   if (as) {
+    // Sayfa load'unda hemen değil, GA/Yandex/Clarity yüklensin diye 200ms gecikme
+    setTimeout(function() {
+     window.sfTrack('auth_success', { method: as });
+    }, 200);
+    sp.delete('auth_success');
+    var clean = window.location.pathname + (sp.toString() ? '?' + sp.toString() : '') + window.location.hash;
+    window.history.replaceState({}, document.title, clean);
+   }
+  } catch (_) { /* sessiz */ }
+ </script>
  <slot name="head" />
  </head>
 
@@ -133,8 +234,13 @@ const user = Astro.locals.user;
 
  {!hideFooter && <Footer transition:persist="site-footer" />}
 
- <!-- Mobile bottom navigation (only <768px viewport) -->
- <MobileBottomNav />
+ {/* Admin sayfalarda public mobil nav + back-to-top gizli (AdminLayout kendi UI'ı var) */}
+ {!isAdminPath && (
+  <>
+   <MobileBottomNav />
+   <BackToTop />
+  </>
+ )}
 
  <!-- Toast -->
  <Toast transition:persist="toast-container" />
@@ -288,7 +394,8 @@ const user = Astro.locals.user;
  </script>
 
  <PWARegister />
- <PerformanceMonitor client:only="react" />
+ {/* Admin + auth sayfalarda PerformanceMonitor disable — 429 rate-limit, beacon queue spillover'ı önle */}
+ {!skipPerfMonitor && <PerformanceMonitor client:only="react" />}
  {GA_MEASUREMENT_ID && <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} debug={import.meta.env.DEV} />}
  </body>
 </html>

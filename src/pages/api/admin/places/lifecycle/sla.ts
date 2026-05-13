@@ -56,7 +56,7 @@ export const GET: APIRoute = async (context) => {
          p.updated_at,
          COALESCE(p.district_id::text, '') AS district_id,
          COALESCE(u.role, 'user') AS owner_role
-       FROM places
+       FROM places p
        LEFT JOIN users u ON u.id = p.owner_id
        WHERE p.status = 'pending'
        ORDER BY p.created_at ASC

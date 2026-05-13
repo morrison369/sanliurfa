@@ -4,387 +4,663 @@
  * Bildirimleri gönder, taslaklar, geçmiş
  */
 
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
  title="Bildirim Yönetimi"
  subtitle="Push bildirimleri gönder, taslakları yönet ve geçmişi görüntüle"
- seo={{ title: 'Bildirim Yönetimi - Admin' }}
+ seo={{ title: 'Bildirim Yönetimi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-6xl">
- <div class="mb-6">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ <div class="nf-page">
+  <div class="nf-tabs" role="tablist">
+   <button id="tab-send" class="nf-tab nf-tab--active" role="tab" type="button">
+    <Icon name="lucide:send" class="w-4 h-4" /> Gönder
+   </button>
+   <button id="tab-drafts" class="nf-tab" role="tab" type="button">
+    <Icon name="lucide:file-edit" class="w-4 h-4" /> Taslaklar
+   </button>
+   <button id="tab-history" class="nf-tab" role="tab" type="button">
+    <Icon name="lucide:history" class="w-4 h-4" /> Geçmiş
+   </button>
+   <button id="tab-stats" class="nf-tab" role="tab" type="button">
+    <Icon name="lucide:bar-chart-3" class="w-4 h-4" /> İstatistikler
+   </button>
+  </div>
+
+  <div id="content-send" class="nf-tab-pane">
+   <div class="nf-send-grid">
+    <div class="nf-card">
+     <div class="nf-card-head">
+      <h3 class="nf-card-title">
+       <Icon name="lucide:bell" class="w-4 h-4" /> Yeni Bildirim
+      </h3>
+      <span class="nf-card-sub">Push bildirim gönder veya taslak olarak kaydet</span>
+     </div>
+     <form id="notification-form" class="nf-form">
+      <div class="nf-field">
+       <label class="nf-label">Bildirim Başlığı</label>
+       <input type="text" name="title" placeholder="örn: Yeni Blog Yazısı" required maxlength="100" class="nf-input" />
+       <p class="nf-hint">Max 100 karakter — bildirim üst başlığı.</p>
+      </div>
+      <div class="nf-field">
+       <label class="nf-label">Açıklama</label>
+       <textarea name="body" placeholder="Bildirim içeriğini yazın..." rows="4" maxlength="500" required class="nf-input"></textarea>
+       <p class="nf-hint">Max 500 karakter — 2–3 satırdan fazlası mobilde kesilir.</p>
+      </div>
+      <div class="nf-field">
+       <label class="nf-label">Tıklanınca Gidecek URL</label>
+       <input type="text" name="url" placeholder="/blog/yeni-yazi" class="nf-input" />
+      </div>
+      <div class="nf-field">
+       <label class="nf-label">Hedef Kitle</label>
+       <select name="target" class="nf-input" aria-label="Hedef kitle">
+        <option value="all">Tüm Aboneler</option>
+        <option value="blog">Blog Aboneleri</option>
+        <option value="new">Yeni Kullanıcılar</option>
+        <option value="active">Aktif Kullanıcılar</option>
+       </select>
+      </div>
+      <div class="nf-row">
+       <div class="nf-field">
+        <label class="nf-label">Gönderme Zamanı</label>
+        <input type="datetime-local" name="scheduled_for" class="nf-input" aria-label="Gönderme zamanı" />
+       </div>
+       <div class="nf-field">
+        <label class="nf-label">Öncelik</label>
+        <select name="priority" class="nf-input" aria-label="Öncelik seviyesi">
+         <option value="normal">Normal</option>
+         <option value="high">Yüksek</option>
+         <option value="urgent">Acil</option>
+        </select>
+       </div>
+      </div>
+      <div class="nf-actions">
+       <button type="button" onclick="saveDraft()" class="nf-btn nf-btn--ghost">
+        <Icon name="lucide:save" class="w-4 h-4" /> Taslak Olarak Kaydet
+       </button>
+       <button type="submit" class="nf-btn nf-btn--primary">
+        <Icon name="lucide:send" class="w-4 h-4" /> Gönder
+       </button>
+      </div>
+     </form>
+    </div>
+
+    <div class="nf-card nf-preview-card">
+     <div class="nf-card-head">
+      <h3 class="nf-card-title">
+       <Icon name="lucide:eye" class="w-4 h-4" /> Önizleme
+      </h3>
+      <span class="nf-card-sub">Mobil bildirim görünümü</span>
+     </div>
+     <div class="nf-preview-device">
+      <div class="nf-preview-bar">
+       <div class="nf-preview-dot"></div>
+       <span>Şimdi</span>
+      </div>
+      <div class="nf-preview-content">
+       <div class="nf-preview-icon">
+        <Icon name="lucide:bell" class="w-4 h-4" />
+       </div>
+       <div class="nf-preview-body">
+        <div class="nf-preview-site">sanliurfa.com</div>
+        <div id="preview-title" class="nf-preview-title">Bildirim Başlığı</div>
+        <div id="preview-body" class="nf-preview-text">Bildirim açıklaması burada gösterilir</div>
+       </div>
+      </div>
+     </div>
+     <dl class="nf-preview-meta">
+      <div><dt>Hedef</dt><dd id="preview-target">Tüm Aboneler</dd></div>
+      <div><dt>Zamanlama</dt><dd id="preview-time">Hemen</dd></div>
+      <div><dt>Durum</dt><dd>Hazırlanıyor</dd></div>
+     </dl>
+    </div>
+   </div>
+  </div>
+
+  <div id="content-drafts" class="nf-tab-pane" hidden>
+   <div class="nf-card">
+    <div class="nf-card-head">
+     <h3 class="nf-card-title">
+      <Icon name="lucide:file-edit" class="w-4 h-4" /> Kaydedilmiş Taslaklar
+     </h3>
+    </div>
+    <div id="drafts-list" class="nf-list">
+     <div class="nf-empty">
+      <Icon name="lucide:inbox" class="w-6 h-6" />
+      <span>Yükleniyor…</span>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <div id="content-history" class="nf-tab-pane" hidden>
+   <div class="nf-card">
+    <div class="nf-card-head">
+     <h3 class="nf-card-title">
+      <Icon name="lucide:history" class="w-4 h-4" /> Gönderilen Bildirimler
+     </h3>
+    </div>
+    <div id="history-list" class="nf-list">
+     <div class="nf-empty">
+      <Icon name="lucide:inbox" class="w-6 h-6" />
+      <span>Yükleniyor…</span>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <div id="content-stats" class="nf-tab-pane" hidden>
+   <div class="nf-stats">
+    <div class="nf-stat nf-stat--indigo">
+     <div class="nf-stat-ico"><Icon name="lucide:send" class="w-5 h-5" /></div>
+     <div>
+      <p class="nf-stat-val" id="stat-total">—</p>
+      <p class="nf-stat-lbl">Toplam Gönderilen</p>
+     </div>
+    </div>
+    <div class="nf-stat nf-stat--emerald">
+     <div class="nf-stat-ico"><Icon name="lucide:mouse-pointer-click" class="w-5 h-5" /></div>
+     <div>
+      <p class="nf-stat-val" id="stat-clicked">—</p>
+      <p class="nf-stat-lbl">Tıklanan</p>
+     </div>
+    </div>
+    <div class="nf-stat nf-stat--amber">
+     <div class="nf-stat-ico"><Icon name="lucide:users" class="w-5 h-5" /></div>
+     <div>
+      <p class="nf-stat-val" id="stat-subscribers">—</p>
+      <p class="nf-stat-lbl">Abone Sayısı</p>
+     </div>
+    </div>
+    <div class="nf-stat nf-stat--violet">
+     <div class="nf-stat-ico"><Icon name="lucide:percent" class="w-5 h-5" /></div>
+     <div>
+      <p class="nf-stat-val" id="stat-rate">—</p>
+      <p class="nf-stat-lbl">Tıklama Oranı</p>
+     </div>
+    </div>
+   </div>
+   <div class="nf-card">
+    <div class="nf-card-head">
+     <h3 class="nf-card-title">
+      <Icon name="lucide:list" class="w-4 h-4" /> Son Bildirimler
+     </h3>
+    </div>
+    <div id="stats-detail" class="nf-list">
+     <div class="nf-empty">
+      <Icon name="lucide:inbox" class="w-6 h-6" />
+      <span>İstatistik yükleniyor…</span>
+     </div>
+    </div>
+   </div>
+  </div>
  </div>
 
- <!-- Tabs -->
- <div class="mb-6 flex border-b border-[rgba(184,115,51,0.14)]">
- <button id="tab-send" class="px-4 py-3 font-medium text-sm text-urfa-600 border-b-2 border-urfa-600 cursor-pointer">
- Gönder
- </button>
- <button id="tab-drafts" class="px-4 py-3 font-medium text-sm text-[#7A6B58] cursor-pointer hover:text-[#7A6B58] border-b-2 border-transparent">
- Taslaklar
- </button>
- <button id="tab-history" class="px-4 py-3 font-medium text-sm text-[#7A6B58] cursor-pointer hover:text-[#7A6B58] border-b-2 border-transparent">
- Geçmiş
- </button>
- <button id="tab-stats" class="px-4 py-3 font-medium text-sm text-[#7A6B58] cursor-pointer hover:text-[#7A6B58] border-b-2 border-transparent">
- İstatistikler
- </button>
- </div>
+ <script is:inline>
+  const tabs = {
+   send: 'content-send',
+   drafts: 'content-drafts',
+   history: 'content-history',
+   stats: 'content-stats'
+  };
 
- <!-- Send Tab -->
- <div id="content-send" class="grid grid-cols-3 gap-6">
- <!-- Form -->
- <div class="col-span-2">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <form id="notification-form" class="space-y-4">
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Bildirim Başlığı</label>
- <input
- type="text"
- name="title"
- placeholder="örn: Yeni Blog Yazısı"
- required
- maxlength="100"
- class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-urfa-500"
- />
- </div>
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Açıklama</label>
- <textarea
- name="body"
- placeholder="Bildirim içeriğini yazın..."
- rows="4"
- maxlength="500"
- required
- class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-urfa-500"
- ></textarea>
- </div>
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Tıklanınca Gidecek URL</label>
- <input
- type="url"
- name="url"
- placeholder="/blog"
- class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-urfa-500"
- />
- </div>
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Hedef Kitle</label>
- <select name="target" class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-urfa-500">
- <option value="all">Tüm Aboneler</option>
- <option value="blog">Blog Aboneleri</option>
- <option value="new">Yeni Kullanıcılar</option>
- <option value="active">Aktif Kullanıcılar</option>
- </select>
- </div>
- <div class="grid grid-cols-2 gap-4">
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Gönderme Zamanı</label>
- <input
- type="datetime-local"
- name="scheduled_for"
- class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-urfa-500"
- />
- </div>
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Öncelik</label>
- <select name="priority" class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:ring-1 focus:ring-urfa-500">
- <option value="normal">Normal</option>
- <option value="high">Yüksek</option>
- <option value="urgent">Acil</option>
- </select>
- </div>
- </div>
- <div class="flex gap-3 pt-2">
- <button
- type="button"
- onclick="saveDraft()"
- class="flex-1 px-4 py-2 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] rounded-sm text-sm font-medium hover:bg-[rgba(184,115,51,0.12)] transition"
- >
- Taslak Olarak Kaydet
- </button>
- <button
- type="submit"
- class="flex-1 px-4 py-2 rounded-sm bg-urfa-600 text-white text-sm font-medium hover:bg-urfa-700 transition"
- >
- Gönder
- </button>
- </div>
- </form>
- </div>
- </div>
+  Object.keys(tabs).forEach(tabName => {
+   document.getElementById('tab-' + tabName).addEventListener('click', () => {
+    Object.values(tabs).forEach(contentId => {
+     document.getElementById(contentId).hidden = true;
+    });
+    document.getElementById(tabs[tabName]).hidden = false;
 
- <!-- Preview -->
- <div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h3 class="font-semibold text-[#7A6B58] mb-4 text-sm">Önizleme</h3>
- <div class="bg-[#0D0A08] rounded-sm p-4 border border-[rgba(184,115,51,0.14)]">
- <p id="preview-title" class="font-bold text-base mb-1 text-[#F5EDD6]">Bildirim Başlığı</p>
- <p id="preview-body" class="text-sm text-[#7A6B58] line-clamp-3">
- Bildirim açıklaması burada gösterilir
- </p>
- <p class="text-xs text-[#7A6B58] mt-3">sanliurfa.com</p>
- </div>
- <div class="mt-4 space-y-1.5 text-sm text-[#7A6B58]">
- <p><span class="font-medium text-[#1F1410]">Hedef:</span> <span id="preview-target">Tüm Aboneler</span></p>
- <p><span class="font-medium text-[#1F1410]">Zamanla:</span> <span id="preview-time">Hemen</span></p>
- <p><span class="font-medium text-[#1F1410]">Durum:</span> <span class="text-[#7A6B58]">Hazırlanıyor</span></p>
- </div>
- </div>
- </div>
- </div>
+    Object.keys(tabs).forEach(name => {
+     const btn = document.getElementById('tab-' + name);
+     btn.classList.toggle('nf-tab--active', name === tabName);
+    });
 
- <!-- Drafts Tab -->
- <div id="content-drafts" class="hidden">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h3 class="font-semibold text-[#7A6B58] mb-4 text-sm">Kaydedilmiş Taslaklar</h3>
- <div id="drafts-list" class="space-y-3">
- <p class="text-[#7A6B58] text-sm">Taslak yok</p>
- </div>
- </div>
- </div>
+    if (tabName === 'stats') loadStats();
+    if (tabName === 'history') loadHistory();
+    if (tabName === 'drafts') loadDrafts();
+   });
+  });
 
- <!-- History Tab -->
- <div id="content-history" class="hidden">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h3 class="font-semibold text-[#7A6B58] mb-4 text-sm">Gönderilen Bildirimler</h3>
- <div id="history-list" class="space-y-3">
- <p class="text-[#7A6B58] text-sm">Geçmiş yükleniyor...</p>
- </div>
- </div>
- </div>
+  document.getElementById('notification-form').addEventListener('input', (e) => {
+   const form = e.target.form;
+   document.getElementById('preview-title').textContent = form.title.value || 'Bildirim Başlığı';
+   document.getElementById('preview-body').textContent = form.body.value || 'Bildirim açıklaması burada gösterilir';
+   const targetMap = { all: 'Tüm Aboneler', blog: 'Blog Aboneleri', new: 'Yeni Kullanıcılar', active: 'Aktif Kullanıcılar' };
+   document.getElementById('preview-target').textContent = targetMap[form.target.value] || form.target.value;
+   document.getElementById('preview-time').textContent = form.scheduled_for.value ? new Date(form.scheduled_for.value).toLocaleString('tr-TR') : 'Hemen';
+  });
 
- <!-- Stats Tab -->
- <div id="content-stats" class="hidden">
- <div class="grid grid-cols-4 gap-4 mb-6">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <p class="text-[#7A6B58] text-sm">Toplam Gönderilen</p>
- <p id="stat-total" class="text-2xl font-bold text-[#1F1410]">0</p>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <p class="text-[#7A6B58] text-sm">Tıklanan</p>
- <p id="stat-clicked" class="text-2xl font-bold text-urfa-600">0</p>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <p class="text-[#7A6B58] text-sm">Abone Sayısı</p>
- <p id="stat-subscribers" class="text-2xl font-bold text-[#7A6B58]">0</p>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <p class="text-[#7A6B58] text-sm">Tıklama Oranı</p>
- <p id="stat-rate" class="text-2xl font-bold text-[#1F1410]">0%</p>
- </div>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h3 class="font-semibold text-[#7A6B58] mb-4 text-sm">Son Bildirimler</h3>
- <div id="stats-detail" class="space-y-3">
- <p class="text-[#7A6B58] text-sm">İstatistik yükleniyor...</p>
- </div>
- </div>
- </div>
- </div>
+  async function saveDraft() {
+   const form = document.getElementById('notification-form');
+   const data = new FormData(form);
+   try {
+    const response = await fetch('/api/notifications/draft', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify(Object.fromEntries(data))
+    });
+    if (response.ok) {
+     window.toast?.success('Taslak kaydedildi');
+     form.reset();
+    } else {
+     window.toast?.error('Hata oluştu');
+    }
+   } catch { window.toast?.error('Bir hata oluştu'); }
+  }
+
+  document.getElementById('notification-form').addEventListener('submit', async (e) => {
+   e.preventDefault();
+   const form = e.target;
+   const data = new FormData(form);
+   try {
+    const response = await fetch('/api/notifications/send', {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify(Object.fromEntries(data))
+    });
+    if (response.ok) {
+     window.toast?.success('Bildirim gönderildi');
+     form.reset();
+    } else {
+     const error = await response.json();
+     window.toast?.error(error.error || 'Bildirim gönderilemedi');
+    }
+   } catch { window.toast?.error('Bir hata oluştu'); }
+  });
+
+  function renderEmpty(container, msg) {
+   const wrap = document.createElement('div');
+   wrap.className = 'nf-empty';
+   const txt = document.createElement('span');
+   txt.textContent = msg;
+   wrap.appendChild(txt);
+   container.replaceChildren(wrap);
+  }
+
+  function renderNotification(n) {
+   const wrap = document.createElement('div');
+   wrap.className = 'nf-item';
+   const head = document.createElement('div');
+   head.className = 'nf-item-head';
+   const title = document.createElement('div');
+   title.className = 'nf-item-title'; title.textContent = n.title;
+   const meta = document.createElement('div');
+   meta.className = 'nf-item-meta';
+   meta.textContent = new Date(n.sent_at).toLocaleString('tr-TR') + ' · ' + (n.recipient_count || 0) + ' kişi · ' + (n.click_count || 0) + ' tıkla';
+   head.appendChild(title); head.appendChild(meta);
+   const body = document.createElement('p');
+   body.className = 'nf-item-body'; body.textContent = n.body;
+   wrap.appendChild(head); wrap.appendChild(body);
+   return wrap;
+  }
+
+  function renderDraft(d, onDelete) {
+   const wrap = document.createElement('div');
+   wrap.className = 'nf-item nf-item--row';
+   const left = document.createElement('div');
+   left.className = 'nf-item-left';
+   const title = document.createElement('div');
+   title.className = 'nf-item-title'; title.textContent = d.title;
+   const body = document.createElement('p');
+   body.className = 'nf-item-body'; body.textContent = d.body;
+   left.appendChild(title); left.appendChild(body);
+   const delBtn = document.createElement('button');
+   delBtn.type = 'button'; delBtn.className = 'nf-item-del';
+   delBtn.textContent = 'Sil';
+   delBtn.addEventListener('click', onDelete);
+   wrap.appendChild(left); wrap.appendChild(delBtn);
+   return wrap;
+  }
+
+  async function loadStats() {
+   try {
+    const response = await fetch('/api/notifications/stats');
+    if (response.ok) {
+     const data = await response.json();
+     document.getElementById('stat-total').textContent = (data.total || 0).toLocaleString('tr-TR');
+     document.getElementById('stat-clicked').textContent = (data.clicked || 0).toLocaleString('tr-TR');
+     document.getElementById('stat-subscribers').textContent = (data.subscribers || 0).toLocaleString('tr-TR');
+     document.getElementById('stat-rate').textContent = (data.rate || 0).toFixed(1) + '%';
+    }
+   } catch {}
+  }
+
+  async function loadHistory() {
+   const list = document.getElementById('history-list');
+   list.textContent = '';
+   try {
+    const response = await fetch('/api/notifications/history');
+    const data = await response.json();
+    if (data.notifications?.length) {
+     data.notifications.forEach(n => list.appendChild(renderNotification(n)));
+    } else {
+     renderEmpty(list, 'Gönderilen bildirim yok');
+    }
+   } catch { renderEmpty(list, 'Veriler yüklenemedi'); }
+  }
+
+  async function loadDrafts() {
+   const list = document.getElementById('drafts-list');
+   list.textContent = '';
+   try {
+    const response = await fetch('/api/notifications/drafts');
+    const data = await response.json();
+    if (data.drafts?.length) {
+     data.drafts.forEach(d => {
+      list.appendChild(renderDraft(d, async () => {
+       if (await window.showConfirm('Taslağı silmek istediğinize emin misiniz?')) {
+        try {
+         await fetch('/api/notifications/drafts/' + d.id, { method: 'DELETE' });
+         loadDrafts();
+        } catch { window.toast?.error('Hata oluştu'); }
+       }
+      }));
+     });
+    } else {
+     renderEmpty(list, 'Taslak yok');
+    }
+   } catch { renderEmpty(list, 'Veriler yüklenemedi'); }
+  }
+
+  window.saveDraft = saveDraft;
+ </script>
+
+ <style>
+  .nf-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .nf-tabs {
+   display: flex; gap: 0.25rem;
+   padding: 0.35rem;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   width: fit-content;
+   max-width: 100%;
+   overflow-x: auto;
+  }
+  .nf-tab {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.5rem 0.95rem;
+   font-size: 0.85rem; font-weight: 600;
+   color: var(--adm-text-muted);
+   background: transparent;
+   border: none;
+   border-radius: 8px;
+   cursor: pointer;
+   white-space: nowrap;
+   transition: all 0.15s;
+  }
+  .nf-tab:hover { color: var(--adm-text); background: var(--adm-bg-hover); }
+  .nf-tab--active {
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff !important;
+   box-shadow: 0 4px 12px -2px rgba(192,87,31,0.3);
+  }
+  .nf-tab--active:hover { background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning)); }
+
+  .nf-tab-pane[hidden] { display: none !important; }
+
+  .nf-send-grid {
+   display: grid;
+   grid-template-columns: 1fr;
+   gap: 1.25rem;
+  }
+  @media (min-width: 1024px) {
+   .nf-send-grid { grid-template-columns: 1.6fr 1fr; }
+  }
+
+  .nf-card {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .nf-card-head {
+   display: flex; flex-direction: column;
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .nf-card-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .nf-card-sub {
+   font-size: 0.78rem;
+   color: var(--adm-text-soft);
+   margin-top: 0.2rem;
+  }
+
+  .nf-form {
+   padding: 1.15rem;
+   display: flex; flex-direction: column; gap: 0.95rem;
+  }
+  .nf-field { display: flex; flex-direction: column; gap: 0.35rem; }
+  .nf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  @media (max-width: 640px) {
+   .nf-row { grid-template-columns: 1fr; }
+  }
+  .nf-label {
+   font-size: 0.8rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .nf-input {
+   width: 100%;
+   padding: 0.55rem 0.75rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   font-size: 0.88rem;
+   color: var(--adm-text);
+   transition: border-color 0.15s, box-shadow 0.15s;
+   font-family: inherit;
+  }
+  .nf-input:focus {
+   outline: none;
+   border-color: var(--adm-accent);
+   box-shadow: 0 0 0 3px var(--adm-bg-active);
+  }
+  textarea.nf-input { resize: vertical; min-height: 90px; }
+  .nf-hint {
+   font-size: 0.72rem;
+   color: var(--adm-text-soft);
+   margin: 0;
+  }
+
+  .nf-actions {
+   display: flex; gap: 0.6rem;
+   padding-top: 0.5rem;
+   border-top: 1px dashed var(--adm-border);
+  }
+  .nf-btn {
+   flex: 1;
+   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+   padding: 0.6rem 1rem;
+   font-size: 0.86rem; font-weight: 600;
+   border-radius: 8px;
+   border: 1px solid transparent;
+   cursor: pointer;
+   transition: all 0.15s;
+  }
+  .nf-btn--primary {
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff;
+  }
+  .nf-btn--primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px -4px rgba(192,87,31,0.35); }
+  .nf-btn--ghost {
+   background: var(--adm-bg);
+   border-color: var(--adm-border);
+   color: var(--adm-text-muted);
+  }
+  .nf-btn--ghost:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+
+  /* Preview device */
+  .nf-preview-card .nf-card-head + .nf-preview-device,
+  .nf-preview-device {
+   margin: 1.15rem;
+   background: linear-gradient(160deg, #1F1410 0%, #0D0A08 100%);
+   border-radius: 14px;
+   padding: 0.85rem;
+   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 8px 24px -4px rgba(0,0,0,0.25);
+  }
+  .nf-preview-bar {
+   display: flex; align-items: center; justify-content: space-between;
+   padding: 0 0.3rem 0.6rem;
+   color: rgba(255,255,255,0.45);
+   font-size: 0.7rem;
+   border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .nf-preview-dot {
+   width: 6px; height: 6px;
+   background: rgb(16,185,129);
+   border-radius: 50%;
+   box-shadow: 0 0 8px rgb(16,185,129);
+  }
+  .nf-preview-content {
+   display: flex; gap: 0.7rem;
+   padding: 0.75rem 0.4rem 0.5rem;
+  }
+  .nf-preview-icon {
+   width: 32px; height: 32px;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   border-radius: 8px;
+   color: #fff;
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .nf-preview-body { min-width: 0; flex: 1; }
+  .nf-preview-site {
+   font-size: 0.65rem;
+   color: rgba(255,255,255,0.4);
+   text-transform: uppercase;
+   letter-spacing: 0.04em;
+   margin-bottom: 0.25rem;
+  }
+  .nf-preview-title {
+   font-size: 0.92rem;
+   font-weight: 600;
+   color: #fff;
+   line-height: 1.3;
+   margin-bottom: 0.3rem;
+  }
+  .nf-preview-text {
+   font-size: 0.78rem;
+   color: rgba(255,255,255,0.7);
+   line-height: 1.45;
+   display: -webkit-box;
+   -webkit-line-clamp: 3;
+   -webkit-box-orient: vertical;
+   overflow: hidden;
+  }
+
+  .nf-preview-meta {
+   margin: 0 1.15rem 1.15rem;
+   display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .nf-preview-meta > div {
+   display: flex; justify-content: space-between;
+   padding: 0.4rem 0.65rem;
+   background: var(--adm-bg);
+   border-radius: 6px;
+   font-size: 0.78rem;
+  }
+  .nf-preview-meta dt { color: var(--adm-text-soft); margin: 0; font-weight: 500; }
+  .nf-preview-meta dd { color: var(--adm-text); margin: 0; font-weight: 600; }
+
+  /* Stats grid */
+  .nf-stats {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+   gap: 1rem;
+   margin-bottom: 1.25rem;
+  }
+  .nf-stat {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   padding: 1.1rem 1.25rem;
+   display: flex; align-items: center; gap: 1rem;
+  }
+  .nf-stat-ico {
+   width: 44px; height: 44px;
+   border-radius: 11px;
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .nf-stat--indigo .nf-stat-ico { background: rgba(99,102,241,0.12); color: rgb(99,102,241); }
+  .nf-stat--emerald .nf-stat-ico { background: rgba(16,185,129,0.12); color: rgb(16,185,129); }
+  .nf-stat--amber .nf-stat-ico { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+  .nf-stat--violet .nf-stat-ico { background: rgba(139,92,246,0.12); color: rgb(139,92,246); }
+  .nf-stat-val {
+   font-family: 'Cormorant Garamond', serif;
+   font-size: 1.85rem; font-weight: 700;
+   line-height: 1; margin: 0;
+   color: var(--adm-text);
+  }
+  .nf-stat-lbl {
+   margin: 0.3rem 0 0;
+   font-size: 0.78rem;
+   color: var(--adm-text-muted);
+   font-weight: 500;
+  }
+
+  /* List items (drafts/history) */
+  .nf-list {
+   padding: 1rem;
+   display: flex; flex-direction: column; gap: 0.65rem;
+  }
+  .nf-item {
+   border: 1px solid var(--adm-border);
+   border-radius: 10px;
+   padding: 0.85rem 1rem;
+   background: var(--adm-bg);
+   display: flex; flex-direction: column; gap: 0.3rem;
+   transition: border-color 0.15s, transform 0.15s;
+  }
+  .nf-item:hover { border-color: rgba(184,115,51,0.3); transform: translateY(-1px); }
+  .nf-item--row { flex-direction: row; align-items: center; justify-content: space-between; }
+  .nf-item-left { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.25rem; }
+  .nf-item-head {
+   display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+  }
+  .nf-item-title {
+   font-weight: 600;
+   color: var(--adm-text);
+   font-size: 0.92rem;
+  }
+  .nf-item-meta {
+   font-size: 0.72rem;
+   color: var(--adm-text-soft);
+  }
+  .nf-item-body {
+   margin: 0;
+   font-size: 0.85rem;
+   color: var(--adm-text-muted);
+   line-height: 1.45;
+  }
+  .nf-item-del {
+   padding: 0.35rem 0.7rem;
+   font-size: 0.76rem; font-weight: 600;
+   color: rgb(190,18,60);
+   background: transparent;
+   border: 1px solid rgba(225,29,72,0.3);
+   border-radius: 6px;
+   cursor: pointer;
+   transition: all 0.15s;
+   flex-shrink: 0;
+  }
+  .nf-item-del:hover { background: rgba(225,29,72,0.08); border-color: rgb(190,18,60); }
+
+  .nf-empty {
+   display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+   padding: 3rem 1rem;
+   color: var(--adm-text-soft);
+   font-size: 0.9rem;
+  }
+ </style>
 </AdminLayout>
-
-<script is:inline>
- // Tab yönetimi
- const tabs = {
- send: 'content-send',
- drafts: 'content-drafts',
- history: 'content-history',
- stats: 'content-stats'
- };
-
- Object.keys(tabs).forEach(tabName => {
- document.getElementById(`tab-${tabName}`).addEventListener('click', () => {
- Object.values(tabs).forEach(contentId => {
- document.getElementById(contentId).classList.add('hidden');
- });
- document.getElementById(tabs[tabName]).classList.remove('hidden');
-
- Object.keys(tabs).forEach(name => {
- const btn = document.getElementById(`tab-${name}`);
- if (name === tabName) {
- btn.classList.add('border-urfa-600', 'text-urfa-600');
- btn.classList.remove('border-transparent', 'text-[#7A6B58]');
- } else {
- btn.classList.remove('border-urfa-600', 'text-urfa-600');
- btn.classList.add('border-transparent', 'text-[#7A6B58]');
- }
- });
-
- if (tabName === 'stats') loadStats();
- if (tabName === 'history') loadHistory();
- if (tabName === 'drafts') loadDrafts();
- });
- });
-
- document.getElementById('notification-form').addEventListener('input', (e) => {
- const form = e.target.form;
- document.getElementById('preview-title').textContent = form.title.value || 'Bildirim Başlığı';
- document.getElementById('preview-body').textContent = form.body.value || 'Bildirim açıklaması burada gösterilir';
- document.getElementById('preview-target').textContent = form.target.value;
- document.getElementById('preview-time').textContent = form.scheduled_for.value ? 'Zamanlanmış' : 'Hemen';
- });
-
- async function saveDraft() {
- const form = document.getElementById('notification-form');
- const data = new FormData(form);
- try {
- const response = await fetch('/api/notifications/draft', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify(Object.fromEntries(data))
- });
- if (response.ok) {
- window.toast?.success('Taslak kaydedildi');
- form.reset();
- } else {
- window.toast?.error('Hata oluştu');
- }
- } catch {
- window.toast?.error('Bir hata oluştu');
- }
- }
-
- document.getElementById('notification-form').addEventListener('submit', async (e) => {
- e.preventDefault();
- const form = e.target;
- const data = new FormData(form);
- try {
- const response = await fetch('/api/notifications/send', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify(Object.fromEntries(data))
- });
- if (response.ok) {
- window.toast?.success('Bildirim gönderildi');
- form.reset();
- } else {
- const error = await response.json();
- window.toast?.error(error.error || 'Bildirim gönderilemedi');
- }
- } catch {
- window.toast?.error('Bir hata oluştu');
- }
- });
-
- function renderNotification(n) {
- const wrapper = document.createElement('div');
- wrapper.className = 'border border-[rgba(184,115,51,0.14)] rounded-sm p-4';
-
- const title = document.createElement('p');
- title.className = 'font-medium text-[#1F1410]';
- title.textContent = n.title;
-
- const body = document.createElement('p');
- body.className = 'text-sm text-[#7A6B58] mt-1';
- body.textContent = n.body;
-
- const meta = document.createElement('p');
- meta.className = 'text-xs text-[#7A6B58] mt-2';
- meta.textContent = `${new Date(n.sent_at).toLocaleString('tr-TR')} · ${n.recipient_count} kişi · ${n.click_count} tıkla`;
-
- wrapper.appendChild(title);
- wrapper.appendChild(body);
- wrapper.appendChild(meta);
- return wrapper;
- }
-
- function renderDraft(d, onDelete) {
- const wrapper = document.createElement('div');
- wrapper.className = 'border border-[rgba(184,115,51,0.14)] rounded-sm p-4';
-
- const row = document.createElement('div');
- row.className = 'flex justify-between items-start';
-
- const content = document.createElement('div');
-
- const title = document.createElement('p');
- title.className = 'font-medium text-[#1F1410]';
- title.textContent = d.title;
-
- const body = document.createElement('p');
- body.className = 'text-sm text-[#7A6B58] mt-1';
- body.textContent = d.body;
-
- content.appendChild(title);
- content.appendChild(body);
-
- const delBtn = document.createElement('button');
- delBtn.className = 'text-xs text-[#7A6B58] hover:text-[#1F1410] hover:underline ml-4 flex-shrink-0';
- delBtn.textContent = 'Sil';
- delBtn.addEventListener('click', onDelete);
-
- row.appendChild(content);
- row.appendChild(delBtn);
- wrapper.appendChild(row);
- return wrapper;
- }
-
- async function loadStats() {
- try {
- const response = await fetch('/api/notifications/stats');
- if (response.ok) {
- const data = await response.json();
- document.getElementById('stat-total').textContent = data.total || '0';
- document.getElementById('stat-clicked').textContent = data.clicked || '0';
- document.getElementById('stat-subscribers').textContent = data.subscribers || '0';
- document.getElementById('stat-rate').textContent = (data.rate || 0).toFixed(1) + '%';
- }
- } catch {
- // ignore
- }
- }
-
- async function loadHistory() {
- const list = document.getElementById('history-list');
- list.textContent = '';
- try {
- const response = await fetch('/api/notifications/history');
- const data = await response.json();
- if (data.notifications?.length) {
- data.notifications.forEach(n => list.appendChild(renderNotification(n)));
- } else {
- const empty = document.createElement('p');
- empty.className = 'text-[#7A6B58] text-sm';
- empty.textContent = 'Gönderilen bildirim yok';
- list.appendChild(empty);
- }
- } catch {
- // ignore
- }
- }
-
- async function loadDrafts() {
- const list = document.getElementById('drafts-list');
- list.textContent = '';
- try {
- const response = await fetch('/api/notifications/drafts');
- const data = await response.json();
- if (data.drafts?.length) {
- data.drafts.forEach(d => {
- list.appendChild(renderDraft(d, async () => {
- if (await window.showConfirm('Taslağı silmek istediğinize emin misiniz?')) {
- try {
- await fetch(`/api/notifications/drafts/${d.id}`, { method: 'DELETE' });
- loadDrafts();
- } catch {
- window.toast?.error('Hata oluştu');
- }
- }
- }));
- });
- } else {
- const empty = document.createElement('p');
- empty.className = 'text-[#7A6B58] text-sm';
- empty.textContent = 'Taslak yok';
- list.appendChild(empty);
- }
- } catch {
- // ignore
- }
- }
-
- window.saveDraft = saveDraft;
-</script>

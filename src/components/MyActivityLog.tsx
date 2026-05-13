@@ -29,7 +29,7 @@ export default function MyActivityLog() {
  }
  };
 
- if (isLoading) return <div className="text-center py-8">Yükleniyor...</div>;
+ if (isLoading) return <div className="text-center py-8">Yükleniyor…</div>;
 
  const getActivityIcon = (type: string) => {
  const icons: Record<string, string> = {

@@ -72,8 +72,8 @@ type Status = 'idle' | 'loading' | 'saving' | 'success' | 'error';
 
 function Section({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) {
  return (
- <div className="bg-[var(--bg-card)] rounded-sm border border-[rgba(184,115,51,0.1)] p-6 mb-6">
- <h2 className="text-lg font-semibold text-[#1F1410] flex items-center gap-2 mb-5">
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm border border-[var(--adm-bg-active)] p-6 mb-6">
+ <h2 className="text-lg font-semibold text-[var(--adm-text)] flex items-center gap-2 mb-5">
  <span>{icon}</span> {title}
  </h2>
  {children}
@@ -87,11 +87,11 @@ function CopyableUrlHint({ label, url, helpText }: { label: string; url: string;
  <div className="bg-[rgba(59,130,246,0.1)] border border-[rgba(59,130,246,0.2)] rounded-sm p-3 mb-4 text-xs text-blue-300">
  <p className="font-medium mb-2">{label}</p>
  <div className="flex items-center gap-2">
- <code className="flex-1 bg-[var(--bg-card)] px-2 py-1.5 rounded border border-[rgba(59,130,246,0.2)] font-mono text-[11px] break-all">{url}</code>
+ <code className="flex-1 bg-[var(--adm-bg-elev)] px-2 py-1.5 rounded border border-[rgba(59,130,246,0.2)] font-mono text-[11px] break-all">{url}</code>
  <button
  type="button"
  onClick={() => navigator.clipboard?.writeText(url)}
- className="shrink-0 px-2 py-1.5 bg-[var(--bg-card)] border border-[rgba(59,130,246,0.2)] rounded text-[11px] hover:bg-[rgba(59,130,246,0.1)]"
+ className="shrink-0 px-2 py-1.5 bg-[var(--adm-bg-elev)] border border-[rgba(59,130,246,0.2)] rounded text-[11px] hover:bg-[rgba(59,130,246,0.1)]"
  title="Panoya kopyala"
  >
  📋
@@ -431,10 +431,10 @@ export default function IntegrationsSettings() {
  return (
  <div className="max-w-2xl mx-auto">
  {/* Master test bar */}
- <div className="bg-[var(--bg-card)] rounded-sm border border-[rgba(184,115,51,0.1)] p-4 mb-6 flex items-center justify-between">
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm border border-[var(--adm-bg-active)] p-4 mb-6 flex items-center justify-between">
  <div>
- <h2 className="text-sm font-semibold text-[#1F1410]">Tüm Entegrasyonları Test Et</h2>
- <p className="text-xs text-[#7A6B58] mt-0.5">Tüm bölümleri tek seferde tarar; sonuçlar aşağıdaki badge'lerde görünür.</p>
+ <h2 className="text-sm font-semibold text-[var(--adm-text)]">Tüm Entegrasyonları Test Et</h2>
+ <p className="text-xs text-[var(--adm-text-muted)] mt-0.5">Tüm bölümleri tek seferde tarar; sonuçlar aşağıdaki badge'lerde görünür.</p>
  </div>
  <button
  type="button"
@@ -448,12 +448,12 @@ export default function IntegrationsSettings() {
 
  {/* E-posta */}
  <Section title="E-posta Entegrasyonu (Resend)" icon="✉️">
- <p className="text-xs text-[#7A6B58] mb-3">
+ <p className="text-xs text-[var(--adm-text-muted)] mb-3">
  Resend hesabı: <a href="https://resend.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline">resend.com/api-keys</a>'den API key alın. Sender e-posta adresinin domaini için <a href="https://resend.com/domains" target="_blank" rel="noopener noreferrer" className="underline">resend.com/domains</a>'da DNS doğrulaması (SPF/DKIM) yapın — yoksa e-postalar spam'e düşer.
  </p>
  <div className="space-y-4">
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">
  Resend API Key
  {email.api_key_set && (
  <span className="ml-2 text-xs text-green-600 font-normal">✓ Kayıtlı: {email.api_key_masked}</span>
@@ -465,12 +465,12 @@ export default function IntegrationsSettings() {
  value={email.api_key}
  onChange={e => setEmail(s => ({ ...s, api_key: e.target.value }))}
  placeholder={email.api_key_set ? 'Değiştirmek için yeni key girin' : 're_xxxxxxxxxxxx'}
- className="flex-1 rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="flex-1 rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <button
  type="button"
  onClick={() => setShowKey(v => !v)}
- className="px-3 py-2 text-sm text-[#7A6B58] border border-[rgba(184,115,51,0.25)] rounded-sm hover:bg-[rgba(184,115,51,0.06)]"
+ className="px-3 py-2 text-sm text-[var(--adm-text-muted)] border border-[var(--adm-border-strong)] rounded-sm hover:bg-[var(--adm-bg-hover)]"
  >
  {showKey ? '🙈' : '👁'}
  </button>
@@ -480,17 +480,17 @@ export default function IntegrationsSettings() {
  </p>
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Gönderici E-posta</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Gönderici E-posta</label>
  <input
  type="email"
  value={email.from_email}
  onChange={e => setEmail(s => ({ ...s, from_email: e.target.value }))}
  placeholder="noreply@sanliurfa.com"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">
  Günlük Kişi Başı Limit
  </label>
  <input
@@ -499,7 +499,8 @@ export default function IntegrationsSettings() {
  max={10000}
  value={email.daily_limit_per_recipient}
  onChange={e => setEmail(s => ({ ...s, daily_limit_per_recipient: Number(e.target.value) || 0 }))}
- className="w-32 rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ aria-label="Günlük kişi başı email limiti"
+ className="w-32 rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <p className="text-xs text-[#4A3828] mt-1">
  Aynı alıcıya günde gönderilebilecek maksimum e-posta sayısı. Spam ve maliyet kontrolü için. <strong>0</strong> = sınırsız.
@@ -521,7 +522,7 @@ export default function IntegrationsSettings() {
  type="button"
  onClick={() => testIntegration('email')}
  disabled={status.email === 'saving'}
- className="px-4 py-2 bg-[rgba(184,115,51,0.08)] text-[#7A6B58] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
+ className="px-4 py-2 bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
  title="Hesabınıza test e-postası gönderir"
  >
  Test Et
@@ -533,42 +534,42 @@ export default function IntegrationsSettings() {
 
  {/* SMTP — Tier 2 fallback for Resend */}
  <Section title="SMTP Sunucu (Resend Fallback)" icon="📮">
- <p className="text-xs text-[#7A6B58] mb-4">
+ <p className="text-xs text-[var(--adm-text-muted)] mb-4">
  Resend yapılandırılmadığında veya kotaya takıldığında SMTP üzerinden gönderim için. Kendi mail sunucunuz varsa dış API gerektirmez.
  </p>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">SMTP Host</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">SMTP Host</label>
  <input
  type="text"
  value={smtp.host}
  onChange={e => setSmtp(s => ({ ...s, host: e.target.value }))}
  placeholder="smtp.example.com"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Port</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Port</label>
  <input
  type="number"
  value={smtp.port}
  onChange={e => setSmtp(s => ({ ...s, port: Number(e.target.value) || 587 }))}
  placeholder="587"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Kullanıcı adı</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Kullanıcı adı</label>
  <input
  type="text"
  value={smtp.user}
  onChange={e => setSmtp(s => ({ ...s, user: e.target.value }))}
  placeholder="user@example.com"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">
  Şifre
  {smtp.pass_set && (
  <span className="ml-2 text-xs text-green-600 font-normal">✓ Kayıtlı: {smtp.pass_masked}</span>
@@ -580,25 +581,25 @@ export default function IntegrationsSettings() {
  value={smtp.pass}
  onChange={e => setSmtp(s => ({ ...s, pass: e.target.value }))}
  placeholder={smtp.pass_set ? 'Değiştirmek için yeni şifre' : 'SMTP şifresi'}
- className="flex-1 rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="flex-1 rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <button
  type="button"
  onClick={() => setShowSmtpPass(v => !v)}
- className="px-3 py-2 text-sm text-[#7A6B58] border border-[rgba(184,115,51,0.25)] rounded-sm hover:bg-[rgba(184,115,51,0.06)]"
+ className="px-3 py-2 text-sm text-[var(--adm-text-muted)] border border-[var(--adm-border-strong)] rounded-sm hover:bg-[var(--adm-bg-hover)]"
  >
  {showSmtpPass ? '🙈' : '👁'}
  </button>
  </div>
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Gönderici E-posta</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Gönderici E-posta</label>
  <input
  type="email"
  value={smtp.from_email}
  onChange={e => setSmtp(s => ({ ...s, from_email: e.target.value }))}
  placeholder="noreply@sanliurfa.com"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div className="flex items-end">
@@ -634,7 +635,7 @@ export default function IntegrationsSettings() {
  type="button"
  onClick={() => testIntegration('smtp')}
  disabled={status.smtp === 'saving'}
- className="px-4 py-2 bg-[rgba(184,115,51,0.08)] text-[#7A6B58] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
+ className="px-4 py-2 bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
  title="SMTP sunucusuna bağlanır ve kimlik doğrulamayı test eder (e-posta göndermez)"
  >
  Test Et
@@ -647,13 +648,13 @@ export default function IntegrationsSettings() {
  <Section title="Google Analytics 4" icon="📊">
  <div className="space-y-4">
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Measurement ID</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Measurement ID</label>
  <input
  type="text"
  value={analytics.ga_id}
  onChange={e => setAnalytics({ ga_id: e.target.value })}
  placeholder="G-XXXXXXXXXX"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <p className="text-xs text-[#4A3828] mt-1">
  GA4 → Yönetici → Veri Akışları → Web Akışı Ayrıntıları'ndan alınır. Hemen aktif olur, rebuild gerekmez.
@@ -671,7 +672,7 @@ export default function IntegrationsSettings() {
  type="button"
  onClick={() => testIntegration('analytics')}
  disabled={status.analytics === 'saving'}
- className="px-4 py-2 bg-[rgba(184,115,51,0.08)] text-[#7A6B58] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
+ className="px-4 py-2 bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
  title="GA4 Measurement ID formatını doğrular (G-XXXXXXXXXX)"
  >
  Test Et
@@ -694,7 +695,7 @@ export default function IntegrationsSettings() {
  />
  <div className="space-y-4">
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">
  Secret Key
  {payment.secret_key_set && (
  <span className="ml-2 text-xs text-green-600 font-normal">✓ Kayıtlı: {payment.secret_key_masked}</span>
@@ -706,12 +707,12 @@ export default function IntegrationsSettings() {
  value={payment.secret_key}
  onChange={e => setPayment(s => ({ ...s, secret_key: e.target.value }))}
  placeholder={payment.secret_key_set ? 'Değiştirmek için yeni key girin' : 'sk_live_... veya sk_test_...'}
- className="flex-1 rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="flex-1 rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <button
  type="button"
  onClick={() => setShowStripeSecret(v => !v)}
- className="px-3 py-2 text-sm text-[#7A6B58] border border-[rgba(184,115,51,0.25)] rounded-sm hover:bg-[rgba(184,115,51,0.06)]"
+ className="px-3 py-2 text-sm text-[var(--adm-text-muted)] border border-[var(--adm-border-strong)] rounded-sm hover:bg-[var(--adm-bg-hover)]"
  >
  {showStripeSecret ? '🙈' : '👁'}
  </button>
@@ -722,13 +723,13 @@ export default function IntegrationsSettings() {
  </div>
 
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Publishable Key</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Publishable Key</label>
  <input
  type="text"
  value={payment.publishable_key}
  onChange={e => setPayment(s => ({ ...s, publishable_key: e.target.value }))}
  placeholder="pk_live_... veya pk_test_..."
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <p className="text-xs text-[#4A3828] mt-1">
  Tarayıcı tarafında Stripe.js başlatmak için kullanılır. Genel olarak güvenli bir değerdir.
@@ -736,7 +737,7 @@ export default function IntegrationsSettings() {
  </div>
 
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">
  Webhook Secret
  {payment.webhook_secret_set && (
  <span className="ml-2 text-xs text-green-600 font-normal">✓ Kayıtlı: {payment.webhook_secret_masked}</span>
@@ -748,18 +749,18 @@ export default function IntegrationsSettings() {
  value={payment.webhook_secret}
  onChange={e => setPayment(s => ({ ...s, webhook_secret: e.target.value }))}
  placeholder={payment.webhook_secret_set ? 'Değiştirmek için yeni secret girin' : 'whsec_...'}
- className="flex-1 rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="flex-1 rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <button
  type="button"
  onClick={() => setShowWebhookSecret(v => !v)}
- className="px-3 py-2 text-sm text-[#7A6B58] border border-[rgba(184,115,51,0.25)] rounded-sm hover:bg-[rgba(184,115,51,0.06)]"
+ className="px-3 py-2 text-sm text-[var(--adm-text-muted)] border border-[var(--adm-border-strong)] rounded-sm hover:bg-[var(--adm-bg-hover)]"
  >
  {showWebhookSecret ? '🙈' : '👁'}
  </button>
  </div>
  <p className="text-xs text-[#4A3828] mt-1">
- <a href="https://dashboard.stripe.com/webhooks" target="_blank" rel="noopener noreferrer" className="underline">dashboard.stripe.com/webhooks</a>'tan webhook eklerken alınır. <code className="bg-[rgba(184,115,51,0.06)] px-1 rounded">/api/billing/webhook</code> endpoint'ini Stripe'a kaydedin.
+ <a href="https://dashboard.stripe.com/webhooks" target="_blank" rel="noopener noreferrer" className="underline">dashboard.stripe.com/webhooks</a>'tan webhook eklerken alınır. <code className="bg-[var(--adm-bg-hover)] px-1 rounded">/api/billing/webhook</code> endpoint'ini Stripe'a kaydedin.
  </p>
  </div>
 
@@ -779,7 +780,7 @@ export default function IntegrationsSettings() {
  type="button"
  onClick={() => testIntegration('payment')}
  disabled={status.payment === 'saving'}
- className="px-4 py-2 bg-[rgba(184,115,51,0.08)] text-[#7A6B58] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
+ className="px-4 py-2 bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
  title="Stripe API'ye küçük bir sorgu gönderir"
  >
  Test Et
@@ -793,7 +794,7 @@ export default function IntegrationsSettings() {
  <Section title="Resim Sağlayıcıları (Unsplash & Pexels)" icon="🖼️">
  <div className="space-y-4">
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">
  Unsplash Access Key
  {imageProviders.unsplash_set && (
  <span className="ml-2 text-xs text-green-600 font-normal">✓ Kayıtlı: {imageProviders.unsplash_masked}</span>
@@ -805,12 +806,12 @@ export default function IntegrationsSettings() {
  value={imageProviders.unsplash_access_key}
  onChange={e => setImageProviders(s => ({ ...s, unsplash_access_key: e.target.value }))}
  placeholder={imageProviders.unsplash_set ? 'Değiştirmek için yeni key girin' : 'Unsplash Access Key'}
- className="flex-1 rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="flex-1 rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <button
  type="button"
  onClick={() => setShowUnsplashKey(v => !v)}
- className="px-3 py-2 text-sm text-[#7A6B58] border border-[rgba(184,115,51,0.25)] rounded-sm hover:bg-[rgba(184,115,51,0.06)]"
+ className="px-3 py-2 text-sm text-[var(--adm-text-muted)] border border-[var(--adm-border-strong)] rounded-sm hover:bg-[var(--adm-bg-hover)]"
  >
  {showUnsplashKey ? '🙈' : '👁'}
  </button>
@@ -821,7 +822,7 @@ export default function IntegrationsSettings() {
  </div>
 
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">
  Pexels API Key
  {imageProviders.pexels_set && (
  <span className="ml-2 text-xs text-green-600 font-normal">✓ Kayıtlı: {imageProviders.pexels_masked}</span>
@@ -833,12 +834,12 @@ export default function IntegrationsSettings() {
  value={imageProviders.pexels_api_key}
  onChange={e => setImageProviders(s => ({ ...s, pexels_api_key: e.target.value }))}
  placeholder={imageProviders.pexels_set ? 'Değiştirmek için yeni key girin' : 'Pexels API Key'}
- className="flex-1 rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="flex-1 rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <button
  type="button"
  onClick={() => setShowPexelsKey(v => !v)}
- className="px-3 py-2 text-sm text-[#7A6B58] border border-[rgba(184,115,51,0.25)] rounded-sm hover:bg-[rgba(184,115,51,0.06)]"
+ className="px-3 py-2 text-sm text-[var(--adm-text-muted)] border border-[var(--adm-border-strong)] rounded-sm hover:bg-[var(--adm-bg-hover)]"
  >
  {showPexelsKey ? '🙈' : '👁'}
  </button>
@@ -863,7 +864,7 @@ export default function IntegrationsSettings() {
  type="button"
  onClick={() => testIntegration('image_providers')}
  disabled={status.image_providers === 'saving'}
- className="px-4 py-2 bg-[rgba(184,115,51,0.08)] text-[#7A6B58] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
+ className="px-4 py-2 bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
  title="Her iki sağlayıcıya küçük bir arama sorgusu gönderir"
  >
  Test Et
@@ -875,20 +876,20 @@ export default function IntegrationsSettings() {
 
  {/* Sosyal Giriş (OAuth) */}
  <Section title="Sosyal Giriş (Google, Facebook, Twitter)" icon="🔐">
- <p className="text-xs text-[#7A6B58] mb-4">
+ <p className="text-xs text-[var(--adm-text-muted)] mb-4">
  OAuth client_id ve client_secret bilgilerinizi her sağlayıcı için ayrı ayrı girin. Auth/token URL'leri otomatik olarak ayarlanır. Her sağlayıcı kendi panelinden bir uygulama oluşturmanızı gerektirir.
  </p>
  <div className="space-y-6">
  {oauthProviders.map((p, idx) => (
- <div key={p.provider_key} className="border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
+ <div key={p.provider_key} className="border border-[var(--adm-border)] rounded-sm p-4">
  <div className="flex items-center justify-between mb-3">
  <div className="flex items-center gap-2">
- <h3 className="text-sm font-semibold text-[#1F1410]">{p.provider_name}</h3>
+ <h3 className="text-sm font-semibold text-[var(--adm-text)]">{p.provider_name}</h3>
  {p.is_enabled && p.client_secret_set && (
  <span className="text-xs px-2 py-0.5 bg-[rgba(34,197,94,0.12)] text-green-400 rounded-sm">Aktif</span>
  )}
  {!p.is_enabled && p.client_secret_set && (
- <span className="text-xs px-2 py-0.5 bg-[rgba(184,115,51,0.08)] text-[#7A6B58] rounded">Devre dışı</span>
+ <span className="text-xs px-2 py-0.5 bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] rounded">Devre dışı</span>
  )}
  {!p.client_secret_set && (
  <span className="text-xs px-2 py-0.5 bg-[rgba(234,179,8,0.12)] text-amber-400 rounded-sm">Yapılandırılmamış</span>
@@ -924,13 +925,13 @@ export default function IntegrationsSettings() {
  <div className="mt-2">
  <p className="mb-1 font-medium">Sağlayıcı paneline kaydedilecek <strong>Redirect URI</strong>:</p>
  <div className="flex items-center gap-2">
- <code className="flex-1 bg-[var(--bg-card)] px-2 py-1.5 rounded border border-[rgba(59,130,246,0.2)] font-mono text-[11px] break-all">
+ <code className="flex-1 bg-[var(--adm-bg-elev)] px-2 py-1.5 rounded border border-[rgba(59,130,246,0.2)] font-mono text-[11px] break-all">
  {p.redirect_uri}
  </code>
  <button
  type="button"
  onClick={() => navigator.clipboard?.writeText(p.redirect_uri)}
- className="shrink-0 px-2 py-1.5 bg-[var(--bg-card)] border border-[rgba(59,130,246,0.2)] rounded text-[11px] hover:bg-[rgba(59,130,246,0.1)]"
+ className="shrink-0 px-2 py-1.5 bg-[var(--adm-bg-elev)] border border-[rgba(59,130,246,0.2)] rounded text-[11px] hover:bg-[rgba(59,130,246,0.1)]"
  title="Panoya kopyala"
  >
  📋
@@ -942,7 +943,7 @@ export default function IntegrationsSettings() {
 
  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
  <div>
- <label className="block text-xs font-medium text-[#7A6B58] mb-1">Client ID</label>
+ <label className="block text-xs font-medium text-[var(--adm-text-muted)] mb-1">Client ID</label>
  <input
  type="text"
  value={p.client_id}
@@ -952,11 +953,11 @@ export default function IntegrationsSettings() {
  )
  }
  placeholder={`${p.provider_name} Client ID`}
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div>
- <label className="block text-xs font-medium text-[#7A6B58] mb-1">
+ <label className="block text-xs font-medium text-[var(--adm-text-muted)] mb-1">
  Client Secret
  {p.client_secret_set && (
  <span className="ml-2 text-xs text-green-600 font-normal">✓ {p.client_secret_masked}</span>
@@ -972,7 +973,7 @@ export default function IntegrationsSettings() {
  )
  }
  placeholder={p.client_secret_set ? 'Değiştirmek için yeni secret' : `${p.provider_name} Client Secret`}
- className="flex-1 rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="flex-1 rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <button
  type="button"
@@ -981,7 +982,7 @@ export default function IntegrationsSettings() {
  arr.map((q, i) => (i === idx ? { ...q, show_secret: !q.show_secret } : q)),
  )
  }
- className="px-3 py-2 text-sm text-[#7A6B58] border border-[rgba(184,115,51,0.25)] rounded-sm hover:bg-[rgba(184,115,51,0.06)]"
+ className="px-3 py-2 text-sm text-[var(--adm-text-muted)] border border-[var(--adm-border-strong)] rounded-sm hover:bg-[var(--adm-bg-hover)]"
  >
  {p.show_secret ? '🙈' : '👁'}
  </button>
@@ -1001,7 +1002,7 @@ export default function IntegrationsSettings() {
  type="button"
  onClick={() => testOAuthProvider(idx)}
  disabled={p.saving || !p.client_secret_set}
- className="px-4 py-2 bg-[rgba(184,115,51,0.08)] text-[#7A6B58] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
+ className="px-4 py-2 bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] text-sm font-medium rounded-sm hover:bg-[rgba(184,115,51,0.15)] disabled:opacity-50"
  title="auth endpoint'in erişilebilirliğini ve client config'in tamlığını doğrular (OAuth akışı başlatmaz)"
  >
  Test Et

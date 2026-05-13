@@ -49,6 +49,12 @@ Allow: /
 User-agent: DuckDuckBot
 Allow: /
 
+User-agent: YandexBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
 User-agent: GPTBot
 Allow: /
 

@@ -1,10 +1,17 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import AdminDashboardOverview from '../../components/AdminDashboardOverview';
 import ModerationQueueManager from '../../components/ModerationQueueManager';
 import UserManagementTable from '../../components/UserManagementTable';
 import DashboardStats from '../../components/admin/DashboardStats.astro';
 import IntegrationsHealthSummary from '../../components/admin/IntegrationsHealthSummary.astro';
+
+const tabs = [
+ { key: 'overview', label: 'Genel Bakış', icon: 'lucide:layout-dashboard' },
+ { key: 'moderation', label: 'Moderasyon', icon: 'lucide:shield' },
+ { key: 'users', label: 'Kullanıcı Yönetimi', icon: 'lucide:users' },
+];
 ---
 
 <AdminLayout
@@ -12,101 +19,176 @@ import IntegrationsHealthSummary from '../../components/admin/IntegrationsHealth
  subtitle="Platform yönetimi, moderasyon ve kullanıcı yönetimi"
  seo={{ title: 'Yönetim Paneli - Admin', noIndex: true }}
 >
- <div class="max-w-7xl mx-auto px-4 py-8">
- {/* Server Island: İstatistikler — server:defer ile ilk HTML beklenmeden yüklenir */}
- <div class="mb-6">
- <DashboardStats server:defer>
- <div slot="fallback" class="grid grid-cols-2 md:grid-cols-3 gap-4 animate-pulse">
- {[1,2,3].map(() => (
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5 h-24" />
- ))}
- </div>
- </DashboardStats>
- </div>
+ <div class="dx-page">
+  <DashboardStats server:defer>
+   <div slot="fallback" class="dx-skel-grid">
+    {[1,2,3,4].map(() => <div class="dx-skel-card"></div>)}
+   </div>
+  </DashboardStats>
 
- {/* Server Island: Entegrasyonlar sağlık özeti */}
- <div class="mb-6">
- <IntegrationsHealthSummary server:defer>
- <div slot="fallback" class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 animate-pulse">
- <div class="h-5 bg-[rgba(184,115,51,0.1)] rounded-sm w-40 mb-4"></div>
- <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
- <div class="h-20 bg-[rgba(184,115,51,0.06)] rounded-sm"></div>
- <div class="h-20 bg-[rgba(184,115,51,0.06)] rounded-sm"></div>
- <div class="h-20 bg-[rgba(184,115,51,0.06)] rounded-sm"></div>
- <div class="h-20 bg-[rgba(184,115,51,0.06)] rounded-sm"></div>
- <div class="h-20 bg-[rgba(184,115,51,0.06)] rounded-sm"></div>
- </div>
- </div>
- </IntegrationsHealthSummary>
- </div>
+  <IntegrationsHealthSummary server:defer>
+   <div slot="fallback" class="dx-skel-card dx-skel-card--wide">
+    <div class="dx-skel-line dx-skel-line--head"></div>
+    <div class="dx-skel-row">
+     {[1,2,3,4,5].map(() => <div class="dx-skel-mini"></div>)}
+    </div>
+   </div>
+  </IntegrationsHealthSummary>
 
- {/* Tabs */}
- <div class="mb-6">
- <div class="border-b border-[rgba(184,115,51,0.2)] flex gap-8">
- <button
- onclick="switchTab('overview')"
- class="py-3 px-1 border-b-2 border-urfa-600 text-urfa-600 font-medium text-sm"
- id="tab-overview"
- >
- Genel Bakış
- </button>
- <button
- onclick="switchTab('moderation')"
- class="py-3 px-1 border-b-2 border-transparent text-[#7A6B58] font-medium text-sm hover:text-[#1F1410]"
- id="tab-moderation"
- >
- Moderasyon
- </button>
- <button
- onclick="switchTab('users')"
- class="py-3 px-1 border-b-2 border-transparent text-[#7A6B58] font-medium text-sm hover:text-[#1F1410]"
- id="tab-users"
- >
- Kullanıcı Yönetimi
- </button>
- </div>
- </div>
+  <div class="dx-tabs" role="tablist">
+   {tabs.map((tab, i) => (
+    <button
+     type="button"
+     class:list={['dx-tab', i === 0 && 'dx-tab--active']}
+     id={`tab-${tab.key}`}
+     role="tab"
+     data-tab={tab.key}
+    >
+     <Icon name={tab.icon} class="w-4 h-4" />
+     <span>{tab.label}</span>
+    </button>
+   ))}
+  </div>
 
- {/* Content Sections */}
- <div id="overview-section">
- <AdminDashboardOverview client:visible />
- </div>
+  <div id="overview-section" class="dx-pane">
+   <AdminDashboardOverview client:visible />
+  </div>
 
- <div id="moderation-section" class="hidden">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 shadow-sm">
- <h2 class="text-xl font-semibold text-[#1F1410] mb-4">Moderasyon Kuyruğu</h2>
- <ModerationQueueManager client:visible />
- </div>
- </div>
+  <div id="moderation-section" class="dx-pane" hidden>
+   <div class="dx-panel">
+    <header class="dx-panel-head">
+     <h2 class="dx-panel-title">
+      <Icon name="lucide:shield-alert" class="w-4 h-4" /> Moderasyon Kuyruğu
+     </h2>
+    </header>
+    <div class="dx-panel-body">
+     <ModerationQueueManager client:visible />
+    </div>
+   </div>
+  </div>
 
- <div id="users-section" class="hidden">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 shadow-sm">
- <h2 class="text-xl font-semibold text-[#1F1410] mb-4">Kullanıcı Yönetimi</h2>
- <UserManagementTable client:visible />
- </div>
- </div>
+  <div id="users-section" class="dx-pane" hidden>
+   <div class="dx-panel">
+    <header class="dx-panel-head">
+     <h2 class="dx-panel-title">
+      <Icon name="lucide:users" class="w-4 h-4" /> Kullanıcı Yönetimi
+     </h2>
+    </header>
+    <div class="dx-panel-body">
+     <UserManagementTable client:visible />
+    </div>
+   </div>
+  </div>
  </div>
 
  <script is:inline>
- function switchTab(tabName) {
- document.getElementById('overview-section')?.classList.add('hidden');
- document.getElementById('moderation-section')?.classList.add('hidden');
- document.getElementById('users-section')?.classList.add('hidden');
-
- document.getElementById('tab-overview')?.classList.remove('border-urfa-600', 'text-urfa-600');
- document.getElementById('tab-moderation')?.classList.remove('border-urfa-600', 'text-urfa-600');
- document.getElementById('tab-users')?.classList.remove('border-urfa-600', 'text-urfa-600');
-
- document.getElementById('tab-overview')?.classList.add('border-transparent', 'text-[#7A6B58]');
- document.getElementById('tab-moderation')?.classList.add('border-transparent', 'text-[#7A6B58]');
- document.getElementById('tab-users')?.classList.add('border-transparent', 'text-[#7A6B58]');
-
- const sectionId = `${tabName}-section`;
- const tabId = `tab-${tabName}`;
-
- document.getElementById(sectionId)?.classList.remove('hidden');
- document.getElementById(tabId)?.classList.remove('border-transparent', 'text-[#7A6B58]');
- document.getElementById(tabId)?.classList.add('border-urfa-600', 'text-urfa-600');
- }
+  const tabKeys = ['overview', 'moderation', 'users'];
+  function switchTab(name) {
+   tabKeys.forEach(k => {
+    document.getElementById(k + '-section').hidden = (k !== name);
+    document.getElementById('tab-' + k).classList.toggle('dx-tab--active', k === name);
+   });
+  }
+  tabKeys.forEach(k => {
+   document.getElementById('tab-' + k).addEventListener('click', () => switchTab(k));
+  });
  </script>
+
+ <style>
+  .dx-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .dx-tabs {
+   display: flex; gap: 0.35rem;
+   padding: 0.35rem;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   width: fit-content;
+   max-width: 100%;
+   overflow-x: auto;
+  }
+  .dx-tab {
+   display: inline-flex; align-items: center; gap: 0.45rem;
+   padding: 0.55rem 1rem;
+   background: transparent;
+   border: none;
+   border-radius: 8px;
+   font-size: 0.86rem; font-weight: 600;
+   color: var(--adm-text-muted);
+   cursor: pointer;
+   transition: all 0.15s;
+   white-space: nowrap;
+  }
+  .dx-tab:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+  .dx-tab--active {
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff !important;
+   box-shadow: 0 4px 12px -2px rgba(192,87,31,0.3);
+  }
+
+  .dx-pane[hidden] { display: none; }
+
+  .dx-panel {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .dx-panel-head {
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .dx-panel-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .dx-panel-body { padding: 1.25rem; }
+
+  /* Skeleton */
+  .dx-skel-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+   gap: 1rem;
+  }
+  .dx-skel-card {
+   height: 96px;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   position: relative;
+   overflow: hidden;
+  }
+  .dx-skel-card::after {
+   content: '';
+   position: absolute;
+   inset: 0;
+   background: linear-gradient(90deg, transparent, var(--adm-bg-hover), transparent);
+   animation: dxShimmer 1.4s infinite;
+  }
+  .dx-skel-card--wide { height: auto; padding: 1.15rem; }
+  .dx-skel-line {
+   height: 16px;
+   background: var(--adm-bg-active);
+   border-radius: 4px;
+   margin-bottom: 1rem;
+  }
+  .dx-skel-line--head { width: 40%; }
+  .dx-skel-row {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+   gap: 0.65rem;
+  }
+  .dx-skel-mini {
+   height: 64px;
+   background: var(--adm-bg-hover);
+   border-radius: 8px;
+  }
+  @keyframes dxShimmer {
+   from { transform: translateX(-100%); }
+   to { transform: translateX(100%); }
+  }
+ </style>
 </AdminLayout>

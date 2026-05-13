@@ -3,9 +3,9 @@
  * Phase 2.4: Progressive Web App
  */
 
-const CACHE_NAME = 'sanliurfa-v2'; // bump → offline.html navigation fallback
+// v3: HTML için network-first (stale asset hash bug fix); _astro/ için cache-first immutable
+const CACHE_NAME = 'sanliurfa-v3';
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
@@ -53,15 +53,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets - cache first
+  // _astro/ hashed assets — content-hashed, safe to cache aggressively (immutable)
+  // Eski hash hiç değişmeyeceği için cache-first hızlı serve eder; yeni hash gelirse cache miss → network
+  if (url.pathname.startsWith('/_astro/') || url.pathname.startsWith('/icons/')) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  // Generic static assets (logos, fonts) - cache first
   if (isStaticAsset(request)) {
     event.respondWith(cacheFirst(request));
     return;
   }
 
-  // HTML pages - stale while revalidate
+  // HTML navigation - NETWORK FIRST (eski stale-while-revalidate stale hash bug'a yol açıyordu)
+  // Network başarısız ise cache fallback, hâlâ yoksa offline.html.
   if (request.mode === 'navigate') {
-    event.respondWith(staleWhileRevalidate(request));
+    event.respondWith(networkFirst(request));
     return;
   }
 

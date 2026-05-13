@@ -1,15 +1,34 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+import AdmStatGrid from '../../components/admin/AdmStatGrid.astro';
+import AdmEmptyState from '../../components/admin/AdmEmptyState.astro';
 import { query } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
 
-let scheduledReports: any[] = [];
-let recentExecutions: any[] = [];
+interface ScheduledReport {
+ id: string;
+ type: string;
+ period: string;
+ email: string;
+ frequency: string;
+ created_at: string;
+}
+interface ReportExecution {
+ id: string;
+ report_id?: string;
+ type?: string;
+ status: string;
+ created_at: string;
+}
+
+let scheduledReports: ScheduledReport[] = [];
+let recentExecutions: ReportExecution[] = [];
 
 try {
  const [repResult, execResult] = await Promise.all([
- query(`SELECT * FROM scheduled_reports ORDER BY created_at DESC LIMIT 50`),
- query(`SELECT * FROM report_executions ORDER BY created_at DESC LIMIT 20`),
+  query<ScheduledReport>(`SELECT * FROM scheduled_reports ORDER BY created_at DESC LIMIT 50`),
+  query<ReportExecution>(`SELECT * FROM report_executions ORDER BY created_at DESC LIMIT 20`),
  ]);
  scheduledReports = repResult.rows;
  recentExecutions = execResult.rows;
@@ -25,101 +44,279 @@ const typeLabels: Record<string, string> = {
  engagement: 'Etkileşim',
 };
 
+const quickReports = [
+ { type: 'users', icon: 'lucide:users', color: 'indigo' },
+ { type: 'places', icon: 'lucide:store', color: 'emerald' },
+ { type: 'reviews', icon: 'lucide:star', color: 'amber' },
+ { type: 'revenue', icon: 'lucide:trending-up', color: 'violet' },
+];
+
+const colorMap: Record<string, { bg: string; fg: string }> = {
+ indigo: { bg: 'rgba(99,102,241,0.12)', fg: 'rgb(99,102,241)' },
+ emerald: { bg: 'rgba(16,185,129,0.12)', fg: 'rgb(16,185,129)' },
+ amber: { bg: 'rgba(217,119,6,0.12)', fg: 'rgb(180,83,9)' },
+ violet: { bg: 'rgba(139,92,246,0.12)', fg: 'rgb(139,92,246)' },
+};
+
+const completedCount = recentExecutions.filter(e => e.status === 'completed').length;
+const failedCount = recentExecutions.filter(e => e.status === 'failed').length;
 ---
 
 <AdminLayout
  title="Rapor Yönetimi"
- subtitle={`${scheduledReports.length} zamanlanmış rapor`}
+ subtitle={`${scheduledReports.length} zamanlanmış rapor • ${recentExecutions.length} son çalışma`}
  seo={{ title: 'Rapor Yönetimi - Admin', noIndex: true }}
 >
- <a slot="hero-action" href="/admin/analytics" class="px-4 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 text-sm transition-colors">
- Analitik Dashboard →
+ <a slot="page-actions" href="/admin/analytics" class="rp-action">
+  <Icon name="lucide:bar-chart-3" class="w-4 h-4" />
+  Analitik Dashboard
  </a>
 
- <div class="sf-container py-8 max-w-5xl">
- <div class="mb-4">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ <div class="rp-page">
+  <AdmStatGrid stats={[
+   { label: 'Zamanlanmış Rapor', value: scheduledReports.length, icon: 'lucide:calendar', color: 'indigo' },
+   { label: 'Başarılı Çalışma', value: completedCount, icon: 'lucide:check-circle', color: 'emerald' },
+   { label: 'Hatalı Çalışma', value: failedCount, icon: 'lucide:alert-triangle', color: 'rose' },
+   { label: 'Son 20 İşlem', value: recentExecutions.length, icon: 'lucide:activity', color: 'amber' },
+  ]} />
+
+  <section class="rp-section">
+   <header class="rp-section-head">
+    <h2 class="rp-section-title">
+     <Icon name="lucide:zap" class="w-4 h-4" /> Hızlı Rapor Oluştur
+    </h2>
+    <p class="rp-section-sub">Aylık özet — JSON olarak indir</p>
+   </header>
+   <div class="rp-quick-grid">
+    {quickReports.map(q => {
+     const c = colorMap[q.color];
+     return (
+      <a
+       href={`/api/admin/reports/generate?type=${q.type}&period=monthly&format=json`}
+       target="_blank"
+       rel="noopener"
+       class="rp-quick-card"
+       style={`--rp-c-bg: ${c.bg}; --rp-c-fg: ${c.fg};`}
+      >
+       <div class="rp-quick-icon"><Icon name={q.icon} class="w-5 h-5" /></div>
+       <div>
+        <div class="rp-quick-title">{typeLabels[q.type]}</div>
+        <div class="rp-quick-sub">Aylık rapor → JSON</div>
+       </div>
+      </a>
+     );
+    })}
+   </div>
+  </section>
+
+  <section class="rp-section">
+   <header class="rp-section-head">
+    <h2 class="rp-section-title">
+     <Icon name="lucide:calendar-clock" class="w-4 h-4" /> Zamanlanmış Raporlar
+    </h2>
+   </header>
+   {scheduledReports.length === 0 ? (
+    <AdmEmptyState
+     icon="lucide:calendar"
+     title="Henüz zamanlanmış rapor yok"
+     description="Otomatik raporlar burada listelenir. Yeni rapor planlamak için CLI komutu kullanılır."
+     size="sm"
+    />
+   ) : (
+    <div class="rp-table-wrap">
+     <table class="rp-table">
+      <thead>
+       <tr>
+        <th class="rp-th">Tür</th>
+        <th class="rp-th">Periyot</th>
+        <th class="rp-th">E-posta</th>
+        <th class="rp-th">Sıklık</th>
+        <th class="rp-th">Oluşturulma</th>
+       </tr>
+      </thead>
+      <tbody>
+       {scheduledReports.map(rep => (
+        <tr>
+         <td class="rp-td rp-td-strong">{typeLabels[rep.type] || rep.type}</td>
+         <td class="rp-td">{rep.period}</td>
+         <td class="rp-td rp-td-truncate" title={rep.email}>{rep.email}</td>
+         <td class="rp-td">
+          <span class="rp-chip">{rep.frequency}</span>
+         </td>
+         <td class="rp-td rp-td-soft">
+          {new Date(rep.created_at).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}
+         </td>
+        </tr>
+       ))}
+      </tbody>
+     </table>
+    </div>
+   )}
+  </section>
+
+  {recentExecutions.length > 0 && (
+   <section class="rp-section">
+    <header class="rp-section-head">
+     <h2 class="rp-section-title">
+      <Icon name="lucide:list-checks" class="w-4 h-4" /> Son Rapor Çalışmaları
+     </h2>
+    </header>
+    <div class="rp-table-wrap">
+     <table class="rp-table">
+      <thead>
+       <tr>
+        <th class="rp-th">Rapor</th>
+        <th class="rp-th">Durum</th>
+        <th class="rp-th">Tarih</th>
+       </tr>
+      </thead>
+      <tbody>
+       {recentExecutions.map(exec => (
+        <tr>
+         <td class="rp-td rp-td-strong">{exec.report_id || exec.type || '—'}</td>
+         <td class="rp-td">
+          <span class:list={['rp-badge',
+           exec.status === 'completed' && 'rp-badge--ok',
+           exec.status === 'failed' && 'rp-badge--err',
+           exec.status === 'running' && 'rp-badge--warn',
+          ]}>{exec.status || 'bilinmiyor'}</span>
+         </td>
+         <td class="rp-td rp-td-soft">
+          {new Date(exec.created_at).toLocaleString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+         </td>
+        </tr>
+       ))}
+      </tbody>
+     </table>
+    </div>
+   </section>
+  )}
  </div>
 
- <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
- {['users', 'places', 'reviews', 'revenue'].map(type => (
- <a
- href={`/api/admin/reports/generate?type=${type}&period=monthly&format=json`}
- target="_blank"
- rel="noopener"
- class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4 text-center hover:border-[rgba(184,115,51,0.4)] hover:shadow-sm transition-all"
- >
- <div class="text-2xl mb-2">
- {type === 'users' ? '👥' : type === 'places' ? '📍' : type === 'reviews' ? '⭐' : '💰'}
- </div>
- <div class="text-sm font-medium text-[#7A6B58]">{typeLabels[type]}</div>
- <div class="text-xs text-[#7A6B58] mt-1">Aylık rapor</div>
- </a>
- ))}
- </div>
+ <style>
+  .rp-page { display: flex; flex-direction: column; gap: 1.25rem; }
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden mb-6">
- <div class="p-4 border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <h2 class="font-semibold text-[#7A6B58] text-sm">Zamanlanmış Raporlar</h2>
- </div>
- {scheduledReports.length === 0 ? (
- <div class="p-8 text-center text-[#7A6B58] text-sm">Henüz zamanlanmış rapor yok.</div>
- ) : (
- <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <tr>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Tür</th>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Periyot</th>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">E-posta</th>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Sıklık</th>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Oluşturulma</th>
- </tr>
- </thead>
- <tbody>
- {scheduledReports.map(rep => (
- <tr class="border-b border-[rgba(184,115,51,0.08)] last:border-0 hover:bg-[rgba(184,115,51,0.04)]">
- <td class="py-3 px-4 font-medium text-[#1F1410]">{typeLabels[rep.type] || rep.type}</td>
- <td class="py-3 px-4 text-[#7A6B58]">{rep.period}</td>
- <td class="py-3 px-4 text-[#7A6B58] truncate max-w-xs">{rep.email}</td>
- <td class="py-3 px-4 text-[#7A6B58]">{rep.frequency}</td>
- <td class="py-3 px-4 text-[#7A6B58] text-xs">
- {new Date(rep.created_at).toLocaleDateString('tr-TR')}
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- )}
- </div>
+  .rp-action {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.55rem 1.1rem;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff; font-weight: 600; font-size: 0.85rem;
+   border-radius: 8px; text-decoration: none;
+   transition: transform 0.15s;
+  }
+  .rp-action:hover { transform: translateY(-1px); }
 
- {recentExecutions.length > 0 && (
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div class="p-4 border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <h2 class="font-semibold text-[#7A6B58] text-sm">Son Rapor Çalışmaları</h2>
- </div>
- <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <tr>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Rapor</th>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Durum</th>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Tarih</th>
- </tr>
- </thead>
- <tbody>
- {recentExecutions.map(exec => (
- <tr class="border-b border-[rgba(184,115,51,0.08)] last:border-0 hover:bg-[rgba(184,115,51,0.04)]">
- <td class="py-3 px-4 text-[#1F1410]">{exec.report_id || exec.type || '—'}</td>
- <td class="py-3 px-4">
- <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${exec.status === 'completed' ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' : exec.status === 'failed' ? 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' : 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]'}`}>
- {exec.status || 'bilinmiyor'}
- </span>
- </td>
- <td class="py-3 px-4 text-[#7A6B58] text-xs">{new Date(exec.created_at).toLocaleDateString('tr-TR')}</td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- )}
- </div>
+  .rp-section {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .rp-section-head {
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .rp-section-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .rp-section-sub {
+   font-size: 0.78rem;
+   color: var(--adm-text-soft);
+   margin: 0.2rem 0 0;
+  }
+
+  .rp-quick-grid {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+   gap: 0.75rem;
+   padding: 1rem;
+  }
+  .rp-quick-card {
+   display: flex; align-items: center; gap: 0.85rem;
+   padding: 0.9rem 1rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 10px;
+   text-decoration: none;
+   transition: all 0.18s;
+  }
+  .rp-quick-card:hover {
+   transform: translateY(-2px);
+   border-color: var(--rp-c-fg);
+   box-shadow: 0 8px 20px -6px rgba(31,20,16,0.08);
+  }
+  .rp-quick-icon {
+   width: 42px; height: 42px;
+   background: var(--rp-c-bg);
+   color: var(--rp-c-fg);
+   border-radius: 10px;
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .rp-quick-title {
+   font-weight: 600;
+   font-size: 0.9rem;
+   color: var(--adm-text);
+   line-height: 1.2;
+  }
+  .rp-quick-sub {
+   font-size: 0.72rem;
+   color: var(--adm-text-soft);
+   margin-top: 0.2rem;
+  }
+
+  .rp-table-wrap { overflow-x: auto; }
+  .rp-table { width: 100%; border-collapse: collapse; }
+  .rp-th {
+   text-align: left;
+   font-size: 0.7rem;
+   font-weight: 700;
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   color: var(--adm-text-soft);
+   padding: 0.7rem 1rem;
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .rp-table tbody tr {
+   border-bottom: 1px solid var(--adm-border);
+   transition: background 0.12s;
+  }
+  .rp-table tbody tr:last-child { border-bottom: none; }
+  .rp-table tbody tr:hover { background: var(--adm-bg-hover); }
+  .rp-td { padding: 0.75rem 1rem; font-size: 0.86rem; color: var(--adm-text); vertical-align: middle; }
+  .rp-td-strong { font-weight: 600; }
+  .rp-td-soft { color: var(--adm-text-muted); font-size: 0.82rem; }
+  .rp-td-truncate {
+   max-width: 240px;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+  }
+
+  .rp-chip {
+   display: inline-flex; align-items: center;
+   padding: 0.2rem 0.55rem;
+   font-size: 0.72rem; font-weight: 600;
+   border-radius: 999px;
+   background: var(--adm-accent-soft);
+   color: var(--adm-accent);
+  }
+
+  .rp-badge {
+   display: inline-flex; align-items: center;
+   padding: 0.22rem 0.6rem;
+   font-size: 0.72rem; font-weight: 600;
+   border-radius: 999px;
+   background: rgba(100,116,139,0.12);
+   color: rgb(71,85,105);
+   text-transform: capitalize;
+  }
+  .rp-badge--ok { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+  .rp-badge--err { background: rgba(225,29,72,0.12); color: rgb(190,18,60); }
+  .rp-badge--warn { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+ </style>
 </AdminLayout>

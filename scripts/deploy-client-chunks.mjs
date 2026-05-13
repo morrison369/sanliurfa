@@ -70,10 +70,33 @@ async function main() {
   const files = getAllFiles(localAstroDir);
   console.log(`Local _astro: ${files.length} dosya`);
 
+  // Top-level public dosyalar (sw.js, manifest.json, vb.) — _astro/ klasöründe DEĞİL
+  // Bunlar deploy script'te eksikti, /sw.js güncellemeleri prod'a yansımıyordu.
+  const localClientDir = resolve(scriptDir, '..', 'dist', 'client');
+  const TOP_LEVEL_FILES = [
+    'sw.js',
+    'manifest.json',
+    'robots.txt',
+    'llms.txt',
+    'llms-full.txt',
+    'offline.html',
+    'favicon.svg',
+    'favicon.ico',
+    'apple-touch-icon.png',
+    'og-image.png',
+    'og-image.jpg',
+    'ads.txt',
+  ];
+  const topLevelExisting = TOP_LEVEL_FILES
+    .map((name) => ({ name, path: resolve(localClientDir, name) }))
+    .filter((f) => existsSync(f.path));
+  console.log(`Top-level static dosyalar: ${topLevelExisting.length}`);
+
   // SFTP ile chunk yükleme
   const sftp = new SftpClient();
   await sftp.connect({ host: SSH_HOST, port: SSH_PORT, username: SSH_USER, password: SSH_PASS });
   const remoteAstroDir = `${REMOTE_DIR}/dist/client/_astro`;
+  const remoteClientDir = `${REMOTE_DIR}/dist/client`;
   try { await sftp.mkdir(remoteAstroDir, true); } catch {}
 
   let ok = 0, fail = 0;
@@ -94,6 +117,17 @@ async function main() {
     }
   }
   console.log(`\r  yüklendi: ${ok}/${files.length} (${fail} hata)`);
+
+  // Top-level static dosyaları upload
+  for (const f of topLevelExisting) {
+    try {
+      await sftp.put(f.path, `${remoteClientDir}/${f.name}`);
+      console.log(`  ✓ /${f.name}`);
+    } catch (e) {
+      console.error(`  ✗ /${f.name}: ${e.message}`);
+      fail++;
+    }
+  }
   await sftp.end();
 
   if (!shouldRestart) {

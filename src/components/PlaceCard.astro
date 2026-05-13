@@ -24,6 +24,7 @@ interface Props {
   review_count?: number | string;
   price_range?: string;
   address?: string;
+  created_at?: string | Date | null;
  };
  compact?: boolean;
 }
@@ -48,6 +49,10 @@ const placeRating = Number.isFinite(ratingNumber) ? ratingNumber : 0;
 const rawReviewCount = place?.review_count ?? reviewCount ?? 0;
 const reviewCountNumber = typeof rawReviewCount === 'number' ? rawReviewCount : Number(rawReviewCount);
 const placeReviewCount = Number.isFinite(reviewCountNumber) ? reviewCountNumber : 0;
+
+// Son 7 günde eklenmiş mekanları "Yeni" badge ile göster
+const createdAt = place?.created_at ? new Date(place.created_at) : null;
+const isNew = createdAt && !isNaN(createdAt.getTime()) && (Date.now() - createdAt.getTime()) < 7 * 24 * 60 * 60 * 1000;
 const priceRange = place?.price_range || '';
 
 const categoryIcons: Record<string, string> = {
@@ -102,6 +107,7 @@ const catLabel = categoryNames[placeCategory] || placeCategory.charAt(0).toUpper
     width={compact ? 320 : 480}
     height={compact ? 240 : 360}
     loading="lazy"
+    sizes={compact ? '(max-width: 640px) 50vw, 320px' : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'}
     class="relative w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
    />
 
@@ -113,6 +119,16 @@ const catLabel = categoryNames[placeCategory] || placeCategory.charAt(0).toUpper
     <Icon name={catIcon} class="w-3 h-3" />
     {catLabel}
    </span>
+
+   {isNew && (
+    <span
+     class="absolute top-3 right-12 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white uppercase tracking-wider"
+     style="background:linear-gradient(135deg,#C0571F,#D49718);box-shadow:0 2px 8px -2px rgba(192,87,31,0.6)"
+     title="Son 7 günde eklendi"
+    >
+     ⚡ Yeni
+    </span>
+   )}
 
    {placeRating > 0 && (
     <div

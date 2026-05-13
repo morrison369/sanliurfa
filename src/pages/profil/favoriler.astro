@@ -23,7 +23,7 @@ try {
  const result = await query(
  `SELECT f.*, p.name as place_name, p.slug as place_slug, p.images as place_images,
  p.rating as place_rating, p.address as place_address
- FROM favorites f
+ FROM user_favorites f
  JOIN places p ON f.place_id = p.id
  WHERE f.user_id = $1
  ORDER BY f.created_at DESC`,

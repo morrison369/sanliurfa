@@ -1,0 +1,133 @@
+---
+/**
+ * AdmEmptyState — admin sayfaları için reusable empty state component.
+ *
+ * Kullanım:
+ *   <AdmEmptyState
+ *     icon="lucide:inbox"
+ *     title="Henüz veri yok"
+ *     description="Bu listede gösterilecek kayıt bulunamadı."
+ *     actionLabel="Yeni Ekle"
+ *     actionHref="/admin/places/add"
+ *   />
+ */
+import { Icon } from 'astro-icon/components';
+
+interface Props {
+ icon?: string;
+ title: string;
+ description?: string;
+ actionLabel?: string;
+ actionHref?: string;
+ secondaryLabel?: string;
+ secondaryHref?: string;
+ size?: 'sm' | 'md' | 'lg';
+}
+
+const {
+ icon = 'lucide:inbox',
+ title,
+ description,
+ actionLabel,
+ actionHref,
+ secondaryLabel,
+ secondaryHref,
+ size = 'md',
+} = Astro.props;
+---
+
+<div class={`adm-empty adm-empty--${size}`} role="status">
+ <div class="adm-empty-icon">
+  <Icon name={icon} />
+ </div>
+ <h3 class="adm-empty-title">{title}</h3>
+ {description && <p class="adm-empty-desc">{description}</p>}
+ {(actionHref || secondaryHref) && (
+  <div class="adm-empty-actions">
+   {actionHref && (
+    <a href={actionHref} class="adm-empty-btn adm-empty-btn--primary">{actionLabel || 'Yeni Ekle'}</a>
+   )}
+   {secondaryHref && (
+    <a href={secondaryHref} class="adm-empty-btn adm-empty-btn--ghost">{secondaryLabel || 'Geri'}</a>
+   )}
+  </div>
+ )}
+</div>
+
+<style is:global>
+ .adm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: var(--adm-bg-elev, #fff);
+  border: 1px dashed var(--adm-border, rgba(192,87,31,.18));
+  border-radius: 12px;
+ }
+ .adm-empty--sm { padding: 1.5rem 1rem; }
+ .adm-empty--lg { padding: 5rem 2rem; }
+
+ .adm-empty-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--adm-accent-soft, rgba(192,87,31,.10));
+  color: var(--adm-accent, #C0571F);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+ }
+ .adm-empty--sm .adm-empty-icon { width: 48px; height: 48px; }
+ .adm-empty-icon svg { width: 32px; height: 32px; }
+ .adm-empty--sm .adm-empty-icon svg { width: 22px; height: 22px; }
+
+ .adm-empty-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--adm-text, #1F1410);
+  margin: 0 0 0.4rem;
+ }
+ .adm-empty--sm .adm-empty-title { font-size: 1.1rem; }
+
+ .adm-empty-desc {
+  margin: 0 0 1.5rem;
+  font-size: 0.92rem;
+  color: var(--adm-text-muted, #6B5848);
+  line-height: 1.6;
+  max-width: 38rem;
+ }
+ .adm-empty--sm .adm-empty-desc { font-size: 0.84rem; margin-bottom: 1rem; }
+
+ .adm-empty-actions {
+  display: flex;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+  justify-content: center;
+ }
+
+ .adm-empty-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.15s, opacity 0.15s, border-color 0.15s;
+ }
+ .adm-empty-btn--primary {
+  background: linear-gradient(135deg, var(--adm-accent, #C0571F), var(--adm-warning, #D49718));
+  color: #fff;
+ }
+ .adm-empty-btn--primary:hover { transform: translateY(-1px); opacity: 0.95; }
+ .adm-empty-btn--ghost {
+  background: transparent;
+  border: 1px solid var(--adm-border, rgba(192,87,31,.18));
+  color: var(--adm-text-muted, #6B5848);
+ }
+ .adm-empty-btn--ghost:hover { border-color: var(--adm-accent, #C0571F); color: var(--adm-accent, #C0571F); }
+</style>

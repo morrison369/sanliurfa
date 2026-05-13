@@ -47,7 +47,7 @@ export default function UserRecommendations() {
  }
  };
 
- if (isLoading) return <div className="text-center py-8">Yükleniyor...</div>;
+ if (isLoading) return <div className="text-center py-8">Yükleniyor…</div>;
  if (users.length === 0) return null;
 
  return (

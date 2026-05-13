@@ -56,7 +56,7 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
  return (
  <div className="space-y-6">
  {[1, 2, 3, 4].map((i) => (
- <div key={i} className="h-32 bg-[rgba(184,115,51,0.08)] rounded-sm animate-pulse" />
+ <div key={i} className="h-32 bg-[var(--adm-bg-hover)] rounded-sm animate-pulse" />
  ))}
  </div>
  );
@@ -72,8 +72,8 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
 
  if (!analytics) {
  return (
- <div className="bg-[rgba(184,115,51,0.04)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 text-center">
- <p className="text-[#7A6B58]">Veri yüklenemedi</p>
+ <div className="bg-[var(--adm-bg-hover)] border border-[var(--adm-border)] rounded-sm p-6 text-center">
+ <p className="text-[var(--adm-text-muted)]">Veri yüklenemedi</p>
  </div>
  );
  }
@@ -85,13 +85,13 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
  return (
  <div className="space-y-6">
  {/* Sekmeler */}
- <div className="flex gap-2 border-b border-[rgba(184,115,51,0.14)]">
+ <div className="flex gap-2 border-b border-[var(--adm-border)]">
  <button
  onClick={() => setActiveTab('overview')}
  className={`px-4 py-2 font-medium border-b-2 transition ${
  activeTab === 'overview'
- ? 'border-urfa-500 text-[#7A6B58]'
- : 'border-transparent text-[#7A6B58] hover:text-[#1F1410]'
+ ? 'border-urfa-500 text-[var(--adm-text-muted)]'
+ : 'border-transparent text-[var(--adm-text-muted)] hover:text-[var(--adm-text)]'
  }`}
  >
  Özet
@@ -100,8 +100,8 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
  onClick={() => setActiveTab('users')}
  className={`px-4 py-2 font-medium border-b-2 transition ${
  activeTab === 'users'
- ? 'border-urfa-500 text-[#7A6B58]'
- : 'border-transparent text-[#7A6B58] hover:text-[#1F1410]'
+ ? 'border-urfa-500 text-[var(--adm-text-muted)]'
+ : 'border-transparent text-[var(--adm-text-muted)] hover:text-[var(--adm-text)]'
  }`}
  >
  Kullanıcılar
@@ -110,8 +110,8 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
  onClick={() => setActiveTab('webhooks')}
  className={`px-4 py-2 font-medium border-b-2 transition ${
  activeTab === 'webhooks'
- ? 'border-urfa-500 text-[#7A6B58]'
- : 'border-transparent text-[#7A6B58] hover:text-[#1F1410]'
+ ? 'border-urfa-500 text-[var(--adm-text-muted)]'
+ : 'border-transparent text-[var(--adm-text-muted)] hover:text-[var(--adm-text)]'
  }`}
  >
  Webhook'lar
@@ -122,40 +122,40 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
  <div className="space-y-6">
  {/* Ana metrikler */}
  <div className="grid md:grid-cols-4 gap-4">
- <div className="bg-[var(--bg-card)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)]">
- <h3 className="text-sm font-medium text-[#7A6B58] mb-2">Toplam Abonelik</h3>
- <p className="text-3xl font-bold text-[#1F1410]">
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 border border-[var(--adm-border)]">
+ <h3 className="text-sm font-medium text-[var(--adm-text-muted)] mb-2">Toplam Abonelik</h3>
+ <p className="text-3xl font-bold text-[var(--adm-text)]">
  {analytics.subscriptions.totalSubscriptions}
  </p>
  </div>
 
- <div className="bg-[var(--bg-card)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)]">
- <h3 className="text-sm font-medium text-[#7A6B58] mb-2">Aktif</h3>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 border border-[var(--adm-border)]">
+ <h3 className="text-sm font-medium text-[var(--adm-text-muted)] mb-2">Aktif</h3>
  <p className="text-3xl font-bold text-green-600 ">
  {analytics.subscriptions.activeSubscriptions}
  </p>
  </div>
 
- <div className="bg-[var(--bg-card)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)]">
- <h3 className="text-sm font-medium text-[#7A6B58] mb-2">Aylık Gelir (MRR)</h3>
- <p className="text-3xl font-bold text-[#7A6B58] ">₺{mrrDisplay}</p>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 border border-[var(--adm-border)]">
+ <h3 className="text-sm font-medium text-[var(--adm-text-muted)] mb-2">Aylık Gelir (MRR)</h3>
+ <p className="text-3xl font-bold text-[var(--adm-text-muted)] ">₺{mrrDisplay}</p>
  </div>
 
- <div className="bg-[var(--bg-card)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)]">
- <h3 className="text-sm font-medium text-[#7A6B58] mb-2">Churn Oranı</h3>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 border border-[var(--adm-border)]">
+ <h3 className="text-sm font-medium text-[var(--adm-text-muted)] mb-2">Churn Oranı</h3>
  <p className="text-3xl font-bold text-red-600 ">{churnPercentage}%</p>
  </div>
  </div>
 
  {/* Plan dağılımı */}
- <div className="bg-[var(--bg-card)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)]">
- <h3 className="text-lg font-semibold text-[#1F1410] mb-4">Plan Dağılımı</h3>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 border border-[var(--adm-border)]">
+ <h3 className="text-lg font-semibold text-[var(--adm-text)] mb-4">Plan Dağılımı</h3>
  <div className="space-y-3">
  {Object.entries(analytics.subscriptions.byTier).map(([tier, count]) => (
  <div key={tier} className="flex items-center justify-between">
- <span className="text-[#7A6B58]">{tier}</span>
+ <span className="text-[var(--adm-text-muted)]">{tier}</span>
  <div className="flex items-center gap-2">
- <div className="w-32 h-2 bg-[rgba(184,115,51,0.08)] rounded-full overflow-hidden">
+ <div className="w-32 h-2 bg-[var(--adm-bg-hover)] rounded-full overflow-hidden">
  <div
  className="h-full bg-[#B87333]"
  style={{
@@ -163,7 +163,7 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
  }}
  />
  </div>
- <span className="font-semibold text-[#1F1410] w-12 text-right">{count}</span>
+ <span className="font-semibold text-[var(--adm-text)] w-12 text-right">{count}</span>
  </div>
  </div>
  ))}
@@ -171,16 +171,16 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
  </div>
 
  {/* Gelir özeti */}
- <div className="bg-[rgba(184,115,51,0.06)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)] ">
- <h3 className="text-lg font-semibold text-[#1F1410] mb-4">Gelir Özeti</h3>
+ <div className="bg-[var(--adm-bg-hover)] rounded-sm p-6 border border-[var(--adm-border)] ">
+ <h3 className="text-lg font-semibold text-[var(--adm-text)] mb-4">Gelir Özeti</h3>
  <div className="grid md:grid-cols-2 gap-6">
  <div>
- <p className="text-sm text-[#7A6B58] mb-1">Aylık Gelir (MRR)</p>
+ <p className="text-sm text-[var(--adm-text-muted)] mb-1">Aylık Gelir (MRR)</p>
  <p className="text-2xl font-bold text-green-600 ">₺{mrrDisplay}</p>
  </div>
  <div>
- <p className="text-sm text-[#7A6B58] mb-1">Yıllık Değerleme (ARR)</p>
- <p className="text-2xl font-bold text-[#7A6B58] ">₺{arrDisplay}</p>
+ <p className="text-sm text-[var(--adm-text-muted)] mb-1">Yıllık Değerleme (ARR)</p>
+ <p className="text-2xl font-bold text-[var(--adm-text-muted)] ">₺{arrDisplay}</p>
  </div>
  </div>
  </div>
@@ -188,9 +188,9 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
  )}
 
  {activeTab === 'users' && (
- <div className="bg-[var(--bg-card)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)]">
- <h3 className="text-lg font-semibold text-[#1F1410] mb-4">Kullanıcı Yönetimi</h3>
- <p className="text-[#7A6B58] mb-4">
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 border border-[var(--adm-border)]">
+ <h3 className="text-lg font-semibold text-[var(--adm-text)] mb-4">Kullanıcı Yönetimi</h3>
+ <p className="text-[var(--adm-text-muted)] mb-4">
  Kullanıcıların abonelik durumunu ve planlarını yönetin. Aşağıdaki linke tıklayarak detaylı yönetim sayfasına gidin.
  </p>
  <a
@@ -205,29 +205,29 @@ export default function SubscriptionAdminDashboard({}: SubscriptionAdminDashboar
  {activeTab === 'webhooks' && (
  <div className="space-y-4">
  <div className="grid md:grid-cols-4 gap-4">
- <div className="bg-[var(--bg-card)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)]">
- <h3 className="text-sm font-medium text-[#7A6B58] mb-2">Başarılı</h3>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 border border-[var(--adm-border)]">
+ <h3 className="text-sm font-medium text-[var(--adm-text-muted)] mb-2">Başarılı</h3>
  <p className="text-3xl font-bold text-green-600">
  {analytics.webhooks?.successful || 0}
  </p>
  </div>
 
- <div className="bg-[var(--bg-card)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)]">
- <h3 className="text-sm font-medium text-[#7A6B58] mb-2">Beklemede</h3>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 border border-[var(--adm-border)]">
+ <h3 className="text-sm font-medium text-[var(--adm-text-muted)] mb-2">Beklemede</h3>
  <p className="text-3xl font-bold text-yellow-600">
  {analytics.webhooks?.pending || 0}
  </p>
  </div>
 
- <div className="bg-[var(--bg-card)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)]">
- <h3 className="text-sm font-medium text-[#7A6B58] mb-2">Yeniden Deniyor</h3>
- <p className="text-3xl font-bold text-[#7A6B58]">
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 border border-[var(--adm-border)]">
+ <h3 className="text-sm font-medium text-[var(--adm-text-muted)] mb-2">Yeniden Deniyor</h3>
+ <p className="text-3xl font-bold text-[var(--adm-text-muted)]">
  {analytics.webhooks?.retrying || 0}
  </p>
  </div>
 
- <div className="bg-[var(--bg-card)] rounded-sm p-6 border border-[rgba(184,115,51,0.14)]">
- <h3 className="text-sm font-medium text-[#7A6B58] mb-2">Başarısız</h3>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 border border-[var(--adm-border)]">
+ <h3 className="text-sm font-medium text-[var(--adm-text-muted)] mb-2">Başarısız</h3>
  <p className="text-3xl font-bold text-red-600">
  {analytics.webhooks?.failed || 0}
  </p>

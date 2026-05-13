@@ -1,230 +1,533 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+
+const resourceOptions = [
+ { value: 'admin.social.events.export', label: 'Social Events Export' },
+ { value: 'admin.places.lifecycle.export', label: 'Places Lifecycle Export' },
+ { value: 'admin.reports.social-lifecycle', label: 'Reports Social Lifecycle' },
+];
 ---
 
 <AdminLayout
  title="Dışa Aktarma Token Yönetimi"
- subtitle="Aktif/pasif tokenları izle ve ihtiyaç halinde iptal et."
+ subtitle="HMAC imzalı kısa ömürlü tokenları yönet — IP/UA/CIDR bağlama"
+ seo={{ title: 'Export Token Yönetimi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 space-y-5">
- <div class="mb-2">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
+ <div class="et-page">
+  <div class="et-info">
+   <Icon name="lucide:shield-check" class="w-4 h-4 et-info-icon" />
+   <span>Tokenlar <strong>HMAC-SHA256</strong> ile imzalanır, ham değer yalnızca tek seferlik gösterilir (45sn). IP/UA/CIDR/Country binding + replay protection desteklenir.</span>
+  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 flex flex-wrap items-center gap-3">
- <select id="resourceKey" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm">
- <option value="">Tüm kaynaklar</option>
- <option value="admin.social.events.export">admin.social.events.export</option>
- <option value="admin.places.lifecycle.export">admin.places.lifecycle.export</option>
- <option value="admin.reports.social-lifecycle">admin.reports.social-lifecycle</option>
- </select>
- <label class="inline-flex items-center gap-2 text-sm text-[#7A6B58]">
- <input id="activeOnly" type="checkbox" class="rounded-sm" checked />
- Sadece aktifler
- </label>
- <button id="refreshBtn" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-4 py-2 text-sm text-[#7A6B58] hover:bg-[rgba(184,115,51,0.04)]">Yenile</button>
- </div>
+  <section class="et-card">
+   <header class="et-card-head">
+    <h2 class="et-card-title">
+     <Icon name="lucide:filter" class="w-4 h-4" /> Filtreler
+    </h2>
+   </header>
+   <div class="et-toolbar">
+    <select id="resourceKey" class="et-select">
+     <option value="">Tüm kaynaklar</option>
+     {resourceOptions.map(r => (
+      <option value={r.value}>{r.label}</option>
+     ))}
+    </select>
+    <label class="et-check">
+     <input id="activeOnly" type="checkbox" checked />
+     <span>Sadece aktif tokenlar</span>
+    </label>
+    <button id="refreshBtn" class="et-btn et-btn--ghost">
+     <Icon name="lucide:refresh-cw" class="w-3.5 h-3.5" /> Yenile
+    </button>
+   </div>
+  </section>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6 space-y-3">
- <h2 class="text-lg font-bold text-[#1F1410]">Yeni Token Üret</h2>
- <div class="grid md:grid-cols-6 gap-3">
- <select id="createResourceKey" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm">
- <option value="admin.social.events.export">admin.social.events.export</option>
- <option value="admin.places.lifecycle.export">admin.places.lifecycle.export</option>
- <option value="admin.reports.social-lifecycle">admin.reports.social-lifecycle</option>
- </select>
- <input id="ttlSeconds" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm" type="number" value="300" />
- <input id="maxDownloads" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm" type="number" value="1" />
- <label class="inline-flex items-center gap-2 text-sm text-[#7A6B58]">
- <input id="bindIp" type="checkbox" checked />
- IP bağla
- </label>
- <label class="inline-flex items-center gap-2 text-sm text-[#7A6B58]">
- <input id="bindUa" type="checkbox" checked />
- Tarayıcı bilgisini bağla
- </label>
- <label class="inline-flex items-center gap-2 text-sm text-[#7A6B58]">
- <input id="replayProtection" type="checkbox" checked />
- Tekrar kullanım koruması
- </label>
- </div>
- <div class="grid md:grid-cols-2 gap-3">
- <input id="allowedIpCidrs" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm" placeholder="İzinli CIDR (virgülle): 10.0.0.0/8,192.168.0.0/16" />
- <input id="allowedCountries" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm" placeholder="İzinli ülke (virgülle): TR,DE" />
- </div>
- <button id="createBtn" class="rounded-sm bg-urfa-600 text-white px-4 py-2 text-sm font-semibold hover:bg-urfa-700">Token Oluştur</button>
- <div id="tokenReveal" class="hidden rounded-sm border border-[rgba(184,115,51,0.3)] bg-[rgba(184,115,51,0.06)] p-3 text-sm">
- <p class="font-semibold text-[#7A6B58]">Token sadece bu ekranda tek sefer gösterilir.</p>
- <div class="mt-2 flex items-center gap-2">
- <code id="rawToken" class="text-xs break-all text-[#7A6B58] font-mono"></code>
- <button id="copyBtn" class="rounded-sm border border-[rgba(184,115,51,0.3)] px-2 py-1 text-xs text-[#7A6B58] hover:bg-[rgba(184,115,51,0.08)]">Kopyala</button>
- </div>
- <p id="revealTimer" class="mt-1 text-xs text-[#7A6B58]"></p>
- </div>
- </div>
+  <section class="et-card">
+   <header class="et-card-head">
+    <h2 class="et-card-title">
+     <Icon name="lucide:plus-circle" class="w-4 h-4" /> Yeni Token Üret
+    </h2>
+    <p class="et-card-sub">Tek seferlik veya kısıtlı kullanım için kısa ömürlü token oluştur</p>
+   </header>
+   <div class="et-create-body">
+    <div class="et-grid et-grid--3">
+     <div class="et-field">
+      <label class="et-label">Kaynak</label>
+      <select id="createResourceKey" class="et-select">
+       {resourceOptions.map(r => (
+        <option value={r.value}>{r.label}</option>
+       ))}
+      </select>
+     </div>
+     <div class="et-field">
+      <label class="et-label">TTL (saniye)</label>
+      <input id="ttlSeconds" class="et-input" type="number" min="60" max="86400" value="300" />
+     </div>
+     <div class="et-field">
+      <label class="et-label">Max İndirme</label>
+      <input id="maxDownloads" class="et-input" type="number" min="1" max="100" value="1" />
+     </div>
+    </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div class="overflow-x-auto">
- <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <tr>
- <th class="px-3 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">Kaynak</th>
- <th class="px-3 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">Kullanım</th>
- <th class="px-3 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">Bitiş</th>
- <th class="px-3 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">Bağlama</th>
- <th class="px-3 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">Durum</th>
- <th class="px-3 py-2 text-left text-xs font-medium text-[#7A6B58] uppercase">İşlem</th>
- </tr>
- </thead>
- <tbody id="tokenRows">
- <tr><td colspan="6" class="px-4 py-8 text-center text-[#7A6B58]">Yükleniyor...</td></tr>
- </tbody>
- </table>
- </div>
- </div>
+    <div class="et-checks">
+     <label class="et-check">
+      <input id="bindIp" type="checkbox" checked />
+      <span><strong>IP Bağla</strong> — token oluşturulan IP'ye sabitlenir</span>
+     </label>
+     <label class="et-check">
+      <input id="bindUa" type="checkbox" checked />
+      <span><strong>UA Bağla</strong> — tarayıcı User-Agent hash'i kontrol edilir</span>
+     </label>
+     <label class="et-check">
+      <input id="replayProtection" type="checkbox" checked />
+      <span><strong>Replay Koruması</strong> — kullanılan token tekrar kullanılamaz</span>
+     </label>
+    </div>
+
+    <div class="et-grid et-grid--2">
+     <div class="et-field">
+      <label class="et-label">İzinli CIDR (virgülle)</label>
+      <input id="allowedIpCidrs" class="et-input et-input--mono" placeholder="10.0.0.0/8, 192.168.0.0/16" />
+     </div>
+     <div class="et-field">
+      <label class="et-label">İzinli Ülkeler (ISO kod)</label>
+      <input id="allowedCountries" class="et-input et-input--mono" placeholder="TR, DE, US" />
+     </div>
+    </div>
+
+    <button id="createBtn" class="et-btn et-btn--primary">
+     <Icon name="lucide:key" class="w-4 h-4" /> Token Oluştur
+    </button>
+
+    <div id="tokenReveal" class="et-reveal" hidden>
+     <div class="et-reveal-head">
+      <Icon name="lucide:alert-triangle" class="w-4 h-4" />
+      <strong>Token sadece bu ekranda bir kez gösterilir.</strong>
+     </div>
+     <div class="et-reveal-row">
+      <code id="rawToken" class="et-reveal-code"></code>
+      <button id="copyBtn" type="button" class="et-btn et-btn--ghost">
+       <Icon name="lucide:copy" class="w-3.5 h-3.5" /> Kopyala
+      </button>
+     </div>
+     <p id="revealTimer" class="et-reveal-timer"></p>
+    </div>
+   </div>
+  </section>
+
+  <section class="et-card">
+   <header class="et-card-head">
+    <h2 class="et-card-title">
+     <Icon name="lucide:list" class="w-4 h-4" /> Tokenlar
+    </h2>
+   </header>
+   <div class="et-table-wrap">
+    <table class="et-table">
+     <thead>
+      <tr>
+       <th class="et-th">Kaynak</th>
+       <th class="et-th et-th-num">Kullanım</th>
+       <th class="et-th">Bitiş</th>
+       <th class="et-th">Bağlama</th>
+       <th class="et-th">Durum</th>
+       <th class="et-th et-th-actions">İşlem</th>
+      </tr>
+     </thead>
+     <tbody id="tokenRows">
+      <tr><td colspan="6" class="et-td-empty">Yükleniyor…</td></tr>
+     </tbody>
+    </table>
+   </div>
+  </section>
  </div>
 
  <script is:inline>
- const tbody = document.getElementById('tokenRows');
- let revealTimeout = null;
- let revealCountdown = null;
+  const tbody = document.getElementById('tokenRows');
+  let revealTimeout = null;
+  let revealCountdown = null;
 
- async function loadTokens() {
- const resourceKey = document.getElementById('resourceKey').value;
- const activeOnly = document.getElementById('activeOnly').checked;
- const qp = new URLSearchParams({ limit: '100' });
- if (resourceKey) qp.set('resourceKey', resourceKey);
- if (activeOnly) qp.set('activeOnly', '1');
+  function setEmpty(text) {
+   const tr = document.createElement('tr');
+   const td = document.createElement('td');
+   td.colSpan = 6;
+   td.className = 'et-td-empty';
+   td.textContent = text;
+   tr.appendChild(td);
+   tbody.replaceChildren(tr);
+  }
 
- const res = await fetch(`/api/admin/exports/token?${qp.toString()}`);
- const json = await res.json();
- if (!res.ok || !json?.success) {
- const tr = document.createElement('tr');
- const td = document.createElement('td');
- td.colSpan = 6;
- td.className = 'px-4 py-6 text-center text-[#7A6B58]';
- td.textContent = 'Token listesi alınamadı';
- tr.appendChild(td);
- tbody.replaceChildren(tr);
- return;
- }
- const rows = Array.isArray(json.tokens) ? json.tokens : [];
- if (!rows.length) {
- const tr = document.createElement('tr');
- const td = document.createElement('td');
- td.colSpan = 6;
- td.className = 'px-4 py-6 text-center text-[#7A6B58]';
- td.textContent = 'Kayıt yok';
- tr.appendChild(td);
- tbody.replaceChildren(tr);
- return;
- }
- function buildTokenRow(x) {
- const active = !x.revoked_at && new Date(x.expires_at).getTime() > Date.now();
- const bind = [x.bound_ip ? 'IP' : '', x.bound_user_agent ? 'UA' : ''].filter(Boolean).join('+') || '-';
- const policy = x.payload?.__tokenPolicy || {};
- const cidrs = Array.isArray(policy.allowedIpCidrs) ? policy.allowedIpCidrs.join(',') : '';
- const countries = Array.isArray(policy.allowedCountries) ? policy.allowedCountries.join(',') : '';
- const tr = document.createElement('tr');
- tr.className = 'border-b border-[rgba(184,115,51,0.08)] hover:bg-[rgba(184,115,51,0.04)]';
- const td1 = document.createElement('td'); td1.className = 'px-3 py-2 font-mono text-xs text-[#7A6B58]'; td1.textContent = x.resource_key;
- const td2 = document.createElement('td'); td2.className = 'px-3 py-2 text-[#7A6B58]'; td2.textContent = x.used_count + '/' + x.max_downloads;
- const td3 = document.createElement('td'); td3.className = 'px-3 py-2 text-xs text-[#7A6B58]'; td3.textContent = new Date(x.expires_at).toLocaleString('tr-TR');
- const td4 = document.createElement('td'); td4.className = 'px-3 py-2';
- const bindDiv = document.createElement('div'); bindDiv.className = 'text-[#7A6B58]'; bindDiv.textContent = bind;
- const cidrsDiv = document.createElement('div'); cidrsDiv.className = 'text-[10px] text-[#7A6B58]'; cidrsDiv.textContent = (cidrs || '-') + ' / ' + (countries || '-');
- td4.appendChild(bindDiv); td4.appendChild(cidrsDiv);
- const td5 = document.createElement('td'); td5.className = 'px-3 py-2';
- const badge = document.createElement('span');
- badge.className = 'px-2 py-1 rounded-sm text-xs ' + (active ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]');
- badge.textContent = active ? 'aktif' : 'pasif';
- td5.appendChild(badge);
- const td6 = document.createElement('td'); td6.className = 'px-3 py-2';
- if (active) {
- const btn = document.createElement('button');
- btn.className = 'rounded-sm border border-[rgba(184,115,51,0.3)] text-[#7A6B58] px-2 py-1 text-xs hover:bg-[rgba(184,115,51,0.06)]';
- btn.textContent = 'İptal Et';
- btn.addEventListener('click', async () => {
- const reason = await window.promptInput('İptal nedeni (opsiyonel):') ?? '';
- const resp = await fetch('/api/admin/exports/token', {
- method: 'DELETE',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ tokenId: x.id, reason }),
- });
- const payload = await resp.json();
- if (!resp.ok || !payload?.success) { window.toast?.error('İptal işlemi başarısız'); return; }
- await loadTokens();
- });
- td6.appendChild(btn);
- } else {
- const dash = document.createElement('span'); dash.className = 'text-xs text-[#7A6B58]'; dash.textContent = '-';
- td6.appendChild(dash);
- }
- tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
- tr.appendChild(td4); tr.appendChild(td5); tr.appendChild(td6);
- return tr;
- }
- tbody.replaceChildren(...rows.map(buildTokenRow));
- }
+  function buildTokenRow(x) {
+   const active = !x.revoked_at && new Date(x.expires_at).getTime() > Date.now();
+   const bindParts = [];
+   if (x.bound_ip) bindParts.push('IP');
+   if (x.bound_user_agent) bindParts.push('UA');
+   const bind = bindParts.join(' + ') || '—';
+   const policy = (x.payload && x.payload.__tokenPolicy) || {};
+   const cidrs = Array.isArray(policy.allowedIpCidrs) ? policy.allowedIpCidrs.join(',') : '';
+   const countries = Array.isArray(policy.allowedCountries) ? policy.allowedCountries.join(',') : '';
 
- document.getElementById('refreshBtn').addEventListener('click', () => void loadTokens());
- document.getElementById('createBtn').addEventListener('click', async () => {
- const payload = {
- resourceKey: document.getElementById('createResourceKey').value,
- ttlSeconds: Number(document.getElementById('ttlSeconds').value || 300),
- maxDownloads: Number(document.getElementById('maxDownloads').value || 1),
- bindIp: document.getElementById('bindIp').checked,
- bindUserAgent: document.getElementById('bindUa').checked,
- replayProtection: document.getElementById('replayProtection').checked,
- allowedIpCidrs: String(document.getElementById('allowedIpCidrs').value || '')
- .split(',')
- .map((x) => x.trim())
- .filter(Boolean),
- allowedCountries: String(document.getElementById('allowedCountries').value || '')
- .split(',')
- .map((x) => x.trim().toUpperCase())
- .filter(Boolean),
- };
- const res = await fetch('/api/admin/exports/token', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify(payload),
- });
- const json = await res.json();
- if (!res.ok || !json?.success) {
- window.toast?.error('Token oluşturulamadı');
- return;
- }
- const reveal = document.getElementById('tokenReveal');
- const rawToken = document.getElementById('rawToken');
- const timer = document.getElementById('revealTimer');
- reveal.classList.remove('hidden');
- rawToken.textContent = json.token;
- let remaining = 45;
- timer.textContent = `Kapanma: ${remaining}s`;
- if (revealTimeout) clearTimeout(revealTimeout);
- if (revealCountdown) clearInterval(revealCountdown);
- revealCountdown = setInterval(() => {
- remaining -= 1;
- timer.textContent = `Kapanma: ${remaining}s`;
- if (remaining <= 0 && revealCountdown) clearInterval(revealCountdown);
- }, 1000);
- revealTimeout = setTimeout(() => {
- rawToken.textContent = '';
- reveal.classList.add('hidden');
- }, 45000);
+   const tr = document.createElement('tr');
 
- document.getElementById('copyBtn').onclick = async () => {
- await navigator.clipboard.writeText(json.token);
- await fetch('/api/admin/exports/token/clipboard', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ resourceKey: payload.resourceKey }),
- });
- };
+   const td1 = document.createElement('td'); td1.className = 'et-td';
+   const code = document.createElement('code'); code.className = 'et-resource'; code.textContent = x.resource_key;
+   td1.appendChild(code);
 
- await loadTokens();
- });
- void loadTokens();
+   const td2 = document.createElement('td'); td2.className = 'et-td et-td-num';
+   const usage = document.createElement('span'); usage.className = 'et-usage';
+   const used = document.createElement('strong'); used.textContent = String(x.used_count);
+   const sep = document.createElement('span'); sep.className = 'et-usage-sep'; sep.textContent = '/' + x.max_downloads;
+   usage.appendChild(used); usage.appendChild(sep);
+   td2.appendChild(usage);
+
+   const td3 = document.createElement('td'); td3.className = 'et-td et-td-soft';
+   td3.textContent = new Date(x.expires_at).toLocaleString('tr-TR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+   const td4 = document.createElement('td'); td4.className = 'et-td';
+   const bindMain = document.createElement('div'); bindMain.className = 'et-bind-main'; bindMain.textContent = bind;
+   td4.appendChild(bindMain);
+   if (cidrs || countries) {
+    const meta = document.createElement('div');
+    meta.className = 'et-bind-meta';
+    meta.textContent = (cidrs || '—') + ' · ' + (countries || '—');
+    td4.appendChild(meta);
+   }
+
+   const td5 = document.createElement('td'); td5.className = 'et-td';
+   const badge = document.createElement('span');
+   badge.className = 'et-badge ' + (active ? 'et-badge--ok' : 'et-badge--muted');
+   badge.textContent = active ? '✓ aktif' : '○ pasif';
+   td5.appendChild(badge);
+
+   const td6 = document.createElement('td'); td6.className = 'et-td et-td-actions';
+   if (active) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'et-row-btn et-row-btn--danger';
+    btn.textContent = '✕ İptal Et';
+    btn.addEventListener('click', async () => {
+     const reason = (await window.promptInput?.('İptal nedeni (opsiyonel):')) || '';
+     const resp = await fetch('/api/admin/exports/token', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tokenId: x.id, reason }),
+     });
+     const payload = await resp.json();
+     if (!resp.ok || !payload?.success) { window.toast?.error('İptal işlemi başarısız'); return; }
+     await loadTokens();
+    });
+    td6.appendChild(btn);
+   } else {
+    const dash = document.createElement('span'); dash.className = 'et-dash'; dash.textContent = '—';
+    td6.appendChild(dash);
+   }
+
+   tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
+   tr.appendChild(td4); tr.appendChild(td5); tr.appendChild(td6);
+   return tr;
+  }
+
+  async function loadTokens() {
+   const resourceKey = document.getElementById('resourceKey').value;
+   const activeOnly = document.getElementById('activeOnly').checked;
+   const qp = new URLSearchParams({ limit: '100' });
+   if (resourceKey) qp.set('resourceKey', resourceKey);
+   if (activeOnly) qp.set('activeOnly', '1');
+
+   try {
+    const res = await fetch('/api/admin/exports/token?' + qp.toString());
+    const json = await res.json();
+    if (!res.ok || !json?.success) { setEmpty('Token listesi alınamadı'); return; }
+    const rows = Array.isArray(json.tokens) ? json.tokens : [];
+    if (!rows.length) { setEmpty('Kayıt yok'); return; }
+    tbody.replaceChildren(...rows.map(buildTokenRow));
+   } catch { setEmpty('Bağlantı hatası'); }
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', () => void loadTokens());
+  document.getElementById('resourceKey').addEventListener('change', () => void loadTokens());
+  document.getElementById('activeOnly').addEventListener('change', () => void loadTokens());
+
+  document.getElementById('createBtn').addEventListener('click', async () => {
+   const payload = {
+    resourceKey: document.getElementById('createResourceKey').value,
+    ttlSeconds: Number(document.getElementById('ttlSeconds').value || 300),
+    maxDownloads: Number(document.getElementById('maxDownloads').value || 1),
+    bindIp: document.getElementById('bindIp').checked,
+    bindUserAgent: document.getElementById('bindUa').checked,
+    replayProtection: document.getElementById('replayProtection').checked,
+    allowedIpCidrs: String(document.getElementById('allowedIpCidrs').value || '')
+     .split(',').map(x => x.trim()).filter(Boolean),
+    allowedCountries: String(document.getElementById('allowedCountries').value || '')
+     .split(',').map(x => x.trim().toUpperCase()).filter(Boolean),
+   };
+   const res = await fetch('/api/admin/exports/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+   });
+   const json = await res.json();
+   if (!res.ok || !json?.success) { window.toast?.error('Token oluşturulamadı'); return; }
+
+   const reveal = document.getElementById('tokenReveal');
+   const rawToken = document.getElementById('rawToken');
+   const timer = document.getElementById('revealTimer');
+   reveal.hidden = false;
+   rawToken.textContent = json.token;
+   let remaining = 45;
+   timer.textContent = '⏳ Kapanmaya kalan: ' + remaining + 's';
+   if (revealTimeout) clearTimeout(revealTimeout);
+   if (revealCountdown) clearInterval(revealCountdown);
+   revealCountdown = setInterval(() => {
+    remaining -= 1;
+    timer.textContent = '⏳ Kapanmaya kalan: ' + remaining + 's';
+    if (remaining <= 0 && revealCountdown) { clearInterval(revealCountdown); revealCountdown = null; }
+   }, 1000);
+   revealTimeout = setTimeout(() => {
+    rawToken.textContent = '';
+    reveal.hidden = true;
+   }, 45000);
+
+   document.getElementById('copyBtn').onclick = async () => {
+    await navigator.clipboard.writeText(json.token);
+    window.toast?.success('Kopyalandı');
+    try {
+     await fetch('/api/admin/exports/token/clipboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resourceKey: payload.resourceKey }),
+     });
+    } catch {}
+   };
+
+   await loadTokens();
+  });
+
+  void loadTokens();
  </script>
+
+ <style>
+  .et-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .et-info {
+   display: flex; gap: 0.55rem; align-items: center;
+   padding: 0.75rem 1rem;
+   background: rgba(217,119,6,0.06);
+   border: 1px solid rgba(217,119,6,0.18);
+   border-radius: 10px;
+   color: var(--adm-text);
+   font-size: 0.86rem;
+   line-height: 1.5;
+  }
+  .et-info-icon { color: rgb(180,83,9); flex-shrink: 0; }
+  .et-info strong { color: var(--adm-text); font-weight: 700; }
+
+  .et-card {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .et-card-head {
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .et-card-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .et-card-sub {
+   font-size: 0.78rem;
+   color: var(--adm-text-soft);
+   margin: 0.2rem 0 0;
+  }
+
+  .et-toolbar {
+   display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
+   padding: 0.95rem 1.15rem;
+  }
+  .et-create-body {
+   display: flex; flex-direction: column; gap: 1rem;
+   padding: 1.15rem;
+  }
+
+  .et-grid { display: grid; gap: 0.75rem; }
+  .et-grid--2 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .et-grid--3 { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
+
+  .et-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .et-label {
+   font-size: 0.72rem; font-weight: 600;
+   color: var(--adm-text-soft);
+   text-transform: uppercase;
+   letter-spacing: 0.04em;
+  }
+  .et-input, .et-select {
+   padding: 0.55rem 0.75rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   font-size: 0.86rem;
+   color: var(--adm-text);
+   font-family: inherit;
+  }
+  .et-input--mono { font-family: 'Menlo', 'Monaco', monospace; font-size: 0.8rem; }
+  .et-input:focus, .et-select:focus {
+   outline: none;
+   border-color: var(--adm-accent);
+   box-shadow: 0 0 0 3px var(--adm-bg-active);
+  }
+
+  .et-checks {
+   display: flex; flex-direction: column; gap: 0.5rem;
+   padding: 0.85rem 1rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 10px;
+  }
+  .et-check {
+   display: flex; align-items: center; gap: 0.55rem;
+   font-size: 0.85rem;
+   color: var(--adm-text);
+   cursor: pointer;
+  }
+  .et-check input[type=checkbox] {
+   width: 16px; height: 16px;
+   accent-color: var(--adm-accent);
+   cursor: pointer;
+  }
+  .et-check strong { font-weight: 600; }
+
+  .et-btn {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.55rem 1.1rem;
+   border-radius: 8px;
+   font-size: 0.85rem; font-weight: 600;
+   border: 1px solid transparent;
+   cursor: pointer;
+   transition: all 0.15s;
+  }
+  .et-btn--primary {
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff;
+   align-self: flex-start;
+  }
+  .et-btn--primary:hover { transform: translateY(-1px); }
+  .et-btn--ghost {
+   background: transparent;
+   color: var(--adm-text-muted);
+   border-color: var(--adm-border);
+  }
+  .et-btn--ghost:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+
+  .et-reveal {
+   border: 1px solid rgba(217,119,6,0.3);
+   background: rgba(217,119,6,0.05);
+   border-radius: 10px;
+   padding: 0.95rem 1rem;
+  }
+  .et-reveal[hidden] { display: none; }
+  .et-reveal-head {
+   display: flex; align-items: center; gap: 0.4rem;
+   color: rgb(180,83,9);
+   font-size: 0.85rem;
+   margin-bottom: 0.6rem;
+  }
+  .et-reveal-row {
+   display: flex; gap: 0.55rem; align-items: stretch;
+   margin-bottom: 0.5rem;
+  }
+  .et-reveal-code {
+   flex: 1;
+   padding: 0.6rem 0.85rem;
+   background: #1a1208;
+   color: #F5EDD6;
+   border-radius: 6px;
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.74rem;
+   word-break: break-all;
+   line-height: 1.5;
+  }
+  .et-reveal-timer {
+   font-size: 0.78rem;
+   color: rgb(180,83,9);
+   margin: 0;
+   font-weight: 500;
+  }
+
+  .et-table-wrap { overflow-x: auto; }
+  .et-table { width: 100%; border-collapse: collapse; min-width: 720px; }
+  .et-th {
+   text-align: left;
+   font-size: 0.68rem;
+   font-weight: 700;
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   color: var(--adm-text-soft);
+   padding: 0.7rem 0.85rem;
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .et-th-num { text-align: right; }
+  .et-th-actions { text-align: right; width: 140px; }
+  .et-table tbody tr { border-bottom: 1px solid var(--adm-border); }
+  .et-table tbody tr:last-child { border-bottom: none; }
+  .et-table tbody tr:hover { background: var(--adm-bg-hover); }
+  .et-td { padding: 0.65rem 0.85rem; font-size: 0.82rem; color: var(--adm-text); vertical-align: top; }
+  .et-td-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .et-td-soft { color: var(--adm-text-muted); font-size: 0.78rem; }
+  .et-td-actions { text-align: right; white-space: nowrap; }
+  .et-td-empty {
+   text-align: center !important;
+   padding: 2.5rem 1rem !important;
+   color: var(--adm-text-soft) !important;
+   font-style: italic;
+  }
+
+  .et-resource {
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.74rem;
+   background: var(--adm-bg);
+   padding: 0.2rem 0.45rem;
+   border-radius: 4px;
+   color: var(--adm-accent);
+   border: 1px solid var(--adm-border);
+  }
+  .et-usage strong { font-weight: 700; color: var(--adm-text); }
+  .et-usage-sep { color: var(--adm-text-soft); }
+
+  .et-bind-main { color: var(--adm-text); font-weight: 600; font-size: 0.82rem; }
+  .et-bind-meta {
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.7rem;
+   color: var(--adm-text-soft);
+   margin-top: 0.2rem;
+  }
+
+  .et-badge {
+   display: inline-flex; align-items: center;
+   padding: 0.22rem 0.55rem;
+   font-size: 0.72rem; font-weight: 600;
+   border-radius: 999px;
+  }
+  .et-badge--ok { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+  .et-badge--muted { background: rgba(100,116,139,0.12); color: rgb(71,85,105); }
+
+  .et-row-btn {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.35rem 0.7rem;
+   font-size: 0.76rem; font-weight: 500;
+   color: var(--adm-text-muted);
+   background: transparent;
+   border: 1px solid var(--adm-border);
+   border-radius: 6px;
+   cursor: pointer;
+   transition: all 0.15s;
+  }
+  .et-row-btn--danger { color: rgb(190,18,60); border-color: rgba(225,29,72,0.3); }
+  .et-row-btn--danger:hover { background: rgba(225,29,72,0.08); border-color: rgb(190,18,60); }
+  .et-dash { color: var(--adm-text-soft); }
+ </style>
 </AdminLayout>

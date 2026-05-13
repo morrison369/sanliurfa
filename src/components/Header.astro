@@ -1,4 +1,6 @@
 ---
+import NotificationBadge from './NotificationBadge';
+
 interface Props {
   user?: { id: string; email?: string; fullName?: string; role?: string } | null;
 }
@@ -62,12 +64,15 @@ const isActive = (href: string) => href !== '/' && path.startsWith(href);
         Eşleşme
       </a>
       {user ? (
-        <a
-          href={user.role === 'admin' ? '/admin' : '/profil'}
-          class="rounded-full border border-[#d9c5a7] px-4 py-2 text-sm font-bold text-[#3d2c21] transition hover:border-[#78331d] hover:bg-white"
-        >
-          {user.role === 'admin' ? 'Admin Panel' : 'Profil'}
-        </a>
+        <>
+          <NotificationBadge client:visible />
+          <a
+            href={user.role === 'admin' ? '/admin' : '/profil'}
+            class="rounded-full border border-[#d9c5a7] px-4 py-2 text-sm font-bold text-[#3d2c21] transition hover:border-[#78331d] hover:bg-white"
+          >
+            {user.role === 'admin' ? 'Admin Panel' : 'Profil'}
+          </a>
+        </>
       ) : (
         <a
           href="/isletme-kayit"

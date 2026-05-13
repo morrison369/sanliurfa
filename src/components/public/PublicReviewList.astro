@@ -23,6 +23,18 @@ interface Props {
 }
 
 const { title = 'Yorumlar', items = [], emptyText = 'Henüz yorum yok.', isAuthenticated = false } = Astro.props;
+
+// Visit type filter chip'leri için unique değerleri hesapla
+const visitTypeLabels: Record<string, string> = {
+  family: 'Aile ile',
+  friends: 'Arkadaşlarla',
+  couple: 'Çift olarak',
+  business: 'İş yemeği',
+  solo: 'Tek başına',
+};
+const uniqueVisitTypes = Array.from(
+  new Set(items.map((i) => i.visit_type).filter((v): v is string => !!v && v.trim().length > 0))
+);
 ---
 
 <section class="prv">
@@ -30,12 +42,23 @@ const { title = 'Yorumlar', items = [], emptyText = 'Henüz yorum yok.', isAuthe
     {title} <span class="prv-count">({items.length})</span>
   </h2>
 
+  {uniqueVisitTypes.length > 1 && (
+    <div class="prv-filters" role="group" aria-label="Ziyaret tipine göre filtrele">
+      <button type="button" class="prv-filter-chip prv-filter-chip--active" data-filter="all">Tümü</button>
+      {uniqueVisitTypes.map((vt) => (
+        <button type="button" class="prv-filter-chip" data-filter={vt}>
+          {visitTypeLabels[vt] || vt}
+        </button>
+      ))}
+    </div>
+  )}
+
   {items.length === 0 ? (
     <p class="prv-empty">{emptyText}</p>
   ) : (
     <div class="prv-list">
       {items.map((item) => (
-        <article class="prv-item" data-review-id={item.id}>
+        <article class="prv-item" data-review-id={item.id} data-visit-type={item.visit_type || ''}>
           <header class="prv-head">
             {item.user_avatar ? (
               <img src={item.user_avatar} alt={item.user_name || 'Üye'} loading="lazy" width={36} height={36} class="prv-avatar" />
@@ -46,7 +69,7 @@ const { title = 'Yorumlar', items = [], emptyText = 'Henüz yorum yok.', isAuthe
               <p class="prv-name">
                 {item.user_name || 'Üye'}
                 {item.is_verified && <span class="prv-badge prv-badge--verified" title="Doğrulanmış ziyaret">✓ Doğrulanmış</span>}
-                {item.visit_type && <span class="prv-badge prv-badge--visit">{item.visit_type}</span>}
+                {item.visit_type && <span class="prv-badge prv-badge--visit">{visitTypeLabels[item.visit_type] || item.visit_type}</span>}
               </p>
               <p class="prv-date">
                 {new Date(item.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -125,6 +148,22 @@ const { title = 'Yorumlar', items = [], emptyText = 'Henüz yorum yok.', isAuthe
 </section>
 
 <script>
+  // Visit type filter chip'leri — client-side toggle
+  document.querySelectorAll('.prv-filter-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      const button = chip as HTMLButtonElement;
+      const target = button.dataset.filter || 'all';
+      document.querySelectorAll('.prv-filter-chip').forEach((c) =>
+        c.classList.toggle('prv-filter-chip--active', c === button)
+      );
+      document.querySelectorAll('.prv-item').forEach((el) => {
+        const item = el as HTMLElement;
+        const vt = item.dataset.visitType || '';
+        item.hidden = target !== 'all' && vt !== target;
+      });
+    });
+  });
+
   // Helpful + flag butonları için inline behavior
   document.querySelectorAll('.prv-btn--helpful').forEach((btn) => {
     btn.addEventListener('click', async (e) => {
@@ -180,6 +219,24 @@ const { title = 'Yorumlar', items = [], emptyText = 'Henüz yorum yok.', isAuthe
   .prv-count { color: var(--public-accent); font-size: 0.85em; }
   .prv-empty { margin: 0; color: var(--public-muted); font-size: 1rem; line-height: 1.7; }
   .prv-list { display: flex; flex-direction: column; gap: 1.1rem; }
+  .prv-filters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+  .prv-filter-chip {
+    padding: 0.32rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--public-muted);
+    background: transparent;
+    border: 1px solid var(--public-border);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .prv-filter-chip:hover { border-color: var(--public-accent); color: var(--public-accent); }
+  .prv-filter-chip--active {
+    background: var(--public-accent);
+    color: #fff;
+    border-color: var(--public-accent);
+  }
   .prv-item { border-top: 1px solid var(--public-border-soft); padding-top: 1.1rem; }
 
   .prv-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }

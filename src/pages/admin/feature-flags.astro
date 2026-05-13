@@ -1,216 +1,435 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
  title="Feature Flag Yönetimi"
- subtitle="Özellikleri canlı ortamda açıp kapatın"
- seo={{ title: 'Feature Flag Yönetimi - Admin' }}
+ subtitle="Özellikleri canlı ortamda anında açıp kapatın — rebuild gerektirmez"
+ seo={{ title: 'Feature Flag Yönetimi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-5xl">
- <div class="mb-6">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ <div class="ff-page">
+  <div class="ff-info">
+   <Icon name="lucide:info" class="w-4 h-4 ff-info-icon" />
+   <span><strong>Feature flag</strong> değişiklikleri Redis cache üzerinden anlık etki eder. Boolean tipinde true/false, percentage tipinde 0–100 rollout yüzdesi atanır.</span>
+  </div>
+
+  <div class="ff-card">
+   <div class="ff-card-head">
+    <h2 class="ff-card-title">
+     <Icon name="lucide:plus-circle" class="w-4 h-4" /> Yeni Flag Oluştur
+    </h2>
+   </div>
+   <form id="createForm" class="ff-form">
+    <div class="ff-field">
+     <label class="ff-label">Flag Key</label>
+     <input name="key" placeholder="flag_key (snake_case)" class="ff-input" required />
+    </div>
+    <div class="ff-field ff-field--flex">
+     <label class="ff-label">Açıklayıcı İsim</label>
+     <input name="name" placeholder="Yeni özellik adı" class="ff-input" required />
+    </div>
+    <div class="ff-field">
+     <label class="ff-label">Tür</label>
+     <select name="type" class="ff-input" aria-label="Flag türü">
+      <option value="boolean">Boolean</option>
+      <option value="percentage">Yüzde</option>
+     </select>
+    </div>
+    <button type="submit" class="ff-btn">
+     <Icon name="lucide:plus" class="w-4 h-4" /> Oluştur
+    </button>
+   </form>
+   <p id="createMsg" class="ff-msg" hidden></p>
+  </div>
+
+  <div class="ff-card">
+   <div class="ff-card-head">
+    <h2 class="ff-card-title">
+     <Icon name="lucide:toggle-right" class="w-4 h-4" /> Mevcut Flagler
+    </h2>
+    <button id="refreshBtn" class="ff-refresh-btn">
+     <Icon name="lucide:refresh-cw" class="w-3.5 h-3.5" /> Yenile
+    </button>
+   </div>
+   <div id="flagsContainer">
+    <div class="ff-empty">
+     <span class="ff-empty-icon">⏳</span>
+     <span>Yükleniyor…</span>
+    </div>
+   </div>
+  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5 mb-5">
- <h2 class="font-semibold text-[#7A6B58] mb-4">Yeni Flag Oluştur</h2>
- <form id="createForm" class="flex flex-wrap gap-3">
- <input
- name="key"
- placeholder="flag_key (snake_case)"
- class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm flex-1 min-w-40"
- required
- />
- <input
- name="name"
- placeholder="Açıklayıcı isim"
- class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm flex-1 min-w-40"
- required
- />
- <select name="type" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm">
- <option value="boolean">Boolean</option>
- <option value="percentage">Yüzde</option>
- </select>
- <button
- type="submit"
- class="px-4 py-2 rounded-sm bg-urfa-600 text-white text-sm hover:bg-urfa-700"
- >
- Oluştur
- </button>
- </form>
- <p id="createMsg" class="text-sm mt-2 hidden"></p>
- </div>
+ <script is:inline>
+  function isEnabled(flag) {
+   return flag.value === true || flag.value === 'true' || flag.value === 1;
+  }
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div class="p-4 border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] flex items-center justify-between">
- <h2 class="font-semibold text-[#7A6B58] text-sm">Mevcut Flagler</h2>
- <button id="refreshBtn" class="text-xs text-urfa-600 hover:underline">Yenile</button>
- </div>
- <div id="flagsContainer">
- <div class="p-8 text-center text-[#7A6B58] text-sm">Yükleniyor...</div>
- </div>
- </div>
- </div>
+  function renderEmpty(container, text, withIcon) {
+   container.textContent = '';
+   const wrap = document.createElement('div');
+   wrap.className = 'ff-empty';
+   if (withIcon) {
+    const icon = document.createElement('span');
+    icon.className = 'ff-empty-icon';
+    icon.textContent = '○';
+    wrap.appendChild(icon);
+   }
+   const span = document.createElement('span');
+   span.textContent = text;
+   wrap.appendChild(span);
+   container.appendChild(wrap);
+  }
+
+  function renderFlags(flags) {
+   const container = document.getElementById('flagsContainer');
+   container.textContent = '';
+
+   if (!flags || flags.length === 0) {
+    renderEmpty(container, 'Henüz flag tanımlanmamış. Yukarıdaki formdan ekleyin.', true);
+    return;
+   }
+
+   const table = document.createElement('table');
+   table.className = 'ff-table';
+
+   const thead = document.createElement('thead');
+   const headRow = document.createElement('tr');
+   ['Key', 'Ad', 'Tür', 'Durum', ''].forEach(label => {
+    const th = document.createElement('th');
+    th.className = 'ff-th';
+    th.textContent = label;
+    headRow.appendChild(th);
+   });
+   thead.appendChild(headRow);
+   table.appendChild(thead);
+
+   const tbody = document.createElement('tbody');
+
+   flags.forEach(f => {
+    const tr = document.createElement('tr');
+
+    const keyTd = document.createElement('td');
+    keyTd.className = 'ff-td';
+    const code = document.createElement('code');
+    code.className = 'ff-key';
+    code.textContent = f.key;
+    keyTd.appendChild(code);
+
+    const nameTd = document.createElement('td');
+    nameTd.className = 'ff-td ff-td-strong';
+    nameTd.textContent = f.name || '—';
+
+    const typeTd = document.createElement('td');
+    typeTd.className = 'ff-td';
+    const typeBadge = document.createElement('span');
+    typeBadge.className = 'ff-type-badge ff-type-badge--' + (f.type || 'boolean');
+    typeBadge.textContent = f.type === 'percentage' ? 'Yüzde' : 'Boolean';
+    typeTd.appendChild(typeBadge);
+
+    const toggleTd = document.createElement('td');
+    toggleTd.className = 'ff-td';
+    const enabled = isEnabled(f);
+    const toggle = document.createElement('label');
+    toggle.className = 'ff-toggle';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = enabled;
+    cb.className = 'ff-toggle-input';
+    const knob = document.createElement('span');
+    knob.className = 'ff-toggle-knob';
+    toggle.appendChild(cb);
+    toggle.appendChild(knob);
+    cb.addEventListener('change', async () => {
+     toggle.classList.add('ff-toggle--loading');
+     try {
+      const res = await fetch('/api/admin/flags', {
+       method: 'PUT',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ key: f.key, value: cb.checked }),
+      });
+      if (!res.ok) {
+       cb.checked = !cb.checked;
+       window.toast?.error('Değişiklik kaydedilemedi');
+      }
+     } catch {
+      cb.checked = !cb.checked;
+      window.toast?.error('Bağlantı hatası');
+     } finally {
+      toggle.classList.remove('ff-toggle--loading');
+     }
+    });
+    toggleTd.appendChild(toggle);
+    const stateText = document.createElement('span');
+    stateText.className = 'ff-toggle-text';
+    stateText.textContent = enabled ? 'Açık' : 'Kapalı';
+    toggleTd.appendChild(stateText);
+    cb.addEventListener('change', () => {
+     stateText.textContent = cb.checked ? 'Açık' : 'Kapalı';
+    });
+
+    const actionTd = document.createElement('td');
+    actionTd.className = 'ff-td ff-td-actions';
+    const delBtn = document.createElement('button');
+    delBtn.className = 'ff-del-btn';
+    delBtn.type = 'button';
+    delBtn.textContent = '✕ Sil';
+    delBtn.addEventListener('click', async () => {
+     if (!await window.showConfirm('"' + f.key + '" flagini silmek istiyor musunuz?')) return;
+     const res = await fetch('/api/admin/flags', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: f.key }),
+     });
+     if (res.ok) loadFlags();
+     else window.toast?.error('Silinemedi.');
+    });
+    actionTd.appendChild(delBtn);
+
+    tr.appendChild(keyTd); tr.appendChild(nameTd); tr.appendChild(typeTd);
+    tr.appendChild(toggleTd); tr.appendChild(actionTd);
+    tbody.appendChild(tr);
+   });
+
+   table.appendChild(tbody);
+   container.appendChild(table);
+  }
+
+  async function loadFlags() {
+   const container = document.getElementById('flagsContainer');
+   renderEmpty(container, 'Yükleniyor…', false);
+   try {
+    const res = await fetch('/api/admin/flags');
+    if (!res.ok) { renderEmpty(container, 'Yüklenemedi.', true); return; }
+    const { flags } = await res.json();
+    renderFlags(flags);
+   } catch { renderEmpty(container, 'Hata oluştu.', true); }
+  }
+
+  document.getElementById('refreshBtn').addEventListener('click', loadFlags);
+
+  document.getElementById('createForm').addEventListener('submit', async (e) => {
+   e.preventDefault();
+   const form = e.target;
+   const msg = document.getElementById('createMsg');
+   const data = { key: form.key.value.trim(), name: form.name.value.trim(), type: form.type.value };
+   const res = await fetch('/api/admin/flags', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+   });
+   if (res.ok) {
+    form.reset();
+    msg.textContent = '✓ Flag oluşturuldu.';
+    msg.className = 'ff-msg ff-msg--ok';
+    msg.hidden = false;
+    loadFlags();
+    setTimeout(() => { msg.hidden = true; }, 3000);
+   } else {
+    const errData = await res.json().catch(() => ({}));
+    msg.textContent = errData.detail || 'Oluşturulamadı.';
+    msg.className = 'ff-msg ff-msg--err';
+    msg.hidden = false;
+   }
+  });
+
+  loadFlags();
+ </script>
+
+ <style>
+  .ff-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .ff-info {
+   display: flex; gap: 0.55rem; align-items: center;
+   padding: 0.75rem 1rem;
+   background: rgba(2,132,199,0.06);
+   border: 1px solid rgba(2,132,199,0.18);
+   border-radius: 10px;
+   color: var(--adm-text);
+   font-size: 0.86rem;
+   line-height: 1.5;
+  }
+  .ff-info-icon { color: rgb(2,132,199); flex-shrink: 0; }
+  .ff-info strong { color: var(--adm-text); font-weight: 700; }
+
+  .ff-card {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .ff-card-head {
+   display: flex; align-items: center; justify-content: space-between;
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .ff-card-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+
+  .ff-form {
+   display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;
+   padding: 1.15rem;
+  }
+  .ff-field { display: flex; flex-direction: column; gap: 0.3rem; min-width: 180px; }
+  .ff-field--flex { flex: 1; }
+  .ff-label {
+   font-size: 0.72rem; font-weight: 600;
+   color: var(--adm-text-soft);
+   text-transform: uppercase;
+   letter-spacing: 0.04em;
+  }
+  .ff-input {
+   padding: 0.55rem 0.75rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   font-size: 0.88rem;
+   color: var(--adm-text);
+   font-family: inherit;
+  }
+  .ff-input:focus {
+   outline: none;
+   border-color: var(--adm-accent);
+   box-shadow: 0 0 0 3px var(--adm-bg-active);
+  }
+  .ff-btn {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.6rem 1.1rem;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff;
+   border: none;
+   border-radius: 8px;
+   font-weight: 600; font-size: 0.85rem;
+   cursor: pointer;
+   transition: transform 0.15s;
+  }
+  .ff-btn:hover { transform: translateY(-1px); }
+
+  .ff-msg {
+   margin: 0 1.15rem 1.15rem;
+   padding: 0.55rem 0.85rem;
+   border-radius: 8px;
+   font-size: 0.82rem;
+  }
+  .ff-msg--ok { background: rgba(16,185,129,0.08); color: rgb(5,150,105); border: 1px solid rgba(16,185,129,0.18); }
+  .ff-msg--err { background: rgba(225,29,72,0.08); color: rgb(190,18,60); border: 1px solid rgba(225,29,72,0.18); }
+  .ff-msg[hidden] { display: none; }
+
+  .ff-refresh-btn {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.35rem 0.75rem;
+   font-size: 0.78rem; font-weight: 500;
+   color: var(--adm-text-muted);
+   background: transparent;
+   border: 1px solid var(--adm-border);
+   border-radius: 6px;
+   cursor: pointer;
+  }
+  .ff-refresh-btn:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+
+  .ff-table { width: 100%; border-collapse: collapse; }
+  .ff-th {
+   text-align: left;
+   font-size: 0.7rem;
+   font-weight: 700;
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   color: var(--adm-text-soft);
+   padding: 0.7rem 1rem;
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .ff-table tbody tr {
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .ff-table tbody tr:last-child { border-bottom: none; }
+  .ff-table tbody tr:hover { background: var(--adm-bg-hover); }
+  .ff-td { padding: 0.75rem 1rem; font-size: 0.86rem; color: var(--adm-text); vertical-align: middle; }
+  .ff-td-strong { font-weight: 600; }
+  .ff-td-actions { text-align: right; }
+
+  .ff-key {
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.74rem;
+   background: var(--adm-bg);
+   padding: 0.25rem 0.5rem;
+   border-radius: 4px;
+   border: 1px solid var(--adm-border);
+   color: var(--adm-accent);
+  }
+  .ff-type-badge {
+   display: inline-flex; align-items: center;
+   padding: 0.22rem 0.55rem;
+   font-size: 0.7rem; font-weight: 600;
+   border-radius: 999px;
+  }
+  .ff-type-badge--boolean { background: rgba(99,102,241,0.12); color: rgb(99,102,241); }
+  .ff-type-badge--percentage { background: rgba(139,92,246,0.12); color: rgb(124,58,237); }
+
+  .ff-toggle {
+   position: relative;
+   display: inline-block;
+   width: 38px; height: 22px;
+   margin-right: 0.55rem;
+   vertical-align: middle;
+  }
+  .ff-toggle-input { opacity: 0; width: 0; height: 0; }
+  .ff-toggle-knob {
+   position: absolute; cursor: pointer;
+   inset: 0;
+   background: rgba(100,116,139,0.3);
+   border-radius: 999px;
+   transition: background 0.18s;
+  }
+  .ff-toggle-knob::before {
+   content: '';
+   position: absolute;
+   left: 2px; top: 2px;
+   width: 18px; height: 18px;
+   background: #fff;
+   border-radius: 50%;
+   transition: transform 0.18s;
+   box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+  }
+  .ff-toggle-input:checked + .ff-toggle-knob {
+   background: linear-gradient(135deg, rgb(16,185,129), rgb(5,150,105));
+  }
+  .ff-toggle-input:checked + .ff-toggle-knob::before { transform: translateX(16px); }
+  .ff-toggle-input:focus + .ff-toggle-knob {
+   box-shadow: 0 0 0 3px rgba(16,185,129,0.2);
+  }
+  .ff-toggle--loading { opacity: 0.5; }
+  .ff-toggle-text {
+   font-size: 0.78rem;
+   font-weight: 600;
+   color: var(--adm-text-muted);
+   vertical-align: middle;
+  }
+
+  .ff-del-btn {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.35rem 0.7rem;
+   font-size: 0.76rem; font-weight: 500;
+   color: rgb(190,18,60);
+   background: transparent;
+   border: 1px solid rgba(225,29,72,0.3);
+   border-radius: 6px;
+   cursor: pointer;
+   transition: all 0.15s;
+  }
+  .ff-del-btn:hover { background: rgba(225,29,72,0.08); border-color: rgb(190,18,60); }
+
+  .ff-empty {
+   display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+   padding: 2.5rem 1rem;
+   color: var(--adm-text-soft);
+   font-size: 0.88rem;
+  }
+  .ff-empty-icon { font-size: 1.5rem; color: var(--adm-border); }
+ </style>
 </AdminLayout>
-
-<script is:inline>
- function isEnabled(flag) {
- return flag.value === true || flag.value === 'true' || flag.value === 1;
- }
-
- function renderFlags(flags) {
- const container = document.getElementById('flagsContainer');
- container.textContent = '';
-
- if (!flags || flags.length === 0) {
- const empty = document.createElement('div');
- empty.className = 'p-8 text-center text-[#7A6B58] text-sm';
- empty.textContent = 'Henüz flag yok.';
- container.appendChild(empty);
- return;
- }
-
- const wrapper = document.createElement('div');
- wrapper.className = 'overflow-x-auto';
-
- const table = document.createElement('table');
- table.className = 'w-full text-sm';
-
- const thead = document.createElement('thead');
- thead.className = 'border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]';
- const headRow = document.createElement('tr');
- ['Key', 'Ad', 'Tür', 'Durum', ''].forEach(label => {
- const th = document.createElement('th');
- th.className = 'py-3 px-4 text-left font-medium text-[#7A6B58]';
- th.textContent = label;
- headRow.appendChild(th);
- });
- thead.appendChild(headRow);
- table.appendChild(thead);
-
- const tbody = document.createElement('tbody');
-
- flags.forEach(f => {
- const tr = document.createElement('tr');
- tr.className = 'border-b border-[rgba(184,115,51,0.08)] last:border-0 hover:bg-[rgba(184,115,51,0.04)]';
-
- const keyTd = document.createElement('td');
- keyTd.className = 'py-3 px-4';
- const keySpan = document.createElement('span');
- keySpan.className = 'font-mono text-xs text-[#7A6B58] bg-[rgba(184,115,51,0.06)] px-2 py-0.5 rounded-sm inline-block';
- keySpan.textContent = f.key;
- keyTd.appendChild(keySpan);
-
- const nameTd = document.createElement('td');
- nameTd.className = 'py-3 px-4 font-medium text-[#1F1410]';
- nameTd.textContent = f.name || '—';
-
- const typeTd = document.createElement('td');
- typeTd.className = 'py-3 px-4 text-[#7A6B58] text-xs';
- typeTd.textContent = f.type || 'boolean';
-
- const toggleTd = document.createElement('td');
- toggleTd.className = 'py-3 px-4';
- const label = document.createElement('label');
- label.className = 'relative inline-flex items-center cursor-pointer';
- label.innerHTML = '<input type="checkbox" class="sr-only peer toggle-check">' +
- '<div class="w-10 h-6 bg-[rgba(184,115,51,0.2)] peer-checked:bg-urfa-600 rounded-full peer-focus:ring-2 peer-focus:ring-urfa-300 after:content-[\'\'] after:absolute after:top-0.5 after:left-0.5 after:bg-[var(--bg-card)] after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>';
- const cb = label.querySelector('input');
- cb.checked = isEnabled(f);
- cb.addEventListener('change', async () => {
- await fetch('/api/admin/flags', {
- method: 'PUT',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ key: f.key, value: cb.checked }),
- });
- });
- toggleTd.appendChild(label);
-
- const actionTd = document.createElement('td');
- actionTd.className = 'py-3 px-4';
- const delBtn = document.createElement('button');
- delBtn.className = 'text-xs text-[#7A6B58] hover:text-[#1F1410] hover:underline';
- delBtn.textContent = 'Sil';
- delBtn.addEventListener('click', async () => {
- if (!await window.showConfirm(`"${f.key}" flagini silmek istiyor musunuz?`)) return;
- const res = await fetch('/api/admin/flags', {
- method: 'DELETE',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ key: f.key }),
- });
- if (res.ok) loadFlags();
- else window.toast?.error('Silinemedi.');
- });
- actionTd.appendChild(delBtn);
-
- tr.appendChild(keyTd);
- tr.appendChild(nameTd);
- tr.appendChild(typeTd);
- tr.appendChild(toggleTd);
- tr.appendChild(actionTd);
- tbody.appendChild(tr);
- });
-
- table.appendChild(tbody);
- wrapper.appendChild(table);
- container.appendChild(wrapper);
- }
-
- async function loadFlags() {
- const container = document.getElementById('flagsContainer');
- container.textContent = '';
- const loading = document.createElement('div');
- loading.className = 'p-8 text-center text-[#7A6B58] text-sm';
- loading.textContent = 'Yükleniyor...';
- container.appendChild(loading);
-
- try {
- const res = await fetch('/api/admin/flags');
- if (!res.ok) {
- container.textContent = '';
- const err = document.createElement('div');
- err.className = 'p-8 text-center text-[#7A6B58] text-sm';
- err.textContent = 'Yüklenemedi.';
- container.appendChild(err);
- return;
- }
- const { flags } = await res.json();
- renderFlags(flags);
- } catch {
- container.textContent = '';
- const err = document.createElement('div');
- err.className = 'p-8 text-center text-[#7A6B58] text-sm';
- err.textContent = 'Hata oluştu.';
- container.appendChild(err);
- }
- }
-
- document.getElementById('refreshBtn').addEventListener('click', loadFlags);
-
- document.getElementById('createForm').addEventListener('submit', async (e) => {
- e.preventDefault();
- const form = e.target;
- const msg = document.getElementById('createMsg');
- const data = { key: form.key.value.trim(), name: form.name.value.trim(), type: form.type.value };
- const res = await fetch('/api/admin/flags', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify(data),
- });
- if (res.ok) {
- form.reset();
- msg.textContent = 'Flag oluşturuldu.';
- msg.className = 'text-sm mt-2 text-[#7A6B58]';
- msg.classList.remove('hidden');
- loadFlags();
- setTimeout(() => msg.classList.add('hidden'), 3000);
- } else {
- const errData = await res.json().catch(() => ({}));
- msg.textContent = errData.detail || 'Oluşturulamadı.';
- msg.className = 'text-sm mt-2 text-[#7A6B58]';
- msg.classList.remove('hidden');
- }
- });
-
- loadFlags();
-</script>

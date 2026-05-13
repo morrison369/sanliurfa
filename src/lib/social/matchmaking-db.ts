@@ -75,26 +75,50 @@ function normalizePhotos(photos: string[]): string[] {
     .slice(0, 4);
 }
 
-export async function upsertMatchProfile(userId: string, input: { bio?: string; photos?: string[]; isDiscoverable?: boolean }) {
+export async function upsertMatchProfile(userId: string, input: {
+  bio?: string;
+  photos?: string[];
+  isDiscoverable?: boolean;
+  interests?: string[] | undefined;
+  ageRangeMin?: number | null | undefined;
+  ageRangeMax?: number | null | undefined;
+  preferredDistrict?: string | null | undefined;
+  lookingFor?: string | null | undefined;
+}) {
   await ensureMatchTables();
 
   const photos = normalizePhotos(input.photos || []);
   const bio = (input.bio || '').trim();
   const isDiscoverable = input.isDiscoverable ?? true;
+  // Extended fields (migration 183)
+  const interests = Array.isArray(input.interests)
+    ? input.interests.filter(i => typeof i === 'string' && i.trim().length > 0).slice(0, 12)
+    : null;
+  const ageMin = (typeof input.ageRangeMin === 'number' && input.ageRangeMin >= 18 && input.ageRangeMin <= 99) ? input.ageRangeMin : null;
+  const ageMax = (typeof input.ageRangeMax === 'number' && input.ageRangeMax >= 18 && input.ageRangeMax <= 99) ? input.ageRangeMax : null;
+  const district = input.preferredDistrict?.trim() || null;
+  const lookingFor = input.lookingFor?.trim() || null;
 
   const row = await queryOne(
     `
-      INSERT INTO user_match_profiles (user_id, bio, photos, is_discoverable, updated_at)
-      VALUES ($1, $2, $3, $4, NOW())
+      INSERT INTO user_match_profiles
+        (user_id, bio, photos, is_discoverable, interests, age_range_min, age_range_max, preferred_district, looking_for, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
       ON CONFLICT (user_id)
       DO UPDATE SET
         bio = EXCLUDED.bio,
         photos = EXCLUDED.photos,
         is_discoverable = EXCLUDED.is_discoverable,
+        interests = EXCLUDED.interests,
+        age_range_min = EXCLUDED.age_range_min,
+        age_range_max = EXCLUDED.age_range_max,
+        preferred_district = EXCLUDED.preferred_district,
+        looking_for = EXCLUDED.looking_for,
+        profile_completeness = calc_match_profile_completeness(user_match_profiles),
         updated_at = NOW()
-      RETURNING user_id, bio, photos, is_discoverable, updated_at
+      RETURNING user_id, bio, photos, is_discoverable, interests, age_range_min, age_range_max, preferred_district, looking_for, profile_completeness, updated_at
     `,
-    [userId, bio, photos, isDiscoverable]
+    [userId, bio, photos, isDiscoverable, interests, ageMin, ageMax, district, lookingFor]
   );
 
   return row;
@@ -103,7 +127,9 @@ export async function upsertMatchProfile(userId: string, input: { bio?: string; 
 export async function getMatchProfile(userId: string) {
   await ensureMatchTables();
   return queryOne(
-    `SELECT user_id, bio, photos, is_discoverable, updated_at
+    `SELECT user_id, bio, photos, is_discoverable,
+            interests, age_range_min, age_range_max, preferred_district, looking_for, profile_completeness,
+            updated_at
      FROM user_match_profiles WHERE user_id = $1`,
     [userId]
   );

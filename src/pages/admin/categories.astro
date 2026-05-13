@@ -1,25 +1,44 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+import AdmStatGrid from '../../components/admin/AdmStatGrid.astro';
+import AdmEmptyState from '../../components/admin/AdmEmptyState.astro';
 import { query } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
 
-let categories: any[] = [];
+interface Category {
+ id: string;
+ name: string;
+ slug: string;
+ icon?: string;
+ color?: string;
+ is_active: boolean;
+ sort_order: number | null;
+ place_count: number;
+}
+
+let categories: Category[] = [];
 let totalPlaces = 0;
+let stats = { total: 0, active: 0, inactive: 0, empty: 0 };
 
 try {
  const [catResult, placeCount] = await Promise.all([
- query(`
- SELECT c.id, c.name, c.slug, c.icon, c.color, c.is_active, c.sort_order,
- COUNT(p.id)::int AS place_count
- FROM categories c
- LEFT JOIN places p ON p.category_id = c.id AND p.status = 'active'
- GROUP BY c.id
- ORDER BY c.sort_order ASC NULLS LAST, c.name
- `),
- query(`SELECT COUNT(*)::int AS cnt FROM places WHERE status = 'active'`),
+  query<Category>(`
+   SELECT c.id, c.name, c.slug, c.icon, c.color, c.is_active, c.sort_order,
+    COUNT(p.id)::int AS place_count
+   FROM categories c
+   LEFT JOIN places p ON p.category_id = c.id AND p.status = 'active'
+   GROUP BY c.id
+   ORDER BY c.sort_order ASC NULLS LAST, c.name
+  `),
+  query<{ cnt: number }>(`SELECT COUNT(*)::int AS cnt FROM places WHERE status = 'active'`),
  ]);
  categories = catResult.rows;
  totalPlaces = placeCount.rows[0]?.cnt || 0;
+ stats.total = categories.length;
+ stats.active = categories.filter(c => c.is_active).length;
+ stats.inactive = categories.filter(c => !c.is_active).length;
+ stats.empty = categories.filter(c => c.place_count === 0).length;
 } catch (e) {
  logger.error('Categories admin query failed', e instanceof Error ? e : new Error(String(e)));
 }
@@ -27,61 +46,179 @@ try {
 
 <AdminLayout
  title="Kategori Yönetimi"
- subtitle={`${categories.length} kategori · Toplam ${totalPlaces} aktif mekan`}
+ subtitle={`${stats.total} kategori • ${totalPlaces.toLocaleString('tr-TR')} aktif mekan`}
  seo={{ title: 'Kategori Yönetimi - Yönetim Paneli', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-5xl space-y-5">
- <div class="mb-2 flex items-center justify-between">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- <a href="/api/admin/site?model=categories" target="_blank" rel="noopener" class="text-xs text-urfa-600 hover:text-[#7A6B58]">JSON Görüntüle</a>
+ <a slot="page-actions" href="/api/admin/site?model=categories" target="_blank" rel="noopener" class="cat-action">
+  <Icon name="lucide:braces" class="w-4 h-4" />
+  JSON Görüntüle
+ </a>
+
+ <div class="cat-page">
+  <AdmStatGrid stats={[
+   { label: 'Toplam Kategori', value: stats.total, icon: 'lucide:layers', color: 'indigo' },
+   { label: 'Aktif', value: stats.active, icon: 'lucide:check-circle', color: 'emerald' },
+   { label: 'Pasif', value: stats.inactive, icon: 'lucide:x-circle', color: 'slate' },
+   { label: 'Mekansız', value: stats.empty, icon: 'lucide:alert-triangle', color: 'amber', detail: 'Boş kategoriler' },
+  ]} />
+
+  <div class="cat-info">
+   <Icon name="lucide:info" class="w-4 h-4 cat-info-icon" />
+   <span>Kategori ekleme/düzenleme migration scriptleri ile yapılır. Slug değişiklikleri tüm mekan URL'lerini etkiler.</span>
+  </div>
+
+  <div class="cat-table-wrap">
+   {categories.length === 0 ? (
+    <AdmEmptyState
+     icon="lucide:layers"
+     title="Kategori bulunamadı"
+     description="Veri tabanına erişilemedi veya henüz kategori tanımlanmamış."
+     size="md"
+    />
+   ) : (
+    <table class="cat-table">
+     <thead>
+      <tr>
+       <th class="cat-th">Kategori</th>
+       <th class="cat-th">Slug</th>
+       <th class="cat-th cat-th-num">Mekan</th>
+       <th class="cat-th cat-th-num">Sıra</th>
+       <th class="cat-th">Durum</th>
+      </tr>
+     </thead>
+     <tbody>
+      {categories.map(cat => (
+       <tr>
+        <td class="cat-td">
+         <div class="cat-cell">
+          <div class="cat-mark" style={cat.color ? `background: ${cat.color}1a; color: ${cat.color}; border-color: ${cat.color}33` : ''}>
+           {cat.icon ? <span class="cat-icon">{cat.icon}</span> : <Icon name="lucide:tag" class="w-4 h-4" />}
+          </div>
+          <div class="cat-name">{cat.name}</div>
+         </div>
+        </td>
+        <td class="cat-td">
+         <code class="cat-slug">{cat.slug}</code>
+        </td>
+        <td class="cat-td cat-td-num">
+         {cat.place_count > 0 ? (
+          <a href={`/mekanlar/${cat.slug}`} class="cat-count-link">
+           <strong>{cat.place_count.toLocaleString('tr-TR')}</strong>
+           <Icon name="lucide:external-link" class="w-3 h-3" />
+          </a>
+         ) : (
+          <span class="cat-count-empty">0</span>
+         )}
+        </td>
+        <td class="cat-td cat-td-num cat-td-soft">{cat.sort_order ?? '—'}</td>
+        <td class="cat-td">
+         <span class:list={['cat-badge', cat.is_active ? 'cat-badge--ok' : 'cat-badge--muted']}>
+          {cat.is_active ? 'Aktif' : 'Pasif'}
+         </span>
+        </td>
+       </tr>
+      ))}
+     </tbody>
+    </table>
+   )}
+  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div class="p-4 border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] flex items-center justify-between">
- <h2 class="font-semibold text-[#7A6B58] text-sm">Kategoriler</h2>
- </div>
- <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <tr>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Ad</th>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Slug</th>
- <th class="py-3 px-4 text-center font-medium text-[#7A6B58]">Mekan</th>
- <th class="py-3 px-4 text-center font-medium text-[#7A6B58]">Sıra</th>
- <th class="py-3 px-4 text-center font-medium text-[#7A6B58]">Durum</th>
- </tr>
- </thead>
- <tbody class="divide-y divide-[rgba(184,115,51,0.08)]">
- {categories.map(cat => (
- <tr class="hover:bg-[rgba(184,115,51,0.04)]">
- <td class="py-3 px-4">
- <div class="flex items-center gap-2">
- {cat.icon && <span class="text-lg">{cat.icon}</span>}
- {cat.color && <span class="w-3 h-3 rounded-full inline-block" style={`background:${cat.color}`}></span>}
- <span class="font-medium text-[#1F1410]">{cat.name}</span>
- </div>
- </td>
- <td class="py-3 px-4 text-[#7A6B58] font-mono text-xs">{cat.slug}</td>
- <td class="py-3 px-4 text-center">
- <a href={`/mekanlar/${cat.slug}`} class="text-urfa-600 hover:text-[#7A6B58]">{cat.place_count}</a>
- </td>
- <td class="py-3 px-4 text-center text-[#7A6B58]">{cat.sort_order ?? '—'}</td>
- <td class="py-3 px-4 text-center">
- <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${cat.is_active ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'}`}>
- {cat.is_active ? 'Aktif' : 'Pasif'}
- </span>
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- {categories.length === 0 && (
- <div class="p-8 text-center text-[#7A6B58] text-sm">Henüz kategori yok veya veri tabanına erişilemedi.</div>
- )}
- </div>
+ <style>
+  .cat-page { display: flex; flex-direction: column; gap: 1.25rem; }
 
- <div class="p-4 bg-[rgba(184,115,51,0.06)] border border-[rgba(184,115,51,0.2)] rounded-sm text-sm text-[#7A6B58]">
- <strong>Not:</strong> Kategori ekleme/düzenleme doğrudan veritabanı migration'ları veya seed scriptleri üzerinden yapılmaktadır.
- Kategori slug'ları mekan URL'lerini etkiler, değiştirirken dikkatli olun.
- </div>
- </div>
+  .cat-action {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.55rem 1.1rem;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   color: var(--adm-text-muted);
+   font-weight: 600; font-size: 0.85rem;
+   border-radius: 8px; text-decoration: none;
+   transition: all 0.15s;
+  }
+  .cat-action:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+
+  .cat-info {
+   display: flex; gap: 0.55rem; align-items: center;
+   padding: 0.75rem 1rem;
+   background: rgba(217,119,6,0.06);
+   border: 1px solid rgba(217,119,6,0.18);
+   border-radius: 10px;
+   color: var(--adm-text);
+   font-size: 0.86rem;
+   line-height: 1.5;
+  }
+  .cat-info-icon { color: rgb(180,83,9); flex-shrink: 0; }
+
+  .cat-table-wrap {
+   overflow-x: auto;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+  }
+  .cat-table { width: 100%; border-collapse: collapse; }
+  .cat-th {
+   text-align: left;
+   font-size: 0.7rem;
+   font-weight: 700;
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   color: var(--adm-text-soft);
+   padding: 0.85rem 1rem;
+   background: var(--adm-bg-hover);
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .cat-th-num { text-align: right; }
+  .cat-table tbody tr {
+   border-bottom: 1px solid var(--adm-border);
+   transition: background 0.12s;
+  }
+  .cat-table tbody tr:last-child { border-bottom: none; }
+  .cat-table tbody tr:hover { background: var(--adm-bg-hover); }
+  .cat-td { padding: 0.75rem 1rem; font-size: 0.86rem; color: var(--adm-text); vertical-align: middle; }
+  .cat-td-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .cat-td-soft { color: var(--adm-text-muted); }
+
+  .cat-cell { display: flex; align-items: center; gap: 0.7rem; }
+  .cat-mark {
+   width: 34px; height: 34px;
+   border-radius: 8px;
+   background: var(--adm-bg-active);
+   color: var(--adm-accent);
+   border: 1px solid rgba(184,115,51,0.18);
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .cat-icon { font-size: 1.05rem; line-height: 1; }
+  .cat-name { font-weight: 600; color: var(--adm-text); }
+
+  .cat-slug {
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.74rem;
+   background: var(--adm-bg);
+   padding: 0.2rem 0.45rem;
+   border-radius: 4px;
+   border: 1px solid var(--adm-border);
+   color: var(--adm-text-muted);
+  }
+
+  .cat-count-link {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   color: var(--adm-accent);
+   text-decoration: none;
+   font-weight: 600;
+  }
+  .cat-count-link:hover { text-decoration: underline; }
+  .cat-count-empty { color: var(--adm-text-soft); }
+
+  .cat-badge {
+   display: inline-flex; align-items: center;
+   padding: 0.22rem 0.6rem;
+   font-size: 0.72rem; font-weight: 600;
+   border-radius: 999px;
+  }
+  .cat-badge--ok { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+  .cat-badge--muted { background: rgba(100,116,139,0.12); color: rgb(71,85,105); }
+ </style>
 </AdminLayout>

@@ -86,7 +86,7 @@ export default function UserPublicProfile({ userId, currentUserId }: { userId: s
  }
  };
 
- if (isLoading) return <div className="text-center py-12">Yükleniyor...</div>;
+ if (isLoading) return <div className="text-center py-12">Yükleniyor…</div>;
  if (!profile) return <div>Profil bulunamadı.</div>;
 
  return (

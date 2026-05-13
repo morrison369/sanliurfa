@@ -32,7 +32,7 @@ function getAllowedOriginsFromEnv(raw?: string): string[] {
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
   '/', '/giris', '/kayit', '/places', '/tarihi-yerler', '/blog',
-  '/gastronomi', '/arama', '/hakkinda', '/iletisim', '/etkinlikler',
+  '/gastronomi', '/arama', '/hakkinda', '/iletisim', '/kunye', '/yazarlar', '/etkinlikler',
   '/gizlilik-politikasi', '/kullanim-kosullari', '/kvkk',
   '/fiyatlandirma', '/sss', '/cerez-politikasi', '/404', '/500', '/loading',
   '/mekanlar', '/ilceler', '/gezilecek-yerler', '/saglik', '/mahalleler', '/yeme-icme',
@@ -65,10 +65,14 @@ const PUBLIC_PATHS = [
   '/sitemap.xml', '/sitemap-pages.xml', '/sitemap-categories.xml', '/sitemap-ilceler.xml',
   '/sitemap-places.xml', '/sitemap-historical.xml', '/sitemap-blog.xml',
   '/sitemap-events.xml', '/sitemap-recipes.xml', '/sitemap-guides.xml',
-  '/rss.xml', '/robots.txt', '/llms.txt', '/llms-full.txt',
+  '/rss.xml', '/robots.txt', '/llms.txt', '/llms-full.txt', '/ads.txt',
  '/uploads', '/images', '/icons', '/_astro', '/_server-islands', '/favicon.svg', '/favicon.ico',
- '/manifest.json', '/sw.js', '/og-image.png', '/apple-touch-icon.png',
+ '/manifest.json', '/sw.js', '/og-image.png', '/apple-touch-icon.png', '/og-image.jpg',
 ];
+
+// Root-level static dosyalar (IndexNow verification, GSC HTML verify, .well-known, vb.)
+// Pattern: `/<32-char-hex>.txt` veya `/google<digits>.html` regex
+const PUBLIC_FILE_REGEX = /^\/(?:[a-f0-9]{16,64}\.txt|google[0-9a-f]+\.html|\.well-known\/.+|BingSiteAuth\.xml|yandex_[a-f0-9]+\.html)$/i;
 
 // Admin only paths
 const ADMIN_PATHS = ['/admin'];
@@ -237,7 +241,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Check if path is public
-  const isPublicPath = PUBLIC_PATHS.some(path => pathname === path || pathname.startsWith(path + '/'));
+  const isPublicPath = PUBLIC_PATHS.some(path => pathname === path || pathname.startsWith(path + '/'))
+    || PUBLIC_FILE_REGEX.test(pathname);
 
   // Check if path is admin only
   const isAdminPath = ADMIN_PATHS.some(path => pathname === path || pathname.startsWith(path + '/'));
@@ -420,14 +425,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
   });
 
   // Content Security Policy
+  // Admin pages need extra hosts for Swagger UI (/admin/api-docs) and Leaflet (/admin/places/add)
+  const isAdminCsp = pathname.startsWith('/admin');
+  const adminExtraScript = isAdminCsp ? ' https://unpkg.com' : '';
+  const adminExtraStyle = isAdminCsp ? ' https://unpkg.com' : '';
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com",
-    "script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https:",
+    `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com${adminExtraScript}`,
+    `script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com${adminExtraScript}`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com${adminExtraStyle}`,
+    "img-src 'self' data: blob: https: https://mc.yandex.ru https://mc.yandex.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://static.cloudflareinsights.com",
+    "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com",
     "media-src 'self' blob:",
     "worker-src 'self' blob:",
     "object-src 'none'",
@@ -448,6 +457,35 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Cache-Control: API yanıtları tarayıcıda cache'lenmemeli (private data)
   if (pathname.startsWith('/api/') && !response.headers.has('Cache-Control')) {
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  }
+
+  // Stale asset hash protection: yeni deploy sonrası eski HTML hala eski CSS/JS hash isteyebilir.
+  // _astro/ path'lerinde 404/500 olursa Astro default error HTML render eder → tarayıcı MIME hatası
+  // ('Refused to apply style ... text/html'). Asset path'leri için minimal plaintext dön.
+  if (
+    (response.status === 404 || response.status === 500) &&
+    (pathname.startsWith('/_astro/') || pathname.startsWith('/_server-islands/'))
+  ) {
+    return new Response(response.status === 404 ? 'Not Found' : 'Internal Server Error', {
+      status: response.status,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'X-Request-ID': requestId,
+      },
+    });
+  }
+
+  // HTML sayfaları için Cache-Control: tarayıcı eski HTML'i tutmamalı (eski asset hash referansı sorunu).
+  // SSR sayfaları yeni deploy sonrası taze HTML almalı — agresif cache yerine revalidate.
+  const contentType = response.headers.get('Content-Type') || '';
+  if (
+    contentType.startsWith('text/html') &&
+    !pathname.startsWith('/api/') &&
+    !pathname.startsWith('/_astro/') &&
+    !response.headers.has('Cache-Control')
+  ) {
+    response.headers.set('Cache-Control', 'no-cache, must-revalidate, max-age=0');
   }
 
   // Add CORS headers for API routes if origin is allowed

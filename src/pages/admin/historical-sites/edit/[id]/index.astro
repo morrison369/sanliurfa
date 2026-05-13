@@ -1,26 +1,42 @@
 ---
 import { actions, isInputError } from 'astro:actions';
 import { Icon } from 'astro-icon/components';
-import AdminLayout from '../../../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../../../layouts/AdminLayoutV2.astro';
 import { queryOne } from '../../../../../lib/postgres';
 import { logger } from '../../../../../lib/logging';
 
-let site: any = null;
-const routeId = Astro.params.id;
-
-if (!routeId) {
- return Astro.redirect('/admin/historical-sites');
+interface SiteRow {
+ id: string;
+ name: string;
+ short_description?: string;
+ description: string;
+ period?: string;
+ location: string;
+ latitude?: number;
+ longitude?: number;
+ visiting_hours?: string;
+ opening_hours?: string;
+ entrance_fee?: string;
+ entry_fee?: string;
+ status: string;
+ is_unesco: boolean;
+ is_featured: boolean;
+ images?: string[];
 }
+
+let site: SiteRow | null = null;
+const routeId = Astro.params.id;
+if (!routeId) return Astro.redirect('/admin/historical-sites');
 
 const siteResult = Astro.getActionResult(actions.updateAdminHistoricalSite);
 const siteInputErrors = isInputError(siteResult?.error) ? siteResult.error.fields : {};
 const siteActionError =
  !isInputError(siteResult?.error) && siteResult?.error?.message
- ? siteResult.error.message
- : null;
+  ? siteResult.error.message
+  : null;
 
 const periods = [
- { id: 'tunç-çağı', label: 'Tunç Çağı' },
+ { id: 'tunc-cagi', label: 'Tunç Çağı' },
  { id: 'hitit', label: 'Hitit Dönemi' },
  { id: 'asur', label: 'Asur Dönemi' },
  { id: 'pers', label: 'Pers Dönemi' },
@@ -28,171 +44,253 @@ const periods = [
  { id: 'roma', label: 'Roma Dönemi' },
  { id: 'bizans', label: 'Bizans Dönemi' },
  { id: 'islami', label: 'İslami Dönem' },
- { id: 'osmanlı', label: 'Osmanlı Dönemi' },
+ { id: 'osmanli', label: 'Osmanlı Dönemi' },
  { id: 'cumhuriyet', label: 'Cumhuriyet Dönemi' },
 ];
 
 try {
- site = await queryOne('SELECT * FROM historical_sites WHERE id = $1', [routeId]);
- if (!site) {
- return Astro.redirect('/admin/historical-sites');
- }
+ site = await queryOne<SiteRow>('SELECT * FROM historical_sites WHERE id = $1', [routeId]);
+ if (!site) return Astro.redirect('/admin/historical-sites');
 } catch (e) {
  logger.error('Error loading admin historical site', e instanceof Error ? e : new Error(String(e)));
 }
 
+const imagesStr = site?.images && Array.isArray(site.images) ? site.images.join(', ') : '';
 ---
 
 <AdminLayout
  title="Tarihi Yer Düzenle"
- subtitle={site ? site.name : 'Tarihi yer bilgilerini güncelleyin'}
- seo={{ title: site ? `${site.name} - Düzenle` : 'Düzenle - Yönetim Paneli', noIndex: true }}
+ subtitle={site ? site.name : 'Tarihi yer bilgileri'}
+ seo={{ title: site ? `${site.name} - Düzenle` : 'Düzenle - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-6xl space-y-5">
- <div class="mb-2">
- <a href="/admin/historical-sites" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Tarihi Yerler</a>
+ <a slot="page-actions" href="/admin/historical-sites" class="hsf-back">
+  <Icon name="lucide:arrow-left" class="w-4 h-4" /> Tarihi Yerler
+ </a>
+
+ <div class="hsf-page">
+  {siteResult?.data?.success && (
+   <div class="hsf-toast hsf-toast--ok">
+    <Icon name="lucide:check-circle" class="w-4 h-4" />
+    <span>{siteResult.data.message || 'Tarihi yer güncellendi.'}<a href="/admin/historical-sites" class="hsf-toast-link">→ Liste</a></span>
+   </div>
+  )}
+  {siteActionError && (
+   <div class="hsf-toast hsf-toast--err">
+    <Icon name="lucide:alert-circle" class="w-4 h-4" />
+    {siteActionError}
+   </div>
+  )}
+
+  <form action={actions.updateAdminHistoricalSite} method="POST" class="hsf-grid">
+   <input type="hidden" name="id" value={routeId} />
+   <div class="hsf-main">
+    <section class="hsf-card">
+     <header class="hsf-card-head">
+      <h2 class="hsf-card-title"><Icon name="lucide:info" class="w-4 h-4" /> Temel Bilgiler</h2>
+     </header>
+     <div class="hsf-card-body hsf-fields">
+      <div class="hsf-field">
+       <label for="name" class="hsf-label">Yer Adı <span class="hsf-req">*</span></label>
+       <input type="text" id="name" name="name" required class="hsf-input" value={site?.name} />
+       {siteInputErrors.name && <p class="hsf-err">{siteInputErrors.name[0]}</p>}
+      </div>
+      <div class="hsf-field">
+       <label for="short_description" class="hsf-label">Kısa Açıklama</label>
+       <input type="text" id="short_description" name="short_description" class="hsf-input" value={site?.short_description || ''} />
+      </div>
+      <div class="hsf-field">
+       <label for="description" class="hsf-label">Açıklama <span class="hsf-req">*</span></label>
+       <textarea id="description" name="description" rows="5" required class="hsf-input hsf-textarea">{site?.description}</textarea>
+       {siteInputErrors.description && <p class="hsf-err">{siteInputErrors.description[0]}</p>}
+      </div>
+      <div class="hsf-field">
+       <label for="period" class="hsf-label">Tarihi Dönem</label>
+       <select id="period" name="period" class="hsf-input">
+        <option value="">— Dönem Seç —</option>
+        {periods.map(p => (
+         <option value={p.id} selected={p.id === site?.period}>{p.label}</option>
+        ))}
+       </select>
+      </div>
+     </div>
+    </section>
+
+    <section class="hsf-card">
+     <header class="hsf-card-head">
+      <h2 class="hsf-card-title"><Icon name="lucide:map-pin" class="w-4 h-4" /> Konum</h2>
+     </header>
+     <div class="hsf-card-body hsf-fields">
+      <div class="hsf-field">
+       <label for="location" class="hsf-label">Adres <span class="hsf-req">*</span></label>
+       <div class="hsf-input-icon">
+        <Icon name="lucide:map-pin" class="hsf-input-icon-svg" />
+        <input type="text" id="location" name="location" required class="hsf-input hsf-input--padded" value={site?.location} />
+       </div>
+       {siteInputErrors.location && <p class="hsf-err">{siteInputErrors.location[0]}</p>}
+      </div>
+      <div class="hsf-row">
+       <div class="hsf-field">
+        <label for="latitude" class="hsf-label">Enlem</label>
+        <input type="number" id="latitude" name="latitude" step="any" class="hsf-input" value={site?.latitude || ''} />
+       </div>
+       <div class="hsf-field">
+        <label for="longitude" class="hsf-label">Boylam</label>
+        <input type="number" id="longitude" name="longitude" step="any" class="hsf-input" value={site?.longitude || ''} />
+       </div>
+      </div>
+     </div>
+    </section>
+
+    <section class="hsf-card">
+     <header class="hsf-card-head">
+      <h2 class="hsf-card-title"><Icon name="lucide:ticket" class="w-4 h-4" /> Ziyaret Bilgileri</h2>
+     </header>
+     <div class="hsf-card-body hsf-fields">
+      <div class="hsf-row">
+       <div class="hsf-field">
+        <label for="opening_hours" class="hsf-label">Çalışma Saatleri</label>
+        <div class="hsf-input-icon">
+         <Icon name="lucide:clock" class="hsf-input-icon-svg" />
+         <input type="text" id="opening_hours" name="opening_hours" class="hsf-input hsf-input--padded" value={site?.visiting_hours || site?.opening_hours || ''} placeholder="08:00 - 18:00" />
+        </div>
+       </div>
+       <div class="hsf-field">
+        <label for="entry_fee" class="hsf-label">Giriş Ücreti</label>
+        <div class="hsf-input-icon">
+         <Icon name="lucide:banknote" class="hsf-input-icon-svg" />
+         <input type="text" id="entry_fee" name="entry_fee" class="hsf-input hsf-input--padded" value={site?.entrance_fee || site?.entry_fee || ''} placeholder="50 TL veya Ücretsiz" />
+        </div>
+       </div>
+      </div>
+     </div>
+    </section>
+   </div>
+
+   <aside class="hsf-aside">
+    <section class="hsf-card">
+     <header class="hsf-card-head">
+      <h3 class="hsf-card-title"><Icon name="lucide:send" class="w-4 h-4" /> Yayınla</h3>
+     </header>
+     <div class="hsf-card-body hsf-fields">
+      <label class="hsf-checkbox">
+       <input type="checkbox" name="is_unesco" checked={site?.is_unesco} />
+       <span><strong>UNESCO Mirası</strong><em>Dünya kültür mirası listesinde</em></span>
+      </label>
+      <label class="hsf-checkbox">
+       <input type="checkbox" name="is_featured" checked={site?.is_featured} />
+       <span><strong>Öne çıkan yer</strong><em>Ana sayfada vurgulanır</em></span>
+      </label>
+      <div class="hsf-field">
+       <label for="status" class="hsf-label">Durum</label>
+       <select id="status" name="status" class="hsf-input">
+        <option value="draft" selected={site?.status === 'draft'}>Taslak</option>
+        <option value="active" selected={site?.status === 'active'}>Aktif</option>
+        <option value="inactive" selected={site?.status === 'inactive'}>Pasif</option>
+       </select>
+      </div>
+      <button type="submit" class="hsf-submit">
+       <Icon name="lucide:save" class="w-4 h-4" /> Güncelle
+      </button>
+     </div>
+    </section>
+
+    <section class="hsf-card">
+     <header class="hsf-card-head">
+      <h3 class="hsf-card-title"><Icon name="lucide:images" class="w-4 h-4" /> Görseller</h3>
+     </header>
+     <div class="hsf-card-body hsf-fields">
+      <textarea name="images" rows="3" class="hsf-input hsf-textarea">{imagesStr}</textarea>
+      <p class="hsf-hint">Virgülle ayırarak birden fazla görsel ekleyebilirsiniz</p>
+      {site?.images && site.images.length > 0 && (
+       <div class="hsf-image-grid">
+        {site.images.slice(0, 6).map((img) => (
+         <img src={img} alt="" class="hsf-image-thumb" loading="lazy" />
+        ))}
+       </div>
+      )}
+     </div>
+    </section>
+   </aside>
+  </form>
  </div>
 
- {siteResult?.data?.success && (
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
- {siteResult.data.message || 'Tarihi yer güncellendi.'}
- <a href="/admin/historical-sites" class="ml-2 font-medium underline">Tarihi yer listesine dön</a>
- </div>
- )}
+ <style>
+  .hsf-page { display: flex; flex-direction: column; gap: 1.25rem; }
+  .hsf-back {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.5rem 1rem;
+   background: var(--adm-bg-elev); border: 1px solid var(--adm-border);
+   color: var(--adm-text-muted); font-weight: 600; font-size: 0.84rem;
+   border-radius: 8px; text-decoration: none;
+  }
+  .hsf-back:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+  .hsf-toast { display: flex; align-items: center; gap: 0.55rem; padding: 0.7rem 1rem; border-radius: 10px; font-size: 0.86rem; }
+  .hsf-toast--ok { background: rgba(16,185,129,0.08); color: rgb(5,150,105); border: 1px solid rgba(16,185,129,0.18); }
+  .hsf-toast--err { background: rgba(225,29,72,0.08); color: rgb(190,18,60); border: 1px solid rgba(225,29,72,0.18); }
+  .hsf-toast-link { margin-left: 0.4rem; font-weight: 600; text-decoration: underline; color: inherit; }
 
- {siteActionError && (
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
- {siteActionError}
- </div>
- )}
+  .hsf-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+  @media (min-width: 1024px) { .hsf-grid { grid-template-columns: 1.6fr 1fr; } }
+  .hsf-main, .hsf-aside { display: flex; flex-direction: column; gap: 1.25rem; }
 
- <form action={actions.updateAdminHistoricalSite} method="POST" class="grid lg:grid-cols-3 gap-6">
- <input type="hidden" name="id" value={routeId} />
- <div class="lg:col-span-2 space-y-5">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Temel Bilgiler</h2>
- <div class="space-y-4">
- <div>
- <label for="name" class="block text-sm font-medium text-[#7A6B58] mb-1">Yer Adı *</label>
- <input type="text" id="name" name="name" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={site.name} />
- {siteInputErrors.name && <p class="mt-1 text-xs text-[#7A6B58]">{siteInputErrors.name[0]}</p>}
- </div>
- <div>
- <label for="short_description" class="block text-sm font-medium text-[#7A6B58] mb-1">Kısa Açıklama</label>
- <input type="text" id="short_description" name="short_description" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={site.short_description || ''} />
- </div>
- <div>
- <label for="description" class="block text-sm font-medium text-[#7A6B58] mb-1">Açıklama *</label>
- <textarea id="description" name="description" rows="5" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 resize-none">{site.description}</textarea>
- {siteInputErrors.description && <p class="mt-1 text-xs text-[#7A6B58]">{siteInputErrors.description[0]}</p>}
- </div>
- <div>
- <label for="period" class="block text-sm font-medium text-[#7A6B58] mb-1">Tarihi Dönem</label>
- <select id="period" name="period" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
- <option value="">Dönem seçin</option>
- {periods.map(p => (
- <option value={p.id} selected={p.id === site.period}>{p.label}</option>
- ))}
- </select>
- </div>
- </div>
- </div>
+  .hsf-card { background: var(--adm-bg-elev); border: 1px solid var(--adm-border); border-radius: 12px; overflow: hidden; }
+  .hsf-card-head { padding: 0.95rem 1.15rem; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+  .hsf-card-title { display: inline-flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--adm-text); }
+  .hsf-card-body { padding: 1.15rem; }
+  .hsf-fields { display: flex; flex-direction: column; gap: 0.95rem; }
+  .hsf-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.85rem; }
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Konum</h2>
- <div class="space-y-4">
- <div>
- <label for="location" class="block text-sm font-medium text-[#7A6B58] mb-1">Adres *</label>
- <div class="relative">
- <Icon name="lucide:map-pin" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
- <input type="text" id="location" name="location" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={site.location} />
- {siteInputErrors.location && <p class="mt-1 text-xs text-[#7A6B58]">{siteInputErrors.location[0]}</p>}
- </div>
- </div>
- <div class="grid sm:grid-cols-2 gap-4">
- <div>
- <label for="latitude" class="block text-sm font-medium text-[#7A6B58] mb-1">Enlem</label>
- <input type="number" id="latitude" name="latitude" step="any" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={site.latitude || ''} />
- </div>
- <div>
- <label for="longitude" class="block text-sm font-medium text-[#7A6B58] mb-1">Boylam</label>
- <input type="number" id="longitude" name="longitude" step="any" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={site.longitude || ''} />
- </div>
- </div>
- </div>
- </div>
+  .hsf-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .hsf-label { font-size: 0.8rem; font-weight: 600; color: var(--adm-text); }
+  .hsf-req { color: rgb(190,18,60); font-weight: 700; }
+  .hsf-input {
+   padding: 0.55rem 0.75rem;
+   background: var(--adm-bg); border: 1px solid var(--adm-border);
+   border-radius: 8px; font-size: 0.88rem; color: var(--adm-text);
+   font-family: inherit; width: 100%;
+  }
+  .hsf-input:focus { outline: none; border-color: var(--adm-accent); box-shadow: 0 0 0 3px var(--adm-bg-active); }
+  .hsf-textarea { resize: vertical; min-height: 100px; }
+  .hsf-input-icon { position: relative; }
+  .hsf-input-icon-svg {
+   position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%);
+   width: 1rem; height: 1rem; color: var(--adm-text-soft); pointer-events: none;
+  }
+  .hsf-input--padded { padding-left: 2.1rem; }
+  .hsf-err { font-size: 0.74rem; color: rgb(190,18,60); margin: 0; }
+  .hsf-hint { font-size: 0.72rem; color: var(--adm-text-soft); margin: 0; }
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Ziyaret Bilgileri</h2>
- <div class="space-y-4">
- <div>
- <label for="opening_hours" class="block text-sm font-medium text-[#7A6B58] mb-1">Çalışma Saatleri</label>
- <div class="relative">
- <Icon name="lucide:clock" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
- <input
- type="text"
- id="opening_hours"
- name="opening_hours"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
- value={site.visiting_hours || site.opening_hours || ''}
- placeholder="Örn: 08:00 - 18:00"
- />
- </div>
- </div>
- <div>
- <label for="entry_fee" class="block text-sm font-medium text-[#7A6B58] mb-1">Giriş Ücreti</label>
- <div class="relative">
- <Icon name="lucide:dollar-sign" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
- <input
- type="text"
- id="entry_fee"
- name="entry_fee"
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
- value={site.entrance_fee || site.entry_fee || ''}
- placeholder="Örn: 50 TL veya Ücretsiz"
- />
- </div>
- </div>
- </div>
- </div>
- </div>
+  .hsf-checkbox {
+   display: flex; gap: 0.6rem; align-items: flex-start;
+   padding: 0.65rem 0.85rem;
+   background: var(--adm-bg); border: 1px solid var(--adm-border);
+   border-radius: 8px; cursor: pointer;
+  }
+  .hsf-checkbox input { width: 16px; height: 16px; accent-color: var(--adm-accent); margin-top: 0.15rem; }
+  .hsf-checkbox strong { display: block; font-weight: 600; font-size: 0.86rem; color: var(--adm-text); margin-bottom: 0.15rem; }
+  .hsf-checkbox em { display: block; font-style: normal; font-size: 0.74rem; color: var(--adm-text-soft); line-height: 1.4; }
 
- <aside class="space-y-5">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h3 class="font-semibold text-[#7A6B58] mb-4">Yayınla</h3>
- <div class="space-y-3">
- <label class="flex items-center gap-2">
- <input type="checkbox" name="is_unesco" checked={site.is_unesco} class="rounded" />
- <span class="text-sm text-[#7A6B58]">UNESCO Mirası</span>
- </label>
- <label class="flex items-center gap-2">
- <input type="checkbox" name="is_featured" checked={site.is_featured} class="rounded" />
- <span class="text-sm text-[#7A6B58]">Öne çıkan yer</span>
- </label>
- </div>
- <label for="status" class="block text-sm font-medium text-[#7A6B58] mt-4 mb-1">Durum</label>
- <select id="status" name="status" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 mt-1">
- <option value="draft" selected={site.status === 'draft'}>Taslak</option>
- <option value="active" selected={site.status === 'active'}>Aktif</option>
- <option value="inactive" selected={site.status === 'inactive'}>Pasif</option>
- </select>
- <button type="submit" class="rounded-sm bg-urfa-600 w-full mt-4 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700 flex items-center justify-center gap-2">
- <Icon name="lucide:save" class="w-4 h-4" />
- Kaydet
- </button>
- </div>
+  .hsf-submit {
+   width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+   padding: 0.65rem 1.1rem;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff; border: none; border-radius: 8px;
+   font-weight: 600; font-size: 0.88rem; cursor: pointer;
+   margin-top: 0.25rem;
+  }
+  .hsf-submit:hover { transform: translateY(-1px); }
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h3 class="font-semibold text-[#7A6B58] mb-4">Görseller</h3>
- <textarea name="images" rows="3" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" placeholder="https://example.com/image1.jpg">{site.images?.join(', ') || ''}</textarea>
- <p class="text-xs text-[#7A6B58] mt-2">Virgülle ayırarak birden fazla görsel ekleyebilirsiniz</p>
- {site.images && site.images.length > 0 && (
- <div class="mt-4 grid grid-cols-3 gap-2">
- {site.images.map((img: string) => <img src={img} alt="" class="w-full h-16 object-cover rounded-sm" />)}
- </div>
- )}
- </div>
- </aside>
- </form>
- </div>
+  .hsf-image-grid {
+   margin-top: 0.65rem;
+   display: grid;
+   grid-template-columns: repeat(3, 1fr);
+   gap: 0.4rem;
+  }
+  .hsf-image-thumb {
+   width: 100%; aspect-ratio: 1;
+   object-fit: cover;
+   border-radius: 6px;
+   border: 1px solid var(--adm-border);
+  }
+ </style>
 </AdminLayout>

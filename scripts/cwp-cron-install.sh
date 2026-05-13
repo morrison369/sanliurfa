@@ -62,6 +62,10 @@ $CRON_TAG release-readiness
 35 4 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh release-readiness npm run -s ops:cwp:release-readiness >> "$APP_DIR/backups/.ops/cron-release-readiness.log" 2>&1
 $CRON_TAG db-backup-daily
 30 2 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh db-backup-daily bash scripts/backup-database.sh >> "$APP_DIR/backups/.ops/cron-db-backup.log" 2>&1
+$CRON_TAG indexnow-daily
+0 6 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh indexnow-daily node scripts/sitemap-ping-search-engines.mjs >> "$APP_DIR/backups/.ops/cron-indexnow.log" 2>&1
+$CRON_TAG uptime-check-5min
+*/5 * * * * $runtime_prefix cd "$APP_DIR" && node scripts/monitoring/uptime-check.mjs >> "$APP_DIR/backups/.ops/cron-uptime.log" 2>&1
 EOF
 }
 

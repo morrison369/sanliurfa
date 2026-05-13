@@ -3,6 +3,7 @@ import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
 import Image from '../../components/Image.astro';
 import PublicPageIntro from '../../components/public/PublicPageIntro.astro';
+import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import { query } from '../../lib/postgres';
 import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import { getPublicAppUrl } from '../../lib/public-app-url';
@@ -139,6 +140,12 @@ const historicalFallbacks = [
  <h3>Sonuç bulunamadı</h3>
  <p>Farklı bir arama terimi deneyin.</p>
  </div>
+ )}
+
+ {faqItems.length > 0 && (
+  <div style="margin-top:3rem">
+   <PublicFaqList items={faqItems} />
+  </div>
  )}
  </div>
  </div>

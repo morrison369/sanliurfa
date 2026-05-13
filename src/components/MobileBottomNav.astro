@@ -23,14 +23,45 @@ const items = [
 <nav class="mbn" aria-label="Mobil ana menü">
  {items.map((item) => {
   const active = item.match(path);
+  const isFeed = item.href.includes('/akis') || item.href.includes('redirect=/akis');
   return (
    <a href={item.href} class:list={['mbn-item', active && 'mbn-item-active']} aria-current={active ? 'page' : undefined}>
-    <Icon name={item.icon} class="mbn-icon" />
+    <span class="mbn-icon-wrap">
+     <Icon name={item.icon} class="mbn-icon" />
+     {isFeed && isAuthenticated && (
+      <span class="mbn-badge" id="mbn-feed-badge" hidden></span>
+     )}
+    </span>
     <span class="mbn-label">{item.label}</span>
    </a>
   );
  })}
 </nav>
+
+{isAuthenticated && (
+ <script>
+  // Bottom nav'da unread bildirim sayısını periyodik olarak göster.
+  // Header NotificationBadge ile aynı endpoint — paralel iki indicator.
+  async function refreshMbnBadge() {
+   try {
+    const r = await fetch('/api/notifications?filter=unread&limit=1');
+    if (!r.ok) return;
+    const d = await r.json();
+    const count = Number(d?.count) || 0;
+    const badge = document.getElementById('mbn-feed-badge');
+    if (!badge) return;
+    if (count > 0) {
+     badge.textContent = count > 9 ? '9+' : String(count);
+     badge.hidden = false;
+    } else {
+     badge.hidden = true;
+    }
+   } catch {}
+  }
+  refreshMbnBadge();
+  setInterval(refreshMbnBadge, 60000);
+ </script>
+)}
 
 <style>
  .mbn {
@@ -78,11 +109,36 @@ const items = [
   transform: scale(0.96);
  }
 
+ .mbn-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  line-height: 0;
+ }
+
  .mbn-icon {
   width: 1.35rem;
   height: 1.35rem;
   stroke-width: 2;
   transition: color 0.15s;
+ }
+
+ .mbn-badge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.5rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.28rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #C0571F;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  border-radius: 999px;
+  line-height: 1;
+  box-shadow: 0 0 0 2px #fff;
  }
 
  .mbn-label {

@@ -24,6 +24,7 @@ const galleryItems = items.filter(Boolean);
             height={720}
             class="pmg-image"
             loading="lazy"
+            sizes={index === 0 && galleryItems.length > 2 ? '(max-width: 768px) 100vw, 66vw' : '(max-width: 768px) 50vw, 33vw'}
           />
         </div>
       ))}

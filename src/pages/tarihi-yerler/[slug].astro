@@ -14,6 +14,7 @@ import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import { getPublicAppUrl } from '../../lib/public-app-url';
 import { logger } from '../../lib/logging';
 import { normalizeGalleryImages, resolveHistoricalImage } from '../../lib/public-image-resolvers';
+import { linkifyContent } from '../../lib/seo/internal-linker';
 const baseUrl = getPublicAppUrl();
 
 let site: any = null;
@@ -139,7 +140,7 @@ const historicalInfoRows = [
  <PublicDetailBody compactSidebar>
  <div>
  <h2 class="ts-section-title">Hakkında</h2>
- <p class="ts-desc">{site.description}</p>
+ <p class="ts-desc" set:html={linkifyContent(String(site.description || ''), `/tarihi-yerler/${site.slug}`)} />
 
  {galleryImages.length > 1 && (
  <div style="margin-top:2.5rem">
@@ -235,6 +236,19 @@ const historicalInfoRows = [
  </PublicSidebarCard>
  )}
  </Fragment>
+
+ <!-- Yayın bilgisi (GSC transparency) -->
+ <div style="margin-top:2rem;padding:1rem 1.25rem;background:rgba(184,115,51,.05);border-left:3px solid var(--public-accent);border-radius:.25rem;font-size:.82rem;color:var(--public-muted);line-height:1.7">
+  <p style="margin:0 0 .25rem">
+   <strong style="color:var(--public-text)">Yazar:</strong> Sanliurfa.com Editöryel Ekibi
+   {site.updated_at && (
+    <>
+     {' · '}<strong style="color:var(--public-text)">Son güncelleme:</strong> <time datetime={site.updated_at}>{new Date(site.updated_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+    </>
+   )}
+  </p>
+  <p style="margin:0;font-size:.76rem">Yerel araştırma + yerinde inceleme. Hata bildirimi: <a href="mailto:iletisim@sanliurfa.com" style="color:var(--public-accent)">iletisim@sanliurfa.com</a> · <a href="/kunye" style="color:var(--public-accent)">Yayın bilgileri</a></p>
+ </div>
  </PublicDetailBody>
 
  <PublicStickyCTA
@@ -271,6 +285,18 @@ const historicalInfoRows = [
    bestRating: 5,
    worstRating: 1,
   },
+  review: siteReviews.slice(0, 5).map((r: any) => ({
+   '@type': 'Review',
+   author: { '@type': 'Person', name: r.full_name || 'Ziyaretçi' },
+   reviewRating: {
+    '@type': 'Rating',
+    ratingValue: Math.max(1, Math.min(5, Number(r.rating) || 5)),
+    bestRating: 5,
+    worstRating: 1,
+   },
+   datePublished: r.created_at ? new Date(r.created_at).toISOString().slice(0, 10) : undefined,
+   reviewBody: String(r.content || '').slice(0, 500),
+  })),
  } : {}),
  })} is:inline />
  <script type="application/ld+json" set:html={JSON.stringify({

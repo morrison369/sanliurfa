@@ -1,5 +1,7 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
+import AdmStatGrid from '../../../components/admin/AdmStatGrid.astro';
 import { query } from '../../../lib/postgres';
 import { logger } from '../../../lib/logging';
 
@@ -26,21 +28,21 @@ function parseStat(value: string | number | undefined): number {
 let stats: UserStats = { total: 0, active: 0, vendors: 0, pending: 0, newToday: 0 };
 try {
  const result = await query<UserStatsRow>(`
- SELECT
- COUNT(*) AS total,
- COUNT(*) FILTER (WHERE status = 'active') AS active,
- COUNT(*) FILTER (WHERE role = 'vendor') AS vendors,
- COUNT(*) FILTER (WHERE status = 'pending') AS pending,
- COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE) AS new_today
- FROM users WHERE status != 'deleted'
+  SELECT
+   COUNT(*) AS total,
+   COUNT(*) FILTER (WHERE status = 'active') AS active,
+   COUNT(*) FILTER (WHERE role = 'vendor') AS vendors,
+   COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+   COUNT(*) FILTER (WHERE DATE(created_at) = CURRENT_DATE) AS new_today
+  FROM users WHERE status != 'deleted'
  `);
  const r = result.rows[0];
  stats = {
- total: parseStat(r?.total),
- active: parseStat(r?.active),
- vendors: parseStat(r?.vendors),
- pending: parseStat(r?.pending),
- newToday: parseStat(r?.new_today),
+  total: parseStat(r?.total),
+  active: parseStat(r?.active),
+  vendors: parseStat(r?.vendors),
+  pending: parseStat(r?.pending),
+  newToday: parseStat(r?.new_today),
  };
 } catch (e) {
  logger.error('Users stats error', e instanceof Error ? e : new Error(String(e)));
@@ -49,311 +51,578 @@ try {
 
 <AdminLayout
  title="Kullanıcı Yönetimi"
- subtitle="Tüm kullanıcıları görüntüleyin ve yönetin"
+ subtitle={`${stats.total.toLocaleString('tr-TR')} kullanıcı • ${stats.newToday} bugün eklendi`}
  seo={{ title: 'Kullanıcı Yönetimi - Yönetim Paneli', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-6xl space-y-5">
- <div class="mb-2 flex items-center justify-between">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
+ <div class="us-page">
+  <AdmStatGrid stats={[
+   { label: 'Toplam Kullanıcı', value: stats.total, icon: 'lucide:users', color: 'indigo' },
+   { label: 'Aktif', value: stats.active, icon: 'lucide:check-circle', color: 'emerald' },
+   { label: 'İşletme', value: stats.vendors, icon: 'lucide:store', color: 'amber' },
+   { label: 'Onay Bekleyen', value: stats.pending, icon: 'lucide:clock', color: 'rose' },
+   { label: 'Bugün Yeni', value: stats.newToday, icon: 'lucide:user-plus', color: 'sky' },
+  ]} />
 
- <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <div class="text-2xl font-bold text-[#1F1410]">{stats.total}</div>
- <div class="text-sm text-[#7A6B58]">Toplam Kullanıcı</div>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <div class="text-2xl font-bold text-[#7A6B58]">{stats.active}</div>
- <div class="text-sm text-[#7A6B58]">Aktif</div>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <div class="text-2xl font-bold text-[#7A6B58]">{stats.vendors}</div>
- <div class="text-sm text-[#7A6B58]">İşletme</div>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <div class="text-2xl font-bold text-[#7A6B58]">{stats.pending}</div>
- <div class="text-sm text-[#7A6B58]">Onay Bekleyen</div>
- </div>
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <div class="text-2xl font-bold text-[#7A6B58]">{stats.newToday}</div>
- <div class="text-sm text-[#7A6B58]">Bugün Yeni</div>
- </div>
- </div>
+  <div class="us-toolbar">
+   <div class="us-search">
+    <Icon name="lucide:search" class="us-search-ico" />
+    <input
+     type="text"
+     id="searchInput"
+     placeholder="İsim veya email ara..."
+     autocomplete="off"
+    />
+   </div>
+   <select id="roleFilter" class="us-select" aria-label="Rol filtresi">
+    <option value="">Tüm Roller</option>
+    <option value="user">Kullanıcı</option>
+    <option value="vendor">İşletme</option>
+    <option value="admin">Admin</option>
+    <option value="moderator">Moderatör</option>
+   </select>
+   <select id="statusFilter" class="us-select" aria-label="Durum filtresi">
+    <option value="">Tüm Durumlar</option>
+    <option value="active">Aktif</option>
+    <option value="pending">Bekleyen</option>
+    <option value="suspended">Askıda</option>
+    <option value="banned">Banlı</option>
+   </select>
+   <button id="searchBtn" class="us-btn">
+    <Icon name="lucide:filter" class="w-4 h-4" /> Filtrele
+   </button>
+  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <div class="flex flex-wrap gap-4">
- <input
- type="text"
- id="searchInput"
- placeholder="İsim veya email ara..."
- class="px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400"
- />
- <select id="roleFilter" class="px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400">
- <option value="">Tüm Roller</option>
- <option value="user">Kullanıcı</option>
- <option value="vendor">İşletme</option>
- <option value="admin">Admin</option>
- </select>
- <select id="statusFilter" class="px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm focus:outline-none focus:border-urfa-400">
- <option value="">Tüm Durumlar</option>
- <option value="active">Aktif</option>
- <option value="pending">Onay Bekleyen</option>
- <option value="suspended">Askıya Alınmış</option>
- </select>
- <button id="searchBtn" class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5c4839]">
- Ara
- </button>
- </div>
- </div>
+  <div class="us-table-wrap">
+   <table class="us-table">
+    <thead>
+     <tr>
+      <th class="us-th us-th-cb"><input type="checkbox" id="selectAll" aria-label="Tümünü seç" /></th>
+      <th class="us-th">Kullanıcı</th>
+      <th class="us-th">Rol</th>
+      <th class="us-th">Durum</th>
+      <th class="us-th">Kayıt Tarihi</th>
+      <th class="us-th">İstatistikler</th>
+      <th class="us-th us-th-actions">İşlemler</th>
+     </tr>
+    </thead>
+    <tbody id="usersTableBody">
+     {Array.from({ length: 5 }).map(() => (
+      <tr class="us-skel-row">
+       <td class="us-td"><span class="us-skel-pill" style="width:16px;height:16px"></span></td>
+       <td class="us-td"><span class="us-skel-bar"></span><span class="us-skel-bar us-skel-bar--narrow"></span></td>
+       <td class="us-td"><span class="us-skel-pill"></span></td>
+       <td class="us-td"><span class="us-skel-pill"></span></td>
+       <td class="us-td"><span class="us-skel-bar us-skel-bar--narrow"></span></td>
+       <td class="us-td"><span class="us-skel-bar"></span></td>
+       <td class="us-td"><span class="us-skel-pill"></span></td>
+      </tr>
+     ))}
+    </tbody>
+   </table>
+   <div class="us-pagination">
+    <p class="us-pag-info">
+     <strong id="showingFrom">0</strong>–<strong id="showingTo">0</strong> / <strong id="totalCount">0</strong> kullanıcı
+    </p>
+    <div class="us-pag-buttons" id="pagination"></div>
+   </div>
+  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div class="overflow-x-auto">
- <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <tr>
- <th class="px-6 py-3 text-left">
- <input type="checkbox" id="selectAll" class="rounded border-[rgba(184,115,51,0.3)]" />
- </th>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Kullanıcı</th>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Rol</th>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Durum</th>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Kayıt Tarihi</th>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İstatistikler</th>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">İşlemler</th>
- </tr>
- </thead>
- <tbody id="usersTableBody" class="divide-y divide-[rgba(184,115,51,0.08)]">
- <tr>
- <td colspan="7" class="px-6 py-12 text-center text-[#7A6B58]">
- Yükleniyor...
- </td>
- </tr>
- </tbody>
- </table>
- </div>
-
- <div class="px-6 py-4 border-t border-[rgba(184,115,51,0.14)] flex items-center justify-between">
- <div class="text-sm text-[#7A6B58]">
- <span id="showingFrom">0</span> - <span id="showingTo">0</span> / <span id="totalCount">0</span>
- </div>
- <div class="flex gap-2" id="pagination">
- <!-- Pagination buttons will be inserted here -->
- </div>
- </div>
- </div>
-
- <div id="bulkActions" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-[#0D0A08] text-white px-6 py-3 rounded-sm shadow-lg hidden">
- <span id="selectedCount">0</span> kullanıcı seçildi
- <div class="inline-flex gap-2 ml-4">
- <button onclick="bulkAction('activate')" class="px-3 py-1 bg-[rgba(184,115,51,0.3)] rounded-sm hover:bg-[rgba(184,115,51,0.4)] text-sm text-white">Aktifleştir</button>
- <button onclick="bulkAction('suspend')" class="px-3 py-1 bg-[rgba(184,115,51,0.15)] rounded-sm hover:bg-[rgba(184,115,51,0.25)] text-sm text-[#7A6B58]">Askıya Al</button>
- <button onclick="bulkAction('delete')" class="px-3 py-1 bg-[rgba(184,115,51,0.08)] rounded-sm hover:bg-[rgba(184,115,51,0.15)] text-sm text-[#7A6B58]">Sil</button>
- </div>
- </div>
+  <div id="bulkActions" class="us-bulk" hidden>
+   <span class="us-bulk-count"><strong id="selectedCount">0</strong> seçildi</span>
+   <div class="us-bulk-actions">
+    <button onclick="bulkAction('activate')" class="us-bulk-btn us-bulk-btn--ok">
+     <Icon name="lucide:check" class="w-3.5 h-3.5" /> Aktifleştir
+    </button>
+    <button onclick="bulkAction('suspend')" class="us-bulk-btn us-bulk-btn--warn">
+     <Icon name="lucide:pause" class="w-3.5 h-3.5" /> Askıya Al
+    </button>
+    <button onclick="bulkAction('delete')" class="us-bulk-btn us-bulk-btn--danger">
+     <Icon name="lucide:trash-2" class="w-3.5 h-3.5" /> Sil
+    </button>
+   </div>
+  </div>
  </div>
 
  <script is:inline>
  let currentPage = 1;
- let selectedUsers = new Set();
+ const selectedUsers = new Set();
  let allUsers = [];
 
  const roleLabels = {
- user: { text: 'Kullanıcı', class: 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' },
- vendor: { text: 'İşletme', class: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
- admin: { text: 'Admin', class: 'bg-[rgba(184,115,51,0.2)] text-[#7A6B58]' },
+  user:      { text: 'Kullanıcı',  cls: 'us-badge us-badge--muted' },
+  vendor:    { text: 'İşletme',    cls: 'us-badge us-badge--amber' },
+  admin:     { text: 'Admin',      cls: 'us-badge us-badge--violet' },
+  moderator: { text: 'Moderatör',  cls: 'us-badge us-badge--sky' },
  };
 
  const statusLabels = {
- active: { text: 'Aktif', class: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
- pending: { text: 'Bekliyor', class: 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' },
- suspended: { text: 'Askıya Alındı', class: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' },
- deleted: { text: 'Silindi', class: 'bg-[rgba(184,115,51,0.04)] text-[#7A6B58]' },
+  active:    { text: 'Aktif',     cls: 'us-badge us-badge--ok' },
+  pending:   { text: 'Bekliyor',  cls: 'us-badge us-badge--warn' },
+  suspended: { text: 'Askıda',    cls: 'us-badge us-badge--danger' },
+  banned:    { text: 'Banlı',     cls: 'us-badge us-badge--danger' },
+  inactive:  { text: 'Pasif',     cls: 'us-badge us-badge--muted' },
  };
 
+ function setTbodyMsg(colSpan, text, cls) {
+  const tbody = document.getElementById('usersTableBody');
+  const tr = document.createElement('tr');
+  const td = document.createElement('td');
+  td.colSpan = colSpan; td.className = cls || 'us-td-empty'; td.textContent = text;
+  tr.appendChild(td); tbody.replaceChildren(tr);
+ }
+
+ function initials(name) {
+  if (!name) return '?';
+  return name.split(' ').filter(Boolean).slice(0,2).map(s => (s[0] || '').toUpperCase()).join('') || '?';
+ }
+
  async function loadUsers() {
- const tbody = document.getElementById('usersTableBody');
- function setTbodyMsg(colSpan, text, cls) {
- const tr = document.createElement('tr');
- const td = document.createElement('td'); td.colSpan = colSpan; td.className = cls; td.textContent = text;
- tr.appendChild(td); tbody.replaceChildren(tr);
- }
- setTbodyMsg(7, 'Yükleniyor...', 'px-6 py-12 text-center text-[#7A6B58]');
+  // İlk yüklemede SSR skeleton zaten var; tekrar render etmiyoruz
+  const params = new URLSearchParams({ page: String(currentPage) });
+  const search = document.getElementById('searchInput').value;
+  const role = document.getElementById('roleFilter').value;
+  const status = document.getElementById('statusFilter').value;
+  if (search) params.append('search', search);
+  if (role) params.append('role', role);
+  if (status) params.append('status', status);
 
- const params = new URLSearchParams({ page: currentPage.toString() });
- const search = document.getElementById('searchInput').value;
- const role = document.getElementById('roleFilter').value;
- const status = document.getElementById('statusFilter').value;
-
- if (search) params.append('search', search);
- if (role) params.append('role', role);
- if (status) params.append('status', status);
-
- try {
- const response = await fetch(`/api/admin/users?${params}`);
- const data = await response.json();
-
- if (data.success) {
- allUsers = data.users;
- renderUsers(data.users);
- updatePagination(data.pagination);
- }
- } catch (err) {
- setTbodyMsg(7, 'Hata oluştu', 'px-6 py-12 text-center text-[#7A6B58]');
- }
- }
-
- function renderUsers(users) {
- const tbody = document.getElementById('usersTableBody');
- function setTbodyMsg(colSpan, text, cls) {
- const tr = document.createElement('tr');
- const td = document.createElement('td'); td.colSpan = colSpan; td.className = cls; td.textContent = text;
- tr.appendChild(td); tbody.replaceChildren(tr);
- }
- if (users.length === 0) {
- setTbodyMsg(7, 'Kullanıcı bulunamadı', 'px-6 py-12 text-center text-[#7A6B58]');
- return;
+  try {
+   const response = await fetch('/api/admin/users?' + params.toString());
+   const data = await response.json();
+   if (data.success) {
+    allUsers = data.users;
+    renderUsers(data.users);
+    updatePagination(data.pagination);
+   } else {
+    setTbodyMsg(7, data?.error || 'Hata oluştu');
+   }
+  } catch {
+   setTbodyMsg(7, 'Bağlantı hatası');
+  }
  }
 
  function buildUserRow(user) {
- const tr = document.createElement('tr'); tr.className = 'hover:bg-[rgba(184,115,51,0.04)]';
- const td1 = document.createElement('td'); td1.className = 'px-6 py-4';
- const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = user.id;
- if (selectedUsers.has(user.id)) cb.checked = true;
- cb.className = 'rounded border-[rgba(184,115,51,0.3)] user-checkbox';
- cb.addEventListener('change', () => toggleSelection(user.id));
- td1.appendChild(cb);
- const td2 = document.createElement('td'); td2.className = 'px-6 py-4';
- const flex = document.createElement('div'); flex.className = 'flex items-center gap-3';
- const avatar = document.createElement('div');
- avatar.className = 'w-10 h-10 bg-[rgba(184,115,51,0.1)] rounded-full flex items-center justify-center text-[#7A6B58] font-medium';
- avatar.textContent = user.name ? user.name.charAt(0).toUpperCase() : '?';
- const nameDiv = document.createElement('div');
- const nameEl = document.createElement('div'); nameEl.className = 'font-medium text-[#1F1410]'; nameEl.textContent = user.name || 'İsimsiz';
- const emailEl = document.createElement('div'); emailEl.className = 'text-sm text-[#7A6B58]'; emailEl.textContent = user.email;
- nameDiv.appendChild(nameEl); nameDiv.appendChild(emailEl);
- flex.appendChild(avatar); flex.appendChild(nameDiv); td2.appendChild(flex);
- const td3 = document.createElement('td'); td3.className = 'px-6 py-4';
- const roleBadge = document.createElement('span');
- roleBadge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (roleLabels[user.role]?.class || 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]');
- roleBadge.textContent = roleLabels[user.role]?.text || user.role;
- td3.appendChild(roleBadge);
- const td4 = document.createElement('td'); td4.className = 'px-6 py-4';
- const statusBadge = document.createElement('span');
- statusBadge.className = 'px-2 py-0.5 rounded-sm text-xs font-medium ' + (statusLabels[user.status]?.class || 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]');
- statusBadge.textContent = statusLabels[user.status]?.text || user.status;
- td4.appendChild(statusBadge);
- const td5 = document.createElement('td'); td5.className = 'px-6 py-4 text-sm text-[#7A6B58]';
- td5.textContent = new Date(user.created_at).toLocaleDateString('tr-TR');
- const td6 = document.createElement('td'); td6.className = 'px-6 py-4 text-sm';
- const reviewsEl = document.createElement('div'); reviewsEl.className = 'text-[#7A6B58]'; reviewsEl.textContent = (user.review_count || 0) + ' yorum';
- td6.appendChild(reviewsEl);
- if (user.place_count > 0) {
- const placesEl = document.createElement('div'); placesEl.className = 'text-[#7A6B58]'; placesEl.textContent = user.place_count + ' işletme';
- td6.appendChild(placesEl);
+  const tr = document.createElement('tr');
+
+  const td1 = document.createElement('td'); td1.className = 'us-td';
+  const cb = document.createElement('input');
+  cb.type = 'checkbox'; cb.value = user.id;
+  cb.checked = selectedUsers.has(user.id);
+  cb.className = 'user-checkbox';
+  cb.addEventListener('change', () => toggleSelection(user.id));
+  td1.appendChild(cb);
+
+  const td2 = document.createElement('td'); td2.className = 'us-td';
+  const flex = document.createElement('div'); flex.className = 'us-user-cell';
+  const avatar = document.createElement('div');
+  avatar.className = 'us-avatar'; avatar.textContent = initials(user.name);
+  const info = document.createElement('div'); info.className = 'us-user-info';
+  const nameEl = document.createElement('div'); nameEl.className = 'us-user-name'; nameEl.textContent = user.name || 'İsimsiz';
+  const emailEl = document.createElement('div'); emailEl.className = 'us-user-email'; emailEl.textContent = user.email;
+  info.appendChild(nameEl); info.appendChild(emailEl);
+  flex.appendChild(avatar); flex.appendChild(info); td2.appendChild(flex);
+
+  const td3 = document.createElement('td'); td3.className = 'us-td';
+  const roleBadge = document.createElement('span');
+  const roleMeta = roleLabels[user.role] || { text: user.role, cls: 'us-badge us-badge--muted' };
+  roleBadge.className = roleMeta.cls; roleBadge.textContent = roleMeta.text;
+  td3.appendChild(roleBadge);
+
+  const td4 = document.createElement('td'); td4.className = 'us-td';
+  const statusMeta = statusLabels[user.status] || { text: user.status, cls: 'us-badge us-badge--muted' };
+  const statusBadge = document.createElement('span');
+  statusBadge.className = statusMeta.cls; statusBadge.textContent = statusMeta.text;
+  td4.appendChild(statusBadge);
+
+  const td5 = document.createElement('td'); td5.className = 'us-td us-td-soft';
+  try {
+   td5.textContent = new Date(user.created_at).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch { td5.textContent = '—'; }
+
+  const td6 = document.createElement('td'); td6.className = 'us-td us-td-soft';
+  const reviews = document.createElement('div');
+  reviews.textContent = (user.review_count || 0) + ' yorum';
+  td6.appendChild(reviews);
+  if (user.place_count > 0) {
+   const places = document.createElement('div');
+   places.textContent = user.place_count + ' işletme';
+   td6.appendChild(places);
+  }
+
+  const td7 = document.createElement('td'); td7.className = 'us-td us-td-actions';
+  const actDiv = document.createElement('div'); actDiv.className = 'us-actions';
+  const detailA = document.createElement('a');
+  detailA.href = '/admin/users/' + user.id;
+  detailA.className = 'us-row-btn us-row-btn--primary'; detailA.textContent = 'Detay';
+  actDiv.appendChild(detailA);
+  const actionBtn = document.createElement('button');
+  actionBtn.type = 'button';
+  if (user.status !== 'suspended' && user.status !== 'banned') {
+   actionBtn.className = 'us-row-btn us-row-btn--warn'; actionBtn.textContent = 'Askıya Al';
+   actionBtn.addEventListener('click', () => suspendUser(user.id));
+  } else {
+   actionBtn.className = 'us-row-btn us-row-btn--ok'; actionBtn.textContent = 'Aktifleştir';
+   actionBtn.addEventListener('click', () => activateUser(user.id));
+  }
+  actDiv.appendChild(actionBtn); td7.appendChild(actDiv);
+
+  tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+  tr.appendChild(td5); tr.appendChild(td6); tr.appendChild(td7);
+  return tr;
  }
- const td7 = document.createElement('td'); td7.className = 'px-6 py-4';
- const actDiv = document.createElement('div'); actDiv.className = 'flex gap-2';
- const detailA = document.createElement('a');
- detailA.href = '/admin/users/' + user.id;
- detailA.className = 'text-[#7A6B58] hover:text-urfa-600 text-sm'; detailA.textContent = 'Detay';
- actDiv.appendChild(detailA);
- const actionBtn = document.createElement('button');
- if (user.status !== 'suspended') {
- actionBtn.className = 'text-[#7A6B58] hover:text-[#7A6B58] text-sm'; actionBtn.textContent = 'Askıya Al';
- actionBtn.addEventListener('click', () => suspendUser(user.id));
- } else {
- actionBtn.className = 'text-[#7A6B58] hover:text-urfa-600 text-sm'; actionBtn.textContent = 'Aktifleştir';
- actionBtn.addEventListener('click', () => activateUser(user.id));
- }
- actDiv.appendChild(actionBtn); td7.appendChild(actDiv);
- tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3);
- tr.appendChild(td4); tr.appendChild(td5); tr.appendChild(td6); tr.appendChild(td7);
- return tr;
- }
- tbody.replaceChildren(...users.map(buildUserRow));
+
+ function renderUsers(users) {
+  if (!users || users.length === 0) {
+   setTbodyMsg(7, 'Kullanıcı bulunamadı');
+   return;
+  }
+  const tbody = document.getElementById('usersTableBody');
+  tbody.replaceChildren(...users.map(buildUserRow));
  }
 
  function updatePagination(pagination) {
- document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
- document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
- document.getElementById('totalCount').textContent = pagination.total;
+  document.getElementById('showingFrom').textContent = ((pagination.page - 1) * pagination.limit) + 1;
+  document.getElementById('showingTo').textContent = Math.min(pagination.page * pagination.limit, pagination.total);
+  document.getElementById('totalCount').textContent = pagination.total;
 
- const pagEl = document.getElementById('pagination');
- const nodes = [];
- for (let i = 1; i <= pagination.totalPages; i++) {
- if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
- const btn = document.createElement('button');
- btn.className = 'px-3 py-1 rounded-sm text-sm ' + (i === pagination.page ? 'bg-urfa-600 text-white' : 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.15)]');
- btn.textContent = String(i);
- btn.addEventListener('click', () => goToPage(i));
- nodes.push(btn);
- } else if (i === pagination.page - 3 || i === pagination.page + 3) {
- const span = document.createElement('span'); span.className = 'px-2 text-[#7A6B58]'; span.textContent = '...';
- nodes.push(span);
- }
- }
- pagEl.replaceChildren(...nodes);
+  const pagEl = document.getElementById('pagination');
+  const nodes = [];
+  if (pagination.page > 1) {
+   const prev = document.createElement('button');
+   prev.className = 'us-pag-btn'; prev.textContent = '‹';
+   prev.addEventListener('click', () => goToPage(pagination.page - 1));
+   nodes.push(prev);
+  }
+  for (let i = 1; i <= pagination.totalPages; i++) {
+   if (i === 1 || i === pagination.totalPages || (i >= pagination.page - 2 && i <= pagination.page + 2)) {
+    const btn = document.createElement('button');
+    btn.className = 'us-pag-btn' + (i === pagination.page ? ' us-pag-btn--active' : '');
+    btn.textContent = String(i);
+    btn.addEventListener('click', () => goToPage(i));
+    nodes.push(btn);
+   } else if (i === pagination.page - 3 || i === pagination.page + 3) {
+    const span = document.createElement('span'); span.className = 'us-pag-gap'; span.textContent = '…';
+    nodes.push(span);
+   }
+  }
+  if (pagination.page < pagination.totalPages) {
+   const next = document.createElement('button');
+   next.className = 'us-pag-btn'; next.textContent = '›';
+   next.addEventListener('click', () => goToPage(pagination.page + 1));
+   nodes.push(next);
+  }
+  pagEl.replaceChildren(...nodes);
  }
 
- function goToPage(page) { currentPage = page; loadUsers(); }
+ function goToPage(p) { currentPage = p; loadUsers(); }
 
- function toggleSelection(userId) {
- if (selectedUsers.has(userId)) { selectedUsers.delete(userId); } else { selectedUsers.add(userId); }
- updateBulkActions();
+ function toggleSelection(id) {
+  if (selectedUsers.has(id)) selectedUsers.delete(id); else selectedUsers.add(id);
+  updateBulkActions();
  }
-
  function updateBulkActions() {
- const bulkActions = document.getElementById('bulkActions');
- const selectedCount = document.getElementById('selectedCount');
- selectedCount.textContent = selectedUsers.size;
- bulkActions.classList.toggle('hidden', selectedUsers.size === 0);
+  const el = document.getElementById('bulkActions');
+  document.getElementById('selectedCount').textContent = selectedUsers.size;
+  el.hidden = selectedUsers.size === 0;
  }
-
  function toggleSelectAll() {
- const selectAll = document.getElementById('selectAll');
- const checkboxes = document.querySelectorAll('.user-checkbox');
- if (selectAll.checked) { allUsers.forEach(u => selectedUsers.add(u.id)); } else { selectedUsers.clear(); }
- checkboxes.forEach(cb => cb.checked = selectAll.checked);
- updateBulkActions();
+  const selectAll = document.getElementById('selectAll');
+  const boxes = document.querySelectorAll('.user-checkbox');
+  if (selectAll.checked) { allUsers.forEach(u => selectedUsers.add(u.id)); }
+  else { selectedUsers.clear(); }
+  boxes.forEach(cb => { cb.checked = selectAll.checked; });
+  updateBulkActions();
  }
 
  async function bulkAction(action) {
- if (!await window.showConfirm(`${selectedUsers.size} kullanıcı için bu işlemi yapmak istediğinize emin misiniz?`)) return;
- try {
- const response = await fetch('/api/admin/users', {
- method: 'PUT',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ userIds: Array.from(selectedUsers), action })
- });
- if (response.ok) { selectedUsers.clear(); updateBulkActions(); loadUsers(); }
- } catch (err) { window.toast?.error('İşlem başarısız'); }
+  if (!await window.showConfirm(selectedUsers.size + ' kullanıcı için bu işlemi yapmak istediğinize emin misiniz?')) return;
+  try {
+   const response = await fetch('/api/admin/users', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userIds: Array.from(selectedUsers), action })
+   });
+   if (response.ok) { selectedUsers.clear(); updateBulkActions(); loadUsers(); }
+   else window.toast?.error('İşlem başarısız');
+  } catch { window.toast?.error('Bağlantı hatası'); }
  }
 
  async function suspendUser(userId) {
- if (!await window.showConfirm('Bu kullanıcıyı askıya almak istediğinize emin misiniz?')) return;
- try {
- const res = await fetch(`/api/admin/users/${userId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'suspend' }) });
- if (res.ok) loadUsers(); else window.toast?.error('İşlem başarısız');
- } catch { window.toast?.error('Bağlantı hatası'); }
+  if (!await window.showConfirm('Bu kullanıcıyı askıya almak istediğinize emin misiniz?')) return;
+  try {
+   const res = await fetch('/api/admin/users/' + userId, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'suspend' })
+   });
+   if (res.ok) loadUsers(); else window.toast?.error('İşlem başarısız');
+  } catch { window.toast?.error('Bağlantı hatası'); }
  }
 
  async function activateUser(userId) {
- if (!await window.showConfirm('Bu kullanıcıyı aktifleştirmek istediğinize emin misiniz?')) return;
- try {
- const res = await fetch(`/api/admin/users/${userId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'activate' }) });
- if (res.ok) loadUsers(); else window.toast?.error('İşlem başarısız');
- } catch { window.toast?.error('Bağlantı hatası'); }
+  if (!await window.showConfirm('Bu kullanıcıyı aktifleştirmek istediğinize emin misiniz?')) return;
+  try {
+   const res = await fetch('/api/admin/users/' + userId, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'activate' })
+   });
+   if (res.ok) loadUsers(); else window.toast?.error('İşlem başarısız');
+  } catch { window.toast?.error('Bağlantı hatası'); }
  }
 
  document.getElementById('searchBtn').addEventListener('click', () => { currentPage = 1; loadUsers(); });
+ document.getElementById('searchInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { currentPage = 1; loadUsers(); }
+ });
  document.getElementById('selectAll').addEventListener('change', toggleSelectAll);
+ document.getElementById('roleFilter').addEventListener('change', () => { currentPage = 1; loadUsers(); });
+ document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; loadUsers(); });
 
- window['goToPage'] = goToPage;
- window['toggleSelection'] = toggleSelection;
- window['bulkAction'] = bulkAction;
- window['suspendUser'] = suspendUser;
- window['activateUser'] = activateUser;
+ window.goToPage = goToPage;
+ window.bulkAction = bulkAction;
+ window.suspendUser = suspendUser;
+ window.activateUser = activateUser;
 
  loadUsers();
  </script>
+
+ <style>
+  .us-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .us-toolbar {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   padding: 0.85rem 1rem;
+   display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center;
+  }
+  .us-search { flex: 1; min-width: 240px; position: relative; }
+  .us-search-ico {
+   position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+   width: 1rem; height: 1rem;
+   color: var(--adm-text-soft);
+   pointer-events: none;
+  }
+  .us-search input {
+   width: 100%;
+   padding: 0.55rem 0.7rem 0.55rem 2.1rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   font-size: 0.88rem;
+   color: var(--adm-text);
+  }
+  .us-search input:focus {
+   outline: none;
+   border-color: var(--adm-accent);
+   box-shadow: 0 0 0 3px var(--adm-bg-active);
+  }
+  .us-select {
+   padding: 0.5rem 0.8rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   font-size: 0.85rem;
+   color: var(--adm-text);
+   cursor: pointer;
+  }
+  .us-select:focus { outline: none; border-color: var(--adm-accent); }
+  .us-btn {
+   display: inline-flex; align-items: center; gap: 0.35rem;
+   padding: 0.5rem 1rem;
+   background: var(--adm-accent);
+   color: #fff;
+   border: none;
+   border-radius: 8px;
+   font-weight: 600; font-size: 0.82rem;
+   cursor: pointer;
+  }
+  .us-btn:hover { filter: brightness(0.92); }
+
+  .us-table-wrap {
+   overflow-x: auto;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+  }
+  .us-table { width: 100%; border-collapse: collapse; }
+  .us-th {
+   text-align: left;
+   font-size: 0.7rem;
+   font-weight: 700;
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   color: var(--adm-text-soft);
+   padding: 0.85rem 1rem;
+   background: var(--adm-bg-hover);
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .us-th-cb { width: 44px; }
+  .us-th-actions { text-align: right; width: 200px; }
+  .us-table tbody tr {
+   border-bottom: 1px solid var(--adm-border);
+   transition: background 0.12s;
+  }
+  .us-table tbody tr:last-child { border-bottom: none; }
+  .us-table tbody tr:hover { background: var(--adm-bg-hover); }
+  .us-td { padding: 0.8rem 1rem; font-size: 0.86rem; color: var(--adm-text); vertical-align: middle; }
+  .us-td-soft { color: var(--adm-text-muted); }
+  .us-td-actions { text-align: right; white-space: nowrap; }
+  .us-td-empty {
+   text-align: center;
+   padding: 3rem 1rem !important;
+   color: var(--adm-text-soft);
+  }
+
+  .us-user-cell {
+   display: flex; align-items: center; gap: 0.7rem;
+   min-width: 0;
+  }
+  .us-avatar {
+   width: 36px; height: 36px;
+   border-radius: 50%;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff;
+   display: inline-flex; align-items: center; justify-content: center;
+   font-weight: 700; font-size: 0.78rem;
+   flex-shrink: 0;
+  }
+  .us-user-info { min-width: 0; }
+  .us-user-name { font-weight: 600; color: var(--adm-text); line-height: 1.3; }
+  .us-user-email { font-size: 0.76rem; color: var(--adm-text-soft); margin-top: 0.1rem; }
+
+  .us-badge {
+   display: inline-flex; align-items: center;
+   padding: 0.22rem 0.55rem;
+   font-size: 0.7rem; font-weight: 600;
+   border-radius: 999px;
+  }
+  .us-badge--ok { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+  .us-badge--warn { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+  .us-badge--danger { background: rgba(225,29,72,0.12); color: rgb(190,18,60); }
+  .us-badge--muted { background: rgba(100,116,139,0.12); color: rgb(71,85,105); }
+  .us-badge--violet { background: rgba(139,92,246,0.12); color: rgb(124,58,237); }
+  .us-badge--sky { background: rgba(2,132,199,0.12); color: rgb(2,132,199); }
+  .us-badge--amber { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+
+  .us-actions { display: inline-flex; gap: 0.35rem; }
+  .us-row-btn {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.38rem 0.7rem;
+   font-size: 0.78rem;
+   font-weight: 500;
+   color: var(--adm-text-muted);
+   background: transparent;
+   border: 1px solid var(--adm-border);
+   border-radius: 6px;
+   text-decoration: none;
+   cursor: pointer;
+   transition: all 0.15s;
+  }
+  .us-row-btn--primary { color: var(--adm-accent); border-color: rgba(184,115,51,0.3); }
+  .us-row-btn--primary:hover { background: var(--adm-bg-hover); border-color: var(--adm-accent); }
+  .us-row-btn--ok { color: rgb(5,150,105); border-color: rgba(16,185,129,0.3); }
+  .us-row-btn--ok:hover { background: rgba(16,185,129,0.08); border-color: rgb(5,150,105); }
+  .us-row-btn--warn { color: rgb(180,83,9); border-color: rgba(217,119,6,0.3); }
+  .us-row-btn--warn:hover { background: rgba(217,119,6,0.08); border-color: rgb(180,83,9); }
+
+  .us-pagination {
+   display: flex; align-items: center; justify-content: space-between;
+   padding: 0.85rem 1rem;
+   border-top: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+   flex-wrap: wrap; gap: 0.75rem;
+  }
+  .us-pag-info { font-size: 0.82rem; color: var(--adm-text-muted); margin: 0; }
+  .us-pag-info strong { color: var(--adm-text); font-weight: 600; }
+  .us-pag-buttons { display: flex; gap: 0.25rem; align-items: center; }
+  .us-pag-btn {
+   display: inline-flex; align-items: center; justify-content: center;
+   min-width: 32px; height: 32px;
+   padding: 0 0.6rem;
+   font-size: 0.82rem; font-weight: 600;
+   color: var(--adm-text-muted);
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 6px;
+   cursor: pointer;
+   transition: all 0.12s;
+  }
+  .us-pag-btn:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+  .us-pag-btn--active {
+   background: var(--adm-accent);
+   color: #fff !important;
+   border-color: var(--adm-accent);
+  }
+  .us-pag-gap {
+   padding: 0 0.4rem;
+   color: var(--adm-text-soft);
+   font-size: 0.85rem;
+  }
+
+  .us-bulk[hidden] { display: none !important; }
+  .us-bulk {
+   position: fixed;
+   bottom: 1.5rem; left: 50%;
+   transform: translateX(-50%);
+   background: var(--adm-text);
+   color: var(--adm-bg);
+   padding: 0.65rem 0.85rem 0.65rem 1.1rem;
+   border-radius: 999px;
+   display: flex; align-items: center; gap: 1rem;
+   box-shadow: 0 12px 32px -4px rgba(0,0,0,0.35);
+   z-index: 50;
+   font-size: 0.86rem;
+   animation: usBulkIn 0.18s ease-out;
+  }
+  @keyframes usBulkIn {
+   from { transform: translate(-50%, 10px); opacity: 0; }
+   to { transform: translate(-50%, 0); opacity: 1; }
+  }
+  .us-bulk-count strong { color: var(--adm-accent); font-weight: 700; margin-right: 0.25rem; }
+  .us-bulk-actions { display: flex; gap: 0.35rem; }
+  .us-bulk-btn {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.4rem 0.85rem;
+   border: none; border-radius: 999px;
+   font-size: 0.78rem; font-weight: 600;
+   cursor: pointer;
+   color: #fff;
+  }
+  .us-bulk-btn--ok { background: rgb(5,150,105); }
+  .us-bulk-btn--warn { background: rgb(180,83,9); color: #fff; }
+  .us-bulk-btn--danger { background: rgb(190,18,60); }
+  .us-bulk-btn:hover { filter: brightness(0.93); }
+
+  /* Skeleton loaders */
+  .us-skel-row { pointer-events: none; }
+  .us-skel-bar {
+   display: block;
+   height: 14px;
+   width: 80%;
+   background: var(--adm-bg-hover);
+   border-radius: 4px;
+   position: relative;
+   overflow: hidden;
+   margin: 4px 0;
+  }
+  .us-skel-bar--narrow { width: 50%; }
+  .us-skel-bar::after, .us-skel-pill::after {
+   content: '';
+   position: absolute; inset: 0;
+   background: linear-gradient(90deg, transparent, var(--adm-bg-active), transparent);
+   animation: usShimmer 1.4s infinite;
+  }
+  .us-skel-pill {
+   display: inline-block;
+   width: 64px; height: 18px;
+   background: var(--adm-bg-hover);
+   border-radius: 999px;
+   position: relative;
+   overflow: hidden;
+  }
+  @keyframes usShimmer {
+   from { transform: translateX(-100%); }
+   to { transform: translateX(100%); }
+  }
+ </style>
 </AdminLayout>

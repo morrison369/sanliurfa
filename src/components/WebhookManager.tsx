@@ -182,7 +182,7 @@ export default function WebhookManager({ token }: WebhookManagerProps) {
 
  <div className="space-y-4">
  {loading && webhooks.length === 0 ? (
- <div className="text-center py-8 text-[#7A6B58]">Yükleniyor...</div>
+ <div className="text-center py-8 text-[#7A6B58]">Yükleniyor…</div>
  ) : webhooks.length === 0 ? (
  <div className="text-center py-8 text-[#7A6B58]">
  Henüz webhook oluşturulmadı.

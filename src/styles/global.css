@@ -719,6 +719,31 @@ body::before {
   100% { background-position: -200% 0; }
 }
 
+/* ─── IMAGE LQIP SHIMMER ───
+ * Görsel yüklenirken bakır-altın gradient shimmer; onload → opacity 1 + bg none.
+ * CLS=0 için width/height attribute zorunlu (Image.astro varsayılan).
+ */
+.img-lqip {
+  background: linear-gradient(
+    100deg,
+    rgba(192, 87, 31, 0.05) 0%,
+    rgba(212, 151, 24, 0.14) 50%,
+    rgba(192, 87, 31, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: skShimmer 1.6s ease-in-out infinite;
+  opacity: 0.85;
+  transition: opacity 240ms ease-out;
+}
+.img-lqip-loaded {
+  background: none;
+  animation: none;
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .img-lqip { animation: none; }
+}
+
 /* ─── TOAST POLISH (T4.19) ───
  * Şanlıurfa palette toast styling — global.toast notification style overrides
  */

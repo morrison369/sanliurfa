@@ -7,6 +7,7 @@ import FeaturedFoods from '../../components/food/FeaturedFoods.astro';
 import Image from '../../components/Image.astro';
 import { logger } from '../../lib/logging';
 import { resolvePlaceImage } from '../../lib/public-image-resolvers';
+import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 const baseUrl = getPublicAppUrl();
 
@@ -231,6 +232,14 @@ const faqItems = [
  </div>
  </div>
  </section>
+
+ {faqItems.length > 0 && (
+  <section style="padding:0 0 3rem;background:var(--bg)">
+   <div class="sf-container">
+    <PublicFaqList items={faqItems} />
+   </div>
+  </section>
+ )}
 
  <script type="application/ld+json" set:html={JSON.stringify({
  '@context': 'https://schema.org',

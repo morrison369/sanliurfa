@@ -96,7 +96,7 @@ export default function UserManagementTable() {
  const selectedUser = users.find((u) => u.id === selectedUserId);
 
  if (loading && users.length === 0) {
- return <div className="text-center py-8 text-[#7A6B58]">Yükleniyor...</div>;
+ return <div className="text-center py-8 text-[var(--adm-text-muted)]">Yükleniyor…</div>;
  }
 
  return (
@@ -115,28 +115,28 @@ export default function UserManagementTable() {
  placeholder="E-posta veya ad ile ara..."
  value={search}
  onChange={(e) => setSearch(e.target.value)}
- className="w-full pl-10 pr-4 py-2 border border-[rgba(184,115,51,0.25)] rounded-sm focus:ring-2 focus:ring-[rgba(184,115,51,0.5)] focus:border-transparent"
+ className="w-full pl-10 pr-4 py-2 border border-[var(--adm-border-strong)] rounded-sm focus:ring-2 focus:ring-[rgba(184,115,51,0.5)] focus:border-transparent"
  />
  </div>
 
- <div className="overflow-x-auto rounded-sm border border-[rgba(184,115,51,0.14)]">
+ <div className="overflow-x-auto rounded-sm border border-[var(--adm-border)]">
  <table className="w-full text-sm">
- <thead className="bg-[rgba(184,115,51,0.04)] border-b border-[rgba(184,115,51,0.14)]">
+ <thead className="bg-[var(--adm-bg-hover)] border-b border-[var(--adm-border)]">
  <tr>
- <th className="py-3 px-4 text-left font-medium text-[#7A6B58]">Kullanıcı</th>
- <th className="py-3 px-4 text-left font-medium text-[#7A6B58]">Rol</th>
- <th className="py-3 px-4 text-left font-medium text-[#7A6B58]">Durum</th>
- <th className="py-3 px-4 text-left font-medium text-[#7A6B58]">İstatistik</th>
- <th className="py-3 px-4 text-left font-medium text-[#7A6B58]">İşlemler</th>
+ <th className="py-3 px-4 text-left font-medium text-[var(--adm-text-muted)]">Kullanıcı</th>
+ <th className="py-3 px-4 text-left font-medium text-[var(--adm-text-muted)]">Rol</th>
+ <th className="py-3 px-4 text-left font-medium text-[var(--adm-text-muted)]">Durum</th>
+ <th className="py-3 px-4 text-left font-medium text-[var(--adm-text-muted)]">İstatistik</th>
+ <th className="py-3 px-4 text-left font-medium text-[var(--adm-text-muted)]">İşlemler</th>
  </tr>
  </thead>
  <tbody>
  {users.map((user) => (
- <tr key={user.id} className="border-b border-[rgba(184,115,51,0.1)] hover:bg-[rgba(184,115,51,0.04)]">
+ <tr key={user.id} className="border-b border-[var(--adm-bg-active)] hover:bg-[var(--adm-bg-hover)]">
  <td className="py-3 px-4">
  <div>
- <div className="font-medium text-[#1F1410]">{user.name || 'Adı yok'}</div>
- <div className="text-xs text-[#7A6B58]">{user.email}</div>
+ <div className="font-medium text-[var(--adm-text)]">{user.name || 'Adı yok'}</div>
+ <div className="text-xs text-[var(--adm-text-muted)]">{user.email}</div>
  </div>
  </td>
  <td className="py-3 px-4">
@@ -145,7 +145,7 @@ export default function UserManagementTable() {
  ? 'bg-[rgba(168,85,247,0.1)] text-purple-300'
  : user.role === 'moderator'
  ? 'bg-[rgba(59,130,246,0.1)] text-blue-300'
- : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'
+ : 'bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)]'
  }`}>
  {user.role === 'admin' ? 'Yönetici' : user.role === 'moderator' ? 'Moderatör' : 'Kullanıcı'}
  </span>
@@ -159,14 +159,14 @@ export default function UserManagementTable() {
  <span className="text-xs px-2 py-0.5 rounded-full bg-[rgba(34,197,94,0.12)] text-green-400 font-medium">Aktif</span>
  )}
  </td>
- <td className="py-3 px-4 text-[#7A6B58] text-xs">
+ <td className="py-3 px-4 text-[var(--adm-text-muted)] text-xs">
  {user.review_count} yorum · {user.place_count} mekan
  </td>
  <td className="py-3 px-4">
  <div className="flex items-center gap-1">
  <button
  onClick={() => setSelectedUserId(user.id)}
- className="p-1.5 hover:bg-[rgba(184,115,51,0.06)] rounded text-[#7A6B58]"
+ className="p-1.5 hover:bg-[var(--adm-bg-hover)] rounded text-[var(--adm-text-muted)]"
  title="Detay"
  >
  <Eye className="w-4 h-4" />
@@ -214,38 +214,38 @@ export default function UserManagementTable() {
  </div>
 
  {users.length === 0 && !loading && (
- <div className="text-center py-8 text-[#7A6B58]">Kullanıcı bulunamadı</div>
+ <div className="text-center py-8 text-[var(--adm-text-muted)]">Kullanıcı bulunamadı</div>
  )}
 
  {/* Kullanıcı Detay Modal */}
  {selectedUserId && selectedUser && (
  <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedUserId(null)}>
- <div className="bg-[var(--bg-card)] rounded-sm max-w-md w-full p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm max-w-md w-full p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
  <h2 className="text-lg font-semibold mb-4">Kullanıcı Detayları</h2>
  <dl className="space-y-2 text-sm">
- <div className="flex justify-between"><dt className="text-[#7A6B58]">Ad</dt><dd className="font-medium">{selectedUser.name || '—'}</dd></div>
- <div className="flex justify-between"><dt className="text-[#7A6B58]">E-posta</dt><dd>{selectedUser.email}</dd></div>
- <div className="flex justify-between"><dt className="text-[#7A6B58]">Rol</dt><dd>{selectedUser.role}</dd></div>
- <div className="flex justify-between"><dt className="text-[#7A6B58]">Kayıt</dt><dd>{new Date(selectedUser.created_at).toLocaleDateString('tr-TR')}</dd></div>
- <div className="flex justify-between"><dt className="text-[#7A6B58]">Yorum</dt><dd>{selectedUser.review_count}</dd></div>
- <div className="flex justify-between"><dt className="text-[#7A6B58]">Mekan</dt><dd>{selectedUser.place_count}</dd></div>
+ <div className="flex justify-between"><dt className="text-[var(--adm-text-muted)]">Ad</dt><dd className="font-medium">{selectedUser.name || '—'}</dd></div>
+ <div className="flex justify-between"><dt className="text-[var(--adm-text-muted)]">E-posta</dt><dd>{selectedUser.email}</dd></div>
+ <div className="flex justify-between"><dt className="text-[var(--adm-text-muted)]">Rol</dt><dd>{selectedUser.role}</dd></div>
+ <div className="flex justify-between"><dt className="text-[var(--adm-text-muted)]">Kayıt</dt><dd>{new Date(selectedUser.created_at).toLocaleDateString('tr-TR')}</dd></div>
+ <div className="flex justify-between"><dt className="text-[var(--adm-text-muted)]">Yorum</dt><dd>{selectedUser.review_count}</dd></div>
+ <div className="flex justify-between"><dt className="text-[var(--adm-text-muted)]">Mekan</dt><dd>{selectedUser.place_count}</dd></div>
  {selectedUser.is_banned && (
  <div className="pt-2 border-t">
  <p className="text-red-600 font-medium">Banlı</p>
- {selectedUser.ban_reason && <p className="text-[#7A6B58] text-xs mt-1">Neden: {selectedUser.ban_reason}</p>}
- {selectedUser.ban_expires_at && <p className="text-[#7A6B58] text-xs">Bitiş: {new Date(selectedUser.ban_expires_at).toLocaleDateString('tr-TR')}</p>}
+ {selectedUser.ban_reason && <p className="text-[var(--adm-text-muted)] text-xs mt-1">Neden: {selectedUser.ban_reason}</p>}
+ {selectedUser.ban_expires_at && <p className="text-[var(--adm-text-muted)] text-xs">Bitiş: {new Date(selectedUser.ban_expires_at).toLocaleDateString('tr-TR')}</p>}
  </div>
  )}
  {(selectedUser.is_suspended || selectedUser.status === 'suspended') && (
  <div className="pt-2 border-t">
  <p className="text-orange-600 font-medium">Askıya Alındı</p>
- {selectedUser.suspension_reason && <p className="text-[#7A6B58] text-xs mt-1">Neden: {selectedUser.suspension_reason}</p>}
+ {selectedUser.suspension_reason && <p className="text-[var(--adm-text-muted)] text-xs mt-1">Neden: {selectedUser.suspension_reason}</p>}
  </div>
  )}
  </dl>
  <button
  onClick={() => setSelectedUserId(null)}
- className="mt-6 w-full px-4 py-2 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.08)] font-medium"
+ className="mt-6 w-full px-4 py-2 bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] rounded-sm hover:bg-[var(--adm-bg-hover)] font-medium"
  >
  Kapat
  </button>
@@ -256,9 +256,9 @@ export default function UserManagementTable() {
  {/* Aksiyon Onay Modal */}
  {actionDialog && (
  <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
- <div className="bg-[var(--bg-card)] rounded-sm max-w-sm w-full p-6 shadow-xl">
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm max-w-sm w-full p-6 shadow-xl">
  <h2 className="text-lg font-semibold mb-2">{actionLabels[actionDialog.type]}</h2>
- <p className="text-sm text-[#7A6B58] mb-4">
+ <p className="text-sm text-[var(--adm-text-muted)] mb-4">
  <span className="font-medium">{actionDialog.userName}</span> kullanıcısını {actionLabels[actionDialog.type].toLowerCase()} istediğinizden emin misiniz?
  </p>
  {(actionDialog.type === 'ban' || actionDialog.type === 'suspend') && (
@@ -267,13 +267,13 @@ export default function UserManagementTable() {
  onChange={(e) => setActionReason(e.target.value)}
  placeholder="Neden (opsiyonel)..."
  rows={2}
- className="w-full px-3 py-2 border border-[rgba(184,115,51,0.25)] rounded-sm text-sm mb-4 resize-none"
+ className="w-full px-3 py-2 border border-[var(--adm-border-strong)] rounded-sm text-sm mb-4 resize-none"
  />
  )}
  <div className="flex gap-3">
  <button
  onClick={() => { setActionDialog(null); setActionReason(''); }}
- className="flex-1 px-4 py-2 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.08)] font-medium text-sm"
+ className="flex-1 px-4 py-2 bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] rounded-sm hover:bg-[var(--adm-bg-hover)] font-medium text-sm"
  disabled={actionLoading}
  >
  İptal
@@ -287,7 +287,7 @@ export default function UserManagementTable() {
  'bg-urfa-600 hover:bg-urfa-700'
  }`}
  >
- {actionLoading ? 'Yükleniyor...' : actionLabels[actionDialog.type]}
+ {actionLoading ? 'Yükleniyor…' : actionLabels[actionDialog.type]}
  </button>
  </div>
  </div>

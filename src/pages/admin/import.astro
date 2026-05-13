@@ -1,5 +1,6 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import { query } from '../../lib/postgres';
 
 interface ImportCategoryRow {
@@ -12,174 +13,347 @@ const catResult = await query<ImportCategoryRow>(
  `SELECT id, slug, name FROM categories WHERE is_active = true ORDER BY sort_order, name`
 );
 const categories = catResult.rows;
+
+const exportTargets = [
+ { type: 'places',  icon: 'lucide:store', label: 'Mekanlar', desc: 'İşletme listesi', color: 'indigo' },
+ { type: 'reviews', icon: 'lucide:star',  label: 'Değerlendirmeler', desc: 'Yorumlar', color: 'amber' },
+ { type: 'users',   icon: 'lucide:users', label: 'Kullanıcılar', desc: 'Üye listesi', color: 'emerald' },
+];
+
+const colorMap: Record<string, { bg: string; fg: string }> = {
+ indigo: { bg: 'rgba(99,102,241,0.12)', fg: 'rgb(99,102,241)' },
+ amber: { bg: 'rgba(217,119,6,0.12)', fg: 'rgb(180,83,9)' },
+ emerald: { bg: 'rgba(16,185,129,0.12)', fg: 'rgb(5,150,105)' },
+};
 ---
 
 <AdminLayout
  title="İçe / Dışa Aktar"
- subtitle="CSV içe aktarma ve veri dışa aktarma"
- seo={{ title: 'İçe/Dışa Aktar - Yönetim Paneli' }}
+ subtitle="CSV ile veri içe aktar veya tablo verilerini CSV olarak indir"
+ seo={{ title: 'İçe/Dışa Aktar - Yönetim Paneli', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-4xl space-y-5">
- <div class="mb-2">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
+ <div class="im-page">
+  <section class="im-card">
+   <header class="im-card-head">
+    <h2 class="im-card-title">
+     <Icon name="lucide:upload-cloud" class="w-4 h-4" /> CSV ile İçe Aktar
+    </h2>
+    <p class="im-card-sub">Toplu mekan ekleme — kategoriye göre yükle</p>
+   </header>
+   <div class="im-card-body">
+    <details class="im-format" open>
+     <summary class="im-format-summary">
+      <Icon name="lucide:info" class="w-3.5 h-3.5" /> Beklenen CSV Formatı
+     </summary>
+     <pre class="im-format-code"><code>isim,adres,telefon,aciklama,enlem,boylam
+"Mekan Adı","Adres Bilgisi","0543 123 4567","Açıklama",37.1234,38.5678</code></pre>
+    </details>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h2 class="text-xl font-bold text-[#1F1410] mb-4 flex items-center gap-2">
- <span>📥</span> CSV ile İçe Aktar
- </h2>
+    <form id="import-form" class="im-form">
+     <div class="im-field">
+      <label class="im-label">Hedef Kategori</label>
+      <select name="categoryId" required class="im-input">
+       <option value="">— Kategori Seçin —</option>
+       {categories.map(cat => (
+        <option value={cat.id}>{cat.name}</option>
+       ))}
+      </select>
+     </div>
 
- <div class="bg-[rgba(184,115,51,0.06)] border border-[rgba(184,115,51,0.2)] rounded-sm p-4 mb-6">
- <h3 class="font-medium text-[#7A6B58] mb-2">Beklenen CSV Formatı:</h3>
- <code class="block bg-[var(--bg-card)] border border-[rgba(184,115,51,0.15)] p-3 rounded-sm text-sm text-[#7A6B58] font-mono">
- isim,adres,telefon,aciklama,enlem,boylam<br/>
- "Mekan Adı","Adres Bilgisi","0543 123 4567","Açıklama",37.1234,38.5678
- </code>
- </div>
+     <div class="im-field">
+      <label class="im-label">CSV Dosyası</label>
+      <input type="file" name="file" accept=".csv" required class="im-input im-input--file" />
+      <p class="im-hint">UTF-8 encoded, virgülle ayrılmış, max 5MB.</p>
+     </div>
 
- <form id="import-form" class="space-y-4">
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Kategori</label>
- <select name="categoryId" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
- <option value="">Kategori Seçin</option>
- {categories.map(cat => (
- <option value={cat.id}>{cat.name}</option>
- ))}
- </select>
- </div>
+     <button type="submit" class="im-btn">
+      <Icon name="lucide:upload" class="w-4 h-4" /> İçe Aktar
+     </button>
+    </form>
 
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">CSV Dosyası</label>
- <input
- type="file"
- name="file"
- accept=".csv"
- required
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm"
- />
- </div>
+    <div id="import-result" class="im-result" hidden></div>
+   </div>
+  </section>
 
- <button type="submit" class="rounded-sm bg-urfa-600 px-6 py-2 text-sm font-semibold text-white hover:bg-urfa-700">
- İçe Aktar
- </button>
- </form>
+  <section class="im-card">
+   <header class="im-card-head">
+    <h2 class="im-card-title">
+     <Icon name="lucide:download-cloud" class="w-4 h-4" /> Dışa Aktar
+    </h2>
+    <p class="im-card-sub">Tablo verilerini CSV formatında indir</p>
+   </header>
+   <div class="im-export-grid">
+    {exportTargets.map(t => {
+     const c = colorMap[t.color];
+     return (
+      <a
+       href={`/api/admin/export?type=${t.type}&format=csv`}
+       class="im-export-card"
+       style={`--im-c-bg: ${c.bg}; --im-c-fg: ${c.fg};`}
+      >
+       <div class="im-export-icon"><Icon name={t.icon} class="w-5 h-5" /></div>
+       <div>
+        <div class="im-export-label">{t.label}</div>
+        <div class="im-export-desc">{t.desc} — CSV</div>
+       </div>
+       <Icon name="lucide:download" class="w-4 h-4 im-export-arrow" />
+      </a>
+     );
+    })}
+   </div>
+  </section>
 
- <div id="import-result" class="mt-4 hidden"></div>
- </div>
-
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h2 class="text-xl font-bold text-[#1F1410] mb-4 flex items-center gap-2">
- <span>📤</span> Dışa Aktar
- </h2>
-
- <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
- <a
- href="/api/admin/export?type=places&format=csv"
- class="p-6 border border-[rgba(184,115,51,0.14)] rounded-sm hover:border-[rgba(184,115,51,0.4)] transition-colors text-center"
- >
- <div class="text-4xl mb-2">📍</div>
- <h3 class="font-medium text-[#1F1410]">Mekanlar</h3>
- <p class="text-sm text-[#7A6B58]">CSV olarak indir</p>
- </a>
-
- <a
- href="/api/admin/export?type=reviews&format=csv"
- class="p-6 border border-[rgba(184,115,51,0.14)] rounded-sm hover:border-[rgba(184,115,51,0.4)] transition-colors text-center"
- >
- <div class="text-4xl mb-2">⭐</div>
- <h3 class="font-medium text-[#1F1410]">Değerlendirmeler</h3>
- <p class="text-sm text-[#7A6B58]">CSV olarak indir</p>
- </a>
-
- <a
- href="/api/admin/export?type=users&format=csv"
- class="p-6 border border-[rgba(184,115,51,0.14)] rounded-sm hover:border-[rgba(184,115,51,0.4)] transition-colors text-center"
- >
- <div class="text-4xl mb-2">👥</div>
- <h3 class="font-medium text-[#1F1410]">Kullanıcılar</h3>
- <p class="text-sm text-[#7A6B58]">CSV olarak indir</p>
- </a>
- </div>
- </div>
-
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h2 class="text-xl font-bold text-[#1F1410] mb-4 flex items-center gap-2">
- <span>💾</span> Yedekleme
- </h2>
-
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] p-4 text-sm text-[#7A6B58]">
- Production ortamında manuel uygulama yedeği kullanılmıyor. CentOS Web Panel tarafındaki günlük otomatik sistem yedeği esas alınır; bu panel sadece CSV içe/dışa aktarma için tutulur.
- </div>
- </div>
+  <section class="im-card im-card--info">
+   <header class="im-card-head">
+    <h2 class="im-card-title">
+     <Icon name="lucide:hard-drive" class="w-4 h-4" /> Yedekleme Politikası
+    </h2>
+   </header>
+   <div class="im-card-body">
+    <p class="im-note">
+     <Icon name="lucide:shield-check" class="w-3.5 h-3.5 im-note-icon" />
+     Production ortamında manuel uygulama yedeği <strong>kullanılmıyor</strong>. CentOS Web Panel günlük otomatik sistem yedeği esastır.
+     Bu panel sadece CSV içe/dışa aktarma içindir.
+    </p>
+   </div>
+  </section>
  </div>
 
  <script is:inline>
- document.getElementById('import-form')?.addEventListener('submit', async (e) => {
- e.preventDefault();
+  document.getElementById('import-form')?.addEventListener('submit', async (e) => {
+   e.preventDefault();
+   const formData = new FormData(e.target);
+   const resultDiv = document.getElementById('import-result');
 
- const formData = new FormData(e.target);
- const resultDiv = document.getElementById('import-result');
+   resultDiv.textContent = '';
+   const loadP = document.createElement('p');
+   loadP.className = 'im-result-status';
+   loadP.textContent = '⏳ İşleniyor…';
+   resultDiv.appendChild(loadP);
+   resultDiv.hidden = false;
 
- const loadP = document.createElement('p');
- loadP.className = 'text-[#7A6B58] text-sm';
- loadP.textContent = 'İşleniyor...';
- resultDiv.replaceChildren(loadP);
- resultDiv.classList.remove('hidden');
+   try {
+    const response = await fetch('/api/admin/import', { method: 'POST', body: formData });
+    const result = await response.json();
 
- try {
- const response = await fetch('/api/admin/import', {
- method: 'POST',
- body: formData,
- });
-
- const result = await response.json();
-
- if (result.error) {
- const errP = document.createElement('p');
- errP.className = 'text-[#7A6B58] text-sm';
- errP.textContent = 'Hata: ' + String(result.error);
- resultDiv.replaceChildren(errP);
- } else {
- const box = document.createElement('div');
- box.className = 'rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3';
- const title = document.createElement('p');
- title.className = 'text-[#7A6B58] font-medium text-sm';
- title.textContent = 'İşlem Tamamlandı!';
- const stats = document.createElement('p');
- stats.className = 'text-[#7A6B58] mt-1 text-sm';
- stats.textContent = 'Toplam: ' + result.total + ' | Başarılı: ' + result.success + ' | Başarısız: ' + result.failed;
- box.appendChild(title);
- box.appendChild(stats);
- if (result.errors && result.errors.length > 0) {
- const details = document.createElement('details');
- details.className = 'mt-3';
- const summary = document.createElement('summary');
- summary.className = 'cursor-pointer text-sm text-[#7A6B58]';
- summary.textContent = 'Hataları Gör (' + result.errors.length + ')';
- const ul = document.createElement('ul');
- ul.className = 'mt-2 text-sm text-[#7A6B58] list-disc pl-4';
- result.errors.slice(0, 10).forEach((err) => {
- const li = document.createElement('li');
- li.textContent = String(err);
- ul.appendChild(li);
- });
- if (result.errors.length > 10) {
- const li = document.createElement('li');
- li.textContent = '... ve ' + (result.errors.length - 10) + ' hata daha';
- ul.appendChild(li);
- }
- details.appendChild(summary);
- details.appendChild(ul);
- box.appendChild(details);
- }
- resultDiv.replaceChildren(box);
- }
- } catch (error) {
- const errP = document.createElement('p');
- errP.className = 'text-[#7A6B58] text-sm';
- errP.textContent = 'Bir hata oluştu';
- resultDiv.replaceChildren(errP);
- }
- });
+    resultDiv.textContent = '';
+    if (result.error) {
+     const errP = document.createElement('p');
+     errP.className = 'im-result-status im-result-status--err';
+     errP.textContent = '✕ Hata: ' + String(result.error);
+     resultDiv.appendChild(errP);
+    } else {
+     const box = document.createElement('div');
+     box.className = 'im-result-box';
+     const title = document.createElement('p');
+     title.className = 'im-result-title';
+     title.textContent = '✓ İşlem Tamamlandı';
+     const stats = document.createElement('p');
+     stats.className = 'im-result-stats';
+     stats.textContent = 'Toplam: ' + result.total + ' • Başarılı: ' + result.success + ' • Başarısız: ' + result.failed;
+     box.appendChild(title);
+     box.appendChild(stats);
+     if (result.errors && result.errors.length > 0) {
+      const details = document.createElement('details');
+      details.className = 'im-result-details';
+      const summary = document.createElement('summary');
+      summary.textContent = 'Hataları Gör (' + result.errors.length + ')';
+      const ul = document.createElement('ul');
+      ul.className = 'im-result-errors';
+      result.errors.slice(0, 10).forEach((err) => {
+       const li = document.createElement('li');
+       li.textContent = String(err);
+       ul.appendChild(li);
+      });
+      if (result.errors.length > 10) {
+       const li = document.createElement('li');
+       li.textContent = '… ve ' + (result.errors.length - 10) + ' hata daha';
+       ul.appendChild(li);
+      }
+      details.appendChild(summary);
+      details.appendChild(ul);
+      box.appendChild(details);
+     }
+     resultDiv.appendChild(box);
+    }
+   } catch {
+    resultDiv.textContent = '';
+    const errP = document.createElement('p');
+    errP.className = 'im-result-status im-result-status--err';
+    errP.textContent = '✕ Bağlantı hatası';
+    resultDiv.appendChild(errP);
+   }
+  });
  </script>
+
+ <style>
+  .im-page { display: flex; flex-direction: column; gap: 1.25rem; max-width: 920px; }
+
+  .im-card {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .im-card-head {
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .im-card-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .im-card-sub {
+   font-size: 0.78rem;
+   color: var(--adm-text-soft);
+   margin: 0.2rem 0 0;
+  }
+  .im-card-body { padding: 1.25rem; }
+
+  .im-format {
+   margin-bottom: 1rem;
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   overflow: hidden;
+  }
+  .im-format-summary {
+   display: flex; align-items: center; gap: 0.4rem;
+   padding: 0.6rem 0.85rem;
+   font-size: 0.82rem; font-weight: 600;
+   color: var(--adm-text-muted);
+   background: var(--adm-bg);
+   cursor: pointer;
+   list-style: none;
+  }
+  .im-format-summary::-webkit-details-marker { display: none; }
+  .im-format-code {
+   margin: 0;
+   padding: 0.85rem 1rem;
+   background: #1a1208;
+   color: #f5edd6;
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.78rem;
+   line-height: 1.55;
+   overflow-x: auto;
+  }
+  .im-format-code code { color: inherit; background: transparent; padding: 0; }
+
+  .im-form { display: flex; flex-direction: column; gap: 0.95rem; }
+  .im-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .im-label {
+   font-size: 0.8rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .im-input {
+   padding: 0.55rem 0.75rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   font-size: 0.88rem;
+   color: var(--adm-text);
+   font-family: inherit;
+  }
+  .im-input:focus { outline: none; border-color: var(--adm-accent); box-shadow: 0 0 0 3px var(--adm-bg-active); }
+  .im-input--file { cursor: pointer; }
+  .im-hint { font-size: 0.72rem; color: var(--adm-text-soft); margin: 0; }
+  .im-btn {
+   align-self: flex-start;
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.6rem 1.3rem;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff;
+   border: none;
+   border-radius: 8px;
+   font-weight: 600; font-size: 0.85rem;
+   cursor: pointer;
+   transition: transform 0.15s;
+  }
+  .im-btn:hover { transform: translateY(-1px); }
+
+  .im-result { margin-top: 1rem; }
+  .im-result[hidden] { display: none; }
+  .im-result-status {
+   padding: 0.6rem 0.85rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   font-size: 0.88rem;
+   color: var(--adm-text);
+   margin: 0;
+  }
+  .im-result-status--err { background: rgba(225,29,72,0.06); border-color: rgba(225,29,72,0.2); color: rgb(190,18,60); }
+  .im-result-box {
+   padding: 0.85rem 1rem;
+   background: rgba(16,185,129,0.06);
+   border: 1px solid rgba(16,185,129,0.18);
+   border-radius: 8px;
+  }
+  .im-result-title { font-weight: 600; color: rgb(5,150,105); margin: 0; font-size: 0.92rem; }
+  .im-result-stats { font-size: 0.84rem; color: var(--adm-text-muted); margin: 0.35rem 0 0; }
+  .im-result-details { margin-top: 0.65rem; font-size: 0.82rem; color: var(--adm-text-muted); }
+  .im-result-details summary { cursor: pointer; font-weight: 500; }
+  .im-result-errors { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+  .im-result-errors li { margin: 0.15rem 0; }
+
+  .im-export-grid {
+   padding: 1rem 1.25rem;
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+   gap: 0.65rem;
+  }
+  .im-export-card {
+   display: flex; align-items: center; gap: 0.85rem;
+   padding: 0.85rem 1rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 10px;
+   text-decoration: none;
+   transition: all 0.18s;
+  }
+  .im-export-card:hover {
+   transform: translateY(-1px);
+   border-color: var(--im-c-fg);
+   box-shadow: 0 6px 16px -4px rgba(31,20,16,0.08);
+  }
+  .im-export-icon {
+   width: 40px; height: 40px;
+   background: var(--im-c-bg);
+   color: var(--im-c-fg);
+   border-radius: 10px;
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .im-export-label {
+   font-weight: 600;
+   color: var(--adm-text);
+   font-size: 0.88rem;
+  }
+  .im-export-desc {
+   font-size: 0.72rem;
+   color: var(--adm-text-soft);
+   margin-top: 0.15rem;
+  }
+  .im-export-arrow {
+   margin-left: auto;
+   color: var(--adm-text-soft);
+  }
+  .im-export-card:hover .im-export-arrow { color: var(--im-c-fg); }
+
+  .im-note {
+   display: flex; gap: 0.5rem; align-items: flex-start;
+   font-size: 0.86rem;
+   color: var(--adm-text-muted);
+   line-height: 1.55;
+   margin: 0;
+  }
+  .im-note-icon {
+   color: rgb(5,150,105);
+   flex-shrink: 0;
+   margin-top: 0.15rem;
+  }
+  .im-note strong { color: var(--adm-text); font-weight: 700; }
+ </style>
 </AdminLayout>

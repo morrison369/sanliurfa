@@ -1,140 +1,317 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+import AdmEmptyState from '../../components/admin/AdmEmptyState.astro';
 import { query } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
 
-let users: any[] = [];
+interface QuotaItem {
+ feature_key: string;
+ used_count: number;
+ limit_override: number | null;
+ reset_at: string | null;
+}
+interface UserQuotaGroup {
+ id: string;
+ email: string;
+ full_name: string;
+ role: string;
+ subscription_tier: string;
+ quotas: QuotaItem[];
+}
+
+let users: UserQuotaGroup[] = [];
 
 try {
- const result = await query(`
- SELECT u.id, u.email, u.full_name, u.role, u.subscription_tier,
- uq.feature_key, uq.used_count, uq.limit_override, uq.reset_at
- FROM users u
- LEFT JOIN user_quotas uq ON u.id = uq.user_id
- WHERE u.role != 'admin'
- ORDER BY u.created_at DESC
- LIMIT 200
+ const result = await query<UserQuotaGroup & QuotaItem>(`
+  SELECT u.id, u.email, u.full_name, u.role, u.subscription_tier,
+   uq.feature_key, uq.used_count, uq.limit_override, uq.reset_at
+  FROM users u
+  LEFT JOIN user_quotas uq ON u.id = uq.user_id
+  WHERE u.role != 'admin'
+  ORDER BY u.created_at DESC
+  LIMIT 200
  `);
 
- const userMap = new Map<string, any>();
+ const userMap = new Map<string, UserQuotaGroup>();
  for (const row of result.rows) {
- if (!userMap.has(row.id)) {
- userMap.set(row.id, {
- id: row.id,
- email: row.email,
- full_name: row.full_name,
- role: row.role,
- subscription_tier: row.subscription_tier,
- quotas: [],
- });
- }
- if (row.feature_key) {
- userMap.get(row.id).quotas.push({
- feature_key: row.feature_key,
- used_count: row.used_count,
- limit_override: row.limit_override,
- reset_at: row.reset_at,
- });
- }
+  if (!userMap.has(row.id)) {
+   userMap.set(row.id, {
+    id: row.id, email: row.email, full_name: row.full_name,
+    role: row.role, subscription_tier: row.subscription_tier,
+    quotas: [],
+   });
+  }
+  if (row.feature_key) {
+   userMap.get(row.id)!.quotas.push({
+    feature_key: row.feature_key,
+    used_count: row.used_count,
+    limit_override: row.limit_override,
+    reset_at: row.reset_at,
+   });
+  }
  }
  users = Array.from(userMap.values());
 } catch (e) {
  logger.error('Quotas admin query failed', e instanceof Error ? e : new Error(String(e)));
 }
 
+const tierLabels: Record<string, { text: string; cls: string }> = {
+ free:     { text: 'Free',     cls: 'qt-tier qt-tier--muted' },
+ premium:  { text: 'Premium',  cls: 'qt-tier qt-tier--gold' },
+ pro:      { text: 'Pro',      cls: 'qt-tier qt-tier--violet' },
+ pro_plus: { text: 'Pro Plus', cls: 'qt-tier qt-tier--featured' },
+};
+
+function initials(name: string): string {
+ if (!name) return '?';
+ return name.split(' ').filter(Boolean).slice(0,2).map(s => s[0]?.toUpperCase() || '').join('') || '?';
+}
 ---
 
 <AdminLayout
  title="Kota Yönetimi"
- subtitle={`${users.length} kullanıcı`}
+ subtitle={`${users.length} kullanıcı izleniyor`}
  seo={{ title: 'Kota Yönetimi - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-6xl">
- <div class="mb-6">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
+ <div class="qt-page">
+  <div class="qt-info">
+   <Icon name="lucide:info" class="w-4 h-4 qt-info-icon" />
+   <span>Kullanıcı bazlı feature limitleri ve günlük kullanım sayaçları. <strong>Tümünü Sıfırla</strong> ile kullanım sayaçları sıfırlanır, limit değişmez.</span>
+  </div>
+
+  <div class="qt-table-wrap">
+   {users.length === 0 ? (
+    <AdmEmptyState
+     icon="lucide:gauge"
+     title="Kota verisi bulunamadı"
+     description="Henüz user_quotas tablosunda kayıt yok. Kullanıcılar feature kullandıkça veriler burada görünür."
+     size="md"
+    />
+   ) : (
+    <table class="qt-table">
+     <thead>
+      <tr>
+       <th class="qt-th">Kullanıcı</th>
+       <th class="qt-th">Tier</th>
+       <th class="qt-th">Kota Kullanımı</th>
+       <th class="qt-th qt-th-actions">İşlem</th>
+      </tr>
+     </thead>
+     <tbody>
+      {users.map(u => {
+       const tier = tierLabels[u.subscription_tier || 'free'] || { text: u.subscription_tier || 'free', cls: 'qt-tier qt-tier--muted' };
+       return (
+        <tr>
+         <td class="qt-td">
+          <div class="qt-user-cell">
+           <div class="qt-avatar">{initials(u.full_name)}</div>
+           <div class="qt-user-info">
+            <div class="qt-user-name">{u.full_name || '—'}</div>
+            <div class="qt-user-email">{u.email}</div>
+           </div>
+          </div>
+         </td>
+         <td class="qt-td">
+          <span class={tier.cls}>{tier.text}</span>
+         </td>
+         <td class="qt-td">
+          {u.quotas.length === 0 ? (
+           <span class="qt-no-data">— Kayıt yok</span>
+          ) : (
+           <div class="qt-quota-list">
+            {u.quotas.map(q => {
+             const limit = q.limit_override || 0;
+             const pct = limit > 0 ? Math.min(100, Math.round((q.used_count / limit) * 100)) : 0;
+             return (
+              <div class="qt-quota-row">
+               <code class="qt-quota-key">{q.feature_key}</code>
+               <span class="qt-quota-bar">
+                <span class:list={['qt-quota-fill', pct >= 90 && 'qt-quota-fill--high', pct >= 70 && pct < 90 && 'qt-quota-fill--mid']} style={`width: ${pct}%`}></span>
+               </span>
+               <span class="qt-quota-text">
+                <strong>{q.used_count}</strong>
+                {limit > 0 && <span class="qt-quota-limit">/ {limit}</span>}
+               </span>
+              </div>
+             );
+            })}
+           </div>
+          )}
+         </td>
+         <td class="qt-td qt-td-actions">
+          <button class="qt-row-btn reset-btn" data-user-id={u.id} data-email={u.email}>
+           <Icon name="lucide:rotate-ccw" class="w-3.5 h-3.5" /> Tümünü Sıfırla
+          </button>
+         </td>
+        </tr>
+       );
+      })}
+     </tbody>
+    </table>
+   )}
+  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- {users.length === 0 ? (
- <div class="p-12 text-center text-[#7A6B58] text-sm">Kullanıcı kota verisi bulunamadı.</div>
- ) : (
- <div class="overflow-x-auto">
- <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <tr>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Kullanıcı</th>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Tier</th>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">Kota Kullanımı</th>
- <th class="py-3 px-4 text-left font-medium text-[#7A6B58]">İşlem</th>
- </tr>
- </thead>
- <tbody>
- {users.map(u => (
- <tr class="border-b border-[rgba(184,115,51,0.08)] last:border-0 hover:bg-[rgba(184,115,51,0.04)]">
- <td class="py-3 px-4">
- <div class="font-medium text-[#1F1410]">{u.full_name || '—'}</div>
- <div class="text-xs text-[#7A6B58]">{u.email}</div>
- </td>
- <td class="py-3 px-4">
- <span class={`text-xs px-2 py-0.5 rounded-sm font-medium ${u.subscription_tier === 'pro_plus' ? 'bg-[rgba(184,115,51,0.2)] text-[#7A6B58]' : u.subscription_tier === 'pro' ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'}`}>
- {u.subscription_tier || 'free'}
- </span>
- </td>
- <td class="py-3 px-4">
- {u.quotas.length === 0 ? (
- <span class="text-[#7A6B58] text-xs">Kota kaydı yok</span>
- ) : (
- <div class="space-y-0.5">
- {u.quotas.map((q: any) => (
- <div class="text-xs text-[#7A6B58]">
- <span class="font-mono bg-[rgba(184,115,51,0.06)] px-1 rounded-sm">{q.feature_key}</span>
- {': '}{q.used_count}
- {q.limit_override ? ` / ${q.limit_override}` : ''}
- </div>
- ))}
- </div>
- )}
- </td>
- <td class="py-3 px-4">
- <button
- class="reset-btn px-2 py-1 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] rounded-sm text-xs hover:bg-[rgba(184,115,51,0.1)]"
- data-user-id={u.id}
- data-email={u.email}
- >
- Tümünü Sıfırla
- </button>
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- )}
- </div>
- </div>
+ <script is:inline>
+  document.querySelectorAll('.reset-btn').forEach(btn => {
+   btn.addEventListener('click', async () => {
+    if (!await window.showConfirm(btn.dataset.email + ' kullanıcısının tüm kotaları sıfırlansın mı?')) return;
+    btn.disabled = true;
+    btn.textContent = 'Sıfırlanıyor…';
+    try {
+     const res = await fetch('/api/admin/quotas/' + btn.dataset.userId, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset_all' }),
+     });
+     if (res.ok) {
+      btn.textContent = '✓ Sıfırlandı';
+      btn.classList.add('qt-row-btn--done');
+     } else {
+      btn.textContent = 'Hata';
+      btn.disabled = false;
+     }
+    } catch {
+     btn.textContent = 'Hata';
+     btn.disabled = false;
+    }
+   });
+  });
+ </script>
+
+ <style>
+  .qt-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .qt-info {
+   display: flex; gap: 0.55rem; align-items: center;
+   padding: 0.75rem 1rem;
+   background: rgba(2,132,199,0.06);
+   border: 1px solid rgba(2,132,199,0.18);
+   border-radius: 10px;
+   color: var(--adm-text);
+   font-size: 0.86rem;
+   line-height: 1.5;
+  }
+  .qt-info-icon { color: rgb(2,132,199); flex-shrink: 0; }
+  .qt-info strong { color: var(--adm-text); font-weight: 600; }
+
+  .qt-table-wrap {
+   overflow-x: auto;
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+  }
+  .qt-table { width: 100%; border-collapse: collapse; }
+  .qt-th {
+   text-align: left;
+   font-size: 0.7rem;
+   font-weight: 700;
+   letter-spacing: 0.06em;
+   text-transform: uppercase;
+   color: var(--adm-text-soft);
+   padding: 0.85rem 1rem;
+   background: var(--adm-bg-hover);
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .qt-th-actions { text-align: right; width: 200px; }
+  .qt-table tbody tr {
+   border-bottom: 1px solid var(--adm-border);
+  }
+  .qt-table tbody tr:last-child { border-bottom: none; }
+  .qt-table tbody tr:hover { background: var(--adm-bg-hover); }
+  .qt-td { padding: 0.85rem 1rem; font-size: 0.86rem; color: var(--adm-text); vertical-align: middle; }
+  .qt-td-actions { text-align: right; white-space: nowrap; }
+
+  .qt-user-cell { display: flex; align-items: center; gap: 0.7rem; }
+  .qt-avatar {
+   width: 36px; height: 36px;
+   border-radius: 50%;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff;
+   display: inline-flex; align-items: center; justify-content: center;
+   font-weight: 700; font-size: 0.78rem;
+   flex-shrink: 0;
+  }
+  .qt-user-name { font-weight: 600; color: var(--adm-text); }
+  .qt-user-email { font-size: 0.76rem; color: var(--adm-text-soft); margin-top: 0.1rem; }
+
+  .qt-tier {
+   display: inline-flex; align-items: center;
+   padding: 0.25rem 0.65rem;
+   font-size: 0.72rem; font-weight: 700;
+   border-radius: 999px;
+   text-transform: uppercase;
+   letter-spacing: 0.04em;
+  }
+  .qt-tier--muted { background: rgba(100,116,139,0.12); color: rgb(71,85,105); }
+  .qt-tier--gold { background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning)); color: #fff; }
+  .qt-tier--violet { background: rgba(139,92,246,0.12); color: rgb(124,58,237); }
+  .qt-tier--featured { background: linear-gradient(135deg, rgb(139,92,246), rgb(99,102,241)); color: #fff; }
+
+  .qt-no-data { color: var(--adm-text-soft); font-size: 0.82rem; font-style: italic; }
+
+  .qt-quota-list { display: flex; flex-direction: column; gap: 0.4rem; max-width: 480px; }
+  .qt-quota-row {
+   display: grid;
+   grid-template-columns: 180px 1fr 100px;
+   gap: 0.75rem;
+   align-items: center;
+   font-size: 0.78rem;
+  }
+  .qt-quota-key {
+   font-family: 'Menlo', 'Monaco', monospace;
+   background: var(--adm-bg);
+   padding: 0.2rem 0.45rem;
+   border-radius: 4px;
+   color: var(--adm-text);
+   font-size: 0.72rem;
+   border: 1px solid var(--adm-border);
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+  }
+  .qt-quota-bar {
+   display: block;
+   height: 6px;
+   background: var(--adm-bg);
+   border-radius: 999px;
+   overflow: hidden;
+   position: relative;
+  }
+  .qt-quota-fill {
+   display: block;
+   height: 100%;
+   background: linear-gradient(90deg, rgb(16,185,129), rgb(5,150,105));
+   transition: width 0.3s;
+  }
+  .qt-quota-fill--mid { background: linear-gradient(90deg, rgb(217,119,6), rgb(180,83,9)); }
+  .qt-quota-fill--high { background: linear-gradient(90deg, rgb(225,29,72), rgb(190,18,60)); }
+  .qt-quota-text {
+   font-variant-numeric: tabular-nums;
+   font-weight: 600;
+   color: var(--adm-text);
+   text-align: right;
+  }
+  .qt-quota-limit { color: var(--adm-text-soft); font-weight: 500; margin-left: 0.2rem; }
+
+  .qt-row-btn {
+   display: inline-flex; align-items: center; gap: 0.3rem;
+   padding: 0.4rem 0.75rem;
+   font-size: 0.78rem; font-weight: 500;
+   color: var(--adm-text-muted);
+   background: transparent;
+   border: 1px solid var(--adm-border);
+   border-radius: 6px;
+   cursor: pointer;
+   transition: all 0.15s;
+  }
+  .qt-row-btn:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+  .qt-row-btn--done {
+   background: rgba(16,185,129,0.08);
+   border-color: rgba(16,185,129,0.3);
+   color: rgb(5,150,105);
+  }
+  .qt-row-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+ </style>
 </AdminLayout>
-
-<script is:inline>
- document.querySelectorAll('.reset-btn').forEach(btn => {
- btn.addEventListener('click', async () => {
- if (!await window.showConfirm(`${btn.dataset.email} kullanıcısının tüm kotaları sıfırlansın mı?`)) return;
- btn.disabled = true;
- btn.textContent = 'Sıfırlanıyor...';
-
- const res = await fetch(`/api/admin/quotas/${btn.dataset.userId}`, {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ action: 'reset_all' }),
- });
-
- if (res.ok) {
- btn.textContent = 'Sıfırlandı';
- btn.className = 'px-2 py-1 bg-[rgba(184,115,51,0.15)] text-[#7A6B58] rounded-sm text-xs';
- } else {
- btn.textContent = 'Hata';
- btn.className = 'px-2 py-1 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] rounded-sm text-xs';
- btn.disabled = false;
- }
- });
- });
-</script>

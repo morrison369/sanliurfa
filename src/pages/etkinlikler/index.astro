@@ -3,6 +3,7 @@ import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
 import PublicPageIntro from '../../components/public/PublicPageIntro.astro';
 import PublicCollectionList from '../../components/public/PublicCollectionList.astro';
+import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import EventCalendarToggle from '../../components/events/EventCalendarToggle';
 import { query } from '../../lib/postgres';
 import { getCachedPublicRouteData } from '../../lib/public-route-cache';
@@ -159,7 +160,7 @@ try {
 
  {events.length > 0 && !queryParam && !kategoriParam && !validAy && (
   <EventCalendarToggle
-   client:load
+   client:visible={{ rootMargin: '200px' }}
    events={events.map((e) => ({
     id: String(e.id),
     title: e.title,
@@ -205,6 +206,12 @@ try {
  <a href="/tarihi-yerler" class="sf-btn-ghost">Tarihi Yerler</a>
  </div>
  </div>
+ )}
+
+ {faqItems.length > 0 && (
+  <div style="margin-top:3rem">
+   <PublicFaqList items={faqItems} />
+  </div>
  )}
  </div>
 

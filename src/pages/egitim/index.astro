@@ -4,6 +4,7 @@ import { query } from '../../lib/postgres';
 import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import { getPublicAppUrl } from '../../lib/public-app-url';
 import { logger } from '../../lib/logging';
+import PublicFaqList from '../../components/public/PublicFaqList.astro';
 const baseUrl = getPublicAppUrl();
 
 let featuredPlaces: any[] = [];
@@ -119,6 +120,12 @@ const faqItems = [
  ))}
  </div>
  </div>
+ )}
+
+ {faqItems.length > 0 && (
+  <div style="margin-top:3rem">
+   <PublicFaqList items={faqItems} />
+  </div>
  )}
  </div>
  </div>

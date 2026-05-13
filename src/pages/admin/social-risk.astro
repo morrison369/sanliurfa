@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
@@ -12,31 +12,31 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-5">
  <div class="flex items-center gap-3">
- <input id="hoursInput" class="border border-[rgba(184,115,51,0.2)] rounded-sm px-3 py-2 text-sm w-28" value="24" />
+ <input id="hoursInput" class="border border-[var(--adm-border-strong)] rounded-sm px-3 py-2 text-sm w-28" value="24" />
  <button id="refreshBtn" class="rounded-sm bg-urfa-600 text-white px-4 py-2 text-sm font-semibold hover:bg-urfa-700">Yenile</button>
  <button id="testWebhookBtn" class="rounded-sm bg-[#6B5540] text-white px-4 py-2 text-sm font-semibold hover:bg-[#4A3A28]">Webhook Testi</button>
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-5">
  <h2 class="font-semibold text-[#7A6B58] mb-3">Eşik ve Webhook</h2>
- <div id="metaPanel" class="mt-3 text-sm text-[#7A6B58]">Yükleniyor...</div>
+ <div id="metaPanel" class="mt-3 text-sm text-[#7A6B58]"><span class="adm-shimmer-text">Veriler yükleniyor…</span></div>
  </div>
 
  <div id="cards" class="grid md:grid-cols-3 gap-4">
- <p class="text-[#7A6B58] text-sm">Yükleniyor...</p>
+ <p class="text-[#7A6B58] text-sm"><span class="adm-shimmer-text">Veriler yükleniyor…</span></p>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-5">
  <h2 class="font-semibold text-[#7A6B58] mb-3">Webhook Teslimat Kaydı</h2>
- <div id="webhookLog" class="mt-3 space-y-2 text-sm text-[#7A6B58]">Yükleniyor...</div>
+ <div id="webhookLog" class="mt-3 space-y-2 text-sm text-[#7A6B58]"><span class="adm-shimmer-text">Veriler yükleniyor…</span></div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-5">
  <h2 class="font-semibold text-[#7A6B58] mb-3">Webhook Yeniden Deneme ve Hata Analizi</h2>
- <div id="webhookMetrics" class="mt-3 text-sm text-[#7A6B58]">Yükleniyor...</div>
+ <div id="webhookMetrics" class="mt-3 text-sm text-[#7A6B58]"><span class="adm-shimmer-text">Veriler yükleniyor…</span></div>
  </div>
  </div>
 
@@ -48,9 +48,9 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  const webhookMetrics = document.getElementById('webhookMetrics');
 
  function level(score) {
- if (score >= 70) return ['Yüksek', 'bg-[rgba(184,115,51,0.2)] text-[#7A6B58]'];
- if (score >= 40) return ['Orta', 'bg-[rgba(184,115,51,0.12)] text-[#7A6B58]'];
- return ['Düşük', 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'];
+ if (score >= 70) return ['Yüksek', 'bg-[var(--adm-border-strong)] text-[#7A6B58]'];
+ if (score >= 40) return ['Orta', 'bg-[var(--adm-bg-active)] text-[#7A6B58]'];
+ return ['Düşük', 'bg-[var(--adm-bg-hover)] text-[#7A6B58]'];
  }
 
  async function loadRisk() {
@@ -80,7 +80,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function makeMetaCard(title, rows) {
  const card = document.createElement('div');
- card.className = 'p-3 rounded-sm bg-[rgba(184,115,51,0.04)] border border-[rgba(184,115,51,0.1)]';
+ card.className = 'p-3 rounded-sm bg-[var(--adm-bg-hover)] border border-[var(--adm-bg-active)]';
  const h = document.createElement('div');
  h.className = 'font-semibold text-[#1F1410] text-sm mb-1';
  h.textContent = title;
@@ -122,7 +122,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  cards.replaceChildren(...tenants.map((t) => {
  const [label, cls] = level(Number(t.score || 0));
  const card = document.createElement('div');
- card.className = 'bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5 space-y-2';
+ card.className = 'bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-5 space-y-2';
 
  const header = document.createElement('div');
  header.className = 'flex items-center justify-between';
@@ -191,7 +191,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
  }
  webhookLog.replaceChildren(...items.map((x) => {
  const wrap = document.createElement('div');
- wrap.className = 'rounded-sm border border-[rgba(184,115,51,0.14)] p-2';
+ wrap.className = 'rounded-sm border border-[var(--adm-border)] p-2';
 
  const ts = document.createElement('div');
  ts.className = 'text-xs text-[#7A6B58]';
@@ -240,7 +240,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  function wmList(title, items, fn) {
  const d = document.createElement('div');
- d.className = 'p-3 rounded-sm border border-[rgba(184,115,51,0.14)]';
+ d.className = 'p-3 rounded-sm border border-[var(--adm-border)]';
  const h = document.createElement('div');
  h.className = 'font-semibold text-[#1F1410] text-sm mb-2';
  h.textContent = title;
@@ -264,14 +264,14 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
  const g1 = document.createElement('div');
  g1.className = 'grid md:grid-cols-3 gap-3 mb-3';
- g1.appendChild(wmCard('bg-[rgba(184,115,51,0.04)] text-[#7A6B58]', 'Toplam', summary.total || 0));
- g1.appendChild(wmCard('bg-[rgba(184,115,51,0.1)] text-[#7A6B58]', 'Başarılı', summary.success_count || 0));
- g1.appendChild(wmCard('bg-[rgba(184,115,51,0.06)] text-[#7A6B58]', 'Başarısız', summary.failure_count || 0));
+ g1.appendChild(wmCard('bg-[var(--adm-bg-hover)] text-[#7A6B58]', 'Toplam', summary.total || 0));
+ g1.appendChild(wmCard('bg-[var(--adm-bg-active)] text-[#7A6B58]', 'Başarılı', summary.success_count || 0));
+ g1.appendChild(wmCard('bg-[var(--adm-bg-hover)] text-[#7A6B58]', 'Başarısız', summary.failure_count || 0));
 
  const g2 = document.createElement('div');
  g2.className = 'grid md:grid-cols-2 gap-3 mb-3';
- g2.appendChild(wmCard('bg-[rgba(184,115,51,0.04)] text-[#7A6B58]', 'Gecikme p50', Math.round(Number(latency.p50_ms || 0)) + ' ms'));
- g2.appendChild(wmCard('bg-[rgba(184,115,51,0.04)] text-[#7A6B58]', 'Gecikme p95', Math.round(Number(latency.p95_ms || 0)) + ' ms'));
+ g2.appendChild(wmCard('bg-[var(--adm-bg-hover)] text-[#7A6B58]', 'Gecikme p50', Math.round(Number(latency.p50_ms || 0)) + ' ms'));
+ g2.appendChild(wmCard('bg-[var(--adm-bg-hover)] text-[#7A6B58]', 'Gecikme p95', Math.round(Number(latency.p95_ms || 0)) + ' ms'));
 
  const g3 = document.createElement('div');
  g3.className = 'grid md:grid-cols-2 gap-3';

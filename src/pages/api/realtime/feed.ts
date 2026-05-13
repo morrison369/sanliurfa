@@ -76,7 +76,10 @@ export const GET: APIRoute = async ({ request, locals }) => {
               }
 
               // Subsequent ticks: fetch new activities since cursor
-              let query = `SELECT ua.id, ua.user_id, ua.action_type, ua.reference_type, ua.reference_id,
+              let query = `SELECT ua.id, ua.user_id,
+                                  COALESCE(ua.type, ua.activity_type) AS action_type,
+                                  COALESCE(ua.entity_type, ua.object_type) AS reference_type,
+                                  COALESCE(ua.entity_id::text, ua.object_id::text) AS reference_id,
                                   ua.metadata, ua.created_at,
                                   u.full_name, u.username, u.avatar_url
                            FROM user_activities ua

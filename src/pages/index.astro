@@ -85,6 +85,12 @@ const organizationSchema = {
     email: 'iletisim@sanliurfa.com',
     availableLanguage: 'Turkish',
   },
+  sameAs: [
+    'https://www.instagram.com/sanliurfacom',
+    'https://www.facebook.com/sanliurfacom',
+    'https://x.com/sanliurfacom',
+    'https://www.youtube.com/@sanliurfacom',
+  ],
 };
 
 const breadcrumbSchema = {
@@ -178,4 +184,39 @@ const faqSchema = {
   </Fragment>
 
   <CityGuideLanding />
+
+  <!-- Görünür FAQ — schema ile birebir aynı içerik (AEO + UX) -->
+  <section class="ix-faq" aria-labelledby="ix-faq-h">
+    <div class="sf-container">
+      <div class="ix-faq-head">
+        <p class="ix-faq-lbl">Sıkça Sorulan Sorular</p>
+        <h2 class="ix-faq-h" id="ix-faq-h">Şanlıurfa ziyaretçileri en çok ne sorar?</h2>
+        <p class="ix-faq-sub">Göbeklitepe'den nöbetçi eczaneye, gezilecek yerlerden yöresel lezzetlere — Şanlıurfa hakkında en sık merak edilen 6 soru.</p>
+      </div>
+      <div class="ix-faq-list">
+        {faqSchema.mainEntity.map((item, i) => (
+          <details class="ix-faq-item" open={i === 0}>
+            <summary class="ix-faq-q">{item.name}</summary>
+            <div class="ix-faq-a">{item.acceptedAnswer.text}</div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .ix-faq{background:var(--bg);padding:3rem 0 4rem;border-top:1px solid rgba(184,115,51,.1)}
+    .ix-faq-head{text-align:center;max-width:42rem;margin:0 auto 2rem}
+    .ix-faq-lbl{font-size:.7rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--copper);margin-bottom:.5rem}
+    .ix-faq-h{font-family:'Cormorant Garamond',serif;font-size:clamp(1.5rem,3.5vw,2.2rem);font-weight:600;color:var(--text-1);margin:0 0 .75rem}
+    .ix-faq-sub{font-size:.92rem;color:#7A6B58;line-height:1.6;margin:0}
+    .ix-faq-list{display:flex;flex-direction:column;gap:.75rem;max-width:46rem;margin:0 auto}
+    .ix-faq-item{background:rgba(255,255,255,.6);border:1px solid rgba(184,115,51,.18);border-radius:.25rem;overflow:hidden;transition:border-color .2s}
+    .ix-faq-item[open]{border-color:rgba(192,87,31,.4)}
+    .ix-faq-q{padding:1rem 1.25rem;font-weight:600;font-size:.95rem;color:var(--text-1);cursor:pointer;list-style:none;position:relative;padding-right:2.5rem}
+    .ix-faq-q::-webkit-details-marker{display:none}
+    .ix-faq-q::after{content:'+';position:absolute;right:1.25rem;top:50%;transform:translateY(-50%);font-size:1.4rem;font-weight:400;color:var(--copper);transition:transform .2s}
+    .ix-faq-item[open] .ix-faq-q::after{content:'−';transform:translateY(-50%) rotate(180deg)}
+    .ix-faq-a{padding:0 1.25rem 1.1rem;font-size:.88rem;line-height:1.7;color:#5A4A38}
+  </style>
 </LandingTemplate>

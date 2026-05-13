@@ -4,7 +4,10 @@
  * Manage email marketing campaigns and sequences
  */
 
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+import AdmStatGrid from '../../components/admin/AdmStatGrid.astro';
+import AdmEmptyState from '../../components/admin/AdmEmptyState.astro';
 import { getAllCampaigns } from '../../lib/email/email-campaigns';
 import { logger } from '../../lib/logging';
 
@@ -14,373 +17,624 @@ try {
 } catch (e) {
  logger.error('Admin campaigns query failed', e instanceof Error ? e : new Error(String(e)));
 }
+
+const totalSent = campaigns.reduce((s, c) => s + (c.sendCount || 0), 0);
+const totalOpens = campaigns.reduce((s, c) => s + (c.openCount || 0), 0);
+const totalClicks = campaigns.reduce((s, c) => s + (c.clickCount || 0), 0);
+const avgOpenRate = campaigns.length > 0
+ ? campaigns.reduce((s, c) => s + (c.sendCount > 0 ? (c.openCount / c.sendCount) * 100 : 0), 0) / campaigns.length
+ : 0;
+const avgClickRate = campaigns.length > 0
+ ? campaigns.reduce((s, c) => s + (c.sendCount > 0 ? (c.clickCount / c.sendCount) * 100 : 0), 0) / campaigns.length
+ : 0;
+
+const tabs = [
+ { key: 'campaigns', label: 'Kampanyalar', icon: 'lucide:mail' },
+ { key: 'create',    label: 'Yeni Kampanya', icon: 'lucide:plus-circle' },
+ { key: 'analytics', label: 'Analitik', icon: 'lucide:bar-chart-3' },
+ { key: 'sequences', label: 'Otomasyon', icon: 'lucide:zap' },
+];
+
+const statusLabels: Record<string, { text: string; cls: string }> = {
+ draft:     { text: 'Taslak',       cls: 'cm-badge--muted' },
+ scheduled: { text: 'Planlandı',    cls: 'cm-badge--warn' },
+ active:    { text: 'Gönderiliyor', cls: 'cm-badge--info' },
+ completed: { text: 'Tamamlandı',   cls: 'cm-badge--ok' },
+};
 ---
 
 <AdminLayout
  title="Email Kampanyaları"
- subtitle="Pazarlama kampanyalarını ve otomasyon akışlarını yönet"
- seo={{ title: 'Kampanyalar - Admin' }}
+ subtitle={`${campaigns.length} kampanya • ${totalSent.toLocaleString('tr-TR')} email gönderildi`}
+ seo={{ title: 'Kampanyalar - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-5xl">
- <div class="mb-6">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
+ <div class="cm-page">
+  <AdmStatGrid stats={[
+   { label: 'Toplam Kampanya', value: campaigns.length, icon: 'lucide:mail', color: 'indigo' },
+   { label: 'Toplam Gönderilen', value: totalSent, icon: 'lucide:send', color: 'emerald' },
+   { label: 'Ortalama Açılma', value: avgOpenRate.toFixed(1) + '%', icon: 'lucide:eye', color: 'amber' },
+   { label: 'Ortalama Tıklama', value: avgClickRate.toFixed(1) + '%', icon: 'lucide:mouse-pointer-click', color: 'violet' },
+  ]} />
 
- <!-- Tabs -->
- <div class="mb-8 flex border-b border-[rgba(184,115,51,0.14)]" role="tablist">
- <button class="tab-button active px-6 py-3 font-medium text-sm border-b-2 border-urfa-600 text-urfa-600"
- role="tab"
- data-tab="campaigns"
- >
- Kampanyalar
- </button>
- <button class="tab-button px-6 py-3 font-medium text-sm border-b-2 border-transparent text-[#7A6B58] hover:text-[#7A6B58]"
- role="tab"
- data-tab="create"
- >
- Yeni Kampanya
- </button>
- <button class="tab-button px-6 py-3 font-medium text-sm border-b-2 border-transparent text-[#7A6B58] hover:text-[#7A6B58]"
- role="tab"
- data-tab="analytics"
- >
- Analitik
- </button>
- <button class="tab-button px-6 py-3 font-medium text-sm border-b-2 border-transparent text-[#7A6B58] hover:text-[#7A6B58]"
- role="tab"
- data-tab="sequences"
- >
- Otomasyon
- </button>
- </div>
+  <div class="cm-tabs" role="tablist">
+   {tabs.map((tab, i) => (
+    <button
+     type="button"
+     class:list={['cm-tab', i === 0 && 'cm-tab--active']}
+     data-tab={tab.key}
+     role="tab"
+    >
+     <Icon name={tab.icon} class="w-4 h-4" />
+     <span>{tab.label}</span>
+    </button>
+   ))}
+  </div>
 
- <!-- Campaigns Tab -->
- <div id="campaigns-tab" class="tab-content">
- <div class="grid gap-4">
- {campaigns.length > 0 ? (
- campaigns.map((campaign) => (
- <div class="bg-[var(--bg-card)] p-6 rounded-sm border border-[rgba(184,115,51,0.14)] shadow-sm">
- <div class="flex justify-between items-start mb-4">
- <div>
- <h3 class="text-lg font-bold text-[#1F1410]">{campaign.name}</h3>
- <p class="text-sm text-[#7A6B58]">{campaign.subject}</p>
- </div>
- <div class="flex gap-2">
- <span class={`px-2 py-0.5 rounded-sm text-xs font-medium ${
- campaign.status === 'completed' ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' :
- campaign.status === 'active' ? 'bg-[rgba(184,115,51,0.2)] text-[#7A6B58]' :
- campaign.status === 'scheduled' ? 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]' :
- 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'
- }`}>
- {campaign.status === 'draft' ? 'Taslak' :
- campaign.status === 'active' ? 'Gönderiliyor' :
- campaign.status === 'scheduled' ? 'Planlandı' :
- campaign.status === 'completed' ? 'Tamamlandı' :
- campaign.status}
- </span>
- </div>
- </div>
+  <div id="campaigns-tab" class="cm-tab-pane">
+   {campaigns.length === 0 ? (
+    <AdmEmptyState
+     icon="lucide:mail"
+     title="Henüz kampanya yok"
+     description="İlk email kampanyanızı oluşturmak için 'Yeni Kampanya' sekmesini kullanın."
+     size="md"
+    />
+   ) : (
+    <div class="cm-list">
+     {campaigns.map((campaign) => {
+      const meta = statusLabels[campaign.status] || { text: campaign.status, cls: 'cm-badge--muted' };
+      const openRate = campaign.sendCount > 0 ? Math.round((campaign.openCount / campaign.sendCount) * 100) : 0;
+      const clickRate = campaign.sendCount > 0 ? Math.round((campaign.clickCount / campaign.sendCount) * 100) : 0;
+      return (
+       <article class="cm-card">
+        <header class="cm-card-head">
+         <div class="cm-card-title-row">
+          <h3 class="cm-card-title">{campaign.name}</h3>
+          <span class:list={['cm-badge', meta.cls]}>{meta.text}</span>
+         </div>
+         <p class="cm-card-subject">
+          <Icon name="lucide:mail" class="w-3 h-3" />
+          {campaign.subject}
+         </p>
+        </header>
 
- <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
- <div>
- <span class="text-[#7A6B58]">Gönderilen:</span>
- <span class="font-semibold text-[#1F1410] ml-2">{campaign.sendCount}</span>
- </div>
- <div>
- <span class="text-[#7A6B58]">Açılan:</span>
- <span class="font-semibold text-[#1F1410] ml-2">{campaign.openCount} ({campaign.sendCount > 0 ? Math.round((campaign.openCount / campaign.sendCount) * 100) : 0}%)</span>
- </div>
- <div>
- <span class="text-[#7A6B58]">Tıklanan:</span>
- <span class="font-semibold text-[#1F1410] ml-2">{campaign.clickCount} ({campaign.sendCount > 0 ? Math.round((campaign.clickCount / campaign.sendCount) * 100) : 0}%)</span>
- </div>
- <div>
- <span class="text-[#7A6B58]">Abonelikten Çıkan:</span>
- <span class="font-semibold text-[#1F1410] ml-2">{campaign.unsubscribeCount}</span>
- </div>
- </div>
+        <div class="cm-stats">
+         <div class="cm-stat-item">
+          <span class="cm-stat-label">Gönderildi</span>
+          <span class="cm-stat-val">{campaign.sendCount.toLocaleString('tr-TR')}</span>
+         </div>
+         <div class="cm-stat-item">
+          <span class="cm-stat-label">Açılan</span>
+          <span class="cm-stat-val">{campaign.openCount.toLocaleString('tr-TR')}</span>
+          <span class="cm-stat-pct">{openRate}%</span>
+         </div>
+         <div class="cm-stat-item">
+          <span class="cm-stat-label">Tıklanan</span>
+          <span class="cm-stat-val">{campaign.clickCount.toLocaleString('tr-TR')}</span>
+          <span class="cm-stat-pct">{clickRate}%</span>
+         </div>
+         <div class="cm-stat-item">
+          <span class="cm-stat-label">Çıkış Yapan</span>
+          <span class="cm-stat-val">{campaign.unsubscribeCount.toLocaleString('tr-TR')}</span>
+         </div>
+        </div>
 
- <div class="flex gap-2">
- <button class="px-4 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 text-sm" onclick={`sendCampaign(${JSON.stringify(campaign.id)})`}>
- Hemen Gönder
- </button>
- <button class="px-4 py-2 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.12)] text-sm" onclick={`testCampaign(${JSON.stringify(campaign.id)})`}>
- Test Gönder
- </button>
- <button class="px-4 py-2 bg-[rgba(184,115,51,0.04)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.08)] text-sm" onclick={`editCampaign(${JSON.stringify(campaign.id)})`}>
- Düzenle
- </button>
- </div>
- </div>
- ))
- ) : (
- <div class="bg-[rgba(184,115,51,0.04)] p-8 rounded-sm text-center border border-[rgba(184,115,51,0.14)]">
- <p class="text-[#7A6B58]">Henüz kampanya yok</p>
- <button onclick="switchTab('create')" class="mt-4 px-4 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 text-sm">
- İlk Kampanyanızı Oluşturun
- </button>
- </div>
- )}
- </div>
- </div>
+        <div class="cm-actions">
+         <button class="cm-action cm-action--primary" data-action="send" data-id={campaign.id}>
+          <Icon name="lucide:send" class="w-3.5 h-3.5" /> Hemen Gönder
+         </button>
+         <button class="cm-action cm-action--ghost" data-action="test" data-id={campaign.id}>
+          <Icon name="lucide:flask-conical" class="w-3.5 h-3.5" /> Test Gönder
+         </button>
+         <button class="cm-action cm-action--ghost" data-action="edit" data-id={campaign.id}>
+          <Icon name="lucide:pencil" class="w-3.5 h-3.5" /> Düzenle
+         </button>
+        </div>
+       </article>
+      );
+     })}
+    </div>
+   )}
+  </div>
 
- <!-- Create Campaign Tab -->
- <div id="create-tab" class="tab-content hidden">
- <form id="campaign-form" class="bg-[var(--bg-card)] p-6 rounded-sm border border-[rgba(184,115,51,0.14)] shadow-sm max-w-2xl">
- <input type="hidden" name="campaignId" value="" />
- <div class="space-y-4">
- <div id="edit-mode-banner" class="hidden rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
- Kampanya düzenleniyor. Kaydettiğinizde mevcut taslak güncellenecek.
- </div>
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Kampanya Adı</label>
- <input
- type="text"
- name="name"
- required
- class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm"
- placeholder="ör: Hoş geldin kampanyası"
- />
- </div>
+  <div id="create-tab" class="cm-tab-pane" hidden>
+   <form id="campaign-form" class="cm-card cm-form">
+    <input type="hidden" name="campaignId" value="" />
+    <div id="edit-mode-banner" class="cm-edit-banner" hidden>
+     <Icon name="lucide:edit" class="w-3.5 h-3.5" />
+     Kampanya düzenleniyor. Kaydederken mevcut taslak güncellenecek.
+    </div>
 
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Konu</label>
- <input
- type="text"
- name="subject"
- required
- class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm"
- placeholder="Email konusu"
- />
- </div>
+    <div class="cm-form-grid">
+     <div class="cm-field cm-field--full">
+      <label class="cm-label">Kampanya Adı</label>
+      <input type="text" name="name" required class="cm-input" placeholder="ör: Mart Hoş Geldin Kampanyası" />
+     </div>
 
- <div class="grid grid-cols-2 gap-4">
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Gönderici Adı</label>
- <input
- type="text"
- name="fromName"
- required
- class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm"
- placeholder="ör: Sanliurfa.com"
- />
- </div>
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Gönderici Email</label>
- <input
- type="email"
- name="fromEmail"
- required
- class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm"
- placeholder="noreply@sanliurfa.com"
- />
- </div>
- </div>
+     <div class="cm-field cm-field--full">
+      <label class="cm-label">Konu Satırı</label>
+      <input type="text" name="subject" required class="cm-input" placeholder="Email başlığı (mailbox'ta görünen)" />
+     </div>
 
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Segment</label>
- <select name="segment" required class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm">
- <option value="">Seç...</option>
- <option value="all_users">Tüm Kullanıcılar</option>
- <option value="subscribers">Abone Olanlar</option>
- <option value="premium">Premium Üyeler</option>
- <option value="inactive">30+ Gün Inaktif</option>
- </select>
- </div>
+     <div class="cm-field">
+      <label class="cm-label">Gönderici Adı</label>
+      <input type="text" name="fromName" required class="cm-input" placeholder="Sanliurfa.com" />
+     </div>
+     <div class="cm-field">
+      <label class="cm-label">Gönderici Email</label>
+      <input type="email" name="fromEmail" required class="cm-input" placeholder="noreply@sanliurfa.com" />
+     </div>
 
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">HTML İçerik</label>
- <textarea
- name="htmlContent"
- required
- rows="10"
- class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm font-mono text-sm"
- placeholder="HTML email içeriği"
- ></textarea>
- </div>
+     <div class="cm-field cm-field--full">
+      <label class="cm-label">Hedef Segment</label>
+      <select name="segment" required class="cm-input">
+       <option value="">— Segment Seç —</option>
+       <option value="all_users">Tüm Kullanıcılar</option>
+       <option value="subscribers">Abone Olanlar</option>
+       <option value="premium">Premium Üyeler</option>
+       <option value="inactive">30+ Gün Inaktif</option>
+      </select>
+     </div>
 
- <div>
- <label class="block text-sm font-medium text-[#7A6B58] mb-1">Zamanlama</label>
- <select name="timing" class="w-full px-3 py-2 border border-[rgba(184,115,51,0.2)] rounded-sm text-sm">
- <option value="now">Hemen Gönder</option>
- <option value="schedule">Zamanla...</option>
- </select>
- </div>
+     <div class="cm-field cm-field--full">
+      <label class="cm-label">HTML İçerik</label>
+      <textarea name="htmlContent" required rows="10" class="cm-input cm-input--mono" placeholder="<h1>Merhaba {{firstName}}</h1>"></textarea>
+      <p class="cm-hint">Mailmerge: <code>{'{{firstName}}'}</code>, <code>{'{{email}}'}</code></p>
+     </div>
 
- <div class="flex gap-2">
- <button type="submit" class="px-6 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 text-sm">
- <span id="campaign-submit-label">Kampanya Oluştur</span>
- </button>
- <button type="reset" class="px-6 py-2 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.12)] text-sm">
- Temizle
- </button>
- </div>
- </div>
- </form>
- </div>
+     <div class="cm-field cm-field--full">
+      <label class="cm-label">Zamanlama</label>
+      <select name="timing" class="cm-input">
+       <option value="now">Hemen Gönder</option>
+       <option value="schedule">Zamanla (sonra)</option>
+      </select>
+     </div>
+    </div>
 
- <!-- Analytics Tab -->
- <div id="analytics-tab" class="tab-content hidden">
- <div class="grid grid-cols-2 gap-4">
- <div class="bg-[var(--bg-card)] p-6 rounded-sm border border-[rgba(184,115,51,0.14)] shadow-sm">
- <h3 class="text-[#7A6B58] text-sm font-medium mb-2">Ortalama Açılma Oranı</h3>
- <p class="text-3xl font-bold text-[#1F1410]">
- {campaigns.length > 0 ? (
- campaigns.reduce((sum, c) => sum + (c.sendCount > 0 ? (c.openCount / c.sendCount) * 100 : 0), 0) / campaigns.length
- ).toFixed(1) : 0}%
- </p>
- </div>
- <div class="bg-[var(--bg-card)] p-6 rounded-sm border border-[rgba(184,115,51,0.14)] shadow-sm">
- <h3 class="text-[#7A6B58] text-sm font-medium mb-2">Ortalama Tıklama Oranı</h3>
- <p class="text-3xl font-bold text-[#1F1410]">
- {campaigns.length > 0 ? (
- campaigns.reduce((sum, c) => sum + (c.sendCount > 0 ? (c.clickCount / c.sendCount) * 100 : 0), 0) / campaigns.length
- ).toFixed(1) : 0}%
- </p>
- </div>
- </div>
- </div>
+    <div class="cm-form-actions">
+     <button type="reset" class="cm-action cm-action--ghost">
+      <Icon name="lucide:x" class="w-3.5 h-3.5" /> Temizle
+     </button>
+     <button type="submit" class="cm-action cm-action--primary">
+      <Icon name="lucide:save" class="w-3.5 h-3.5" />
+      <span id="campaign-submit-label">Kampanya Oluştur</span>
+     </button>
+    </div>
+   </form>
+  </div>
 
- <!-- Sequences Tab -->
- <div id="sequences-tab" class="tab-content hidden">
- <div class="bg-[var(--bg-card)] p-6 rounded-sm border border-[rgba(184,115,51,0.14)] shadow-sm">
- <h3 class="font-bold text-[#1F1410] mb-4">Otomasyon Akışları</h3>
- <p class="text-[#7A6B58] text-sm">Otomasyon akışları kullanıcıların belirli olaylara yanıt olarak tetiklenen email serileridir.</p>
- <ul class="mt-4 space-y-2 text-sm">
- <li class="flex items-center gap-2">
- <span class="w-2 h-2 bg-urfa-600 rounded-full flex-shrink-0"></span>
- <span class="text-[#7A6B58]"><strong class="text-[#1F1410]">Hoş Geldin Serisi:</strong> Yeni üye kaydolduğunda başlayıp 7 gün süren selamlaşma</span>
- </li>
- <li class="flex items-center gap-2">
- <span class="w-2 h-2 bg-urfa-600 rounded-full flex-shrink-0"></span>
- <span class="text-[#7A6B58]"><strong class="text-[#1F1410]">Premium Onboarding:</strong> Premium abonelik başladığında başlayan selamlaşma</span>
- </li>
- <li class="flex items-center gap-2">
- <span class="w-2 h-2 bg-urfa-600 rounded-full flex-shrink-0"></span>
- <span class="text-[#7A6B58]"><strong class="text-[#1F1410]">Geri Kazanım:</strong> 30+ gün inaktif kullanıcılara yeniden katılım daveti</span>
- </li>
- </ul>
- </div>
- </div>
+  <div id="analytics-tab" class="cm-tab-pane" hidden>
+   <div class="cm-analytics-grid">
+    <div class="cm-an-card cm-an-card--emerald">
+     <Icon name="lucide:eye" class="w-5 h-5 cm-an-icon" />
+     <div>
+      <p class="cm-an-label">Toplam Açılma</p>
+      <p class="cm-an-val">{totalOpens.toLocaleString('tr-TR')}</p>
+     </div>
+    </div>
+    <div class="cm-an-card cm-an-card--violet">
+     <Icon name="lucide:mouse-pointer-click" class="w-5 h-5 cm-an-icon" />
+     <div>
+      <p class="cm-an-label">Toplam Tıklama</p>
+      <p class="cm-an-val">{totalClicks.toLocaleString('tr-TR')}</p>
+     </div>
+    </div>
+    <div class="cm-an-card cm-an-card--amber">
+     <Icon name="lucide:percent" class="w-5 h-5 cm-an-icon" />
+     <div>
+      <p class="cm-an-label">Açılma Oranı</p>
+      <p class="cm-an-val">{avgOpenRate.toFixed(1)}%</p>
+     </div>
+    </div>
+    <div class="cm-an-card cm-an-card--indigo">
+     <Icon name="lucide:trending-up" class="w-5 h-5 cm-an-icon" />
+     <div>
+      <p class="cm-an-label">Tıklama Oranı</p>
+      <p class="cm-an-val">{avgClickRate.toFixed(1)}%</p>
+     </div>
+    </div>
+   </div>
+  </div>
+
+  <div id="sequences-tab" class="cm-tab-pane" hidden>
+   <div class="cm-card cm-seq-card">
+    <header class="cm-card-head">
+     <h3 class="cm-card-title">
+      <Icon name="lucide:zap" class="w-4 h-4" /> Otomasyon Akışları
+     </h3>
+    </header>
+    <p class="cm-seq-desc">Belirli olaylara tetiklenen email serileri. <strong>Yakında</strong> CMS üzerinden yönetilebilir olacak.</p>
+    <ul class="cm-seq-list">
+     <li class="cm-seq-item">
+      <span class="cm-seq-dot cm-seq-dot--emerald"></span>
+      <div>
+       <strong>Hoş Geldin Serisi</strong>
+       <p>Yeni üye kaydından sonra 7 gün boyunca rehber emaillar</p>
+      </div>
+     </li>
+     <li class="cm-seq-item">
+      <span class="cm-seq-dot cm-seq-dot--amber"></span>
+      <div>
+       <strong>Premium Onboarding</strong>
+       <p>Abonelik başladığında özellik tanıtımı</p>
+      </div>
+     </li>
+     <li class="cm-seq-item">
+      <span class="cm-seq-dot cm-seq-dot--rose"></span>
+      <div>
+       <strong>Geri Kazanım</strong>
+       <p>30+ gün inaktif kullanıcılara yeniden katılım daveti</p>
+      </div>
+     </li>
+    </ul>
+   </div>
+  </div>
  </div>
 </AdminLayout>
 
 <script is:inline define:vars={{ campaignsJson: JSON.stringify(campaigns) }}>
- const campaigns = JSON.parse(campaignsJson);
+ const allCampaigns = JSON.parse(campaignsJson);
 
  function switchTab(tabName) {
- document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
- document.querySelectorAll('.tab-button').forEach(el => {
- el.classList.remove('active', 'border-urfa-600', 'text-urfa-600');
- el.classList.add('border-transparent', 'text-[#7A6B58]');
- });
-
- const tabEl = document.getElementById(`${tabName}-tab`);
- if (tabEl) tabEl.classList.remove('hidden');
-
- const btn = document.querySelector(`[data-tab="${tabName}"]`);
- if (btn) {
- btn.classList.add('active', 'border-urfa-600', 'text-urfa-600');
- btn.classList.remove('border-transparent', 'text-[#7A6B58]');
- }
+  document.querySelectorAll('.cm-tab-pane').forEach(el => { el.hidden = (el.id !== tabName + '-tab'); });
+  document.querySelectorAll('.cm-tab').forEach(el => {
+   el.classList.toggle('cm-tab--active', el.dataset.tab === tabName);
+  });
  }
 
- document.querySelectorAll('.tab-button').forEach(btn => {
- btn.addEventListener('click', () => {
- const tabName = btn.getAttribute('data-tab');
- if (tabName) switchTab(tabName);
- });
+ document.querySelectorAll('.cm-tab').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
  });
 
  async function sendCampaign(campaignId) {
- if (await window.showConfirm('Kampanyayı gönder?')) {
- fetch(`/api/marketing/campaigns/${campaignId}/send`, { method: 'POST' })
- .then(r => r.json())
- .then(data => {
- if (data.success) {
- window.toast?.success('Kampanya gönderilmeye başladı!');
- location.reload();
- } else {
- window.toast?.error('Hata: ' + (data.error || 'Gönderilemedi'));
- }
- });
- }
+  if (!await window.showConfirm('Kampanyayı şimdi göndermek istediğinize emin misiniz?')) return;
+  try {
+   const r = await fetch('/api/marketing/campaigns/' + campaignId + '/send', { method: 'POST' });
+   const data = await r.json();
+   if (data.success) {
+    window.toast?.success('Kampanya gönderilmeye başladı');
+    setTimeout(() => location.reload(), 1000);
+   } else {
+    window.toast?.error('Hata: ' + (data.error || 'Gönderilemedi'));
+   }
+  } catch { window.toast?.error('Bağlantı hatası'); }
  }
 
- function testCampaign(campaignId) {
- fetch(`/api/marketing/campaigns/${campaignId}/send`, {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({ testMode: true })
- })
- .then(r => r.json())
- .then(data => {
- if (data.success) {
- window.toast?.success('Test emaili admin hesabına gönderildi!');
- } else {
- window.toast?.error('Hata: ' + (data.error || 'Gönderilemedi'));
- }
- });
+ async function testCampaign(campaignId) {
+  try {
+   const r = await fetch('/api/marketing/campaigns/' + campaignId + '/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ testMode: true })
+   });
+   const data = await r.json();
+   if (data.success) window.toast?.success('Test emaili admin hesabına gönderildi');
+   else window.toast?.error('Hata: ' + (data.error || 'Gönderilemedi'));
+  } catch { window.toast?.error('Bağlantı hatası'); }
  }
 
  function editCampaign(campaignId) {
- const campaign = campaigns.find((item) => String(item.id) === String(campaignId));
- const form = document.getElementById('campaign-form');
- if (!campaign || !(form instanceof HTMLFormElement)) return;
- const field = (name) => form.elements.namedItem(name);
-
- field('campaignId').value = campaign.id || '';
- field('name').value = campaign.name || '';
- field('subject').value = campaign.subject || '';
- field('fromName').value = campaign.fromName || '';
- field('fromEmail').value = campaign.fromEmail || '';
- field('segment').value = campaign.segment || 'all_users';
- field('htmlContent').value = campaign.htmlContent || '';
- field('timing').value = campaign.scheduledAt ? 'schedule' : 'now';
-
- document.getElementById('edit-mode-banner')?.classList.remove('hidden');
- const label = document.getElementById('campaign-submit-label');
- if (label) label.textContent = 'Kampanyayı Güncelle';
- switchTab('create');
- form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const campaign = allCampaigns.find(item => String(item.id) === String(campaignId));
+  const form = document.getElementById('campaign-form');
+  if (!campaign || !(form instanceof HTMLFormElement)) return;
+  const field = (name) => form.elements.namedItem(name);
+  field('campaignId').value = campaign.id || '';
+  field('name').value = campaign.name || '';
+  field('subject').value = campaign.subject || '';
+  field('fromName').value = campaign.fromName || '';
+  field('fromEmail').value = campaign.fromEmail || '';
+  field('segment').value = campaign.segment || 'all_users';
+  field('htmlContent').value = campaign.htmlContent || '';
+  field('timing').value = campaign.scheduledAt ? 'schedule' : 'now';
+  const banner = document.getElementById('edit-mode-banner');
+  if (banner) banner.hidden = false;
+  const label = document.getElementById('campaign-submit-label');
+  if (label) label.textContent = 'Kampanyayı Güncelle';
+  switchTab('create');
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
  }
- window.sendCampaign = sendCampaign;
- window.testCampaign = testCampaign;
- window.editCampaign = editCampaign;
+
+ document.querySelectorAll('[data-action]').forEach(btn => {
+  btn.addEventListener('click', () => {
+   const id = btn.dataset.id;
+   const action = btn.dataset.action;
+   if (action === 'send') sendCampaign(id);
+   else if (action === 'test') testCampaign(id);
+   else if (action === 'edit') editCampaign(id);
+  });
+ });
 
  document.getElementById('campaign-form')?.addEventListener('submit', async (e) => {
- e.preventDefault();
- const form = e.target;
- if (!(form instanceof HTMLFormElement)) return;
- const data = new FormData(form);
-
- const payload = {
- id: String(data.get('campaignId') || ''),
- name: String(data.get('name') || ''),
- subject: String(data.get('subject') || ''),
- fromName: String(data.get('fromName') || ''),
- fromEmail: String(data.get('fromEmail') || ''),
- segment: String(data.get('segment') || ''),
- htmlContent: String(data.get('htmlContent') || ''),
- textContent: '',
- status: 'draft',
- timing: String(data.get('timing') || 'now')
- };
- const isEdit = Boolean(payload.id);
-
- const response = await fetch(isEdit ? `/api/marketing/campaigns?id=${encodeURIComponent(payload.id)}` : '/api/marketing/campaigns', {
- method: isEdit ? 'PUT' : 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify(payload)
- });
-
- const result = await response.json();
- if (result.success) {
- window.toast?.success(isEdit ? 'Kampanya güncellendi!' : 'Kampanya oluşturuldu!');
- form.reset();
- location.reload();
- } else {
- window.toast?.error('Hata: ' + (result.error || 'Kaydedilemedi'));
- }
+  e.preventDefault();
+  const form = e.target;
+  if (!(form instanceof HTMLFormElement)) return;
+  const data = new FormData(form);
+  const payload = {
+   id: String(data.get('campaignId') || ''),
+   name: String(data.get('name') || ''),
+   subject: String(data.get('subject') || ''),
+   fromName: String(data.get('fromName') || ''),
+   fromEmail: String(data.get('fromEmail') || ''),
+   segment: String(data.get('segment') || ''),
+   htmlContent: String(data.get('htmlContent') || ''),
+   textContent: '',
+   status: 'draft',
+   timing: String(data.get('timing') || 'now')
+  };
+  const isEdit = Boolean(payload.id);
+  try {
+   const response = await fetch(isEdit ? '/api/marketing/campaigns?id=' + encodeURIComponent(payload.id) : '/api/marketing/campaigns', {
+    method: isEdit ? 'PUT' : 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+   });
+   const result = await response.json();
+   if (result?.success) {
+    window.toast?.success(isEdit ? 'Kampanya güncellendi' : 'Kampanya oluşturuldu');
+    setTimeout(() => location.reload(), 1000);
+   } else {
+    window.toast?.error(result?.error || 'İşlem başarısız');
+   }
+  } catch { window.toast?.error('Bağlantı hatası'); }
  });
 </script>
+
+<style>
+ .cm-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+ .cm-tabs {
+  display: flex; gap: 0.35rem;
+  padding: 0.35rem;
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  width: fit-content; max-width: 100%;
+  overflow-x: auto;
+ }
+ .cm-tab {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.95rem;
+  background: transparent;
+  border: none; border-radius: 8px;
+  font-size: 0.85rem; font-weight: 600;
+  color: var(--adm-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+ }
+ .cm-tab:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+ .cm-tab--active {
+  background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+  color: #fff !important;
+  box-shadow: 0 4px 12px -2px rgba(192,87,31,0.3);
+ }
+ .cm-tab-pane[hidden] { display: none !important; }
+
+ .cm-card {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  overflow: hidden;
+ }
+ .cm-card-head {
+  padding: 0.95rem 1.15rem;
+  border-bottom: 1px solid var(--adm-border);
+  background: var(--adm-bg-hover);
+ }
+ .cm-card-title-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.75rem; flex-wrap: wrap;
+ }
+ .cm-card-title {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  margin: 0;
+  font-size: 1rem; font-weight: 600;
+  color: var(--adm-text);
+ }
+ .cm-card-subject {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--adm-text-soft);
+  margin: 0.35rem 0 0;
+ }
+
+ .cm-list { display: flex; flex-direction: column; gap: 1rem; }
+
+ .cm-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.65rem;
+  padding: 1rem 1.15rem;
+  background: var(--adm-bg);
+ }
+ .cm-stat-item {
+  display: flex; flex-direction: column;
+  padding: 0.7rem 0.85rem;
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+ }
+ .cm-stat-label {
+  font-size: 0.7rem;
+  color: var(--adm-text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+ }
+ .cm-stat-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem; font-weight: 700;
+  color: var(--adm-text);
+  line-height: 1;
+ }
+ .cm-stat-pct {
+  font-size: 0.74rem;
+  color: var(--adm-accent);
+  margin-top: 0.25rem;
+  font-weight: 600;
+ }
+
+ .cm-actions {
+  display: flex; gap: 0.5rem; flex-wrap: wrap;
+  padding: 0.85rem 1.15rem;
+  border-top: 1px solid var(--adm-border);
+ }
+ .cm-action {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.5rem 0.95rem;
+  font-size: 0.82rem; font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+ }
+ .cm-action--primary {
+  background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+  color: #fff;
+ }
+ .cm-action--primary:hover { transform: translateY(-1px); }
+ .cm-action--ghost {
+  background: transparent;
+  color: var(--adm-text-muted);
+  border-color: var(--adm-border);
+ }
+ .cm-action--ghost:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+
+ .cm-badge {
+  display: inline-flex; align-items: center;
+  padding: 0.22rem 0.65rem;
+  font-size: 0.72rem; font-weight: 600;
+  border-radius: 999px;
+ }
+ .cm-badge--ok    { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+ .cm-badge--warn  { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+ .cm-badge--info  { background: rgba(2,132,199,0.12); color: rgb(2,132,199); }
+ .cm-badge--muted { background: rgba(100,116,139,0.12); color: rgb(71,85,105); }
+
+ .cm-form { padding: 1.25rem; }
+ .cm-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+ }
+ @media (max-width: 640px) {
+  .cm-form-grid { grid-template-columns: 1fr; }
+ }
+ .cm-field { display: flex; flex-direction: column; gap: 0.3rem; }
+ .cm-field--full { grid-column: 1 / -1; }
+ .cm-label {
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--adm-text);
+ }
+ .cm-input {
+  padding: 0.55rem 0.75rem;
+  background: var(--adm-bg);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--adm-text);
+  font-family: inherit;
+ }
+ .cm-input--mono { font-family: 'Menlo', 'Monaco', monospace; font-size: 0.82rem; }
+ .cm-input:focus { outline: none; border-color: var(--adm-accent); box-shadow: 0 0 0 3px var(--adm-bg-active); }
+ .cm-hint { font-size: 0.72rem; color: var(--adm-text-soft); margin: 0; }
+ .cm-hint code { background: var(--adm-bg); padding: 0.05rem 0.3rem; border-radius: 3px; color: var(--adm-accent); }
+
+ .cm-edit-banner {
+  display: flex; align-items: center; gap: 0.4rem;
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.85rem;
+  background: rgba(217,119,6,0.08);
+  border: 1px solid rgba(217,119,6,0.2);
+  border-radius: 8px;
+  font-size: 0.84rem;
+  color: rgb(180,83,9);
+ }
+ .cm-edit-banner[hidden] { display: none; }
+
+ .cm-form-actions {
+  display: flex; gap: 0.65rem; justify-content: flex-end;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px dashed var(--adm-border);
+ }
+
+ .cm-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+ }
+ .cm-an-card {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+ }
+ .cm-an-card--indigo .cm-an-icon { color: rgb(99,102,241); }
+ .cm-an-card--emerald .cm-an-icon { color: rgb(5,150,105); }
+ .cm-an-card--amber .cm-an-icon { color: rgb(180,83,9); }
+ .cm-an-card--violet .cm-an-icon { color: rgb(124,58,237); }
+ .cm-an-icon {
+  width: 44px !important; height: 44px !important;
+  padding: 0.6rem;
+  background: var(--adm-bg);
+  border-radius: 11px;
+  flex-shrink: 0;
+ }
+ .cm-an-label {
+  font-size: 0.78rem;
+  color: var(--adm-text-soft);
+  margin: 0 0 0.2rem;
+ }
+ .cm-an-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.85rem; font-weight: 700;
+  color: var(--adm-text);
+  margin: 0;
+  line-height: 1;
+ }
+
+ .cm-seq-card { padding-bottom: 1.25rem; }
+ .cm-seq-desc {
+  margin: 1rem 1.15rem 1.25rem;
+  font-size: 0.88rem;
+  color: var(--adm-text-muted);
+  line-height: 1.55;
+ }
+ .cm-seq-desc strong { color: var(--adm-accent); font-weight: 700; }
+ .cm-seq-list {
+  margin: 0 1.15rem;
+  padding: 0;
+  list-style: none;
+  display: flex; flex-direction: column; gap: 0.85rem;
+ }
+ .cm-seq-item {
+  display: flex; gap: 0.85rem; align-items: flex-start;
+  padding: 0.85rem 1rem;
+  background: var(--adm-bg);
+  border: 1px solid var(--adm-border);
+  border-radius: 10px;
+ }
+ .cm-seq-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  margin-top: 0.4rem;
+  flex-shrink: 0;
+ }
+ .cm-seq-dot--emerald { background: rgb(16,185,129); box-shadow: 0 0 8px rgba(16,185,129,0.4); }
+ .cm-seq-dot--amber { background: rgb(217,119,6); box-shadow: 0 0 8px rgba(217,119,6,0.4); }
+ .cm-seq-dot--rose { background: rgb(225,29,72); box-shadow: 0 0 8px rgba(225,29,72,0.4); }
+ .cm-seq-item strong {
+  display: block;
+  font-weight: 700;
+  color: var(--adm-text);
+  margin-bottom: 0.2rem;
+  font-size: 0.92rem;
+ }
+ .cm-seq-item p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--adm-text-muted);
+  line-height: 1.5;
+ }
+</style>

@@ -77,10 +77,10 @@ export const GET: APIRoute = async ({ request, params }) => {
     // Get user stats
     const stats = await queryOne(
       `SELECT
-        COUNT(CASE WHEN action_type = 'review_created' THEN 1 END) as review_count,
-        COUNT(CASE WHEN action_type = 'favorite_added' THEN 1 END) as favorite_count,
-        COUNT(CASE WHEN action_type = 'comment_posted' THEN 1 END) as comment_count,
-        COUNT(CASE WHEN action_type = 'badge_earned' THEN 1 END) as badge_count
+        COUNT(CASE WHEN COALESCE(type, activity_type) = 'review_created' THEN 1 END) as review_count,
+        COUNT(CASE WHEN COALESCE(type, activity_type) = 'favorite_added' THEN 1 END) as favorite_count,
+        COUNT(CASE WHEN COALESCE(type, activity_type) = 'comment_posted' THEN 1 END) as comment_count,
+        COUNT(CASE WHEN COALESCE(type, activity_type) = 'badge_earned' THEN 1 END) as badge_count
       FROM user_activities
       WHERE user_id = $1`,
       [id]

@@ -4,9 +4,10 @@
  * server:defer ile ana sayfanın HTML'i beklemeden render edilir.
  *
  * Kullanım: <DashboardStats server:defer>
- * <div slot="fallback" class="animate-pulse ...">Loading</div>
+ *   <div slot="fallback" class="animate-pulse ...">Loading</div>
  * </DashboardStats>
  */
+import { Icon } from 'astro-icon/components';
 import { query } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
 
@@ -17,7 +18,6 @@ interface Stats {
  pendingPlaces: number;
  totalReviews: number;
  pendingReviews: number;
- totalRevenue: number;
 }
 
 let stats: Stats = {
@@ -27,70 +27,160 @@ let stats: Stats = {
  pendingPlaces: 0,
  totalReviews: 0,
  pendingReviews: 0,
- totalRevenue: 0,
 };
 
 try {
  const [usersResult, placesResult, reviewsResult] = await Promise.all([
- query(`SELECT
- COUNT(*) AS total,
- COUNT(*) FILTER (WHERE created_at >= date_trunc('month', NOW())) AS new_this_month
- FROM users WHERE status != 'deleted'`),
- query(`SELECT
- COUNT(*) AS total,
- COUNT(*) FILTER (WHERE status = 'pending') AS pending
- FROM places WHERE status != 'deleted'`),
- query(`SELECT
- COUNT(*) AS total,
- COUNT(*) FILTER (WHERE status = 'pending') AS pending
- FROM reviews`),
+  query(`SELECT
+   COUNT(*) AS total,
+   COUNT(*) FILTER (WHERE created_at >= date_trunc('month', NOW())) AS new_this_month
+   FROM users WHERE status != 'deleted'`),
+  query(`SELECT
+   COUNT(*) AS total,
+   COUNT(*) FILTER (WHERE status = 'pending') AS pending
+   FROM places WHERE status != 'deleted'`),
+  query(`SELECT
+   COUNT(*) AS total,
+   COUNT(*) FILTER (WHERE status = 'pending' OR is_moderated = false) AS pending
+   FROM reviews`),
  ]);
 
  stats = {
- totalUsers: parseInt(usersResult.rows[0]?.total || '0'),
- newUsersThisMonth: parseInt(usersResult.rows[0]?.new_this_month || '0'),
- totalPlaces: parseInt(placesResult.rows[0]?.total || '0'),
- pendingPlaces: parseInt(placesResult.rows[0]?.pending || '0'),
- totalReviews: parseInt(reviewsResult.rows[0]?.total || '0'),
- pendingReviews: parseInt(reviewsResult.rows[0]?.pending || '0'),
- totalRevenue: 0,
+  totalUsers: parseInt(usersResult.rows[0]?.total || '0'),
+  newUsersThisMonth: parseInt(usersResult.rows[0]?.new_this_month || '0'),
+  totalPlaces: parseInt(placesResult.rows[0]?.total || '0'),
+  pendingPlaces: parseInt(placesResult.rows[0]?.pending || '0'),
+  totalReviews: parseInt(reviewsResult.rows[0]?.total || '0'),
+  pendingReviews: parseInt(reviewsResult.rows[0]?.pending || '0'),
  };
 } catch (e) {
  logger.error('DashboardStats query failed', e instanceof Error ? e : new Error(String(e)));
 }
 ---
 
-<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
- <div class="flex items-center justify-between">
- <div>
- <p class="text-sm text-[#7A6B58]">Toplam Kullanıcı</p>
- <p class="text-2xl font-bold text-[#1F1410] mt-1">{stats.totalUsers.toLocaleString('tr-TR')}</p>
- </div>
- <div class="w-12 h-12 bg-[rgba(59,130,246,0.1)] flex items-center justify-center text-2xl">👥</div>
- </div>
- <p class="text-xs text-[#B87333] mt-2">+{stats.newUsersThisMonth} bu ay</p>
- </div>
-
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
- <div class="flex items-center justify-between">
- <div>
- <p class="text-sm text-[#7A6B58]">İşletmeler</p>
- <p class="text-2xl font-bold text-[#1F1410] mt-1">{stats.totalPlaces.toLocaleString('tr-TR')}</p>
- </div>
- <div class="w-12 h-12 bg-[rgba(184,115,51,0.1)] flex items-center justify-center text-2xl">🏪</div>
- </div>
- <p class="text-xs text-[#7A6B58] mt-2">{stats.pendingPlaces} onay bekliyor</p>
+<div class="ds-grid">
+ <div class="ds-card ds-card--indigo">
+  <div class="ds-card-head">
+   <div class="ds-card-ico"><Icon name="lucide:users" class="w-5 h-5" /></div>
+   <div class="ds-card-body">
+    <p class="ds-card-lbl">Toplam Kullanıcı</p>
+    <p class="ds-card-val">{stats.totalUsers.toLocaleString('tr-TR')}</p>
+   </div>
+  </div>
+  <p class="ds-card-meta">
+   {stats.newUsersThisMonth > 0 ? (
+    <span class="ds-card-meta-up">
+     <Icon name="lucide:trending-up" class="w-3 h-3" />
+     +{stats.newUsersThisMonth} bu ay
+    </span>
+   ) : 'Bu ay yeni kayıt yok'}
+  </p>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-5">
- <div class="flex items-center justify-between">
- <div>
- <p class="text-sm text-[#7A6B58]">Yorumlar</p>
- <p class="text-2xl font-bold text-[#1F1410] mt-1">{stats.totalReviews.toLocaleString('tr-TR')}</p>
+ <div class="ds-card ds-card--amber">
+  <div class="ds-card-head">
+   <div class="ds-card-ico"><Icon name="lucide:store" class="w-5 h-5" /></div>
+   <div class="ds-card-body">
+    <p class="ds-card-lbl">İşletmeler</p>
+    <p class="ds-card-val">{stats.totalPlaces.toLocaleString('tr-TR')}</p>
+   </div>
+  </div>
+  <p class="ds-card-meta">
+   {stats.pendingPlaces > 0 ? (
+    <span class="ds-card-meta-warn">
+     <Icon name="lucide:clock" class="w-3 h-3" />
+     {stats.pendingPlaces} onay bekliyor
+    </span>
+   ) : 'Tüm onaylar tamam ✓'}
+  </p>
  </div>
- <div class="w-12 h-12 bg-[rgba(16,185,129,0.1)] flex items-center justify-center text-2xl">⭐</div>
- </div>
- <p class="text-xs text-[#7A6B58] mt-2">{stats.pendingReviews} onay bekliyor</p>
+
+ <div class="ds-card ds-card--emerald">
+  <div class="ds-card-head">
+   <div class="ds-card-ico"><Icon name="lucide:star" class="w-5 h-5" /></div>
+   <div class="ds-card-body">
+    <p class="ds-card-lbl">Yorumlar</p>
+    <p class="ds-card-val">{stats.totalReviews.toLocaleString('tr-TR')}</p>
+   </div>
+  </div>
+  <p class="ds-card-meta">
+   {stats.pendingReviews > 0 ? (
+    <span class="ds-card-meta-warn">
+     <Icon name="lucide:clock" class="w-3 h-3" />
+     {stats.pendingReviews} moderate bekliyor
+    </span>
+   ) : 'Tüm yorumlar moderate ✓'}
+  </p>
  </div>
 </div>
+
+<style>
+ .ds-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+ }
+ .ds-card {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 1.15rem 1.25rem;
+  position: relative;
+  overflow: hidden;
+ }
+ .ds-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 100% 0%, var(--ds-c-accent) 0%, transparent 55%);
+  opacity: 0.06;
+  pointer-events: none;
+ }
+ .ds-card--indigo { --ds-c-accent: rgb(99,102,241); }
+ .ds-card--amber { --ds-c-accent: rgb(217,119,6); }
+ .ds-card--emerald { --ds-c-accent: rgb(16,185,129); }
+
+ .ds-card-head {
+  display: flex; align-items: center; gap: 0.95rem;
+  position: relative;
+ }
+ .ds-card-ico {
+  width: 42px; height: 42px;
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--ds-c-accent) 12%, transparent);
+  color: var(--ds-c-accent);
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+ }
+ .ds-card-body { min-width: 0; }
+ .ds-card-lbl {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--adm-text-muted);
+  font-weight: 500;
+ }
+ .ds-card-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.85rem; font-weight: 700;
+  line-height: 1;
+  margin: 0.2rem 0 0;
+  color: var(--adm-text);
+  letter-spacing: -0.02em;
+ }
+ .ds-card-meta {
+  margin: 0.75rem 0 0;
+  font-size: 0.78rem;
+  color: var(--adm-text-soft);
+  position: relative;
+ }
+ .ds-card-meta-up {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  color: rgb(5,150,105);
+  font-weight: 600;
+ }
+ .ds-card-meta-warn {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  color: rgb(180,83,9);
+  font-weight: 600;
+ }
+</style>

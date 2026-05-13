@@ -238,7 +238,7 @@ export default function UserSettings() {
  if (isLoading) {
  return (
  <div className="text-center py-8">
- <p className="text-[#7A6B58]">Yükleniyor...</p>
+ <p className="text-[#7A6B58]">Yükleniyor…</p>
  </div>
  );
  }

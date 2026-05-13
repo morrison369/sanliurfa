@@ -1,24 +1,30 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
  title="API Dokümantasyonu"
- subtitle="Tüm API endpoint'lerini inceleyin ve test edin"
- seo={{ title: 'API Dokümantasyonu - Admin' }}
+ subtitle="Tüm API endpoint'lerini inceleyin ve test edin (Swagger UI)"
+ seo={{ title: 'API Dokümantasyonu - Admin', noIndex: true }}
 >
- <a slot="hero-action" href="/api/docs" target="_blank" rel="noopener" class="px-4 py-2 rounded-sm bg-urfa-600 text-white hover:bg-urfa-700 text-sm transition-colors">
- OpenAPI JSON
+ <a slot="page-actions" href="/api/docs" target="_blank" rel="noopener" class="ad-action">
+  <Icon name="lucide:download" class="w-4 h-4" />
+  OpenAPI JSON
  </a>
 
- <div class="sf-container py-8">
- <div class="mb-6">
- <a href="/admin" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Admin Paneli</a>
- </div>
+ <div class="ad-page">
+  <div class="ad-info">
+   <Icon name="lucide:info" class="w-4 h-4 ad-info-icon" />
+   <span>
+    <strong>İnteraktif API gezgini.</strong>
+    Endpoint'leri buradan test edebilirsiniz. Auth gereken çağrılar admin oturumunuzu kullanır.
+   </span>
+  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div id="swagger-ui"></div>
- </div>
+  <div class="ad-swagger-wrap">
+   <div id="swagger-ui"></div>
+  </div>
  </div>
 </AdminLayout>
 
@@ -26,29 +32,54 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 <script is:inline src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
 <script is:inline>
  window.addEventListener('load', () => {
- SwaggerUIBundle({
- url: '/api/docs',
- dom_id: '#swagger-ui',
- deepLinking: true,
- presets: [
- SwaggerUIBundle.presets.apis,
- SwaggerUIBundle.presets.standalone
- ],
- plugins: [
- SwaggerUIBundle.plugins.DownloadUrl
- ],
- requestInterceptor: (req) => {
- return req;
- }
- });
+  SwaggerUIBundle({
+   url: '/api/docs',
+   dom_id: '#swagger-ui',
+   deepLinking: true,
+   presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.presets.standalone],
+   plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+   requestInterceptor: (req) => req
+  });
  });
 </script>
 
 <style is:global>
- .swagger-ui {
- padding: 20px;
+ .swagger-ui { padding: 20px; }
+ .swagger-ui .topbar { display: none; }
+ .swagger-ui .info { margin: 30px 0; }
+ .swagger-ui .info hgroup.main a { display: none; }
+</style>
+
+<style>
+ .ad-page { display: flex; flex-direction: column; gap: 1rem; }
+
+ .ad-action {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+  color: #fff; font-weight: 600; font-size: 0.85rem;
+  border-radius: 8px; text-decoration: none;
+  transition: transform 0.15s;
  }
- .swagger-ui .topbar {
- display: none;
+ .ad-action:hover { transform: translateY(-1px); }
+
+ .ad-info {
+  display: flex; gap: 0.55rem; align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(2,132,199,0.06);
+  border: 1px solid rgba(2,132,199,0.18);
+  border-radius: 10px;
+  color: var(--adm-text);
+  font-size: 0.86rem;
+  line-height: 1.5;
+ }
+ .ad-info-icon { color: rgb(2,132,199); flex-shrink: 0; }
+ .ad-info strong { color: var(--adm-text); font-weight: 600; }
+
+ .ad-swagger-wrap {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  overflow: hidden;
  }
 </style>

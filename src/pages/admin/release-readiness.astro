@@ -1,7 +1,9 @@
 ---
 import fs from 'node:fs';
 import path from 'node:path';
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import { Icon } from 'astro-icon/components';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+import AdmStatGrid from '../../components/admin/AdmStatGrid.astro';
 import { loadHomepagePlatformData } from '../../lib/home-data';
 import {
  HOMEPAGE_SECTIONS_FALLBACK,
@@ -41,8 +43,8 @@ const homepagePlatformData = await loadHomepagePlatformData();
 const homepageSectionState = resolveHomepageSections({
  homepageSectionsSetting,
  platformHomepageSections: homepagePlatformData.platformHomepageSections as Array<{
- section_key?: string;
- is_active?: boolean;
+  section_key?: string;
+  is_active?: boolean;
  }>,
 });
 const homepageSectionSummary = summarizeHomepageSections({
@@ -51,125 +53,293 @@ const homepageSectionSummary = summarizeHomepageSections({
 });
 
 if (fs.existsSync(dashboardPath)) {
- try {
- dashboard = JSON.parse(fs.readFileSync(dashboardPath, 'utf8'));
- } catch {
- dashboard = { generatedAt: null, ready: false, checks: [] };
- }
+ try { dashboard = JSON.parse(fs.readFileSync(dashboardPath, 'utf8')); }
+ catch { dashboard = { generatedAt: null, ready: false, checks: [] }; }
 }
 
 try {
  const result = await query(
- `SELECT setting_key, setting_value
- FROM site_settings
- WHERE setting_key IN ('transport.lastUpdated','weather.lastUpdated','pharmacy.lastUpdated','jobs.contentQuality.lastRun')`,
+  `SELECT setting_key, setting_value
+   FROM site_settings
+   WHERE setting_key IN ('transport.lastUpdated','weather.lastUpdated','pharmacy.lastUpdated','jobs.contentQuality.lastRun')`,
  );
  freshnessRows = (result.rows || []).map((row) => {
- const settingValue =
- row?.setting_value && typeof row.setting_value === 'object'
- ? row.setting_value
- : {};
- const value = String(settingValue.at || settingValue.updatedAt || settingValue.lastUpdated || '');
- return {
- key: String(row.setting_key || ''),
- value,
- stale: isFreshnessStale(String(row.setting_key || ''), {
- [String(row.setting_key || '')]: value,
- }),
- };
+  const settingValue =
+   row?.setting_value && typeof row.setting_value === 'object' ? row.setting_value : {};
+  const value = String(settingValue.at || settingValue.updatedAt || settingValue.lastUpdated || '');
+  return {
+   key: String(row.setting_key || ''),
+   value,
+   stale: isFreshnessStale(String(row.setting_key || ''), {
+    [String(row.setting_key || '')]: value,
+   }),
+  };
  });
-} catch {
- freshnessRows = [];
-}
+} catch { freshnessRows = []; }
+
+const checksOk = dashboard.checks.filter(c => c.ok).length;
+const checksTotal = dashboard.checks.length;
+const configsValid = homepageConfigStatuses.filter(c => c.valid).length;
+const configsTotal = homepageConfigStatuses.length;
+const freshOk = freshnessRows.filter(r => !r.stale).length;
+const sectionsActive = homepageSectionSummary.filter(s => s.enabled).length;
 ---
 
 <AdminLayout
  title="Release Readiness"
- subtitle="Frontend release gate ve checklist durumu"
- seo={{ title: 'Release Readiness - Sanliurfa.com', description: 'Release readiness dashboard', noIndex: true }}
+ subtitle={`Frontend release gate • ${dashboard.ready ? 'HAZIR ✓' : 'EKSİK ✕'}`}
+ seo={{ title: 'Release Readiness - Admin', noIndex: true }}
 >
- <div class="sf-container py-8">
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] p-5 mb-6">
- <h2 class="text-xl font-bold text-[#1F1410]">Genel Durum</h2>
- <p class="mt-2 text-sm text-[#7A6B58]">
- Hazır: <strong class={dashboard.ready ? 'text-emerald-400' : 'text-red-700'}>{dashboard.ready ? 'EVET' : 'HAYIR'}</strong>
- </p>
- <p class="mt-1 text-xs text-[#7A6B58]">Üretim zamanı: {dashboard.generatedAt || 'yok'}</p>
+ <div class="rr-page">
+  <div class:list={['rr-banner', dashboard.ready && 'rr-banner--ok', !dashboard.ready && 'rr-banner--err']}>
+   <div class="rr-banner-icon">
+    <Icon name={dashboard.ready ? 'lucide:check-circle' : 'lucide:alert-triangle'} class="w-5 h-5" />
+   </div>
+   <div class="rr-banner-text">
+    <div class="rr-banner-title">{dashboard.ready ? 'Production deploy serbest' : 'Release bloklanmış'}</div>
+    <div class="rr-banner-sub">
+     Son rapor: {dashboard.generatedAt ? new Date(dashboard.generatedAt).toLocaleString('tr-TR') : 'henüz üretilmemiş'}
+    </div>
+   </div>
+  </div>
+
+  <AdmStatGrid stats={[
+   { label: 'Checklist', value: checksTotal > 0 ? `${checksOk}/${checksTotal}` : '—', icon: 'lucide:list-checks', color: checksOk === checksTotal ? 'emerald' : 'rose' },
+   { label: 'Homepage Config', value: `${configsValid}/${configsTotal}`, icon: 'lucide:settings', color: configsValid === configsTotal ? 'emerald' : 'amber' },
+   { label: 'Servis Tazeliği', value: freshnessRows.length > 0 ? `${freshOk}/${freshnessRows.length}` : '—', icon: 'lucide:radio', color: freshOk === freshnessRows.length ? 'emerald' : 'amber' },
+   { label: 'Aktif Section', value: `${sectionsActive}/${homepageSectionSummary.length}`, icon: 'lucide:layout', color: 'indigo' },
+  ]} />
+
+  <section class="rr-section">
+   <header class="rr-section-head">
+    <h2 class="rr-section-title">
+     <Icon name="lucide:list-checks" class="w-4 h-4" /> Checklist Kontrolleri
+    </h2>
+    <span class="rr-section-meta">{checksOk}/{checksTotal} başarılı</span>
+   </header>
+   <div class="rr-list">
+    {(dashboard.checks || []).map((item) => (
+     <div class:list={['rr-row', item.ok && 'rr-row--ok', !item.ok && 'rr-row--err']}>
+      <code class="rr-row-key">{item.rel}</code>
+      <span class:list={['rr-row-status', item.ok ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+       {item.ok ? '✓ OK' : '✕ EKSİK'}
+      </span>
+     </div>
+    ))}
+    {checksTotal === 0 && <p class="rr-empty">Henüz rapor üretilmemiş. CLI: <code>npm run release:dashboard</code></p>}
+   </div>
+  </section>
+
+  <section class="rr-section">
+   <header class="rr-section-head">
+    <h2 class="rr-section-title">
+     <Icon name="lucide:settings-2" class="w-4 h-4" /> Homepage Config Sağlığı
+    </h2>
+    <span class="rr-section-meta">{configsValid}/{configsTotal} valid</span>
+   </header>
+   <div class="rr-list">
+    {homepageConfigStatuses.map((item) => (
+     <div class:list={['rr-row', item.valid && 'rr-row--ok', !item.valid && 'rr-row--err']}>
+      <div class="rr-row-info">
+       <code class="rr-row-key">{item.key}</code>
+       <span class="rr-row-resolution">
+        {item.resolution === 'cms-valid' ? 'kaynak: cms'
+         : item.resolution === 'cms-invalid-fallback' ? 'kaynak: cms (fallback aktif)'
+         : 'kaynak: fallback'}
+       </span>
+      </div>
+      <span class:list={['rr-row-status', item.valid ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+       {item.valid ? '✓ VALID' : item.hasRow ? '✕ INVALID' : '○ EKSİK'}
+      </span>
+     </div>
+    ))}
+   </div>
+   {invalidHomepageConfigs.length > 0 && (
+    <div class="rr-warn">
+     <Icon name="lucide:alert-triangle" class="w-3.5 h-3.5" />
+     Invalid <code>homepage.*</code> payload tespit edildi. Fallback çalışıyor; prod deploy bloklanmalı.
+    </div>
+   )}
+  </section>
+
+  <section class="rr-section">
+   <header class="rr-section-head">
+    <h2 class="rr-section-title">
+     <Icon name="lucide:radio" class="w-4 h-4" /> Canlı Servis Tazeliği
+    </h2>
+   </header>
+   <div class="rr-list">
+    {freshnessRows.map((item) => (
+     <div class:list={['rr-row', !item.stale && 'rr-row--ok', item.stale && 'rr-row--warn']}>
+      <code class="rr-row-key">{item.key}</code>
+      <span class:list={['rr-row-status', item.stale ? 'rr-row-status--warn' : 'rr-row-status--ok']}>
+       {item.stale ? '⚠ STALE' : '✓ OK'}
+      </span>
+     </div>
+    ))}
+    {freshnessRows.length === 0 && <p class="rr-empty">Tazelik verisi bulunamadı.</p>}
+   </div>
+  </section>
+
+  <section class="rr-section">
+   <header class="rr-section-head">
+    <h2 class="rr-section-title">
+     <Icon name="lucide:layout" class="w-4 h-4" /> Homepage Section Sırası ve Görünürlüğü
+    </h2>
+   </header>
+   <div class="rr-list">
+    {homepageSectionSummary.map((item) => (
+     <div class:list={['rr-row', item.enabled && 'rr-row--ok', !item.enabled && 'rr-row--warn']}>
+      <div class="rr-row-info">
+       <span class="rr-order">{item.order}</span>
+       <code class="rr-row-key">{item.id}</code>
+      </div>
+      <span class:list={['rr-row-status', item.enabled ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+       {item.enabled ? '✓ AKTİF' : '○ KAPALI'}
+      </span>
+     </div>
+    ))}
+   </div>
+  </section>
  </div>
 
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] p-5">
- <h3 class="text-lg font-bold text-[#1F1410] mb-4">Checklist Kontrolleri</h3>
- <div class="space-y-2">
- {(dashboard.checks || []).map((item) => (
- <div class="flex items-center justify-between rounded-sm bg-[rgba(184,115,51,0.05)] px-3 py-2">
- <code class="text-xs text-[#4A3828]">{item.rel}</code>
- <span class={item.ok ? 'text-emerald-400 text-sm font-semibold' : 'text-red-700 text-sm font-semibold'}>
- {item.ok ? 'OK' : 'EKSİK'}
- </span>
- </div>
- ))}
- </div>
- </div>
+ <style>
+  .rr-page { display: flex; flex-direction: column; gap: 1.25rem; }
 
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] p-5 mt-6">
- <h3 class="text-lg font-bold text-[#1F1410] mb-4">Homepage Config Sağlığı</h3>
- <div class="space-y-2">
- {homepageConfigStatuses.map((item) => (
- <div class="flex items-center justify-between rounded-sm bg-[rgba(184,115,51,0.05)] px-3 py-2">
- <div class="flex flex-col gap-1">
- <code class="text-xs text-[#4A3828]">{item.key}</code>
- <span class="text-[11px] uppercase tracking-[0.18em] text-[#7A6B58]">
- {item.resolution === 'cms-valid'
- ? 'kaynak: cms'
- : item.resolution === 'cms-invalid-fallback'
- ? 'kaynak: cms fakat fallback aktif'
- : 'kaynak: fallback'}
- </span>
- </div>
- <span class={item.valid ? 'text-emerald-400 text-sm font-semibold' : 'text-red-700 text-sm font-semibold'}>
- {item.valid ? 'VALID' : item.hasRow ? 'INVALID' : 'EKSİK'}
- </span>
- </div>
- ))}
- </div>
- {invalidHomepageConfigs.length > 0 && (
- <p class="mt-4 text-sm text-red-700">
- Invalid `homepage.*` payload bulundu. Son geçerli preset/fallback çalışıyor; prod deploy bloklanmalı.
- </p>
- )}
- </div>
+  .rr-banner {
+   display: flex; gap: 1rem; align-items: center;
+   padding: 1rem 1.25rem;
+   border-radius: 12px;
+   border: 1px solid var(--adm-border);
+  }
+  .rr-banner--ok {
+   background: rgba(16,185,129,0.06);
+   border-color: rgba(16,185,129,0.25);
+  }
+  .rr-banner--err {
+   background: rgba(225,29,72,0.06);
+   border-color: rgba(225,29,72,0.25);
+  }
+  .rr-banner-icon {
+   width: 44px; height: 44px;
+   border-radius: 11px;
+   display: inline-flex; align-items: center; justify-content: center;
+   flex-shrink: 0;
+  }
+  .rr-banner--ok .rr-banner-icon { background: rgba(16,185,129,0.15); color: rgb(5,150,105); }
+  .rr-banner--err .rr-banner-icon { background: rgba(225,29,72,0.15); color: rgb(190,18,60); }
+  .rr-banner-title {
+   font-family: 'Cormorant Garamond', serif;
+   font-size: 1.3rem; font-weight: 700;
+   color: var(--adm-text);
+  }
+  .rr-banner-sub {
+   font-size: 0.82rem;
+   color: var(--adm-text-soft);
+   margin-top: 0.2rem;
+  }
 
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] p-5 mt-6">
- <h3 class="text-lg font-bold text-[#1F1410] mb-4">Canlı Servis Tazeliği</h3>
- <div class="space-y-2">
- {freshnessRows.map((item) => (
- <div class="flex items-center justify-between rounded-sm bg-[rgba(184,115,51,0.05)] px-3 py-2">
- <code class="text-xs text-[#4A3828]">{item.key}</code>
- <span class={item.stale ? 'text-amber-400 text-sm font-semibold' : 'text-emerald-400 text-sm font-semibold'}>
- {item.stale ? 'STALE' : 'OK'}
- </span>
- </div>
- ))}
- </div>
- </div>
+  .rr-section {
+   background: var(--adm-bg-elev);
+   border: 1px solid var(--adm-border);
+   border-radius: 12px;
+   overflow: hidden;
+  }
+  .rr-section-head {
+   display: flex; align-items: center; justify-content: space-between;
+   padding: 0.95rem 1.15rem;
+   border-bottom: 1px solid var(--adm-border);
+   background: var(--adm-bg-hover);
+  }
+  .rr-section-title {
+   display: inline-flex; align-items: center; gap: 0.5rem;
+   margin: 0;
+   font-size: 0.95rem; font-weight: 600;
+   color: var(--adm-text);
+  }
+  .rr-section-meta {
+   font-size: 0.78rem;
+   color: var(--adm-text-soft);
+   font-weight: 500;
+  }
 
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[var(--bg-card)] p-5 mt-6">
- <h3 class="text-lg font-bold text-[#1F1410] mb-4">Homepage Section Sırası ve Görünürlüğü</h3>
- <div class="space-y-2">
- {homepageSectionSummary.map((item) => (
- <div class="flex items-center justify-between rounded-sm bg-[rgba(184,115,51,0.05)] px-3 py-2">
- <div class="flex items-center gap-3">
- <span class="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[#B87333] px-2 text-[11px] font-bold text-[#F5EDD6]">
- {item.order}
- </span>
- <code class="text-xs text-[#4A3828]">{item.id}</code>
- </div>
- <span class={item.enabled ? 'text-emerald-400 text-sm font-semibold' : 'text-amber-400 text-sm font-semibold'}>
- {item.enabled ? 'AKTİF' : 'KAPALI'}
- </span>
- </div>
- ))}
- </div>
- </div>
- </div>
+  .rr-list { padding: 0.65rem; display: flex; flex-direction: column; gap: 0.35rem; }
+
+  .rr-row {
+   display: flex; align-items: center; justify-content: space-between;
+   gap: 0.85rem;
+   padding: 0.55rem 0.85rem;
+   background: var(--adm-bg);
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   transition: border-color 0.15s;
+  }
+  .rr-row--ok { border-left: 3px solid rgb(5,150,105); }
+  .rr-row--err { border-left: 3px solid rgb(190,18,60); }
+  .rr-row--warn { border-left: 3px solid rgb(180,83,9); }
+  .rr-row-info { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+  .rr-row-key {
+   font-family: 'Menlo', 'Monaco', monospace;
+   font-size: 0.76rem;
+   color: var(--adm-text);
+  }
+  .rr-row-resolution {
+   font-size: 0.68rem;
+   color: var(--adm-text-soft);
+   text-transform: uppercase;
+   letter-spacing: 0.06em;
+  }
+  .rr-row-status {
+   font-size: 0.74rem; font-weight: 700;
+   white-space: nowrap;
+   padding: 0.2rem 0.55rem;
+   border-radius: 999px;
+  }
+  .rr-row-status--ok { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+  .rr-row-status--err { background: rgba(225,29,72,0.12); color: rgb(190,18,60); }
+  .rr-row-status--warn { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+
+  .rr-order {
+   display: inline-flex; align-items: center; justify-content: center;
+   min-width: 22px; height: 22px;
+   padding: 0 0.4rem;
+   background: var(--adm-accent);
+   color: #fff;
+   border-radius: 999px;
+   font-size: 0.7rem; font-weight: 700;
+   margin-right: 0.5rem;
+  }
+
+  .rr-empty {
+   text-align: center;
+   padding: 1.5rem;
+   color: var(--adm-text-soft);
+   font-size: 0.86rem;
+   margin: 0;
+  }
+  .rr-empty code {
+   background: var(--adm-bg);
+   padding: 0.15rem 0.4rem;
+   border-radius: 4px;
+   font-family: 'Menlo', 'Monaco', monospace;
+   color: var(--adm-accent);
+  }
+
+  .rr-warn {
+   margin: 0 1rem 1rem;
+   padding: 0.55rem 0.85rem;
+   background: rgba(225,29,72,0.06);
+   border: 1px solid rgba(225,29,72,0.18);
+   border-radius: 8px;
+   color: rgb(190,18,60);
+   font-size: 0.82rem;
+   display: flex; align-items: center; gap: 0.4rem;
+  }
+  .rr-warn code {
+   background: rgba(225,29,72,0.1);
+   padding: 0.1rem 0.3rem;
+   border-radius: 4px;
+   font-family: 'Menlo', 'Monaco', monospace;
+  }
+ </style>
 </AdminLayout>

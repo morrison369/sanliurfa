@@ -3,6 +3,26 @@ import Layout from '../layouts/Layout.astro';
 import { Icon } from 'astro-icon/components';
 import { randomBytes } from 'node:crypto';
 
+// Defense in depth: asset path için HTML 500 dönmemeli (MIME parse hatası)
+const path = Astro.url.pathname;
+const isAssetPath =
+ path.startsWith('/_astro/') ||
+ path.startsWith('/_server-islands/') ||
+ path.endsWith('.css') ||
+ path.endsWith('.js') ||
+ path.endsWith('.map') ||
+ path.endsWith('.woff') ||
+ path.endsWith('.woff2');
+if (isAssetPath) {
+ return new Response('Internal Server Error', {
+  status: 500,
+  headers: {
+   'Content-Type': 'text/plain; charset=utf-8',
+   'Cache-Control': 'no-store',
+  },
+ });
+}
+
 const seo = {
  title: '500 — Sunucu Hatası | Sanliurfa.com',
  description: 'Bir hata oluştu. Lütfen daha sonra tekrar deneyin.',

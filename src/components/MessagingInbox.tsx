@@ -263,7 +263,7 @@ export default function MessagingInbox() {
 
  <div className="flex-1 overflow-y-auto">
  {loadingConversations ? (
- <div className="p-4 text-sm text-[#7A6B58]">Yükleniyor...</div>
+ <div className="p-4 text-sm text-[#7A6B58]">Yükleniyor…</div>
  ) : filteredConversations.length === 0 ? (
  <div className="p-6 text-sm text-[#7A6B58]">Henüz sohbet yok.</div>
  ) : (

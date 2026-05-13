@@ -1,148 +1,460 @@
 ---
 import { Icon } from 'astro-icon/components';
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
+import AdmStatGrid from '../../../components/admin/AdmStatGrid.astro';
+import AdmEmptyState from '../../../components/admin/AdmEmptyState.astro';
 import { getPosts, getCategories } from '../../../lib/blog/db';
+import { query } from '../../../lib/postgres';
 import { safeIntParam } from '../../../lib/api';
+import { logger } from '../../../lib/logging';
 
 const url = new URL(Astro.request.url);
-const status = url.searchParams.get('status');
-const category = url.searchParams.get('category');
-const search = url.searchParams.get('search');
+const status = url.searchParams.get('status') || '';
+const category = url.searchParams.get('category') || '';
+const search = url.searchParams.get('search') || '';
 const page = safeIntParam(url.searchParams.get('page'), 1, 1, 1_000_000);
 const limit = 20;
 const offset = (page - 1) * limit;
 
+let stats = { total: 0, published: 0, draft: 0, scheduled: 0, archived: 0 };
+try {
+ const r = await query<{ status: string; cnt: number }>(
+  `SELECT status, COUNT(*)::int AS cnt FROM blog_posts GROUP BY status`
+ );
+ for (const row of r.rows) {
+  const k = row.status as keyof typeof stats;
+  if (k in stats) stats[k] = row.cnt;
+  stats.total += row.cnt;
+ }
+} catch (e) {
+ logger.error('admin blog stats failed', e instanceof Error ? e : new Error(String(e)));
+}
+
 const [{ posts, total }, categories] = await Promise.all([
  getPosts({
- limit,
- offset,
- ...(status ? { status } : {}),
- ...(category ? { category } : {}),
- ...(search ? { search } : {}),
+  limit,
+  offset,
+  status: status || '',
+  ...(category ? { category } : {}),
+  ...(search ? { search } : {}),
  }),
  getCategories(),
 ]);
 
 const totalPages = Math.ceil(total / limit);
+const statusChips: { value: string; label: string }[] = [
+ { value: '', label: 'Tümü' },
+ { value: 'published', label: 'Yayında' },
+ { value: 'draft', label: 'Taslak' },
+ { value: 'scheduled', label: 'Planlandı' },
+ { value: 'archived', label: 'Arşiv' },
+];
 
+const statusLabels: Record<string, { text: string; cls: string }> = {
+ published: { text: 'Yayında', cls: 'bp-badge--ok' },
+ draft: { text: 'Taslak', cls: 'bp-badge--muted' },
+ scheduled: { text: 'Planlandı', cls: 'bp-badge--warn' },
+ archived: { text: 'Arşiv', cls: 'bp-badge--soft' },
+};
+
+function buildPageHref(p: number): string {
+ const qs = new URLSearchParams();
+ qs.set('page', String(p));
+ if (status) qs.set('status', status);
+ if (category) qs.set('category', category);
+ if (search) qs.set('search', search);
+ return `?${qs.toString()}`;
+}
+
+function computePageWindow(current: number, totalP: number, windowSize = 7): number[] {
+ if (totalP <= windowSize) return Array.from({ length: totalP }, (_, i) => i + 1);
+ const half = Math.floor(windowSize / 2);
+ let start = current - half;
+ let end = current + half;
+ if (start < 1) { start = 1; end = windowSize; }
+ if (end > totalP) { end = totalP; start = totalP - windowSize + 1; }
+ const out: number[] = [];
+ for (let i = start; i <= end; i++) out.push(i);
+ return out;
+}
+const pageWindow = computePageWindow(page, totalPages);
 ---
 
 <AdminLayout
- title="Tüm Yazılar"
- subtitle={`${total} yazı bulundu`}
- seo={{ title: 'Tüm Yazılar - Yönetim Paneli', noIndex: true }}
+ title="Blog Yazıları"
+ subtitle={`${total.toLocaleString('tr-TR')} yazı`}
+ seo={{ title: 'Blog Yazıları - Yönetim Paneli', noIndex: true }}
 >
- <a slot="hero-action" href="/admin/blog/new" class="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700 inline-flex items-center gap-2">
- <Icon name="lucide:plus" class="w-4 h-4" />
- Yeni Yazı
+ <a slot="page-actions" href="/admin/blog/new" class="bp-cta">
+  <Icon name="lucide:plus" class="w-4 h-4" />
+  Yeni Yazı
  </a>
 
- <div class="sf-container py-8 max-w-6xl space-y-5">
- <div class="mb-2">
- <a href="/admin/blog" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Blog Yönetimi</a>
- </div>
+ <div class="bp-page">
+  <AdmStatGrid stats={[
+   { label: 'Toplam Yazı', value: stats.total, icon: 'lucide:file-text', color: 'indigo', href: '/admin/blog/posts' },
+   { label: 'Yayında', value: stats.published, icon: 'lucide:check-circle', color: 'emerald', href: '/admin/blog/posts?status=published' },
+   { label: 'Taslak', value: stats.draft, icon: 'lucide:pencil-line', color: 'slate', href: '/admin/blog/posts?status=draft' },
+   { label: 'Planlandı', value: stats.scheduled, icon: 'lucide:calendar-clock', color: 'amber', href: '/admin/blog/posts?status=scheduled' },
+  ]} />
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-4">
- <form class="flex flex-wrap gap-4" method="get">
- <div class="flex-1 min-w-[200px]">
- <input
- type="text"
- name="search"
- value={search}
- placeholder="Yazı ara..."
- class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400"
- />
- </div>
+  <form class="bp-toolbar" method="get">
+   <div class="bp-search">
+    <Icon name="lucide:search" class="bp-search-ico" />
+    <input
+     type="text"
+     name="search"
+     value={search}
+     placeholder="Yazı başlığı, içerik ara..."
+     autocomplete="off"
+    />
+   </div>
 
- <select name="status" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
- <option value="">Tüm Durumlar</option>
- <option value="published" selected={status === 'published'}>Yayında</option>
- <option value="draft" selected={status === 'draft'}>Taslak</option>
- <option value="scheduled" selected={status === 'scheduled'}>Planlandı</option>
- </select>
+   <div class="bp-chips" role="group" aria-label="Durum filtresi">
+    {statusChips.map(chip => (
+     <a
+      href={`?${new URLSearchParams({
+       ...(chip.value ? { status: chip.value } : {}),
+       ...(category ? { category } : {}),
+       ...(search ? { search } : {}),
+      }).toString()}`}
+      class:list={['bp-chip', status === chip.value && 'bp-chip--active']}
+     >{chip.label}</a>
+    ))}
+   </div>
 
- <select name="category" class="rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
- <option value="">Tüm Kategoriler</option>
- {categories.map(cat => (
- <option value={cat.slug} selected={category === cat.slug}>{cat.name}</option>
- ))}
- </select>
+   <select name="category" class="bp-select" onchange="this.form.submit()" aria-label="Kategori filtresi">
+    <option value="">Tüm Kategoriler</option>
+    {categories.map(cat => (
+     <option value={cat.slug} selected={category === cat.slug}>{cat.name}</option>
+    ))}
+   </select>
 
- <button type="submit" class="rounded-sm bg-[#6B5540] px-4 py-2 text-sm font-semibold text-white hover:bg-[#5c4839]">
- Filtrele
- </button>
- </form>
- </div>
+   {status && <input type="hidden" name="status" value={status} />}
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
- <div class="overflow-x-auto">
- <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
- <tr>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Yazı</th>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Kategori</th>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Durum</th>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Görüntülenme</th>
- <th class="px-6 py-3 text-left text-xs font-medium text-[#7A6B58] uppercase">Tarih</th>
- <th class="px-6 py-3 text-right text-xs font-medium text-[#7A6B58] uppercase">İşlemler</th>
- </tr>
- </thead>
- <tbody class="divide-y divide-[rgba(184,115,51,0.08)]">
- {posts.map(post => (
- <tr class="hover:bg-[rgba(184,115,51,0.04)]">
- <td class="px-6 py-4">
- <div class="flex items-center gap-3">
- {post.featured_image && (
- <img src={post.featured_image} alt="" class="w-10 h-10 rounded-sm object-cover" />
- )}
- <div>
- <div class="text-sm font-medium text-[#1F1410]">{post.title}</div>
- <div class="text-sm text-[#7A6B58]">/{post.slug}</div>
- </div>
- </div>
- </td>
- <td class="px-6 py-4 text-sm text-[#7A6B58]">{post.category_name || '-'}</td>
- <td class="px-6 py-4">
- <span class={`inline-flex px-2 py-0.5 text-xs font-medium rounded-sm ${
- post.status === 'published' ? 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' :
- post.status === 'draft' ? 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' :
- 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]'
- }`}>
- {post.status === 'published' ? 'Yayında' : post.status === 'draft' ? 'Taslak' : 'Planlandı'}
- </span>
- </td>
- <td class="px-6 py-4 text-sm text-[#7A6B58]">{post.view_count.toLocaleString('tr-TR')}</td>
- <td class="px-6 py-4 text-sm text-[#7A6B58]">{new Date(post.created_at).toLocaleDateString('tr-TR')}</td>
- <td class="px-6 py-4 text-right text-sm">
- <a href={`/admin/blog/edit/${post.id}`} class="text-[#7A6B58] hover:text-urfa-600 mr-3">Düzenle</a>
- <a href={`/blog/${post.slug}`} target="_blank" rel="noopener" class="text-[#7A6B58] hover:text-[#7A6B58]">Görüntüle</a>
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
+   <button type="submit" class="bp-search-btn">
+    <Icon name="lucide:filter" class="w-4 h-4" /> Filtrele
+   </button>
+  </form>
 
- {posts.length === 0 && (
- <div class="py-12 text-center text-sm text-[#7A6B58]">Yazı bulunamadı</div>
- )}
- </div>
+  <div class="bp-table-wrap">
+   {posts.length === 0 ? (
+    <AdmEmptyState
+     icon="lucide:file-text"
+     title="Yazı bulunamadı"
+     description={search || status || category ? 'Filtre kriterlerinize uygun yazı yok. Filtreyi temizleyip tekrar deneyin.' : 'Henüz bir blog yazısı yok. Yeni bir yazıyla başlayın.'}
+     actionLabel="Yeni Yazı"
+     actionHref="/admin/blog/new"
+     size="md"
+    />
+   ) : (
+    <>
+     <table class="bp-table">
+      <thead>
+       <tr>
+        <th class="bp-th">Yazı</th>
+        <th class="bp-th">Kategori</th>
+        <th class="bp-th">Durum</th>
+        <th class="bp-th bp-th-num">Görüntülenme</th>
+        <th class="bp-th">Tarih</th>
+        <th class="bp-th bp-th-actions">İşlemler</th>
+       </tr>
+      </thead>
+      <tbody>
+       {posts.map(post => {
+        const label = statusLabels[post.status] || { text: post.status, cls: 'bp-badge--muted' };
+        return (
+         <tr>
+          <td class="bp-td">
+           <div class="bp-post-cell">
+            {post.featured_image ? (
+             <img src={post.featured_image} alt="" class="bp-thumb" loading="lazy" />
+            ) : (
+             <div class="bp-thumb bp-thumb--ph" aria-hidden="true">
+              <Icon name="lucide:image" class="w-4 h-4" />
+             </div>
+            )}
+            <div class="bp-post-text">
+             <div class="bp-post-title">{post.title}</div>
+             <div class="bp-post-slug">/{post.slug}</div>
+            </div>
+           </div>
+          </td>
+          <td class="bp-td bp-td-soft">{post.category_name || '—'}</td>
+          <td class="bp-td">
+           <span class:list={['bp-badge', label.cls]}>{label.text}</span>
+           {post.is_pinned && <span class="bp-pin" title="Sabitlenmiş">📌</span>}
+          </td>
+          <td class="bp-td bp-td-num bp-td-soft">
+           {(post.view_count || 0).toLocaleString('tr-TR')}
+          </td>
+          <td class="bp-td bp-td-soft">
+           {new Date(post.created_at).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </td>
+          <td class="bp-td bp-td-actions">
+           <a href={`/admin/blog/edit/${post.id}`} class="bp-row-btn bp-row-btn--primary">
+            <Icon name="lucide:pencil" class="w-3.5 h-3.5" /> Düzenle
+           </a>
+           <a href={`/blog/${post.slug}`} target="_blank" rel="noopener" class="bp-row-btn">
+            <Icon name="lucide:external-link" class="w-3.5 h-3.5" /> Görüntüle
+           </a>
+          </td>
+         </tr>
+        );
+       })}
+      </tbody>
+     </table>
 
- {totalPages > 1 && (
- <div class="flex justify-center gap-2">
- {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
- <a
- href={`?page=${p}${status ? `&status=${status}` : ''}${category ? `&category=${category}` : ''}${search ? `&search=${search}` : ''}`}
- class={`px-3 py-1 rounded-sm text-sm ${
- p === page
- ? 'bg-urfa-600 text-white'
- : 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.15)]'
- }`}
- >
- {p}
- </a>
- ))}
- </div>
- )}
+     {totalPages > 1 && (
+      <div class="bp-pagination">
+       <p class="bp-pag-info">
+        <strong>{offset + 1}</strong>–<strong>{Math.min(offset + limit, total)}</strong> / <strong>{total.toLocaleString('tr-TR')}</strong> yazı
+       </p>
+       <div class="bp-pag-buttons">
+        {page > 1 && (
+         <a href={buildPageHref(page - 1)} class="bp-pag-btn" aria-label="Önceki sayfa">
+          <Icon name="lucide:chevron-left" class="w-4 h-4" />
+         </a>
+        )}
+        {pageWindow.map(p => (
+         <a
+          href={buildPageHref(p)}
+          class:list={['bp-pag-btn', p === page && 'bp-pag-btn--active']}
+         >{p}</a>
+        ))}
+        {page < totalPages && (
+         <a href={buildPageHref(page + 1)} class="bp-pag-btn" aria-label="Sonraki sayfa">
+          <Icon name="lucide:chevron-right" class="w-4 h-4" />
+         </a>
+        )}
+       </div>
+      </div>
+     )}
+    </>
+   )}
+  </div>
  </div>
 </AdminLayout>
+
+<style>
+ .bp-page { display: flex; flex-direction: column; gap: 1.25rem; }
+
+ .bp-cta {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+  color: #fff; font-weight: 600; font-size: 0.85rem;
+  border-radius: 8px; text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+ }
+ .bp-cta:hover { transform: translateY(-1px); box-shadow: var(--adm-shadow); }
+
+ .bp-toolbar {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center;
+ }
+ .bp-search { flex: 1; min-width: 240px; position: relative; }
+ .bp-search-ico {
+  position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+  width: 1rem; height: 1rem;
+  color: var(--adm-text-soft);
+  pointer-events: none;
+ }
+ .bp-search input {
+  width: 100%;
+  padding: 0.55rem 0.7rem 0.55rem 2.1rem;
+  background: var(--adm-bg);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--adm-text);
+  transition: border-color 0.15s;
+ }
+ .bp-search input:focus {
+  outline: none;
+  border-color: var(--adm-accent);
+  box-shadow: 0 0 0 3px var(--adm-bg-active);
+ }
+
+ .bp-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+ .bp-chip {
+  padding: 0.42rem 0.85rem;
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--adm-text-muted);
+  background: transparent;
+  border: 1px solid var(--adm-border);
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all 0.15s;
+ }
+ .bp-chip:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+ .bp-chip--active {
+  background: var(--adm-accent);
+  color: #fff !important;
+  border-color: var(--adm-accent);
+ }
+
+ .bp-select {
+  padding: 0.5rem 0.8rem;
+  background: var(--adm-bg);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--adm-text);
+  cursor: pointer;
+ }
+ .bp-select:focus { outline: none; border-color: var(--adm-accent); }
+
+ .bp-search-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  background: var(--adm-accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600; font-size: 0.82rem;
+  cursor: pointer;
+  transition: filter 0.15s;
+ }
+ .bp-search-btn:hover { filter: brightness(0.92); }
+
+ .bp-table-wrap {
+   overflow-x: auto;
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+ }
+ .bp-table { width: 100%; border-collapse: collapse; }
+ .bp-th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--adm-text-soft);
+  padding: 0.85rem 1rem;
+  background: var(--adm-bg-hover);
+  border-bottom: 1px solid var(--adm-border);
+ }
+ .bp-th-num { text-align: right; }
+ .bp-th-actions { text-align: right; width: 220px; }
+ .bp-table tbody tr {
+  border-bottom: 1px solid var(--adm-border);
+  transition: background 0.12s;
+ }
+ .bp-table tbody tr:last-child { border-bottom: none; }
+ .bp-table tbody tr:hover { background: var(--adm-bg-hover); }
+ .bp-td { padding: 0.85rem 1rem; font-size: 0.86rem; color: var(--adm-text); vertical-align: middle; }
+ .bp-td-soft { color: var(--adm-text-muted); }
+ .bp-td-num { text-align: right; font-variant-numeric: tabular-nums; }
+ .bp-td-actions { text-align: right; white-space: nowrap; }
+
+ .bp-post-cell {
+  display: flex; align-items: center; gap: 0.75rem;
+  min-width: 0;
+ }
+ .bp-thumb {
+  width: 44px; height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--adm-bg);
+  border: 1px solid var(--adm-border);
+  flex-shrink: 0;
+ }
+ .bp-thumb--ph {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--adm-text-soft);
+ }
+ .bp-post-text { min-width: 0; }
+ .bp-post-title {
+  font-weight: 600;
+  color: var(--adm-text);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 0.15rem;
+ }
+ .bp-post-slug {
+  font-size: 0.72rem;
+  color: var(--adm-text-soft);
+  font-family: 'Menlo', 'Monaco', monospace;
+ }
+
+ .bp-badge {
+  display: inline-flex; align-items: center;
+  padding: 0.22rem 0.55rem;
+  font-size: 0.72rem; font-weight: 600;
+  border-radius: 999px;
+ }
+ .bp-badge--ok { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
+ .bp-badge--warn { background: rgba(217,119,6,0.12); color: rgb(180,83,9); }
+ .bp-badge--muted { background: rgba(100,116,139,0.12); color: rgb(71,85,105); }
+ .bp-badge--soft { background: rgba(100,116,139,0.08); color: rgb(100,116,139); }
+ .bp-pin { margin-left: 0.35rem; font-size: 0.85rem; }
+
+ .bp-row-btn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.38rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--adm-text-muted);
+  background: transparent;
+  border: 1px solid var(--adm-border);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.15s;
+  margin-left: 0.35rem;
+ }
+ .bp-row-btn:first-child { margin-left: 0; }
+ .bp-row-btn:hover {
+  border-color: var(--adm-text-muted);
+  color: var(--adm-text);
+  background: var(--adm-bg);
+ }
+ .bp-row-btn--primary {
+  color: var(--adm-accent);
+  border-color: rgba(184,115,51,0.3);
+ }
+ .bp-row-btn--primary:hover {
+  background: var(--adm-bg-hover);
+  border-color: var(--adm-accent);
+  color: var(--adm-accent);
+ }
+
+ .bp-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-top: 1px solid var(--adm-border);
+  background: var(--adm-bg-hover);
+  flex-wrap: wrap; gap: 0.75rem;
+ }
+ .bp-pag-info { font-size: 0.82rem; color: var(--adm-text-muted); margin: 0; }
+ .bp-pag-info strong { color: var(--adm-text); font-weight: 600; }
+ .bp-pag-buttons { display: flex; gap: 0.25rem; }
+ .bp-pag-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 32px; height: 32px;
+  padding: 0 0.6rem;
+  font-size: 0.82rem; font-weight: 600;
+  color: var(--adm-text-muted);
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: all 0.12s;
+ }
+ .bp-pag-btn:hover {
+  border-color: var(--adm-accent);
+  color: var(--adm-accent);
+ }
+ .bp-pag-btn--active {
+  background: var(--adm-accent);
+  color: #fff !important;
+  border-color: var(--adm-accent);
+ }
+</style>

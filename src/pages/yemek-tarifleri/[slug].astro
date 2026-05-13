@@ -13,6 +13,7 @@ import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import { getPublicAppUrl } from '../../lib/public-app-url';
 import RelatedRecipes from '../../components/recipes/RelatedRecipes.astro';
 import RecipeComments from '../../components/recipes/RecipeComments';
+import { linkifyContent } from '../../lib/seo/internal-linker';
 import { logger } from '../../lib/logging';
 import { resolveRecipeImage } from '../../lib/public-image-resolvers';
 const baseUrl = getPublicAppUrl();
@@ -148,7 +149,7 @@ const faqItems = [
  {recipe.description && (
  <PublicContentSection eyebrow="Lezzet Notu">
   <PublicRichProse>
-   <p>{recipe.description}</p>
+   <p set:html={linkifyContent(String(recipe.description), `/yemek-tarifleri/${recipe.slug}`)} />
   </PublicRichProse>
  </PublicContentSection>
  )}
@@ -181,6 +182,24 @@ const faqItems = [
   isAuthenticated={isAuthenticated}
   client:visible
  />
+
+ <!-- Yayın bilgisi (GSC transparency) -->
+ <div style="margin-top:2rem;padding:1rem 1.25rem;background:rgba(184,115,51,.05);border-left:3px solid var(--public-accent);border-radius:.25rem;font-size:.82rem;color:var(--public-muted);line-height:1.7">
+  <p style="margin:0 0 .25rem">
+   <strong style="color:var(--public-text)">Yazar:</strong> Sanliurfa.com Mutfak Ekibi
+   {recipe.created_at && (
+    <>
+     {' · '}<strong style="color:var(--public-text)">Yayın:</strong> <time datetime={recipe.created_at}>{new Date(recipe.created_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+    </>
+   )}
+   {recipe.updated_at && recipe.updated_at !== recipe.created_at && (
+    <>
+     {' · '}<strong style="color:var(--public-text)">Son güncelleme:</strong> <time datetime={recipe.updated_at}>{new Date(recipe.updated_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+    </>
+   )}
+  </p>
+  <p style="margin:0;font-size:.76rem">Tarif yerel mutfak araştırması + denenmiş ölçülerle hazırlanır. Düzeltme/öneri: <a href="mailto:iletisim@sanliurfa.com" style="color:var(--public-accent)">iletisim@sanliurfa.com</a> · <a href="/kunye" style="color:var(--public-accent)">Yayın bilgileri</a></p>
+ </div>
  </div>
 
  <Fragment slot="sidebar">
@@ -269,7 +288,7 @@ const faqItems = [
  bestRating: '5',
  worstRating: '1',
  } : undefined,
- author: { '@type': 'Organization', name: 'Sanliurfa.com', url: baseUrl },
+ author: { '@type': 'Organization', name: 'Sanliurfa.com Mutfak Ekibi', url: `${baseUrl}/yazarlar#mutfak-ekibi` },
  publisher: { '@type': 'Organization', name: 'Sanliurfa.com', url: baseUrl, logo: { '@type': 'ImageObject', url: `${baseUrl}/favicon.svg` } },
  datePublished: recipe.created_at,
  dateModified: recipe.updated_at || recipe.created_at,

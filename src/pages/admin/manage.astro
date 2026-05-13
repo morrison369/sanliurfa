@@ -1,13 +1,26 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
 import AdminManager from '../../components/admin/AdminManager';
 ---
 
 <AdminLayout
  title="Yönetim"
- subtitle="Yerler, yorumlar ve kullanıcıları yönet"
+ subtitle="Yerler, yorumlar ve kullanıcıları tek panelden yönet"
+ seo={{ title: 'Yönetim - Admin', noIndex: true }}
 >
- <div class="sf-container py-8">
- <AdminManager client:visible />
+ <div class="mg-page">
+  <div class="mg-panel">
+   <AdminManager client:visible />
+  </div>
  </div>
 </AdminLayout>
+
+<style>
+ .mg-page { display: flex; flex-direction: column; gap: 1rem; }
+ .mg-panel {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+ }
+</style>

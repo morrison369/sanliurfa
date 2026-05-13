@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { requireAuth } from '../../../lib/auth';
-import { getMatchCandidates, getSwipeQuota } from '../../../lib/social/matchmaking-db';
+import { getSwipeQuota } from '../../../lib/social/matchmaking-db';
+import { getRankedCandidates } from '../../../lib/social/match-scoring';
 import { getSocialFeatureConfig } from '../../../lib/social/match-features';
 import { apiResponse, problemJson, HttpStatus, safeErrorDetail, safeIntParam } from '../../../lib/api';
 import { enforceSocialRateLimit } from '../../../lib/social/abuse-policy';
@@ -34,10 +35,23 @@ export const GET: APIRoute = async ({ request, url }) => {
     }
 
     const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
-    const candidates = await getMatchCandidates(auth.user.id, limit);
+    const ranked = await getRankedCandidates(auth.user.id, limit);
     const quota = await getSwipeQuota(auth.user.id);
 
-    return apiResponse({ success: true, data: candidates, quota }, HttpStatus.OK);
+    // UI-friendly shape: MatchCandidate + score/matchReasons
+    const data = ranked.map((r) => ({
+      userId: r.user_id,
+      fullName: r.full_name || 'Üye',
+      username: r.username,
+      bio: r.bio || '',
+      photos: Array.isArray(r.photos) ? r.photos : [],
+      score: r.score,
+      matchReasons: r.matchReasons,
+      preferredDistrict: r.preferred_district,
+      profileCompleteness: r.profile_completeness,
+    }));
+
+    return apiResponse({ success: true, data, quota }, HttpStatus.OK);
   } catch (error) {
     return problemJson({
       status: 500,

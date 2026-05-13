@@ -1,0 +1,104 @@
+---
+/**
+ * BackToTop — uzun sayfalarda scroll-to-top floating button.
+ * 400px scroll sonrası görünür; mobile bottom nav üzerinde durmaz.
+ * smooth scroll + reduced-motion uyumlu.
+ */
+---
+
+<button
+  type="button"
+  id="back-to-top"
+  class="btt"
+  aria-label="Yukarı çık"
+  hidden
+>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="m18 15-6-6-6 6"></path>
+  </svg>
+</button>
+
+<style>
+  .btt {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 39;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    background: rgba(192, 87, 31, 0.92);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    box-shadow: 0 4px 16px -4px rgba(31, 20, 16, 0.3);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, background 0.15s;
+  }
+  .btt:hover {
+    background: #C0571F;
+  }
+  .btt[data-visible="true"] {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Mobile bottom nav 768px altında 4rem yüksekliğe yakın — onun üzerinde dur.
+     Mobile'da sağda "Giriş/Profil" item'ı vardı, button onunla çakışıyordu;
+     bu yüzden mobile'da sol-altta gösteriyoruz (safe-area uyumlu). */
+  @media (max-width: 768px) {
+    .btt {
+      right: auto;
+      left: 1rem;
+      bottom: 4.75rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btt { transition: opacity 0.15s; }
+  }
+</style>
+
+<script>
+  const btn = document.getElementById('back-to-top') as HTMLButtonElement | null;
+  if (btn) {
+    let ticking = false;
+
+    const updateVisibility = () => {
+      const shouldShow = window.scrollY > 400;
+      if (shouldShow) {
+        btn.hidden = false;
+        // Next frame: trigger transition
+        requestAnimationFrame(() => btn.setAttribute('data-visible', 'true'));
+      } else {
+        btn.removeAttribute('data-visible');
+        // Hide from a11y after transition completes
+        setTimeout(() => {
+          if (btn.getAttribute('data-visible') !== 'true' && window.scrollY <= 400) {
+            btn.hidden = true;
+          }
+        }, 200);
+      }
+      ticking = false;
+    };
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(updateVisibility);
+        ticking = true;
+      }
+    }, { passive: true });
+
+    btn.addEventListener('click', () => {
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
+    });
+
+    // Initial check (e.g. user reloaded mid-page)
+    updateVisibility();
+  }
+</script>

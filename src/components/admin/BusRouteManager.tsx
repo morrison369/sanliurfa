@@ -127,13 +127,13 @@ export default function BusRouteManager() {
  }
 
  const tabCls = (t: string) =>
- `px-4 py-2 text-sm font-medium rounded-sm transition-colors ${tab === t ? 'bg-[var(--bg-card)] shadow text-[#1F1410]' : 'text-[#7A6B58] hover:text-[#7A6B58]'}`;
+ `px-4 py-2 text-sm font-medium rounded-sm transition-colors ${tab === t ? 'bg-[var(--adm-bg-elev)] shadow text-[var(--adm-text)]' : 'text-[var(--adm-text-muted)] hover:text-[var(--adm-text-muted)]'}`;
 
  return (
  <div className="space-y-6">
- <div className="bg-[var(--bg-card)] rounded-sm p-6">
- <h1 className="text-2xl font-bold text-[#1F1410]">Otobüs Hat Yönetimi</h1>
- <p className="text-[#7A6B58] mt-1">Hat ekle, sefer saatlerini düzenle, aktif/pasif yönet.</p>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6">
+ <h1 className="text-2xl font-bold text-[var(--adm-text)]">Otobüs Hat Yönetimi</h1>
+ <p className="text-[var(--adm-text-muted)] mt-1">Hat ekle, sefer saatlerini düzenle, aktif/pasif yönet.</p>
  </div>
 
  {msg && (
@@ -143,7 +143,7 @@ export default function BusRouteManager() {
  </div>
  )}
 
- <div className="bg-[rgba(184,115,51,0.06)] p-1 rounded-sm inline-flex gap-1 flex-wrap">
+ <div className="bg-[var(--adm-bg-hover)] p-1 rounded-sm inline-flex gap-1 flex-wrap">
  <button onClick={() => setTab('list')} className={tabCls('list')}>🚌 Hatlar</button>
  <button onClick={() => setTab('add')} className={tabCls('add')}>➕ Hat Ekle</button>
  {selectedRoute && (
@@ -155,54 +155,54 @@ export default function BusRouteManager() {
 
  {/* LIST TAB */}
  {tab === 'list' && (
- <div className="bg-[var(--bg-card)] rounded-sm overflow-hidden">
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm overflow-hidden">
  {loading ? (
  <div className="text-center py-10 text-[#4A3828]">Yükleniyor…</div>
  ) : routes.length === 0 ? (
  <div className="text-center py-10 text-[#4A3828]">
  <p className="mb-2">Henüz hat yok.</p>
- <button onClick={() => setTab('add')} className="text-[#7A6B58] underline text-sm">Hat ekleyin</button>
+ <button onClick={() => setTab('add')} className="text-[var(--adm-text-muted)] underline text-sm">Hat ekleyin</button>
  </div>
  ) : (
  <table className="w-full text-sm">
- <thead className="bg-[rgba(184,115,51,0.04)] border-b border-[rgba(184,115,51,0.14)]">
+ <thead className="bg-[var(--adm-bg-hover)] border-b border-[var(--adm-border)]">
  <tr>
- <th className="text-left px-4 py-3 font-medium text-[#7A6B58]">Hat</th>
- <th className="text-left px-4 py-3 font-medium text-[#7A6B58] hidden sm:table-cell">Güzergah</th>
- <th className="text-left px-4 py-3 font-medium text-[#7A6B58]">Sefer</th>
- <th className="text-left px-4 py-3 font-medium text-[#7A6B58]">Durum</th>
- <th className="text-left px-4 py-3 font-medium text-[#7A6B58]">İşlem</th>
+ <th className="text-left px-4 py-3 font-medium text-[var(--adm-text-muted)]">Hat</th>
+ <th className="text-left px-4 py-3 font-medium text-[var(--adm-text-muted)] hidden sm:table-cell">Güzergah</th>
+ <th className="text-left px-4 py-3 font-medium text-[var(--adm-text-muted)]">Sefer</th>
+ <th className="text-left px-4 py-3 font-medium text-[var(--adm-text-muted)]">Durum</th>
+ <th className="text-left px-4 py-3 font-medium text-[var(--adm-text-muted)]">İşlem</th>
  </tr>
  </thead>
- <tbody className="divide-y divide-[rgba(184,115,51,0.1)]">
+ <tbody className="divide-y divide-[var(--adm-bg-active)]">
  {routes.map(r => (
- <tr key={r.id} className="hover:bg-[rgba(184,115,51,0.04)]">
+ <tr key={r.id} className="hover:bg-[var(--adm-bg-hover)]">
  <td className="px-4 py-3">
  <span className="font-bold text-red-600 text-base">{r.route_no}</span>
- <p className="text-xs text-[#7A6B58]">{r.name}</p>
+ <p className="text-xs text-[var(--adm-text-muted)]">{r.name}</p>
  </td>
- <td className="px-4 py-3 text-[#7A6B58] hidden sm:table-cell text-xs">
+ <td className="px-4 py-3 text-[var(--adm-text-muted)] hidden sm:table-cell text-xs">
  {r.start_stop && r.end_stop ? `${r.start_stop} → ${r.end_stop}` : '—'}
  </td>
- <td className="px-4 py-3 text-[#7A6B58] text-xs">
+ <td className="px-4 py-3 text-[var(--adm-text-muted)] text-xs">
  <span className="block">İş: {r.weekday_count}</span>
  <span className="block">HY: {r.weekend_count}</span>
  </td>
  <td className="px-4 py-3">
- <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.is_active ? 'bg-[rgba(34,197,94,0.12)] text-green-400' : 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]'}`}>
+ <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.is_active ? 'bg-[rgba(34,197,94,0.12)] text-green-400' : 'bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)]'}`}>
  {r.is_active ? 'Aktif' : 'Pasif'}
  </span>
  </td>
  <td className="px-4 py-3 space-x-2">
  <button
  onClick={() => loadSchedules(r)}
- className="text-xs text-[#7A6B58] hover:underline"
+ className="text-xs text-[var(--adm-text-muted)] hover:underline"
  >
  Saatler
  </button>
  <button
  onClick={() => toggleRoute(r.id)}
- className="text-xs text-[#7A6B58] hover:underline"
+ className="text-xs text-[var(--adm-text-muted)] hover:underline"
  >
  {r.is_active ? 'Pasif Yap' : 'Aktif Yap'}
  </button>
@@ -217,61 +217,61 @@ export default function BusRouteManager() {
 
  {/* ADD TAB */}
  {tab === 'add' && (
- <div className="bg-[var(--bg-card)] rounded-sm p-6 max-w-lg">
- <h2 className="text-lg font-semibold text-[#1F1410] mb-5">Yeni Hat Ekle</h2>
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 max-w-lg">
+ <h2 className="text-lg font-semibold text-[var(--adm-text)] mb-5">Yeni Hat Ekle</h2>
  <div className="space-y-4">
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Hat No *</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Hat No *</label>
  <input
  type="text"
  value={newRoute.route_no}
  onChange={e => setNewRoute(f => ({ ...f, route_no: e.target.value }))}
  placeholder="Örn: 12"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Hat Adı *</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Hat Adı *</label>
  <input
  type="text"
  value={newRoute.name}
  onChange={e => setNewRoute(f => ({ ...f, name: e.target.value }))}
  placeholder="Örn: Karaköprü - Merkez"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  </div>
  <div className="grid grid-cols-2 gap-3">
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Başlangıç Durağı</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Başlangıç Durağı</label>
  <input
  type="text"
  value={newRoute.start_stop}
  onChange={e => setNewRoute(f => ({ ...f, start_stop: e.target.value }))}
  placeholder="Örn: Karaköprü"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Bitiş Durağı</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Bitiş Durağı</label>
  <input
  type="text"
  value={newRoute.end_stop}
  onChange={e => setNewRoute(f => ({ ...f, end_stop: e.target.value }))}
  placeholder="Örn: Topçu Meydanı"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  </div>
  <div>
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Notlar</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Notlar</label>
  <input
  type="text"
  value={newRoute.notes}
  onChange={e => setNewRoute(f => ({ ...f, notes: e.target.value }))}
  placeholder="Opsiyonel"
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  </div>
  <button
@@ -287,30 +287,30 @@ export default function BusRouteManager() {
 
  {/* SCHEDULE TAB */}
  {tab === 'schedule' && selectedRoute && (
- <div className="bg-[var(--bg-card)] rounded-sm p-6 max-w-lg">
- <h2 className="text-lg font-semibold text-[#1F1410] mb-1">
+ <div className="bg-[var(--adm-bg-elev)] rounded-sm p-6 max-w-lg">
+ <h2 className="text-lg font-semibold text-[var(--adm-text)] mb-1">
  Hat {selectedRoute.route_no} — {selectedRoute.name}
  </h2>
- <p className="text-sm text-[#7A6B58] mb-5">Her satıra bir sefer saati (HH:MM). Kaydettiğinizde bu kombinasyon için tüm saatler güncellenir.</p>
+ <p className="text-sm text-[var(--adm-text-muted)] mb-5">Her satıra bir sefer saati (HH:MM). Kaydettiğinizde bu kombinasyon için tüm saatler güncellenir.</p>
 
  <div className="flex gap-3 mb-4">
  <div>
- <label className="block text-xs font-medium text-[#7A6B58] mb-1">Gün Tipi</label>
+ <label className="block text-xs font-medium text-[var(--adm-text-muted)] mb-1">Gün Tipi</label>
  <select
  value={dayType}
  onChange={e => setDayType(e.target.value as 'weekday' | 'weekend')}
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  >
  <option value="weekday">Hafta İçi</option>
  <option value="weekend">Hafta Sonu</option>
  </select>
  </div>
  <div>
- <label className="block text-xs font-medium text-[#7A6B58] mb-1">Yön</label>
+ <label className="block text-xs font-medium text-[var(--adm-text-muted)] mb-1">Yön</label>
  <select
  value={direction}
  onChange={e => setDirection(e.target.value as 'outbound' | 'inbound')}
- className="rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  >
  <option value="outbound">Gidiş</option>
  <option value="inbound">Dönüş</option>
@@ -319,13 +319,13 @@ export default function BusRouteManager() {
  </div>
 
  <div className="mb-4">
- <label className="block text-sm font-medium text-[#7A6B58] mb-1">Sefer Saatleri (her satıra bir saat)</label>
+ <label className="block text-sm font-medium text-[var(--adm-text-muted)] mb-1">Sefer Saatleri (her satıra bir saat)</label>
  <textarea
  value={bulkTimes}
  onChange={e => setBulkTimes(e.target.value)}
  rows={10}
  placeholder={"06:00\n06:30\n07:00\n..."}
- className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] px-3 py-2 text-sm bg-[var(--bg-card)] text-[#1F1410] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
+ className="w-full rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)] font-mono focus:outline-none focus:ring-2 focus:ring-[rgba(184,115,51,0.5)]"
  />
  <p className="text-xs text-[#4A3828] mt-1">
  {bulkTimes.split('\n').filter(t => /^\d{2}:\d{2}$/.test(t.trim())).length} geçerli saat
@@ -342,7 +342,7 @@ export default function BusRouteManager() {
  </button>
  <button
  onClick={() => setTab('list')}
- className="px-5 py-2.5 bg-[rgba(184,115,51,0.06)] text-[#7A6B58] font-medium rounded-sm hover:bg-[rgba(184,115,51,0.08)]"
+ className="px-5 py-2.5 bg-[var(--adm-bg-hover)] text-[var(--adm-text-muted)] font-medium rounded-sm hover:bg-[var(--adm-bg-hover)]"
  >
  Geri
  </button>

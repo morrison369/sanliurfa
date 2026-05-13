@@ -1,5 +1,6 @@
 ---
-import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+import AdmEmptyState from '../../components/admin/AdmEmptyState.astro';
 import { query } from '../../lib/postgres';
 
 const user = Astro.locals.user;
@@ -10,18 +11,25 @@ const VALID_STATUS = ['pending', 'approved', 'rejected', 'all'];
 const safeStatus = VALID_STATUS.includes(statusFilter) ? statusFilter : 'pending';
 
 const statusWhere = safeStatus === 'all' ? '' : `AND pc.status = '${safeStatus}'`;
-const claims = await query(
- `SELECT pc.id, pc.status, pc.contact_name, pc.contact_phone, pc.contact_email,
-         pc.message, pc.admin_note, pc.created_at,
-         p.id as place_id, p.name as place_name, p.slug as place_slug,
-         u.full_name as user_name, u.email as user_email
-  FROM place_claims pc
-  JOIN places p ON p.id = pc.place_id
-  JOIN users u ON u.id = pc.user_id
-  WHERE 1=1 ${statusWhere}
-  ORDER BY pc.created_at DESC
-  LIMIT 100`,
-).then(r => r.rows);
+let claims: any[] = [];
+let loadError: string | null = null;
+try {
+ const r = await query(
+  `SELECT pc.id, pc.status, pc.contact_name, pc.contact_phone, pc.contact_email,
+          pc.message, pc.admin_note, pc.created_at,
+          p.id as place_id, p.name as place_name, p.slug as place_slug,
+          u.full_name as user_name, u.email as user_email
+   FROM place_claims pc
+   LEFT JOIN places p ON p.id = pc.place_id
+   LEFT JOIN users u ON u.id = pc.user_id
+   WHERE 1=1 ${statusWhere}
+   ORDER BY pc.created_at DESC
+   LIMIT 100`,
+ );
+ claims = r.rows;
+} catch (e) {
+ loadError = e instanceof Error ? e.message : String(e);
+}
 
 const statusLabel: Record<string, string> = { pending: 'Bekleyen', approved: 'Onaylı', rejected: 'Reddedilen', all: 'Tümü' };
 const statusColor: Record<string, string> = { pending: '#D49718', approved: '#2C7A52', rejected: '#C0571F' };
@@ -61,8 +69,19 @@ const statusColor: Record<string, string> = { pending: '#D49718', approved: '#2C
    ))}
   </div>
 
-  {claims.length === 0 && (
-   <p style="color:#7A6448;text-align:center;padding:3rem">Bu durumda talep bulunmuyor.</p>
+  {loadError && (
+   <div style="background:rgba(199,57,71,.08);border:1px solid rgba(199,57,71,.25);color:#9C3340;padding:.85rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:.85rem">
+    ⚠ Sahiplik talepleri yüklenemedi: {loadError}
+   </div>
+  )}
+  {!loadError && claims.length === 0 && (
+   <AdmEmptyState
+    icon="lucide:file-warning"
+    title="Sahiplik talebi yok"
+    description={`"${statusLabel[safeStatus] || safeStatus}" durumunda inceleyebileceğiniz talep bulunmuyor.`}
+    actionLabel="Tüm Talepleri Gör"
+    actionHref="/admin/claims?status=all"
+   />
   )}
 
   {claims.map((c: any) => (

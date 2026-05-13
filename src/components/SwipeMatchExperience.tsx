@@ -5,7 +5,34 @@ interface MatchProfile {
  bio: string;
  photos: string[];
  is_discoverable: boolean;
+ interests?: string[];
+ age_range_min?: number | null;
+ age_range_max?: number | null;
+ preferred_district?: string | null;
+ looking_for?: string | null;
+ profile_completeness?: number;
 }
+
+const LOOKING_FOR_OPTIONS: Array<{ value: string; label: string }> = [
+ { value: '', label: 'Belirtmek istemiyorum' },
+ { value: 'arkadaslik', label: 'Arkadaşlık' },
+ { value: 'iliskili', label: 'İlişki' },
+ { value: 'sohbet', label: 'Sohbet' },
+ { value: 'aktivite', label: 'Birlikte aktivite' },
+ { value: 'kahve', label: 'Kahve buluşması' },
+];
+
+const SUGGESTED_INTERESTS = [
+ 'göbeklitepe', 'tarih', 'fotoğrafçılık', 'yemek', 'kebap', 'isot',
+ 'yürüyüş', 'sıra gecesi', 'müzik', 'sinema', 'kitap', 'kahve',
+ 'spor', 'doğa', 'halfeti', 'harran',
+];
+
+const URFA_DISTRICTS = [
+ '', 'Merkez', 'Eyyübiye', 'Haliliye', 'Karaköprü', 'Akçakale', 'Birecik',
+ 'Bozova', 'Ceylanpınar', 'Halfeti', 'Harran', 'Hilvan', 'Siverek',
+ 'Suruç', 'Viranşehir',
+];
 
 interface MatchCandidate {
  userId: string;
@@ -13,6 +40,10 @@ interface MatchCandidate {
  username?: string;
  bio?: string;
  photos?: string[];
+ score?: number;
+ matchReasons?: string[];
+ preferredDistrict?: string | null;
+ profileCompleteness?: number;
 }
 
 interface UserMatch {
@@ -143,6 +174,11 @@ export default function SwipeMatchExperience() {
  bio: profile.bio,
  photos: profile.photos.filter(Boolean).slice(0, 4),
  isDiscoverable: profile.is_discoverable,
+ interests: Array.isArray(profile.interests) ? profile.interests.slice(0, 12) : [],
+ ageRangeMin: typeof profile.age_range_min === 'number' ? profile.age_range_min : null,
+ ageRangeMax: typeof profile.age_range_max === 'number' ? profile.age_range_max : null,
+ preferredDistrict: profile.preferred_district || null,
+ lookingFor: profile.looking_for || null,
  }),
  });
  const data = await res.json();
@@ -375,6 +411,103 @@ export default function SwipeMatchExperience() {
  onChange={(e) => setProfile((prev) => ({ ...prev, bio: e.target.value }))}
  />
 
+ <div className="grid grid-cols-2 gap-2">
+ <div>
+ <label className="mb-1 block text-xs text-[#7A6B58]">İlçe (tercih)</label>
+ <select
+ className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] bg-transparent p-2 text-sm text-[#1F1410]"
+ value={profile.preferred_district || ''}
+ onChange={(e) => setProfile((prev) => ({ ...prev, preferred_district: e.target.value || null }))}
+ >
+ {URFA_DISTRICTS.map((d) => (
+ <option key={d} value={d}>{d || '— Belirtmek istemiyorum —'}</option>
+ ))}
+ </select>
+ </div>
+ <div>
+ <label className="mb-1 block text-xs text-[#7A6B58]">Aradığım</label>
+ <select
+ className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] bg-transparent p-2 text-sm text-[#1F1410]"
+ value={profile.looking_for || ''}
+ onChange={(e) => setProfile((prev) => ({ ...prev, looking_for: e.target.value || null }))}
+ >
+ {LOOKING_FOR_OPTIONS.map((o) => (
+ <option key={o.value} value={o.value}>{o.label}</option>
+ ))}
+ </select>
+ </div>
+ </div>
+
+ <div className="grid grid-cols-2 gap-2">
+ <div>
+ <label className="mb-1 block text-xs text-[#7A6B58]">Yaş aralığı (min)</label>
+ <input
+ type="number"
+ min={18}
+ max={99}
+ placeholder="18"
+ className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] bg-transparent p-2 text-sm text-[#1F1410]"
+ value={typeof profile.age_range_min === 'number' ? profile.age_range_min : ''}
+ onChange={(e) => {
+ const v = e.target.valueAsNumber;
+ setProfile((prev) => ({ ...prev, age_range_min: Number.isFinite(v) ? v : null }));
+ }}
+ />
+ </div>
+ <div>
+ <label className="mb-1 block text-xs text-[#7A6B58]">Yaş aralığı (max)</label>
+ <input
+ type="number"
+ min={18}
+ max={99}
+ placeholder="99"
+ className="w-full rounded-sm border border-[rgba(184,115,51,0.25)] bg-transparent p-2 text-sm text-[#1F1410]"
+ value={typeof profile.age_range_max === 'number' ? profile.age_range_max : ''}
+ onChange={(e) => {
+ const v = e.target.valueAsNumber;
+ setProfile((prev) => ({ ...prev, age_range_max: Number.isFinite(v) ? v : null }));
+ }}
+ />
+ </div>
+ </div>
+
+ <div>
+ <label className="mb-1 block text-xs text-[#7A6B58]">İlgi alanları (en fazla 12, tıkla aç/kapat)</label>
+ <div className="flex flex-wrap gap-1.5">
+ {SUGGESTED_INTERESTS.map((tag) => {
+ const selected = Array.isArray(profile.interests) && profile.interests.includes(tag);
+ return (
+ <button
+ key={tag}
+ type="button"
+ onClick={() => setProfile((prev) => {
+ const current = Array.isArray(prev.interests) ? prev.interests : [];
+ const next = selected ? current.filter((t) => t !== tag) : (current.length < 12 ? [...current, tag] : current);
+ return { ...prev, interests: next };
+ })}
+ className={`rounded-full border px-2.5 py-1 text-xs transition ${selected
+ ? 'border-urfa-600 bg-urfa-600 text-white'
+ : 'border-[rgba(184,115,51,0.25)] text-[#7A6B58] hover:border-urfa-600 hover:text-urfa-600'}`}
+ >
+ {tag}
+ </button>
+ );
+ })}
+ </div>
+ </div>
+
+ {typeof profile.profile_completeness === 'number' && (
+ <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-2">
+ <div className="mb-1 flex items-center justify-between text-xs text-[#7A6B58]">
+ <span>Profil tamamlanma</span>
+ <span className="font-semibold text-[#1F1410]">%{profile.profile_completeness}</span>
+ </div>
+ <div className="h-1.5 w-full rounded-full bg-[rgba(184,115,51,0.15)]">
+ <div className="h-1.5 rounded-full bg-urfa-600 transition-all" style={{ width: `${Math.min(100, profile.profile_completeness)}%` }} />
+ </div>
+ </div>
+ )}
+
  <p className="text-xs text-[#7A6B58]">Fotoğraflar (en fazla 4) — profil fotoğraflarınız swipe kartında görünür</p>
 
  <div className="grid grid-cols-2 gap-2">
@@ -398,7 +531,7 @@ export default function SwipeMatchExperience() {
  ) : (
  <label className="flex h-full cursor-pointer flex-col items-center justify-center gap-1 text-[#7A6B58] hover:text-[#7A6B58]">
  {isUploading ? (
- <span className="text-xs">Yükleniyor...</span>
+ <span className="text-xs">Yükleniyor…</span>
  ) : (
  <>
  <span className="text-2xl">+</span>
@@ -483,8 +616,32 @@ export default function SwipeMatchExperience() {
  (e.currentTarget as HTMLImageElement).src = '/images/placeholder.jpg';
  }}
  />
- <h3 className="text-lg font-bold text-[#1F1410]">{candidate.fullName}</h3>
+ <div className="flex items-start justify-between gap-2">
+ <div className="min-w-0 flex-1">
+ <h3 className="truncate text-lg font-bold text-[#1F1410]">{candidate.fullName}</h3>
  <p className="text-sm text-[#7A6B58]">@{candidate.username || 'uye'}</p>
+ </div>
+ {typeof candidate.score === 'number' && candidate.score > 0 && (
+ <span
+ className="shrink-0 rounded-full bg-urfa-600 px-2 py-0.5 text-xs font-semibold text-white"
+ title="Uyum puanı"
+ >
+ %{Math.min(100, Math.round((candidate.score / 130) * 100))}
+ </span>
+ )}
+ </div>
+ {Array.isArray(candidate.matchReasons) && candidate.matchReasons.length > 0 && (
+ <div className="mt-1.5 flex flex-wrap gap-1">
+ {candidate.matchReasons.slice(0, 3).map((reason, idx) => (
+ <span
+ key={idx}
+ className="rounded-full bg-[rgba(184,115,51,0.1)] px-2 py-0.5 text-[10px] text-urfa-700"
+ >
+ ✓ {reason}
+ </span>
+ ))}
+ </div>
+ )}
  <p className="mt-2 text-sm text-[#7A6B58]">{candidate.bio || 'Henüz biyografi yok.'}</p>
  </article>
  );

@@ -1,5 +1,5 @@
 ---
-import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../layouts/AdminLayoutV2.astro';
 ---
 
 <AdminLayout
@@ -13,50 +13,50 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  </div>
 
  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h3 class="font-semibold text-[#1F1410] mb-2">Mekan İçerikleri</h3>
  <p class="text-sm text-[#7A6B58]">Veritabanındaki mekanlar için otomatik blog yazıları oluştur</p>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h3 class="font-semibold text-[#1F1410] mb-2">Kategori Rehberleri</h3>
  <p class="text-sm text-[#7A6B58]">Restoran, otel, tarihi yerler için kapsamlı rehberler</p>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h3 class="font-semibold text-[#1F1410] mb-2">SEO Optimizasyonu</h3>
  <p class="text-sm text-[#7A6B58]">Otomatik meta başlıklar ve açıklamalar</p>
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-lg font-semibold text-[#1F1410] mb-2">Kategori Rehberi Oluştur</h2>
  <p class="text-sm text-[#7A6B58] mb-4">Belirli bir kategori için kapsamlı rehber yazısı oluşturun</p>
 
  <div class="flex flex-wrap gap-3">
- <button onclick="generateCategoryGuide('restoran')" class="px-4 py-2 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.2)] text-sm font-medium">
+ <button onclick="generateCategoryGuide('restoran')" class="px-4 py-2 bg-[var(--adm-bg-active)] text-[#7A6B58] rounded-sm hover:bg-[var(--adm-border-strong)] text-sm font-medium">
  🍽️ Restoran Rehberi
  </button>
- <button onclick="generateCategoryGuide('otel')" class="px-4 py-2 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.2)] text-sm font-medium">
+ <button onclick="generateCategoryGuide('otel')" class="px-4 py-2 bg-[var(--adm-bg-active)] text-[#7A6B58] rounded-sm hover:bg-[var(--adm-border-strong)] text-sm font-medium">
  🏨 Otel Rehberi
  </button>
- <button onclick="generateCategoryGuide('tarihi-yerler')" class="px-4 py-2 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.2)] text-sm font-medium">
+ <button onclick="generateCategoryGuide('tarihi-yerler')" class="px-4 py-2 bg-[var(--adm-bg-active)] text-[#7A6B58] rounded-sm hover:bg-[var(--adm-border-strong)] text-sm font-medium">
  🏛️ Tarihi Yerler Rehberi
  </button>
- <button onclick="generateCategoryGuide('cafe')" class="px-4 py-2 bg-[rgba(184,115,51,0.1)] text-[#7A6B58] rounded-sm hover:bg-[rgba(184,115,51,0.2)] text-sm font-medium">
+ <button onclick="generateCategoryGuide('cafe')" class="px-4 py-2 bg-[var(--adm-bg-active)] text-[#7A6B58] rounded-sm hover:bg-[var(--adm-border-strong)] text-sm font-medium">
  ☕ Kafe Rehberi
  </button>
  </div>
 
  <div id="category-result" class="mt-4 hidden">
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
+ <div class="rounded-sm border border-[var(--adm-border-strong)] bg-[var(--adm-bg-hover)] px-4 py-3 text-sm text-[#7A6B58]">
  <p class="font-medium">✅ İçerik başarıyla oluşturuldu!</p>
  <a id="category-link" href="/admin/blog" class="text-urfa-600 hover:text-[#7A6B58] mt-2 inline-block">Yazıyı görüntüle →</a>
  </div>
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-lg font-semibold text-[#1F1410] mb-2">Mekanlar İçin İçerik Oluştur</h2>
  <p class="text-sm text-[#7A6B58] mb-4">İçerik oluşturulmamış mekanlar için otomatik yazılar</p>
 
@@ -65,9 +65,9 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  </button>
 
  <div id="places-container" class="mt-4 hidden">
- <div class="border border-[rgba(184,115,51,0.14)] rounded-sm overflow-hidden">
+ <div class="border border-[var(--adm-border)] rounded-sm overflow-hidden">
  <table class="w-full text-sm">
- <thead class="border-b border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
+ <thead class="border-b border-[var(--adm-border)] bg-[var(--adm-bg-hover)]">
  <tr>
  <th class="px-4 py-3 text-left text-[#7A6B58]">
  <input type="checkbox" id="select-all" onchange="toggleSelectAll()" />
@@ -76,7 +76,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  <th class="px-4 py-3 text-left text-[#7A6B58] font-medium text-xs uppercase">Kategori</th>
  </tr>
  </thead>
- <tbody id="places-list" class="divide-y divide-[rgba(184,115,51,0.08)]">
+ <tbody id="places-list" class="divide-y divide-[var(--adm-bg-hover)]">
  </tbody>
  </table>
  </div>
@@ -87,10 +87,10 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  </div>
  </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
+ <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
  <h2 class="text-lg font-semibold text-[#1F1410] mb-4">Oluşturma Geçmişi</h2>
  <div id="history-list" class="space-y-3">
- <p class="text-[#7A6B58] text-center py-4 text-sm">Yükleniyor...</p>
+ <p class="text-[#7A6B58] text-center py-4 text-sm">Yükleniyor…</p>
  </div>
  </div>
  </div>
@@ -126,7 +126,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
  function buildPlaceRow(p) {
  const tr = document.createElement('tr');
- tr.className = 'hover:bg-[rgba(184,115,51,0.04)]';
+ tr.className = 'hover:bg-[var(--adm-bg-hover)]';
  const tdCheck = document.createElement('td');
  tdCheck.className = 'px-4 py-3';
  const cb = document.createElement('input');
@@ -232,14 +232,14 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 
  const statusMap = {
  completed: { text: 'Tamamlandı', cls: 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]' },
- failed: { text: 'Başarısız', cls: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' },
- running: { text: 'Çalışıyor', cls: 'bg-[rgba(184,115,51,0.1)] text-[#7A6B58]' },
- queued: { text: 'Sırada', cls: 'bg-[rgba(184,115,51,0.08)] text-[#7A6B58]' },
+ failed: { text: 'Başarısız', cls: 'bg-[var(--adm-bg-hover)] text-[#7A6B58]' },
+ running: { text: 'Çalışıyor', cls: 'bg-[var(--adm-bg-active)] text-[#7A6B58]' },
+ queued: { text: 'Sırada', cls: 'bg-[var(--adm-bg-hover)] text-[#7A6B58]' },
  };
 
  function buildJobRow(job) {
  const div = document.createElement('div');
- div.className = 'flex items-center justify-between p-4 bg-[rgba(184,115,51,0.04)] rounded-sm border border-[rgba(184,115,51,0.1)]';
+ div.className = 'flex items-center justify-between p-4 bg-[var(--adm-bg-hover)] rounded-sm border border-[var(--adm-bg-active)]';
  const left = document.createElement('div');
  left.className = 'flex items-center gap-3';
  const icon = document.createElement('span');
@@ -256,7 +256,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
  info.appendChild(date);
  left.appendChild(icon);
  left.appendChild(info);
- const s = statusMap[job.status] || { text: 'Beklemede', cls: 'bg-[rgba(184,115,51,0.06)] text-[#7A6B58]' };
+ const s = statusMap[job.status] || { text: 'Beklemede', cls: 'bg-[var(--adm-bg-hover)] text-[#7A6B58]' };
  const badge = document.createElement('span');
  badge.className = 'px-3 py-1 text-xs font-medium rounded-sm ' + s.cls;
  badge.textContent = s.text;

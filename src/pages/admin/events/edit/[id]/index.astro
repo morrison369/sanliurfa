@@ -1,23 +1,33 @@
 ---
 import { actions, isInputError } from 'astro:actions';
 import { Icon } from 'astro-icon/components';
-import AdminLayout from '../../../../../layouts/AdminLayout.astro';
+import AdminLayout from '../../../../../layouts/AdminLayoutV2.astro';
 import { queryOne } from '../../../../../lib/postgres';
 import { logger } from '../../../../../lib/logging';
 
-let event: any = null;
-const routeId = Astro.params.id;
-
-if (!routeId) {
- return Astro.redirect('/admin/events');
+interface EventRow {
+ id: string;
+ title: string;
+ description: string;
+ category: string;
+ start_date: string;
+ end_date: string | null;
+ location: string;
+ status: string;
+ is_featured: boolean;
+ image_url: string | null;
 }
+
+let event: EventRow | null = null;
+const routeId = Astro.params.id;
+if (!routeId) return Astro.redirect('/admin/events');
 
 const eventResult = Astro.getActionResult(actions.updateAdminEvent);
 const eventInputErrors = isInputError(eventResult?.error) ? eventResult.error.fields : {};
 const eventActionError =
  !isInputError(eventResult?.error) && eventResult?.error?.message
- ? eventResult.error.message
- : null;
+  ? eventResult.error.message
+  : null;
 
 const categories = [
  { id: 'kultur-sanat', label: 'Kültür & Sanat' },
@@ -29,207 +39,312 @@ const categories = [
  { id: 'diger', label: 'Diğer' },
 ];
 
-const formatDateTimeLocal = (dateString: string) => {
+const formatDateTimeLocal = (dateString: string | null) => {
+ if (!dateString) return '';
  const d = new Date(dateString);
  if (Number.isNaN(d.getTime())) return '';
- return d.toISOString().slice(0, 16);
+ const pad = (n: number) => String(n).padStart(2, '0');
+ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
 };
 
 try {
- event = await queryOne('SELECT * FROM events WHERE id = $1', [routeId]);
- if (!event) {
- return Astro.redirect('/admin/events');
- }
+ event = await queryOne<EventRow>('SELECT * FROM events WHERE id = $1', [routeId]);
+ if (!event) return Astro.redirect('/admin/events');
 } catch (e) {
  logger.error('Error loading admin event', e instanceof Error ? e : new Error(String(e)));
 }
 
+const startPresets = [
+ { key: 'today', label: 'Bugün 18:00' },
+ { key: 'tomorrow', label: 'Yarın 18:00' },
+ { key: 'weekend', label: 'Cumartesi' },
+ { key: '+7d', label: '+7 gün' },
+ { key: '+30d', label: '+30 gün' },
+];
+const endPresets = [
+ { key: '+1h', label: '+1 saat' },
+ { key: '+3h', label: '+3 saat' },
+ { key: 'sameday', label: 'Aynı gün 23:00' },
+ { key: '+1d', label: 'Ertesi gün' },
+];
 ---
 
 <AdminLayout
  title="Etkinlik Düzenle"
- subtitle={event ? event.title : 'Etkinlik bilgilerini güncelleyin'}
- seo={{ title: event ? `${event.title} - Düzenle` : 'Düzenle - Yönetim Paneli', noIndex: true }}
+ subtitle={event ? event.title : 'Etkinlik bilgileri'}
+ seo={{ title: event ? `${event.title} - Düzenle` : 'Düzenle - Admin', noIndex: true }}
 >
- <div class="sf-container py-8 max-w-6xl space-y-5">
- <div class="mb-2">
- <a href="/admin/events" class="text-sm text-[#7A6B58] hover:text-[#7A6B58]">← Etkinlikler</a>
- </div>
+ <a slot="page-actions" href="/admin/events" class="evf-back">
+  <Icon name="lucide:arrow-left" class="w-4 h-4" /> Etkinlikler
+ </a>
 
- {eventResult?.data?.success && (
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
- {eventResult.data.message || 'Etkinlik güncellendi.'}
- <a href="/admin/events" class="ml-2 font-medium underline">Etkinlik listesine dön</a>
- </div>
- )}
+ <div class="evf-page">
+  {eventResult?.data?.success && (
+   <div class="evf-toast evf-toast--ok">
+    <Icon name="lucide:check-circle" class="w-4 h-4" />
+    <span>{eventResult.data.message || 'Etkinlik güncellendi.'}<a href="/admin/events" class="evf-toast-link">→ Liste</a></span>
+   </div>
+  )}
+  {eventActionError && (
+   <div class="evf-toast evf-toast--err">
+    <Icon name="lucide:alert-circle" class="w-4 h-4" />
+    {eventActionError}
+   </div>
+  )}
 
- {eventActionError && (
- <div class="rounded-sm border border-[rgba(184,115,51,0.2)] bg-[rgba(184,115,51,0.06)] px-4 py-3 text-sm text-[#7A6B58]">
- {eventActionError}
- </div>
- )}
+  <form action={actions.updateAdminEvent} method="POST" class="evf-grid">
+   <input type="hidden" name="id" value={routeId} />
+   <div class="evf-main">
+    <section class="evf-card">
+     <header class="evf-card-head">
+      <h2 class="evf-card-title"><Icon name="lucide:info" class="w-4 h-4" /> Temel Bilgiler</h2>
+     </header>
+     <div class="evf-card-body evf-fields">
+      <div class="evf-field">
+       <label for="title" class="evf-label">Etkinlik Adı <span class="evf-req">*</span></label>
+       <input type="text" id="title" name="title" required class="evf-input" value={event?.title} />
+       {eventInputErrors.title && <p class="evf-err">{eventInputErrors.title[0]}</p>}
+      </div>
+      <div class="evf-field">
+       <label for="description" class="evf-label">Açıklama <span class="evf-req">*</span></label>
+       <textarea id="description" name="description" rows="5" required class="evf-input evf-textarea">{event?.description}</textarea>
+       {eventInputErrors.description && <p class="evf-err">{eventInputErrors.description[0]}</p>}
+      </div>
+      <div class="evf-field">
+       <label for="category" class="evf-label">Kategori <span class="evf-req">*</span></label>
+       <select id="category" name="category" required class="evf-input">
+        {categories.map(cat => (
+         <option value={cat.id} selected={cat.id === event?.category}>{cat.label}</option>
+        ))}
+       </select>
+       {eventInputErrors.category && <p class="evf-err">{eventInputErrors.category[0]}</p>}
+      </div>
+     </div>
+    </section>
 
- <form action={actions.updateAdminEvent} method="POST" class="grid lg:grid-cols-3 gap-6">
- <input type="hidden" name="id" value={routeId} />
- <div class="lg:col-span-2 space-y-5">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Temel Bilgiler</h2>
- <div class="space-y-4">
- <div>
- <label for="title" class="block text-sm font-medium text-[#7A6B58] mb-1">Etkinlik Adı *</label>
- <input type="text" id="title" name="title" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={event.title} />
- {eventInputErrors.title && <p class="mt-1 text-xs text-[#7A6B58]">{eventInputErrors.title[0]}</p>}
- </div>
- <div>
- <label for="description" class="block text-sm font-medium text-[#7A6B58] mb-1">Açıklama *</label>
- <textarea id="description" name="description" rows="5" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 resize-none">{event.description}</textarea>
- {eventInputErrors.description && <p class="mt-1 text-xs text-[#7A6B58]">{eventInputErrors.description[0]}</p>}
- </div>
- <div>
- <label for="category" class="block text-sm font-medium text-[#7A6B58] mb-1">Kategori *</label>
- <select id="category" name="category" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400">
- {categories.map(cat => (
- <option value={cat.id} selected={cat.id === event.category}>{cat.label}</option>
- ))}
- </select>
- {eventInputErrors.category && <p class="mt-1 text-xs text-[#7A6B58]">{eventInputErrors.category[0]}</p>}
- </div>
- </div>
- </div>
+    <section class="evf-card">
+     <header class="evf-card-head">
+      <h2 class="evf-card-title"><Icon name="lucide:calendar-clock" class="w-4 h-4" /> Tarih ve Konum</h2>
+     </header>
+     <div class="evf-card-body evf-fields">
+      <div class="evf-row">
+       <div class="evf-field">
+        <label for="start_date" class="evf-label">Başlangıç <span class="evf-req">*</span></label>
+        <input type="datetime-local" id="start_date" name="start_date" required class="evf-input" value={formatDateTimeLocal(event?.start_date || null)} />
+        <div class="evf-presets">
+         {startPresets.map(p => (
+          <button type="button" data-date-preset={p.key} data-target="start_date" class="evf-preset">{p.label}</button>
+         ))}
+        </div>
+        <p id="start_date_preview" class="evf-preview"></p>
+       </div>
+       <div class="evf-field">
+        <label for="end_date" class="evf-label">Bitiş</label>
+        <input type="datetime-local" id="end_date" name="end_date" class="evf-input" value={event?.end_date ? formatDateTimeLocal(event.end_date) : ''} />
+        <div class="evf-presets">
+         {endPresets.map(p => (
+          <button type="button" data-end-preset={p.key} class="evf-preset">{p.label}</button>
+         ))}
+        </div>
+        <p id="end_date_preview" class="evf-preview"></p>
+       </div>
+      </div>
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h2 class="text-base font-semibold text-[#7A6B58] mb-4">Tarih ve Konum</h2>
- <div class="space-y-4">
- <div class="grid sm:grid-cols-2 gap-4">
- <div>
- <label for="start_date" class="block text-sm font-medium text-[#7A6B58] mb-1">Başlangıç Tarihi *</label>
- <input type="datetime-local" id="start_date" name="start_date" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={formatDateTimeLocal(event.start_date)} />
- <div class="mt-2 flex flex-wrap gap-1.5">
-   <button type="button" data-date-preset="today" data-target="start_date" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Bugün 18:00</button>
-   <button type="button" data-date-preset="tomorrow" data-target="start_date" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Yarın 18:00</button>
-   <button type="button" data-date-preset="weekend" data-target="start_date" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Cumartesi</button>
-   <button type="button" data-date-preset="+7d" data-target="start_date" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">+7 gün</button>
-   <button type="button" data-date-preset="+30d" data-target="start_date" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">+30 gün</button>
- </div>
- <p id="start_date_preview" class="mt-1 text-xs text-[#9B8A75]"></p>
- {eventInputErrors.start_date && <p class="mt-1 text-xs text-[#7A6B58]">{eventInputErrors.start_date[0]}</p>}
- </div>
- <div>
- <label for="end_date" class="block text-sm font-medium text-[#7A6B58] mb-1">Bitiş Tarihi</label>
- <input type="datetime-local" id="end_date" name="end_date" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={event.end_date ? formatDateTimeLocal(event.end_date) : ''} />
- <div class="mt-2 flex flex-wrap gap-1.5">
-   <button type="button" data-end-preset="+1h" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">+1 saat</button>
-   <button type="button" data-end-preset="+3h" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">+3 saat</button>
-   <button type="button" data-end-preset="sameday" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Aynı gün 23:00</button>
-   <button type="button" data-end-preset="+1d" class="text-xs px-2.5 py-1 rounded-sm bg-[rgba(184,115,51,0.08)] text-[#7A6B58] hover:bg-[rgba(184,115,51,0.16)]">Ertesi gün</button>
- </div>
- <p id="end_date_preview" class="mt-1 text-xs text-[#9B8A75]"></p>
- </div>
+      <div class="evf-field">
+       <label for="location" class="evf-label">Konum <span class="evf-req">*</span></label>
+       <div class="evf-input-icon">
+        <Icon name="lucide:map-pin" class="evf-input-icon-svg" />
+        <input type="text" id="location" name="location" required class="evf-input evf-input--padded" value={event?.location} />
+       </div>
+       {eventInputErrors.location && <p class="evf-err">{eventInputErrors.location[0]}</p>}
+      </div>
+     </div>
+    </section>
+   </div>
+
+   <aside class="evf-aside">
+    <section class="evf-card">
+     <header class="evf-card-head">
+      <h3 class="evf-card-title"><Icon name="lucide:send" class="w-4 h-4" /> Yayınla</h3>
+     </header>
+     <div class="evf-card-body evf-fields">
+      <label class="evf-checkbox">
+       <input type="checkbox" name="is_featured" checked={event?.is_featured} />
+       <span><strong>Öne çıkan etkinlik</strong><em>Ana sayfada vurgulanır</em></span>
+      </label>
+      <div class="evf-field">
+       <label for="status" class="evf-label">Durum</label>
+       <select id="status" name="status" class="evf-input">
+        <option value="draft" selected={event?.status === 'draft'}>Taslak</option>
+        <option value="published" selected={event?.status === 'published'}>Yayında</option>
+        <option value="cancelled" selected={event?.status === 'cancelled'}>İptal Edildi</option>
+       </select>
+      </div>
+      <button type="submit" class="evf-submit">
+       <Icon name="lucide:save" class="w-4 h-4" /> Güncelle
+      </button>
+     </div>
+    </section>
+
+    <section class="evf-card">
+     <header class="evf-card-head">
+      <h3 class="evf-card-title"><Icon name="lucide:image" class="w-4 h-4" /> Görsel</h3>
+     </header>
+     <div class="evf-card-body evf-fields">
+      <input type="url" name="image" class="evf-input" value={event?.image_url || ''} placeholder="https://example.com/image.jpg" />
+      {event?.image_url && <img src={event.image_url} alt="" class="evf-image-preview" loading="lazy" />}
+     </div>
+    </section>
+   </aside>
+  </form>
  </div>
 
  <script is:inline>
   (function () {
-    function pad(n) { return String(n).padStart(2, '0'); }
-    function toLocalInput(d) {
-      return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
-        'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
-    }
-    function fmtTr(d) {
-      return d.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) +
-        ' · ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
-    }
-    function setDate(targetId, d) {
-      const el = document.getElementById(targetId);
-      if (!el) return;
-      el.value = toLocalInput(d);
-      el.dispatchEvent(new Event('change'));
-    }
-    function updatePreview(id) {
-      const el = document.getElementById(id);
-      const out = document.getElementById(id + '_preview');
-      if (!el || !out) return;
-      if (!el.value) { out.textContent = ''; return; }
-      const d = new Date(el.value);
-      out.textContent = Number.isFinite(d.getTime()) ? fmtTr(d) : '';
-    }
-    document.querySelectorAll('[data-date-preset]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const preset = btn.getAttribute('data-date-preset');
-        const target = btn.getAttribute('data-target') || 'start_date';
-        const now = new Date();
-        now.setSeconds(0); now.setMilliseconds(0);
-        if (preset === 'today') { now.setHours(18, 0); setDate(target, now); }
-        else if (preset === 'tomorrow') { now.setDate(now.getDate() + 1); now.setHours(18, 0); setDate(target, now); }
-        else if (preset === 'weekend') {
-          const dow = now.getDay();
-          const diff = (6 - dow + 7) % 7 || 7;
-          now.setDate(now.getDate() + diff); now.setHours(20, 0); setDate(target, now);
-        }
-        else if (preset === '+7d') { now.setDate(now.getDate() + 7); now.setHours(19, 0); setDate(target, now); }
-        else if (preset === '+30d') { now.setDate(now.getDate() + 30); now.setHours(19, 0); setDate(target, now); }
-      });
+   function pad(n) { return String(n).padStart(2, '0'); }
+   function toLocalInput(d) {
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+     'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+   }
+   function fmtTr(d) {
+    return d.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) +
+     ' · ' + d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+   }
+   function setDate(targetId, d) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    el.value = toLocalInput(d);
+    el.dispatchEvent(new Event('change'));
+   }
+   function updatePreview(id) {
+    const el = document.getElementById(id);
+    const out = document.getElementById(id + '_preview');
+    if (!el || !out) return;
+    if (!el.value) { out.textContent = ''; return; }
+    const d = new Date(el.value);
+    out.textContent = Number.isFinite(d.getTime()) ? fmtTr(d) : '';
+   }
+   document.querySelectorAll('[data-date-preset]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+     const preset = btn.getAttribute('data-date-preset');
+     const target = btn.getAttribute('data-target') || 'start_date';
+     const now = new Date();
+     now.setSeconds(0); now.setMilliseconds(0);
+     if (preset === 'today') { now.setHours(18, 0); setDate(target, now); }
+     else if (preset === 'tomorrow') { now.setDate(now.getDate() + 1); now.setHours(18, 0); setDate(target, now); }
+     else if (preset === 'weekend') {
+      const dow = now.getDay();
+      const diff = (6 - dow + 7) % 7 || 7;
+      now.setDate(now.getDate() + diff); now.setHours(20, 0); setDate(target, now);
+     }
+     else if (preset === '+7d') { now.setDate(now.getDate() + 7); now.setHours(19, 0); setDate(target, now); }
+     else if (preset === '+30d') { now.setDate(now.getDate() + 30); now.setHours(19, 0); setDate(target, now); }
     });
-    document.querySelectorAll('[data-end-preset]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const preset = btn.getAttribute('data-end-preset');
-        const start = document.getElementById('start_date').value;
-        if (!start) { alert('Önce başlangıç tarihi seçin'); return; }
-        const d = new Date(start);
-        if (preset === '+1h') d.setHours(d.getHours() + 1);
-        else if (preset === '+3h') d.setHours(d.getHours() + 3);
-        else if (preset === 'sameday') d.setHours(23, 0);
-        else if (preset === '+1d') d.setDate(d.getDate() + 1);
-        setDate('end_date', d);
-      });
+   });
+   document.querySelectorAll('[data-end-preset]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+     const preset = btn.getAttribute('data-end-preset');
+     const start = document.getElementById('start_date').value;
+     if (!start) { window.toast?.warning?.('Önce başlangıç tarihi seçin') ?? alert('Önce başlangıç tarihi seçin'); return; }
+     const d = new Date(start);
+     if (preset === '+1h') d.setHours(d.getHours() + 1);
+     else if (preset === '+3h') d.setHours(d.getHours() + 3);
+     else if (preset === 'sameday') d.setHours(23, 0);
+     else if (preset === '+1d') d.setDate(d.getDate() + 1);
+     setDate('end_date', d);
     });
-    ['start_date', 'end_date'].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.addEventListener('change', () => updatePreview(id));
-        el.addEventListener('input', () => updatePreview(id));
-        updatePreview(id);
-      }
-    });
+   });
+   ['start_date', 'end_date'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+     el.addEventListener('change', () => updatePreview(id));
+     el.addEventListener('input', () => updatePreview(id));
+     updatePreview(id);
+    }
+   });
   })();
  </script>
- <div>
- <label for="location" class="block text-sm font-medium text-[#7A6B58] mb-1">Konum *</label>
- <div class="relative">
- <Icon name="lucide:map-pin" class="absolute left-3 top-3 w-5 h-5 text-[#7A6B58]" />
- <input type="text" id="location" name="location" required class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] pl-10 px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={event.location} />
- {eventInputErrors.location && <p class="mt-1 text-xs text-[#7A6B58]">{eventInputErrors.location[0]}</p>}
- </div>
- </div>
- </div>
- </div>
- </div>
 
- <aside class="space-y-5">
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h3 class="font-semibold text-[#7A6B58] mb-4">Yayınla</h3>
- <label class="flex items-center gap-2 mb-3">
- <input type="checkbox" name="is_featured" checked={event.is_featured} class="rounded" />
- <span class="text-sm text-[#7A6B58]">Öne çıkan etkinlik</span>
- </label>
- <label for="status" class="block text-sm font-medium text-[#7A6B58] mb-1">Durum</label>
- <select id="status" name="status" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400 mt-1">
- <option value="draft" selected={event.status === 'draft'}>Taslak</option>
- <option value="published" selected={event.status === 'published'}>Yayında</option>
- <option value="cancelled" selected={event.status === 'cancelled'}>İptal Edildi</option>
- </select>
- <button type="submit" class="rounded-sm bg-urfa-600 w-full mt-4 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700 flex items-center justify-center gap-2">
- <Icon name="lucide:save" class="w-4 h-4" />
- Kaydet
- </button>
- </div>
+ <style>
+  .evf-page { display: flex; flex-direction: column; gap: 1.25rem; }
+  .evf-back {
+   display: inline-flex; align-items: center; gap: 0.4rem;
+   padding: 0.5rem 1rem;
+   background: var(--adm-bg-elev); border: 1px solid var(--adm-border);
+   color: var(--adm-text-muted); font-weight: 600; font-size: 0.84rem;
+   border-radius: 8px; text-decoration: none;
+  }
+  .evf-back:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+  .evf-toast { display: flex; align-items: center; gap: 0.55rem; padding: 0.7rem 1rem; border-radius: 10px; font-size: 0.86rem; }
+  .evf-toast--ok { background: rgba(16,185,129,0.08); color: rgb(5,150,105); border: 1px solid rgba(16,185,129,0.18); }
+  .evf-toast--err { background: rgba(225,29,72,0.08); color: rgb(190,18,60); border: 1px solid rgba(225,29,72,0.18); }
+  .evf-toast-link { margin-left: 0.4rem; font-weight: 600; text-decoration: underline; color: inherit; }
 
- <div class="bg-[var(--bg-card)] border border-[rgba(184,115,51,0.14)] rounded-sm p-6">
- <h3 class="font-semibold text-[#7A6B58] mb-4">Görsel</h3>
- <input type="url" name="image" class="w-full rounded-sm border border-[rgba(184,115,51,0.2)] px-3 py-2 text-sm focus:outline-none focus:border-urfa-400" value={event.image_url || ''} placeholder="https://example.com/image.jpg" />
- <p class="text-xs text-[#7A6B58] mt-2">Etkinlik görsel URL'si</p>
- {event.image_url && <img src={event.image_url} alt="" class="mt-3 w-full h-32 object-cover rounded-sm" />}
- </div>
- </aside>
- </form>
- </div>
+  .evf-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+  @media (min-width: 1024px) { .evf-grid { grid-template-columns: 1.6fr 1fr; } }
+  .evf-main, .evf-aside { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .evf-card { background: var(--adm-bg-elev); border: 1px solid var(--adm-border); border-radius: 12px; overflow: hidden; }
+  .evf-card-head { padding: 0.95rem 1.15rem; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+  .evf-card-title { display: inline-flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--adm-text); }
+  .evf-card-body { padding: 1.15rem; }
+  .evf-fields { display: flex; flex-direction: column; gap: 0.95rem; }
+  .evf-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.85rem; }
+
+  .evf-field { display: flex; flex-direction: column; gap: 0.3rem; }
+  .evf-label { font-size: 0.8rem; font-weight: 600; color: var(--adm-text); }
+  .evf-req { color: rgb(190,18,60); font-weight: 700; }
+  .evf-input {
+   padding: 0.55rem 0.75rem;
+   background: var(--adm-bg); border: 1px solid var(--adm-border);
+   border-radius: 8px; font-size: 0.88rem; color: var(--adm-text);
+   font-family: inherit; width: 100%;
+  }
+  .evf-input:focus { outline: none; border-color: var(--adm-accent); box-shadow: 0 0 0 3px var(--adm-bg-active); }
+  .evf-textarea { resize: vertical; min-height: 110px; }
+  .evf-input-icon { position: relative; }
+  .evf-input-icon-svg {
+   position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%);
+   width: 1rem; height: 1rem; color: var(--adm-text-soft); pointer-events: none;
+  }
+  .evf-input--padded { padding-left: 2.1rem; }
+  .evf-err { font-size: 0.74rem; color: rgb(190,18,60); margin: 0; }
+  .evf-hint { font-size: 0.72rem; color: var(--adm-text-soft); margin: 0; }
+  .evf-presets { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .evf-preset {
+   font-size: 0.72rem; font-weight: 600;
+   padding: 0.25rem 0.65rem;
+   background: var(--adm-bg); border: 1px solid var(--adm-border);
+   border-radius: 999px; color: var(--adm-text-muted); cursor: pointer;
+  }
+  .evf-preset:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
+  .evf-preview { font-size: 0.74rem; color: var(--adm-text-soft); margin: 0; font-style: italic; }
+
+  .evf-checkbox {
+   display: flex; gap: 0.6rem; align-items: flex-start;
+   padding: 0.7rem 0.85rem;
+   background: var(--adm-bg); border: 1px solid var(--adm-border);
+   border-radius: 8px; cursor: pointer;
+  }
+  .evf-checkbox input { width: 16px; height: 16px; accent-color: var(--adm-accent); margin-top: 0.15rem; }
+  .evf-checkbox strong { display: block; font-weight: 600; font-size: 0.86rem; color: var(--adm-text); margin-bottom: 0.15rem; }
+  .evf-checkbox em { display: block; font-style: normal; font-size: 0.74rem; color: var(--adm-text-soft); line-height: 1.4; }
+
+  .evf-submit {
+   width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+   padding: 0.65rem 1.1rem;
+   background: linear-gradient(135deg, var(--adm-accent), var(--adm-warning));
+   color: #fff; border: none; border-radius: 8px;
+   font-weight: 600; font-size: 0.88rem; cursor: pointer;
+   margin-top: 0.25rem;
+  }
+  .evf-submit:hover { transform: translateY(-1px); }
+
+  .evf-image-preview {
+   margin-top: 0.65rem;
+   width: 100%; max-height: 180px; object-fit: cover;
+   border-radius: 8px;
+   border: 1px solid var(--adm-border);
+  }
+ </style>
 </AdminLayout>

@@ -13,6 +13,7 @@ export default function ReviewForm({ placeId, placeName, isAuthenticated, redire
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [visitType, setVisitType] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -46,7 +47,7 @@ export default function ReviewForm({ placeId, placeName, isAuthenticated, redire
       const res = await fetch('/api/reviews/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ placeId, rating, title: title.trim() || null, content: content.trim() }),
+        body: JSON.stringify({ placeId, rating, title: title.trim() || null, content: content.trim(), visitType: visitType || null }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -59,7 +60,11 @@ export default function ReviewForm({ placeId, placeName, isAuthenticated, redire
       setHoverRating(0);
       setTitle('');
       setContent('');
+      setVisitType('');
       setSuccess(true);
+      if (typeof (window as any).sfTrack === 'function') {
+        (window as any).sfTrack('review_submit', { place_id: placeId, rating, has_title: Boolean(title.trim()), has_visit_type: Boolean(visitType) });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Yorum gönderilemedi.');
       setSubmitting(false);
@@ -138,6 +143,26 @@ export default function ReviewForm({ placeId, placeName, isAuthenticated, redire
           </span>
         )}
       </div>
+
+      {/* Visit type (optional, helps review quality + filtering) */}
+      <select
+        value={visitType}
+        onChange={(e) => setVisitType(e.target.value)}
+        aria-label="Ziyaret tipi"
+        style={{
+          width: '100%', padding: '.55rem .75rem', fontSize: '.85rem',
+          border: '1px solid rgba(192,87,31,.18)', borderRadius: '5px',
+          marginBottom: '.5rem', background: '#FBF6EC', color: '#1F1410',
+          fontFamily: 'inherit', cursor: 'pointer',
+        }}
+      >
+        <option value="">Ziyaret tipi (opsiyonel)</option>
+        <option value="family">Aile ile</option>
+        <option value="friends">Arkadaşlarla</option>
+        <option value="couple">Çift olarak</option>
+        <option value="business">İş yemeği</option>
+        <option value="solo">Tek başına</option>
+      </select>
 
       {/* Title (optional) */}
       <input

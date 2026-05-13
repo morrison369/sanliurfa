@@ -32,7 +32,7 @@ export default function TrendingPlaces() {
  fetchTrending();
  }, []);
 
- if (loading) return <div className="p-4">Yükleniyor...</div>;
+ if (loading) return <div className="p-4">Yükleniyor…</div>;
 
  return (
  <div className="bg-[var(--bg-card)] rounded-sm shadow">

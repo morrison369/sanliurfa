@@ -93,6 +93,7 @@ function buildPagesEntries(nowIso: string): SitemapEntry[] {
     { url: '/ucretsiz-gezilecek-yerler', priority: 0.7, changefreq: 'weekly' },
     { url: '/bugun-sanliurfada-ne-yapilir', priority: 0.8, changefreq: 'daily' },
     { url: '/isletme-kayit', priority: 0.7, changefreq: 'monthly' },
+    { url: '/etkinlik-ekle', priority: 0.7, changefreq: 'monthly' },
     { url: '/halfeti-tekne-turu', priority: 0.75, changefreq: 'weekly' },
     { url: '/sanliurfa-fotograf-sporlari', priority: 0.7, changefreq: 'weekly' },
     { url: '/arama', priority: 0.6, changefreq: 'weekly' },
@@ -112,6 +113,8 @@ function buildPagesEntries(nowIso: string): SitemapEntry[] {
   const institutionalPages: Static[] = [
     { url: '/hakkinda', priority: 0.5, changefreq: 'monthly' },
     { url: '/iletisim', priority: 0.4, changefreq: 'monthly' },
+    { url: '/kunye', priority: 0.45, changefreq: 'monthly' },
+    { url: '/yazarlar', priority: 0.5, changefreq: 'monthly' },
     { url: '/sss', priority: 0.5, changefreq: 'monthly' },
     { url: '/gizlilik-politikasi', priority: 0.2, changefreq: 'yearly' },
     { url: '/kullanim-kosullari', priority: 0.2, changefreq: 'yearly' },

@@ -1,0 +1,126 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+const baseUrl = getPublicAppUrl();
+
+const seo = {
+ title: 'Yazarlar ve Editöryel Ekip - Sanliurfa.com',
+ description: 'Sanliurfa.com içeriklerini hazırlayan editöryel ekip, mutfak ekibi ve uzman katkıcılar. Yazar profilleri ve uzmanlık alanları.',
+ keywords: ['sanliurfa.com yazarlar', 'editöryel ekip', 'içerik üreticileri', 'şanlıurfa içerik ekibi'],
+ canonical: '/yazarlar',
+};
+
+const authors = [
+ {
+  slug: 'editoryel-ekip',
+  name: 'Sanliurfa.com Editöryel Ekibi',
+  role: 'Şehir Rehberi & Tarih',
+  bio: 'Şanlıurfa\'nın mekanları, tarihi yerleri, kültür mirası ve günlük yaşamı üzerine yerinde araştırma yapan bağımsız editöryel ekiptir. 2025\'ten bu yana şehir rehberi içerikleri hazırlar.',
+  expertise: ['Şehir Rehberi', 'Tarihi Yerler', 'Gezi Rehberi', 'Şanlıurfa Kültürü'],
+  postCount: '100+ blog yazısı',
+ },
+ {
+  slug: 'mutfak-ekibi',
+  name: 'Sanliurfa.com Mutfak Ekibi',
+  role: 'Yöresel Mutfak & Gastronomi',
+  bio: 'Şanlıurfa yöresel yemekleri, geleneksel tarifler ve gastronomi içerikleri üzerine uzmanlaşan ekip. Yerel mutfak araştırması ve denenmiş ölçülerle her tarif hazırlanır.',
+  expertise: ['Urfa Mutfağı', 'Yöresel Tarifler', 'Kebap Kültürü', 'Tatlılar'],
+  postCount: '180+ tarif',
+ },
+ {
+  slug: 'topluluk-moderasyonu',
+  name: 'Topluluk Moderasyon Ekibi',
+  role: 'Kullanıcı Katkıları & Yorumlar',
+  bio: 'Kullanıcıların eklediği mekanlar, etkinlikler, yorumlar ve topluluk içeriklerini inceleyen moderasyon ekibi. İçerik kalitesi ve site politikaları için sorumluluk taşır.',
+  expertise: ['İçerik Moderasyonu', 'Topluluk Yönetimi', 'Doğrulama'],
+  postCount: '5000+ moderasyon işlemi',
+ },
+];
+---
+
+<Layout seo={seo}>
+ <style is:inline>
+  .yz-page { background: var(--public-bg); padding: 3rem 0 5rem; min-height: 100vh; }
+  .yz-hero { max-width: 48rem; margin: 0 auto 2.5rem; }
+  .yz-lbl { font-size: .72rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--public-accent); margin-bottom: .5rem; }
+  .yz-h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 700; color: var(--public-text); margin: 0 0 .75rem; }
+  .yz-desc { font-size: .95rem; line-height: 1.75; color: var(--public-muted); margin: 0; }
+  .yz-list { max-width: 48rem; margin: 0 auto; display: flex; flex-direction: column; gap: 1.25rem; }
+  .yz-card { background: var(--bg-card); border: 1px solid rgba(184,115,51,.18); padding: 1.75rem; border-radius: .5rem; transition: border-color .15s; }
+  .yz-card:hover { border-color: var(--public-accent); }
+  .yz-card-h { display: flex; align-items: baseline; flex-wrap: wrap; gap: .75rem; margin-bottom: .35rem; }
+  .yz-name { font-family: 'Cormorant Garamond', serif; font-size: 1.45rem; font-weight: 700; color: var(--public-text); margin: 0; }
+  .yz-role { font-size: .76rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--public-accent); }
+  .yz-bio { font-size: .92rem; color: var(--public-muted); line-height: 1.7; margin: .65rem 0 1rem; }
+  .yz-tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .85rem; }
+  .yz-tag { font-size: .72rem; padding: .25rem .65rem; background: rgba(184,115,51,.08); color: var(--public-accent); border-radius: 999px; }
+  .yz-meta { font-size: .82rem; color: var(--public-text-soft); }
+  .yz-meta a { color: var(--public-accent); }
+  .yz-meta a:hover { text-decoration: underline; }
+ </style>
+
+ <main class="yz-page">
+  <div class="sf-container">
+   <div class="yz-hero">
+    <p class="yz-lbl">İçerik Sorumluluğu</p>
+    <h1 class="yz-h1">Yazarlar ve Editöryel Ekip</h1>
+    <p class="yz-desc">
+     Sanliurfa.com içerikleri, alanında deneyimli editöryel ve uzman ekipler tarafından yerinde araştırma + kaynak doğrulama ile hazırlanır.
+     Her yazı yazar imzası, yayın tarihi ve son güncellenme bilgisi ile yayınlanır.
+     Hata bildirimi veya işbirliği için <a href="/iletisim">iletişim sayfasından</a> ulaşabilirsiniz.
+    </p>
+   </div>
+
+   <div class="yz-list">
+    {authors.map((author) => (
+     <article class="yz-card" id={author.slug}>
+      <header class="yz-card-h">
+       <h2 class="yz-name">{author.name}</h2>
+       <span class="yz-role">{author.role}</span>
+      </header>
+      <p class="yz-bio">{author.bio}</p>
+      <div class="yz-tags">
+       {author.expertise.map((tag) => <span class="yz-tag">{tag}</span>)}
+      </div>
+      <p class="yz-meta">📊 {author.postCount} · ✉ <a href="mailto:iletisim@sanliurfa.com">iletisim@sanliurfa.com</a></p>
+     </article>
+    ))}
+   </div>
+
+   <p style="max-width:48rem;margin:2.5rem auto 0;font-size:.88rem;color:var(--public-muted);line-height:1.75;text-align:center">
+    Yayın politikamız ve içerik sorumluluğumuz hakkında detaylar için <a href="/kunye" style="color:var(--public-accent);font-weight:600">Künye sayfasını</a> ziyaret edin.
+   </p>
+  </div>
+ </main>
+
+ <script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'Sanliurfa.com Yazarlar',
+  description: 'Sanliurfa.com editöryel ekibi, mutfak ekibi ve topluluk moderasyon ekibi.',
+  url: `${baseUrl}/yazarlar`,
+  mainEntity: {
+   '@type': 'ItemList',
+   itemListElement: authors.map((a, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    item: {
+     '@type': 'Person',
+     name: a.name,
+     description: a.bio,
+     url: `${baseUrl}/yazarlar#${a.slug}`,
+     jobTitle: a.role,
+     worksFor: { '@type': 'Organization', name: 'Sanliurfa.com', url: baseUrl },
+     knowsAbout: a.expertise,
+    },
+   })),
+  },
+ })} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+  itemListElement: [
+   { '@type': 'ListItem', position: 1, name: 'Anasayfa', item: `${baseUrl}/` },
+   { '@type': 'ListItem', position: 2, name: 'Yazarlar', item: `${baseUrl}/yazarlar` },
+  ],
+ })} is:inline />
+</Layout>
