@@ -222,6 +222,73 @@ Detay: [`docs/ASTRO_DETAILED.md`](docs/ASTRO_DETAILED.md) "SEO & Structured Data
 
 ---
 
+## Image Pipeline (2026-05-13 olgunlaştı)
+
+### Format Cascade (browser otomatik)
+`/uploads/` paths için `src/components/Image.astro` runtime `<picture>` emit eder:
+```html
+<picture>
+  <source srcset=".../foo.avif" type="image/avif">     <!-- ~50% smaller than JPG -->
+  <source srcset=".../foo.webp" type="image/webp">     <!-- 95%+ browser support -->
+  <img src=".../foo.webp">                              <!-- fallback + onerror /images/placeholder.jpg -->
+</picture>
+```
+
+### File Generation Pipeline
+- **JPG → WebP + AVIF**: `npm run images:webp:convert` (sharp, PROD=1 env)
+- **WebP → AVIF**: `npm run images:avif:from-webp` (Pexels-backfilled için)
+- **NULL refs cleanup**: `npm run images:cleanup:broken-refs` (filesystem check, NULL'a çevirir)
+- **Pexels backfill**: `npm run images:backfill:pexels` (NULL → real image)
+
+### Dizin Konvansiyonu
+`/uploads/{type}/{slug}.{ext}` — `type` = places | historical | historical-sites | blog | blogs | events | recipes | avatars
+
+### Sharp Settings (production)
+- WebP: `quality: 82, effort: 5`
+- AVIF: `quality: 60, effort: 4` (build time/quality balance)
+- Resize: `1200x800 fit:cover` (backfill için)
+
+---
+
+## GSC API Auth (2026-05 SA Bug Workaround)
+
+**Bağlam**: Google'ın confirmed bug'ı (Apr 23, 2026-) — yeni service account email'ler GSC'ye eklenince "email not found". Workaround: OAuth user flow.
+
+### Auth Cascade (`scripts/lib/gsc-auth.mjs`)
+1. `GSC_REFRESH_TOKEN` env (prod) — gcloud built-in OAuth client kullanır
+2. Service Account (legacy, bug riski)
+3. gcloud user (local dev)
+
+### gcloud Built-in Client (public, SDK'da gömülü)
+```
+client_id: 764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com
+client_secret: d-FL95Q19q7MQmFpd7hHD0Ty
+```
+
+### Required for ADC user creds (zorunlu header)
+Her GSC API çağrısında: `x-goog-user-project: sanliurfa-com-2026`
+
+### Scripts
+- `npm run gsc:sitemap:submit` / `:status`
+- `npm run gsc:url:inspect`
+- `npm run gsc:search:analytics`
+- `npm run gsc:indexing:request` (general URL re-crawl)
+- `npm run gsc:cron:daily` (cron'lu — sitemap + top queries + coverage)
+
+---
+
+## Silent-Fail Bug Pattern Uyarısı
+
+`Promise.all([...queries])` içinde 1 query fail ederse TÜM array'ler boş fallback'e gider. Belirti: page render ediyor ama "0 sonuç", listing boş.
+
+**Tespit:** PM2 logs'da `column "X" does not exist` / `relation "Y" does not exist` → page-level error
+**Önleme:** Yeni query yazarken `\d table` (psql) ile actual schema doğrula
+**2 örnek (2026-05-13 fix):**
+- `mekanlar/index.astro`: `places.category_name` yok → JOIN categories
+- `bugun-sanliurfada-ne-yapilir.astro`: `recipes.category` yok → field kaldır
+
+---
+
 ## Strict Prohibitions
 
 ### Turkish Only — NO i18n
