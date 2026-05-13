@@ -29,7 +29,7 @@ try {
         WHERE p.status='active' AND p.is_featured=true
         ORDER BY p.rating DESC NULLS LAST LIMIT 6`),
       query(`SELECT slug, name, short_description, cover_image FROM historical_sites WHERE status='published' ORDER BY RANDOM() LIMIT 4`),
-      query(`SELECT slug, name, category, description FROM recipes WHERE status='published' ORDER BY RANDOM() LIMIT 1`),
+      query(`SELECT slug, name, description FROM recipes WHERE status='published' ORDER BY RANDOM() LIMIT 1`),
       query(`SELECT p.slug, p.name, p.rating, c.name AS category_name
         FROM places p LEFT JOIN categories c ON p.category_id = c.id
         WHERE p.status='active' AND c.name ILIKE ANY(ARRAY['%restoran%','%lokanta%','%yemek%','%kebap%','%cafe%'])
