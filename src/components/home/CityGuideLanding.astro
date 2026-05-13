@@ -368,7 +368,7 @@ const guidePosts = [
 
       <div class="grid grid-cols-2 gap-4 lg:grid-cols-12">
         {collageCards.map((card, idx) => (
-          <a href={card.href} class={`group relative min-h-44 overflow-hidden rounded-2xl border border-white/20 shadow-2xl shadow-black/50 ring-1 ring-white/10 transition duration-300 hover:ring-[#f4c56e]/30 ${card.className}`}>
+          <a href={card.href} class={`group relative min-w-0 min-h-44 overflow-hidden rounded-2xl border border-white/20 shadow-2xl shadow-black/50 ring-1 ring-white/10 transition duration-300 hover:ring-[#f4c56e]/30 ${card.className}`}>
             <Image src={card.image} alt={`${card.title} Şanlıurfa rehberi`} width={640} height={500} loading="eager" fetchpriority={idx === 0 ? 'high' : 'auto'} class="h-full min-h-44 w-full object-cover transition duration-700 group-hover:scale-[1.06]" />
             <span class="absolute inset-0 bg-gradient-to-t from-[#120c06]/88 via-[#120c06]/22 to-transparent"></span>
             <span class="absolute inset-0 bg-gradient-to-t from-[#78331d]/40 to-transparent opacity-0 transition duration-500 group-hover:opacity-100"></span>

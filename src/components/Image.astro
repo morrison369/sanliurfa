@@ -65,7 +65,7 @@ const uploadWebpSrc = isRuntimeUpload ? src.replace(/\.(jpe?g|png)$/i, '.webp') 
 ---
 
 {isRuntimeUpload ? (
- <picture>
+ <picture style="display:contents">
   <source srcset={uploadAvifSrc} type="image/avif" />
   <source srcset={uploadWebpSrc} type="image/webp" />
   <img
@@ -73,8 +73,8 @@ const uploadWebpSrc = isRuntimeUpload ? src.replace(/\.(jpe?g|png)$/i, '.webp') 
    alt={alt}
    width={width}
    height={height}
-   class={finalClass}
-   style={style}
+   class={`${finalClass} block max-w-full`.trim()}
+   style={`max-width:100%;height:auto;${style || ''}`}
    loading={loading}
    decoding={decoding}
    fetchpriority={fetchpriority}
