@@ -8,7 +8,7 @@ import BackToTop from '../components/BackToTop.astro';
 import ThemeScript from '../components/ThemeScript.astro';
 import Toast from '../components/ui/Toast.astro';
 import ErrorBoundary from '../components/ErrorBoundary.astro';
-import GoogleAnalytics from '../components/GoogleAnalytics.astro';
+import Analytics from '../components/Analytics.astro';
 import PWARegister from '../components/PWARegister.astro';
 import PerformanceMonitor from '../components/PerformanceMonitor.tsx';
 import { getSiteSetting } from '../lib/site-content';
@@ -156,65 +156,13 @@ const user = Astro.locals.user;
  </style>
  <ThemeScript />
  {!skipViewTransitions && <ClientRouter />}
- {clarityProjectId && (
-  <script is:inline define:vars={{ clarityProjectId }}>
-   (function(c,l,a,r,i,t,y){
-    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
-    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-   })(window, document, "clarity", "script", clarityProjectId);
-  </script>
- )}
- {yandexMetricaId && (
-  <script is:inline define:vars={{ yandexMetricaId }}>
-   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-   m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-   ym(Number(yandexMetricaId), "init", { clickmap:true, trackLinks:true, accurateTrackBounce:true, webvisor:true });
-  </script>
-  <noscript><div><img src={`https://mc.yandex.ru/watch/${yandexMetricaId}`} style="position:absolute;left:-9999px" alt="" /></div></noscript>
- )}
-
- <!-- Merkezi event tracking: window.sfTrack(name, params) → GA4 + Yandex + Clarity -->
- <script is:inline define:vars={{ yandexMetricaId }}>
-  window.sfTrack = function(eventName, params) {
-   if (!eventName) return;
-   try {
-    // Google Analytics 4
-    if (typeof window.gtag === 'function') {
-     window.gtag('event', eventName, params || {});
-    }
-    // Yandex Metrica
-    if (typeof window.ym === 'function' && yandexMetricaId) {
-     window.ym(Number(yandexMetricaId), 'reachGoal', eventName, params || {});
-    }
-    // Microsoft Clarity
-    if (typeof window.clarity === 'function') {
-     window.clarity('event', eventName);
-     if (params) {
-      Object.entries(params).forEach(function(entry) {
-       try { window.clarity('set', String(entry[0]), String(entry[1])); } catch (_) {}
-      });
-     }
-    }
-   } catch (_) { /* sessiz */ }
-  };
-
-  // auth_success query param varsa login/register event ate + URL'i temizle (history replace)
-  try {
-   var sp = new URLSearchParams(window.location.search);
-   var as = sp.get('auth_success');
-   if (as) {
-    // Sayfa load'unda hemen değil, GA/Yandex/Clarity yüklensin diye 200ms gecikme
-    setTimeout(function() {
-     window.sfTrack('auth_success', { method: as });
-    }, 200);
-    sp.delete('auth_success');
-    var clean = window.location.pathname + (sp.toString() ? '?' + sp.toString() : '') + window.location.hash;
-    window.history.replaceState({}, document.title, clean);
-   }
-  } catch (_) { /* sessiz */ }
- </script>
+ {/* Consolidated analytics: GA4 + Clarity + Yandex (all via Partytown, sfTrack helper) */}
+ <Analytics
+  ga4MeasurementId={GA_MEASUREMENT_ID}
+  clarityProjectId={clarityProjectId}
+  yandexMetricaId={yandexMetricaId}
+  debug={import.meta.env.DEV}
+ />
  <slot name="head" />
  </head>
 
@@ -396,6 +344,6 @@ const user = Astro.locals.user;
  <PWARegister />
  {/* Admin + auth sayfalarda PerformanceMonitor disable — 429 rate-limit, beacon queue spillover'ı önle */}
  {!skipPerfMonitor && <PerformanceMonitor client:only="react" />}
- {GA_MEASUREMENT_ID && <GoogleAnalytics measurementId={GA_MEASUREMENT_ID} debug={import.meta.env.DEV} />}
+ {/* Note: Analytics (GA4 + Clarity + Yandex) head'de yüklendi — burada tekrar yükleme yok */}
  </body>
 </html>
