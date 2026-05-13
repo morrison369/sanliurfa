@@ -50,6 +50,8 @@ async function searchAnalytics(token) {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(payload),
+        // ADC user creds için zorunlu — yoksa "quota project required" error
+        'x-goog-user-project': process.env.GOOGLE_CLOUD_PROJECT || 'sanliurfa-com-2026',
       },
     }, (res) => {
       let data = '';

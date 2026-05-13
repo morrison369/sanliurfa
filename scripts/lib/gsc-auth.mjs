@@ -25,6 +25,29 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const SA_KEY_PATH = path.resolve(scriptDir, '..', '.gsc-sa-key.json');
 
+// Auto-load .env (önce project root, sonra prod path)
+(function loadEnvIfNeeded() {
+  if (process.env.GSC_REFRESH_TOKEN) return;
+  const candidates = [
+    path.resolve(scriptDir, '..', '..', '.env'),
+    '/home/sanliur/public_html/.env',
+  ];
+  for (const f of candidates) {
+    if (!fs.existsSync(f)) continue;
+    for (const raw of fs.readFileSync(f, 'utf8').split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line || line.startsWith('#')) continue;
+      const sep = line.indexOf('=');
+      if (sep < 0) continue;
+      const k = line.slice(0, sep).trim();
+      let v = line.slice(sep + 1).trim();
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+      if (k && !process.env[k]) process.env[k] = v;
+    }
+    if (process.env.GSC_REFRESH_TOKEN) break;
+  }
+})();
+
 function b64url(input) {
   const buf = typeof input === 'string' ? Buffer.from(input) : Buffer.from(JSON.stringify(input));
   return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
@@ -96,12 +119,19 @@ function getGcloudUserToken() {
 /**
  * GSC_REFRESH_TOKEN ile access_token elde eder (OAuth user flow).
  * 2026-05 Google SA bug'ı için workaround — en güvenli production yöntemi.
+ *
+ * gcloud SDK'sının built-in OAuth client'ını kullanır (public, embedded in SDK).
+ * Bu sayede prod .env'de GOOGLE_CLIENT_ID/SECRET (Web App) gerekmez.
  */
+const GCLOUD_BUILTIN_CLIENT_ID = '764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com';
+const GCLOUD_BUILTIN_CLIENT_SECRET = 'd-FL95Q19q7MQmFpd7hHD0Ty';
+
 async function getRefreshTokenAccess(scopes) {
   const refreshToken = process.env.GSC_REFRESH_TOKEN || process.env.GOOGLE_OAUTH_REFRESH_TOKEN;
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  if (!refreshToken || !clientId || !clientSecret) return null;
+  if (!refreshToken) return null;
+  // gcloud built-in client'ı GSC_CLIENT_ID env yoksa kullan
+  const clientId = process.env.GSC_CLIENT_ID || GCLOUD_BUILTIN_CLIENT_ID;
+  const clientSecret = process.env.GSC_CLIENT_SECRET || GCLOUD_BUILTIN_CLIENT_SECRET;
 
   const body = new URLSearchParams({
     client_id: clientId,
