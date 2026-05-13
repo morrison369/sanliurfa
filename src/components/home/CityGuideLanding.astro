@@ -277,11 +277,26 @@ const guidePosts = [
 
 <div class="overflow-hidden bg-[#fff8ec] text-[#201711]">
   <section class="relative overflow-hidden bg-[#120c06]">
+    {/* Hero background — local AVIF/WebP cascade (Pexels remote 607KB hero replaced 2026-05-13, LCP fix) */}
     <div
-      class="absolute inset-0 opacity-35"
-      style={{ backgroundImage: "url(https://images.pexels.com/photos/17306342/pexels-photo-17306342.jpeg?auto=compress&cs=tinysrgb&w=1920&q=80)", backgroundSize: "cover", backgroundPosition: "center 40%" }}
+      class="absolute inset-0 opacity-35 hero-bg-image"
       aria-hidden="true"
     ></div>
+    <style is:inline define:vars={{}}>{`
+      .hero-bg-image {
+        background-image: url('/images/hero/sanliurfa-landing.webp');
+        background-image: -webkit-image-set(
+          url('/images/hero/sanliurfa-landing.avif') type('image/avif'),
+          url('/images/hero/sanliurfa-landing.webp') type('image/webp')
+        );
+        background-image: image-set(
+          url('/images/hero/sanliurfa-landing.avif') type('image/avif'),
+          url('/images/hero/sanliurfa-landing.webp') type('image/webp')
+        );
+        background-size: cover;
+        background-position: center 40%;
+      }
+    `}</style>
     <div class="absolute inset-0 bg-gradient-to-r from-[#120c06]/95 via-[#120c06]/72 to-[#120c06]/30" aria-hidden="true"></div>
     <div class="absolute inset-0 bg-gradient-to-t from-[#120c06]/75 via-transparent to-transparent" aria-hidden="true"></div>
 
