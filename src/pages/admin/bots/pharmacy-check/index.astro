@@ -1,0 +1,221 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type PharmacyIssue = {
+  id: number | string;
+  name: string;
+  district: string | null;
+  phone: string | null;
+  address: string | null;
+  duty_date: string | null;
+  issues: string[];
+};
+
+let items: PharmacyIssue[] = [];
+let ran = false;
+let summary = { total: 0, noPhone: 0, noAddress: 0, stale: 0, duplicates: 0 };
+let tableExists = true;
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const result = await query(`
+      SELECT id, name, district, phone, address, duty_date, created_at
+      FROM duty_pharmacies
+      ORDER BY duty_date DESC NULLS LAST, name
+      LIMIT 300
+    `);
+
+    summary.total = result.rows.length;
+    const seenNames = new Map<string, number>();
+
+    for (const p of result.rows) {
+      const issues: string[] = [];
+      const key = (p.name || '').toLowerCase().trim();
+
+      if (!p.phone) { issues.push('Telefon yok'); summary.noPhone++; }
+      if (!p.address || p.address.trim() === '') { issues.push('Adres yok'); summary.noAddress++; }
+
+      if (p.duty_date) {
+        const dutyDate = new Date(p.duty_date);
+        const daysDiff = Math.floor((Date.now() - dutyDate.getTime()) / 86400000);
+        if (daysDiff > 30) { issues.push(`Eski kayıt (${daysDiff} gün)`); summary.stale++; }
+      } else {
+        issues.push('Tarih belirtilmemiş');
+      }
+
+      if (seenNames.has(key)) {
+        issues.push('Duplikasyon');
+        summary.duplicates++;
+      } else {
+        seenNames.set(key, p.id);
+      }
+
+      if (issues.length > 0) {
+        items.push({
+          id: p.id, name: p.name, district: p.district,
+          phone: p.phone, address: p.address,
+          duty_date: p.duty_date ? new Date(p.duty_date).toLocaleDateString('tr-TR') : null,
+          issues,
+        });
+      }
+    }
+  } catch (err: unknown) {
+    tableExists = (err as { message?: string })?.message?.includes('does not exist') === false;
+  }
+}
+---
+
+<AdminLayoutV2
+  title="Eczane Veri Botu"
+  subtitle="Nöbetçi eczane listesi kalite kontrolü"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'Eczane Veri Botu' }]}
+  seo={{ title: 'Eczane Veri Botu - Admin', noIndex: true }}
+>
+  <div class="phbot-page">
+
+    <div class="phbot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span><strong>Manuel çalıştır.</strong> Nöbetçi eczane veritabanı taranır. Eksik/eski veriler ve duplikasyonlar raporlanır.</span>
+    </div>
+
+    {!ran ? (
+      <div class="phbot-run-card">
+        <div class="phbot-run-icon">💊</div>
+        <div class="phbot-run-body">
+          <div class="phbot-run-title">Eczane Veri Botu — Analizi Başlat</div>
+          <div class="phbot-run-desc">
+            <code>duty_pharmacies</code> tablosu taranır. Telefonsuz, adrессiz, 30 günden eski ve mükerrer kayıtlar listelenir.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="phbot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="phbot-results">
+
+        <div class="phbot-summary">
+          <div class="phbot-sum-stat"><span class="phbot-sum-val">{summary.total}</span><span class="phbot-sum-lbl">Taranan</span></div>
+          <div class="phbot-sum-stat"><span class="phbot-sum-val">{items.length}</span><span class="phbot-sum-lbl">Sorunlu</span></div>
+          <div class="phbot-sum-stat"><span class="phbot-sum-val" style="color:#c62828">{summary.noPhone}</span><span class="phbot-sum-lbl">Telefonsuz</span></div>
+          <div class="phbot-sum-stat"><span class="phbot-sum-val" style="color:#c62828">{summary.noAddress}</span><span class="phbot-sum-lbl">Adrессiz</span></div>
+          <div class="phbot-sum-stat"><span class="phbot-sum-val" style="color:#e65100">{summary.stale}</span><span class="phbot-sum-lbl">Eski Kayıt</span></div>
+          <div class="phbot-sum-stat"><span class="phbot-sum-val" style="color:#757575">{summary.duplicates}</span><span class="phbot-sum-lbl">Duplikasyon</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="phbot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {items.length > 0 ? (
+          <div class="phbot-table-card">
+            <div class="phbot-table-title">Sorunlu Eczaneler ({items.length})</div>
+            <div class="phbot-table-wrap">
+              <table class="phbot-table">
+                <thead>
+                  <tr>
+                    <th class="phbot-th">Eczane</th>
+                    <th class="phbot-th">İlçe</th>
+                    <th class="phbot-th">Telefon</th>
+                    <th class="phbot-th">Nöbet Tarihi</th>
+                    <th class="phbot-th">Sorunlar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.slice(0, 200).map(item => (
+                    <tr class="phbot-tr">
+                      <td class="phbot-td phbot-td-name">{item.name}</td>
+                      <td class="phbot-td phbot-td-muted">{item.district || '—'}</td>
+                      <td class="phbot-td phbot-td-muted">{item.phone || <span class="phbot-empty">—</span>}</td>
+                      <td class="phbot-td phbot-td-muted">{item.duty_date || <span class="phbot-empty">—</span>}</td>
+                      <td class="phbot-td">
+                        <div class="phbot-issues">
+                          {item.issues.map(iss => <span class="phbot-issue">{iss}</span>)}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : summary.total === 0 ? (
+          <div class="phbot-empty-state">
+            <span>📭</span>
+            <p>
+              {tableExists
+                ? 'Eczane veritabanı boş — nöbet verileri henüz girilmemiş.'
+                : 'duty_pharmacies tablosu bulunamadı.'
+              }
+            </p>
+            <a href="/nobetci-eczaneler" class="phbot-link">Nöbetçi Eczaneler Sayfası →</a>
+          </div>
+        ) : (
+          <div class="phbot-all-ok">
+            <span>✓</span>
+            <p>Tüm eczane kayıtları eksiksiz!</p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.phbot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.phbot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.phbot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.phbot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.phbot-run-icon { font-size: 36px; flex-shrink: 0; }
+.phbot-run-body { flex: 1; min-width: 200px; }
+.phbot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.phbot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.phbot-run-desc code { background: var(--adm-bg); border-radius: 3px; padding: 1px 5px; font-size: 11px; }
+.phbot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.phbot-run-btn:hover { opacity: 0.85; }
+
+.phbot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.phbot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.phbot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.phbot-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.phbot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.phbot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.phbot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.phbot-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.phbot-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.phbot-table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+.phbot-table { width: 100%; border-collapse: collapse; }
+.phbot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.phbot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.phbot-tr:last-child .phbot-td { border-bottom: none; }
+.phbot-tr:hover .phbot-td { background: var(--adm-bg-hover); }
+.phbot-td-name { font-weight: 500; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.phbot-td-muted { color: var(--adm-text-muted); font-size: 11px; }
+.phbot-empty { color: var(--adm-border); }
+.phbot-issues { display: flex; flex-wrap: wrap; gap: 3px; }
+.phbot-issue { font-size: 10px; background: rgba(198,40,40,.08); color: #c62828; border-radius: 4px; padding: 2px 5px; }
+
+.phbot-empty-state { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: var(--adm-text-muted); text-align: center; }
+.phbot-empty-state span { font-size: 36px; }
+.phbot-empty-state p { font-size: 13px; }
+.phbot-link { font-size: 13px; color: var(--adm-text-muted); }
+.phbot-link:hover { color: var(--adm-text); }
+
+.phbot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.phbot-all-ok span { font-size: 36px; }
+.phbot-all-ok p { font-size: 14px; }
+</style>

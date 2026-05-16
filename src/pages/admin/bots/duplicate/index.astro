@@ -1,0 +1,220 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type DupGroup = {
+  type: 'place' | 'blog' | 'slug';
+  key: string;
+  count: number;
+  ids: number[];
+};
+
+let groups: DupGroup[] = [];
+let ran = false;
+let summary = { dupPlaces: 0, dupBlogs: 0, dupSlugs: 0 };
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const [dupPlacesRes, dupBlogsRes, dupSlugRes] = await Promise.all([
+      query(`
+        SELECT LOWER(TRIM(name)) as key, COUNT(*)::int as cnt, ARRAY_AGG(id ORDER BY id) as ids
+        FROM places
+        WHERE status IN ('active','published')
+        GROUP BY LOWER(TRIM(name))
+        HAVING COUNT(*) > 1
+        ORDER BY cnt DESC
+        LIMIT 50
+      `),
+      query(`
+        SELECT LOWER(TRIM(title)) as key, COUNT(*)::int as cnt, ARRAY_AGG(id ORDER BY id) as ids
+        FROM blog_posts
+        WHERE status = 'published'
+        GROUP BY LOWER(TRIM(title))
+        HAVING COUNT(*) > 1
+        ORDER BY cnt DESC
+        LIMIT 50
+      `),
+      query(`
+        SELECT slug as key, COUNT(*)::int as cnt, ARRAY_AGG(id ORDER BY id) as ids, 'place' as src
+        FROM places
+        GROUP BY slug HAVING COUNT(*) > 1
+        UNION ALL
+        SELECT slug as key, COUNT(*)::int as cnt, ARRAY_AGG(id ORDER BY id) as ids, 'blog' as src
+        FROM blog_posts
+        GROUP BY slug HAVING COUNT(*) > 1
+        ORDER BY cnt DESC
+        LIMIT 30
+      `),
+    ]);
+
+    for (const r of dupPlacesRes.rows) {
+      summary.dupPlaces++;
+      groups.push({ type: 'place', key: r.key, count: r.cnt, ids: r.ids });
+    }
+    for (const r of dupBlogsRes.rows) {
+      summary.dupBlogs++;
+      groups.push({ type: 'blog', key: r.key, count: r.cnt, ids: r.ids });
+    }
+    for (const r of dupSlugRes.rows) {
+      summary.dupSlugs++;
+      groups.push({ type: r.src as 'place' | 'blog', key: `[SLUG] ${r.key}`, count: r.cnt, ids: r.ids });
+    }
+
+    groups.sort((a, b) => b.count - a.count);
+  } catch (_) { /* graceful */ }
+}
+---
+
+<AdminLayoutV2
+  title="Duplicate Veri Botu"
+  subtitle="Aynı isimli mekanlar, tekrar blog başlıkları ve slug çakışmaları"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'Duplicate Veri Botu' }]}
+  seo={{ title: 'Duplicate Veri Botu - Admin', noIndex: true }}
+>
+  <div class="dbot-page">
+
+    <div class="dbot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span><strong>Manuel çalıştır.</strong> Tespit edilen duplikasyon grupları listelenir — silme işlemi admin tarafından yapılır.</span>
+    </div>
+
+    {!ran ? (
+      <div class="dbot-run-card">
+        <div class="dbot-run-icon">🔀</div>
+        <div class="dbot-run-body">
+          <div class="dbot-run-title">Duplicate Veri Botu — Analizi Başlat</div>
+          <div class="dbot-run-desc">
+            Aktif mekanlar ve yayındaki bloglar taranır. Aynı isimli kayıtlar, tekrar eden başlıklar ve slug çakışmaları gruplar halinde gösterilir.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="dbot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="dbot-results">
+
+        <div class="dbot-summary">
+          <div class="dbot-sum-stat"><span class="dbot-sum-val">{groups.length}</span><span class="dbot-sum-lbl">Toplam Grup</span></div>
+          <div class="dbot-sum-stat"><span class="dbot-sum-val" style="color:#c62828">{summary.dupPlaces}</span><span class="dbot-sum-lbl">Mekan Duplikası</span></div>
+          <div class="dbot-sum-stat"><span class="dbot-sum-val" style="color:#e65100">{summary.dupBlogs}</span><span class="dbot-sum-lbl">Blog Duplikası</span></div>
+          <div class="dbot-sum-stat"><span class="dbot-sum-val" style="color:#c62828">{summary.dupSlugs}</span><span class="dbot-sum-lbl">Slug Çakışması</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="dbot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {groups.length > 0 ? (
+          <div class="dbot-table-card">
+            <div class="dbot-table-title">Duplikasyon Grupları ({groups.length})</div>
+            <div class="dbot-table-wrap">
+              <table class="dbot-table">
+                <thead>
+                  <tr>
+                    <th class="dbot-th">Tip</th>
+                    <th class="dbot-th">Anahtar (İsim / Başlık / Slug)</th>
+                    <th class="dbot-th">Tekrar</th>
+                    <th class="dbot-th">ID'ler</th>
+                    <th class="dbot-th">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {groups.map(g => (
+                    <tr class="dbot-tr">
+                      <td class="dbot-td">
+                        <span class={`dbot-type dbot-type--${g.type}`}>{g.type === 'blog' ? 'Blog' : 'Mekan'}</span>
+                      </td>
+                      <td class="dbot-td dbot-td-key">{g.key}</td>
+                      <td class="dbot-td">
+                        <span class="dbot-count" style={g.count >= 3 ? 'color:#c62828' : 'color:#e65100'}>×{g.count}</span>
+                      </td>
+                      <td class="dbot-td dbot-td-ids">
+                        {g.ids.map((id: number) => (
+                          <a
+                            href={g.type === 'blog' ? `/admin/blog/edit/${id}` : `/admin/businesses/${id}/edit`}
+                            class="dbot-id-link"
+                          >
+                            #{id}
+                          </a>
+                        ))}
+                      </td>
+                      <td class="dbot-td">
+                        {g.type === 'place'
+                          ? <a href={`/admin/businesses?search=${encodeURIComponent(g.key)}`} class="dbot-act">Listele</a>
+                          : <a href={`/admin/blog?search=${encodeURIComponent(g.key)}`} class="dbot-act">Listele</a>
+                        }
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div class="dbot-all-ok">
+            <span>✓</span>
+            <p>Duplikasyon tespit edilmedi — tüm veriler benzersiz!</p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.dbot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.dbot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.dbot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.dbot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.dbot-run-icon { font-size: 36px; flex-shrink: 0; }
+.dbot-run-body { flex: 1; min-width: 200px; }
+.dbot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.dbot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.dbot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.dbot-run-btn:hover { opacity: 0.85; }
+
+.dbot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.dbot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.dbot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.dbot-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.dbot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.dbot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.dbot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.dbot-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.dbot-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.dbot-table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+.dbot-table { width: 100%; border-collapse: collapse; }
+.dbot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.dbot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.dbot-tr:last-child .dbot-td { border-bottom: none; }
+.dbot-tr:hover .dbot-td { background: var(--adm-bg-hover); }
+
+.dbot-type { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+.dbot-type--blog { background: rgba(46,125,50,.1); color: #2e7d32; }
+.dbot-type--place { background: rgba(25,118,210,.1); color: #1976d2; }
+.dbot-td-key { font-weight: 500; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dbot-count { font-weight: 700; font-size: 13px; }
+.dbot-td-ids { display: flex; flex-wrap: wrap; gap: 4px; }
+.dbot-id-link { font-size: 10px; font-family: monospace; color: var(--adm-text-muted); text-decoration: none; border: 1px solid var(--adm-border); border-radius: 3px; padding: 1px 4px; }
+.dbot-id-link:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.dbot-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; white-space: nowrap; }
+.dbot-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.dbot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.dbot-all-ok span { font-size: 36px; }
+.dbot-all-ok p { font-size: 14px; }
+</style>

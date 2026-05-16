@@ -1,0 +1,237 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type CommunityAlert = {
+  type: 'photo' | 'message' | 'profile';
+  id: number | string;
+  subject: string;
+  author: string | null;
+  signals: string[];
+  created_at: Date | null;
+};
+
+let alerts: CommunityAlert[] = [];
+let ran = false;
+let summary = { photos: 0, messages: 0, profiles: 0, total: 0 };
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const [photosRes, profilesRes] = await Promise.all([
+      query(`
+        SELECT cp.id, cp.image_url, cp.status, cp.created_at,
+               u.full_name as author_name, u.email as author_email
+        FROM community_photos cp
+        LEFT JOIN users u ON u.id = cp.user_id
+        WHERE cp.status = 'pending'
+           OR cp.created_at > NOW() - INTERVAL '7 days'
+        ORDER BY cp.created_at DESC
+        LIMIT 100
+      `).catch(() => ({ rows: [] })),
+      query(`
+        SELECT u.id, u.full_name, u.email, u.avatar_url, u.bio, u.role,
+               u.created_at, u.is_banned
+        FROM users u
+        WHERE u.created_at > NOW() - INTERVAL '30 days'
+           OR u.is_banned = true
+        ORDER BY u.created_at DESC
+        LIMIT 200
+      `).catch(() => ({ rows: [] })),
+    ]);
+
+    for (const p of photosRes.rows) {
+      const signals: string[] = [];
+      if (p.status === 'pending') signals.push('Onay bekliyor');
+      if (signals.length > 0) {
+        summary.photos++;
+        alerts.push({
+          type: 'photo', id: p.id,
+          subject: p.image_url?.split('/').pop() || 'Fotoğraf',
+          author: p.author_name || p.author_email,
+          signals, created_at: p.created_at,
+        });
+      }
+    }
+
+    for (const u of profilesRes.rows) {
+      const signals: string[] = [];
+      if (u.is_banned) signals.push('Banlı kullanıcı');
+      const daysSince = u.created_at
+        ? Math.floor((Date.now() - new Date(u.created_at).getTime()) / 86400000)
+        : 999;
+      if (!u.avatar_url && daysSince < 7) signals.push('Avatarsız yeni üye');
+      if (!u.bio && daysSince < 7) signals.push('Biyografisiz yeni üye');
+      if (signals.length > 0) {
+        summary.profiles++;
+        alerts.push({
+          type: 'profile', id: u.id,
+          subject: u.full_name || u.email || 'Kullanıcı',
+          author: u.email,
+          signals, created_at: u.created_at,
+        });
+      }
+    }
+
+    summary.total = alerts.length;
+    alerts.sort((a, b) => {
+      const order = { photo: 0, message: 1, profile: 2 };
+      return order[a.type] - order[b.type];
+    });
+  } catch (_) { /* graceful */ }
+}
+
+function fmtDate(d: Date | null): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+}
+---
+
+<AdminLayoutV2
+  title="Topluluk Güvenlik Botu"
+  subtitle="Bekleyen fotoğraflar, yeni profil anormallikleri ve banlı kullanıcılar"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'Topluluk Güvenlik Botu' }]}
+  seo={{ title: 'Topluluk Güvenlik Botu - Admin', noIndex: true }}
+>
+  <div class="cgbot-page">
+
+    <div class="cgbot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>
+        <strong>Manuel çalıştır.</strong> Bot ban atmaz — şüpheli aktiviteler admin onayı için listelenir. Son 30 günlük yeni üyeler + tüm banlı kullanıcılar dahildir.
+      </span>
+    </div>
+
+    {!ran ? (
+      <div class="cgbot-run-card">
+        <div class="cgbot-run-icon">🛡</div>
+        <div class="cgbot-run-body">
+          <div class="cgbot-run-title">Topluluk Güvenlik Botu — Analizi Başlat</div>
+          <div class="cgbot-run-desc">
+            Bekleyen topluluk fotoğrafları ve son 30 günde katılan yeni üyeler incelenir. Banlı hesaplar, avatarsız/biyografisiz yeni profiller ve onay bekleyen içerikler raporlanır.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="cgbot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="cgbot-results">
+
+        <div class="cgbot-summary">
+          <div class="cgbot-sum-stat"><span class="cgbot-sum-val">{summary.total}</span><span class="cgbot-sum-lbl">Toplam Uyarı</span></div>
+          <div class="cgbot-sum-stat"><span class="cgbot-sum-val" style="color:#e65100">{summary.photos}</span><span class="cgbot-sum-lbl">Fotoğraf</span></div>
+          <div class="cgbot-sum-stat"><span class="cgbot-sum-val" style="color:#757575">{summary.profiles}</span><span class="cgbot-sum-lbl">Profil</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="cgbot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {alerts.length > 0 ? (
+          <div class="cgbot-table-card">
+            <div class="cgbot-table-title">Topluluk Uyarıları ({alerts.length})</div>
+            <div class="cgbot-table-wrap">
+              <table class="cgbot-table">
+                <thead>
+                  <tr>
+                    <th class="cgbot-th">Tip</th>
+                    <th class="cgbot-th">Konu</th>
+                    <th class="cgbot-th">Kullanıcı</th>
+                    <th class="cgbot-th">Sinyaller</th>
+                    <th class="cgbot-th">Tarih</th>
+                    <th class="cgbot-th">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {alerts.slice(0, 150).map(alert => (
+                    <tr class="cgbot-tr">
+                      <td class="cgbot-td">
+                        <span class={`cgbot-type cgbot-type--${alert.type}`}>
+                          {alert.type === 'photo' ? 'Fotoğraf' : alert.type === 'message' ? 'Mesaj' : 'Profil'}
+                        </span>
+                      </td>
+                      <td class="cgbot-td cgbot-td-name">{alert.subject}</td>
+                      <td class="cgbot-td cgbot-td-muted">{alert.author || 'Anonim'}</td>
+                      <td class="cgbot-td">
+                        <div class="cgbot-signals">
+                          {alert.signals.map(s => <span class="cgbot-signal">{s}</span>)}
+                        </div>
+                      </td>
+                      <td class="cgbot-td cgbot-td-muted">{fmtDate(alert.created_at)}</td>
+                      <td class="cgbot-td">
+                        {alert.type === 'photo' && <a href="/admin/media" class="cgbot-act">İncele</a>}
+                        {alert.type === 'profile' && <a href={`/admin/community/users?id=${alert.id}`} class="cgbot-act">Profil</a>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div class="cgbot-all-ok">
+            <span>✓</span>
+            <p>Toplulukta şüpheli aktivite tespit edilmedi!</p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.cgbot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.cgbot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.cgbot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.cgbot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.cgbot-run-icon { font-size: 36px; flex-shrink: 0; }
+.cgbot-run-body { flex: 1; min-width: 200px; }
+.cgbot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.cgbot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.cgbot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.cgbot-run-btn:hover { opacity: 0.85; }
+
+.cgbot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.cgbot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.cgbot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.cgbot-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.cgbot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.cgbot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.cgbot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.cgbot-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.cgbot-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.cgbot-table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+.cgbot-table { width: 100%; border-collapse: collapse; }
+.cgbot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.cgbot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.cgbot-tr:last-child .cgbot-td { border-bottom: none; }
+.cgbot-tr:hover .cgbot-td { background: var(--adm-bg-hover); }
+
+.cgbot-type { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+.cgbot-type--photo { background: rgba(156,39,176,.1); color: #7b1fa2; }
+.cgbot-type--message { background: rgba(25,118,210,.1); color: #1976d2; }
+.cgbot-type--profile { background: rgba(117,117,117,.1); color: #757575; }
+.cgbot-td-name { font-weight: 500; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cgbot-td-muted { color: var(--adm-text-muted); font-size: 11px; }
+.cgbot-signals { display: flex; flex-wrap: wrap; gap: 3px; }
+.cgbot-signal { font-size: 10px; background: rgba(230,81,0,.08); color: #e65100; border-radius: 4px; padding: 2px 5px; }
+.cgbot-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; }
+.cgbot-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.cgbot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.cgbot-all-ok span { font-size: 36px; }
+.cgbot-all-ok p { font-size: 14px; }
+</style>

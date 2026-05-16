@@ -188,7 +188,7 @@ const TYPE_LABELS: Record<string, string> = {
       var status = action === 'resolve' ? 'resolved' : 'dismissed';
       btn.disabled = true;
 
-      fetch('/api/admin/reports/' + id, {
+      fetch('/api/admin/reports-moderation/' + id, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: status }),

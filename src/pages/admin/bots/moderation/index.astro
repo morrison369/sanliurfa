@@ -1,0 +1,257 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type SuspectItem = {
+  id: number | string;
+  type: 'review' | 'comment';
+  content: string;
+  author: string | null;
+  place_or_target: string | null;
+  risk_score: number;
+  signals: string[];
+  created_at: Date;
+};
+
+let items: SuspectItem[] = [];
+let ran = false;
+let summary = { totalScanned: 0, highRisk: 0, medRisk: 0, pending: 0 };
+
+const runBot = Astro.request.method === 'POST';
+
+const SPAM_KEYWORDS = ['http', 'www.', '.com', 'kazan', 'ücretsiz', 'tıkla', 'indir', 'telegram', 'whatsapp', 'para kazan'];
+const PROFANITY_KEYWORDS = ['sik', 'orospu', 'göt', 'amk', 'bok', 'gerize'];
+
+if (runBot) {
+  ran = true;
+  try {
+    const [reviewsRes, commentsRes] = await Promise.all([
+      query(`
+        SELECT r.id, r.content, r.rating, r.status, r.created_at,
+               u.full_name as author_name, u.email as author_email,
+               p.name as place_name
+        FROM reviews r
+        LEFT JOIN users u ON u.id = r.user_id
+        LEFT JOIN places p ON p.id = r.place_id
+        WHERE r.created_at > NOW() - INTERVAL '90 days'
+        ORDER BY r.created_at DESC
+        LIMIT 500
+      `),
+      query(`
+        SELECT c.id, c.content, c.status, c.created_at,
+               u.full_name as author_name, u.email as author_email,
+               c.target_type, c.target_id
+        FROM comments c
+        LEFT JOIN users u ON u.id = c.user_id
+        WHERE c.created_at > NOW() - INTERVAL '90 days'
+        ORDER BY c.created_at DESC
+        LIMIT 500
+      `),
+    ]);
+
+    summary.totalScanned = reviewsRes.rows.length + commentsRes.rows.length;
+
+    const scoreItem = (content: string, status: string): { score: number; signals: string[] } => {
+      const signals: string[] = [];
+      let score = 0;
+      const lower = content.toLowerCase();
+
+      if (status === 'pending') { signals.push('Onay bekliyor'); score += 10; summary.pending++; }
+
+      for (const kw of SPAM_KEYWORDS) {
+        if (lower.includes(kw)) { signals.push(`Spam: "${kw}"`); score += 30; break; }
+      }
+      for (const kw of PROFANITY_KEYWORDS) {
+        if (lower.includes(kw)) { signals.push('Küfür/uygunsuz dil'); score += 40; break; }
+      }
+      if (content.length < 10) { signals.push('Çok kısa içerik'); score += 20; }
+      if (/(.)\1{4,}/.test(content)) { signals.push('Tekrarlayan karakter'); score += 25; }
+      if (/[A-Z]{5,}/.test(content)) { signals.push('Tümü büyük harf'); score += 15; }
+
+      return { score, signals };
+    };
+
+    for (const r of reviewsRes.rows) {
+      const { score, signals } = scoreItem(r.content || '', r.status);
+      if (score >= 20) {
+        if (score >= 40) summary.highRisk++; else summary.medRisk++;
+        items.push({
+          id: r.id, type: 'review',
+          content: (r.content || '').substring(0, 120),
+          author: r.author_name || r.author_email,
+          place_or_target: r.place_name,
+          risk_score: score, signals,
+          created_at: r.created_at,
+        });
+      }
+    }
+
+    for (const c of commentsRes.rows) {
+      const { score, signals } = scoreItem(c.content || '', c.status);
+      if (score >= 20) {
+        if (score >= 40) summary.highRisk++; else summary.medRisk++;
+        items.push({
+          id: c.id, type: 'comment',
+          content: (c.content || '').substring(0, 120),
+          author: c.author_name || c.author_email,
+          place_or_target: `${c.target_type}/${c.target_id}`,
+          risk_score: score, signals,
+          created_at: c.created_at,
+        });
+      }
+    }
+
+    items.sort((a, b) => b.risk_score - a.risk_score);
+  } catch (_) { /* graceful */ }
+}
+
+function fmtDate(d: Date): string {
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+}
+
+const riskColor = (s: number) => s >= 40 ? '#c62828' : s >= 25 ? '#e65100' : '#757575';
+---
+
+<AdminLayoutV2
+  title="Yorum Moderasyon Botu"
+  subtitle="Spam, uygunsuz dil ve sahte yorum sinyalleri tespiti"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'Moderasyon Botu' }]}
+  seo={{ title: 'Yorum Moderasyon Botu - Admin', noIndex: true }}
+>
+  <div class="mbot-page">
+
+    <div class="mbot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>
+        <strong>Manuel çalıştır.</strong> Son 90 gündeki yorumlar taranır. Bot ban atmaz — admin kararı gerektirir.
+      </span>
+    </div>
+
+    {!ran ? (
+      <div class="mbot-run-card">
+        <div class="mbot-run-icon">💬</div>
+        <div class="mbot-run-body">
+          <div class="mbot-run-title">Moderasyon Botu — Analizi Başlat</div>
+          <div class="mbot-run-desc">
+            Son 90 gündeki yorum ve commentler taranır. Spam bağlantılar, küfür, aşırı kısa içerik ve şüpheli paternler risk skoru ile listelenir.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="mbot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="mbot-results">
+
+        <div class="mbot-summary">
+          <div class="mbot-sum-stat"><span class="mbot-sum-val">{summary.totalScanned}</span><span class="mbot-sum-lbl">Taranan</span></div>
+          <div class="mbot-sum-stat"><span class="mbot-sum-val">{items.length}</span><span class="mbot-sum-lbl">Şüpheli</span></div>
+          <div class="mbot-sum-stat"><span class="mbot-sum-val" style="color:#c62828">{summary.highRisk}</span><span class="mbot-sum-lbl">Yüksek Risk</span></div>
+          <div class="mbot-sum-stat"><span class="mbot-sum-val" style="color:#e65100">{summary.medRisk}</span><span class="mbot-sum-lbl">Orta Risk</span></div>
+          <div class="mbot-sum-stat"><span class="mbot-sum-val" style="color:#757575">{summary.pending}</span><span class="mbot-sum-lbl">Onay Bekliyor</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="mbot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {items.length > 0 ? (
+          <div class="mbot-table-card">
+            <div class="mbot-table-title">Şüpheli Yorumlar ({items.length})</div>
+            <div class="mbot-table-wrap">
+              <table class="mbot-table">
+                <thead>
+                  <tr>
+                    <th class="mbot-th">Risk</th>
+                    <th class="mbot-th">Tip</th>
+                    <th class="mbot-th">İçerik</th>
+                    <th class="mbot-th">Yazar</th>
+                    <th class="mbot-th">Sinyaller</th>
+                    <th class="mbot-th">Tarih</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.slice(0, 100).map(item => (
+                    <tr class="mbot-tr">
+                      <td class="mbot-td">
+                        <span class="mbot-score" style={`color:${riskColor(item.risk_score)}`}>{item.risk_score}</span>
+                      </td>
+                      <td class="mbot-td">
+                        <span class={`mbot-type mbot-type--${item.type}`}>{item.type === 'review' ? 'Yorum' : 'Cmt'}</span>
+                      </td>
+                      <td class="mbot-td mbot-td-content">{item.content}{item.content.length >= 120 ? '…' : ''}</td>
+                      <td class="mbot-td mbot-td-muted">{item.author || 'Anonim'}</td>
+                      <td class="mbot-td">
+                        <div class="mbot-signals">
+                          {item.signals.map(s => <span class="mbot-signal">{s}</span>)}
+                        </div>
+                      </td>
+                      <td class="mbot-td mbot-td-muted">{fmtDate(item.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div class="mbot-all-ok">
+            <span>✓</span>
+            <p>Son 90 günde şüpheli yorum tespit edilmedi!</p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.mbot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.mbot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.mbot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.mbot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.mbot-run-icon { font-size: 36px; flex-shrink: 0; }
+.mbot-run-body { flex: 1; min-width: 200px; }
+.mbot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.mbot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.mbot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.mbot-run-btn:hover { opacity: 0.85; }
+
+.mbot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.mbot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.mbot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.mbot-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.mbot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.mbot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.mbot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.mbot-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.mbot-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.mbot-table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+.mbot-table { width: 100%; border-collapse: collapse; }
+.mbot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.mbot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.mbot-tr:last-child .mbot-td { border-bottom: none; }
+.mbot-tr:hover .mbot-td { background: var(--adm-bg-hover); }
+
+.mbot-score { font-size: 15px; font-weight: 700; }
+.mbot-type { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+.mbot-type--review { background: rgba(25,118,210,.1); color: #1976d2; }
+.mbot-type--comment { background: rgba(156,39,176,.1); color: #7b1fa2; }
+.mbot-td-content { max-width: 260px; font-size: 11px; color: var(--adm-text-muted); }
+.mbot-td-muted { color: var(--adm-text-muted); font-size: 11px; }
+.mbot-signals { display: flex; flex-wrap: wrap; gap: 3px; }
+.mbot-signal { font-size: 10px; background: rgba(198,40,40,.08); color: #c62828; border-radius: 4px; padding: 2px 5px; }
+
+.mbot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.mbot-all-ok span { font-size: 36px; }
+.mbot-all-ok p { font-size: 14px; }
+</style>

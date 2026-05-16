@@ -1,0 +1,226 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type CoordIssue = {
+  id: number;
+  name: string;
+  slug: string;
+  district_name: string | null;
+  category_name: string | null;
+  address: string | null;
+  issue: 'no_coords' | 'no_address' | 'both';
+};
+
+let issues: CoordIssue[] = [];
+let ran = false;
+let summary = { noCoords: 0, noAddress: 0, both: 0, total: 0 };
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const result = await query(`
+      SELECT p.id, p.name, p.slug, p.address, p.latitude, p.longitude,
+             d.name as district_name, c.name as category_name
+      FROM places p
+      LEFT JOIN districts d ON d.id = p.district_id
+      LEFT JOIN categories c ON c.id = p.category_id
+      WHERE p.status IN ('active','published')
+        AND (p.latitude IS NULL OR p.longitude IS NULL OR p.address IS NULL OR p.address = '')
+      ORDER BY p.name
+      LIMIT 500
+    `);
+
+    summary.total = result.rows.length;
+
+    for (const p of result.rows) {
+      const noCoords = !p.latitude || !p.longitude;
+      const noAddress = !p.address || p.address.trim() === '';
+      let issue: CoordIssue['issue'];
+      if (noCoords && noAddress) { issue = 'both'; summary.both++; }
+      else if (noCoords) { issue = 'no_coords'; summary.noCoords++; }
+      else { issue = 'no_address'; summary.noAddress++; }
+
+      issues.push({
+        id: p.id, name: p.name, slug: p.slug,
+        district_name: p.district_name, category_name: p.category_name,
+        address: p.address, issue,
+      });
+    }
+
+    issues.sort((a, b) => {
+      const order = { both: 0, no_coords: 1, no_address: 2 };
+      return order[a.issue] - order[b.issue];
+    });
+  } catch (_) { /* graceful */ }
+}
+
+const ISSUE_LABELS: Record<CoordIssue['issue'], string> = {
+  both: 'Koordinat + Adres yok',
+  no_coords: 'Koordinat yok',
+  no_address: 'Adres yok',
+};
+
+const ISSUE_COLORS: Record<CoordIssue['issue'], string> = {
+  both: '#c62828',
+  no_coords: '#e65100',
+  no_address: '#757575',
+};
+---
+
+<AdminLayoutV2
+  title="Harita Koordinat Botu"
+  subtitle="Koordinatsız ve adrессiz mekanları tespit eder"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'Harita Koordinat Botu' }]}
+  seo={{ title: 'Harita Koordinat Botu - Admin', noIndex: true }}
+>
+  <div class="mcbot-page">
+
+    <div class="mcbot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>
+        <strong>Manuel çalıştır.</strong> Koordinatsız mekanlara Nominatim geocode linki verilir — veri otomatik değiştirilmez.
+      </span>
+    </div>
+
+    {!ran ? (
+      <div class="mcbot-run-card">
+        <div class="mcbot-run-icon">📍</div>
+        <div class="mcbot-run-body">
+          <div class="mcbot-run-title">Harita Koordinat Botu — Analizi Başlat</div>
+          <div class="mcbot-run-desc">
+            Aktif mekanlar taranır. Koordinatsız veya adrессiz olan mekanlar listelenir, öncelik sırasıyla gösterilir.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="mcbot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="mcbot-results">
+
+        <div class="mcbot-summary">
+          <div class="mcbot-sum-stat"><span class="mcbot-sum-val">{summary.total}</span><span class="mcbot-sum-lbl">Toplam Sorun</span></div>
+          <div class="mcbot-sum-stat"><span class="mcbot-sum-val" style="color:#c62828">{summary.both}</span><span class="mcbot-sum-lbl">İkisi de Yok</span></div>
+          <div class="mcbot-sum-stat"><span class="mcbot-sum-val" style="color:#e65100">{summary.noCoords}</span><span class="mcbot-sum-lbl">Koordinatsız</span></div>
+          <div class="mcbot-sum-stat"><span class="mcbot-sum-val" style="color:#757575">{summary.noAddress}</span><span class="mcbot-sum-lbl">Adrессiz</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="mcbot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {issues.length > 0 ? (
+          <div class="mcbot-table-card">
+            <div class="mcbot-table-title">Koordinat/Adres Sorunları ({issues.length} mekan)</div>
+            <div class="mcbot-table-wrap">
+              <table class="mcbot-table">
+                <thead>
+                  <tr>
+                    <th class="mcbot-th">Sorun</th>
+                    <th class="mcbot-th">Mekan</th>
+                    <th class="mcbot-th">İlçe / Kategori</th>
+                    <th class="mcbot-th">Adres</th>
+                    <th class="mcbot-th">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {issues.slice(0, 300).map(item => (
+                    <tr class="mcbot-tr">
+                      <td class="mcbot-td">
+                        <span class="mcbot-issue-badge" style={`color:${ISSUE_COLORS[item.issue]}`}>
+                          {ISSUE_LABELS[item.issue]}
+                        </span>
+                      </td>
+                      <td class="mcbot-td mcbot-td-name">{item.name}</td>
+                      <td class="mcbot-td mcbot-td-muted">
+                        {item.district_name && <span>{item.district_name}</span>}
+                        {item.category_name && <span class="mcbot-cat">{item.category_name}</span>}
+                      </td>
+                      <td class="mcbot-td mcbot-td-addr">{item.address || <span class="mcbot-empty">—</span>}</td>
+                      <td class="mcbot-td mcbot-td-acts">
+                        <a href={`/admin/businesses/${item.id}/edit`} class="mcbot-act">Düzenle</a>
+                        {item.address && (
+                          <a
+                            href={`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(item.address + ' Şanlıurfa')}&format=json`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="mcbot-act mcbot-act--geo"
+                          >
+                            Geocode
+                          </a>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div class="mcbot-all-ok">
+            <span>✓</span>
+            <p>Tüm aktif mekanların koordinat ve adres bilgisi tam!</p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.mcbot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.mcbot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.mcbot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.mcbot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.mcbot-run-icon { font-size: 36px; flex-shrink: 0; }
+.mcbot-run-body { flex: 1; min-width: 200px; }
+.mcbot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.mcbot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.mcbot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.mcbot-run-btn:hover { opacity: 0.85; }
+
+.mcbot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.mcbot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.mcbot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.mcbot-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.mcbot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.mcbot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.mcbot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.mcbot-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.mcbot-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.mcbot-table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+.mcbot-table { width: 100%; border-collapse: collapse; }
+.mcbot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.mcbot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.mcbot-tr:last-child .mcbot-td { border-bottom: none; }
+.mcbot-tr:hover .mcbot-td { background: var(--adm-bg-hover); }
+
+.mcbot-issue-badge { font-size: 10px; font-weight: 600; white-space: nowrap; }
+.mcbot-td-name { font-weight: 500; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mcbot-td-muted { color: var(--adm-text-muted); font-size: 11px; }
+.mcbot-cat { margin-left: 4px; background: var(--adm-bg-hover); border-radius: 4px; padding: 1px 5px; font-size: 10px; }
+.mcbot-td-addr { font-size: 11px; color: var(--adm-text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mcbot-empty { color: var(--adm-border); }
+.mcbot-td-acts { display: flex; gap: 4px; }
+.mcbot-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; white-space: nowrap; }
+.mcbot-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.mcbot-act--geo { border-color: #1976d2; color: #1976d2; }
+.mcbot-act--geo:hover { background: rgba(25,118,210,.08); }
+
+.mcbot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.mcbot-all-ok span { font-size: 36px; }
+.mcbot-all-ok p { font-size: 14px; }
+</style>

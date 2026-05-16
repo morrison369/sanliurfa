@@ -1,0 +1,220 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type LinkIssue = {
+  id: number;
+  title: string;
+  slug: string;
+  type: 'blog' | 'place';
+  link_count: number;
+  issues: string[];
+};
+
+let items: LinkIssue[] = [];
+let ran = false;
+let summary = { noLinks: 0, fewLinks: 0, total: 0 };
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const [blogRes, placeRes] = await Promise.all([
+      query(`
+        SELECT id, title, slug, content
+        FROM blog_posts
+        WHERE status = 'published'
+        ORDER BY published_at DESC
+        LIMIT 300
+      `),
+      query(`
+        SELECT id, name, slug, short_description
+        FROM places
+        WHERE status IN ('active','published')
+        LIMIT 300
+      `),
+    ]);
+
+    summary.total = blogRes.rows.length + placeRes.rows.length;
+
+    for (const b of blogRes.rows) {
+      const content = b.content || '';
+      const internalLinks = (content.match(/href="\/[^"]+"/g) || []).length;
+      const issues: string[] = [];
+
+      if (internalLinks === 0) { issues.push('Hiç iç link yok'); summary.noLinks++; }
+      else if (internalLinks < 2) { issues.push(`Çok az iç link (${internalLinks})`); summary.fewLinks++; }
+
+      if (!content.includes('/mekanlar/') && !content.includes('/tarihi-yerler/')) {
+        issues.push('Mekan/tarihi yer linki yok');
+      }
+
+      if (issues.length > 0) {
+        items.push({ id: b.id, title: b.title, slug: b.slug, type: 'blog', link_count: internalLinks, issues });
+      }
+    }
+
+    for (const p of placeRes.rows) {
+      const desc = p.short_description || '';
+      const internalLinks = (desc.match(/href="\/[^"]+"/g) || []).length;
+      const issues: string[] = [];
+
+      if (desc.length < 50) issues.push('Açıklama çok kısa — link eklenemez');
+
+      if (issues.length > 0) {
+        items.push({ id: p.id, title: p.name, slug: p.slug, type: 'place', link_count: internalLinks, issues });
+      }
+    }
+
+    items.sort((a, b) => a.link_count - b.link_count);
+  } catch (_) { /* graceful */ }
+}
+---
+
+<AdminLayoutV2
+  title="İç Link Botu"
+  subtitle="İç linksiz blog yazılarını ve kısa mekan açıklamalarını tespit eder"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'İç Link Botu' }]}
+  seo={{ title: 'İç Link Botu - Admin', noIndex: true }}
+>
+  <div class="lbot-page">
+
+    <div class="lbot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span><strong>Manuel çalıştır.</strong> Blog içeriklerinde iç link sayımı yapılır — link ekleme işlemi admin tarafından yapılır.</span>
+    </div>
+
+    {!ran ? (
+      <div class="lbot-run-card">
+        <div class="lbot-run-icon">🔗</div>
+        <div class="lbot-run-body">
+          <div class="lbot-run-title">İç Link Botu — Analizi Başlat</div>
+          <div class="lbot-run-desc">
+            Yayındaki blog yazıları ve aktif mekanlar taranır. İç link sayısı yetersiz olan içerikler listelenir. Her blog yazısında en az 2 iç link olması önerilir.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="lbot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="lbot-results">
+
+        <div class="lbot-summary">
+          <div class="lbot-sum-stat"><span class="lbot-sum-val">{summary.total}</span><span class="lbot-sum-lbl">Taranan</span></div>
+          <div class="lbot-sum-stat"><span class="lbot-sum-val">{items.length}</span><span class="lbot-sum-lbl">Sorunlu</span></div>
+          <div class="lbot-sum-stat"><span class="lbot-sum-val" style="color:#c62828">{summary.noLinks}</span><span class="lbot-sum-lbl">Hiç Link Yok</span></div>
+          <div class="lbot-sum-stat"><span class="lbot-sum-val" style="color:#e65100">{summary.fewLinks}</span><span class="lbot-sum-lbl">Az Link</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="lbot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {items.length > 0 ? (
+          <div class="lbot-table-card">
+            <div class="lbot-table-title">İç Link Sorunları ({items.length})</div>
+            <div class="lbot-table-wrap">
+              <table class="lbot-table">
+                <thead>
+                  <tr>
+                    <th class="lbot-th">Tip</th>
+                    <th class="lbot-th">Başlık</th>
+                    <th class="lbot-th">İç Link</th>
+                    <th class="lbot-th">Sorunlar</th>
+                    <th class="lbot-th">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.slice(0, 200).map(item => (
+                    <tr class="lbot-tr">
+                      <td class="lbot-td">
+                        <span class={`lbot-type lbot-type--${item.type}`}>{item.type === 'blog' ? 'Blog' : 'Mekan'}</span>
+                      </td>
+                      <td class="lbot-td lbot-td-name">{item.title}</td>
+                      <td class="lbot-td">
+                        <span class="lbot-count" style={item.link_count === 0 ? 'color:#c62828' : 'color:#e65100'}>
+                          {item.link_count}
+                        </span>
+                      </td>
+                      <td class="lbot-td">
+                        <div class="lbot-issues">
+                          {item.issues.map(iss => <span class="lbot-issue">{iss}</span>)}
+                        </div>
+                      </td>
+                      <td class="lbot-td">
+                        {item.type === 'blog'
+                          ? <a href={`/admin/blog/edit/${item.id}`} class="lbot-act">Düzenle</a>
+                          : <a href={`/admin/businesses/${item.id}/edit`} class="lbot-act">Düzenle</a>
+                        }
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div class="lbot-all-ok">
+            <span>✓</span>
+            <p>Tüm içeriklerde yeterli iç link mevcut!</p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.lbot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.lbot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.lbot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.lbot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.lbot-run-icon { font-size: 36px; flex-shrink: 0; }
+.lbot-run-body { flex: 1; min-width: 200px; }
+.lbot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.lbot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.lbot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.lbot-run-btn:hover { opacity: 0.85; }
+
+.lbot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.lbot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.lbot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.lbot-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.lbot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.lbot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.lbot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.lbot-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.lbot-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.lbot-table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+.lbot-table { width: 100%; border-collapse: collapse; }
+.lbot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.lbot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.lbot-tr:last-child .lbot-td { border-bottom: none; }
+.lbot-tr:hover .lbot-td { background: var(--adm-bg-hover); }
+
+.lbot-type { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+.lbot-type--blog { background: rgba(46,125,50,.1); color: #2e7d32; }
+.lbot-type--place { background: rgba(25,118,210,.1); color: #1976d2; }
+.lbot-td-name { font-weight: 500; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lbot-count { font-size: 15px; font-weight: 700; }
+.lbot-issues { display: flex; flex-wrap: wrap; gap: 3px; }
+.lbot-issue { font-size: 10px; background: rgba(198,40,40,.08); color: #c62828; border-radius: 4px; padding: 2px 5px; }
+.lbot-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; white-space: nowrap; }
+.lbot-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.lbot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.lbot-all-ok span { font-size: 36px; }
+.lbot-all-ok p { font-size: 14px; }
+</style>

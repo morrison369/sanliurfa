@@ -1,0 +1,247 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type ImageIssue = {
+  id: number | string;
+  filename: string;
+  mime_type: string;
+  size_kb: number;
+  issues: string[];
+  entity_type: string;
+};
+
+let items: ImageIssue[] = [];
+let ran = false;
+let summary = { noAlt: 0, tooBig: 0, wrongFormat: 0, total: 0 };
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const [assetsRes, placesRes, blogRes] = await Promise.all([
+      query(`
+        SELECT id, filename, mime_type, size_bytes, alt_text, entity_type
+        FROM site_media_assets
+        ORDER BY created_at DESC
+        LIMIT 500
+      `).catch(() => ({ rows: [] })),
+      query(`
+        SELECT id, name, thumbnail_url
+        FROM places
+        WHERE status IN ('active','published')
+          AND thumbnail_url IS NOT NULL
+        LIMIT 300
+      `),
+      query(`
+        SELECT id, title, featured_image
+        FROM blog_posts
+        WHERE status = 'published'
+          AND featured_image IS NOT NULL
+        LIMIT 200
+      `),
+    ]);
+
+    summary.total = assetsRes.rows.length;
+
+    for (const a of assetsRes.rows) {
+      const issues: string[] = [];
+      const sizeKb = Math.round((a.size_bytes || 0) / 1024);
+
+      if (!a.alt_text || a.alt_text.trim() === '') { issues.push('Alt text eksik'); summary.noAlt++; }
+      if (sizeKb > 500) { issues.push(`Büyük dosya (${sizeKb}KB > 500KB)`); summary.tooBig++; }
+      if (a.mime_type === 'image/jpeg' || a.mime_type === 'image/png') {
+        issues.push('WebP/AVIF formatına dönüştürülmeli');
+        summary.wrongFormat++;
+      }
+
+      if (issues.length > 0) {
+        items.push({
+          id: a.id,
+          filename: a.filename || '(adsız)',
+          mime_type: a.mime_type || '—',
+          size_kb: sizeKb,
+          issues,
+          entity_type: a.entity_type || 'media',
+        });
+      }
+    }
+
+    for (const p of placesRes.rows) {
+      if (!p.thumbnail_url) continue;
+      const issues: string[] = [];
+      if (p.thumbnail_url.startsWith('http') && !p.thumbnail_url.includes('localhost')) {
+        issues.push('Harici CDN URL (local olmalı)');
+      }
+      if (issues.length > 0) {
+        items.push({
+          id: p.id, filename: p.thumbnail_url.split('/').pop() || p.thumbnail_url,
+          mime_type: 'image/*', size_kb: 0, issues, entity_type: 'place',
+        });
+      }
+    }
+
+    for (const b of blogRes.rows) {
+      if (!b.featured_image) continue;
+      const issues: string[] = [];
+      if (b.featured_image.startsWith('http') && !b.featured_image.includes('localhost')) {
+        issues.push('Harici CDN URL (local olmalı)');
+      }
+      if (issues.length > 0) {
+        items.push({
+          id: b.id, filename: b.featured_image.split('/').pop() || b.featured_image,
+          mime_type: 'image/*', size_kb: 0, issues, entity_type: 'blog',
+        });
+      }
+    }
+
+    items.sort((a, b) => b.issues.length - a.issues.length);
+  } catch (_) { /* graceful */ }
+}
+---
+
+<AdminLayoutV2
+  title="Görsel / Alt Text Botu"
+  subtitle="Eksik alt text, büyük dosya ve format sorunları tespiti"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'Görsel Botu' }]}
+  seo={{ title: 'Görsel Botu - Admin', noIndex: true }}
+>
+  <div class="ibot-page">
+
+    <div class="ibot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span><strong>Manuel çalıştır.</strong> Medya varlıkları ve mekan/blog görselleri taranır. Bot düzeltme yapmaz.</span>
+    </div>
+
+    {!ran ? (
+      <div class="ibot-run-card">
+        <div class="ibot-run-icon">🖼</div>
+        <div class="ibot-run-body">
+          <div class="ibot-run-title">Görsel / Alt Text Botu — Analizi Başlat</div>
+          <div class="ibot-run-desc">
+            Medya arşivi, mekan thumbnail'leri ve blog öne çıkan görseller taranır. Eksik alt text, 500KB üzeri dosya ve harici CDN URL'leri listelenir.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="ibot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="ibot-results">
+
+        <div class="ibot-summary">
+          <div class="ibot-sum-stat"><span class="ibot-sum-val">{summary.total}</span><span class="ibot-sum-lbl">Taranan Varlık</span></div>
+          <div class="ibot-sum-stat"><span class="ibot-sum-val">{items.length}</span><span class="ibot-sum-lbl">Sorunlu</span></div>
+          <div class="ibot-sum-stat"><span class="ibot-sum-val" style="color:#c62828">{summary.noAlt}</span><span class="ibot-sum-lbl">Alt Text Yok</span></div>
+          <div class="ibot-sum-stat"><span class="ibot-sum-val" style="color:#e65100">{summary.tooBig}</span><span class="ibot-sum-lbl">500KB Üzeri</span></div>
+          <div class="ibot-sum-stat"><span class="ibot-sum-val" style="color:#757575">{summary.wrongFormat}</span><span class="ibot-sum-lbl">JPEG/PNG</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="ibot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {items.length > 0 ? (
+          <div class="ibot-table-card">
+            <div class="ibot-table-title">Görsel Sorunları ({items.length})</div>
+            <div class="ibot-table-wrap">
+              <table class="ibot-table">
+                <thead>
+                  <tr>
+                    <th class="ibot-th">Varlık</th>
+                    <th class="ibot-th">Format</th>
+                    <th class="ibot-th">Boyut</th>
+                    <th class="ibot-th">Sorunlar</th>
+                    <th class="ibot-th">Tip</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.slice(0, 200).map(item => (
+                    <tr class="ibot-tr">
+                      <td class="ibot-td ibot-td-name">{item.filename}</td>
+                      <td class="ibot-td ibot-td-muted">{item.mime_type}</td>
+                      <td class="ibot-td ibot-td-muted">{item.size_kb > 0 ? `${item.size_kb}KB` : '—'}</td>
+                      <td class="ibot-td">
+                        <div class="ibot-issues">
+                          {item.issues.map(iss => <span class="ibot-issue">{iss}</span>)}
+                        </div>
+                      </td>
+                      <td class="ibot-td">
+                        <span class="ibot-entity">{item.entity_type}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div class="ibot-all-ok">
+            <span>✓</span>
+            <p>Tüm görseller standartları karşılıyor!</p>
+          </div>
+        )}
+
+        <div class="ibot-tip">
+          <strong>WebP dönüşümü için:</strong> <code>npm run images:webp:convert</code> komutu çalıştırılabilir.
+          Alt text eklemek için <a href="/admin/media" class="ibot-tip-link">Medya Yönetimi →</a>
+        </div>
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.ibot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.ibot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.ibot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.ibot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.ibot-run-icon { font-size: 36px; flex-shrink: 0; }
+.ibot-run-body { flex: 1; min-width: 200px; }
+.ibot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.ibot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.ibot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.ibot-run-btn:hover { opacity: 0.85; }
+
+.ibot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.ibot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.ibot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.ibot-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.ibot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.ibot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.ibot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.ibot-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.ibot-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.ibot-table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+.ibot-table { width: 100%; border-collapse: collapse; }
+.ibot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.ibot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.ibot-tr:last-child .ibot-td { border-bottom: none; }
+.ibot-tr:hover .ibot-td { background: var(--adm-bg-hover); }
+
+.ibot-td-name { font-size: 11px; font-family: monospace; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ibot-td-muted { color: var(--adm-text-muted); font-size: 11px; }
+.ibot-issues { display: flex; flex-wrap: wrap; gap: 3px; }
+.ibot-issue { font-size: 10px; background: rgba(198,40,40,.08); color: #c62828; border-radius: 4px; padding: 2px 5px; }
+.ibot-entity { font-size: 10px; background: var(--adm-bg-hover); border-radius: 4px; padding: 2px 6px; color: var(--adm-text-muted); }
+
+.ibot-tip { font-size: 12px; color: var(--adm-text-muted); padding: 12px 16px; background: var(--adm-bg-hover); border: 1px solid var(--adm-border); border-radius: 8px; }
+.ibot-tip code { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 4px; padding: 1px 6px; font-size: 11px; }
+.ibot-tip-link { color: var(--adm-text-muted); }
+.ibot-tip-link:hover { color: var(--adm-text); }
+
+.ibot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.ibot-all-ok span { font-size: 36px; }
+.ibot-all-ok p { font-size: 14px; }
+</style>

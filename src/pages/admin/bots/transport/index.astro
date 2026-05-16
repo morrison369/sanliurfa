@@ -1,0 +1,208 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type RouteIssue = {
+  id: number | string;
+  name: string;
+  type: 'bus' | 'flight';
+  scheduleCount: number;
+  issues: string[];
+};
+
+let items: RouteIssue[] = [];
+let ran = false;
+let summary = { busRoutes: 0, busSchedules: 0, noSchedule: 0, flightNote: false };
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const [routesRes, schedulesRes] = await Promise.all([
+      query(`SELECT id, name, description FROM bus_routes ORDER BY name`).catch(() => ({ rows: [] })),
+      query(`SELECT route_id, COUNT(*)::int as cnt FROM bus_schedules GROUP BY route_id`).catch(() => ({ rows: [] })),
+    ]);
+
+    summary.busRoutes = routesRes.rows.length;
+    summary.busSchedules = schedulesRes.rows.reduce((a: number, r: { cnt: number }) => a + r.cnt, 0);
+    summary.flightNote = true;
+
+    const schedMap = new Map<number, number>();
+    for (const s of schedulesRes.rows) schedMap.set(s.route_id, s.cnt);
+
+    for (const r of routesRes.rows) {
+      const cnt = schedMap.get(r.id) || 0;
+      const issues: string[] = [];
+      if (cnt === 0) { issues.push('Sefer saati yok'); summary.noSchedule++; }
+      else if (cnt < 3) issues.push(`Az sefer (${cnt} adet)`);
+      if (!r.description || r.description.trim() === '') issues.push('Açıklama eksik');
+
+      if (issues.length > 0) {
+        items.push({ id: r.id, name: r.name, type: 'bus', scheduleCount: cnt, issues });
+      }
+    }
+  } catch (_) { /* graceful */ }
+}
+---
+
+<AdminLayoutV2
+  title="Ulaşım Veri Botu"
+  subtitle="Otobüs rotaları ve uçuş verilerinin kalite kontrolü"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'Ulaşım Veri Botu' }]}
+  seo={{ title: 'Ulaşım Veri Botu - Admin', noIndex: true }}
+>
+  <div class="tbot-page">
+
+    <div class="tbot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span><strong>Manuel çalıştır.</strong> Otobüs rotaları DB'den, uçuş verileri statik dosyadan okunur. Bot düzeltme yapmaz.</span>
+    </div>
+
+    {!ran ? (
+      <div class="tbot-run-card">
+        <div class="tbot-run-icon">🚌</div>
+        <div class="tbot-run-body">
+          <div class="tbot-run-title">Ulaşım Veri Botu — Analizi Başlat</div>
+          <div class="tbot-run-desc">
+            Aktif otobüs rotaları ve sefer sayıları kontrol edilir. Sefersiz veya eksik açıklamalı rotalar listelenir. Uçuş verisi için statik dosya durumu raporlanır.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="tbot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="tbot-results">
+
+        <div class="tbot-summary">
+          <div class="tbot-sum-stat"><span class="tbot-sum-val">{summary.busRoutes}</span><span class="tbot-sum-lbl">Otobüs Rotası</span></div>
+          <div class="tbot-sum-stat"><span class="tbot-sum-val">{summary.busSchedules}</span><span class="tbot-sum-lbl">Toplam Sefer</span></div>
+          <div class="tbot-sum-stat"><span class="tbot-sum-val" style="color:#c62828">{summary.noSchedule}</span><span class="tbot-sum-lbl">Sefersiz Rota</span></div>
+          <div class="tbot-sum-stat"><span class="tbot-sum-val">{items.length}</span><span class="tbot-sum-lbl">Sorunlu Rota</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="tbot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {items.length > 0 && (
+          <div class="tbot-table-card">
+            <div class="tbot-table-title">Sorunlu Otobüs Rotaları ({items.length})</div>
+            <div class="tbot-table-wrap">
+              <table class="tbot-table">
+                <thead>
+                  <tr>
+                    <th class="tbot-th">Rota Adı</th>
+                    <th class="tbot-th">Sefer Sayısı</th>
+                    <th class="tbot-th">Sorunlar</th>
+                    <th class="tbot-th">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map(item => (
+                    <tr class="tbot-tr">
+                      <td class="tbot-td tbot-td-name">{item.name}</td>
+                      <td class="tbot-td">
+                        <span class={item.scheduleCount === 0 ? 'tbot-zero' : 'tbot-count'}>{item.scheduleCount}</span>
+                      </td>
+                      <td class="tbot-td">
+                        <div class="tbot-issues">
+                          {item.issues.map(iss => <span class="tbot-issue">{iss}</span>)}
+                        </div>
+                      </td>
+                      <td class="tbot-td">
+                        <a href="/admin/transport/bus" class="tbot-act">Yönet</a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {summary.busRoutes === 0 && (
+          <div class="tbot-empty-note">
+            <strong>Otobüs rotası bulunamadı.</strong> <a href="/admin/transport/bus" class="tbot-link">Rota Yönetimi</a>'nden ekleyebilirsiniz.
+          </div>
+        )}
+
+        {items.length === 0 && summary.busRoutes > 0 && (
+          <div class="tbot-all-ok">
+            <span>✓</span>
+            <p>Tüm otobüs rotaları eksiksiz!</p>
+          </div>
+        )}
+
+        <div class="tbot-flight-card">
+          <div class="tbot-flight-title">✈ Uçuş Verisi Durumu</div>
+          <div class="tbot-flight-body">
+            <p>GAP Havalimanı uçuş verileri <strong>statik dosyada</strong> tutulmaktadır.</p>
+            <p>Güncelleme için: <code>src/pages/ulasim/ucak-saatleri.astro</code> dosyasını düzenleyin.</p>
+            <p>Ayrıca admin sayfasından görüntülemek için: <a href="/admin/transport/flights" class="tbot-link">Uçuş Tarifesi →</a></p>
+          </div>
+        </div>
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.tbot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.tbot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.tbot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.tbot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.tbot-run-icon { font-size: 36px; flex-shrink: 0; }
+.tbot-run-body { flex: 1; min-width: 200px; }
+.tbot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.tbot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.tbot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.tbot-run-btn:hover { opacity: 0.85; }
+
+.tbot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.tbot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.tbot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.tbot-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.tbot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.tbot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.tbot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.tbot-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.tbot-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.tbot-table-wrap { overflow-x: auto; }
+.tbot-table { width: 100%; border-collapse: collapse; }
+.tbot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.tbot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.tbot-tr:last-child .tbot-td { border-bottom: none; }
+.tbot-tr:hover .tbot-td { background: var(--adm-bg-hover); }
+.tbot-td-name { font-weight: 500; }
+.tbot-zero { font-size: 14px; font-weight: 700; color: #c62828; }
+.tbot-count { font-size: 14px; font-weight: 700; color: var(--adm-text); }
+.tbot-issues { display: flex; flex-wrap: wrap; gap: 3px; }
+.tbot-issue { font-size: 10px; background: rgba(198,40,40,.08); color: #c62828; border-radius: 4px; padding: 2px 5px; }
+.tbot-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; }
+.tbot-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.tbot-empty-note { padding: 16px 18px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; font-size: 13px; color: var(--adm-text-muted); }
+.tbot-link { color: var(--adm-text-muted); }
+.tbot-link:hover { color: var(--adm-text); }
+
+.tbot-flight-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.tbot-flight-title { padding: 10px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.tbot-flight-body { padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--adm-text-muted); }
+.tbot-flight-body code { background: var(--adm-bg-hover); border-radius: 3px; padding: 1px 6px; font-size: 11px; border: 1px solid var(--adm-border); }
+
+.tbot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.tbot-all-ok span { font-size: 36px; }
+.tbot-all-ok p { font-size: 14px; }
+</style>

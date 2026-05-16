@@ -1,0 +1,217 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type Application = {
+  id: number | string;
+  business_name: string;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  category: string | null;
+  status: string;
+  missing: string[];
+  created_at: Date;
+};
+
+let apps: Application[] = [];
+let ran = false;
+let summary = { pending: 0, incomplete: 0, ready: 0, total: 0 };
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const result = await query(`
+      SELECT a.id, a.business_name, a.contact_name, a.contact_email, a.contact_phone,
+             a.category, a.status, a.address, a.description, a.created_at
+      FROM place_applications a
+      ORDER BY a.created_at DESC
+      LIMIT 200
+    `);
+
+    summary.total = result.rows.length;
+
+    for (const a of result.rows) {
+      if (a.status === 'pending') summary.pending++;
+      const missing: string[] = [];
+      if (!a.contact_phone) missing.push('Telefon');
+      if (!a.contact_email) missing.push('E-posta');
+      if (!a.address) missing.push('Adres');
+      if (!a.description || a.description.length < 30) missing.push('Açıklama');
+      if (!a.category) missing.push('Kategori');
+
+      if (missing.length > 0) summary.incomplete++;
+      else if (a.status === 'pending') summary.ready++;
+
+      apps.push({
+        id: a.id, business_name: a.business_name,
+        contact_name: a.contact_name, contact_email: a.contact_email,
+        contact_phone: a.contact_phone, category: a.category,
+        status: a.status, missing,
+        created_at: a.created_at,
+      });
+    }
+  } catch (_) { /* graceful — table may not exist */ }
+}
+
+function fmtDate(d: Date): string {
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+---
+
+<AdminLayoutV2
+  title="Başvuru Kontrol Botu"
+  subtitle="Bekleyen işletme başvurularını ve eksik bilgileri tespit eder"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'Başvuru Botu' }]}
+  seo={{ title: 'Başvuru Kontrol Botu - Admin', noIndex: true }}
+>
+  <div class="sbot2-page">
+
+    <div class="sbot2-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span><strong>Manuel çalıştır.</strong> Başvurular sadece listelenir — onay/red işlemi Başvuru Yönetimi sayfasından yapılır.</span>
+    </div>
+
+    {!ran ? (
+      <div class="sbot2-run-card">
+        <div class="sbot2-run-icon">📋</div>
+        <div class="sbot2-run-body">
+          <div class="sbot2-run-title">Başvuru Kontrol Botu — Analizi Başlat</div>
+          <div class="sbot2-run-desc">
+            Tüm işletme başvuruları taranır. Eksik telefon, e-posta, adres veya açıklaması olan başvurular işaretlenir. Onaya hazır başvurular ayrıca listelenir.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="sbot2-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="sbot2-results">
+
+        <div class="sbot2-summary">
+          <div class="sbot2-sum-stat"><span class="sbot2-sum-val">{summary.total}</span><span class="sbot2-sum-lbl">Toplam</span></div>
+          <div class="sbot2-sum-stat"><span class="sbot2-sum-val" style="color:#e65100">{summary.pending}</span><span class="sbot2-sum-lbl">Bekliyor</span></div>
+          <div class="sbot2-sum-stat"><span class="sbot2-sum-val" style="color:#c62828">{summary.incomplete}</span><span class="sbot2-sum-lbl">Eksik Bilgi</span></div>
+          <div class="sbot2-sum-stat"><span class="sbot2-sum-val" style="color:#2e7d32">{summary.ready}</span><span class="sbot2-sum-lbl">Onaya Hazır</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="sbot2-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {apps.length > 0 ? (
+          <div class="sbot2-table-card">
+            <div class="sbot2-table-title">Başvurular ({apps.length})</div>
+            <div class="sbot2-table-wrap">
+              <table class="sbot2-table">
+                <thead>
+                  <tr>
+                    <th class="sbot2-th">Durum</th>
+                    <th class="sbot2-th">İşletme Adı</th>
+                    <th class="sbot2-th">İletişim</th>
+                    <th class="sbot2-th">Kategori</th>
+                    <th class="sbot2-th">Eksik</th>
+                    <th class="sbot2-th">Tarih</th>
+                    <th class="sbot2-th">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {apps.map(a => (
+                    <tr class="sbot2-tr">
+                      <td class="sbot2-td">
+                        <span class={`sbot2-status sbot2-status--${a.status}`}>{a.status}</span>
+                      </td>
+                      <td class="sbot2-td sbot2-td-name">{a.business_name}</td>
+                      <td class="sbot2-td sbot2-td-muted">
+                        <div>{a.contact_name || '—'}</div>
+                        <div>{a.contact_email || '—'}</div>
+                      </td>
+                      <td class="sbot2-td sbot2-td-muted">{a.category || <span class="sbot2-empty">—</span>}</td>
+                      <td class="sbot2-td">
+                        {a.missing.length === 0
+                          ? <span class="sbot2-ok">✓ Tam</span>
+                          : <div class="sbot2-missing">{a.missing.map(m => <span class="sbot2-miss">{m}</span>)}</div>
+                        }
+                      </td>
+                      <td class="sbot2-td sbot2-td-muted">{fmtDate(a.created_at)}</td>
+                      <td class="sbot2-td">
+                        <a href={`/admin/applications/${a.id}`} class="sbot2-act">İncele</a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div class="sbot2-empty-state">
+            <span>📭</span>
+            <p>Henüz başvuru yok veya <code>place_applications</code> tablosu boş.</p>
+            <a href="/admin/applications" class="sbot2-link">Başvuru Yönetimi →</a>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.sbot2-page { display: flex; flex-direction: column; gap: 14px; }
+
+.sbot2-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.sbot2-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.sbot2-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.sbot2-run-icon { font-size: 36px; flex-shrink: 0; }
+.sbot2-run-body { flex: 1; min-width: 200px; }
+.sbot2-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.sbot2-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.sbot2-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.sbot2-run-btn:hover { opacity: 0.85; }
+
+.sbot2-results { display: flex; flex-direction: column; gap: 14px; }
+
+.sbot2-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.sbot2-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.sbot2-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.sbot2-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.sbot2-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.sbot2-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.sbot2-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.sbot2-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.sbot2-table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+.sbot2-table { width: 100%; border-collapse: collapse; }
+.sbot2-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.sbot2-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.sbot2-tr:last-child .sbot2-td { border-bottom: none; }
+.sbot2-tr:hover .sbot2-td { background: var(--adm-bg-hover); }
+
+.sbot2-status { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+.sbot2-status--pending { background: rgba(230,81,0,.1); color: #e65100; }
+.sbot2-status--approved { background: rgba(46,125,50,.1); color: #2e7d32; }
+.sbot2-status--rejected { background: rgba(198,40,40,.1); color: #c62828; }
+.sbot2-td-name { font-weight: 500; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sbot2-td-muted { color: var(--adm-text-muted); font-size: 11px; }
+.sbot2-empty { color: var(--adm-border); }
+.sbot2-ok { font-size: 11px; color: #2e7d32; }
+.sbot2-missing { display: flex; flex-wrap: wrap; gap: 3px; }
+.sbot2-miss { font-size: 10px; background: rgba(198,40,40,.08); color: #c62828; border-radius: 4px; padding: 2px 5px; }
+.sbot2-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; }
+.sbot2-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.sbot2-empty-state { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: var(--adm-text-muted); text-align: center; }
+.sbot2-empty-state span { font-size: 36px; }
+.sbot2-empty-state p { font-size: 13px; }
+.sbot2-empty-state code { background: var(--adm-bg-hover); border-radius: 3px; padding: 1px 5px; font-size: 11px; }
+.sbot2-link { font-size: 13px; color: var(--adm-text-muted); }
+.sbot2-link:hover { color: var(--adm-text); }
+</style>

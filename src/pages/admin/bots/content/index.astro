@@ -1,0 +1,213 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type ThinContent = {
+  id: number | string;
+  title: string;
+  slug: string;
+  type: 'blog' | 'place';
+  charCount: number;
+  issues: string[];
+};
+
+let items: ThinContent[] = [];
+let ran = false;
+let summary = { thinBlog: 0, thinPlace: 0, noFaq: 0, shortDesc: 0 };
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const [blogRes, placeRes] = await Promise.all([
+      query(`
+        SELECT b.id, b.title, b.slug,
+               LENGTH(b.content) as char_count,
+               b.meta_description, b.content
+        FROM blog_posts b
+        WHERE b.status = 'published'
+        ORDER BY char_count ASC
+        LIMIT 300
+      `),
+      query(`
+        SELECT p.id, p.name, p.slug,
+               LENGTH(COALESCE(p.short_description,'')) as char_count,
+               p.short_description, p.meta_description
+        FROM places p
+        WHERE p.status IN ('active','published')
+        ORDER BY char_count ASC
+        LIMIT 300
+      `),
+    ]);
+
+    for (const b of blogRes.rows) {
+      const issues: string[] = [];
+      const len = Number(b.char_count) || 0;
+      if (len < 800) { issues.push(`İnce içerik (${len}k < 800k)`); summary.thinBlog++; }
+      if (!b.meta_description || b.meta_description.length < 50) issues.push('Meta açıklama eksik/kısa');
+      const hasFaq = (b.content || '').toLowerCase().includes('sss') || (b.content || '').includes('?') && (b.content || '').includes('Sık');
+      if (!hasFaq) { issues.push('FAQ bölümü yok'); summary.noFaq++; }
+      if (issues.length > 0) {
+        items.push({ id: b.id, title: b.title, slug: b.slug, type: 'blog', charCount: len, issues });
+      }
+    }
+
+    for (const p of placeRes.rows) {
+      const issues: string[] = [];
+      const len = Number(p.char_count) || 0;
+      if (len < 100) { issues.push(`Açıklama çok kısa (${len}k < 100k)`); summary.shortDesc++; }
+      if (len < 50) { issues.push('Açıklama neredeyse boş'); summary.thinPlace++; }
+      if (!p.meta_description || p.meta_description.length < 50) issues.push('Meta açıklama eksik/kısa');
+      if (issues.length > 0) {
+        items.push({ id: p.id, title: p.name, slug: p.slug, type: 'place', charCount: len, issues });
+      }
+    }
+
+    items.sort((a, b) => a.charCount - b.charCount);
+  } catch (_) { /* graceful */ }
+}
+---
+
+<AdminLayoutV2
+  title="İçerik Botu"
+  subtitle="İnce içerik, eksik meta, FAQ eksikliği tespiti"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'İçerik Botu' }]}
+  seo={{ title: 'İçerik Botu - Admin', noIndex: true }}
+>
+  <div class="cbot-page">
+
+    <div class="cbot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span><strong>Manuel çalıştır.</strong> Bot sadece analiz yapar, hiçbir veri değiştirilmez.</span>
+    </div>
+
+    {!ran ? (
+      <div class="cbot-run-card">
+        <div class="cbot-run-icon">📝</div>
+        <div class="cbot-run-body">
+          <div class="cbot-run-title">İçerik Botu — Analizi Başlat</div>
+          <div class="cbot-run-desc">
+            Yayındaki blog yazıları ve aktif mekanlar taranır. İnce içerik (&lt;800k), eksik meta açıklama, FAQ eksikliği ve kısa yer açıklamaları listelenir.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="cbot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="cbot-results">
+
+        <div class="cbot-summary">
+          <div class="cbot-sum-stat"><span class="cbot-sum-val">{items.length}</span><span class="cbot-sum-lbl">Toplam Sorun</span></div>
+          <div class="cbot-sum-stat"><span class="cbot-sum-val" style="color:#c62828">{summary.thinBlog}</span><span class="cbot-sum-lbl">İnce Blog</span></div>
+          <div class="cbot-sum-stat"><span class="cbot-sum-val" style="color:#c62828">{summary.shortDesc}</span><span class="cbot-sum-lbl">Kısa Mekan Desc</span></div>
+          <div class="cbot-sum-stat"><span class="cbot-sum-val" style="color:#e65100">{summary.noFaq}</span><span class="cbot-sum-lbl">FAQ'sız Blog</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="cbot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {items.length > 0 ? (
+          <div class="cbot-table-card">
+            <div class="cbot-table-title">İçerik Sorunları ({items.length})</div>
+            <div class="cbot-table-wrap">
+              <table class="cbot-table">
+                <thead>
+                  <tr>
+                    <th class="cbot-th">Tip</th>
+                    <th class="cbot-th">Başlık / Ad</th>
+                    <th class="cbot-th">Karakter</th>
+                    <th class="cbot-th">Sorunlar</th>
+                    <th class="cbot-th">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.slice(0, 200).map(item => (
+                    <tr class="cbot-tr">
+                      <td class="cbot-td">
+                        <span class={`cbot-type cbot-type--${item.type}`}>{item.type === 'blog' ? 'Blog' : 'Mekan'}</span>
+                      </td>
+                      <td class="cbot-td cbot-td-name">{item.title}</td>
+                      <td class="cbot-td cbot-td-num">{item.charCount.toLocaleString('tr-TR')}</td>
+                      <td class="cbot-td">
+                        <div class="cbot-issues">
+                          {item.issues.map(iss => <span class="cbot-issue">{iss}</span>)}
+                        </div>
+                      </td>
+                      <td class="cbot-td">
+                        {item.type === 'blog'
+                          ? <a href={`/admin/blog/edit/${item.id}`} class="cbot-act">Düzenle</a>
+                          : <a href={`/admin/businesses/${item.id}/edit`} class="cbot-act">Düzenle</a>
+                        }
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div class="cbot-all-ok">
+            <span>✓</span>
+            <p>Tüm içerikler kalite standartlarını karşılıyor!</p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.cbot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.cbot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.cbot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.cbot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.cbot-run-icon { font-size: 36px; flex-shrink: 0; }
+.cbot-run-body { flex: 1; min-width: 200px; }
+.cbot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.cbot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.cbot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.cbot-run-btn:hover { opacity: 0.85; }
+
+.cbot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.cbot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.cbot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.cbot-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.cbot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.cbot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.cbot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.cbot-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.cbot-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.cbot-table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+.cbot-table { width: 100%; border-collapse: collapse; }
+.cbot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.cbot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.cbot-tr:last-child .cbot-td { border-bottom: none; }
+.cbot-tr:hover .cbot-td { background: var(--adm-bg-hover); }
+
+.cbot-type { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+.cbot-type--blog { background: rgba(46,125,50,.1); color: #2e7d32; }
+.cbot-type--place { background: rgba(25,118,210,.1); color: #1976d2; }
+.cbot-td-name { font-weight: 500; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cbot-td-num { font-family: monospace; font-size: 11px; color: var(--adm-text-muted); }
+.cbot-issues { display: flex; flex-wrap: wrap; gap: 4px; }
+.cbot-issue { font-size: 10px; background: rgba(198,40,40,.08); color: #c62828; border-radius: 4px; padding: 2px 6px; }
+.cbot-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; white-space: nowrap; }
+.cbot-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.cbot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.cbot-all-ok span { font-size: 36px; }
+.cbot-all-ok p { font-size: 14px; }
+</style>

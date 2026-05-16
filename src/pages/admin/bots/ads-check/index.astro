@@ -1,0 +1,238 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type AdIssue = {
+  id: number | string;
+  title: string;
+  type: string;
+  status: string;
+  expires_at: Date | null;
+  daysLeft: number | null;
+  budget: number;
+  spent: number;
+  issues: string[];
+};
+
+let items: AdIssue[] = [];
+let ran = false;
+let summary = { total: 0, expiringSoon: 0, overBudget: 0, noImage: 0 };
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const result = await query(`
+      SELECT id, title, type, status, expires_at,
+             budget, spent, image_url, target_url,
+             impressions, clicks, created_at
+      FROM advertisements
+      ORDER BY expires_at ASC NULLS LAST
+      LIMIT 200
+    `);
+
+    summary.total = result.rows.length;
+
+    for (const a of result.rows) {
+      const issues: string[] = [];
+
+      let daysLeft: number | null = null;
+      if (a.expires_at) {
+        daysLeft = Math.floor((new Date(a.expires_at).getTime() - Date.now()) / 86400000);
+        if (daysLeft < 0) issues.push('Süresi dolmuş');
+        else if (daysLeft <= 7) { issues.push(`${daysLeft} günde bitiyor`); summary.expiringSoon++; }
+      }
+
+      const budget = Number(a.budget) || 0;
+      const spent = Number(a.spent) || 0;
+      if (budget > 0 && spent >= budget) { issues.push('Bütçe tükendi'); summary.overBudget++; }
+      else if (budget > 0 && spent >= budget * 0.9) issues.push('Bütçe %90 doldu');
+
+      if (!a.image_url) { issues.push('Görsel yok'); summary.noImage++; }
+      if (!a.target_url) issues.push('Hedef URL yok');
+
+      if (issues.length > 0) {
+        items.push({
+          id: a.id, title: a.title, type: a.type, status: a.status,
+          expires_at: a.expires_at, daysLeft,
+          budget, spent, issues,
+        });
+      }
+    }
+  } catch (_) { /* graceful */ }
+}
+
+function fmtDate(d: Date | null): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+---
+
+<AdminLayoutV2
+  title="Reklam Kontrol Botu"
+  subtitle="Süresi bitmek üzere reklamlar, bütçe tükenme ve görsel eksiklikleri"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'Reklam Kontrol Botu' }]}
+  seo={{ title: 'Reklam Kontrol Botu - Admin', noIndex: true }}
+>
+  <div class="adbot-page">
+
+    <div class="adbot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span><strong>Manuel çalıştır.</strong> Reklam veritabanı taranır. Süresi yaklaşanlar, bütçesi dolan ve görselsiz reklamlar raporlanır.</span>
+    </div>
+
+    {!ran ? (
+      <div class="adbot-run-card">
+        <div class="adbot-run-icon">📣</div>
+        <div class="adbot-run-body">
+          <div class="adbot-run-title">Reklam Kontrol Botu — Analizi Başlat</div>
+          <div class="adbot-run-desc">
+            Tüm reklamlar taranır. 7 günden az kalan, bütçesi tükenmiş veya görselsiz reklamlar öncelik sırasıyla listelenir.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="adbot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="adbot-results">
+
+        <div class="adbot-summary">
+          <div class="adbot-sum-stat"><span class="adbot-sum-val">{summary.total}</span><span class="adbot-sum-lbl">Toplam Reklam</span></div>
+          <div class="adbot-sum-stat"><span class="adbot-sum-val">{items.length}</span><span class="adbot-sum-lbl">Sorunlu</span></div>
+          <div class="adbot-sum-stat"><span class="adbot-sum-val" style="color:#e65100">{summary.expiringSoon}</span><span class="adbot-sum-lbl">7 Günde Bitiyor</span></div>
+          <div class="adbot-sum-stat"><span class="adbot-sum-val" style="color:#c62828">{summary.overBudget}</span><span class="adbot-sum-lbl">Bütçe Tükendi</span></div>
+          <div class="adbot-sum-stat"><span class="adbot-sum-val" style="color:#757575">{summary.noImage}</span><span class="adbot-sum-lbl">Görselsiz</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="adbot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {items.length > 0 ? (
+          <div class="adbot-table-card">
+            <div class="adbot-table-title">Sorunlu Reklamlar ({items.length})</div>
+            <div class="adbot-table-wrap">
+              <table class="adbot-table">
+                <thead>
+                  <tr>
+                    <th class="adbot-th">Reklam</th>
+                    <th class="adbot-th">Tip / Durum</th>
+                    <th class="adbot-th">Bitiş</th>
+                    <th class="adbot-th">Bütçe</th>
+                    <th class="adbot-th">Sorunlar</th>
+                    <th class="adbot-th">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map(item => (
+                    <tr class="adbot-tr">
+                      <td class="adbot-td adbot-td-name">{item.title}</td>
+                      <td class="adbot-td adbot-td-muted">
+                        <div>{item.type}</div>
+                        <span class={`adbot-status adbot-status--${item.status}`}>{item.status}</span>
+                      </td>
+                      <td class="adbot-td adbot-td-muted">
+                        <div>{fmtDate(item.expires_at)}</div>
+                        {item.daysLeft !== null && item.daysLeft >= 0 && (
+                          <span style={item.daysLeft <= 3 ? 'color:#c62828;font-size:10px' : 'color:#e65100;font-size:10px'}>
+                            {item.daysLeft}g kaldı
+                          </span>
+                        )}
+                      </td>
+                      <td class="adbot-td adbot-td-muted">
+                        {item.budget > 0 ? (
+                          <div>{item.spent.toLocaleString('tr-TR')} / {item.budget.toLocaleString('tr-TR')} ₺</div>
+                        ) : '—'}
+                      </td>
+                      <td class="adbot-td">
+                        <div class="adbot-issues">
+                          {item.issues.map(iss => <span class="adbot-issue">{iss}</span>)}
+                        </div>
+                      </td>
+                      <td class="adbot-td">
+                        <a href="/admin/ads" class="adbot-act">Yönet</a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : summary.total === 0 ? (
+          <div class="adbot-empty-state">
+            <span>📭</span>
+            <p>Henüz reklam kaydı yok.</p>
+            <a href="/admin/ads" class="adbot-link">Reklam Yönetimi →</a>
+          </div>
+        ) : (
+          <div class="adbot-all-ok">
+            <span>✓</span>
+            <p>Tüm reklamlar sorunsuz!</p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.adbot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.adbot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.adbot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.adbot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.adbot-run-icon { font-size: 36px; flex-shrink: 0; }
+.adbot-run-body { flex: 1; min-width: 200px; }
+.adbot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.adbot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.adbot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.adbot-run-btn:hover { opacity: 0.85; }
+
+.adbot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.adbot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.adbot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.adbot-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.adbot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.adbot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.adbot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.adbot-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.adbot-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.adbot-table-wrap { overflow-x: auto; }
+.adbot-table { width: 100%; border-collapse: collapse; }
+.adbot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.adbot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.adbot-tr:last-child .adbot-td { border-bottom: none; }
+.adbot-tr:hover .adbot-td { background: var(--adm-bg-hover); }
+
+.adbot-td-name { font-weight: 500; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adbot-td-muted { color: var(--adm-text-muted); font-size: 11px; }
+.adbot-status { font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 3px; margin-top: 2px; display: inline-block; }
+.adbot-status--active { background: rgba(46,125,50,.1); color: #2e7d32; }
+.adbot-status--paused { background: rgba(117,117,117,.1); color: #757575; }
+.adbot-status--expired { background: rgba(198,40,40,.1); color: #c62828; }
+.adbot-issues { display: flex; flex-wrap: wrap; gap: 3px; }
+.adbot-issue { font-size: 10px; background: rgba(198,40,40,.08); color: #c62828; border-radius: 4px; padding: 2px 5px; }
+.adbot-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; }
+.adbot-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.adbot-empty-state { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: var(--adm-text-muted); text-align: center; }
+.adbot-empty-state span { font-size: 36px; }
+.adbot-empty-state p { font-size: 13px; }
+.adbot-link { font-size: 13px; color: var(--adm-text-muted); }
+.adbot-link:hover { color: var(--adm-text); }
+
+.adbot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.adbot-all-ok span { font-size: 36px; }
+.adbot-all-ok p { font-size: 14px; }
+</style>
