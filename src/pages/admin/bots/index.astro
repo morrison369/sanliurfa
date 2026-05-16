@@ -111,7 +111,7 @@ const categories = [...new Set(BOTS.map(b => b.category))];
           btn.textContent = 'Çalıştır';
           if (statusEl) {
             if (d.success) {
-              var cnt = d.issueCount || 0;
+              var cnt = (d.result && d.result.issues) || 0;
               statusEl.textContent = now + ' — ' + cnt + ' sorun bulundu';
               statusEl.style.color = cnt > 0 ? '#c62828' : '#2e7d32';
             } else {
