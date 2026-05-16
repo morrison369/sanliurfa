@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-05-15T12:07:52.949Z",
+  "status": "passed",
+  "ruleCount": 33,
+  "uniqueUrlCount": 32,
+  "criticalUrls": [
+    "/mekanlar",
+    "/gezilecek-yerler",
+    "/yemek-tarifleri",
+    "/saglik/nobetci-eczaneler",
+    "/ulasim/otobus-saatleri",
+    "/ulasim/ucak-saatleri",
+    "/etkinlikler",
+    "/topluluk",
+    "/isletme-kayit"
+  ],
+  "missingCriticalUrls": [],
+  "checks": [
+    {
+      "name": "internal-linker registry",
+      "ok": true,
+      "detail": "33 rules, 32 unique URLs"
+    },
+    {
+      "name": "critical SEO hubs covered",
+      "ok": true,
+      "detail": "all critical hubs present"
+    },
+    {
+      "name": "sidebar component",
+      "ok": true,
+      "detail": "src/components/seo/InternalBacklinks.astro"
+    },
+    {
+      "name": "blog detail integration",
+      "ok": true,
+      "detail": "src/pages/blog/[slug].astro"
+    },
+    {
+      "name": "inline link style",
+      "ok": true,
+      "detail": "src/styles/global.css"
+    }
+  ]
+}

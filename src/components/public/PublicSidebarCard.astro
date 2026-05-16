@@ -12,7 +12,7 @@ const { title, eyebrow, accent = false } = Astro.props;
   {(eyebrow || title) && (
     <header class="psc-head">
       {eyebrow && <p class="psc-eyebrow">{eyebrow}</p>}
-      {title && <h2 class="psc-title">{title}</h2>}
+      {title && <p class="psc-title">{title}</p>}
     </header>
   )}
   <div class="psc-body">

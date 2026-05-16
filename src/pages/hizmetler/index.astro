@@ -1,12 +1,22 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { query } from '../../lib/postgres';
+import { queryReadMany } from '../../lib/postgres';
 import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import { getPublicAppUrl } from '../../lib/public-app-url';
 import { logger } from '../../lib/logging';
 import PublicFaqList from '../../components/public/PublicFaqList.astro';
 
-let featuredPlaces: any[] = [];
+type FeaturedPlace = {
+ slug: string;
+ name: string;
+ address: string | null;
+ phone: string | null;
+ category_name: string | null;
+};
+
+const HIZMETLER_CACHE_TTL_MS = 300_000;
+
+let featuredPlaces: FeaturedPlace[] = [];
 
 const hizmetlerCategories = [
  { slug: 'kuaforler', name: 'Kuaförler', icon: '💇', desc: 'Bayan kuaförleri' },
@@ -26,15 +36,21 @@ const acilHizmetler = [
 
 try {
  featuredPlaces = await getCachedPublicRouteData('page:hizmetler:index', async () => {
-  const placesResult = await query(
-   `SELECT p.*, c.name as category_name FROM places p
- LEFT JOIN categories c ON p.category_id = c.id
- WHERE c.slug IN ('kuaforler','berberler','temizlik-firmalari','nakliyat','cilingir','elektrikci','tesisatci')
- AND p.status = 'active'
- ORDER BY p.rating DESC LIMIT 6`
+  return queryReadMany<FeaturedPlace>(
+   `SELECT
+      p.slug,
+      p.name,
+      p.address,
+      p.phone,
+      c.name AS category_name
+    FROM places p
+    LEFT JOIN categories c ON p.category_id = c.id
+    WHERE c.slug IN ('kuaforler','berberler','temizlik-firmalari','nakliyat','cilingir','elektrikci','tesisatci')
+      AND p.status = 'active'
+    ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
+    LIMIT 6`,
   );
-  return placesResult.rows;
- });
+ }, HIZMETLER_CACHE_TTL_MS);
 } catch (e) {
  logger.error('Error loading hizmetler:', e instanceof Error ? e : new Error(String(e)));
 }

@@ -13,6 +13,7 @@ const ROUTES = [
   '/blog',
   '/hakkinda',
   '/iletisim',
+  '/yayin-politikasi',
   '/arama',
   '/giris',
   '/kayit',

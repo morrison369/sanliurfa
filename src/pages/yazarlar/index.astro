@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getPublicAppUrl } from '../../lib/public-app-url';
+import { PUBLISHER_PROFILE } from '../../lib/transparency';
 const baseUrl = getPublicAppUrl();
 
 const seo = {
@@ -8,6 +9,7 @@ const seo = {
  description: 'Sanliurfa.com içeriklerini hazırlayan editöryel ekip, mutfak ekibi ve uzman katkıcılar. Yazar profilleri ve uzmanlık alanları.',
  keywords: ['sanliurfa.com yazarlar', 'editöryel ekip', 'içerik üreticileri', 'şanlıurfa içerik ekibi'],
  canonical: '/yazarlar',
+ modifiedTime: PUBLISHER_PROFILE.transparencyReviewedAtIso,
 };
 
 const authors = [
@@ -88,7 +90,7 @@ const authors = [
    </div>
 
    <p style="max-width:48rem;margin:2.5rem auto 0;font-size:.88rem;color:var(--public-muted);line-height:1.75;text-align:center">
-    Yayın politikamız ve içerik sorumluluğumuz hakkında detaylar için <a href="/kunye" style="color:var(--public-accent);font-weight:600">Künye sayfasını</a> ziyaret edin.
+    Yayın politikamız ve içerik sorumluluğumuz hakkında detaylar için <a href="/kunye" style="color:var(--public-accent);font-weight:600">Künye sayfasını</a> ve <a href="/yayin-politikasi" style="color:var(--public-accent);font-weight:600">Yayın Politikası</a> sayfasını ziyaret edin.
    </p>
   </div>
  </main>

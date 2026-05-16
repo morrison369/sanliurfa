@@ -5,6 +5,7 @@ import {
   CITY_CONTENT_AGENTS,
   CityContentAgentError,
   approveCityContentDraft,
+  getCityContentDraftSummary,
   isCityContentAgentKey,
   listCityContentDrafts,
   listCityContentJobs,
@@ -39,10 +40,20 @@ export const GET: APIRoute = async ({ request, url }) => {
 
   try {
     const status = url.searchParams.get('status') || undefined;
-    const [sources, jobs, drafts] = await Promise.all([
+    const draftType = url.searchParams.get('draftType') || undefined;
+    const limit = Number(url.searchParams.get('limit') || 100);
+    const offset = Number(url.searchParams.get('offset') || 0);
+    const draftOptions = {
+      ...(status ? { status } : {}),
+      ...(draftType ? { draftType } : {}),
+      limit,
+      offset,
+    };
+    const [sources, jobs, drafts, draftSummary] = await Promise.all([
       listCityContentSources(),
       listCityContentJobs(30),
-      listCityContentDrafts(status),
+      listCityContentDrafts(draftOptions),
+      getCityContentDraftSummary(),
     ]);
 
     return json({
@@ -51,6 +62,7 @@ export const GET: APIRoute = async ({ request, url }) => {
       sources,
       jobs,
       drafts,
+      draftSummary,
       policy: {
         autoPublish: false,
         language: 'tr',

@@ -10,6 +10,7 @@ const steps = [
   ['npm', ['run', '-s', 'docs:terminology:gate']],
   ['npm', ['run', '-s', 'smoke:city-content-agents']],
   ['npm', ['run', '-s', 'seo:geo:gate']],
+  ['npm', ['run', '-s', 'seo:internal-links:report']],
   ['npx', ['astro', 'check', '--minimumFailingSeverity', 'error']],
 ];
 
@@ -35,6 +36,6 @@ for (const [command, args] of steps) {
 
 console.log(
   includeBuild
-    ? '[public-city-gate] ok: public city acceptance, city agents, SEO/GEO, Astro check and build passed'
-    : '[public-city-gate] ok: public city acceptance, city agents, SEO/GEO and Astro check passed',
+    ? '[public-city-gate] ok: public city acceptance, city agents, SEO/GEO, internal links, Astro check and build passed'
+    : '[public-city-gate] ok: public city acceptance, city agents, SEO/GEO, internal links and Astro check passed',
 );

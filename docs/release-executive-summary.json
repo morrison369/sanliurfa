@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-05-15T12:08:16.983Z",
+  "status": "ready_with_advisories",
+  "decision": "ADVISORY",
+  "summary": {
+    "blockers": 0,
+    "advisoryCount": 3,
+    "nextActionCount": 7,
+    "blockingActionCount": 0,
+    "waitingActionCount": 1
+  },
+  "passed": {
+    "mediaReadiness": true,
+    "adminStrictRole": true,
+    "blogDuplicateRisk": true,
+    "adsenseReadiness": true,
+    "publisherCenterReadiness": true
+  },
+  "expectedExternalReviews": [
+    {
+      "area": "pagespeed-api-less",
+      "reason": "AdSense / DoubleClick third-party test_cookie Lighthouse best-practices review.",
+      "releaseBlocker": false
+    }
+  ],
+  "advisories": {
+    "database": {
+      "title": "DB P0 quarantine adaylarını production gözlem sürecinde tut",
+      "detail": "2 quarantine candidate, 1 runtime hold. Cadence=observing (3/14). Otomatik drop yok.",
+      "dueAfter": "2026-05-29T12:07:47.159Z",
+      "automaticDropAllowed": false
+    },
+    "redis": {
+      "status": "idle",
+      "mode": "optional-fail-open",
+      "releaseBlocker": false,
+      "fallbackAllowed": true
+    }
+  },
+  "quality": {
+    "lintOk": true,
+    "typecheckOk": true,
+    "openapiOk": true,
+    "mediaReadinessOk": true,
+    "adminStrictRoleOk": true
+  }
+}

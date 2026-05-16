@@ -214,7 +214,93 @@ export const GET: APIRoute = async () => {
     },
     '/admin/site/integrations/test': buildPostPath('Probe a saved integration (sends test email / hits provider API)', 'Admin', true),
     '/admin/city-content-agents': {
-      get: buildGetPath('List city content agents, sources, jobs and drafts', 'Admin', true).get,
+      get: {
+        summary: 'List city content agents, sources, jobs and filtered drafts',
+        tags: ['Admin'],
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: 'status',
+            in: 'query',
+            required: false,
+            schema: { type: 'string', enum: ['pending', 'approved', 'rejected'] },
+            description: 'Taslak moderasyon durumuna göre filtreler',
+          },
+          {
+            name: 'draftType',
+            in: 'query',
+            required: false,
+            schema: {
+              type: 'string',
+              enum: ['place-discovery-draft', 'place-update-draft', 'seo-override-draft'],
+            },
+            description: 'Taslak tipine göre filtreler',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 1, maximum: 500, default: 100 },
+            description: 'Dönen taslak sayısı; sunucu tarafında 1-500 aralığına sıkıştırılır',
+          },
+          {
+            name: 'offset',
+            in: 'query',
+            required: false,
+            schema: { type: 'integer', minimum: 0, default: 0 },
+            description: 'Sayfalama başlangıç konumu',
+          },
+        ],
+        responses: {
+          '200': {
+            description: 'OK',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    data: {
+                      type: 'object',
+                      properties: {
+                        success: { type: 'boolean' },
+                        agents: { type: 'array', items: { type: 'object' } },
+                        sources: { type: 'array', items: { type: 'object' } },
+                        jobs: { type: 'array', items: { type: 'object' } },
+                        drafts: { type: 'array', items: { type: 'object' } },
+                        draftSummary: {
+                          type: 'object',
+                          properties: {
+                            total: { type: 'integer' },
+                            byStatus: {
+                              type: 'object',
+                              additionalProperties: { type: 'integer' },
+                            },
+                            byType: {
+                              type: 'object',
+                              additionalProperties: { type: 'integer' },
+                            },
+                          },
+                        },
+                        policy: {
+                          type: 'object',
+                          properties: {
+                            autoPublish: { type: 'boolean', example: false },
+                            language: { type: 'string', example: 'tr' },
+                            focusKeyword: { type: 'string', example: 'Şanlıurfa' },
+                            sourcePolicy: { type: 'string' },
+                          },
+                        },
+                      },
+                    },
+                    meta: { type: 'object' },
+                  },
+                },
+              },
+            },
+          },
+          ...standardErrorResponses,
+        },
+      },
       post: buildPostPath('Run city content agent or moderate draft', 'Admin', true).post,
     },
     '/admin/social/events': buildGetPath('Get unified social events timeline', 'Admin', true),
@@ -251,6 +337,10 @@ export const GET: APIRoute = async () => {
     '/admin/moderation': buildGetPath('Admin moderation overview', 'Admin', true),
     '/admin/monitoring': buildGetPath('Admin monitoring overview', 'Admin', true),
     '/admin/places': buildGetPath('Admin places management', 'Admin', true),
+    '/admin/events/submissions': {
+      get: buildGetPath('Admin event submissions queue', 'Admin', true).get,
+      post: buildPostPath('Approve or reject event submission', 'Admin', true).post,
+    },
     '/admin/revenue': buildGetPath('Admin revenue metrics', 'Admin', true),
     '/admin/blog': buildGetPath('Admin blog management', 'Admin', true),
     '/admin/blog/categories': buildGetPath('Admin blog categories', 'Admin', true),
@@ -5036,7 +5126,7 @@ export const GET: APIRoute = async () => {
             place_id: { type: 'string', format: 'uuid' },
             created_at: { type: 'string', format: 'date-time' },
             place_name: { type: 'string' },
-            place_images: { type: 'array', items: { type: 'string' }, description: 'public path veya CDN URL listesi' },
+            place_images: { type: 'array', items: { type: 'string' }, description: 'public path listesi' },
             place_rating: { type: 'number', format: 'float' },
           },
         },

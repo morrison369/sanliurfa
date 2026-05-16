@@ -209,6 +209,12 @@
  */
 html.dark,
 html[data-theme='light'] {
+  --bg: #FBF6EC;
+  --bg-surface: #F5EDDA;
+  --bg-card: #FFFFFF;
+  --text-1: #1F1410;
+  --text-2: #4A3C2E;
+  --text-3: #7A6B55;
   color-scheme: light;
 }
 
@@ -779,4 +785,21 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   body::before { display: none; }
   .sk-shimmer { animation: none; }
+}
+
+.il-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  border-radius: 0.25rem;
+  color: var(--public-accent);
+  line-height: 1.45;
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.12em;
+  vertical-align: baseline;
+}
+
+.il-link:hover {
+  color: var(--public-accent-strong);
 }

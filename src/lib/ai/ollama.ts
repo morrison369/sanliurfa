@@ -1,7 +1,7 @@
 /**
- * Ollama Cloud API client — Türkçe içerik üretimi
- * Model: gemma4:31b (birincil) → ministral-3:14b (yedek)
- * Endpoint: https://ollama.com/api
+ * Ollama API client — Türkçe içerik üretimi.
+ * Varsayılan Ollama Cloud: https://ollama.com/api
+ * OLLAMA_API_KEY zorunludur.
  */
 
 import { logger } from '../logging';
@@ -10,6 +10,7 @@ const BASE_URL = import.meta.env.OLLAMA_BASE_URL || 'https://ollama.com/api';
 const API_KEY  = import.meta.env.OLLAMA_API_KEY   || '';
 const MODEL    = import.meta.env.OLLAMA_MODEL      || 'gemma4:31b';
 const FALLBACK = import.meta.env.OLLAMA_FALLBACK_MODEL || 'ministral-3:14b';
+const IS_CLOUD = /ollama\.com/i.test(BASE_URL);
 
 const SYSTEM_PROMPT = `Sen Şanlıurfa.com için çalışan profesyonel bir Türkçe içerik yazarısın.
 Şanlıurfa şehri, ilçeleri, tarihi yerleri, mekanları ve Türk kültürü hakkında;
@@ -40,7 +41,7 @@ async function chat(
   messages: OllamaMessage[],
   opts: OllamaOptions = {}
 ): Promise<GenerateResult> {
-  if (!API_KEY) throw new Error('OLLAMA_API_KEY tanımlı değil');
+  if (IS_CLOUD && !API_KEY) throw new Error('OLLAMA_API_KEY tanımlı değil');
 
   const model = opts.model || MODEL;
   const start = Date.now();
@@ -57,10 +58,11 @@ async function chat(
   const res = await fetch(`${BASE_URL}/chat`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${API_KEY}`,
+      ...(API_KEY ? { Authorization: `Bearer ${API_KEY}` } : {}),
       'Content-Type': 'application/json',
     },
     body,
+    signal: AbortSignal.timeout(120000),
   });
 
   const data = await res.json() as any;
@@ -137,6 +139,36 @@ Sonunda <h2>Sonuç</h2> bölümü ekle.`,
       },
     ],
     { temperature: 0.75 }
+  );
+  return result.content;
+}
+
+export async function generateBlogContentHTMLWithContext(
+  title: string,
+  keywords: string[],
+  context: string,
+  wordCount = 800
+): Promise<string> {
+  const result = await chat(
+    [
+      { role: 'system', content: SYSTEM_PROMPT },
+      {
+        role: 'user',
+        content: `"${title}" başlıklı bir blog yazısı yaz.
+Anahtar kelimeler: ${keywords.join(', ')}
+Doğrulanmış veri bağlamı:
+${context}
+
+Kurallar:
+- Yalnızca veri bağlamında verilen mekan adı, adres, telefon, web sitesi, kategori, çalışma saati, puan ve açıklamayı kullan.
+- Veri bağlamında olmayan fiyat, saat, tarih, kapasite, menü veya iddia uydurma.
+- Yaklaşık ${wordCount} kelime yaz.
+- Sadece HTML etiketleri kullan: h2, h3, p, ul, li, strong, em.
+- Son bölüm <h2>Sık Sorulan Sorular</h2> olsun ve 3 soru-cevap içersin.
+- Yalnızca HTML içeriğini döndür.`,
+      },
+    ],
+    { temperature: 0.55 }
   );
   return result.content;
 }

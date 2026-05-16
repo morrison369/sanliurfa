@@ -4,7 +4,7 @@
  */
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeErrorDetail } from '../../../../lib/api';
 
 export const GET: APIRoute = async ({ request, locals }) => {
  const requestId = getRequestId(request);
@@ -13,7 +13,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
  }
 
  try {
-  const result = await query(`
+ const result = await query(`
    WITH recent AS (
     SELECT 'user' AS type, id::text AS entity_id, full_name AS title, NULL::text AS subtitle, created_at, NULL::text AS slug
      FROM users WHERE created_at > NOW() - INTERVAL '7 days'
@@ -37,6 +37,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   return apiResponse({ items: result.rows }, HttpStatus.OK, requestId);
  } catch (err) {
-  return apiError(ErrorCode.INTERNAL_ERROR, 'Activity yüklenemedi', HttpStatus.INTERNAL_SERVER_ERROR, { detail: err instanceof Error ? err.message : String(err) }, requestId);
+  return apiError(
+   ErrorCode.INTERNAL_ERROR,
+   'Activity yüklenemedi',
+   HttpStatus.INTERNAL_SERVER_ERROR,
+   { detail: safeErrorDetail(err, 'activity_fetch_failed') },
+   requestId,
+  );
  }
 };

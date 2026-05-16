@@ -8,6 +8,7 @@ const steps = [
   ['public theme surface', 'npm', ['run', '-s', 'public:theme:surface:gate']],
   ['unit tests', 'npm', ['run', '-s', 'test:unit']],
   ['build', 'npm', ['run', '-s', 'build']],
+  ['quality reports refresh', 'npm', ['run', '-s', 'quality:reports:refresh']],
   ['quality metrics', 'npm', ['run', '-s', 'quality:metrics']],
   ['secret scan', 'npm', ['run', '-s', 'security:scan-secrets']],
   ['prod dependency audit', 'npm', ['audit', '--omit=dev']],

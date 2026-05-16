@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, Send, Trash2 } from 'lucide-react';
+import { Flag, Search, Send, ShieldOff, Trash2, VolumeX } from 'lucide-react';
+
+const QUICK_STARTERS = [
+ 'Merhaba, eşleştiğimize sevindim. Şanlıurfa’da en sevdiğin mekan neresi?',
+ 'Selam, ortak ilgi alanlarımızı gördüm. Bu hafta şehirde önereceğin bir yer var mı?',
+ 'Merhaba, güvenli ve kısa bir sohbetle başlayalım. Bugün nasılsın?',
+];
 
 interface ConversationApiRow {
  id: string;
@@ -55,6 +61,7 @@ export default function MessagingInbox() {
  const [typingUsers, setTypingUsers] = useState<string[]>([]);
  const [lastReadLabel, setLastReadLabel] = useState<string>('');
  const [unreadDrift, setUnreadDrift] = useState<number>(0);
+ const [safetyStatus, setSafetyStatus] = useState<string>('');
 
  const selectedConversation = useMemo(
  () => conversations.find((c) => c.id === selectedConvoId) || null,
@@ -71,6 +78,16 @@ export default function MessagingInbox() {
  if (names.length === 0) return '';
  return names.slice(0, 2).join(', ');
  }, [selectedConversation, typingUsers, currentUserId]);
+ const selectedOtherUserId = useMemo(() => {
+ if (!selectedConversation || !currentUserId) return '';
+ if (selectedConversation.participantA && selectedConversation.participantA !== currentUserId) {
+ return selectedConversation.participantA;
+ }
+ if (selectedConversation.participantB && selectedConversation.participantB !== currentUserId) {
+ return selectedConversation.participantB;
+ }
+ return '';
+ }, [selectedConversation, currentUserId]);
 
  const filteredConversations = useMemo(() => {
  const term = searchQuery.trim().toLowerCase();
@@ -130,6 +147,10 @@ export default function MessagingInbox() {
 
  async function maybeCreateConversationFromUrl() {
  const params = new URLSearchParams(window.location.search);
+ const starter = params.get('starter');
+ if (starter && starter.trim().length > 0) {
+ setNewMessage(starter.trim().slice(0, 500));
+ }
  const conversationId = params.get('conversation');
  if (conversationId) {
  setSelectedConvoId(conversationId);
@@ -152,6 +173,53 @@ export default function MessagingInbox() {
  setSelectedConvoId(createdId);
  }
  }
+
+ const handleSafetyAction = async (action: 'mute' | 'block' | 'report') => {
+ if (!selectedOtherUserId) {
+ setSafetyStatus('Bu konuşmada karşı kullanıcı bilgisi alınamadı.');
+ return;
+ }
+
+ const labels = {
+ mute: 'Bu kullanıcıdan gelen bildirimleri susturmak',
+ block: 'Bu kullanıcıyı engellemek',
+ report: 'Bu kullanıcıyı moderasyona bildirmek',
+ } as const;
+ if (!window.confirm(`${labels[action]} istediğinize emin misiniz?`)) return;
+
+ const endpoint = action === 'block'
+ ? '/api/users/privacy/block'
+ : action === 'mute'
+ ? '/api/users/privacy/mute'
+ : '/api/reports/submit';
+ const body = action === 'block'
+ ? { blockedUserId: selectedOtherUserId, reason: 'Mesajlaşma güvenlik aksiyonu' }
+ : action === 'mute'
+ ? { mutedUserId: selectedOtherUserId }
+ : {
+ content_type: 'user',
+ content_id: selectedOtherUserId,
+ reason: 'harassment',
+ description: 'Mesajlaşma ekranından güvenlik bildirimi gönderildi.',
+ reported_user_id: selectedOtherUserId,
+ };
+
+ const res = await fetch(endpoint, {
+ method: 'POST',
+ headers: { 'Content-Type': 'application/json' },
+ body: JSON.stringify(body),
+ });
+ const json = await res.json().catch(() => ({}));
+ if (!res.ok) {
+ setSafetyStatus(json?.error || json?.message || 'Güvenlik işlemi tamamlanamadı.');
+ return;
+ }
+ setSafetyStatus(action === 'block'
+ ? 'Kullanıcı engellendi.'
+ : action === 'mute'
+ ? 'Kullanıcı bildirimleri susturuldu.'
+ : 'Rapor moderasyon kuyruğuna gönderildi.');
+ };
 
  useEffect(() => {
  let mounted = true;
@@ -304,7 +372,36 @@ export default function MessagingInbox() {
  <h2 className="font-semibold">{selectedConversation.participantName}</h2>
  {typingLabel && <p className="text-xs text-emerald-400">{typingLabel} yazıyor...</p>}
  {lastReadLabel && <p className="text-xs text-[#7A6B58]">Son okuma: {lastReadLabel}</p>}
+ {safetyStatus && <p className="text-xs text-amber-500">{safetyStatus}</p>}
  </div>
+ <div className="flex items-center gap-1">
+ <button
+ onClick={() => handleSafetyAction('mute')}
+ disabled={!selectedOtherUserId}
+ className="p-2 hover:bg-[rgba(184,115,51,0.06)] rounded disabled:opacity-50"
+ aria-label="Kullanıcıyı sustur"
+ title="Kullanıcıyı sustur"
+ >
+ <VolumeX className="w-4 h-4" />
+ </button>
+ <button
+ onClick={() => handleSafetyAction('report')}
+ disabled={!selectedOtherUserId}
+ className="p-2 hover:bg-[rgba(184,115,51,0.06)] rounded disabled:opacity-50"
+ aria-label="Kullanıcıyı raporla"
+ title="Kullanıcıyı raporla"
+ >
+ <Flag className="w-4 h-4" />
+ </button>
+ <button
+ onClick={() => handleSafetyAction('block')}
+ disabled={!selectedOtherUserId}
+ className="p-2 hover:bg-[rgba(220,38,38,0.08)] rounded text-red-500 disabled:opacity-50"
+ aria-label="Kullanıcıyı engelle"
+ title="Kullanıcıyı engelle"
+ >
+ <ShieldOff className="w-4 h-4" />
+ </button>
  <button
  onClick={() => handleDeleteConversation(selectedConvoId)}
  className="p-2 hover:bg-[rgba(184,115,51,0.06)] rounded"
@@ -313,10 +410,28 @@ export default function MessagingInbox() {
  <Trash2 className="w-5 h-5" />
  </button>
  </div>
+ </div>
 
  <div className="flex-1 overflow-y-auto p-4 space-y-3">
  {messages.length === 0 ? (
- <div className="text-sm text-[#7A6B58]">Henüz mesaj yok. İlk mesajı gönderin.</div>
+ <div className="space-y-3 text-sm text-[#7A6B58]">
+ <p>Henüz mesaj yok. İlk mesajı gönderin.</p>
+ <div className="rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)] p-3">
+ <p className="mb-2 font-semibold text-[#1F1410]">Hazır güvenli başlangıçlar</p>
+ <div className="flex flex-wrap gap-2">
+ {QUICK_STARTERS.map((starter) => (
+ <button
+ key={starter}
+ type="button"
+ onClick={() => setNewMessage(starter)}
+ className="rounded-full border border-[rgba(184,115,51,0.25)] px-3 py-1 text-xs text-[#7A6B58] hover:border-urfa-600 hover:text-urfa-600"
+ >
+ {starter}
+ </button>
+ ))}
+ </div>
+ </div>
+ </div>
  ) : (
  messages.map((m) => {
  const isMine = currentUserId ? m.sender_id === currentUserId : false;
@@ -341,7 +456,20 @@ export default function MessagingInbox() {
  )}
  </div>
 
- <div className="p-4 border-t flex gap-2">
+ <div className="border-t p-4">
+ <div className="mb-2 flex flex-wrap gap-2">
+ {QUICK_STARTERS.map((starter) => (
+ <button
+ key={starter}
+ type="button"
+ onClick={() => setNewMessage(starter)}
+ className="rounded-full border border-[rgba(184,115,51,0.2)] px-3 py-1 text-xs text-[#7A6B58] hover:border-urfa-600 hover:text-urfa-600"
+ >
+ {starter}
+ </button>
+ ))}
+ </div>
+ <div className="flex gap-2">
  <input
  type="text"
  value={newMessage}
@@ -370,6 +498,7 @@ export default function MessagingInbox() {
  >
  <Send className="w-5 h-5" />
  </button>
+ </div>
  </div>
  </div>
  ) : (

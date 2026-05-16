@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2026-05-15T12:07:53.306Z",
+  "status": "ok",
+  "mode": "cloud",
+  "baseUrl": "https://ollama.com/api",
+  "apiKeyPresent": true,
+  "liveChecked": false,
+  "liveOk": null,
+  "model": "gemma4:31b",
+  "fallbackModel": "ministral-3:14b",
+  "fallback2Model": "nemotron-3-super",
+  "files": {
+    "sharedLib": {
+      "rel": "scripts/ollama-lib.mjs",
+      "ok": true
+    },
+    "astroClient": {
+      "rel": "src/lib/ai/ollama.ts",
+      "ok": true
+    },
+    "contentBot": {
+      "rel": "src/pages/api/admin/content-bot/generate.ts",
+      "ok": true
+    }
+  },
+  "scripts": [
+    {
+      "rel": "scripts/ollama-generate-blog-posts.mjs",
+      "ok": true
+    },
+    {
+      "rel": "scripts/ollama-generate-place-descriptions.mjs",
+      "ok": true
+    },
+    {
+      "rel": "scripts/ollama-generate-place-meta.mjs",
+      "ok": true
+    },
+    {
+      "rel": "scripts/ollama-generate-blog-meta.mjs",
+      "ok": true
+    },
+    {
+      "rel": "scripts/ollama-fix-thin-content.mjs",
+      "ok": true
+    }
+  ],
+  "packageScripts": [
+    {
+      "name": "ollama:readiness",
+      "ok": true
+    },
+    {
+      "name": "ollama:readiness:live",
+      "ok": true
+    }
+  ],
+  "policy": {
+    "turkishOnly": true,
+    "draftFirst": true,
+    "noFakeFacts": true,
+    "localStorageOnlyForImages": true,
+    "liveCheckOptional": true
+  }
+}

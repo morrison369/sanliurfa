@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2026-05-14T15:11:24.456Z",
+  "applyDb": false,
+  "applyProdSsh": false,
+  "missingOnly": true,
+  "total": 2,
+  "ok": 2,
+  "failed": 0,
+  "results": [
+    {
+      "slug": "bozova-ataturk-baraji-gunubirlik-gezi",
+      "status": "review",
+      "wordCount": 705,
+      "file": "D:\\sanliurfa.com\\sanliurfa\\docs\\generated-blog-drafts\\bozova-ataturk-baraji-gunubirlik-gezi.json"
+    },
+    {
+      "slug": "viransehir-gezi-rehberi-eyyup-nebi",
+      "status": "review",
+      "wordCount": 625,
+      "file": "D:\\sanliurfa.com\\sanliurfa\\docs\\generated-blog-drafts\\viransehir-gezi-rehberi-eyyup-nebi.json"
+    }
+  ]
+}

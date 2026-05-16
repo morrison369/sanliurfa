@@ -1,0 +1,156 @@
+---
+import type { AdSenseAdminSummary } from '../../lib/admin/adsense-admin';
+
+interface Props {
+  adsenseSummary: AdSenseAdminSummary | null;
+}
+
+const { adsenseSummary } = Astro.props as Props;
+---
+
+<section class="crm-panel" data-ads-panel>
+  <div class="crm-panel-head">
+    <div>
+      <h3>Reklam ve sponsor kontrol paneli</h3>
+      <p>Sponsorlu mekan, boş reklam alanı ve süresi biten kampanya kontrolleri tek yüzeyde.</p>
+    </div>
+    <div class="crm-actions">
+      <a class="crm-btn crm-btn--primary" href="/admin/site-content?key=adsense.slots">AdSense slotlarını yönet</a>
+      <a class="crm-btn" href="/admin/release-readiness">Readiness raporu</a>
+    </div>
+  </div>
+  {adsenseSummary && (
+    <>
+      <div class="crm-grid-3">
+        <article class="crm-card">
+          <span class="crm-card-label">AdSense client</span>
+          <strong>{adsenseSummary.client || 'Eksik'}</strong>
+          <p>{adsenseSummary.client ? 'Client anahtarı tanımlı.' : 'Client anahtarı eksik; reklam yüklenmez.'}</p>
+        </article>
+        <article class="crm-card">
+          <span class="crm-card-label">Manuel slot doluluğu</span>
+          <strong>{adsenseSummary.manualSlotCount}/{adsenseSummary.totalSlotCount}</strong>
+          <p>{adsenseSummary.emptySlotCount} slot boş. Boş alanlar render edilmez.</p>
+        </article>
+        <article class="crm-card">
+          <span class="crm-card-label">Auto ads</span>
+          <strong>{adsenseSummary.autoAdsEnabled ? 'Açık' : 'Kapalı'}</strong>
+          <p>
+            {adsenseSummary.status === 'ready'
+              ? 'Kod tarafı yayın için hazır.'
+              : adsenseSummary.status === 'review'
+                ? 'Temel kurulum hazır, slot doluluğu gözden geçirilmeli.'
+                : 'Client veya slot eksikleri var.'}
+          </p>
+        </article>
+      </div>
+      <div class="crm-grid-3">
+        <article class="crm-card">
+          <span class="crm-card-label">DB slotları</span>
+          <strong>{adsenseSummary.dbSlotCount}</strong>
+          <p>Doğrudan admin panelinden yönetilen slot sayısı.</p>
+        </article>
+        <article class="crm-card">
+          <span class="crm-card-label">ENV slotları</span>
+          <strong>{adsenseSummary.envSlotCount}</strong>
+          <p>Halen `.env` fallback üzerinden gelen slot sayısı.</p>
+        </article>
+        <article class="crm-card">
+          <span class="crm-card-label">Operasyon durumu</span>
+          <strong>{adsenseSummary.status === 'ready' ? 'Hazır' : adsenseSummary.status === 'review' ? 'Gözden geçir' : 'Bloklu'}</strong>
+          <p>Slot doluluğu, client ve auto ads birlikte değerlendirilir.</p>
+        </article>
+      </div>
+      {adsenseSummary.recommendations.length > 0 && (
+        <div class="crm-bot-result">
+          <strong>AdSense önerileri</strong>
+          <ul>
+            {adsenseSummary.recommendations.map((item) => <li>{item}</li>)}
+          </ul>
+        </div>
+      )}
+      <div class="crm-bot-result" data-adsense-live>
+        <div class="crm-panel-head">
+          <div>
+            <h3>Canlı smoke doğrulaması</h3>
+            <p>Panel önce son kayıtlı smoke sonucunu gösterir. Yeniden kontrol butonu public yüzeyleri tekrar doğrular.</p>
+          </div>
+          <button type="button" class="crm-btn" data-adsense-refresh>Yeniden kontrol et</button>
+        </div>
+        <strong data-adsense-live-status>
+          {adsenseSummary.smokeGeneratedAt
+            ? `${adsenseSummary.rows.filter((row) => row.smoke.ok).length}/${adsenseSummary.rows.length} yerleşim son smoke kaydında doğrulandı.`
+            : 'Henüz manuel smoke kontrolü kaydedilmedi.'}
+        </strong>
+        <p data-adsense-live-meta>
+          {adsenseSummary.smokeGeneratedAt
+            ? `Son kontrol: ${adsenseSummary.smokeGeneratedAt}`
+            : 'Buton ile public reklam yüzeylerini ilk kez doğrulayabilirsiniz.'}
+        </p>
+        <div class="crm-timeline-list" data-adsense-live-list></div>
+      </div>
+      <div class="crm-table-wrap">
+        <table class="crm-table">
+          <thead>
+            <tr>
+              <th>Yerleşim</th>
+              <th>Açıklama</th>
+              <th>Render yüzeyi</th>
+              <th>Slot</th>
+              <th>Kaynak</th>
+              <th>Smoke</th>
+              <th>Durum</th>
+            </tr>
+          </thead>
+          <tbody>
+            {adsenseSummary.rows.map((row) => (
+              <tr>
+                <td><strong>{row.label}</strong></td>
+                <td>{row.description}</td>
+                <td>
+                  <div class="crm-chip-row">
+                    {row.renderTargets.map((target) => (
+                      <a href={target.href} target="_blank" rel="noopener">{target.label}</a>
+                    ))}
+                  </div>
+                </td>
+                <td><code>{row.slot || '—'}</code></td>
+                <td>
+                  <span class={row.source === 'db' ? 'crm-ok' : row.source === 'env' ? 'crm-warn' : 'crm-status'}>
+                    {row.source === 'db' ? 'DB' : row.source === 'env' ? 'ENV' : 'Yok'}
+                  </span>
+                </td>
+                <td>
+                  <div class="crm-stack">
+                    <span class={row.smoke.ok ? 'crm-ok' : 'crm-status'}>
+                      {row.smoke.ok ? 'Doğrulandı' : 'Doğrulanmadı'}
+                    </span>
+                    <small>{row.smoke.note}</small>
+                    {row.smoke.url && (
+                      <a href={row.smoke.url} target="_blank" rel="noopener">
+                        Smoke URL
+                      </a>
+                    )}
+                  </div>
+                </td>
+                <td>
+                  <span class={row.configured ? 'crm-ok' : 'crm-status'}>
+                    {row.configured ? 'Hazır' : 'Boş'}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )}
+  <div class="crm-ad-grid">
+    {['Banner alanları', 'Sponsorlu işletmeler', 'Kategori sponsorluğu', 'İlçe sponsorluğu', 'Etkinlik sponsorluğu', 'Reklam veren notları'].map((item) => (
+      <article class="crm-ad-card">
+        <strong>{item}</strong>
+        <p>Başlangıç/bitiş, aktif/pasif, görsel, tıklama linki ve fatura/not alanı için hazır yönetim bölümü.</p>
+      </article>
+    ))}
+  </div>
+</section>

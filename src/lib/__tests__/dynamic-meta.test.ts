@@ -147,7 +147,8 @@ describe('generateOrganizationStructuredData', () => {
     const sd = generateOrganizationStructuredData();
     expect(sd['@type']).toBe('Organization');
     expect(sd.name).toBe('Sanliurfa.com');
-    expect(sd.contactPoint.email).toBe('info@sanliurfa.com');
+    expect(sd.email).toBe('iletisim@sanliurfa.com');
+    expect(sd.contactPoint[0].email).toBe('iletisim@sanliurfa.com');
   });
 });
 

@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-05-14T12:38:49.769Z",
+  "status": "passed",
+  "suite": "critical",
+  "project": "chromium",
+  "specs": [
+    "e2e/home.spec.ts",
+    "e2e/auth.spec.ts",
+    "e2e/places.spec.ts",
+    "e2e/blog.spec.ts",
+    "e2e/photos.spec.ts"
+  ],
+  "exitCode": 0,
+  "summary": {
+    "specCount": 31,
+    "testCount": 31,
+    "passed": 30,
+    "failed": 0,
+    "skipped": 1,
+    "timedOut": 0,
+    "interrupted": 0
+  },
+  "failedTests": [],
+  "artifactSource": "Playwright JSON reporter"
+}

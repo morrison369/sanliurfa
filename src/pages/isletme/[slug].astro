@@ -19,29 +19,12 @@ import { normalizeGalleryImages, resolvePlaceImage } from '../../lib/public-imag
 import { linkifyContent } from '../../lib/seo/internal-linker';
 import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import LeafletMap from '../../components/map/LeafletMap.astro';
+import { getCuratedPlaceFallbackBySlug } from '../../data/curated-place-fallbacks';
+import { sanitizeURL } from '../../lib/security/xss';
 
 const { slug } = Astro.params;
 
 let place: any = null;
-
-const fallbackPlaces: Record<string, any> = {
- gobeklitepe: {
-  slug: 'gobeklitepe', name: 'Göbeklitepe', category_name: 'Tarihi Yer', category_slug: 'tarihi-yerler',
-  district_name: 'Haliliye', district_slug: 'haliliye', is_verified: true, is_featured: true, rating: 4.9, review_count: 4521, price_range: '₺₺',
-  address: 'Örencik Mahallesi, Haliliye/Şanlıurfa', phone: '+90 414 318 10 00',
-  short_description: 'UNESCO Dünya Mirası listesinde yer alan, insanlık tarihinin bilinen en eski anıtsal tapınak merkezi.',
-  description: 'Göbeklitepe, Şanlıurfa şehir merkezine yaklaşık 18 km mesafede bulunan ve Neolitik döneme tarihlenen arkeolojik alandır. T biçimli dikilitaşları, hayvan kabartmaları ve ritüel yapılarıyla dünya arkeoloji tarihinde özel bir yere sahiptir.',
-  images: ['/images/historical/gobeklitepe.webp'],
- },
- balikligol: {
-  slug: 'balikligol', name: 'Balıklıgöl', category_name: 'Tarihi Yer', category_slug: 'tarihi-yerler',
-  district_name: 'Eyyübiye', district_slug: 'eyyubiye', is_verified: true, is_featured: true, rating: 4.9, review_count: 2847, price_range: 'Ücretsiz',
-  address: 'Balıklıgöl Mahallesi, Eyyübiye/Şanlıurfa', phone: '+90 414 318 10 00',
-  short_description: "Şanlıurfa'nın sembolü olan, Hz. İbrahim anlatısıyla bilinen kutsal göl ve tarihi ziyaret alanı.",
-  description: 'Balıklıgöl, Şanlıurfa merkezde yer alan ve kutsal balıklarıyla tanınan tarihi bir ziyaret noktasıdır.',
-  images: ['/images/historical/balikligol.webp'],
- },
-};
 
 try {
  place = await getCachedPublicRouteData(`page:isletme:detail:${slug}`, async () =>
@@ -51,15 +34,15 @@ try {
     FROM places p
     LEFT JOIN categories c ON p.category_id = c.id
     LEFT JOIN districts d ON p.district_id = d.id
-    WHERE p.slug = $1 AND p.status = 'active'`,
+   WHERE p.slug = $1 AND p.status = 'active'`,
    [slug]
   ),
  );
- if (!place) place = fallbackPlaces[String(slug || '')];
+ if (!place) place = getCuratedPlaceFallbackBySlug(slug);
  if (!place) return Astro.redirect('/mekanlar');
 } catch (e) {
  logger.error('isletme/[slug] error', e instanceof Error ? e : new Error(String(e)));
- place = fallbackPlaces[String(slug || '')];
+ place = getCuratedPlaceFallbackBySlug(slug);
  if (!place) return Astro.redirect('/mekanlar');
 }
 
@@ -227,16 +210,27 @@ const placeHeroMetaItems = [
 const updatedDateLabel = place.updated_at
  ? new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(place.updated_at))
  : null;
+const safeWebsiteUrl = place.website ? sanitizeURL(String(place.website)) : '';
+const visibleReviewCount = reviews.length;
+const schemaAggregateRating = place.rating && visibleReviewCount > 0
+ ? {
+    '@type': 'AggregateRating',
+    ratingValue: Number(place.rating),
+    bestRating: 5,
+    worstRating: 1,
+    reviewCount: visibleReviewCount,
+   }
+ : null;
 
 const contactRows = [
  ...(place.address ? [{ icon: 'lucide:map-pin', label: 'Adres', value: place.address }] : []),
  ...(place.phone ? [{ icon: 'lucide:phone', label: 'Telefon', value: place.phone, href: `tel:${place.phone}` }] : []),
- ...(place.website
+ ...(safeWebsiteUrl
   ? [{
       icon: 'lucide:globe',
       label: 'Web Sitesi',
       value: String(place.website).replace(/^https?:\/\//, ''),
-      href: place.website,
+      href: safeWebsiteUrl,
       external: true,
     }]
   : []),
@@ -340,7 +334,7 @@ const contactRows = [
      <div class="pd-card" style="display:flex;align-items:center;justify-content:space-between;gap:1rem;background:linear-gradient(135deg,#fdf5e8 0%,#fff 100%);border:1px dashed rgba(192,87,31,0.3)">
       <div>
        <p style="font-size:.95rem;font-weight:700;color:#1F1410;margin:0 0 .25rem">📸 Bu mekanın fotoğrafını sen de paylaş</p>
-       <p style="font-size:.82rem;color:#7A6B58;margin:0">Ziyaret ettiğin mekanın fotoğrafı topluluğa katkı sağlar.</p>
+       <p style="font-size:.95rem;color:#7A6B58;margin:0">Ziyaret ettiğin mekanın fotoğrafı topluluğa katkı sağlar.</p>
       </div>
       <a href={isAuthenticated ? '/topluluk/fotolar' : `/giris?redirect=/isletme/${slug}#yorumlar`} style="padding:.55rem 1.1rem;background:linear-gradient(135deg,#C0571F 0%,#9F4717 100%);color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;border-radius:5px;flex-shrink:0">
        {isAuthenticated ? 'Fotoğraf Ekle' : 'Giriş Yap'}
@@ -408,7 +402,7 @@ const contactRows = [
         href={`https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}`}
         target="_blank"
         rel="noopener"
-        class="mt-2 flex items-center gap-1.5 text-sm font-semibold text-[var(--copper)] hover:underline"
+        class="mt-2 flex min-h-10 items-center gap-1.5 text-sm font-semibold text-[var(--copper)] hover:underline"
        >
         <Icon name="lucide:map-pin" class="w-4 h-4" />
         Google Harita'da Aç
@@ -455,7 +449,7 @@ const contactRows = [
        {!isAuthenticated ? (
         <a href={`/giris?redirect=/isletme/${slug}#sahiplik`} class="claim-btn">Giriş yaparak talep oluştur</a>
        ) : userClaim ? (
-        <p class="claim-status claim-status--{userClaim.status}">
+        <p class:list={['claim-status', `claim-status--${userClaim.status}`]}>
          {userClaim.status === 'pending' && 'Talebiniz inceleme bekliyor.'}
          {userClaim.status === 'rejected' && 'Talebiniz reddedildi. Yeniden başvurabilirsiniz.'}
         </p>
@@ -540,16 +534,16 @@ const contactRows = [
   '@type': getSchemaType(place.category_name || '', place.category_slug || ''),
   name: place.name,
   description: place.short_description || place.description,
-  url: `https://sanliurfa.com/isletme/${slug}`,
+  url: safeWebsiteUrl || `https://sanliurfa.com/isletme/${slug}`,
+  mainEntityOfPage: `https://sanliurfa.com/isletme/${slug}`,
   ...(heroImage ? { image: heroImage.startsWith('http') ? heroImage : `https://sanliurfa.com${heroImage}` } : {}),
   address: { '@type': 'PostalAddress', streetAddress: place.address, addressLocality: place.district_name || 'Şanlıurfa', addressRegion: 'Şanlıurfa', addressCountry: 'TR' },
   ...(place.latitude && place.longitude ? { geo: { '@type': 'GeoCoordinates', latitude: Number(place.latitude), longitude: Number(place.longitude) } } : {}),
   ...(place.latitude && place.longitude ? { hasMap: `https://www.google.com/maps/search/?api=1&query=${place.latitude},${place.longitude}` } : {}),
   ...(place.phone ? { telephone: place.phone } : {}),
-  ...(place.website ? { sameAs: [place.website] } : {}),
   ...(ohParsed?.schema && ohParsed.schema.length > 0 ? { openingHours: ohParsed.schema } : {}),
   ...(place.price_range ? { priceRange: place.price_range } : {}),
-  ...(place.rating ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: Number(place.rating), bestRating: 5, worstRating: 1, reviewCount: place.review_count || 1 } } : {}),
+  ...(schemaAggregateRating ? { aggregateRating: schemaAggregateRating } : {}),
   ...(reviews.length > 0 ? {
    review: reviews.slice(0, 5).map((r: any) => ({
     '@type': 'Review',

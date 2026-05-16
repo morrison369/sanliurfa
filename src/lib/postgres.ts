@@ -422,6 +422,8 @@ const ALLOWED_TABLES = new Set([
   'memberships',
   // SSR performance metrics (migration 177)
   'ssr_perf_metrics',
+  // Member classifieds (migration 186)
+  'classified_categories', 'classified_listings',
 ]);
 
 function validateTable(table: string): void {

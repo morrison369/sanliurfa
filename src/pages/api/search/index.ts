@@ -9,6 +9,7 @@ import { recordSuggestionImpression, updateAutocompleteIndex, recordZeroResultSe
 import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeIntParam, safeFloatParam } from '../../../lib/api';
 import { recordRequest } from '../../../lib/metrics';
 import { logger } from '../../../lib/logging';
+import { normalizeSearchQuery } from '../../../lib/search/search-normalization';
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const requestId = getRequestId(request);
@@ -17,7 +18,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   try {
     const url = new URL(request.url);
-    const query = url.searchParams.get('q');
+    const rawQuery = url.searchParams.get('q');
+    const query = rawQuery?.trim() || '';
     const searchType = url.searchParams.get('type') || 'places';
     const rawSortBy = url.searchParams.get('sort') || 'rating';
     const VALID_SORT_OPTIONS = new Set(['rating', 'newest', 'name', 'distance']);
@@ -25,7 +27,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 100);
     const offset = safeIntParam(url.searchParams.get('offset'), 0, 0, 1_000_000);
 
-    if (!query || query.trim().length < 2) {
+    if (!query || query.length < 2) {
       recordRequest('GET', '/api/search', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(
         ErrorCode.VALIDATION_ERROR,
@@ -40,6 +42,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
       recordRequest('GET', '/api/search', HttpStatus.UNPROCESSABLE_ENTITY, Date.now() - startTime);
       return apiError(ErrorCode.VALIDATION_ERROR, 'Arama terimi 500 karakterden uzun olamaz', HttpStatus.UNPROCESSABLE_ENTITY, undefined, requestId);
     }
+
+    const analyticsQuery = normalizeSearchQuery(query);
 
     // Parse filters
     const filters: Record<string, unknown> = {};
@@ -67,7 +71,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     }
 
     // Record search
-    recordSearchQuery(locals.user?.id, query, searchType, resultCount, filters).catch(err => {
+    recordSearchQuery(locals.user?.id, analyticsQuery, searchType, resultCount, filters).catch(err => {
       logger.error('Failed to record search', err);
     });
 
@@ -78,7 +82,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     // Record zero results
     if (resultCount === 0) {
-      recordZeroResultSearch(query, searchType, filters).catch(err => {
+      recordZeroResultSearch(analyticsQuery, searchType, filters).catch(err => {
         logger.error('Failed to record zero results', err);
       });
     }

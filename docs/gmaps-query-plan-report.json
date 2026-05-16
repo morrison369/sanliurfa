@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-05-15T12:07:53.135Z",
+  "status": "ok",
+  "source": "database-empty-fallback",
+  "onlyMissing": true,
+  "outputFile": "scripts/gmaps-queries.txt",
+  "queryCount": 2,
+  "dbAvailable": false,
+  "dbError": null,
+  "inputIdFormat": "query #!#slug",
+  "policy": {
+    "localStorageOnly": true,
+    "sharedHostingSafe": true,
+    "recommendedConcurrency": 1,
+    "recommendedDepth": 1
+  },
+  "sample": [
+    "Göbeklitepe Tarihi Yer Haliliye Örencik Mahallesi, Haliliye/Şanlıurfa Şanlıurfa #!#gobeklitepe",
+    "Balıklıgöl Tarihi Yer Eyyübiye Balıklıgöl Mahallesi, Eyyübiye/Şanlıurfa Şanlıurfa #!#balikligol"
+  ]
+}

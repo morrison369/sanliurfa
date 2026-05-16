@@ -9,6 +9,7 @@
  *   /admin/users    — kullanıcı yönetimi (rol/status, bulk işlem)
  *   /admin/reviews  — yorum moderasyon
  */
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface HubStats {
@@ -119,9 +120,7 @@ export default function AdminManager() {
        </div>
        <div className="mg-card-cta">
         <span>Aç</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-         <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
+        <ArrowRight size={14} aria-hidden="true" />
        </div>
       </a>
      );

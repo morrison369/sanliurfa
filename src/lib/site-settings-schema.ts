@@ -121,6 +121,8 @@ export const SITE_SETTING_SCHEMAS: Record<string, SiteSettingSchemaField[]> = {
   'homepage.featuredGuides': [{ key: 'items', type: 'array', required: true }],
   'homepage.faq': [{ key: 'items', type: 'array', required: true, note: 'q/a alanları zorunlu' }],
   'homepage.heroQuickLinks': [{ key: 'items', type: 'array', required: true }],
+  'homepage.quickAccess': [{ key: 'items', type: 'array', required: true }],
+  'homepage.routes': [{ key: 'items', type: 'array', required: true, note: 'image /images/ ile başlamalı' }],
   'homepage.liveStatusCards': [{ key: 'items', type: 'array', required: true }],
   'homepage.serviceQuickLinks': [{ key: 'items', type: 'array', required: true }],
   'homepage.communityPanel': [
@@ -373,6 +375,52 @@ export function validateSiteSetting(key: string, value: unknown): ValidationResu
     }
     if (!isInternalHref(value.primaryHref) || !isInternalHref(value.secondaryHref)) {
       return { ok: false, error: 'CTA href alanları dahili route olmalı' };
+    }
+    return { ok: true };
+  }
+
+  if (key === 'homepage.cta') {
+    if (typeof value.title !== 'string' || !value.title.trim()) {
+      return { ok: false, error: 'title zorunlu' };
+    }
+    if (typeof value.description !== 'string' || !value.description.trim()) {
+      return { ok: false, error: 'description zorunlu' };
+    }
+    if (!isObject(value.primary) || !isObject(value.secondary)) {
+      return { ok: false, error: 'primary ve secondary object olmalı' };
+    }
+    const ctas = [value.primary, value.secondary] as const;
+    for (const cta of ctas) {
+      if (typeof cta.label !== 'string' || !cta.label.trim()) {
+        return { ok: false, error: 'CTA label zorunlu' };
+      }
+      if (typeof cta.ariaLabel !== 'string' || !cta.ariaLabel.trim()) {
+        return { ok: false, error: 'CTA ariaLabel zorunlu' };
+      }
+      if (!isInternalHref(cta.href)) {
+        return { ok: false, error: 'CTA href alanları dahili route olmalı' };
+      }
+    }
+    return { ok: true };
+  }
+
+  if (key === 'homepage.sectionOrder') {
+    if (!Array.isArray(value.items) || value.items.length === 0) {
+      return { ok: false, error: 'items en az 1 elemanlı dizi olmalı' };
+    }
+    for (const item of value.items) {
+      if (typeof item !== 'string' || !item.trim()) {
+        return { ok: false, error: 'items içeriği dolu string olmalı' };
+      }
+    }
+    return { ok: true };
+  }
+
+  if (key === 'homepage.theme') {
+    for (const [tokenKey, tokenValue] of Object.entries(value)) {
+      if (tokenValue !== undefined && typeof tokenValue !== 'string') {
+        return { ok: false, error: `${tokenKey} string olmalı` };
+      }
     }
     return { ok: true };
   }

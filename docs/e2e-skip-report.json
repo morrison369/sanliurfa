@@ -1,0 +1,119 @@
+{
+  "generatedAt": "2026-05-15T12:08:14.139Z",
+  "status": "ok",
+  "source": "e2e static skip declaration scan",
+  "summary": {
+    "declarationCount": 17,
+    "undocumentedCount": 0,
+    "byReason": {
+      "auth or environment dependent": 3,
+      "runtime setup dependent": 4,
+      "seed data dependent": 7,
+      "environment schema dependent": 3
+    }
+  },
+  "items": [
+    {
+      "file": "e2e/2fa.spec.ts",
+      "line": 82,
+      "expression": "test.skip(!authToken, 'Auth token üretilemedi, 2FA akışı atlandı.');",
+      "reason": "auth or environment dependent"
+    },
+    {
+      "file": "e2e/2fa.spec.ts",
+      "line": 100,
+      "expression": "test.skip(!response.ok(), `2FA setup başarısız: ${response.status()}`);",
+      "reason": "runtime setup dependent"
+    },
+    {
+      "file": "e2e/2fa.spec.ts",
+      "line": 116,
+      "expression": "test.skip(!setupResponse.ok(), `2FA setup başarısız: ${setupResponse.status()}`);",
+      "reason": "runtime setup dependent"
+    },
+    {
+      "file": "e2e/2fa.spec.ts",
+      "line": 137,
+      "expression": "test.skip(!setupResponse.ok(), `2FA setup başarısız: ${setupResponse.status()}`);",
+      "reason": "runtime setup dependent"
+    },
+    {
+      "file": "e2e/admin-site-content-live.spec.ts",
+      "line": 8,
+      "expression": "test.skip(getRes.status() === 401 || getRes.status() === 403, 'Admin site settings require auth when E2E bypass is unavailable');",
+      "reason": "auth or environment dependent"
+    },
+    {
+      "file": "e2e/admin-site-content-live.spec.ts",
+      "line": 26,
+      "expression": "test.skip(!putRes.ok(), 'Admin hero publish is unavailable in this E2E environment');",
+      "reason": "runtime setup dependent"
+    },
+    {
+      "file": "e2e/analytics/realtime-metrics.spec.ts",
+      "line": 42,
+      "expression": "test.skip(true, 'Admin auth seed is unavailable for SSE header check in this E2E profile');",
+      "reason": "auth or environment dependent"
+    },
+    {
+      "file": "e2e/blog.spec.ts",
+      "line": 42,
+      "expression": "test.skip(!href, 'No blog post seeded in test database');",
+      "reason": "seed data dependent"
+    },
+    {
+      "file": "e2e/loyalty/admin-rewards.spec.ts",
+      "line": 29,
+      "expression": "test.skip(true, 'Admin role seed is unavailable in this E2E profile');",
+      "reason": "seed data dependent"
+    },
+    {
+      "file": "e2e/loyalty/admin-rewards.spec.ts",
+      "line": 52,
+      "expression": "test.skip(true, 'Admin role seed is unavailable in this E2E profile');",
+      "reason": "seed data dependent"
+    },
+    {
+      "file": "e2e/loyalty/admin-rewards.spec.ts",
+      "line": 105,
+      "expression": "test.skip(true, 'Admin role seed is unavailable in this E2E profile');",
+      "reason": "seed data dependent"
+    },
+    {
+      "file": "e2e/loyalty/admin-rewards.spec.ts",
+      "line": 126,
+      "expression": "test.skip(true, 'Admin role seed is unavailable in this E2E profile');",
+      "reason": "seed data dependent"
+    },
+    {
+      "file": "e2e/messaging.spec.ts",
+      "line": 91,
+      "expression": "test.skip(messages.length === 0, 'Current E2E seed returned no readable messages for this conversation');",
+      "reason": "seed data dependent"
+    },
+    {
+      "file": "e2e/social/hashtags.spec.ts",
+      "line": 25,
+      "expression": "test.skip(true, 'No hashtag seed data is available in this E2E profile');",
+      "reason": "seed data dependent"
+    },
+    {
+      "file": "e2e/social-phase1.spec.ts",
+      "line": 83,
+      "expression": "test.skip(true, 'Lokal ortamda sosyal şema migration tamamlanmamış');",
+      "reason": "environment schema dependent"
+    },
+    {
+      "file": "e2e/social-phase1.spec.ts",
+      "line": 104,
+      "expression": "test.skip(true, 'Lokal ortamda sosyal şema migration tamamlanmamış');",
+      "reason": "environment schema dependent"
+    },
+    {
+      "file": "e2e/social-phase1.spec.ts",
+      "line": 122,
+      "expression": "test.skip(true, 'Lokal ortamda sosyal şema migration tamamlanmamış');",
+      "reason": "environment schema dependent"
+    }
+  ]
+}

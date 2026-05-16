@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { requireAuth } from '../../../../lib/auth';
-import { query, queryOne, queryMany } from '../../../../lib/postgres';
+import { queryOne, queryMany } from '../../../../lib/postgres';
 import { saveFile, validateImageSignature } from '../../../../lib/file/file-storage';
 import { apiResponse, apiError, problemJson, HttpStatus, safeErrorDetail, safeIntParam, ErrorCode } from '../../../../lib/api';
 import { logger } from '../../../../lib/logging';

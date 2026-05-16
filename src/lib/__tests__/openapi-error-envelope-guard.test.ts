@@ -7,6 +7,9 @@ const ALLOWED_ERROR_REFS = new Set([
   '#/components/schemas/ErrorFlagged',
   '#/components/schemas/ErrorApi',
 ]);
+const ALLOWED_ROUTE_SCHEMA_EXCEPTIONS = new Set([
+  'GET /health 503 -> #/components/schemas/HealthStatus',
+]);
 
 function isErrorStatus(statusCode: string): boolean {
   const status = Number(statusCode);
@@ -32,8 +35,12 @@ describe('openapi error envelope guard', () => {
           if (!schema) continue;
 
           if (schema.$ref) {
+            const violation = `${method.toUpperCase()} ${path} ${statusCode} -> ${schema.$ref}`;
+            if (ALLOWED_ROUTE_SCHEMA_EXCEPTIONS.has(violation)) {
+              continue;
+            }
             if (!ALLOWED_ERROR_REFS.has(schema.$ref)) {
-              violations.push(`${method.toUpperCase()} ${path} ${statusCode} -> ${schema.$ref}`);
+              violations.push(violation);
             }
             continue;
           }
@@ -59,4 +66,3 @@ describe('openapi error envelope guard', () => {
     ).toEqual([]);
   });
 });
-

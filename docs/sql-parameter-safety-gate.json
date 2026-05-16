@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-05-15T12:06:51.589Z",
+  "status": "ok",
+  "summary": {
+    "scannedRoots": [
+      "src",
+      "scripts"
+    ],
+    "findingCount": 0
+  },
+  "findings": []
+}

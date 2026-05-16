@@ -98,6 +98,7 @@ export const GET: APIRoute = async ({ url }) => {
            r.id, r.place_id, r.user_id, r.title, r.content, r.rating,
            r.helpful_count, r.unhelpful_count, r.images, r.visit_type,
            r.is_verified, r.status, r.created_at, r.updated_at,
+           r.owner_response, r.owner_responded_at,
            u.full_name AS user_name, u.avatar_url AS user_avatar
          FROM reviews r
          JOIN users u ON u.id = r.user_id

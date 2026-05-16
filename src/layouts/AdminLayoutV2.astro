@@ -41,73 +41,65 @@ const path = Astro.url.pathname;
 
 const nav = [
  {
-  group: 'Genel',
+  group: 'Komuta',
   items: [
    { href: '/admin', label: 'Dashboard', icon: 'lucide:layout-dashboard' },
-   { href: '/admin/analytics', label: 'Analitik', icon: 'lucide:bar-chart-3' },
-   { href: '/admin/monitoring', label: 'Monitoring', icon: 'lucide:activity' },
-   { href: '/admin/performance', label: 'Performans', icon: 'lucide:zap' },
+   { href: '/admin/command', label: 'Komut Merkezi', icon: 'lucide:command' },
+   { href: '/admin/settings', label: 'Frontend Yönetimi', icon: 'lucide:sliders-horizontal' },
+   { href: '/admin/seo', label: 'SEO Merkezi', icon: 'lucide:search-check' },
+   { href: '/admin/bots', label: 'Botlar Merkezi', icon: 'lucide:bot' },
   ],
  },
  {
-  group: 'İçerik',
+  group: 'Şehir Rehberi CRM',
   items: [
-   { href: '/admin/places', label: 'Mekanlar', icon: 'lucide:map-pin' },
-   { href: '/admin/recipes', label: 'Tarifler', icon: 'lucide:chef-hat' },
+   { href: '/admin/businesses', label: 'Mekanlar CRM', icon: 'lucide:store' },
+   { href: '/admin/submissions', label: 'İşletme Başvuruları', icon: 'lucide:kanban-square' },
+   { href: '/admin/classifieds', label: 'Ücretsiz İlanlar', icon: 'lucide:badge-plus' },
+   { href: '/admin/categories', label: 'Kategori / Alt Kategori', icon: 'lucide:folder-tree' },
+   { href: '/admin/locations/districts', label: 'İlçeler', icon: 'lucide:map' },
+   { href: '/admin/locations/neighborhoods', label: 'Mahalleler', icon: 'lucide:route' },
+   { href: '/admin/map', label: 'Harita Yönetimi', icon: 'lucide:map-pinned' },
+  ],
+ },
+ {
+  group: 'İçerik ve Günlük Veri',
+  items: [
+   { href: '/admin/blog', label: 'Blog / Rehber', icon: 'lucide:file-text' },
    { href: '/admin/events', label: 'Etkinlikler', icon: 'lucide:calendar' },
-   { href: '/admin/blog', label: 'Blog', icon: 'lucide:file-text' },
-   { href: '/admin/historical-sites', label: 'Tarihi Yerler', icon: 'lucide:landmark' },
-   { href: '/admin/categories', label: 'Kategoriler', icon: 'lucide:folder-tree' },
-   { href: '/admin/site-content', label: 'Site İçerikleri', icon: 'lucide:layout-template' },
+   { href: '/admin/pharmacies', label: 'Nöbetçi Eczaneler', icon: 'lucide:cross' },
+   { href: '/admin/transport/bus', label: 'Otobüs Hatları', icon: 'lucide:bus' },
+   { href: '/admin/transport/flights', label: 'Uçak Saatleri', icon: 'lucide:plane' },
+   { href: '/admin/media', label: 'Medya Kütüphanesi', icon: 'lucide:image' },
   ],
  },
  {
   group: 'Topluluk',
   items: [
+   { href: '/admin/community/users', label: 'Kullanıcılar', icon: 'lucide:users' },
+   { href: '/admin/community/profiles', label: 'Eşleşme Profilleri', icon: 'lucide:heart-handshake' },
+   { href: '/admin/community/matches', label: 'Eşleşmeler', icon: 'lucide:users-round' },
+   { href: '/admin/community/reports', label: 'Şikayetler', icon: 'lucide:shield-alert' },
    { href: '/admin/reviews', label: 'Yorumlar', icon: 'lucide:message-square' },
-   { href: '/admin/moderation', label: 'Moderasyon', icon: 'lucide:shield-check' },
-   { href: '/admin/claims', label: 'Talepler', icon: 'lucide:file-warning' },
    { href: '/admin/messages', label: 'Mesajlar', icon: 'lucide:inbox' },
-   { href: '/admin/community-photos', label: 'Fotoğraflar', icon: 'lucide:image' },
-   { href: '/admin/notifications', label: 'Bildirimler', icon: 'lucide:bell' },
   ],
  },
  {
-  group: 'Ticari',
+  group: 'Gelir',
   items: [
-   { href: '/admin/revenue', label: 'Gelir', icon: 'lucide:trending-up' },
+   { href: '/admin/ads', label: 'Reklam ve Sponsor', icon: 'lucide:badge-dollar-sign' },
+   { href: '/admin/revenue', label: 'Gelir Özeti', icon: 'lucide:trending-up' },
    { href: '/admin/campaigns', label: 'Kampanyalar', icon: 'lucide:megaphone' },
    { href: '/admin/reservations', label: 'Rezervasyonlar', icon: 'lucide:book-open-check' },
-   { href: '/admin/quotas', label: 'Kotalar', icon: 'lucide:gauge' },
-   { href: '/admin/loyalty', label: 'Sadakat', icon: 'lucide:gift' },
   ],
  },
  {
   group: 'Sistem',
   items: [
+   { href: '/admin/users', label: 'Rol ve Yetki', icon: 'lucide:user-cog' },
+   { href: '/admin/audit-log', label: 'Audit Log', icon: 'lucide:scroll-text' },
    { href: '/admin/integrations', label: 'Entegrasyonlar', icon: 'lucide:plug' },
-   { href: '/admin/settings/marketing', label: 'Marketing', icon: 'lucide:line-chart' },
-   { href: '/admin/feature-flags', label: 'Feature Flags', icon: 'lucide:flag' },
-   { href: '/admin/governance', label: 'Governance', icon: 'lucide:scale' },
    { href: '/admin/api-docs', label: 'API Docs', icon: 'lucide:code' },
-  ],
- },
- {
-  group: 'Raporlar',
-  items: [
-   { href: '/admin/reports', label: 'Raporlar', icon: 'lucide:file-bar-chart' },
-   { href: '/admin/audit-logs', label: 'Audit Logs', icon: 'lucide:scroll-text' },
-   { href: '/admin/site-audit', label: 'Site Audit', icon: 'lucide:clipboard-check' },
-   { href: '/admin/release-readiness', label: 'Release', icon: 'lucide:rocket' },
-  ],
- },
- {
-  group: 'Diğer',
-  items: [
-   { href: '/admin/import', label: 'İçe Aktar', icon: 'lucide:upload' },
-   { href: '/admin/content-generator', label: 'İçerik Üretici', icon: 'lucide:sparkles' },
-   { href: '/admin/content-agents', label: 'Agentler', icon: 'lucide:bot' },
-   { href: '/admin/export-tokens', label: 'Export', icon: 'lucide:download' },
   ],
  },
 ];
@@ -244,7 +236,7 @@ const allItems = nav.flatMap(g => g.items.map(i => ({ ...i, group: g.group })));
    <div class="adm-cmdk-panel" role="document">
     <div class="adm-cmdk-input-row">
      <Icon name="lucide:search" class="w-4 h-4" />
-     <input type="text" id="adm-cmdk-input" placeholder="Sayfa veya komut ara..." autocomplete="off" />
+     <input type="text" id="adm-cmdk-input" placeholder="İşletme, kullanıcı, kategori, etkinlik, blog, eczane, ilçe ara..." autocomplete="off" />
      <kbd>ESC</kbd>
     </div>
     <div class="adm-cmdk-results" id="adm-cmdk-results"></div>
@@ -384,6 +376,41 @@ const allItems = nav.flatMap(g => g.items.map(i => ({ ...i, group: g.group })));
    link.appendChild(grp);
    cmdkResults.appendChild(link);
   });
+  if (q.length >= 2) {
+   const loading = document.createElement('p');
+   loading.className = 'adm-cmdk-empty';
+   loading.textContent = 'CRM kayıtları aranıyor...';
+   cmdkResults.appendChild(loading);
+   fetch('/api/admin/command?q=' + encodeURIComponent(q))
+    .then((res) => (res.ok ? res.json() : { results: [] }))
+    .then((payload) => {
+     if (cmdkInput.value.toLowerCase().trim() !== q) return;
+     loading.remove();
+     const results = Array.isArray(payload.results) ? payload.results : [];
+     if (results.length === 0) return;
+     const groupTitle = document.createElement('p');
+     groupTitle.className = 'adm-cmdk-section-title';
+     groupTitle.textContent = 'CRM sonuçları';
+     cmdkResults.appendChild(groupTitle);
+     results.forEach((item) => {
+      const link = document.createElement('a');
+      link.href = item.adminHref || item.href || '/admin';
+      link.className = 'adm-cmdk-item adm-cmdk-item--crm';
+      const lbl = document.createElement('span');
+      lbl.className = 'adm-cmdk-item-label';
+      lbl.textContent = item.label || '(başlıksız)';
+      const grp = document.createElement('span');
+      grp.className = 'adm-cmdk-item-group';
+      grp.textContent = `${item.type || 'Kayıt'} · ${item.description || ''}`;
+      link.appendChild(lbl);
+      link.appendChild(grp);
+      cmdkResults.appendChild(link);
+     });
+    })
+    .catch(() => {
+     loading.textContent = 'CRM araması yüklenemedi';
+    });
+  }
  }
 
  cmdkBtn?.addEventListener('click', openCmdk);
@@ -876,11 +903,20 @@ const allItems = nav.flatMap(g => g.items.map(i => ({ ...i, group: g.group })));
  }
  .adm-cmdk-results { max-height: 400px; overflow-y: auto; padding: 0.35rem; }
  .adm-cmdk-empty { text-align: center; color: var(--adm-text-soft); padding: 2rem 1rem; margin: 0; font-size: 0.88rem; }
+ .adm-cmdk-section-title {
+  margin: .35rem .75rem .25rem;
+  color: var(--adm-text-soft);
+  font-size: .68rem;
+  font-weight: 850;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+ }
  .adm-cmdk-item {
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
   padding: 0.6rem 0.85rem; border-radius: 6px;
   color: var(--adm-text); text-decoration: none; font-size: 0.9rem; cursor: pointer;
  }
+ .adm-cmdk-item--crm { border-left: 2px solid var(--adm-accent); }
  .adm-cmdk-item:hover, .adm-cmdk-item--active { background: var(--adm-bg-active); color: var(--adm-accent); }
  .adm-cmdk-item-group {
   font-size: 0.72rem; color: var(--adm-text-soft);

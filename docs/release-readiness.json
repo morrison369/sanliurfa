@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-07T15:54:42.380Z",
+  "generatedAt": "2026-05-15T12:08:15.833Z",
   "status": "ready_with_advisories",
   "checks": [
     {
@@ -11,6 +11,256 @@
       "name": "OpenAPI baseline",
       "ok": true,
       "artifact": "docs/openapi-route-gap-baseline.json"
+    },
+    {
+      "name": "Release next actions report",
+      "ok": true,
+      "artifact": "docs/release-next-actions-report.json"
+    },
+    {
+      "name": "Release artifact freshness gate",
+      "ok": true,
+      "artifact": "docs/release-artifact-freshness.json"
+    },
+    {
+      "name": "Release handoff summary",
+      "ok": true,
+      "artifact": "docs/release-handoff-summary.json"
+    },
+    {
+      "name": "Script surface report",
+      "ok": true,
+      "artifact": "docs/script-surface-report.json"
+    },
+    {
+      "name": "Script canonical surface report",
+      "ok": true,
+      "artifact": "docs/script-canonical-surface-report.json"
+    },
+    {
+      "name": "Migration duplicate drift report",
+      "ok": true,
+      "artifact": "docs/migration-duplicate-drift-report.json"
+    },
+    {
+      "name": "Unit test report",
+      "ok": true,
+      "artifact": "docs/unit-test-report.json"
+    },
+    {
+      "name": "API contract group report",
+      "ok": true,
+      "artifact": "docs/api-contract-group-report.json"
+    },
+    {
+      "name": "API release gate report",
+      "ok": true,
+      "artifact": "docs/api-release-gate-report.json"
+    },
+    {
+      "name": "API debug envelope report",
+      "ok": true,
+      "artifact": "docs/api-debug-envelope-report.json"
+    },
+    {
+      "name": "E2E skip report",
+      "ok": true,
+      "artifact": "docs/e2e-skip-report.json"
+    },
+    {
+      "name": "E2E critical coverage report",
+      "ok": true,
+      "artifact": "docs/e2e-critical-coverage-report.json"
+    },
+    {
+      "name": "Build artifact report",
+      "ok": true,
+      "artifact": "docs/build-artifact-report.json"
+    },
+    {
+      "name": "DB usage audit",
+      "ok": true,
+      "artifact": "docs/db-usage-audit.json"
+    },
+    {
+      "name": "DB retirement observation report",
+      "ok": true,
+      "artifact": "docs/db-retirement-observation-report.json"
+    },
+    {
+      "name": "DB P0 quarantine plan",
+      "ok": true,
+      "artifact": "docs/db-p0-quarantine-plan.json"
+    },
+    {
+      "name": "DB observation cadence report",
+      "ok": true,
+      "artifact": "docs/db-observation-cadence-report.json"
+    },
+    {
+      "name": "DB observation calendar report",
+      "ok": true,
+      "artifact": "docs/db-observation-calendar-report.json"
+    },
+    {
+      "name": "DB manual decision readiness report",
+      "ok": true,
+      "artifact": "docs/db-manual-decision-readiness-report.json"
+    },
+    {
+      "name": "DB registry classification report",
+      "ok": true,
+      "artifact": "docs/db-registry-classification-report.json"
+    },
+    {
+      "name": "DB runtime hold plan",
+      "ok": true,
+      "artifact": "docs/db-runtime-hold-plan.json"
+    },
+    {
+      "name": "SQL parameter safety gate",
+      "ok": true,
+      "artifact": "docs/sql-parameter-safety-gate.json"
+    },
+    {
+      "name": "DB prod version compare report",
+      "ok": true,
+      "artifact": "docs/db-prod-version-compare-report.json"
+    },
+    {
+      "name": "DB index review plan",
+      "ok": true,
+      "artifact": "docs/db-index-review-plan.json"
+    },
+    {
+      "name": "DB advisory evidence bundle",
+      "ok": true,
+      "artifact": "docs/db-advisory-evidence-bundle.json"
+    },
+    {
+      "name": "Zero-result search report",
+      "ok": true,
+      "artifact": "docs/search-zero-result-report.json"
+    },
+    {
+      "name": "Local upload parity report",
+      "ok": true,
+      "artifact": "docs/local-upload-parity-report.json"
+    },
+    {
+      "name": "Local upload bucket quota report",
+      "ok": true,
+      "artifact": "docs/local-upload-bucket-quota-report.json"
+    },
+    {
+      "name": "Local upload classification report",
+      "ok": true,
+      "artifact": "docs/local-upload-candidate-classification.json"
+    },
+    {
+      "name": "Local upload archive candidates report",
+      "ok": true,
+      "artifact": "docs/local-upload-archive-candidates.json"
+    },
+    {
+      "name": "Local media storage gate",
+      "ok": true,
+      "artifact": "docs/local-media-storage-gate.json"
+    },
+    {
+      "name": "Media readiness report",
+      "ok": true,
+      "artifact": "docs/media-readiness-report.json"
+    },
+    {
+      "name": "Static image integrity gate",
+      "ok": true,
+      "artifact": "docs/static-image-integrity-report.json"
+    },
+    {
+      "name": "Admin strict role gate",
+      "ok": true,
+      "artifact": "docs/admin-strict-role-gate.json"
+    },
+    {
+      "name": "Redis runtime health report",
+      "ok": true,
+      "artifact": "docs/redis-runtime-health-report.json"
+    },
+    {
+      "name": "Warmup safety report",
+      "ok": true,
+      "artifact": "docs/warmup-safety-report.json"
+    },
+    {
+      "name": "Cron readiness report",
+      "ok": true,
+      "artifact": "docs/cron-readiness-report.json"
+    },
+    {
+      "name": "LLMS/Sitemap auto update gate",
+      "ok": true,
+      "artifact": "docs/llms-sitemap-auto-update-gate.json"
+    },
+    {
+      "name": "Blog rich results report",
+      "ok": true,
+      "artifact": "docs/blog-draft-rich-results-report.json"
+    },
+    {
+      "name": "Blog duplicate risk gate",
+      "ok": true,
+      "artifact": "docs/blog-duplicate-risk-gate.json"
+    },
+    {
+      "name": "Blog draft quality report",
+      "ok": true,
+      "artifact": "docs/blog-draft-quality-report.json"
+    },
+    {
+      "name": "Blog publish readiness report",
+      "ok": true,
+      "artifact": "docs/blog-publish-readiness-report.json"
+    },
+    {
+      "name": "Blog admin publish queue report",
+      "ok": true,
+      "artifact": "docs/blog-admin-publish-queue-report.json"
+    },
+    {
+      "name": "Publish all content drafts report",
+      "ok": true,
+      "artifact": "docs/publish-all-content-drafts-report.json"
+    },
+    {
+      "name": "PageSpeed API research report",
+      "ok": true,
+      "artifact": "docs/pagespeed-api-research-report.json"
+    },
+    {
+      "name": "PageSpeed API-less Lighthouse report",
+      "ok": true,
+      "artifact": "docs/pagespeed-api-less-lighthouse-report.json"
+    },
+    {
+      "name": "PageSpeed live check report",
+      "ok": true,
+      "artifact": "docs/pagespeed-live-check-report.json"
+    },
+    {
+      "name": "PageSpeed quota management report",
+      "ok": true,
+      "artifact": "docs/pagespeed-quota-management-report.json"
+    },
+    {
+      "name": "Backend/frontend improvement report",
+      "ok": true,
+      "artifact": "docs/backend-frontend-improvement-report.json"
+    },
+    {
+      "name": "Unit skip report",
+      "ok": true,
+      "artifact": "docs/unit-skip-report.json"
     },
     {
       "name": "Image manifest",
@@ -47,10 +297,318 @@
   },
   "advisories": [
     {
-      "name": "Migration duplicate baseline",
+      "name": "DB P0 retirement observation",
       "severity": "advisory",
-      "detail": "3 duplicate number group(s), 14 duplicate slug group(s). Dosya rename prod schema_migrations versiyonlarını etkileyebileceği için docs/MIGRATION_DUPLICATE_REMEDIATION.md planıyla çözülmeli.",
+      "detail": "2 P0 quarantine candidate gözlem kuyruğunda. Runtime hold: 1. Otomatik drop yok; owner/source/migration kanıtı ve production gözlemi gerekir.",
+      "artifact": "docs/db-retirement-observation-report.json"
+    }
+  ],
+  "notes": [
+    {
+      "name": "Immutable migration duplicate baseline",
+      "severity": "info",
+      "detail": "3 duplicate number group(s), 14 duplicate slug group(s). Dosya rename prod schema_migrations versiyonlarını etkileyebileceği için docs/MIGRATION_DUPLICATE_REMEDIATION.md planıyla yönetilmeli. Baseline ile birebir eşleşiyor; yeni regresyon yok.",
       "artifact": "docs/migration-duplicate-report.json"
+    },
+    {
+      "name": "Migration duplicate drift",
+      "severity": "info",
+      "detail": "Duplicate baseline uyumlu; 3 number group, 14 slug group immutable baseline içinde.",
+      "artifact": "docs/migration-duplicate-drift-report.json"
+    },
+    {
+      "name": "Script canonical surface",
+      "severity": "info",
+      "detail": "15 canonical command, 0 missing, 370 total package scripts.",
+      "artifact": "docs/script-canonical-surface-report.json"
+    },
+    {
+      "name": "Blog duplicate risk gate",
+      "severity": "info",
+      "detail": "0 selected duplicate-risk topic; 43 duplicate-risk topic skipped, auto-publish kapali.",
+      "artifact": "docs/blog-duplicate-risk-gate.json"
+    },
+    {
+      "name": "Build artifact budget snapshot",
+      "severity": "info",
+      "detail": "dist/client 14.64 MB, _astro budget uyumlu.",
+      "artifact": "docs/build-artifact-report.json"
+    },
+    {
+      "name": "Release next actions",
+      "severity": "info",
+      "detail": "7 aksiyon, 0 kanıt/gözlem bekleyen madde.",
+      "artifact": "docs/release-next-actions-report.json"
+    },
+    {
+      "name": "Release artifact freshness",
+      "severity": "info",
+      "detail": "passed; stale/missing=0, max age=180 minutes.",
+      "artifact": "docs/release-artifact-freshness.json"
+    },
+    {
+      "name": "Release handoff summary",
+      "severity": "info",
+      "detail": "Generated at 2026-05-15T12:05:13.615Z; status=ready_with_advisories, local-storage=ok, pagespeed-api-less=review.",
+      "artifact": "docs/release-handoff-summary.json"
+    },
+    {
+      "name": "Unit tests",
+      "severity": "info",
+      "detail": "381/381 test file, 4957/4957 test passed.",
+      "artifact": "docs/unit-test-report.json"
+    },
+    {
+      "name": "API contract groups",
+      "severity": "info",
+      "detail": "11 API contract group passed.",
+      "artifact": "docs/api-contract-group-report.json"
+    },
+    {
+      "name": "API release gate report",
+      "severity": "info",
+      "detail": "5/5 API release checks passed.",
+      "artifact": "docs/api-release-gate-report.json"
+    },
+    {
+      "name": "API debug envelope",
+      "severity": "info",
+      "detail": "3/3 debug envelope check passed. RequestId, X-Request-ID and frontend fetch diagnostics are tracked.",
+      "artifact": "docs/api-debug-envelope-report.json"
+    },
+    {
+      "name": "E2E report",
+      "severity": "info",
+      "detail": "critical / chromium: 30/31 passed, 0 failed.",
+      "artifact": "docs/e2e-report.json"
+    },
+    {
+      "name": "E2E skip report",
+      "severity": "info",
+      "detail": "17 E2E skip declaration, 0 undocumented.",
+      "artifact": "docs/e2e-skip-report.json"
+    },
+    {
+      "name": "E2E critical coverage",
+      "severity": "info",
+      "detail": "10/10 critical flow covered, 0 missing.",
+      "artifact": "docs/e2e-critical-coverage-report.json"
+    },
+    {
+      "name": "DB usage audit",
+      "severity": "info",
+      "detail": "497 tablo, 766 reviewable unused-index adayı, 280 protected zero-scan index, 3 speculative zero-row candidate raporlandı.",
+      "artifact": "docs/db-usage-audit.json"
+    },
+    {
+      "name": "DB retirement observation",
+      "severity": "info",
+      "detail": "P0 quarantine=2, runtime hold=1, P1=0, P2=766. Otomatik drop yok; en erken aksiyon 2026-05-29T12:07:47.159Z.",
+      "artifact": "docs/db-retirement-observation-report.json"
+    },
+    {
+      "name": "DB P0 quarantine plan",
+      "severity": "advisory",
+      "detail": "2 quarantine candidate, 1 runtime hold. Automatic drop/quarantine yok.",
+      "artifact": "docs/db-p0-quarantine-plan.json"
+    },
+    {
+      "name": "DB observation cadence",
+      "severity": "info",
+      "detail": "3/14 snapshot, 11 eksik gün, status=observing.",
+      "artifact": "docs/db-observation-cadence-report.json"
+    },
+    {
+      "name": "DB observation calendar",
+      "severity": "advisory",
+      "detail": "3/14 observation day complete; next snapshot=2026-05-16T12:04:43.938Z, earliest action=2026-05-29T12:04:43.938Z, auto drop yok.",
+      "artifact": "docs/db-observation-calendar-report.json"
+    },
+    {
+      "name": "DB manual decision readiness",
+      "severity": "info",
+      "detail": "0 ready, 2 waiting, 1 runtime hold.",
+      "artifact": "docs/db-manual-decision-readiness-report.json"
+    },
+    {
+      "name": "DB registry classification",
+      "severity": "advisory",
+      "detail": "0 unclassified table, 766 reviewable unused index, 280 protected zero-scan index. Automatic DB drop disabled.",
+      "artifact": "docs/db-registry-classification-report.json"
+    },
+    {
+      "name": "DB runtime hold plan",
+      "severity": "advisory",
+      "detail": "public.campaign_performance runtime_hold; refs=2, incompatible contracts=1, auto drop yok.",
+      "artifact": "docs/db-runtime-hold-plan.json"
+    },
+    {
+      "name": "SQL parameter safety",
+      "severity": "info",
+      "detail": "0 unsafe SQL parameter pattern found.",
+      "artifact": "docs/sql-parameter-safety-gate.json"
+    },
+    {
+      "name": "DB prod/current version compare",
+      "severity": "info",
+      "detail": "DATABASE_URL localhost/sanliurfa: 188/188 source migration matched, 0 pending/unmatched, 4 DB-only.",
+      "artifact": "docs/db-prod-version-compare-report.json"
+    },
+    {
+      "name": "DB index review plan",
+      "severity": "info",
+      "detail": "766 reviewable index candidate, 505 high-risk keep/review. Automatic index drop disabled.",
+      "artifact": "docs/db-index-review-plan.json"
+    },
+    {
+      "name": "DB advisory evidence bundle",
+      "severity": "info",
+      "detail": "2 quarantine candidate, 1 runtime hold, observation 3/14. Automatic DB/index drop disabled.",
+      "artifact": "docs/db-advisory-evidence-bundle.json"
+    },
+    {
+      "name": "Zero-result search report",
+      "severity": "info",
+      "detail": "0 unresolved query / 0 occurrence.",
+      "artifact": "docs/search-zero-result-report.json"
+    },
+    {
+      "name": "Local upload parity",
+      "severity": "info",
+      "detail": "928 upload dosyası, 0 missing ref, 0 unreferenced candidate.",
+      "artifact": "docs/local-upload-parity-report.json"
+    },
+    {
+      "name": "Local upload bucket quota",
+      "severity": "info",
+      "detail": "5 bucket, 0 blocker, 0 review, 0 advisory.",
+      "artifact": "docs/local-upload-bucket-quota-report.json"
+    },
+    {
+      "name": "Local upload candidate classification",
+      "severity": "info",
+      "detail": "0 candidate: 0 observed, 0 archive candidate, 0 delete-review. Otomatik silme yok.",
+      "artifact": "docs/local-upload-candidate-classification.json"
+    },
+    {
+      "name": "Local upload archive candidates",
+      "severity": "info",
+      "detail": "0 manual archive PR candidate, 0 delete-review. Otomatik silme yok.",
+      "artifact": "docs/local-upload-archive-candidates.json"
+    },
+    {
+      "name": "Local media storage gate",
+      "severity": "info",
+      "detail": "local-only=yes, external-object-storage=no, live checks=5/5, failed patterns=0.",
+      "artifact": "docs/local-media-storage-gate.json"
+    },
+    {
+      "name": "Static image integrity gate",
+      "severity": "info",
+      "detail": "200 local public image checked; failed=0, review=0. CDN/object-storage varsayımı yok.",
+      "artifact": "docs/static-image-integrity-report.json"
+    },
+    {
+      "name": "Media readiness",
+      "severity": "info",
+      "detail": "5/5 media checks passed; uploads=928, public-images=200, local-storage-only=yes.",
+      "artifact": "docs/media-readiness-report.json"
+    },
+    {
+      "name": "Admin strict role gate",
+      "severity": "info",
+      "detail": "32/32 high-impact admin endpoint strict role checks passed; review=0.",
+      "artifact": "docs/admin-strict-role-gate.json"
+    },
+    {
+      "name": "Unit skip report",
+      "severity": "info",
+      "detail": "0 skipped test file, 0 skipped test, 0 undocumented skip declaration.",
+      "artifact": "docs/unit-skip-report.json"
+    },
+    {
+      "name": "Redis runtime health",
+      "severity": "advisory",
+      "detail": "idle; 127.0.0.1:6381 ping=fail. Fallback release blocker değil.",
+      "artifact": "docs/redis-runtime-health-report.json"
+    },
+    {
+      "name": "Warmup safety",
+      "severity": "info",
+      "detail": "ok; warmup yeni port/dev server açmamalı ve sadece mevcut base URL fetch etmelidir.",
+      "artifact": "docs/warmup-safety-report.json"
+    },
+    {
+      "name": "Cron readiness",
+      "severity": "info",
+      "detail": "16/16 managed cron job preview içinde mevcut.",
+      "artifact": "docs/cron-readiness-report.json"
+    },
+    {
+      "name": "LLMS/Sitemap auto update",
+      "severity": "info",
+      "detail": "6/6 auto-update check geçti. llms.txt, llms-full.txt, sitemap index, section sitemap, dynamic sitemap ve robots discovery izleniyor.",
+      "artifact": "docs/llms-sitemap-auto-update-gate.json"
+    },
+    {
+      "name": "Blog rich results",
+      "severity": "info",
+      "detail": "40/40 blog draft rich results/schema parity check geçti; review=0.",
+      "artifact": "docs/blog-draft-rich-results-report.json"
+    },
+    {
+      "name": "Blog draft quality",
+      "severity": "info",
+      "detail": "40/40 blog draft content quality/source safety check gecti; review=0.",
+      "artifact": "docs/blog-draft-quality-report.json"
+    },
+    {
+      "name": "Blog publish readiness",
+      "severity": "info",
+      "detail": "40 blog draft prod ortamda published/existing; issues=0, autoPublish=false.",
+      "artifact": "docs/blog-publish-readiness-report.json"
+    },
+    {
+      "name": "Blog admin publish queue",
+      "severity": "info",
+      "detail": "40 blog draft admin review kuyrugunda; quality=40, rich=40, autoPublish=false.",
+      "artifact": "docs/blog-admin-publish-queue-report.json"
+    },
+    {
+      "name": "Publish all content drafts",
+      "severity": "info",
+      "detail": "0 draft-like content remains; city_content_drafts updated=0, moderation auto-approved=no.",
+      "artifact": "docs/publish-all-content-drafts-report.json"
+    },
+    {
+      "name": "PageSpeed API research",
+      "severity": "info",
+      "detail": "PageSpeed API service enabled=yes, local-storage policy=documented.",
+      "artifact": "docs/pagespeed-api-research-report.json"
+    },
+    {
+      "name": "PageSpeed API-less Lighthouse",
+      "severity": "info",
+      "detail": "0/1 Lighthouse CLI check ok; API used=no, status=review, perf=0.85, best=0.77, seo=1.",
+      "artifact": "docs/pagespeed-api-less-lighthouse-report.json"
+    },
+    {
+      "name": "PageSpeed live check",
+      "severity": "advisory",
+      "detail": "0/0 live checks ok; quota-limited=1.",
+      "artifact": "docs/pagespeed-live-check-report.json"
+    },
+    {
+      "name": "PageSpeed quota management",
+      "severity": "info",
+      "detail": "Quota management marked=yes, completed=yes, live status=review, quota-limited=1.",
+      "artifact": "docs/pagespeed-quota-management-report.json"
+    },
+    {
+      "name": "Backend/frontend improvements",
+      "severity": "info",
+      "detail": "14/14 improvement checks passed; backend=9/9, frontend=5/5.",
+      "artifact": "docs/backend-frontend-improvement-report.json"
     }
   ],
   "summary": "Temel artefaktlar mevcut. Advisory maddeleri release notlarında takip edilmeli."

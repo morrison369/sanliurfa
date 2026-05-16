@@ -239,17 +239,57 @@ export async function listCityContentJobs(limit = 20): Promise<CityContentAgentJ
   return result.rows;
 }
 
-export async function listCityContentDrafts(status?: string): Promise<CityContentDraft[]> {
+export async function listCityContentDrafts(options: {
+  status?: string;
+  draftType?: string;
+  limit?: number;
+  offset?: number;
+} = {}): Promise<CityContentDraft[]> {
   await ensureCityContentAgentTables();
-  const result = status
-    ? await query<CityContentDraft>(
-        `SELECT * FROM city_content_drafts WHERE status = $1 ORDER BY updated_at DESC LIMIT 100`,
-        [status],
-      )
-    : await query<CityContentDraft>(
-        `SELECT * FROM city_content_drafts ORDER BY updated_at DESC LIMIT 100`,
-      );
+  const where: string[] = [];
+  const params: any[] = [];
+  if (options.status) {
+    params.push(options.status);
+    where.push(`status = $${params.length}`);
+  }
+  if (options.draftType) {
+    params.push(options.draftType);
+    where.push(`draft_type = $${params.length}`);
+  }
+
+  const limit = Math.max(1, Math.min(500, Number(options.limit || 100)));
+  const offset = Math.max(0, Number(options.offset || 0));
+  params.push(limit, offset);
+
+  const result = await query<CityContentDraft>(
+    `SELECT * FROM city_content_drafts
+     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
+     ORDER BY updated_at DESC
+     LIMIT $${params.length - 1} OFFSET $${params.length}`,
+    params,
+  );
   return result.rows;
+}
+
+export async function getCityContentDraftSummary(): Promise<{
+  total: number;
+  byStatus: Record<string, number>;
+  byType: Record<string, number>;
+}> {
+  await ensureCityContentAgentTables();
+  const [statusResult, typeResult] = await Promise.all([
+    query<{ status: string; count: number }>(
+      `SELECT status, COUNT(*)::int AS count FROM city_content_drafts GROUP BY status ORDER BY status ASC`,
+    ),
+    query<{ draft_type: string; count: number }>(
+      `SELECT draft_type, COUNT(*)::int AS count FROM city_content_drafts GROUP BY draft_type ORDER BY draft_type ASC`,
+    ),
+  ]);
+
+  const byStatus = Object.fromEntries(statusResult.rows.map((row) => [row.status, Number(row.count)]));
+  const byType = Object.fromEntries(typeResult.rows.map((row) => [row.draft_type, Number(row.count)]));
+  const total = Object.values(byStatus).reduce((sum, count) => sum + Number(count), 0);
+  return { total, byStatus, byType };
 }
 
 async function createJob(

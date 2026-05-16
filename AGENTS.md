@@ -91,12 +91,19 @@ For every new phase range:
 
 **Ücretli Servis ve Harici CDN YASAĞI:**
 - **KESİNLİKLE YASAK:** Image CDN servisleri (Cloudinary, Cloudflare Images, Imgix vb.)
+- **KESİNLİKLE YASAK:** Her türlü edge/CDN dağıtım katmanı veya harici static asset servisi
 - **KESİNLİKLE YASAK:** Ücretli görseller (Shutterstock, Getty Images vb.)
 - **KESİNLİKLE YASAK:** Ücretli API'ler (Google Maps API, SendGrid, AWS SES vb.)
 - **KESİNLİKLE YASAK:** Üçüncü parti haritalama servisleri (Google Maps, Mapbox vb.)
 - **İZİN VERİLEN:** Ücretsiz alternatifler (OpenStreetMap, Ücretsiz SMTP, Local image processing)
 
 **Neden:** Proje sahibi açıkça ücretsiz, açık kaynak çözümler istemiştir.
+
+**Media Storage Kuralı (Kesin):**
+- Site görselleri ve kullanıcı yüklemeleri yalnızca aynı sunucudaki local filesystem altında tutulur.
+- Kanonik kökler `public/images` ve `public/uploads` dizinleridir.
+- `/_astro` asset'leri build çıktısıdır; medya depolama sistemi değildir.
+- Harici object storage, bucket CDN veya origin dışı asset dağıtımı önerilmez.
 
 ## 🧭 DB-First İçerik Yönetimi (Zorunlu)
 

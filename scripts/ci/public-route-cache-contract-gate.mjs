@@ -4,6 +4,7 @@ import path from 'node:path';
 import { PUBLIC_ROUTE_SMOKE_ROUTES } from '../smoke/public-route-smoke-routes.mjs';
 
 const root = process.cwd();
+const showNotes = process.env.PUBLIC_ROUTE_CACHE_CONTRACT_NOTES !== '0';
 
 const routeToFile = new Map([
   ['/', 'src/pages/index.astro'],
@@ -33,8 +34,15 @@ const routeToFile = new Map([
   ['/yemek-tarifleri/urfa-kebabi', 'src/pages/yemek-tarifleri/[slug].astro'],
   ['/sanliurfada-ne-yenir', 'src/pages/sanliurfada-ne-yenir.astro'],
   ['/bugun-sanliurfada-ne-yapilir', 'src/pages/bugun-sanliurfada-ne-yapilir.astro'],
+  ['/sanliurfa-gezi-rehberi', 'src/pages/sanliurfa-gezi-rehberi.astro'],
+  ['/gobeklitepe-gezi-rehberi', 'src/pages/gobeklitepe-gezi-rehberi.astro'],
+  ['/balikligol-gezi-rehberi', 'src/pages/balikligol-gezi-rehberi.astro'],
+  ['/ucretsiz-gezilecek-yerler', 'src/pages/ucretsiz-gezilecek-yerler.astro'],
   ['/en-iyi-kebapcilar', 'src/pages/en-iyi-kebapcilar.astro'],
   ['/en-iyi-cigerciler', 'src/pages/en-iyi-cigerciler.astro'],
+  ['/en-iyi-oteller', 'src/pages/en-iyi-oteller.astro'],
+  ['/en-iyi-gezilecek-yerler', 'src/pages/en-iyi-gezilecek-yerler.astro'],
+  ['/en-iyi-kahvalti-mekanlari', 'src/pages/en-iyi-kahvalti-mekanlari.astro'],
   ['/sanliurfa-kahvalti-mekanlari', 'src/pages/sanliurfa-kahvalti-mekanlari.astro'],
   ['/sanliurfa-gece-acik-mekanlar', 'src/pages/sanliurfa-gece-acik-mekanlar.astro'],
   ['/sanliurfa-sira-gecesi-mekanlari', 'src/pages/sanliurfa-sira-gecesi-mekanlari.astro'],
@@ -57,7 +65,9 @@ const routeToFile = new Map([
   ['/mahalleler/haliliye', 'src/pages/mahalleler/[ilce]/index.astro'],
   ['/harita', 'src/pages/harita.astro'],
   ['/arama', 'src/pages/arama/index.astro'],
+  ['/topluluk/fotolar', 'src/pages/topluluk/fotolar.astro'],
   ['/hakkimizda', 'src/pages/hakkimizda.astro'],
+  ['/hakkinda', 'src/pages/hakkinda.astro'],
   ['/iletisim', 'src/pages/iletisim.astro'],
 ]);
 
@@ -204,5 +214,7 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
-for (const warning of warnings) console.log(`public-route-cache-contract-gate: note: ${warning}`);
+if (showNotes) {
+  for (const warning of warnings) console.log(`public-route-cache-contract-gate: note: ${warning}`);
+}
 console.log(`public-route-cache-contract-gate: PASS (${requiredPublicFiles.length} route files, ${publicAstroFiles.length} public astro files scanned)`);

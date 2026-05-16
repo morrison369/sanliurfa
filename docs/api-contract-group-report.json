@@ -1,0 +1,174 @@
+{
+  "generatedAt": "2026-05-15T12:06:23.703Z",
+  "status": "passed",
+  "groups": [
+    {
+      "group": "auth",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/auth.test.ts",
+        "src/lib/__tests__/auth-middleware-helpers.test.ts",
+        "src/lib/__tests__/auth-legacy-callback-api.test.ts",
+        "src/lib/__tests__/auth-social-facebook-api.test.ts",
+        "src/lib/__tests__/two-factor-auth-totp.test.ts",
+        "src/lib/__tests__/integration/auth.integration.test.ts"
+      ],
+      "testFilesPassed": 6,
+      "testFilesFailed": 0,
+      "testsPassed": 41,
+      "testsFailed": 0
+    },
+    {
+      "group": "places",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/places.test.ts",
+        "src/lib/__tests__/places-detail-api.test.ts",
+        "src/lib/__tests__/places-list-cache-api.test.ts",
+        "src/lib/__tests__/places-like-api.test.ts",
+        "src/lib/__tests__/places-follow-api.test.ts",
+        "src/lib/__tests__/places-photos-api.test.ts",
+        "src/lib/__tests__/places-analytics-api.test.ts",
+        "src/lib/__tests__/places-review-analytics-api.test.ts",
+        "src/lib/__tests__/places-availability-api.test.ts"
+      ],
+      "testFilesPassed": 9,
+      "testFilesFailed": 0,
+      "testsPassed": 60,
+      "testsFailed": 0
+    },
+    {
+      "group": "reviews",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/reviews-add-api.test.ts",
+        "src/lib/__tests__/review-management-pure.test.ts",
+        "src/lib/__tests__/review-antispam.test.ts"
+      ],
+      "testFilesPassed": 3,
+      "testFilesFailed": 0,
+      "testsPassed": 20,
+      "testsFailed": 0
+    },
+    {
+      "group": "admin",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/admin-bulk-action-api.test.ts",
+        "src/lib/__tests__/admin-event-submissions-api.test.ts",
+        "src/lib/__tests__/admin-moderation-api.test.ts",
+        "src/lib/__tests__/admin-users-id-api.test.ts"
+      ],
+      "testFilesPassed": 4,
+      "testFilesFailed": 0,
+      "testsPassed": 38,
+      "testsFailed": 0
+    },
+    {
+      "group": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/files-upload-api.test.ts",
+        "src/lib/__tests__/photos-upload-api.test.ts",
+        "src/lib/__tests__/public-upload-serving.test.ts",
+        "src/lib/__tests__/image-optimizer.test.ts",
+        "src/lib/__tests__/security-file-upload-xss.test.ts"
+      ],
+      "testFilesPassed": 5,
+      "testFilesFailed": 0,
+      "testsPassed": 59,
+      "testsFailed": 0
+    },
+    {
+      "group": "search",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/search-engine-fallback.test.ts",
+        "src/lib/__tests__/search-index-api.test.ts",
+        "src/lib/__tests__/search-normalization.test.ts",
+        "src/lib/__tests__/search-zero-result-report-helpers.test.ts"
+      ],
+      "testFilesPassed": 4,
+      "testFilesFailed": 0,
+      "testsPassed": 27,
+      "testsFailed": 0
+    },
+    {
+      "group": "reservations",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/reservations-api.test.ts",
+        "src/lib/__tests__/security-vendor-idor.test.ts"
+      ],
+      "testFilesPassed": 2,
+      "testFilesFailed": 0,
+      "testsPassed": 22,
+      "testsFailed": 0
+    },
+    {
+      "group": "promotions",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/places-promotions-api.test.ts",
+        "src/lib/__tests__/promotions-api.test.ts",
+        "src/lib/__tests__/promotions-management-pure.test.ts"
+      ],
+      "testFilesPassed": 3,
+      "testFilesFailed": 0,
+      "testsPassed": 18,
+      "testsFailed": 0
+    },
+    {
+      "group": "events",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/admin-event-submissions-api.test.ts",
+        "src/lib/__tests__/admin-events-admin-pure.test.ts",
+        "src/lib/__tests__/events-management-pure.test.ts",
+        "src/lib/__tests__/event-stream-types.test.ts",
+        "src/lib/__tests__/place-lifecycle-events.test.ts",
+        "src/lib/__tests__/place-lifecycle-events-helpers.test.ts"
+      ],
+      "testFilesPassed": 6,
+      "testFilesFailed": 0,
+      "testsPassed": 42,
+      "testsFailed": 0
+    },
+    {
+      "group": "communityPhotos",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/photos-upload-api.test.ts",
+        "src/lib/__tests__/places-photos-api.test.ts",
+        "src/lib/__tests__/public-upload-serving.test.ts"
+      ],
+      "testFilesPassed": 3,
+      "testFilesFailed": 0,
+      "testsPassed": 21,
+      "testsFailed": 0
+    },
+    {
+      "group": "sitemap",
+      "status": "passed",
+      "exitCode": 0,
+      "files": [
+        "src/lib/__tests__/sitemap-helpers.test.ts"
+      ],
+      "testFilesPassed": 1,
+      "testFilesFailed": 0,
+      "testsPassed": 3,
+      "testsFailed": 0
+    }
+  ],
+  "coverageGaps": []
+}

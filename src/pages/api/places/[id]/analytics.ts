@@ -23,13 +23,13 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
       return apiError(ErrorCode.VALIDATION_ERROR, 'Mekan kimliği gerekli', HttpStatus.BAD_REQUEST, undefined, requestId);
     }
 
-    const place = await queryOne('SELECT id, user_id FROM places WHERE id = $1', [placeId]);
+    const place = await queryOne('SELECT id, owner_id FROM places WHERE id = $1', [placeId]);
     if (!place) {
       recordRequest('GET', `/api/places/${placeId}/analytics`, HttpStatus.NOT_FOUND, Date.now() - startTime);
       return apiError(ErrorCode.NOT_FOUND, 'Mekan bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
     }
 
-    const isOwner = user && user.id === place.user_id;
+    const isOwner = user && user.id === place.owner_id;
     const isAdmin = user && user.role === 'admin';
 
     if (!isAdmin && !isOwner) {

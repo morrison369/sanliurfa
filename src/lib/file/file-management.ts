@@ -1,6 +1,6 @@
 /**
  * File Management Library
- * S3 uploads, CDN caching, file variants, access tracking
+ * Local file registry, cache metadata, file variants, access tracking
  */
 
 import { queryOne, queryMany, insert, update } from '../postgres';
@@ -8,7 +8,7 @@ import { logger } from '../logger';
 import { getCache, setCache, deleteCache } from '../cache';
 import _crypto from 'crypto';
 
-export interface S3File {
+export interface StoredFileRecord {
   id: string;
   file_key: string;
   original_filename: string;
@@ -20,7 +20,18 @@ export interface S3File {
   uploaded_by_user_id: string;
 }
 
-export async function registerS3File(userId: string, fileKey: string, filename: string, fileSize: number, mimeType: string, s3Url: string, isPublic: boolean = false): Promise<S3File | null> {
+// Legacy compatibility: schema column names stay `s3_*` / `cdn_url`, but runtime storage is local.
+export type S3File = StoredFileRecord;
+
+export async function registerLocalFile(
+  userId: string,
+  fileKey: string,
+  filename: string,
+  fileSize: number,
+  mimeType: string,
+  publicUrl: string,
+  isPublic: boolean = false,
+): Promise<StoredFileRecord | null> {
   try {
     const result = await insert('s3_files', {
       file_key: fileKey,
@@ -28,23 +39,26 @@ export async function registerS3File(userId: string, fileKey: string, filename: 
       file_size_bytes: fileSize,
       file_type: fileKey.split('.').pop()?.toLowerCase() || 'unknown',
       mime_type: mimeType,
-      s3_url: s3Url,
-      cdn_url: `https://cdn.sanliurfa.com/${fileKey}`,
+      s3_bucket: 'local',
+      s3_url: publicUrl,
+      cdn_url: publicUrl,
       uploaded_by_user_id: userId,
       is_public: isPublic,
       virus_scan_status: 'pending'
     });
 
     await deleteCache(`files:user:${userId}`);
-    logger.info('S3 file registered', { fileKey, filename, size: fileSize });
+    logger.info('Local file registered', { fileKey, filename, size: fileSize });
     return result;
   } catch (error) {
-    logger.error('Failed to register S3 file', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to register local file', error instanceof Error ? error : new Error(String(error)));
     return null;
   }
 }
 
-export async function getFileById(fileId: string): Promise<S3File | null> {
+export const registerS3File = registerLocalFile;
+
+export async function getFileById(fileId: string): Promise<StoredFileRecord | null> {
   try {
     const cacheKey = `file:${fileId}`;
     let cached = await getCache(cacheKey);
@@ -69,7 +83,7 @@ export async function getFileById(fileId: string): Promise<S3File | null> {
   }
 }
 
-export async function getUserFiles(userId: string, limit: number = 50): Promise<S3File[]> {
+export async function getUserFiles(userId: string, limit: number = 50): Promise<StoredFileRecord[]> {
   try {
     const cacheKey = `files:user:${userId}`;
     let cached = await getCache(cacheKey);
@@ -167,7 +181,11 @@ export async function getFileVariants(fileId: string): Promise<any[]> {
   }
 }
 
-export async function setupCDNCaching(fileId: string, ttlSeconds: number = 86400, gzipEnabled: boolean = true): Promise<boolean> {
+export async function configureLocalFileCache(
+  fileId: string,
+  ttlSeconds: number = 86400,
+  gzipEnabled: boolean = true,
+): Promise<boolean> {
   try {
     await insert('cdn_cache_settings', {
       file_id: fileId,
@@ -178,15 +196,17 @@ export async function setupCDNCaching(fileId: string, ttlSeconds: number = 86400
     });
 
     await deleteCache(`file:${fileId}`);
-    logger.info('CDN caching configured', { fileId, ttl: ttlSeconds });
+    logger.info('Local file cache configured', { fileId, ttl: ttlSeconds });
     return true;
   } catch (error) {
-    logger.error('Failed to setup CDN caching', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to configure local file cache', error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }
 
-export async function purgeCDNCache(fileId: string): Promise<boolean> {
+export const setupCDNCaching = configureLocalFileCache;
+
+export async function refreshLocalFileCacheMetadata(fileId: string): Promise<boolean> {
   try {
     await update('cdn_cache_settings', { file_id: fileId }, {
       last_cache_purge: new Date(),
@@ -194,13 +214,15 @@ export async function purgeCDNCache(fileId: string): Promise<boolean> {
     });
 
     await deleteCache(`file:${fileId}`);
-    logger.info('CDN cache purged', { fileId });
+    logger.info('Local file cache metadata refreshed', { fileId });
     return true;
   } catch (error) {
-    logger.error('Failed to purge CDN cache', error instanceof Error ? error : new Error(String(error)));
+    logger.error('Failed to refresh local file cache metadata', error instanceof Error ? error : new Error(String(error)));
     return false;
   }
 }
+
+export const purgeCDNCache = refreshLocalFileCacheMetadata;
 
 export async function archiveFile(fileId: string): Promise<boolean> {
   try {
@@ -262,12 +284,12 @@ export async function scanFileVirus(fileId: string): Promise<boolean> {
 }
 
 export function generateUploadSignature(bucket: string, key: string, expiresInSeconds: number = 3600): any {
-  // In production, use AWS SDK to generate signed URL
-  // This is a placeholder
+  // Local storage flow için geçici upload makbuzu üretir.
+  // Legacy isim korunuyor; gerçek signed S3 URL üretilmez.
   return {
     bucket: bucket,
     key: key,
-    signed_url: `https://${bucket}.s3.amazonaws.com/${key}?expires=${Date.now() + expiresInSeconds * 1000}`,
+    signed_url: `${key}?expires=${Date.now() + expiresInSeconds * 1000}`,
     expires_at: new Date(Date.now() + expiresInSeconds * 1000)
   };
 }

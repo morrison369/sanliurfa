@@ -10,7 +10,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { queryOneMock, queryManyMock, insertMock, deleteCachePatternMock, getCacheMock, setCacheMock, createNotificationMock } = vi.hoisted(() => ({
+const { queryMock, queryOneMock, queryManyMock, insertMock, deleteCachePatternMock, getCacheMock, setCacheMock, createNotificationMock } = vi.hoisted(() => ({
+  queryMock: vi.fn(),
   queryOneMock: vi.fn(),
   queryManyMock: vi.fn(),
   insertMock: vi.fn(),
@@ -21,7 +22,7 @@ const { queryOneMock, queryManyMock, insertMock, deleteCachePatternMock, getCach
 }));
 
 vi.mock('../postgres', () => ({
-  query: vi.fn(),
+  query: queryMock,
   queryOne: queryOneMock,
   queryMany: queryManyMock,
   insert: insertMock,
@@ -44,6 +45,7 @@ vi.mock('../loyalty/loyalty-system', () => ({
 }));
 
 beforeEach(() => {
+  queryMock.mockReset();
   queryOneMock.mockReset();
   queryManyMock.mockReset();
   insertMock.mockReset();
@@ -55,6 +57,7 @@ beforeEach(() => {
   getCacheMock.mockResolvedValue(null);
   setCacheMock.mockResolvedValue('OK');
   createNotificationMock.mockResolvedValue('notif-1');
+  queryMock.mockResolvedValue({ rows: [], rowCount: 1 });
 });
 
 import { addReviewResponse, getReviewResponses } from '../review/review-management';
@@ -62,8 +65,8 @@ import { addReviewResponse, getReviewResponses } from '../review/review-manageme
 describe('addReviewResponse', () => {
   it('owner verified + insert + cache invalidate + notification', async () => {
     queryOneMock
-      .mockResolvedValueOnce({ user_id: 'owner-1' }) // place ownership
-      .mockResolvedValueOnce({ user_id: 'reviewer-1' }) // review user
+      .mockResolvedValueOnce({ owner_id: 'owner-1' }) // place ownership
+      .mockResolvedValueOnce({ id: 'rev-1', user_id: 'reviewer-1', place_id: 'p-1' }) // review user
       .mockResolvedValueOnce({ full_name: 'İşletme Adı' }); // owner user
 
     insertMock.mockResolvedValueOnce({
@@ -80,7 +83,7 @@ describe('addReviewResponse', () => {
   });
 
   it('non-owner - throw "Access denied"', async () => {
-    queryOneMock.mockResolvedValueOnce({ user_id: 'real-owner' });
+    queryOneMock.mockResolvedValueOnce({ owner_id: 'real-owner' });
     await expect(
       addReviewResponse('rev-1', 'p-1', 'fake-owner', 'Response')
     ).rejects.toThrow(/Access denied/);
@@ -93,21 +96,20 @@ describe('addReviewResponse', () => {
     ).rejects.toThrow(/Access denied/);
   });
 
-  it('review not found - skip notification (no error)', async () => {
+  it('review not found - throw and skip notification', async () => {
     queryOneMock
-      .mockResolvedValueOnce({ user_id: 'owner-1' })
+      .mockResolvedValueOnce({ owner_id: 'owner-1' })
       .mockResolvedValueOnce(null); // review not found
 
-    insertMock.mockResolvedValueOnce({ id: 'r-1' });
-    await addReviewResponse('rev-1', 'p-1', 'owner-1', 'X');
-    // notification skipped because review null
+    await expect(addReviewResponse('rev-1', 'p-1', 'owner-1', 'X')).rejects.toThrow(/Review not found/);
+    expect(insertMock).not.toHaveBeenCalled();
     expect(createNotificationMock).not.toHaveBeenCalled();
   });
 
   it('owner full_name fallback "İşletme Sahibi"', async () => {
     queryOneMock
-      .mockResolvedValueOnce({ user_id: 'owner-1' })
-      .mockResolvedValueOnce({ user_id: 'reviewer-1' })
+      .mockResolvedValueOnce({ owner_id: 'owner-1' })
+      .mockResolvedValueOnce({ id: 'rev-1', user_id: 'reviewer-1', place_id: 'p-1' })
       .mockResolvedValueOnce(null); // owner user not found
 
     insertMock.mockResolvedValueOnce({ id: 'r-1' });

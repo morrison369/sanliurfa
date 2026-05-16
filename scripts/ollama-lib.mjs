@@ -18,7 +18,8 @@ export function getOllamaConfig() {
   const FALLBACK2 = process.env.OLLAMA_FALLBACK2_MODEL || 'nemotron-3-super';
   const KEY       = process.env.OLLAMA_API_KEY;
   const BASE_URL  = process.env.OLLAMA_BASE_URL        || 'https://ollama.com/api';
-  return { MODEL, FALLBACK, FALLBACK2, KEY, BASE_URL };
+  const IS_CLOUD  = /ollama\.com/i.test(BASE_URL);
+  return { MODEL, FALLBACK, FALLBACK2, KEY, BASE_URL, IS_CLOUD };
 }
 
 /**
@@ -27,12 +28,13 @@ export function getOllamaConfig() {
  * Rate limit (429) durumunda 6 saniye bekleyip retry yapar.
  */
 export async function ollamaChat(messages, model, config) {
-  const { KEY, BASE_URL, FALLBACK, FALLBACK2 } = config;
+  const { KEY, BASE_URL, FALLBACK, FALLBACK2, IS_CLOUD } = config;
+  if (IS_CLOUD && !KEY) throw new Error('OLLAMA_API_KEY eksik');
 
   const tryModel = async (m, attempt = 0) => {
     const res = await fetch(`${BASE_URL}/chat`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+      headers: { ...(KEY ? { Authorization: `Bearer ${KEY}` } : {}), 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: m,
         messages,
@@ -134,4 +136,3 @@ Markdown kullanmazsın; yalnızca HTML etiketleri kullanırsın: <h2>, <h3>, <p>
 - Keyword stuffing yasak
 - 100 kelimeden uzun giriş paragrafları yasak
 - Sahte istatistik veya uydurmaca tarih yasak`;
-

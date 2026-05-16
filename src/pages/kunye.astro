@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { getPublicAppUrl } from '../lib/public-app-url';
+import { PUBLISHER_PROFILE } from '../lib/transparency';
 const baseUrl = getPublicAppUrl();
 
 const seo = {
@@ -8,9 +9,10 @@ const seo = {
  description: "Sanliurfa.com'un yasal künye bilgileri: yayıncı, kuruluş, adres, iletişim, içerik sorumluluğu ve yayın politikası.",
  keywords: ['sanliurfa.com künye', 'imprint', 'sanliurfa.com yayıncı', 'yayın bilgileri', 'iletişim'],
  canonical: '/kunye',
+ modifiedTime: PUBLISHER_PROFILE.transparencyReviewedAtIso,
 };
 
-const lastUpdated = new Date().toISOString().slice(0, 10);
+const lastUpdated = PUBLISHER_PROFILE.transparencyReviewedAtIso;
 ---
 
 <Layout seo={seo}>
@@ -58,8 +60,12 @@ const lastUpdated = new Date().toISOString().slice(0, 10);
       <span class="ky-v">Sanliurfa.com — Şanlıurfa Şehir Rehberi</span>
      </div>
      <div class="ky-row">
-      <span class="ky-k">Yayıncı / İşletici</span>
-      <span class="ky-v">Sanliurfa.com Editöryel Ekibi</span>
+     <span class="ky-k">Yayıncı / İşletici</span>
+      <span class="ky-v">{PUBLISHER_PROFILE.publisherName}</span>
+     </div>
+     <div class="ky-row">
+      <span class="ky-k">Yayıncı Kuruluş / Ağ</span>
+      <span class="ky-v">{PUBLISHER_PROFILE.legalName}</span>
      </div>
      <div class="ky-row">
       <span class="ky-k">Kuruluş Yılı</span>
@@ -83,19 +89,19 @@ const lastUpdated = new Date().toISOString().slice(0, 10);
      <h2 class="ky-section-h">İletişim Bilgileri</h2>
      <div class="ky-row">
       <span class="ky-k">E-posta (Genel)</span>
-      <span class="ky-v"><a href="mailto:iletisim@sanliurfa.com">iletisim@sanliurfa.com</a></span>
+      <span class="ky-v"><a href={`mailto:${PUBLISHER_PROFILE.generalEmail}`}>{PUBLISHER_PROFILE.generalEmail}</a></span>
      </div>
      <div class="ky-row">
       <span class="ky-k">E-posta (İşletme)</span>
-      <span class="ky-v"><a href="mailto:isletme@sanliurfa.com">isletme@sanliurfa.com</a></span>
+      <span class="ky-v"><a href={`mailto:${PUBLISHER_PROFILE.businessEmail}`}>{PUBLISHER_PROFILE.businessEmail}</a></span>
      </div>
      <div class="ky-row">
       <span class="ky-k">E-posta (Hukuk/KVKK)</span>
-      <span class="ky-v"><a href="mailto:kvkk@sanliurfa.com">kvkk@sanliurfa.com</a></span>
+      <span class="ky-v"><a href={`mailto:${PUBLISHER_PROFILE.privacyEmail}`}>{PUBLISHER_PROFILE.privacyEmail}</a></span>
      </div>
      <div class="ky-row">
       <span class="ky-k">Adres</span>
-      <span class="ky-v">Eyyübiye, Şanlıurfa, Türkiye</span>
+      <span class="ky-v">{PUBLISHER_PROFILE.address}</span>
      </div>
      <div class="ky-row">
       <span class="ky-k">İletişim Formu</span>
@@ -125,6 +131,10 @@ const lastUpdated = new Date().toISOString().slice(0, 10);
      <p class="ky-p">
       Üçüncü taraf reklamlar (varsa) sayfa üzerinde açıkça <em>Reklam</em> ibaresiyle işaretlenir. Editöryel içerikler bağımsızdır.
      </p>
+     <p class="ky-p">
+      Editöryel ilkeler, düzeltme politikası, sponsorlu içerik açıklamaları ve güncelleme süreçleri için
+      ayrıca <a href="/yayin-politikasi">Yayın Politikası</a> sayfası kullanılır.
+     </p>
      <ul class="ky-ul">
       <li>Tüm yazılar bir yazar adı veya “Sanliurfa.com Editöryel Ekibi” imzasıyla yayınlanır.</li>
       <li>Yayın tarihi her sayfada açıkça görüntülenir; içerik güncellenirse “Son güncelleme” bilgisi eklenir.</li>
@@ -148,6 +158,7 @@ const lastUpdated = new Date().toISOString().slice(0, 10);
      <h2 class="ky-section-h">Hukuki Belgeler</h2>
      <ul class="ky-ul">
       <li><a href="/gizlilik-politikasi">Gizlilik Politikası</a> — kişisel veri işleme, çerez kullanımı, üçüncü taraf entegrasyonları</li>
+      <li><a href="/yayin-politikasi">Yayın Politikası</a> — yazar imzası, tarih, düzeltme ve reklam şeffaflığı</li>
       <li><a href="/kullanim-kosullari">Kullanım Koşulları</a> — site kullanımı, üyelik, içerik kuralları</li>
       <li><a href="/kvkk">KVKK Aydınlatma Metni</a> — 6698 sayılı kanun kapsamında veri sahibi hakları</li>
       <li><a href="/cerez-politikasi">Çerez Politikası</a> — çerez türleri, amaçları, yönetimi</li>
@@ -179,6 +190,7 @@ const lastUpdated = new Date().toISOString().slice(0, 10);
   publisher: {
    '@type': 'Organization',
    name: 'Sanliurfa.com',
+   legalName: PUBLISHER_PROFILE.legalName,
    url: baseUrl,
    email: 'iletisim@sanliurfa.com',
    foundingDate: '2025',

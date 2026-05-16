@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-06T13:19:49.682Z",
+  "generatedAt": "2026-05-14T18:47:48.575Z",
   "requiredRoutes": [
     "/saglik/nobetci-eczaneler",
     "/ulasim/otobus-saatleri",
@@ -34,9 +34,9 @@
     "/mekanlar"
   ],
   "localImageStats": {
-    "places": 4,
-    "blog": 19,
-    "tarihiYerler": 2,
+    "places": 6,
+    "blog": 100,
+    "tarihiYerler": 3,
     "etkinlikler": 2
   },
   "dbUnavailable": false,

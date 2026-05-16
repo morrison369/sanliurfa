@@ -111,7 +111,7 @@ describe('Vendor-Only IDOR Pattern (3-yol switch enforcement)', () => {
         placeId: 'place-99',
       } as any);
       vi.mocked(query).mockResolvedValueOnce({
-        rows: [{ id: 'res-1', place_id: 'place-99', customer_email: 'ok@x.com' }],
+        rows: [{ id: 'res-1', place_id: 'place-99', owner_id: 'vendor-1', customer_email: 'ok@x.com' }],
         rowCount: 1, command: 'SELECT',
       } as any);
 
@@ -131,7 +131,7 @@ describe('Vendor-Only IDOR Pattern (3-yol switch enforcement)', () => {
         placeId: 'place-OTHER',
       } as any);
       vi.mocked(query).mockResolvedValueOnce({
-        rows: [{ id: 'res-1', place_id: 'place-99', customer_email: 'leak@x.com' }],
+        rows: [{ id: 'res-1', place_id: 'place-99', owner_id: 'vendor-1', customer_email: 'leak@x.com' }],
         rowCount: 1, command: 'SELECT',
       } as any);
 
@@ -174,10 +174,15 @@ describe('Vendor-Only IDOR Pattern (3-yol switch enforcement)', () => {
       expect(response.status).toBe(403);
     });
 
-    it('vendor without placeId → 403', async () => {
+    it('vendor without placeId → 200 and owner filter applied', async () => {
+      const { query } = await import('../../lib/postgres');
       vi.mocked(authenticateUser).mockResolvedValue({
         user: { id: 'vendor-1', role: 'vendor', email: 'v@x.com' },
         placeId: null,
+      } as any);
+      vi.mocked(query).mockResolvedValueOnce({
+        rows: [{ id: 'res-1', place_id: 'place-99', customer_email: 'ok@x.com' }],
+        rowCount: 1, command: 'SELECT',
       } as any);
 
       const { GET } = await import('../../pages/api/reservations/index');
@@ -185,7 +190,8 @@ describe('Vendor-Only IDOR Pattern (3-yol switch enforcement)', () => {
         request: new Request('http://localhost/api/reservations'),
       } as any);
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(200);
+      expect(vi.mocked(query).mock.calls[0]?.[0]).toContain('p.owner_id');
     });
   });
 });

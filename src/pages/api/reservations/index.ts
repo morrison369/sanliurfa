@@ -23,6 +23,8 @@ export const GET: APIRoute = async (context) => {
     const placeId = url.searchParams.get('placeId');
     const status = url.searchParams.get('status');
     const date = url.searchParams.get('date');
+    const dateFrom = url.searchParams.get('dateFrom');
+    const dateTo = url.searchParams.get('dateTo');
 
     let sql = `
       SELECT r.*, p.name as place_name, p.slug as place_slug
@@ -42,10 +44,15 @@ export const GET: APIRoute = async (context) => {
         params.push(placeId);
         paramIndex++;
       }
-    } else if (auth.user.role === 'vendor' && auth.placeId) {
-      sql += ` AND r.place_id = $${paramIndex}`;
-      params.push(auth.placeId);
+    } else if (auth.user.role === 'vendor') {
+      sql += ` AND p.owner_id = $${paramIndex}`;
+      params.push(auth.user.id);
       paramIndex++;
+      if (placeId) {
+        sql += ` AND r.place_id = $${paramIndex}`;
+        params.push(placeId);
+        paramIndex++;
+      }
     } else {
       return problemJson({
         status: 403,
@@ -75,6 +82,18 @@ export const GET: APIRoute = async (context) => {
     if (date) {
       sql += ` AND r.reservation_date = $${paramIndex}`;
       params.push(date);
+      paramIndex++;
+    }
+
+    if (dateFrom) {
+      sql += ` AND r.reservation_date >= $${paramIndex}`;
+      params.push(dateFrom);
+      paramIndex++;
+    }
+
+    if (dateTo) {
+      sql += ` AND r.reservation_date <= $${paramIndex}`;
+      params.push(dateTo);
       paramIndex++;
     }
 

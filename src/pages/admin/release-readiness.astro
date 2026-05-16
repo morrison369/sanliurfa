@@ -17,6 +17,296 @@ import { isFreshnessStale } from '../../lib/city-service-freshness';
 type ReadinessDashboard = {
  generatedAt: string | null;
  ready: boolean;
+ decision?: 'READY' | 'BLOCKED' | 'ADVISORY';
+ gateSummary?: Record<string, string | boolean | number>;
+ qualityRefresh?: {
+  status?: string;
+  generatedAt?: string | null;
+  lintOk?: boolean;
+  typecheckOk?: boolean;
+  openapiOk?: boolean;
+ };
+ releaseNextActions?: {
+  status?: string;
+  actionCount?: number;
+  blockingActionCount?: number;
+  waitingActionCount?: number;
+  actions?: Array<{
+   priority?: string;
+   area?: string;
+   title?: string;
+   status?: string;
+   command?: string;
+   detail?: string;
+  }>;
+ } | null;
+ freshness?: {
+  status?: string;
+  generatedAt?: string | null;
+  staleOrMissingCount?: number | null;
+ };
+ releaseHandoffSummary?: {
+  generatedAt?: string | null;
+  releaseStatus?: string;
+  localMediaStorage?: string;
+  pagespeedApiLessLighthouse?: string;
+  artifactCount?: number;
+  advisoryCount?: number;
+ } | null;
+ uploadArchive?: {
+  status?: string;
+  generatedAt?: string | null;
+  total?: number;
+  archiveCandidate?: number;
+  deletableReview?: number;
+ };
+ unitSkips?: {
+  status?: string;
+  generatedAt?: string | null;
+  observedSkippedFiles?: number;
+  observedSkippedTests?: number;
+  declarationCount?: number;
+  undocumentedCount?: number;
+ };
+ e2eSkips?: {
+  status?: string;
+  generatedAt?: string | null;
+  declarationCount?: number;
+  undocumentedCount?: number;
+ };
+ e2eCriticalCoverage?: {
+  status?: string;
+  generatedAt?: string | null;
+  flowCount?: number;
+  coveredCount?: number;
+  missingCount?: number;
+ };
+  api?: {
+  releaseGate?: {
+   status?: string;
+   passedChecks?: number;
+   totalChecks?: number;
+   failedChecks?: number;
+  } | null;
+  contractGroups?: {
+   status?: string;
+   groupCount?: number;
+   coverageGapCount?: number;
+  } | null;
+  debugEnvelope?: {
+   status?: string;
+   passed?: number;
+   total?: number;
+   failed?: number;
+  } | null;
+ };
+ buildArtifacts?: {
+  status?: string;
+  distClientTotalMb?: number;
+  distClientWithinSoftBudget?: boolean;
+  astroWithinBudget?: boolean;
+ } | null;
+ scriptCanonicalSurface?: {
+  status?: string;
+  totalScripts?: number;
+  familyCount?: number;
+  canonicalCount?: number;
+  missingCanonicalCount?: number;
+ } | null;
+ migrationDuplicateDrift?: {
+  status?: string;
+  duplicateNumberGroups?: number;
+  duplicateSlugGroups?: number;
+  numberDrift?: boolean;
+  slugDrift?: boolean;
+ } | null;
+ dbRetirement?: {
+  status?: string;
+  p0DropCandidateCount?: number;
+  p0QuarantineCandidateCount?: number;
+  p0RuntimeHoldCount?: number;
+  p1ReviewCandidateCount?: number;
+  p2UnusedIndexCandidateCount?: number;
+  automaticDropAllowed?: boolean;
+ } | null;
+ dbP0QuarantinePlan?: {
+  status?: string;
+  quarantineCandidateCount?: number;
+  runtimeHoldCount?: number;
+  earliestActionAt?: string | null;
+  automaticDropAllowed?: boolean;
+ } | null;
+ dbObservationCadence?: {
+  status?: string;
+  snapshotCount?: number;
+  observationDays?: number;
+  missingDays?: number;
+  stableEnoughForAction?: boolean;
+  earliestActionAt?: string | null;
+ } | null;
+ dbObservationCalendar?: {
+  status?: string;
+  completeCount?: number;
+  observationDays?: number;
+  missingOrPendingCount?: number;
+  nextSnapshotDueAt?: string | null;
+  earliestActionAt?: string | null;
+  actionWindowOpen?: boolean;
+  automaticDropAllowed?: boolean;
+ } | null;
+ dbManualDecisionReadiness?: {
+  status?: string;
+  readyForManualPrCount?: number;
+  waitingForEvidenceCount?: number;
+  runtimeHoldCount?: number;
+  actionWindowOpen?: boolean;
+ } | null;
+ dbRegistryClassification?: {
+  status?: string;
+  tableCount?: number;
+  unclassifiedCount?: number;
+  unusedIndexCount?: number;
+  automaticDbDropAllowed?: boolean;
+ } | null;
+ dbRuntimeHoldPlan?: {
+  status?: string;
+  table?: string;
+  runtimeReferenceCount?: number;
+  incompatibleContractCount?: number;
+  automaticDropAllowed?: boolean;
+ } | null;
+ localUploadBucketQuota?: {
+  status?: string;
+  bucketCount?: number;
+  blockerCount?: number;
+  reviewCount?: number;
+  advisoryCount?: number;
+ } | null;
+ localMediaStorageGate?: {
+  status?: string;
+  localStorageOnly?: boolean;
+  externalObjectStorageConfigured?: boolean;
+  liveChecks?: number;
+  liveOk?: number;
+  failedPatterns?: number;
+ } | null;
+ mediaReadiness?: {
+  status?: string;
+  checks?: number;
+  passed?: number;
+  failed?: number;
+  uploadFiles?: number;
+  publicImages?: number;
+  localStorageOnly?: boolean;
+  externalObjectStorageAllowed?: boolean;
+  automaticDeleteAllowed?: boolean;
+ } | null;
+ redisRuntimeHealth?: {
+  status?: string;
+  host?: string;
+  port?: number;
+  pingOk?: boolean;
+  latencyMs?: number | null;
+  runtimeMode?: string;
+  releaseBlocker?: boolean;
+  fallbackAllowed?: boolean;
+ } | null;
+ warmupSafety?: {
+  status?: string;
+  reviewCount?: number;
+ } | null;
+ cronReadiness?: {
+  status?: string;
+  requiredJobCount?: number;
+  presentJobCount?: number;
+  missingJobCount?: number;
+ } | null;
+ llmsSitemapAutoUpdate?: {
+  status?: string;
+  checks?: number;
+  ok?: number;
+  failed?: number;
+ } | null;
+ gmapsScraperReadiness?: {
+  status?: string;
+  binaryFound?: boolean;
+  cliOk?: boolean;
+  localStorageOnly?: boolean;
+ } | null;
+ gmapsDiscoveryDrafts?: {
+  status?: string;
+  mode?: string;
+  candidateCount?: number;
+  existingDraftCount?: number | null;
+  pendingDraftCount?: number | null;
+  insertedOrUpdatedCount?: number;
+  autoPublish?: boolean;
+ } | null;
+ contentAgentDrafts?: {
+  status?: string;
+  total?: number;
+  pending?: number;
+  stalePendingCount?: number;
+  autoPublish?: boolean;
+ } | null;
+ publishAllContentDrafts?: {
+  status?: string;
+  remainingDraftLike?: number;
+  moderationPending?: number;
+  cityContentUpdated?: number;
+  moderationQueuesAutoApproved?: boolean;
+ } | null;
+ blogDraftRichResults?: {
+  status?: string;
+  drafts?: number;
+  ok?: number;
+  review?: number;
+ } | null;
+ pagespeedApiResearch?: {
+  status?: string;
+  enabled?: boolean;
+ } | null;
+ pagespeedApiLessLighthouse?: {
+  status?: string;
+  checks?: number;
+  ok?: number;
+  review?: number;
+  failed?: number;
+  apiUsed?: boolean;
+  performance?: number | null;
+  accessibility?: number | null;
+  bestPractices?: number | null;
+  seo?: number | null;
+  reviewClassification?: string | null;
+  externalExpectedReview?: boolean;
+ } | null;
+ adminStrictRoleGate?: {
+  status?: string;
+  checked?: number;
+  ok?: number;
+  review?: number;
+ } | null;
+ pagespeedLiveCheck?: {
+  status?: string;
+  checks?: number;
+  ok?: number;
+  review?: number;
+  quotaLimited?: number;
+ } | null;
+ pagespeedQuotaManagement?: {
+  status?: string;
+  managementMarked?: boolean;
+  quotaManagementCompleted?: boolean;
+  liveStatus?: string;
+  quotaLimited?: number;
+ } | null;
+ searchZeroResult?: {
+  status?: string;
+  unresolvedCount?: number;
+  unresolvedOccurrences?: number;
+ } | null;
+ advisoryReasons?: Array<{ code?: string; detail?: string }>;
+ e2eFailures?: Array<{ spec?: string; title?: string; outcome?: string }>;
  checks: Array<{ rel: string; ok: boolean }>;
 };
 
@@ -87,16 +377,18 @@ const sectionsActive = homepageSectionSummary.filter(s => s.enabled).length;
 
 <AdminLayout
  title="Release Readiness"
- subtitle={`Frontend release gate • ${dashboard.ready ? 'HAZIR ✓' : 'EKSİK ✕'}`}
+ subtitle={`Frontend release gate • ${dashboard.decision || (dashboard.ready ? 'READY' : 'BLOCKED')}`}
  seo={{ title: 'Release Readiness - Admin', noIndex: true }}
 >
  <div class="rr-page">
-  <div class:list={['rr-banner', dashboard.ready && 'rr-banner--ok', !dashboard.ready && 'rr-banner--err']}>
+  <div class:list={['rr-banner', dashboard.decision === 'READY' && 'rr-banner--ok', dashboard.decision === 'ADVISORY' && 'rr-banner--warn', (!dashboard.ready || dashboard.decision === 'BLOCKED') && 'rr-banner--err']}>
    <div class="rr-banner-icon">
-    <Icon name={dashboard.ready ? 'lucide:check-circle' : 'lucide:alert-triangle'} class="w-5 h-5" />
+    <Icon name={dashboard.decision === 'READY' ? 'lucide:check-circle' : dashboard.decision === 'ADVISORY' ? 'lucide:info' : 'lucide:alert-triangle'} class="w-5 h-5" />
    </div>
    <div class="rr-banner-text">
-    <div class="rr-banner-title">{dashboard.ready ? 'Production deploy serbest' : 'Release bloklanmış'}</div>
+    <div class="rr-banner-title">
+     {dashboard.decision === 'READY' ? 'Production deploy serbest' : dashboard.decision === 'ADVISORY' ? 'Production deploy advisory ile serbest' : 'Release bloklanmış'}
+    </div>
     <div class="rr-banner-sub">
      Son rapor: {dashboard.generatedAt ? new Date(dashboard.generatedAt).toLocaleString('tr-TR') : 'henüz üretilmemiş'}
     </div>
@@ -108,7 +400,571 @@ const sectionsActive = homepageSectionSummary.filter(s => s.enabled).length;
    { label: 'Homepage Config', value: `${configsValid}/${configsTotal}`, icon: 'lucide:settings', color: configsValid === configsTotal ? 'emerald' : 'amber' },
    { label: 'Servis Tazeliği', value: freshnessRows.length > 0 ? `${freshOk}/${freshnessRows.length}` : '—', icon: 'lucide:radio', color: freshOk === freshnessRows.length ? 'emerald' : 'amber' },
    { label: 'Aktif Section', value: `${sectionsActive}/${homepageSectionSummary.length}`, icon: 'lucide:layout', color: 'indigo' },
+   { label: 'Quality Refresh', value: dashboard.qualityRefresh?.status || '—', icon: 'lucide:refresh-cw', color: dashboard.qualityRefresh?.status === 'passed' ? 'emerald' : 'amber' },
+   { label: 'Next Actions', value: dashboard.releaseNextActions ? `${dashboard.releaseNextActions.blockingActionCount ?? 0}/${dashboard.releaseNextActions.waitingActionCount ?? 0}` : '—', icon: 'lucide:list-todo', color: (dashboard.releaseNextActions?.blockingActionCount ?? 0) === 0 ? 'emerald' : 'amber' },
+   { label: 'Freshness', value: dashboard.freshness?.status || '—', icon: 'lucide:clock-3', color: dashboard.freshness?.status === 'passed' ? 'emerald' : 'rose' },
+   { label: 'Handoff', value: dashboard.releaseHandoffSummary?.releaseStatus || '—', icon: 'lucide:clipboard-check', color: dashboard.releaseHandoffSummary ? 'emerald' : 'rose' },
+   { label: 'Upload Archive', value: String(dashboard.uploadArchive?.total ?? '—'), icon: 'lucide:archive', color: (dashboard.uploadArchive?.deletableReview ?? 0) > 0 ? 'rose' : (dashboard.uploadArchive?.total ?? 0) > 0 ? 'amber' : 'emerald' },
+   { label: 'Unit Skips', value: String(dashboard.unitSkips?.observedSkippedTests ?? '—'), icon: 'lucide:skip-forward', color: (dashboard.unitSkips?.undocumentedCount ?? 0) > 0 ? 'rose' : 'emerald' },
+   { label: 'E2E Critical', value: `${dashboard.e2eCriticalCoverage?.coveredCount ?? '—'}/${dashboard.e2eCriticalCoverage?.flowCount ?? '—'}`, icon: 'lucide:route', color: dashboard.e2eCriticalCoverage?.status === 'ok' ? 'emerald' : 'amber' },
+   { label: 'API Gate', value: dashboard.api?.releaseGate?.status || '—', icon: 'lucide:shield-check', color: dashboard.api?.releaseGate?.status === 'passed' ? 'emerald' : 'rose' },
+   { label: 'API Debug', value: `${dashboard.api?.debugEnvelope?.passed ?? '—'}/${dashboard.api?.debugEnvelope?.total ?? '—'}`, icon: 'lucide:bug', color: dashboard.api?.debugEnvelope?.status === 'ok' ? 'emerald' : 'rose' },
+   { label: 'DB P0', value: String(dashboard.dbRetirement?.p0QuarantineCandidateCount ?? dashboard.dbRetirement?.p0DropCandidateCount ?? '—'), icon: 'lucide:database-zap', color: (dashboard.dbRetirement?.p0QuarantineCandidateCount ?? dashboard.dbRetirement?.p0DropCandidateCount ?? 0) > 0 ? 'amber' : 'emerald' },
+   { label: 'DB Gözlem', value: `${dashboard.dbObservationCadence?.snapshotCount ?? '—'}/${dashboard.dbObservationCadence?.observationDays ?? '—'}`, icon: 'lucide:calendar-clock', color: dashboard.dbObservationCadence?.status === 'stale' ? 'rose' : 'amber' },
+   { label: 'DB Takvim', value: `${dashboard.dbObservationCalendar?.completeCount ?? '—'}/${dashboard.dbObservationCalendar?.observationDays ?? '—'}`, icon: 'lucide:calendar-days', color: dashboard.dbObservationCalendar?.status === 'complete' ? 'emerald' : 'amber' },
+   { label: 'DB Registry', value: String(dashboard.dbRegistryClassification?.unclassifiedCount ?? '—'), icon: 'lucide:database-backup', color: (dashboard.dbRegistryClassification?.unclassifiedCount ?? 0) > 0 ? 'amber' : 'emerald' },
+   { label: 'DB Runtime Hold', value: String(dashboard.dbRuntimeHoldPlan?.runtimeReferenceCount ?? '—'), icon: 'lucide:git-pull-request-draft', color: dashboard.dbRuntimeHoldPlan?.status === 'clear' ? 'emerald' : 'amber' },
+   { label: 'DB Manuel Karar', value: dashboard.dbManualDecisionReadiness?.status || '—', icon: 'lucide:file-check-2', color: dashboard.dbManualDecisionReadiness?.status === 'manual_review_ready' ? 'amber' : 'emerald' },
+   { label: 'Upload Bucket', value: dashboard.localUploadBucketQuota?.status || '—', icon: 'lucide:folder-kanban', color: dashboard.localUploadBucketQuota?.status === 'ok' ? 'emerald' : dashboard.localUploadBucketQuota?.status === 'blocked' ? 'rose' : 'amber' },
+   { label: 'Local Medya', value: dashboard.localMediaStorageGate?.status || '—', icon: 'lucide:hard-drive', color: dashboard.localMediaStorageGate?.status === 'ok' && dashboard.localMediaStorageGate?.localStorageOnly ? 'emerald' : 'rose' },
+   { label: 'Media Readiness', value: `${dashboard.mediaReadiness?.passed ?? '—'}/${dashboard.mediaReadiness?.checks ?? '—'}`, icon: 'lucide:image-up', color: dashboard.mediaReadiness?.status === 'ok' && dashboard.mediaReadiness?.localStorageOnly ? 'emerald' : 'rose' },
+   { label: 'Admin Role', value: `${dashboard.adminStrictRoleGate?.ok ?? '—'}/${dashboard.adminStrictRoleGate?.checked ?? '—'}`, icon: 'lucide:user-lock', color: dashboard.adminStrictRoleGate?.status === 'ok' ? 'emerald' : 'rose' },
+   { label: 'Redis', value: dashboard.redisRuntimeHealth?.status || '—', icon: 'lucide:database', color: dashboard.redisRuntimeHealth?.status === 'ok' ? 'emerald' : dashboard.redisRuntimeHealth?.releaseBlocker ? 'rose' : 'amber' },
+   { label: 'Warmup', value: dashboard.warmupSafety?.status || '—', icon: 'lucide:flame-kindling', color: dashboard.warmupSafety?.status === 'ok' ? 'emerald' : 'rose' },
+   { label: 'Cron', value: `${dashboard.cronReadiness?.presentJobCount ?? '—'}/${dashboard.cronReadiness?.requiredJobCount ?? '—'}`, icon: 'lucide:calendar-cog', color: dashboard.cronReadiness?.status === 'ok' ? 'emerald' : 'rose' },
+   { label: 'LLMS/Sitemap', value: `${dashboard.llmsSitemapAutoUpdate?.ok ?? '—'}/${dashboard.llmsSitemapAutoUpdate?.checks ?? '—'}`, icon: 'lucide:bot', color: dashboard.llmsSitemapAutoUpdate?.status === 'ok' ? 'emerald' : 'rose' },
+   { label: 'GMaps CLI', value: dashboard.gmapsScraperReadiness?.status || '—', icon: 'lucide:map-pinned', color: dashboard.gmapsScraperReadiness?.status === 'ok' ? 'emerald' : 'amber' },
+   { label: 'Keşif Draft', value: String(dashboard.gmapsDiscoveryDrafts?.pendingDraftCount ?? '—'), icon: 'lucide:map-plus', color: dashboard.gmapsDiscoveryDrafts?.status === 'ok' && dashboard.gmapsDiscoveryDrafts?.autoPublish === false ? 'emerald' : 'amber' },
+   { label: 'İçerik Draft', value: String(dashboard.contentAgentDrafts?.pending ?? '—'), icon: 'lucide:file-pen-line', color: dashboard.contentAgentDrafts?.status === 'ok' && dashboard.contentAgentDrafts?.pending === 0 && dashboard.contentAgentDrafts?.autoPublish === false ? 'emerald' : 'amber' },
+   { label: 'Toplu Yayın', value: String(dashboard.publishAllContentDrafts?.remainingDraftLike ?? '—'), icon: 'lucide:send-horizontal', color: dashboard.publishAllContentDrafts?.status === 'ok' && dashboard.publishAllContentDrafts?.remainingDraftLike === 0 ? 'emerald' : 'amber' },
+   { label: 'Rich Results', value: `${dashboard.blogDraftRichResults?.ok ?? '—'}/${dashboard.blogDraftRichResults?.drafts ?? '—'}`, icon: 'lucide:sparkles', color: dashboard.blogDraftRichResults?.status === 'ok' ? 'emerald' : 'amber' },
+   { label: 'PageSpeed', value: dashboard.pagespeedLiveCheck?.status || '—', icon: 'lucide:gauge', color: dashboard.pagespeedLiveCheck?.status === 'ok' ? 'emerald' : dashboard.pagespeedLiveCheck?.quotaLimited ? 'amber' : 'rose' },
+   { label: 'PS API-less', value: dashboard.pagespeedApiLessLighthouse?.externalExpectedReview ? 'expected' : dashboard.pagespeedApiLessLighthouse?.performance != null ? String(dashboard.pagespeedApiLessLighthouse.performance) : dashboard.pagespeedApiLessLighthouse?.status || '—', icon: 'lucide:activity', color: dashboard.pagespeedApiLessLighthouse?.status === 'ok' || dashboard.pagespeedApiLessLighthouse?.externalExpectedReview ? 'emerald' : dashboard.pagespeedApiLessLighthouse?.status === 'review' ? 'amber' : 'rose' },
+   { label: 'PS Kota', value: dashboard.pagespeedQuotaManagement?.status === 'managed_with_live_quota_review' ? 'managed' : dashboard.pagespeedQuotaManagement?.status || '—', icon: 'lucide:gauge-circle', color: dashboard.pagespeedQuotaManagement?.quotaManagementCompleted ? 'emerald' : 'amber' },
+   { label: 'Scripts', value: String(dashboard.scriptCanonicalSurface?.totalScripts ?? '—'), icon: 'lucide:terminal-square', color: (dashboard.scriptCanonicalSurface?.missingCanonicalCount ?? 0) === 0 ? 'emerald' : 'rose' },
+   { label: 'Migration Drift', value: dashboard.migrationDuplicateDrift?.status || '—', icon: 'lucide:git-compare-arrows', color: dashboard.migrationDuplicateDrift?.status === 'ok' ? 'emerald' : 'rose' },
   ]} />
+
+  {dashboard.advisoryReasons && dashboard.advisoryReasons.length > 0 && (
+   <section class="rr-section">
+    <header class="rr-section-head">
+     <h2 class="rr-section-title">
+      <Icon name="lucide:info" class="w-4 h-4" /> Advisory Sebepleri
+     </h2>
+     <span class="rr-section-meta">{dashboard.advisoryReasons.length} neden</span>
+    </header>
+    <div class="rr-list">
+     {dashboard.advisoryReasons.map((item) => (
+      <div class="rr-row rr-row--warn">
+       <div class="rr-row-info">
+        <code class="rr-row-key">{item.code || 'advisory'}</code>
+        <span class="rr-row-resolution">{item.detail || 'Detay yok'}</span>
+       </div>
+       <span class="rr-row-status rr-row-status--warn">ADVISORY</span>
+      </div>
+     ))}
+    </div>
+  </section>
+ )}
+
+  <section class="rr-section">
+   <header class="rr-section-head">
+    <h2 class="rr-section-title">
+     <Icon name="lucide:layout-dashboard" class="w-4 h-4" /> İçerik ve Keşif Operasyonları
+    </h2>
+    <span class="rr-section-meta">admin onaylı, local storage, autopublish kapalı</span>
+   </header>
+   <div class="rr-list">
+    <div class:list={['rr-row', dashboard.gmapsScraperReadiness?.status === 'ok' && 'rr-row--ok', dashboard.gmapsScraperReadiness?.status !== 'ok' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">google maps scraper readiness</code>
+      <span class="rr-row-resolution">
+       binary={dashboard.gmapsScraperReadiness?.binaryFound ? 'found' : 'missing'} · cli={dashboard.gmapsScraperReadiness?.cliOk ? 'ok' : 'review'} · local-storage={dashboard.gmapsScraperReadiness?.localStorageOnly ? 'yes' : 'no'}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.gmapsScraperReadiness?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.gmapsScraperReadiness?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.gmapsDiscoveryDrafts?.status === 'ok' && dashboard.gmapsDiscoveryDrafts?.autoPublish === false && 'rr-row--ok', dashboard.gmapsDiscoveryDrafts?.autoPublish !== false && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">google maps discovery drafts</code>
+      <span class="rr-row-resolution">
+       {dashboard.gmapsDiscoveryDrafts?.candidateCount ?? 0} aday · pending={dashboard.gmapsDiscoveryDrafts?.pendingDraftCount ?? 0} · mode={dashboard.gmapsDiscoveryDrafts?.mode || 'unknown'} · upsert={dashboard.gmapsDiscoveryDrafts?.insertedOrUpdatedCount ?? 0} · autopublish={dashboard.gmapsDiscoveryDrafts?.autoPublish ? 'yes' : 'no'}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.gmapsDiscoveryDrafts?.status === 'ok' && dashboard.gmapsDiscoveryDrafts?.autoPublish === false ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.gmapsDiscoveryDrafts?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.contentAgentDrafts?.status === 'ok' && dashboard.contentAgentDrafts?.autoPublish === false && 'rr-row--ok', dashboard.contentAgentDrafts?.autoPublish !== false && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">content agent drafts</code>
+      <span class="rr-row-resolution">
+       total={dashboard.contentAgentDrafts?.total ?? 0} · pending={dashboard.contentAgentDrafts?.pending ?? 0} · stale={dashboard.contentAgentDrafts?.stalePendingCount ?? 0} · admin approval required · autopublish={dashboard.contentAgentDrafts?.autoPublish ? 'yes' : 'no'}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.contentAgentDrafts?.status === 'ok' && dashboard.contentAgentDrafts?.autoPublish === false ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.contentAgentDrafts?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.publishAllContentDrafts?.status === 'ok' && dashboard.publishAllContentDrafts?.remainingDraftLike === 0 && 'rr-row--ok', dashboard.publishAllContentDrafts?.status !== 'ok' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">publish all content drafts</code>
+      <span class="rr-row-resolution">
+       remaining-draft-like={dashboard.publishAllContentDrafts?.remainingDraftLike ?? 0} · city-content-updated={dashboard.publishAllContentDrafts?.cityContentUpdated ?? 0} · moderation-pending={dashboard.publishAllContentDrafts?.moderationPending ?? 0} · moderation-auto-approved={dashboard.publishAllContentDrafts?.moderationQueuesAutoApproved ? 'yes' : 'no'}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.publishAllContentDrafts?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.publishAllContentDrafts?.status || 'not-run'}
+     </span>
+    </div>
+   </div>
+  </section>
+
+  <section class="rr-section">
+   <header class="rr-section-head">
+    <h2 class="rr-section-title">
+     <Icon name="lucide:search-check" class="w-4 h-4" /> SEO, AEO, GEO ve AIO Gate Özeti
+    </h2>
+    <span class="rr-section-meta">llms / sitemap / rich results / pagespeed</span>
+   </header>
+   <div class="rr-list">
+    <div class:list={['rr-row', dashboard.llmsSitemapAutoUpdate?.status === 'ok' && 'rr-row--ok', dashboard.llmsSitemapAutoUpdate?.status !== 'ok' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">llms + sitemap auto update</code>
+      <span class="rr-row-resolution">
+       {dashboard.llmsSitemapAutoUpdate?.ok ?? 0}/{dashboard.llmsSitemapAutoUpdate?.checks ?? 0} check geçti · llms.txt, llms-full.txt, sitemap index, section sitemap, dynamic sitemap, robots discovery
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.llmsSitemapAutoUpdate?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.llmsSitemapAutoUpdate?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.blogDraftRichResults?.status === 'ok' && 'rr-row--ok', dashboard.blogDraftRichResults?.status !== 'ok' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">blog rich results schema parity</code>
+      <span class="rr-row-resolution">
+       {dashboard.blogDraftRichResults?.ok ?? 0}/{dashboard.blogDraftRichResults?.drafts ?? 0} draft OK · review={dashboard.blogDraftRichResults?.review ?? 0} · BlogPosting/FAQPage/BreadcrumbList
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.blogDraftRichResults?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.blogDraftRichResults?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.pagespeedApiResearch?.status === 'ok' && 'rr-row--ok', dashboard.pagespeedApiResearch?.status !== 'ok' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">pagespeed api research</code>
+      <span class="rr-row-resolution">
+       API service {dashboard.pagespeedApiResearch?.enabled ? 'enabled' : 'disabled'} · local storage policy korunur
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.pagespeedApiResearch?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.pagespeedApiResearch?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', (dashboard.pagespeedApiLessLighthouse?.status === 'ok' || dashboard.pagespeedApiLessLighthouse?.externalExpectedReview) && 'rr-row--ok', dashboard.pagespeedApiLessLighthouse?.status === 'review' && !dashboard.pagespeedApiLessLighthouse?.externalExpectedReview && 'rr-row--warn', dashboard.pagespeedApiLessLighthouse?.status === 'failed' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">pagespeed api-less lighthouse</code>
+      <span class="rr-row-resolution">
+       {dashboard.pagespeedApiLessLighthouse?.ok ?? 0}/{dashboard.pagespeedApiLessLighthouse?.checks ?? 0} CLI check OK · API={dashboard.pagespeedApiLessLighthouse?.apiUsed ? 'yes' : 'no'} · perf={dashboard.pagespeedApiLessLighthouse?.performance ?? 'n/a'} · a11y={dashboard.pagespeedApiLessLighthouse?.accessibility ?? 'n/a'} · best={dashboard.pagespeedApiLessLighthouse?.bestPractices ?? 'n/a'} · seo={dashboard.pagespeedApiLessLighthouse?.seo ?? 'n/a'} · classification={dashboard.pagespeedApiLessLighthouse?.reviewClassification || 'none'} · blocker={dashboard.pagespeedApiLessLighthouse?.externalExpectedReview ? 'no' : dashboard.pagespeedApiLessLighthouse?.status === 'failed' ? 'yes' : 'review'}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.pagespeedApiLessLighthouse?.status === 'ok' || dashboard.pagespeedApiLessLighthouse?.externalExpectedReview ? 'rr-row-status--ok' : dashboard.pagespeedApiLessLighthouse?.status === 'failed' ? 'rr-row-status--err' : 'rr-row-status--warn']}>
+      {dashboard.pagespeedApiLessLighthouse?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.pagespeedLiveCheck?.status === 'ok' && 'rr-row--ok', dashboard.pagespeedLiveCheck?.status === 'review' && 'rr-row--warn', dashboard.pagespeedLiveCheck?.status === 'failed' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">pagespeed live check</code>
+      <span class="rr-row-resolution">
+       {dashboard.pagespeedLiveCheck?.ok ?? 0}/{dashboard.pagespeedLiveCheck?.checks ?? 0} live check OK · review={dashboard.pagespeedLiveCheck?.review ?? 0} · quota-limited={dashboard.pagespeedLiveCheck?.quotaLimited ?? 0}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.pagespeedLiveCheck?.status === 'ok' ? 'rr-row-status--ok' : dashboard.pagespeedLiveCheck?.status === 'failed' ? 'rr-row-status--err' : 'rr-row-status--warn']}>
+      {dashboard.pagespeedLiveCheck?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.pagespeedQuotaManagement?.quotaManagementCompleted && 'rr-row--ok', !dashboard.pagespeedQuotaManagement?.quotaManagementCompleted && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">pagespeed quota management</code>
+      <span class="rr-row-resolution">
+       marked={dashboard.pagespeedQuotaManagement?.managementMarked ? 'yes' : 'no'} · completed={dashboard.pagespeedQuotaManagement?.quotaManagementCompleted ? 'yes' : 'no'} · live={dashboard.pagespeedQuotaManagement?.liveStatus || 'unknown'} · quota-limited={dashboard.pagespeedQuotaManagement?.quotaLimited ?? 0} · live OK zorla yazılmaz
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.pagespeedQuotaManagement?.quotaManagementCompleted ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.pagespeedQuotaManagement?.status || 'not-run'}
+     </span>
+    </div>
+   </div>
+  </section>
+
+  {dashboard.releaseNextActions && (
+   <section class="rr-section">
+    <header class="rr-section-head">
+     <h2 class="rr-section-title">
+      <Icon name="lucide:list-todo" class="w-4 h-4" /> Sıradaki Aksiyonlar
+     </h2>
+     <span class="rr-section-meta">
+      {dashboard.releaseNextActions.actionCount ?? 0} aksiyon · blocking={dashboard.releaseNextActions.blockingActionCount ?? 0} · waiting={dashboard.releaseNextActions.waitingActionCount ?? 0}
+     </span>
+    </header>
+    <div class="rr-list">
+     {(dashboard.releaseNextActions.actions || []).map((item) => (
+      <div class:list={['rr-row', item.status === 'ok' && 'rr-row--ok', item.status !== 'ok' && 'rr-row--warn']}>
+       <div class="rr-row-info">
+        <code class="rr-row-key">{item.priority || 'P?'} · {item.area || 'general'} · {item.title || 'aksiyon'}</code>
+        <span class="rr-row-resolution">{item.command || 'komut yok'} · {item.detail || 'detay yok'}</span>
+       </div>
+       <span class:list={['rr-row-status', item.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+        {item.status || 'review'}
+       </span>
+      </div>
+     ))}
+    </div>
+   </section>
+  )}
+
+  <section class="rr-section">
+   <header class="rr-section-head">
+    <h2 class="rr-section-title">
+     <Icon name="lucide:activity" class="w-4 h-4" /> Operasyonel Kalite Özeti
+    </h2>
+    <span class="rr-section-meta">refresh / freshness / upload / skip</span>
+   </header>
+   <div class="rr-list">
+    <div class:list={['rr-row', dashboard.qualityRefresh?.status === 'passed' && 'rr-row--ok', dashboard.qualityRefresh?.status !== 'passed' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">quality:reports:refresh</code>
+      <span class="rr-row-resolution">
+       {dashboard.qualityRefresh?.generatedAt ? new Date(dashboard.qualityRefresh.generatedAt).toLocaleString('tr-TR') : 'rapor yok'}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.qualityRefresh?.status === 'passed' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.qualityRefresh?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.freshness?.status === 'passed' && 'rr-row--ok', dashboard.freshness?.status !== 'passed' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">release:artifacts:fresh</code>
+      <span class="rr-row-resolution">{dashboard.freshness?.staleOrMissingCount ?? '—'} stale/missing artefact</span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.freshness?.status === 'passed' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.freshness?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.releaseHandoffSummary && 'rr-row--ok', !dashboard.releaseHandoffSummary && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">release:handoff</code>
+      <span class="rr-row-resolution">
+       status={dashboard.releaseHandoffSummary?.releaseStatus || 'not-run'} · local-storage={dashboard.releaseHandoffSummary?.localMediaStorage || 'unknown'} · pagespeed-api-less={dashboard.releaseHandoffSummary?.pagespeedApiLessLighthouse || 'unknown'} · artifacts={dashboard.releaseHandoffSummary?.artifactCount ?? 0}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.releaseHandoffSummary ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.releaseHandoffSummary?.releaseStatus || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', (dashboard.uploadArchive?.deletableReview ?? 0) > 0 && 'rr-row--err', (dashboard.uploadArchive?.deletableReview ?? 0) === 0 && (dashboard.uploadArchive?.total ?? 0) > 0 && 'rr-row--warn', (dashboard.uploadArchive?.total ?? 0) === 0 && 'rr-row--ok']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">local upload archive queue</code>
+      <span class="rr-row-resolution">
+       {dashboard.uploadArchive?.archiveCandidate ?? 0} archive candidate · {dashboard.uploadArchive?.deletableReview ?? 0} delete-review
+      </span>
+     </div>
+     <span class:list={['rr-row-status', (dashboard.uploadArchive?.deletableReview ?? 0) > 0 ? 'rr-row-status--err' : (dashboard.uploadArchive?.total ?? 0) > 0 ? 'rr-row-status--warn' : 'rr-row-status--ok']}>
+      {dashboard.uploadArchive?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.localUploadBucketQuota?.status === 'ok' && 'rr-row--ok', dashboard.localUploadBucketQuota?.status === 'review' && 'rr-row--warn', dashboard.localUploadBucketQuota?.status === 'blocked' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">local upload bucket quota</code>
+      <span class="rr-row-resolution">
+       {dashboard.localUploadBucketQuota?.bucketCount ?? 0} bucket · {dashboard.localUploadBucketQuota?.reviewCount ?? 0} review · {dashboard.localUploadBucketQuota?.advisoryCount ?? 0} advisory · local storage only
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.localUploadBucketQuota?.status === 'ok' ? 'rr-row-status--ok' : dashboard.localUploadBucketQuota?.status === 'blocked' ? 'rr-row-status--err' : 'rr-row-status--warn']}>
+      {dashboard.localUploadBucketQuota?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.localMediaStorageGate?.status === 'ok' && dashboard.localMediaStorageGate?.localStorageOnly && !dashboard.localMediaStorageGate?.externalObjectStorageConfigured && 'rr-row--ok', dashboard.localMediaStorageGate?.status !== 'ok' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">local media storage gate</code>
+      <span class="rr-row-resolution">
+       local-only={dashboard.localMediaStorageGate?.localStorageOnly ? 'yes' : 'no'} · external-object-storage={dashboard.localMediaStorageGate?.externalObjectStorageConfigured ? 'yes' : 'no'} · live={dashboard.localMediaStorageGate?.liveOk ?? 0}/{dashboard.localMediaStorageGate?.liveChecks ?? 0} · failed-patterns={dashboard.localMediaStorageGate?.failedPatterns ?? 0}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.localMediaStorageGate?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+     {dashboard.localMediaStorageGate?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.mediaReadiness?.status === 'ok' && dashboard.mediaReadiness?.localStorageOnly && !dashboard.mediaReadiness?.externalObjectStorageAllowed && !dashboard.mediaReadiness?.automaticDeleteAllowed && 'rr-row--ok', dashboard.mediaReadiness?.status !== 'ok' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">media readiness</code>
+      <span class="rr-row-resolution">
+       {dashboard.mediaReadiness?.passed ?? 0}/{dashboard.mediaReadiness?.checks ?? 0} check · uploads={dashboard.mediaReadiness?.uploadFiles ?? 0} · public-images={dashboard.mediaReadiness?.publicImages ?? 0} · local-only={dashboard.mediaReadiness?.localStorageOnly ? 'yes' : 'no'} · external-object-storage={dashboard.mediaReadiness?.externalObjectStorageAllowed ? 'yes' : 'no'} · auto-delete={dashboard.mediaReadiness?.automaticDeleteAllowed ? 'yes' : 'no'}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.mediaReadiness?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.mediaReadiness?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.redisRuntimeHealth?.status === 'ok' && 'rr-row--ok', dashboard.redisRuntimeHealth?.status !== 'ok' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">redis runtime health</code>
+      <span class="rr-row-resolution">
+       {dashboard.redisRuntimeHealth?.host || 'unknown'}:{dashboard.redisRuntimeHealth?.port ?? '—'} · ping {dashboard.redisRuntimeHealth?.pingOk ? 'ok' : 'fail'} · {dashboard.redisRuntimeHealth?.latencyMs ?? '—'}ms · mode={dashboard.redisRuntimeHealth?.runtimeMode || 'unknown'} · fallback={dashboard.redisRuntimeHealth?.fallbackAllowed ? 'yes' : 'no'} · release-blocker={dashboard.redisRuntimeHealth?.releaseBlocker ? 'yes' : 'no'}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.redisRuntimeHealth?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.redisRuntimeHealth?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.adminStrictRoleGate?.status === 'ok' && 'rr-row--ok', dashboard.adminStrictRoleGate?.status !== 'ok' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">admin strict role gate</code>
+      <span class="rr-row-resolution">
+       {dashboard.adminStrictRoleGate?.ok ?? 0}/{dashboard.adminStrictRoleGate?.checked ?? 0} high-impact admin endpoint strict role OK · review={dashboard.adminStrictRoleGate?.review ?? 0}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.adminStrictRoleGate?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.adminStrictRoleGate?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.warmupSafety?.status === 'ok' && 'rr-row--ok', dashboard.warmupSafety?.status !== 'ok' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">warmup safety</code>
+      <span class="rr-row-resolution">
+       {dashboard.warmupSafety?.reviewCount ?? 0} review · warmup yeni port/dev server açamaz
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.warmupSafety?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.warmupSafety?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.cronReadiness?.status === 'ok' && 'rr-row--ok', dashboard.cronReadiness?.status !== 'ok' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">cron readiness</code>
+      <span class="rr-row-resolution">
+       {dashboard.cronReadiness?.presentJobCount ?? 0}/{dashboard.cronReadiness?.requiredJobCount ?? 0} managed job · {dashboard.cronReadiness?.missingJobCount ?? 0} missing · apply-safe manuel
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.cronReadiness?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.cronReadiness?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', (dashboard.unitSkips?.undocumentedCount ?? 0) === 0 && 'rr-row--ok', (dashboard.unitSkips?.undocumentedCount ?? 0) > 0 && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">unit skip report</code>
+      <span class="rr-row-resolution">
+       {dashboard.unitSkips?.observedSkippedFiles ?? 0} skipped file · {dashboard.unitSkips?.observedSkippedTests ?? 0} skipped test · {dashboard.unitSkips?.undocumentedCount ?? 0} undocumented
+      </span>
+     </div>
+     <span class:list={['rr-row-status', (dashboard.unitSkips?.undocumentedCount ?? 0) === 0 ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.unitSkips?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', (dashboard.e2eSkips?.undocumentedCount ?? 0) === 0 && 'rr-row--ok', (dashboard.e2eSkips?.undocumentedCount ?? 0) > 0 && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">e2e skip report</code>
+      <span class="rr-row-resolution">
+       {dashboard.e2eSkips?.declarationCount ?? 0} declaration · {dashboard.e2eSkips?.undocumentedCount ?? 0} undocumented
+      </span>
+     </div>
+     <span class:list={['rr-row-status', (dashboard.e2eSkips?.undocumentedCount ?? 0) === 0 ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+     {dashboard.e2eSkips?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.e2eCriticalCoverage?.status === 'ok' && 'rr-row--ok', dashboard.e2eCriticalCoverage?.status !== 'ok' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">e2e critical coverage</code>
+      <span class="rr-row-resolution">
+       {dashboard.e2eCriticalCoverage?.coveredCount ?? 0}/{dashboard.e2eCriticalCoverage?.flowCount ?? 0} flow covered · {dashboard.e2eCriticalCoverage?.missingCount ?? 0} missing
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.e2eCriticalCoverage?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.e2eCriticalCoverage?.status || 'not-run'}
+     </span>
+    </div>
+   </div>
+  </section>
+
+  <section class="rr-section">
+   <header class="rr-section-head">
+    <h2 class="rr-section-title">
+     <Icon name="lucide:server-cog" class="w-4 h-4" /> API, DB, Arama ve Build Sinyalleri
+    </h2>
+    <span class="rr-section-meta">operasyon merkezi</span>
+   </header>
+   <div class="rr-list">
+    <div class:list={['rr-row', dashboard.api?.releaseGate?.status === 'passed' && 'rr-row--ok', dashboard.api?.releaseGate?.status !== 'passed' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">api release gate</code>
+      <span class="rr-row-resolution">{dashboard.api?.releaseGate?.passedChecks ?? 0}/{dashboard.api?.releaseGate?.totalChecks ?? 0} checks passed</span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.api?.releaseGate?.status === 'passed' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+     {dashboard.api?.releaseGate?.status || 'not-run'}
+    </span>
+   </div>
+    <div class:list={['rr-row', dashboard.api?.debugEnvelope?.status === 'ok' && 'rr-row--ok', dashboard.api?.debugEnvelope?.status !== 'ok' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">api debug envelope</code>
+      <span class="rr-row-resolution">{dashboard.api?.debugEnvelope?.passed ?? 0}/{dashboard.api?.debugEnvelope?.total ?? 0} check · requestId + X-Request-ID + frontend fetch diagnostics</span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.api?.debugEnvelope?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.api?.debugEnvelope?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.api?.contractGroups?.status === 'passed' && 'rr-row--ok', dashboard.api?.contractGroups?.status !== 'passed' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">api contract groups</code>
+      <span class="rr-row-resolution">{dashboard.api?.contractGroups?.groupCount ?? 0} group · {dashboard.api?.contractGroups?.coverageGapCount ?? 0} coverage gap</span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.api?.contractGroups?.status === 'passed' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.api?.contractGroups?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.buildArtifacts?.status === 'ok' && dashboard.buildArtifacts?.distClientWithinSoftBudget && 'rr-row--ok', dashboard.buildArtifacts?.status !== 'ok' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">build artifact budget</code>
+      <span class="rr-row-resolution">dist/client {dashboard.buildArtifacts?.distClientTotalMb ?? 0} MB · _astro {dashboard.buildArtifacts?.astroWithinBudget ? 'ok' : 'review'}</span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.buildArtifacts?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.buildArtifacts?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.scriptCanonicalSurface?.status === 'ok' && 'rr-row--ok', dashboard.scriptCanonicalSurface?.status !== 'ok' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">script canonical surface</code>
+      <span class="rr-row-resolution">{dashboard.scriptCanonicalSurface?.canonicalCount ?? 0} canonical · {dashboard.scriptCanonicalSurface?.missingCanonicalCount ?? 0} missing · {dashboard.scriptCanonicalSurface?.totalScripts ?? 0} total scripts</span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.scriptCanonicalSurface?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.scriptCanonicalSurface?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.migrationDuplicateDrift?.status === 'ok' && 'rr-row--ok', dashboard.migrationDuplicateDrift?.status !== 'ok' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">migration duplicate drift</code>
+      <span class="rr-row-resolution">{dashboard.migrationDuplicateDrift?.duplicateNumberGroups ?? 0} number group · {dashboard.migrationDuplicateDrift?.duplicateSlugGroups ?? 0} slug group · drift {(dashboard.migrationDuplicateDrift?.numberDrift || dashboard.migrationDuplicateDrift?.slugDrift) ? 'var' : 'yok'}</span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.migrationDuplicateDrift?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.migrationDuplicateDrift?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', (dashboard.dbRetirement?.p0DropCandidateCount ?? 0) === 0 && 'rr-row--ok', (dashboard.dbRetirement?.p0DropCandidateCount ?? 0) > 0 && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">db retirement observation</code>
+      <span class="rr-row-resolution">P0 quarantine={dashboard.dbRetirement?.p0QuarantineCandidateCount ?? 0} · runtime hold={dashboard.dbRetirement?.p0RuntimeHoldCount ?? 0} · P1={dashboard.dbRetirement?.p1ReviewCandidateCount ?? 0} · P2={dashboard.dbRetirement?.p2UnusedIndexCandidateCount ?? 0} · auto drop yok</span>
+     </div>
+     <span class:list={['rr-row-status', (dashboard.dbRetirement?.p0DropCandidateCount ?? 0) === 0 ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.dbRetirement?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.dbP0QuarantinePlan?.status === 'ok' && 'rr-row--ok', dashboard.dbP0QuarantinePlan?.status === 'advisory' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">db p0 quarantine plan</code>
+      <span class="rr-row-resolution">candidate={dashboard.dbP0QuarantinePlan?.quarantineCandidateCount ?? 0} · runtime hold={dashboard.dbP0QuarantinePlan?.runtimeHoldCount ?? 0} · earliest {dashboard.dbP0QuarantinePlan?.earliestActionAt || 'unknown'} · auto drop yok</span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.dbP0QuarantinePlan?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.dbP0QuarantinePlan?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.dbObservationCadence?.status !== 'stale' && 'rr-row--warn', dashboard.dbObservationCadence?.status === 'stale' && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">db observation cadence</code>
+      <span class="rr-row-resolution">{dashboard.dbObservationCadence?.snapshotCount ?? 0}/{dashboard.dbObservationCadence?.observationDays ?? 0} snapshot · {dashboard.dbObservationCadence?.missingDays ?? 0} eksik gün · earliest {dashboard.dbObservationCadence?.earliestActionAt || 'unknown'}</span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.dbObservationCadence?.status === 'stale' ? 'rr-row-status--err' : 'rr-row-status--warn']}>
+      {dashboard.dbObservationCadence?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.dbObservationCalendar?.status === 'complete' && 'rr-row--ok', dashboard.dbObservationCalendar?.status !== 'complete' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">db observation calendar</code>
+      <span class="rr-row-resolution">
+       {dashboard.dbObservationCalendar?.completeCount ?? 0}/{dashboard.dbObservationCalendar?.observationDays ?? 0} gün tamamlandı · eksik/bekleyen={dashboard.dbObservationCalendar?.missingOrPendingCount ?? 0} · next={dashboard.dbObservationCalendar?.nextSnapshotDueAt || 'unknown'} · earliest={dashboard.dbObservationCalendar?.earliestActionAt || 'unknown'} · auto-drop={dashboard.dbObservationCalendar?.automaticDropAllowed ? 'yes' : 'no'}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.dbObservationCalendar?.status === 'complete' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.dbObservationCalendar?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', dashboard.dbManualDecisionReadiness?.status === 'waiting' && 'rr-row--warn', dashboard.dbManualDecisionReadiness?.status === 'manual_review_ready' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">db manual decision readiness</code>
+      <span class="rr-row-resolution">{dashboard.dbManualDecisionReadiness?.readyForManualPrCount ?? 0} ready · {dashboard.dbManualDecisionReadiness?.waitingForEvidenceCount ?? 0} waiting · {dashboard.dbManualDecisionReadiness?.runtimeHoldCount ?? 0} runtime hold · auto drop yok</span>
+     </div>
+     <span class="rr-row-status rr-row-status--warn">
+     {dashboard.dbManualDecisionReadiness?.status || 'not-run'}
+    </span>
+   </div>
+    <div class:list={['rr-row', dashboard.dbRuntimeHoldPlan?.status === 'clear' && 'rr-row--ok', dashboard.dbRuntimeHoldPlan?.status !== 'clear' && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">db runtime hold plan</code>
+      <span class="rr-row-resolution">
+       table={dashboard.dbRuntimeHoldPlan?.table || 'unknown'} · refs={dashboard.dbRuntimeHoldPlan?.runtimeReferenceCount ?? 0} · incompatible-contracts={dashboard.dbRuntimeHoldPlan?.incompatibleContractCount ?? 0} · auto-drop={dashboard.dbRuntimeHoldPlan?.automaticDropAllowed ? 'yes' : 'no'}
+      </span>
+     </div>
+     <span class:list={['rr-row-status', dashboard.dbRuntimeHoldPlan?.status === 'clear' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.dbRuntimeHoldPlan?.status || 'not-run'}
+     </span>
+    </div>
+   <div class:list={['rr-row', (dashboard.dbRegistryClassification?.unclassifiedCount ?? 0) === 0 && 'rr-row--ok', (dashboard.dbRegistryClassification?.unclassifiedCount ?? 0) > 0 && 'rr-row--warn']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">db registry classification</code>
+      <span class="rr-row-resolution">{dashboard.dbRegistryClassification?.tableCount ?? 0} tablo · {dashboard.dbRegistryClassification?.unclassifiedCount ?? 0} unclassified · {dashboard.dbRegistryClassification?.unusedIndexCount ?? 0} unused index · auto drop {dashboard.dbRegistryClassification?.automaticDbDropAllowed ? 'açık' : 'kapalı'}</span>
+     </div>
+     <span class:list={['rr-row-status', (dashboard.dbRegistryClassification?.unclassifiedCount ?? 0) === 0 ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
+      {dashboard.dbRegistryClassification?.status || 'not-run'}
+     </span>
+    </div>
+    <div class:list={['rr-row', (dashboard.searchZeroResult?.unresolvedCount ?? 0) === 0 && 'rr-row--ok', (dashboard.searchZeroResult?.unresolvedCount ?? 0) > 0 && 'rr-row--err']}>
+     <div class="rr-row-info">
+      <code class="rr-row-key">zero-result search</code>
+      <span class="rr-row-resolution">{dashboard.searchZeroResult?.unresolvedCount ?? 0} unresolved · {dashboard.searchZeroResult?.unresolvedOccurrences ?? 0} occurrence</span>
+     </div>
+     <span class:list={['rr-row-status', (dashboard.searchZeroResult?.unresolvedCount ?? 0) === 0 ? 'rr-row-status--ok' : 'rr-row-status--err']}>
+      {dashboard.searchZeroResult?.status || 'not-run'}
+     </span>
+    </div>
+   </div>
+  </section>
+
+  {dashboard.gateSummary && (
+   <section class="rr-section">
+    <header class="rr-section-head">
+     <h2 class="rr-section-title">
+      <Icon name="lucide:gauge" class="w-4 h-4" /> Tek Bakış Gate Özeti
+     </h2>
+     <span class="rr-section-meta">{dashboard.decision || 'UNKNOWN'}</span>
+    </header>
+    <div class="rr-list">
+     {Object.entries(dashboard.gateSummary).map(([key, value]) => {
+      const ok = value === true || value === 'ready' || value === 'passed' || value === 'ok';
+      const warn = value === 'not-run' || value === 'ready_with_advisories' || value === 'review';
+      return (
+       <div class:list={['rr-row', ok && 'rr-row--ok', warn && 'rr-row--warn', !ok && !warn && 'rr-row--err']}>
+        <code class="rr-row-key">{key}</code>
+        <span class:list={['rr-row-status', ok ? 'rr-row-status--ok' : warn ? 'rr-row-status--warn' : 'rr-row-status--err']}>
+         {String(value)}
+        </span>
+       </div>
+      );
+     })}
+    </div>
+   </section>
+  )}
+
+  {dashboard.e2eFailures && dashboard.e2eFailures.length > 0 && (
+   <section class="rr-section">
+    <header class="rr-section-head">
+     <h2 class="rr-section-title">
+      <Icon name="lucide:bug" class="w-4 h-4" /> E2E Failure Detayları
+     </h2>
+     <span class="rr-section-meta">{dashboard.e2eFailures.length} failure</span>
+    </header>
+    <div class="rr-list">
+     {dashboard.e2eFailures.map((item) => (
+      <div class="rr-row rr-row--err">
+       <div class="rr-row-info">
+        <code class="rr-row-key">{item.spec || 'unknown spec'}</code>
+        <span class="rr-row-resolution">{item.title || 'unknown test'}</span>
+       </div>
+       <span class="rr-row-status rr-row-status--err">{item.outcome || 'failed'}</span>
+      </div>
+     ))}
+    </div>
+   </section>
+  )}
 
   <section class="rr-section">
    <header class="rr-section-head">
@@ -220,6 +1076,10 @@ const sectionsActive = homepageSectionSummary.filter(s => s.enabled).length;
    background: rgba(225,29,72,0.06);
    border-color: rgba(225,29,72,0.25);
   }
+  .rr-banner--warn {
+   background: rgba(217,119,6,0.06);
+   border-color: rgba(217,119,6,0.25);
+  }
   .rr-banner-icon {
    width: 44px; height: 44px;
    border-radius: 11px;
@@ -228,6 +1088,7 @@ const sectionsActive = homepageSectionSummary.filter(s => s.enabled).length;
   }
   .rr-banner--ok .rr-banner-icon { background: rgba(16,185,129,0.15); color: rgb(5,150,105); }
   .rr-banner--err .rr-banner-icon { background: rgba(225,29,72,0.15); color: rgb(190,18,60); }
+  .rr-banner--warn .rr-banner-icon { background: rgba(217,119,6,0.15); color: rgb(180,83,9); }
   .rr-banner-title {
    font-family: 'Cormorant Garamond', serif;
    font-size: 1.3rem; font-weight: 700;

@@ -1,8 +1,14 @@
 import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
+
+async function waitForHomepageReady(page: Page) {
+  await page.goto('/');
+  await expect(page.locator('main h1')).toBeVisible();
+}
 
 test.describe('Homepage', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    await waitForHomepageReady(page);
   });
 
   test('page loads successfully with correct title', async ({ page }) => {
@@ -20,13 +26,13 @@ test.describe('Homepage', () => {
   });
 
   test('search bar is functional', async ({ page }) => {
-    const searchInput = page.locator('form[action="/arama"] input[name="q"]:visible, input[type="search"]:visible, input[placeholder*="Ara"]:visible, input[placeholder*="ara"]:visible').first();
+    const searchInput = page.locator('[data-testid="homepage-search-input"]').first();
     await expect(searchInput).toBeVisible();
 
     await searchInput.fill('göbeklitepe');
     await expect(searchInput).toHaveValue('göbeklitepe');
 
-    await searchInput.press('Enter');
+    await page.locator('[data-testid="homepage-search-submit"]').click();
     await expect(page).toHaveURL(/\/arama/);
   });
 
@@ -38,11 +44,14 @@ test.describe('Homepage', () => {
     await expect(nav.locator('a[href="/mekanlar"], a[href="/isletme"], a:has-text("Mekanlar")').first()).toBeVisible();
   });
 
-  test('categories section is displayed', async ({ page }) => {
-    const categoriesSection = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Kategoriler' }) }).first();
+  test('popular categories section is displayed', async ({ page }) => {
+    const categoriesSection = page
+      .locator('section')
+      .filter({ has: page.getByRole('heading', { name: /Popüler Kategoriler|Kategoriler/i }) })
+      .first();
     await expect(categoriesSection).toBeVisible();
 
-    const categoryItems = categoriesSection.locator('a[href^="/mekanlar"]');
+    const categoryItems = categoriesSection.locator('a[href^="/"]');
     const count = await categoryItems.count();
     expect(count).toBeGreaterThanOrEqual(6);
   });
@@ -69,11 +78,13 @@ test.describe('Homepage', () => {
 
   test('homepage is responsive and mobile-friendly', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
+    await waitForHomepageReady(page);
 
     const hero = page.locator('.home-hero h1, main h1').first();
     await expect(hero).toBeVisible();
     await expect(page.locator('#sf-header')).toBeVisible();
-    await expect(page.locator('button[aria-label*="Menü"], button[aria-label*="menu"], button:has-text("Menü"), button:has-text("Menu")').first()).toBeVisible();
+    const menuTrigger = page.locator('#mobileMenuBtn, summary[aria-label*="Menü"], summary[aria-label*="menu"]').first();
+    await expect(menuTrigger).toBeVisible();
   });
 
   test('main navigation links navigate correctly', async ({ page }) => {
@@ -83,20 +94,18 @@ test.describe('Homepage', () => {
     expect(await visibleNavLinks.count()).toBeGreaterThanOrEqual(3);
   });
 
-  test('quick links to login and registration are visible', async ({ page }) => {
+  test('guest quick action links are visible', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
-    const loginLink = page.locator('header a[href*="giris"], header a:has-text("Giriş")').first();
-    await expect(loginLink).toBeVisible();
-
-    const registerLink = page.locator('header a[href*="kayit"], header a:has-text("Kayıt")').first();
-    await expect(registerLink).toBeVisible();
+    await expect(page.locator('header a[href="/arama"]').first()).toBeVisible();
+    await expect(page.locator('header a[href="/eslesme"]').first()).toBeVisible();
+    await expect(page.locator('header a[href="/isletme-kayit"]').first()).toBeVisible();
   });
 });
 
 test.describe('Homepage - Content Loading', () => {
   test('images load without errors', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForHomepageReady(page);
+    await page.waitForLoadState('domcontentloaded');
 
     const images = page.locator('img');
     const count = await images.count();
@@ -107,11 +116,18 @@ test.describe('Homepage - Content Loading', () => {
       return;
     }
 
-    const brokenImages = await page.evaluate(() => {
+    const { loadedImages, brokenImages } = await page.evaluate(() => {
       const imgs = Array.from(document.querySelectorAll('img'));
-      return imgs.filter((img: HTMLImageElement) => img.naturalWidth === 0 && !img.closest('noscript')).length;
+      const completeImgs = imgs.filter(
+        (img: HTMLImageElement) => img.complete && !img.closest('noscript') && img.currentSrc,
+      );
+      return {
+        loadedImages: completeImgs.length,
+        brokenImages: completeImgs.filter((img: HTMLImageElement) => img.naturalWidth === 0).length,
+      };
     });
-    expect(brokenImages).toBeLessThan(count);
+    expect(loadedImages).toBeGreaterThan(0);
+    expect(brokenImages).toBe(0);
   });
 
   test('no console errors on homepage', async ({ page }) => {
@@ -127,8 +143,8 @@ test.describe('Homepage - Content Loading', () => {
     });
     page.on('pageerror', (err) => pageErrors.push(String(err)));
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await waitForHomepageReady(page);
+    await page.waitForTimeout(1500);
 
     expect(pageErrors.length).toBeLessThanOrEqual(3);
     expect(errors.length).toBeLessThan(50);

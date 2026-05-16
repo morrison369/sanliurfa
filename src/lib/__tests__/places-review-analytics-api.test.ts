@@ -42,7 +42,7 @@ describe('places review analytics api', () => {
   });
 
   it('returns 403 for non-owner', async () => {
-    queryOneMock.mockResolvedValueOnce({ user_id: 'owner-1' });
+    queryOneMock.mockResolvedValueOnce({ owner_id: 'owner-1' });
     const response = await GET(
       createApiContext({
         url: 'http://localhost/api/places/1/review-analytics',
@@ -54,7 +54,7 @@ describe('places review analytics api', () => {
   });
 
   it('returns analytics for owner', async () => {
-    queryOneMock.mockResolvedValueOnce({ user_id: 'u1' });
+    queryOneMock.mockResolvedValueOnce({ owner_id: 'u1' });
     getPlaceReviewSummaryMock.mockResolvedValueOnce({ total_reviews: 10 });
     getTopReviewsForPlaceMock.mockResolvedValueOnce([{ id: 'r1' }]);
 

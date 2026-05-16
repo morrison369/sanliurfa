@@ -5,15 +5,16 @@ interface Props {
  seo: any;
  title?: string;
  category?: string;
+ wide?: boolean;
 }
 
-const { seo, title, category } = Astro.props;
+const { seo, title, category, wide = false } = Astro.props;
 ---
 
 <Layout seo={seo}>
  <slot name="hero" />
  <article class="et-page">
-  <div class="sf-container et-shell">
+  <div class:list={['sf-container', 'et-shell', wide && 'et-shell--wide']}>
    {category && !Astro.slots.has('hero') && <p class="et-category">{category}</p>}
    {title && !Astro.slots.has('hero') && <h1 class="et-title">{title}</h1>}
    <slot />
@@ -30,6 +31,10 @@ const { seo, title, category } = Astro.props;
  .et-shell {
   max-width: 52rem;
   margin: 0 auto;
+ }
+
+ .et-shell--wide {
+  max-width: min(100%, 76rem);
  }
 
  .et-category {

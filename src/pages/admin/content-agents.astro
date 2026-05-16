@@ -61,9 +61,39 @@ import AdminLayout from '../../layouts/AdminLayoutV2.astro';
       <h2 class="ca-card-title">
        <Icon name="lucide:inbox" class="w-4 h-4" /> Taslak Kuyruğu
       </h2>
-      <p class="ca-card-sub">Onaylanan taslaklar yayına geçer; reddedilenler canlıya çıkmaz</p>
+      <p class="ca-card-sub" id="drafts-summary">Onaylanan taslaklar yayına geçer; reddedilenler canlıya çıkmaz</p>
      </div>
     </header>
+    <div class="ca-filter-row">
+     <label>
+      Durum
+      <select id="draft-status-filter">
+       <option value="">Tümü</option>
+       <option value="pending" selected>Pending</option>
+       <option value="approved">Approved</option>
+       <option value="rejected">Rejected</option>
+      </select>
+     </label>
+     <label>
+      Tip
+      <select id="draft-type-filter">
+       <option value="">Tümü</option>
+       <option value="place-discovery-draft">Google Maps keşif</option>
+       <option value="place-enrichment-draft">Mekan zenginleştirme</option>
+       <option value="seo-override-draft">SEO/GEO</option>
+       <option value="media-task">Görsel görevleri</option>
+      </select>
+     </label>
+     <label>
+      Limit
+      <select id="draft-limit-filter">
+       <option value="50">50</option>
+       <option value="100" selected>100</option>
+       <option value="250">250</option>
+       <option value="500">500</option>
+      </select>
+     </label>
+    </div>
     <div id="drafts-list" class="ca-list"></div>
    </section>
 
@@ -82,7 +112,7 @@ import AdminLayout from '../../layouts/AdminLayoutV2.astro';
  </div>
 
  <script is:inline>
- const state = { agents: [], sources: [], jobs: [], drafts: [], policy: {} };
+ const state = { agents: [], sources: [], jobs: [], drafts: [], policy: {}, draftSummary: {} };
 
  function statusBadgeClass(status) {
  if (status === 'completed' || status === 'approved') return 'bg-[rgba(184,115,51,0.15)] text-[#7A6B58]';
@@ -268,7 +298,7 @@ import AdminLayout from '../../layouts/AdminLayoutV2.astro';
  meta.textContent = draft.draft_type + ' · /' + draft.slug;
  const summary = document.createElement('p');
  summary.className = 'mt-2 text-sm leading-6 text-[#7A6B58]';
- summary.textContent = String(draft.payload?.summary || draft.payload?.sourceDigest || '').slice(0, 260);
+ summary.textContent = String(draft.payload?.summary || draft.payload?.sourceDigest || draft.payload?.query || '').slice(0, 260);
  info.appendChild(title);
  info.appendChild(meta);
  info.appendChild(summary);
@@ -294,8 +324,15 @@ import AdminLayout from '../../layouts/AdminLayoutV2.astro';
  return article;
  }
 
- function renderDrafts() {
+function renderDrafts() {
  const container = document.getElementById('drafts-list');
+ const summary = state.draftSummary || {};
+ const summaryEl = document.getElementById('drafts-summary');
+ if (summaryEl) {
+ const pending = summary.byStatus?.pending || 0;
+ const discovery = summary.byType?.['place-discovery-draft'] || 0;
+ summaryEl.textContent = `${summary.total || 0} toplam · ${pending} pending · ${discovery} Google Maps keşif adayı`;
+ }
  if (!state.drafts.length) {
  const p = document.createElement('p');
  p.className = 'text-sm text-[#7A6B58]';
@@ -345,8 +382,20 @@ import AdminLayout from '../../layouts/AdminLayoutV2.astro';
  container.replaceChildren(...state.jobs.map(makeJobCard));
  }
 
+ function draftQueryString() {
+ const params = new URLSearchParams();
+ const status = document.getElementById('draft-status-filter')?.value || '';
+ const draftType = document.getElementById('draft-type-filter')?.value || '';
+ const limit = document.getElementById('draft-limit-filter')?.value || '100';
+ if (status) params.set('status', status);
+ if (draftType) params.set('draftType', draftType);
+ params.set('limit', limit);
+ const query = params.toString();
+ return query ? `?${query}` : '';
+ }
+
  async function loadData() {
- const res = await fetch('/api/admin/city-content-agents');
+ const res = await fetch('/api/admin/city-content-agents' + draftQueryString());
  const data = await res.json();
  if (!res.ok || data.success === false) throw new Error(data.detail || 'Veri alınamadı');
  Object.assign(state, data);
@@ -360,6 +409,9 @@ import AdminLayout from '../../layouts/AdminLayoutV2.astro';
  window.runAgent = runAgent;
  window.updateDraft = updateDraft;
  document.getElementById('refresh-btn').addEventListener('click', loadData);
+ document.getElementById('draft-status-filter')?.addEventListener('change', loadData);
+ document.getElementById('draft-type-filter')?.addEventListener('change', loadData);
+ document.getElementById('draft-limit-filter')?.addEventListener('change', loadData);
  loadData().catch((error) => {
  const p = document.createElement('p');
  p.className = 'text-sm text-[#7A6B58]';
@@ -468,6 +520,32 @@ import AdminLayout from '../../layouts/AdminLayoutV2.astro';
    display: flex; flex-direction: column;
    gap: 0.65rem;
    min-height: 80px;
+  }
+  .ca-filter-row {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+   gap: 0.65rem;
+   padding: 0.85rem 1.15rem 0;
+  }
+  .ca-filter-row label {
+   display: flex;
+   flex-direction: column;
+   gap: 0.25rem;
+   font-size: 0.72rem;
+   font-weight: 700;
+   color: var(--adm-text-soft);
+   text-transform: uppercase;
+   letter-spacing: 0.06em;
+  }
+  .ca-filter-row select {
+   border: 1px solid var(--adm-border);
+   border-radius: 8px;
+   background: var(--adm-bg-elev);
+   color: var(--adm-text);
+   padding: 0.55rem 0.65rem;
+   font-size: 0.86rem;
+   text-transform: none;
+   letter-spacing: 0;
   }
  </style>
 </AdminLayout>

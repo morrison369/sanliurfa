@@ -40,6 +40,7 @@ const ALLOWED_FILES = new Set<string>([
   'src/components/AdminAnalyticsDashboard.tsx',
   'src/components/AdvancedSearchPanel.tsx',
   'src/components/CollectionDetail.tsx',
+  'src/components/Analytics.astro',             // noscript analytics beacon requires external raw <img> pixel
   'src/components/LeaderboardsDisplay.tsx',
   'src/components/PhotoUpload.tsx',
   'src/components/RewardsCatalog.tsx',

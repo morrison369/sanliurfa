@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { resolvePlaceImage } from '../lib/public-image-resolvers';
 interface Place {
  id: string;
  slug?: string;
+ href?: string;
  name: string;
  category: string;
  image_url?: string;
@@ -25,6 +27,13 @@ interface SearchResults {
  places: Place[];
  users: User[];
  collections: Collection[];
+}
+
+function getPlaceImage(place: Place) {
+ return resolvePlaceImage({
+  slug: place.slug ?? null,
+  image_url: place.image_url ?? null,
+ });
 }
 
 export default function SearchResults({ query }: { query?: string }) {
@@ -96,8 +105,8 @@ export default function SearchResults({ query }: { query?: string }) {
  <h3 className="mb-4 text-2xl font-black text-[#201711]">Mekanlar ({results.places.length})</h3>
  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
  {results.places.map((place) => (
- <a key={place.id} href={place.slug ? `/isletme/${place.slug}` : '/mekanlar'} className="overflow-hidden rounded-2xl border border-[#eadcc4] bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-[#d39b62] hover:shadow-xl hover:shadow-[#78331d]/10">
- {place.image_url && <img src={place.image_url} alt={place.name} loading="lazy" width={400} height={144} className="h-36 w-full object-cover" />}
+ <a key={place.id} href={place.href || (place.slug ? `/isletme/${place.slug}` : '/mekanlar')} className="overflow-hidden rounded-2xl border border-[#eadcc4] bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-[#d39b62] hover:shadow-xl hover:shadow-[#78331d]/10">
+ {(place.image_url || place.slug) && <img src={getPlaceImage(place)} alt={place.name} loading="lazy" width={400} height={144} className="h-36 w-full object-cover" />}
  <div className="p-4">
  <p className="font-black text-[#201711]">{place.name}</p>
  <p className="mt-1 text-sm text-[#6d5945]">{place.category}</p>

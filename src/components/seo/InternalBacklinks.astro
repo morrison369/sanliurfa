@@ -1,0 +1,115 @@
+---
+import type { InternalLinkSuggestion } from '../../lib/seo/internal-linker';
+
+interface Props {
+  title?: string;
+  links: InternalLinkSuggestion[];
+}
+
+const { title = 'İlgili İç Bağlantılar', links } = Astro.props;
+const visibleLinks = Array.isArray(links) ? links.filter((link) => link?.href && link?.label) : [];
+const clusterLabels: Record<string, string> = {
+  gezi: 'Gezi',
+  gastronomi: 'Gastronomi',
+  mekan: 'Mekan',
+  ulasim: 'Ulaşım',
+  saglik: 'Sağlık',
+  topluluk: 'Topluluk',
+  kurumsal: 'Kurumsal',
+};
+---
+
+{visibleLinks.length > 0 && (
+  <nav class="ib" aria-label={title}>
+    <div class="ib-head">
+      <p class="ib-title">{title}</p>
+      <p class="ib-note">Bu bağlantılar konu yakınlığına göre seçilir; mevcut sayfadan değerli hub sayfalara geçiş sağlar.</p>
+    </div>
+    <ul class="ib-list">
+      {visibleLinks.map((link) => (
+        <li class="ib-item">
+          <a href={link.href} class="ib-link">
+            <span class="ib-label">{link.label}</span>
+            <span class="ib-cluster">{clusterLabels[link.cluster] || link.cluster}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}
+
+<style>
+  .ib {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .ib-head {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .ib-title {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--public-muted);
+  }
+
+  .ib-note {
+    margin: 0;
+    color: var(--public-text-soft);
+    font-size: 0.76rem;
+    line-height: 1.55;
+  }
+
+  .ib-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ib-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.6rem 0.72rem;
+    border: 1px solid rgba(184, 115, 51, 0.14);
+    border-radius: 0.45rem;
+    background: rgba(184, 115, 51, 0.06);
+    color: var(--public-accent);
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s, transform 0.15s;
+  }
+
+  .ib-link:hover {
+    border-color: rgba(184, 115, 51, 0.34);
+    background: rgba(184, 115, 51, 0.12);
+    transform: translateY(-1px);
+  }
+
+  .ib-label {
+    font-size: 0.86rem;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  .ib-cluster {
+    flex-shrink: 0;
+    border-radius: 999px;
+    padding: 0.16rem 0.45rem;
+    background: #fff8ed;
+    color: var(--public-muted);
+    font-size: 0.64rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+</style>

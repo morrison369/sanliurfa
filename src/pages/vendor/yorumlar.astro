@@ -182,7 +182,7 @@ const seo = {
                   <p>{r.owner_response}</p>
                 </div>
               ) : (
-                <form class="vy-form" data-review-id={r.id} data-place-id={r.place_id} onsubmit="return window.__vyReply(event,this)">
+                <form class="vy-form" data-review-id={r.id} data-place-id={r.place_id}>
                   <textarea name="response" required minlength="10" maxlength="2000" placeholder="Yanıtınızı yazın... (10-2000 karakter)" class="vy-textarea"></textarea>
                   <div class="vy-form-row">
                     <button type="submit" class="vy-submit">Yanıt Gönder</button>
@@ -214,10 +214,11 @@ const seo = {
       const placeId = form.dataset.placeId;
       const textarea = form.querySelector('textarea');
       const submitBtn = form.querySelector('button[type="submit"]');
+      if (!(textarea instanceof HTMLTextAreaElement) || !(submitBtn instanceof HTMLButtonElement)) return;
       const responseText = textarea.value.trim();
       if (responseText.length < 10) {
         alert('Yanıt en az 10 karakter olmalı.');
-        return false;
+        return;
       }
       submitBtn.disabled = true;
       submitBtn.textContent = 'Gönderiliyor...';
@@ -250,7 +251,14 @@ const seo = {
         submitBtn.textContent = 'Yanıt Gönder';
         alert('Hata: ' + (err.message || err));
       }
-      return false;
     };
+
+    document.querySelectorAll('.vy-form').forEach((replyForm) => {
+      if (replyForm.dataset.bound === '1') return;
+      replyForm.dataset.bound = '1';
+      replyForm.addEventListener('submit', (event) => {
+        window.__vyReply(event, replyForm);
+      });
+    });
   </script>
 </Layout>

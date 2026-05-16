@@ -8,9 +8,11 @@ import { deleteCachePattern } from '../../../lib/cache';
 // List promotions
 export const GET: APIRoute = async (context) => {
   try {
+    const auth = await authenticateUser(context);
     const url = new URL(context.request.url);
     const placeId = url.searchParams.get('placeId');
-    const status = url.searchParams.get('status') || 'active';
+    const requestedStatus = url.searchParams.get('status');
+    const status = requestedStatus || 'active';
     const featured = url.searchParams.get('featured');
 
     const VALID_PROMOTION_STATUSES = new Set(['active', 'draft', 'paused', 'expired', 'scheduled']);
@@ -23,6 +25,24 @@ export const GET: APIRoute = async (context) => {
         instance: '/api/promotions',
       });
     }
+
+    const isAdmin = auth?.user.role === 'admin';
+    const isVendor = auth?.user.role === 'vendor';
+    const ownedPlaceIds = new Set(auth?.placeIds || []);
+    const vendorOwnsRequestedPlace = placeId ? ownedPlaceIds.has(placeId) : false;
+    const ownerScopedVendorRequest = isVendor && (!placeId || vendorOwnsRequestedPlace);
+
+    if (!isAdmin && !ownerScopedVendorRequest && requestedStatus && requestedStatus !== 'active') {
+      return problemJson({
+        status: 403,
+        title: 'Forbidden',
+        detail: 'Sadece aktif promosyonlar herkese açıktır',
+        type: '/problems/promotions-status-forbidden',
+        instance: '/api/promotions',
+      });
+    }
+
+    const effectiveStatus = isAdmin || ownerScopedVendorRequest ? status : 'active';
 
     let sql = `
       SELECT p.*, pl.name as place_name, pl.slug as place_slug
@@ -39,9 +59,15 @@ export const GET: APIRoute = async (context) => {
       paramIndex++;
     }
 
-    if (status) {
+    if (ownerScopedVendorRequest) {
+      sql += ` AND pl.owner_id = $${paramIndex}`;
+      params.push(auth!.user.id);
+      paramIndex++;
+    }
+
+    if (effectiveStatus) {
       sql += ` AND p.status = $${paramIndex}`;
-      params.push(status);
+      params.push(effectiveStatus);
       paramIndex++;
     }
 

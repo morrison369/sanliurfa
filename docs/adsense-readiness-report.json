@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-05-15T12:08:14.285Z",
+  "mode": "local",
+  "baseUrl": null,
+  "status": "passed",
+  "checks": [
+    {
+      "name": "public ads.txt exists",
+      "ok": true,
+      "detail": "public/ads.txt"
+    },
+    {
+      "name": "public ads.txt exact publisher line",
+      "ok": true,
+      "detail": "google.com, pub-7160871802649062, DIRECT, f08c47fec0942fa0"
+    },
+    {
+      "name": "layout adsense meta",
+      "ok": true,
+      "detail": "<meta name=\"google-adsense-account\" content=\"ca-pub-7160871802649062\""
+    },
+    {
+      "name": "layout adsense loader script",
+      "ok": true,
+      "detail": "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7160871802649062 via sf-adsense-loader"
+    },
+    {
+      "name": "robots explicit ads access",
+      "ok": true,
+      "detail": "Mediapartners-Google + /ads.txt"
+    }
+  ]
+}

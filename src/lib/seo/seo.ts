@@ -61,14 +61,12 @@ export function generateOrganizationSchema(baseUrl: string): StructuredData {
     'contactPoint': {
       '@type': 'ContactPoint',
       'contactType': 'Customer Service',
-      'telephone': '+90-414-318-0000',
-      'email': 'info@sanliurfa.com'
+      'email': 'iletisim@sanliurfa.com'
     },
     'address': {
       '@type': 'PostalAddress',
       'addressCountry': 'TR',
-      'addressRegion': 'Şanlıurfa',
-      'postalCode': '63xxx'
+      'addressRegion': 'Şanlıurfa'
     }
   };
 }

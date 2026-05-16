@@ -68,6 +68,7 @@ npm run ops:cwp:releases         # release listesi (son 20)
 npm run ops:cwp:cron:show              # mevcut cron'ları göster
 npm run ops:cwp:cron:preview           # eklenecekleri göster (dry-run)
 npm run ops:cwp:cron:diff              # mevcut vs önerilen fark
+npm run cron:readiness:report          # local/CI managed cron preview kanıtı
 npm run ops:cwp:cron:install           # 9 cron job'ı kur
 npm run ops:cwp:cron:install:if-needed # idempotent — varsa skip
 npm run ops:cwp:cron:apply-safe        # güvenli mod (yedek alır)
@@ -105,6 +106,7 @@ npm run ops:cwp:triage           # triage report
 | daily-ops | `5 4 * * *` | `ops:cwp:daily` |
 | weekly-audit | `15 4 * * 0` | `ops:cwp:weekly` |
 | release-readiness | `35 4 * * *` | `ops:cwp:release-readiness` |
+| nightly-evidence | `50 4 * * *` | `NIGHTLY_INCLUDE_ADSENSE_LIVE=1 npm run -s jobs:nightly:core` |
 
 Log konumu: `~/public_html/backups/.ops/cron-*.log`
 
@@ -298,8 +300,41 @@ exit
 
 # Lokal:
 bash scripts/prod-smoke-curl.sh             # post-deploy smoke
+npm run adsense:readiness:live              # /ads.txt, AdSense meta, robots crawler izni
+npm run release:next-actions                # advisory aksiyon planı
+npm run db:observation:cadence              # DB 14 günlük gözlem cadence
+npm run db:manual:decision:readiness        # manuel DB karar hazırlığı
 # 10/10 PASS bekleniyor
 ```
+
+---
+
+## Google Maps Scraper / Shared Hosting
+
+Google Maps scraper prod ortamda Docker ile değil, Go binary + Node.js orkestrasyonu ile çalışır.
+
+```bash
+cd ~/public_html
+npm run gmaps:prod:install                  # tek seferlik Linux binary kurulumu
+npm run gmaps:prod:check                    # binary health check
+npm run gmaps:query-plan                    # DB'den scripts/gmaps-queries.txt üretir
+npm run gmaps:discovery-plan                # kategoriler.txt'den keşif sorguları üretir
+npm run gmaps:discovery-drafts              # dry-run: keşif aday taslak raporu
+npm run gmaps:discovery-drafts:apply        # pending admin taslaklarına yazar, yayınlamaz
+npm run gmaps:enrich:full                   # depth=1, concurrency=1, local storage görseller
+```
+
+Kurallar:
+- `GMAPS_SCRAPER_BIN` verilirse önce o binary kullanılır.
+- Varsayılan prod binary yolu `$HOME/tools/google-maps-scraper`.
+- Windows ve prod PostgreSQL için `DATABASE_URL` varsa query plan DB'den üretilir; DB yoksa yerel fallback veriye düşer.
+- Dev ve prod aynı PostgreSQL URL'sini kullanıyorsa bu değer tek kaynak olarak `.env`, `.env.local`, `.env.production` veya `scripts/.env.scripts` içinde `DATABASE_URL`/`PROD_DATABASE_URL` adıyla tutulur; scriptler bu dosyaları otomatik okur.
+- `scripts/gmaps-queries.txt` satırları `arama sorgusu #!#slug` formatındadır; scraper çıktısındaki `input_id` doğrudan mekan slug eşleştirmesi sağlar.
+- `scripts/gmaps-discovery-queries.txt` kategori keşfi içindir; bu dosyadan gelen sonuçlar otomatik DB update değil, aday inceleme/import akışı için kullanılır.
+- `gmaps:discovery-drafts:apply` yalnızca `city_content_drafts` içine `pending` taslak yazar; mekan yayını, otomatik import veya otomatik publish yapmaz.
+- Shared hosting için `--concurrency=1 --depth=1` korunur.
+- `--fast-mode` kullanılacaksa upstream CLI `--geo` ister; Şanlıurfa koordinatı verilmeden fast-mode çalıştırılmaz.
+- Görseller yalnızca `/public/uploads/places` altına yazılır; CDN/object storage kullanılmaz.
 
 ---
 

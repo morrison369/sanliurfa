@@ -1,0 +1,67 @@
+{
+  "generatedAt": "2026-05-15T12:07:48.343Z",
+  "status": "ok",
+  "source": "docs/local-upload-parity-report.json",
+  "policy": {
+    "storageModel": "local_filesystem_only",
+    "automaticDeleteAllowed": false,
+    "thresholds": {
+      "advisoryPercent": 70,
+      "reviewPercent": 85,
+      "blockerPercent": 95
+    }
+  },
+  "summary": {
+    "bucketCount": 5,
+    "blockerCount": 0,
+    "reviewCount": 0,
+    "advisoryCount": 0
+  },
+  "buckets": [
+    {
+      "bucket": "places",
+      "totalMb": 113.4,
+      "fileCount": 534,
+      "candidateCount": 0,
+      "softLimitMb": 180,
+      "usedPercent": 63,
+      "status": "ok"
+    },
+    {
+      "bucket": "blogs",
+      "totalMb": 56.34,
+      "fileCount": 278,
+      "candidateCount": 0,
+      "softLimitMb": 90,
+      "usedPercent": 62.6,
+      "status": "ok"
+    },
+    {
+      "bucket": "historical",
+      "totalMb": 11.83,
+      "fileCount": 39,
+      "candidateCount": 0,
+      "softLimitMb": 30,
+      "usedPercent": 39.4,
+      "status": "ok"
+    },
+    {
+      "bucket": "recipes",
+      "totalMb": 10.36,
+      "fileCount": 57,
+      "candidateCount": 0,
+      "softLimitMb": 30,
+      "usedPercent": 34.5,
+      "status": "ok"
+    },
+    {
+      "bucket": "events",
+      "totalMb": 8.77,
+      "fileCount": 20,
+      "candidateCount": 0,
+      "softLimitMb": 30,
+      "usedPercent": 29.2,
+      "status": "ok"
+    }
+  ]
+}

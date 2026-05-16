@@ -1,0 +1,105 @@
+{
+  "generatedAt": "2026-05-15T12:07:48.669Z",
+  "status": "ok",
+  "localStorageOnly": true,
+  "externalObjectStorageConfigured": false,
+  "policy": {
+    "cdnOrObjectStorageAllowed": false,
+    "mediaSourceOfTruth": [
+      "public/images",
+      "public/uploads"
+    ],
+    "generatedAssets": [
+      "dist/client/_astro",
+      "dist/client/images"
+    ],
+    "automaticDeleteAllowed": false
+  },
+  "scannedFiles": [
+    "src/lib/security/security-headers.ts",
+    "src/lib/security/xss.ts",
+    "src/layouts/Layout.astro",
+    "src/pages/api/admin/performance/summary.ts",
+    "src/lib/deployment/index.ts",
+    "docs/CDN_CACHE_RULES.md",
+    "scripts/cache-warmup.sh",
+    "scripts/deploy-client-chunks.mjs",
+    "src/middleware.ts",
+    "src/pages/llms-full.txt.ts",
+    "src/pages/og/[slug].png.ts",
+    "src/pages/api/docs/openapi.json.ts",
+    "src/lib/audit/index.ts"
+  ],
+  "failures": [],
+  "localPaths": [
+    {
+      "path": "public/images",
+      "exists": true
+    },
+    {
+      "path": "public/uploads",
+      "exists": true
+    },
+    {
+      "path": "dist/client/_astro",
+      "exists": true
+    },
+    {
+      "path": "dist/client/images",
+      "exists": true
+    }
+  ],
+  "liveBaseUrl": "https://sanliurfa.com",
+  "liveChecks": [
+    {
+      "url": "https://sanliurfa.com/images/home/collage/balikligol.avif",
+      "status": 200,
+      "ok": true,
+      "cacheControl": "public, max-age=14400",
+      "contentType": "image/avif",
+      "server": "cloudflare",
+      "source": "live-head"
+    },
+    {
+      "url": "https://sanliurfa.com/images/home/collage/gobeklitepe.avif",
+      "status": 200,
+      "ok": true,
+      "cacheControl": "public, max-age=14400",
+      "contentType": "image/avif",
+      "server": "cloudflare",
+      "source": "live-head"
+    },
+    {
+      "url": "https://sanliurfa.com/images/home/collage/harran.avif",
+      "status": 200,
+      "ok": true,
+      "cacheControl": "public, max-age=14400",
+      "contentType": "image/avif",
+      "server": "cloudflare",
+      "source": "live-head"
+    },
+    {
+      "url": "https://sanliurfa.com/images/home/collage/halfeti.avif",
+      "status": 200,
+      "ok": true,
+      "cacheControl": "public, max-age=14400",
+      "contentType": "image/avif",
+      "server": "cloudflare",
+      "source": "live-head"
+    },
+    {
+      "url": "https://sanliurfa.com/uploads/recipes/kaburga-dolmasi.jpg",
+      "status": 200,
+      "ok": true,
+      "cacheControl": "public, max-age=14400",
+      "contentType": "image/jpeg",
+      "server": "cloudflare",
+      "source": "live-head"
+    }
+  ],
+  "notes": [
+    "Medya dosyalari local filesystem kaynakli pathlerden servis edilir.",
+    "Browser cache header degeri hosting/proxy katmaninda degisebilir; bu depolama modelini degistirmez.",
+    "Dis nesne depolama veya ucuncu parti medya dagitim servisi kullanilmaz."
+  ]
+}

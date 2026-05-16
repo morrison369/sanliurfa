@@ -242,6 +242,20 @@ export default defineConfig({
       chunkSizeWarningLimit: 200,
       rollupOptions: {
         external: ['nodemailer'],
+        output: {
+          manualChunks(id) {
+            if (id.includes('node_modules/leaflet')) return 'leaflet-vendor';
+            if (
+              id.includes('/src/data/homepage-shell') ||
+              id.includes('/src/data/homepage-theme') ||
+              id.includes('/src/lib/admin/preset-summary') ||
+              id.includes('/src/lib/admin/preset-storage')
+            ) {
+              return 'admin-site-content-shared';
+            }
+            return undefined;
+          },
+        },
       },
     },
     ssr: {

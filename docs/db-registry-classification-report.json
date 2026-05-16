@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-05-15T12:07:47.475Z",
+  "status": "advisory",
+  "destructiveActionsAllowed": false,
+  "automaticDbDropAllowed": false,
+  "summary": {
+    "tableCount": 497,
+    "indexCount": 1149,
+    "zeroScanIndexCount": 1046,
+    "protectedZeroScanIndexCount": 280,
+    "unusedIndexCount": 766,
+    "unclassifiedCount": 0,
+    "p0QuarantineCandidateCount": 2,
+    "p0RuntimeHoldCount": 1
+  },
+  "classification": {
+    "coreSurfaceCount": 340,
+    "opsRuntimeCount": 74,
+    "speculativeOrLegacyCount": 83,
+    "unclassifiedCount": 0
+  },
+  "recommendations": [
+    {
+      "priority": "P1",
+      "title": "Unclassified tablo registry kapat",
+      "status": "ok",
+      "detail": "0 tablo sınıflandırma bekliyor."
+    },
+    {
+      "priority": "P1",
+      "title": "Reviewable unused index gözlemi destructive olmayan PR ile yönet",
+      "status": "advisory",
+      "detail": "766 reviewable aday var; 280 unique/constraint protected zero-scan index drop adayı değildir."
+    },
+    {
+      "priority": "P1",
+      "title": "14 günlük production observation penceresini tamamla",
+      "status": "waiting",
+      "detail": "3/14 snapshot."
+    },
+    {
+      "priority": "P2",
+      "title": "Manual decision PR için kanıt paketini bekle",
+      "status": "waiting",
+      "detail": "0 ready, 2 waiting."
+    }
+  ]
+}

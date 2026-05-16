@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-05-14T18:51:59.342Z",
+  "mode": "local",
+  "baseUrl": null,
+  "status": "passed",
+  "checks": [
+    {
+      "name": "NewsMediaOrganization schema",
+      "ok": true,
+      "detail": "src/layouts/Layout.astro"
+    },
+    {
+      "name": "publishing principles schema",
+      "ok": true,
+      "detail": "src/layouts/Layout.astro"
+    },
+    {
+      "name": "ownership funding schema",
+      "ok": true,
+      "detail": "src/layouts/Layout.astro"
+    },
+    {
+      "name": "RSS content type",
+      "ok": true,
+      "detail": "src/pages/rss.xml.ts"
+    },
+    {
+      "name": "RSS self atom link",
+      "ok": true,
+      "detail": "src/pages/rss.xml.ts"
+    },
+    {
+      "name": "RSS editor contact",
+      "ok": true,
+      "detail": "src/pages/rss.xml.ts"
+    },
+    {
+      "name": "Publisher Center JSON endpoint",
+      "ok": true,
+      "detail": "src/pages/publisher-center.json.ts"
+    },
+    {
+      "name": "Publisher Center docs",
+      "ok": true,
+      "detail": "docs/PUBLISHER_CENTER_SETUP.md"
+    }
+  ]
+}

@@ -51,7 +51,7 @@ describe('places analytics api', () => {
   });
 
   it('returns 403 when user is not owner and not admin', async () => {
-    queryOneMock.mockResolvedValueOnce({ id: '1', user_id: 'owner-1' });
+    queryOneMock.mockResolvedValueOnce({ id: '1', owner_id: 'owner-1' });
 
     const response = await GET(
       createApiContext({
@@ -67,7 +67,7 @@ describe('places analytics api', () => {
   });
 
   it('returns analytics for owner/admin', async () => {
-    queryOneMock.mockResolvedValueOnce({ id: '1', user_id: 'u1' });
+    queryOneMock.mockResolvedValueOnce({ id: '1', owner_id: 'u1' });
     getPlaceAnalyticsMock.mockResolvedValueOnce({ views: 120, clicks: 34 });
 
     const response = await GET(

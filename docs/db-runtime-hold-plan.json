@@ -1,0 +1,354 @@
+{
+  "generatedAt": "2026-05-15T12:06:51.104Z",
+  "status": "runtime_hold",
+  "policy": {
+    "destructiveActionsAllowed": false,
+    "automaticDropAllowed": false,
+    "automaticMigrationAllowed": false
+  },
+  "summary": {
+    "table": "public.campaign_performance",
+    "runtimeReferenceCount": 2,
+    "sourceContractCount": 2,
+    "schemaAvailable": true,
+    "liveColumnCount": 13,
+    "incompatibleContractCount": 1
+  },
+  "liveSchema": {
+    "available": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "campaign_id",
+        "type": "uuid"
+      },
+      {
+        "name": "date",
+        "type": "date"
+      },
+      {
+        "name": "impressions",
+        "type": "integer"
+      },
+      {
+        "name": "clicks",
+        "type": "integer"
+      },
+      {
+        "name": "conversions",
+        "type": "integer"
+      },
+      {
+        "name": "spent",
+        "type": "numeric"
+      },
+      {
+        "name": "revenue",
+        "type": "numeric"
+      },
+      {
+        "name": "ctr",
+        "type": "numeric"
+      },
+      {
+        "name": "conversion_rate",
+        "type": "numeric"
+      },
+      {
+        "name": "roi",
+        "type": "numeric"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "metric_date",
+        "type": "date"
+      }
+    ]
+  },
+  "sourceContracts": [
+    {
+      "area": "business-marketing",
+      "file": "src/lib/marketing/marketing-campaigns.ts",
+      "expectedColumns": [
+        "campaign_id",
+        "date",
+        "impressions",
+        "clicks",
+        "conversions",
+        "spent",
+        "revenue"
+      ],
+      "references": [
+        {
+          "line": 21,
+          "text": "spent: number;"
+        },
+        {
+          "line": 32,
+          "text": "date: string;"
+        },
+        {
+          "line": 33,
+          "text": "impressions: number;"
+        },
+        {
+          "line": 34,
+          "text": "clicks: number;"
+        },
+        {
+          "line": 35,
+          "text": "conversions: number;"
+        },
+        {
+          "line": 36,
+          "text": "spent: number;"
+        },
+        {
+          "line": 37,
+          "text": "revenue: number;"
+        },
+        {
+          "line": 69,
+          "text": "spent: 0,"
+        },
+        {
+          "line": 308,
+          "text": "`SELECT * FROM campaign_performance"
+        },
+        {
+          "line": 309,
+          "text": "WHERE campaign_id = $1 AND date >= $2"
+        },
+        {
+          "line": 310,
+          "text": "ORDER BY date DESC`,"
+        },
+        {
+          "line": 327,
+          "text": "summary.total_impressions += m.impressions || 0;"
+        },
+        {
+          "line": 328,
+          "text": "summary.total_clicks += m.clicks || 0;"
+        },
+        {
+          "line": 329,
+          "text": "summary.total_conversions += m.conversions || 0;"
+        },
+        {
+          "line": 330,
+          "text": "summary.total_spent += m.spent || 0;"
+        },
+        {
+          "line": 331,
+          "text": "summary.total_revenue += m.revenue || 0;"
+        }
+      ],
+      "liveCompatible": true,
+      "missingLiveColumns": []
+    },
+    {
+      "area": "email-analytics",
+      "file": "src/lib/email/email-analytics.ts",
+      "expectedColumns": [
+        "campaign_id",
+        "metric_date",
+        "sends",
+        "opens",
+        "clicks",
+        "conversions",
+        "bounces",
+        "unsubscribes",
+        "complaints",
+        "revenue_cents"
+      ],
+      "references": [
+        {
+          "line": 12,
+          "text": "sends: number;"
+        },
+        {
+          "line": 13,
+          "text": "opens: number;"
+        },
+        {
+          "line": 16,
+          "text": "bounces: number;"
+        },
+        {
+          "line": 17,
+          "text": "unsubscribes: number;"
+        },
+        {
+          "line": 18,
+          "text": "complaints: number;"
+        },
+        {
+          "line": 32,
+          "text": "AND table_name = 'campaign_performance'"
+        },
+        {
+          "line": 66,
+          "text": "sends: overview.send_count,"
+        },
+        {
+          "line": 67,
+          "text": "opens: overview.open_count,"
+        },
+        {
+          "line": 70,
+          "text": "bounces: overview.bounce_count,"
+        },
+        {
+          "line": 71,
+          "text": "unsubscribes: overview.unsubscribe_count,"
+        },
+        {
+          "line": 72,
+          "text": "complaints: overview.complaint_count,"
+        },
+        {
+          "line": 113,
+          "text": "sends: stats.send_count,"
+        },
+        {
+          "line": 114,
+          "text": "opens: stats.open_count,"
+        },
+        {
+          "line": 120,
+          "text": "bounces: stats.bounce_count,"
+        },
+        {
+          "line": 122,
+          "text": "unsubscribes: stats.unsubscribe_count,"
+        },
+        {
+          "line": 123,
+          "text": "complaints: stats.complaint_count,"
+        },
+        {
+          "line": 142,
+          "text": "const dateColumn = has('metric_date') ? 'metric_date' : has('date') ? 'date' : null;"
+        },
+        {
+          "line": 148,
+          "text": "`${dateColumn} AS metric_date`,"
+        },
+        {
+          "line": 149,
+          "text": "has('sends') ? 'sends' : '0::int AS sends',"
+        },
+        {
+          "line": 150,
+          "text": "has('opens') ? 'opens' : '0::int AS opens',"
+        },
+        {
+          "line": 153,
+          "text": "has('bounces') ? 'bounces' : '0::int AS bounces',"
+        },
+        {
+          "line": 154,
+          "text": "has('unsubscribes') ? 'unsubscribes' : '0::int AS unsubscribes',"
+        },
+        {
+          "line": 155,
+          "text": "has('complaints') ? 'complaints' : '0::int AS complaints',"
+        },
+        {
+          "line": 156,
+          "text": "has('revenue_cents') ? 'revenue_cents' : '0::int AS revenue_cents',"
+        },
+        {
+          "line": 162,
+          "text": "FROM campaign_performance"
+        },
+        {
+          "line": 170,
+          "text": "date: new Date(m.metric_date),"
+        },
+        {
+          "line": 171,
+          "text": "sends: m.sends,"
+        },
+        {
+          "line": 172,
+          "text": "opens: m.opens,"
+        },
+        {
+          "line": 175,
+          "text": "bounces: m.bounces,"
+        },
+        {
+          "line": 176,
+          "text": "unsubscribes: m.unsubscribes,"
+        },
+        {
+          "line": 177,
+          "text": "complaints: m.complaints,"
+        },
+        {
+          "line": 178,
+          "text": "revenue: m.revenue_cents,"
+        },
+        {
+          "line": 187,
+          "text": "* Get engagement timeline (opens and clicks over time)"
+        },
+        {
+          "line": 249,
+          "text": "COUNT(CASE WHEN engagement_type = 'open' THEN 1 END) as opens,"
+        },
+        {
+          "line": 273,
+          "text": "COUNT(CASE WHEN engagement_type = 'open' THEN 1 END) as opens,"
+        },
+        {
+          "line": 363,
+          "text": "sends: c.send_count,"
+        },
+        {
+          "line": 364,
+          "text": "opens: c.open_count,"
+        },
+        {
+          "line": 369,
+          "text": "bounces: c.bounce_count,"
+        },
+        {
+          "line": 371,
+          "text": "unsubscribes: c.unsubscribe_count,"
+        },
+        {
+          "line": 372,
+          "text": "complaints: c.complaint_count,"
+        }
+      ],
+      "liveCompatible": false,
+      "missingLiveColumns": [
+        "sends",
+        "opens",
+        "bounces",
+        "unsubscribes",
+        "complaints",
+        "revenue_cents"
+      ]
+    }
+  ],
+  "decision": {
+    "action": "keep-table-runtime-hold",
+    "reason": "campaign_performance iki runtime akışı tarafından okunuyor; şema sözleşmeleri netleştirilmeden drop/quarantine güvenli değil.",
+    "nextSafeSteps": [
+      "Marketing ve email analytics için tek canonical performans tablosu seç.",
+      "Diğer akışı yeni tabloya veya compatibility view katmanına taşı.",
+      "Runtime referansları sıfırlanmadan db:retirement:observe sonucunu manuel aksiyona yükseltme.",
+      "Migration ve rollback PR hazırlanırsa önce staging smoke, sonra 14 günlük gözlem tamamlanmalı."
+    ]
+  }
+}

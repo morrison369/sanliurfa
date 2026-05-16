@@ -12,6 +12,7 @@ if (!user) {
 }
 
 let profile: any = null;
+let matchProfile: any = null;
 let errorMessage: string | null = null;
 let successMessage: string | null = null;
 let errorMessages: Record<string, string> = {};
@@ -36,6 +37,12 @@ const seo = {
 
 try {
  profile = await queryOne('SELECT * FROM users WHERE id = $1', [user.id]);
+ matchProfile = await queryOne(
+  `SELECT is_discoverable, profile_completeness, cardinality(photos) AS photo_count, preferred_district, looking_for
+   FROM user_match_profiles
+   WHERE user_id = $1`,
+  [user.id]
+ ).catch(() => null);
  errorMessage = Astro.url.searchParams.get('error');
  successMessage = Astro.url.searchParams.get('success');
  errorMessages = {
@@ -52,6 +59,13 @@ try {
 } catch (e) {
  logger.error('Error loading data:', e instanceof Error ? e : new Error(String(e)));
 }
+
+const privacySettings = profile?.privacy_settings && typeof profile.privacy_settings === 'object'
+ ? profile.privacy_settings
+ : {};
+const messageVisibility = privacySettings?.allow_messages === false ? 'Kapalı' : 'Açık';
+const publicVisibility = privacySettings?.profile_public === false ? 'Kapalı' : 'Açık';
+const socialDiscovery = matchProfile?.is_discoverable === false ? 'Kapalı' : 'Açık';
 ---
 
 <Layout seo={seo}>
@@ -83,7 +97,15 @@ try {
  .pas-form-footer{display:flex;justify-content:flex-end;margin-top:1rem}
  .pas-btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6rem 1.25rem;background:var(--public-accent);color:white;font-weight:700;font-size:.85rem;border:none;cursor:pointer;transition:background .15s}
  .pas-btn:hover{background:var(--public-accent-strong)}
+ .pas-btn-outline{background:transparent;color:var(--public-accent);border:1px solid var(--public-border);text-decoration:none}
+ .pas-btn-outline:hover{background:var(--public-accent-soft)}
  .pas-space{display:flex;flex-direction:column;gap:1.5rem}
+ .pas-status-grid{display:grid;gap:.75rem}
+ @media(min-width:48rem){.pas-status-grid{grid-template-columns:repeat(2,1fr)}}
+ .pas-status{padding:.9rem;background:var(--public-accent-soft);border:1px solid var(--public-border);border-radius:6px}
+ .pas-status-label{display:block;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--public-muted);margin-bottom:.3rem}
+ .pas-status-value{font-size:1rem;font-weight:800;color:var(--public-text);margin:0}
+ .pas-note{font-size:.82rem;color:var(--public-muted);line-height:1.55;margin:.75rem 0 0}
  </style>
 
  <div class="pas-page">
@@ -161,6 +183,48 @@ try {
  </button>
  </div>
  </form>
+ </div>
+
+ <div class="pas-card">
+ <h2 class="pas-h2">
+ <Icon name="lucide:shield-check" class="w-5 h-5" />
+ Gizlilik ve Sosyal Görünürlük
+ </h2>
+ <div class="pas-status-grid">
+ <div class="pas-status">
+ <span class="pas-status-label">Profil görünürlüğü</span>
+ <p class="pas-status-value">{publicVisibility}</p>
+ </div>
+ <div class="pas-status">
+ <span class="pas-status-label">Mesaj alma</span>
+ <p class="pas-status-value">{messageVisibility}</p>
+ </div>
+ <div class="pas-status">
+ <span class="pas-status-label">Eşleşme keşfi</span>
+ <p class="pas-status-value">{socialDiscovery}</p>
+ </div>
+ <div class="pas-status">
+ <span class="pas-status-label">Eşleşme profili</span>
+ <p class="pas-status-value">%{Number(matchProfile?.profile_completeness || 0)} · {Number(matchProfile?.photo_count || 0)}/4 fotoğraf</p>
+ </div>
+ </div>
+ <p class="pas-note">
+  Mesajlaşma güvenliği konuşma ekranında; eşleşme görünürlüğü, ilgi alanları ve fotoğraflar eşleşme panelinde yönetilir.
+ </p>
+ <div class="pas-form-footer" style="justify-content:flex-start;gap:.5rem;flex-wrap:wrap">
+ <a href="/eslesme" class="pas-btn pas-btn-outline">
+ <Icon name="lucide:sparkles" class="w-4 h-4" />
+ Eşleşme ayarları
+ </a>
+ <a href="/mesajlar" class="pas-btn pas-btn-outline">
+ <Icon name="lucide:mail" class="w-4 h-4" />
+ Mesaj güvenliği
+ </a>
+ <a href="/sosyal" class="pas-btn pas-btn-outline">
+ <Icon name="lucide:users" class="w-4 h-4" />
+ Sosyal akış
+ </a>
+ </div>
  </div>
 
  <div class="pas-card">

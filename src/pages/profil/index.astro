@@ -2,6 +2,7 @@
 import { Icon } from 'astro-icon/components';
 import Layout from '../../layouts/Layout.astro';
 import { queryOne, query } from '../../lib/postgres';
+import { getUserClassifiedSummary } from '../../lib/classifieds';
 import ProfileStats from '../../components/profile/ProfileStats.astro';
 import ProfileSidebar from '../../components/profile/ProfileSidebar.astro';
 import { logger } from '../../lib/logging';
@@ -15,6 +16,16 @@ if (!user) {
 let profile: any = null;
 let recentReviews: any[] = [];
 let matchCount = 0;
+let matchProfile: any = null;
+let subscriptionSummary: any = null;
+let classifiedSummary = {
+ total_count: 0,
+ active_count: 0,
+ pending_count: 0,
+ archived_count: 0,
+ total_views: 0,
+ total_contacts: 0,
+};
 
 const seo = {
  title: 'Profilim - Sanliurfa.com',
@@ -24,7 +35,7 @@ const seo = {
 
 try {
  profile = await queryOne('SELECT * FROM users WHERE id = $1', [user.id]);
- const [revRes, matchRes] = await Promise.all([
+ const [revRes, matchRes, matchProfileRow, subscriptionRow, classifiedSummaryRow] = await Promise.all([
   query(
    `SELECT r.id, r.rating, r.title, r.created_at, p.name AS place_name, p.slug AS place_slug
     FROM reviews r
@@ -37,14 +48,40 @@ try {
    `SELECT COUNT(*)::int AS c FROM social_matches WHERE user_a_id = $1 OR user_b_id = $1`,
    [user.id]
   ),
+  queryOne(
+   `SELECT is_discoverable, profile_completeness, cardinality(photos) AS photo_count, updated_at
+    FROM user_match_profiles
+    WHERE user_id = $1`,
+   [user.id]
+  ).catch(() => null),
+  queryOne(
+   `SELECT s.status, s.billing_cycle, s.end_date, st.display_name, st.name
+    FROM subscriptions s
+    LEFT JOIN subscription_tiers st ON st.id = s.tier_id
+    WHERE s.user_id = $1
+    ORDER BY (s.status = 'active') DESC, s.created_at DESC
+   LIMIT 1`,
+   [user.id]
+  ).catch(() => null),
+  getUserClassifiedSummary(user.id).catch(() => classifiedSummary),
  ]);
  recentReviews = revRes.rows;
  matchCount = Number(matchRes.rows[0]?.c || 0);
+ matchProfile = matchProfileRow;
+ subscriptionSummary = subscriptionRow;
+ classifiedSummary = classifiedSummaryRow;
 } catch (e) {
  logger.error('Error loading profile data:', e instanceof Error ? e : new Error(String(e)));
 }
 
 const initial = (profile?.full_name || user.email || 'U').charAt(0).toUpperCase();
+const privacySettings = profile?.privacy_settings && typeof profile.privacy_settings === 'object'
+ ? profile.privacy_settings
+ : {};
+const profileCompleteness = Number(matchProfile?.profile_completeness || 0);
+const matchPhotoCount = Number(matchProfile?.photo_count || 0);
+const membershipLabel = subscriptionSummary?.display_name || subscriptionSummary?.name || profile?.subscription_tier || 'Ücretsiz üye';
+const membershipStatus = subscriptionSummary?.status === 'active' ? 'Aktif' : subscriptionSummary?.status ? String(subscriptionSummary.status) : 'Standart';
 ---
 
 <Layout seo={seo}>
@@ -75,10 +112,20 @@ const initial = (profile?.full_name || user.email || 'U').charAt(0).toUpperCase(
   .pi-value{color:var(--public-text);font-size:.95rem;font-weight:500;margin:0;word-break:break-word}
 
   /* Quick stats */
-  .pi-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1.25rem 0}
+  .pi-stats-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;margin:1.25rem 0}
+  @media(max-width:52rem){.pi-stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
   .pi-stat{padding:1rem;text-align:center;background:linear-gradient(135deg,var(--public-accent-soft),var(--public-surface-muted));border:1px solid var(--public-border);border-radius:8px}
   .pi-stat-num{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:800;line-height:1;background:linear-gradient(135deg,var(--public-accent),var(--public-warning));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--public-accent)}
   .pi-stat-lbl{font-size:.7rem;font-weight:600;color:var(--public-muted);margin-top:.4rem;text-transform:uppercase;letter-spacing:.08em}
+  .pi-hub-grid{display:grid;gap:.75rem}
+  @media(min-width:48rem){.pi-hub-grid{grid-template-columns:repeat(2,1fr)}}
+  .pi-hub{display:flex;flex-direction:column;gap:.65rem;padding:1rem;background:linear-gradient(135deg,var(--public-surface-muted),var(--public-accent-soft));border:1px solid var(--public-border);border-radius:8px}
+  .pi-hub-top{display:flex;align-items:center;justify-content:space-between;gap:.75rem}
+  .pi-hub-title{font-weight:800;color:var(--public-text);font-size:.95rem;margin:0}
+  .pi-hub-kpi{font-family:'Cormorant Garamond',serif;font-weight:800;font-size:1.55rem;color:var(--public-accent);line-height:1}
+  .pi-hub-text{font-size:.8rem;color:var(--public-muted);line-height:1.45;margin:0}
+  .pi-hub-link{display:inline-flex;align-items:center;gap:.35rem;font-size:.78rem;font-weight:800;color:var(--public-accent);text-decoration:none}
+  .pi-hub-link:hover{text-decoration:underline}
 
   /* Recent reviews */
   .pi-rev-list{display:flex;flex-direction:column;gap:.75rem}
@@ -122,8 +169,20 @@ const initial = (profile?.full_name || user.email || 'U').charAt(0).toUpperCase(
        {(() => {
         const p = profile?.points || 0;
         const tier = p >= 5000 ? 'Platin' : p >= 1500 ? 'Altın' : p >= 500 ? 'Gümüş' : p >= 100 ? 'Bronz' : 'Yeni Üye';
-        const color = tier === 'Platin' ? '#9F8EFF' : tier === 'Altın' ? '#D49718' : tier === 'Gümüş' ? '#9C9C9C' : tier === 'Bronz' ? '#C0571F' : '#7A6B58';
-        return <span style={`margin-left:.5rem;padding:.15rem .55rem;background:${color}15;color:${color};border:1px solid ${color}40;border-radius:999px;font-size:.72rem;font-weight:700`}>{tier}</span>;
+        const tone = tier === 'Platin'
+         ? { text: '#9F8EFF', background: '#9F8EFF15', border: '#9F8EFF40' }
+         : tier === 'Altın'
+          ? { text: '#D49718', background: '#D4971815', border: '#D4971840' }
+          : tier === 'Gümüş'
+           ? { text: '#9C9C9C', background: '#9C9C9C15', border: '#9C9C9C40' }
+           : tier === 'Bronz'
+            ? { text: '#C0571F', background: '#C0571F15', border: '#C0571F40' }
+            : {
+             text: 'var(--public-text-soft)',
+             background: 'color-mix(in srgb, var(--public-text-soft) 14%, transparent)',
+             border: 'color-mix(in srgb, var(--public-text-soft) 24%, transparent)',
+            };
+        return <span style={`margin-left:.5rem;padding:.15rem .55rem;background:${tone.background};color:${tone.text};border:1px solid ${tone.border};border-radius:999px;font-size:.72rem;font-weight:700`}>{tier}</span>;
        })()}
       </p>
      </div>
@@ -146,6 +205,62 @@ const initial = (profile?.full_name || user.email || 'U').charAt(0).toUpperCase(
        <div class="pi-stat">
         <div class="pi-stat-num">{profile?.level || 1}</div>
         <div class="pi-stat-lbl">Seviye</div>
+       </div>
+       <div class="pi-stat">
+        <div class="pi-stat-num">{classifiedSummary.active_count}</div>
+        <div class="pi-stat-lbl">Aktif İlan</div>
+       </div>
+      </div>
+     </div>
+
+     <!-- Membership and social hub -->
+     <div class="pi-card">
+      <h2 class="pi-card-h">Üyelik ve Sosyal Merkez</h2>
+      <p class="pi-card-sub">Abonelik, eşleşme, mesajlaşma ve görünürlük durumunuz tek ekranda.</p>
+      <div class="pi-hub-grid">
+       <div class="pi-hub">
+        <div class="pi-hub-top">
+         <p class="pi-hub-title">Eşleşme Profili</p>
+         <span class="pi-hub-kpi">%{profileCompleteness}</span>
+        </div>
+        <p class="pi-hub-text">{matchProfile?.is_discoverable === false ? 'Keşfedilebilirlik kapalı. Diğer üyeler sizi eşleşme kartlarında göremez.' : `Keşfedilebilirlik açık. ${matchPhotoCount}/4 fotoğraf yüklü.`}</p>
+        <a href="/eslesme" class="pi-hub-link"><Icon name="lucide:sparkles" style="width:.85rem;height:.85rem" /> Eşleşmeyi geliştir</a>
+       </div>
+       <div class="pi-hub">
+        <div class="pi-hub-top">
+         <p class="pi-hub-title">Mesajlaşma</p>
+         <span class="pi-hub-kpi">{matchCount}</span>
+        </div>
+        <p class="pi-hub-text">Eşleşmelerinizden ve sosyal etkileşimlerden gelen konuşmaları tek gelen kutusunda takip edin.</p>
+        <a href="/mesajlar" class="pi-hub-link"><Icon name="lucide:mail" style="width:.85rem;height:.85rem" /> Mesajları aç</a>
+       </div>
+       <div class="pi-hub">
+        <div class="pi-hub-top">
+         <p class="pi-hub-title">Üyelik</p>
+         <span class="pi-hub-kpi">{membershipStatus}</span>
+        </div>
+        <p class="pi-hub-text">{membershipLabel} paketi görünüyor. Premium ve işletme avantajları abonelik sayfasından yönetilir.</p>
+        <a href="/abonelik" class="pi-hub-link"><Icon name="lucide:badge-check" style="width:.85rem;height:.85rem" /> Aboneliği yönet</a>
+       </div>
+       <div class="pi-hub">
+        <div class="pi-hub-top">
+         <p class="pi-hub-title">Gizlilik</p>
+         <span class="pi-hub-kpi">{privacySettings?.profile_public === false ? 'Kapalı' : 'Açık'}</span>
+        </div>
+        <p class="pi-hub-text">Profil görünürlüğü, mesaj alma ve sosyal keşif ayarlarını düzenli kontrol edin.</p>
+        <a href="/profil/ayarlar" class="pi-hub-link"><Icon name="lucide:shield" style="width:.85rem;height:.85rem" /> Gizlilik ayarları</a>
+       </div>
+       <div class="pi-hub">
+        <div class="pi-hub-top">
+         <p class="pi-hub-title">İlan Merkezi</p>
+         <span class="pi-hub-kpi">{classifiedSummary.total_count}</span>
+        </div>
+        <p class="pi-hub-text">
+         {classifiedSummary.pending_count > 0
+          ? `${classifiedSummary.pending_count} ilanınız inceleme kuyruğunda. Toplam ${classifiedSummary.total_views} görüntüleme ve ${classifiedSummary.total_contacts} iletişim etkileşimi var.`
+          : `Toplam ${classifiedSummary.total_views} görüntüleme ve ${classifiedSummary.total_contacts} iletişim etkileşimiyle ücretsiz ilanlarınızı yönetin.`}
+        </p>
+        <a href="/profil/ilanlar" class="pi-hub-link"><Icon name="lucide:badge-plus" style="width:.85rem;height:.85rem" /> İlanlarımı yönet</a>
        </div>
       </div>
      </div>
@@ -190,6 +305,10 @@ const initial = (profile?.full_name || user.email || 'U').charAt(0).toUpperCase(
        <a href="/profil/favoriler" class="pi-btn pi-btn-outline">
         <Icon name="lucide:heart" style="width:.95rem;height:.95rem" />
         Favoriler
+       </a>
+       <a href="/profil/ilanlar" class="pi-btn pi-btn-outline">
+        <Icon name="lucide:briefcase-business" style="width:.95rem;height:.95rem" />
+        İlanlarım
        </a>
       </div>
      </div>

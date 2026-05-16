@@ -1,5 +1,7 @@
 ---
 import Icon from './Icon.astro';
+import { getSiteSetting } from '../lib/site-content';
+import { PUBLISHER_PROFILE } from '../lib/transparency';
 
 const year = new Date().getFullYear();
 
@@ -10,7 +12,7 @@ const social = [
   { label: 'YouTube',   href: 'https://www.youtube.com/@sanliurfacom',  icon: 'lucide:youtube'   },
 ];
 
-const groups = [
+const fallbackGroups = [
   {
     title: 'Keşfet',
     links: [
@@ -64,6 +66,7 @@ const groups = [
     links: [
       { label: 'Hakkımızda', href: '/hakkinda' },
       { label: 'Yazarlar', href: '/yazarlar' },
+      { label: 'Yayın Politikası', href: '/yayin-politikasi' },
       { label: 'İletişim', href: '/iletisim' },
       { label: 'Künye', href: '/kunye' },
       { label: 'İşletme Ekle', href: '/isletme-kayit' },
@@ -71,6 +74,12 @@ const groups = [
     ],
   },
 ];
+
+const footerLinksSetting = await getSiteSetting('footer.links', { groups: fallbackGroups });
+const groups =
+  Array.isArray(footerLinksSetting.groups) && footerLinksSetting.groups.length > 0
+    ? footerLinksSetting.groups
+    : fallbackGroups;
 ---
 
 <footer class="bg-[#100a05]">
@@ -85,7 +94,8 @@ const groups = [
           12.000 Yıllık Tarihin Modern Rehberi
         </p>
         <p class="mt-4 max-w-sm text-sm leading-7 text-white/50">
-          Şanlıurfa mekanları, gezi rotaları, ilçeler, yemek kültürü ve günlük şehir servisleri için modern yerel rehber.
+          Şanlıurfa mekanları, gezi rotaları, ilçeler, yemek kültürü ve günlük şehir servisleri için
+          editöryel standartlarla hazırlanan yerel rehber.
         </p>
         <div class="mt-5 flex flex-wrap gap-2">
           <a href="/saglik/nobetci-eczaneler" class="rounded-full border border-white/15 bg-white/6 px-3 py-2 text-xs font-bold text-white/65 transition hover:border-[#f4c56e]/45 hover:text-[#f4c56e]">Nöbetçi Eczane</a>
@@ -115,9 +125,13 @@ const groups = [
         <div class="mt-7">
           <p class="text-xs font-black uppercase tracking-[0.13em] text-[#f4c56e]/80">İletişim</p>
           <address class="mt-3 not-italic text-sm leading-7 text-white/55">
-            <p>📧 <a href="mailto:iletisim@sanliurfa.com" class="hover:text-[#f4c56e]">iletisim@sanliurfa.com</a></p>
-            <p>📍 Eyyübiye, Şanlıurfa, Türkiye</p>
+            <p>🏢 {PUBLISHER_PROFILE.legalName}</p>
+            <p>📰 <a href="/yazarlar#editoryel-ekip" class="hover:text-[#f4c56e]">{PUBLISHER_PROFILE.publisherName}</a></p>
+            <p>📧 <a href={`mailto:${PUBLISHER_PROFILE.generalEmail}`} class="hover:text-[#f4c56e]">{PUBLISHER_PROFILE.generalEmail}</a></p>
+            <p>💼 <a href={`mailto:${PUBLISHER_PROFILE.businessEmail}`} class="hover:text-[#f4c56e]">{PUBLISHER_PROFILE.businessEmail}</a></p>
+            <p>📍 {PUBLISHER_PROFILE.address}</p>
             <p>📄 <a href="/kunye" class="hover:text-[#f4c56e]">Yayın bilgileri (Künye)</a></p>
+            <p>📘 <a href="/yayin-politikasi" class="hover:text-[#f4c56e]">Yayın politikası ve düzeltme ilkeleri</a></p>
           </address>
         </div>
 
@@ -163,6 +177,7 @@ const groups = [
       <div class="flex flex-wrap gap-4">
         <a href="/kullanim-kosullari" class="inline-flex min-h-8 items-center transition hover:text-white/65">Kullanım Koşulları</a>
         <a href="/kvkk" class="inline-flex min-h-8 items-center transition hover:text-white/65">KVKK</a>
+        <a href="/yayin-politikasi" class="inline-flex min-h-8 items-center transition hover:text-white/65">Yayın Politikası</a>
         <a href="/iletisim" class="inline-flex min-h-8 items-center transition hover:text-white/65">İletişim</a>
       </div>
     </div>

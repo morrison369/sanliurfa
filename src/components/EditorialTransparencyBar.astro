@@ -1,0 +1,152 @@
+---
+import { PUBLISHER_PROFILE, formatTransparencyDate } from '../lib/transparency';
+
+interface Props {
+  author?: string | undefined;
+  publishedTime?: string | undefined;
+  modifiedTime?: string | undefined;
+  contentKind?: string | undefined;
+  sourceNote?: string | undefined;
+  reviewPolicy?: string | undefined;
+}
+
+const { author, publishedTime, modifiedTime, contentKind, sourceNote, reviewPolicy } =
+  Astro.props as Props;
+
+const authorName = author || PUBLISHER_PROFILE.publisherName;
+const publishedLabel = formatTransparencyDate(publishedTime);
+const modifiedLabel = formatTransparencyDate(modifiedTime);
+const transparencyReviewedLabel =
+  formatTransparencyDate(PUBLISHER_PROFILE.transparencyReviewedAtIso) || '13 Mayıs 2026';
+---
+
+<section class="etb" aria-labelledby="etb-title">
+  <div class="sf-container">
+    <div class="etb-card">
+      <div class="etb-head">
+        <p class="etb-eyebrow">Yayıncı Şeffaflığı</p>
+        <h2 class="etb-title" id="etb-title">İçeriğin arkasındaki ekip ve iletişim bilgileri</h2>
+      </div>
+
+      <div class="etb-grid">
+        <p><strong>Yayıncı:</strong> {PUBLISHER_PROFILE.publisherName}</p>
+        <p><strong>Yayıncı kuruluş / ağ:</strong> {PUBLISHER_PROFILE.legalName}</p>
+        <p><strong>Platform / yayın ağı:</strong> {PUBLISHER_PROFILE.platformName}</p>
+        <p><strong>Hazırlayan ekip:</strong> {authorName}</p>
+        <p><strong>İçerik türü:</strong> {contentKind || 'Şehir rehberi ve editöryel içerik'}</p>
+        <p><strong>Kuruluş:</strong> {PUBLISHER_PROFILE.foundedYear}</p>
+        {publishedLabel && <p><strong>Yayın tarihi:</strong> {publishedLabel}</p>}
+        {modifiedLabel && <p><strong>Son güncelleme:</strong> {modifiedLabel}</p>}
+        <p><strong>Şeffaflık incelemesi:</strong> {transparencyReviewedLabel}</p>
+        <p>
+          <strong>İletişim:</strong>{' '}
+          <a href={`mailto:${PUBLISHER_PROFILE.generalEmail}`}>{PUBLISHER_PROFILE.generalEmail}</a>
+          {' · '}
+          <a href={`mailto:${PUBLISHER_PROFILE.businessEmail}`}>{PUBLISHER_PROFILE.businessEmail}</a>
+        </p>
+        <p><strong>Adres:</strong> {PUBLISHER_PROFILE.address}</p>
+        <p><strong>Kaynak notu:</strong> {sourceNote || 'Yerel editöryel kontrol, resmi kaynaklar ve kullanıcı geri bildirimleri birlikte değerlendirilir.'}</p>
+        <p><strong>İnceleme politikası:</strong> {reviewPolicy || 'Önemli sayfalar düzenli olarak güncellenir; hata bildirimi iletişim kanalları üzerinden alınır.'}</p>
+      </div>
+
+      <nav class="etb-links" aria-label="Yayıncı bağlantıları">
+        <a href={PUBLISHER_PROFILE.aboutPath}>Hakkımızda</a>
+        <a href={PUBLISHER_PROFILE.imprintPath}>Künye</a>
+        <a href={PUBLISHER_PROFILE.authorsPath}>Yazarlar</a>
+        <a href={PUBLISHER_PROFILE.policyPath}>Yayın Politikası</a>
+        <a href={PUBLISHER_PROFILE.contactPath}>İletişim</a>
+      </nav>
+
+      <p class="etb-note">
+        Yazar profilleri, yayıncı kimliği, reklam ve sponsor açıklamaları, düzeltme talepleri
+        ile iletişim kanalları bu bağlantılarda açıkça yer alır.
+      </p>
+    </div>
+  </div>
+</section>
+
+<style>
+  .etb {
+    padding: 1.5rem 0 0;
+    background: transparent;
+  }
+
+  .etb-card {
+    border: 1px solid rgba(184, 115, 51, 0.18);
+    background: var(--bg-card);
+    padding: 1.25rem;
+    border-radius: 0.5rem;
+  }
+
+  .etb-head {
+    margin-bottom: 1rem;
+  }
+
+  .etb-eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--public-accent);
+  }
+
+  .etb-title {
+    margin: 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.35rem, 2vw, 1.8rem);
+    color: var(--public-text);
+  }
+
+  .etb-grid {
+    display: grid;
+    gap: 0.65rem 1rem;
+    color: var(--public-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  @media (min-width: 48rem) {
+    .etb-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .etb-grid p {
+    margin: 0;
+  }
+
+  .etb-grid strong {
+    color: var(--public-text);
+    font-weight: 700;
+  }
+
+  .etb-grid a,
+  .etb-links a {
+    color: var(--public-accent);
+    text-decoration: none;
+  }
+
+  .etb-grid a:hover,
+  .etb-links a:hover {
+    text-decoration: underline;
+  }
+
+  .etb-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(184, 115, 51, 0.14);
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .etb-note {
+    margin: 0.9rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.65;
+    color: var(--public-text-soft);
+  }
+</style>

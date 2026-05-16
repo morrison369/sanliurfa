@@ -20,11 +20,15 @@ const CSP_DIRECTIVES = {
     "'unsafe-inline'", // Required for Astro hydration
     "https://analytics.sanliurfa.com",
     "https://maps.googleapis.com",
+    "https://pagead2.googlesyndication.com",
+    "https://*.googlesyndication.com",
+    "https://*.doubleclick.net",
+    "https://ep2.adtrafficquality.google",
+    "https://*.adtrafficquality.google",
   ],
   'style-src': [
     "'self'",
     "'unsafe-inline'", // Required for styled-components/inline styles
-    "https://fonts.googleapis.com",
   ],
   'img-src': [
     "'self'",
@@ -36,13 +40,27 @@ const CSP_DIRECTIVES = {
   ],
   'font-src': [
     "'self'",
-    "https://fonts.gstatic.com",
   ],
   'connect-src': [
     "'self'",
     "https://api.sanliurfa.com",
     "wss://realtime.sanliurfa.com",
     "https://analytics.sanliurfa.com",
+    "https://pagead2.googlesyndication.com",
+    "https://*.googlesyndication.com",
+    "https://*.doubleclick.net",
+    "https://ep1.adtrafficquality.google",
+    "https://*.adtrafficquality.google",
+  ],
+  'frame-src': [
+    "'self'",
+    "https://www.google.com",
+    "https://googleads.g.doubleclick.net",
+    "https://tpc.googlesyndication.com",
+    "https://*.googlesyndication.com",
+    "https://*.doubleclick.net",
+    "https://ep2.adtrafficquality.google",
+    "https://*.adtrafficquality.google",
   ],
   'media-src': ["'self'", "https://videos.sanliurfa.com"],
   'object-src': ["'none'"],

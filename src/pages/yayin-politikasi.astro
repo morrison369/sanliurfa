@@ -1,0 +1,243 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getPublicAppUrl } from '../lib/public-app-url';
+import { PUBLISHER_PROFILE } from '../lib/transparency';
+
+const baseUrl = getPublicAppUrl();
+
+const seo = {
+  title: 'Yayın Politikası - Sanliurfa.com',
+  description:
+    'Sanliurfa.com yayın politikası: yazar bilgisi, açık tarihler, düzeltme süreci, reklam şeffaflığı, kaynak kullanımı ve iletişim kuralları.',
+  keywords: [
+    'sanliurfa.com yayın politikası',
+    'editöryel ilkeler',
+    'düzeltme politikası',
+    'yayıncı şeffaflığı',
+  ],
+  canonical: '/yayin-politikasi',
+  modifiedTime: PUBLISHER_PROFILE.transparencyReviewedAtIso,
+};
+---
+
+<Layout seo={seo}>
+  <main class="yp-page">
+    <div class="sf-container">
+      <section class="yp-hero">
+        <p class="yp-lbl">Şeffaflık</p>
+        <h1 class="yp-h1">Yayın Politikası</h1>
+        <p class="yp-desc">
+          Bu sayfa, Sanliurfa.com içeriklerinin nasıl hazırlandığını, kim tarafından
+          yayınlandığını, açık tarih ve yazar bilgilerinin nasıl gösterildiğini, hata
+          düzeltme süreçlerini ve reklam şeffaflığı kurallarını açıklar.
+        </p>
+        <p class="yp-meta">
+          Son gözden geçirme:
+          <strong>{new Date(PUBLISHER_PROFILE.transparencyReviewedAtIso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
+        </p>
+      </section>
+
+      <div class="yp-grid">
+        <section class="yp-card">
+          <h2>Yayıncı ve içerik sorumluluğu</h2>
+          <p>
+            Sanliurfa.com içerikleri, <strong>{PUBLISHER_PROFILE.publisherName}</strong> tarafından
+            hazırlanır ve yayınlanır. Platformun kurumsal ve iletişim bilgileri
+            <a href="/kunye"> Künye</a> sayfasında açıkça yer alır.
+          </p>
+          <p>
+            Yazar profilleri, uzmanlık alanları ve ekip rolleri
+            <a href="/yazarlar"> Yazarlar</a> sayfasında listelenir.
+          </p>
+        </section>
+
+        <section class="yp-card">
+          <h2>Yazar adı ve açık tarihler</h2>
+          <p>
+            Blog yazıları, tarifler, rehber içerikleri ve kurumsal sayfalar; mümkün olan her durumda
+            yazar adı veya ekip imzası ile yayınlanır.
+          </p>
+          <ul>
+            <li>İçerik yayınlandığında yayın tarihi görünür.</li>
+            <li>İçerik güncellendiğinde son güncelleme tarihi ayrıca gösterilir.</li>
+            <li>Kurumsal şeffaflık sayfalarında son gözden geçirme tarihi açıkça yer alır.</li>
+          </ul>
+        </section>
+
+        <section class="yp-card">
+          <h2>Kaynak kullanımı ve doğrulama</h2>
+          <p>
+            Şehir rehberi, mekan, gezi, tarih ve gastronomi içerikleri yerel araştırma, resmi kaynaklar,
+            saha notları ve kullanıcı geri bildirimleri ile hazırlanır.
+          </p>
+          <p>
+            Değişken bilgilerin bulunduğu alanlarda, ziyaretçiye işletme veya resmi kurumla yeniden
+            doğrulama yapması önerilir.
+          </p>
+        </section>
+
+        <section class="yp-card">
+          <h2>Düzeltme ve geri bildirim süreci</h2>
+          <p>
+            Hatalı bilgi, güncel olmayan detay veya içerik itirazları için
+            <a href={`mailto:${PUBLISHER_PROFILE.generalEmail}`}> {PUBLISHER_PROFILE.generalEmail}</a>
+            adresi ya da <a href="/iletisim">iletişim formu</a> kullanılır.
+          </p>
+          <ul>
+            <li>Talep alındığında editöryel ekip inceleme yapar.</li>
+            <li>Doğrulanan hatalar makul süre içinde düzeltilir.</li>
+            <li>Önemli güncellemelerde sayfa üzerindeki tarih bilgisi yenilenir.</li>
+          </ul>
+        </section>
+
+        <section class="yp-card">
+          <h2>Reklam ve sponsorlu içerik şeffaflığı</h2>
+          <p>
+            Sponsorlu, reklam veya işbirliği kapsamında yayınlanan içerikler kullanıcıya açıkça belirtilir.
+            Editöryel içerik ile reklam içeriği birbirine karıştırılmaz.
+          </p>
+          <p>
+            İşletme ve reklam talepleri için
+            <a href={`mailto:${PUBLISHER_PROFILE.businessEmail}`}> {PUBLISHER_PROFILE.businessEmail}</a>
+            adresi kullanılır.
+          </p>
+        </section>
+
+        <section class="yp-card">
+          <h2>Topluluk içerikleri ve moderasyon</h2>
+          <p>
+            Kullanıcı yorumları, fotoğrafları ve topluluk katkıları moderasyon sürecinden geçer.
+            Topluluk içerikleri ilgili kullanıcının görüşüdür; gerektiğinde editöryel denetim uygulanır.
+          </p>
+        </section>
+
+        <section class="yp-card">
+          <h2>Şeffaflık bağlantıları</h2>
+          <ul>
+            <li><a href="/kunye">Künye</a> — yayıncı, adres ve iletişim bilgileri</li>
+            <li><a href="/yazarlar">Yazarlar</a> — ekip ve uzmanlık alanları</li>
+            <li><a href="/iletisim">İletişim</a> — geri bildirim ve düzeltme kanalı</li>
+            <li><a href="/gizlilik-politikasi">Gizlilik Politikası</a> — veri ve çerez şeffaflığı</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script type="application/ld+json" set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: 'Sanliurfa.com Yayın Politikası',
+    url: `${baseUrl}/yayin-politikasi`,
+    dateModified: PUBLISHER_PROFILE.transparencyReviewedAtIso,
+    publisher: {
+      '@type': 'Organization',
+      name: PUBLISHER_PROFILE.siteName,
+      url: baseUrl,
+      email: PUBLISHER_PROFILE.generalEmail,
+    },
+    author: {
+      '@type': 'Organization',
+      name: PUBLISHER_PROFILE.publisherName,
+      url: `${baseUrl}${PUBLISHER_PROFILE.authorsPath}`,
+    },
+  })} is:inline />
+</Layout>
+
+<style>
+  .yp-page {
+    min-height: 100vh;
+    padding: 3rem 0 5rem;
+    background: var(--public-bg);
+  }
+
+  .yp-hero {
+    max-width: 48rem;
+    margin: 0 auto 2rem;
+  }
+
+  .yp-lbl {
+    margin: 0 0 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--public-accent);
+  }
+
+  .yp-h1 {
+    margin: 0 0 0.75rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 700;
+    color: var(--public-text);
+  }
+
+  .yp-desc,
+  .yp-card p,
+  .yp-card li {
+    font-size: 0.94rem;
+    line-height: 1.75;
+    color: var(--public-muted);
+  }
+
+  .yp-meta {
+    margin: 1rem 0 0;
+    font-size: 0.8rem;
+    color: var(--public-text-soft);
+  }
+
+  .yp-meta strong {
+    color: var(--public-text);
+  }
+
+  .yp-grid {
+    max-width: 60rem;
+    margin: 0 auto;
+    display: grid;
+    gap: 1rem;
+  }
+
+  @media (min-width: 56rem) {
+    .yp-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .yp-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(184, 115, 51, 0.18);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+  }
+
+  .yp-card h2 {
+    margin: 0 0 0.75rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    color: var(--public-text);
+  }
+
+  .yp-card p,
+  .yp-card ul {
+    margin: 0 0 0.75rem;
+  }
+
+  .yp-card ul {
+    padding-left: 1.2rem;
+  }
+
+  .yp-card li {
+    margin-bottom: 0.4rem;
+  }
+
+  .yp-card a {
+    color: var(--public-accent);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .yp-card a:hover {
+    text-decoration: underline;
+  }
+</style>

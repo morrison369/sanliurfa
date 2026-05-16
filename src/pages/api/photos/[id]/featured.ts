@@ -64,9 +64,9 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     }
 
     // Check authorization - only admin or place owner can set featured
-    const place = await queryOne('SELECT user_id FROM places WHERE id = $1', [photo.place_id]);
+    const place = await queryOne('SELECT owner_id FROM places WHERE id = $1', [photo.place_id]);
     const isAdmin = user.role === 'admin';
-    const isPlaceOwner = place?.user_id === user.id;
+    const isPlaceOwner = place?.owner_id === user.id;
     const isPhotoOwner = photo.uploaded_by === user.id;
 
     if (!isAdmin && !isPlaceOwner && !isPhotoOwner) {

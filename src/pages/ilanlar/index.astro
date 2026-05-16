@@ -1,0 +1,617 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getPublicAppUrl } from '../../lib/public-app-url';
+import {
+  getClassifiedCategoryTree,
+  getClassifiedCategoryCounts,
+  getClassifiedDistricts,
+  getClassifiedPriceFacetCounts,
+  listClassifieds,
+  type ClassifiedListing,
+} from '../../lib/classifieds';
+
+const user = Astro.locals.user;
+const category = Astro.url.searchParams.get('kategori') || '';
+const district = Astro.url.searchParams.get('ilce') || '';
+const priceBand = Astro.url.searchParams.get('fiyat') || '';
+const q = Astro.url.searchParams.get('q') || '';
+
+let listings: ClassifiedListing[] = [];
+let loadError = '';
+try {
+  listings = await listClassifieds({
+    categorySlug: category,
+    district,
+    priceBand,
+    q,
+    includePendingForUserId: user?.id ?? null,
+    limit: 36,
+  });
+} catch (error) {
+  loadError = error instanceof Error ? error.message : 'İlanlar yüklenemedi.';
+}
+
+const categories = getClassifiedCategoryTree();
+const categoryCounts = await getClassifiedCategoryCounts().catch(() => new Map<string, number>());
+const districts = getClassifiedDistricts();
+const formatter = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 });
+const priceFacets = await getClassifiedPriceFacetCounts({
+  categorySlug: category || null,
+  district: district || null,
+  q: q || null,
+  includePendingForUserId: user?.id ?? null,
+}).catch(() => []);
+const baseUrl = getPublicAppUrl();
+const canonical = '/ilanlar';
+const seo = {
+  title: 'Şanlıurfa Ücretsiz İlanlar | Sanliurfa.com',
+  description:
+    'Şanlıurfa üyelerine özel ücretsiz emlak, vasıta, yedek parça ve ikinci el alışveriş ilanları.',
+  canonical,
+};
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+    { '@type': 'ListItem', position: 2, name: 'İlanlar', item: `${baseUrl}${canonical}` },
+  ],
+};
+const itemListSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Şanlıurfa ücretsiz ilanlar',
+  itemListOrder: 'https://schema.org/ItemListOrderDescending',
+  numberOfItems: listings.length,
+  itemListElement: listings.slice(0, 20).map((listing, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    url: `${baseUrl}/ilanlar/${listing.slug}`,
+    name: listing.title,
+  })),
+};
+const hasActiveFilters = Boolean(category || district || q || priceBand);
+const pricedListings = listings.filter((listing) => Number(listing.price || 0) > 0);
+const averagePrice =
+  pricedListings.length > 0
+    ? Math.round(pricedListings.reduce((sum, listing) => sum + Number(listing.price || 0), 0) / pricedListings.length)
+    : 0;
+const districtCoverage = new Set(listings.map((listing) => listing.district).filter(Boolean)).size;
+const qualityStrongCount = listings.filter(
+  (listing) =>
+    Array.isArray(listing.images) &&
+    listing.images.length > 0 &&
+    Boolean(listing.phone) &&
+    Boolean(listing.address),
+).length;
+const qualityStrongRate = listings.length > 0 ? Math.round((qualityStrongCount / listings.length) * 100) : 0;
+const newestListingDate = listings[0]?.created_at ? new Date(listings[0].created_at).toLocaleDateString('tr-TR') : null;
+const marketSummary = {
+  active: listings.length > 0 ? String(listings.length) : 'Veri yok',
+  activeNote:
+    listings.length > 0
+      ? 'Seçili filtrelerle şu an görünen ilan sayısı.'
+      : 'Bu görünümde henüz listelenecek ilan görünmüyor.',
+  average: pricedListings.length > 0 ? formatter.format(averagePrice) : 'Fiyat verisi yok',
+  averageNote:
+    pricedListings.length > 0
+      ? 'Fiyat girilmiş ilanların ortalama seviyesi.'
+      : 'Ortalama hesaplamak için yeterli fiyatlı ilan yok.',
+  quality: listings.length > 0 ? `%${qualityStrongRate}` : 'Kalite verisi yok',
+  qualityNote:
+    listings.length > 0
+      ? 'Görsel, telefon ve adresi birlikte dolu ilanların payı.'
+      : 'Kalite oranı için görünür ilan verisi bekleniyor.',
+  coverage: districtCoverage > 0 ? String(districtCoverage) : 'İlçe verisi yok',
+  coverageNote: newestListingDate ? `Son yeni ilan: ${newestListingDate}` : 'Henüz tarih sinyali yok.',
+};
+---
+
+<Layout seo={seo}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} is:inline />
+    <script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} is:inline />
+  </Fragment>
+  <main class="classifieds-shell">
+    <section class="classifieds-hero">
+      <div>
+        <p class="eyebrow">Üyelere özel ücretsiz ilan sistemi</p>
+        <h1>Şanlıurfa ücretsiz ilanlar</h1>
+        <p>
+          Emlak, vasıta, yedek parça ve ikinci el alışveriş ilanları sadece Şanlıurfa ilçeleri için yayınlanır.
+          Diğer şehir ve ülke seçimi yoktur.
+        </p>
+      </div>
+      <a class="primary-cta" href={user ? '/ilan-ekle' : '/giris?redirect=/ilan-ekle'}>Ücretsiz ilan ver</a>
+    </section>
+
+    <form class="classifieds-filter" method="get" action="/ilanlar">
+      <input type="search" name="q" value={q} placeholder="İlan adı veya açıklama ara" />
+      <select name="kategori">
+        <option value="">Tüm kategoriler</option>
+        {categories.map((parent) => (
+          <optgroup label={parent.name}>
+            {(parent.children ?? []).map((child) => (
+              <option value={child.slug} selected={category === child.slug}>{child.name}</option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+      <select name="ilce">
+        <option value="">Tüm ilçeler</option>
+        {districts.map((item) => <option value={item} selected={district === item}>{item}</option>)}
+      </select>
+      <select name="fiyat">
+        <option value="">Tüm fiyatlar</option>
+        <option value="0-25000" selected={priceBand === '0-25000'}>0 - 25.000 TL</option>
+        <option value="25001-100000" selected={priceBand === '25001-100000'}>25.001 - 100.000 TL</option>
+        <option value="100001-500000" selected={priceBand === '100001-500000'}>100.001 - 500.000 TL</option>
+        <option value="500001-plus" selected={priceBand === '500001-plus'}>500.000 TL+</option>
+      </select>
+      <button type="submit">Filtrele</button>
+      {hasActiveFilters && <a class="filter-clear" href="/ilanlar">Temizle</a>}
+    </form>
+
+    <div class="classifieds-layout">
+      <aside class="classifieds-sidebar" aria-label="İlan kategorileri">
+        <h2>Kategoriler</h2>
+        {categories.map((parent) => (
+          <details open>
+            <summary>{parent.name}</summary>
+            <nav>
+              {(parent.children ?? []).map((child) => (
+                <a class:list={[category === child.slug && 'active']} href={`/ilanlar/kategori/${child.slug}`}>
+                  <span>{child.name}</span>
+                  <em>{categoryCounts.get(child.slug) || 0}</em>
+                </a>
+              ))}
+            </nav>
+          </details>
+        ))}
+        {priceFacets.length > 0 && (
+          <section class="classifieds-facet">
+            <h3>Fiyat bandı dağılımı</h3>
+            <ul>
+              {priceFacets.map((facet) => (
+                <li>
+                  <a
+                    class:list={[priceBand === facet.value && 'active']}
+                    href={`/ilanlar?${new URLSearchParams({ ...(category ? { kategori: category } : {}), ...(district ? { ilce: district } : {}), ...(q ? { q } : {}), fiyat: facet.value }).toString()}`}
+                  >{facet.label}</a>
+                  <em>{facet.count}</em>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </aside>
+
+      <section class="classifieds-results">
+        <div class="results-head">
+          <div>
+            <h2>Yayındaki ilanlar</h2>
+            <p>{listings.length} ilan listeleniyor. Onay bekleyen ilanları sadece ilan sahibi görebilir.</p>
+          </div>
+          <span>Şehir: Şanlıurfa</span>
+        </div>
+
+        <section class="classifieds-intro" aria-label="İlan rehberi açıklaması">
+          <div>
+            <h2>Şanlıurfa ilan pazarında nasıl arama yapılır?</h2>
+            <p>
+              Ücretsiz ilan rehberinde emlak, vasıta, yedek parça ve ikinci el kategorileri ilçe bazında filtrelenir.
+              Aradığınız kayıt için önce kategori, sonra ilçe filtresi kullanmak daha doğru sonuç verir.
+            </p>
+          </div>
+          <div>
+            <h3>Yalnızca Şanlıurfa</h3>
+            <p>
+              Bu pazar yeri yalnızca Şanlıurfa ve ilçelerine açıktır. Yerel alıcı ve satıcı aynı şehir içinde daha hızlı
+              iletişim kurabildiği için dönüşüm kalitesi yükselir.
+            </p>
+          </div>
+        </section>
+        <section class="market-metrics" aria-label="Pazar yoğunluğu ve kalite özeti">
+          <article>
+            <strong>{marketSummary.active}</strong>
+            <span>Aktif sonuç</span>
+            <p>{marketSummary.activeNote}</p>
+          </article>
+          <article>
+            <strong>{marketSummary.average}</strong>
+            <span>Ortalama fiyat</span>
+            <p>{marketSummary.averageNote}</p>
+          </article>
+          <article>
+            <strong>{marketSummary.quality}</strong>
+            <span>Güçlü kalite oranı</span>
+            <p>{marketSummary.qualityNote}</p>
+          </article>
+          <article>
+            <strong>{marketSummary.coverage}</strong>
+            <span>İlçe kapsaması</span>
+            <p>{marketSummary.coverageNote}</p>
+          </article>
+        </section>
+
+        {loadError && <div class="state-card state-card--error">{loadError}</div>}
+        {!loadError && listings.length === 0 && (
+          <div class="state-card">
+            <strong>Bu filtrelerde ilan yok.</strong>
+            <p>İlk ücretsiz ilanı eklemek için üye girişi yapabilirsiniz.</p>
+          </div>
+        )}
+
+        <div class="classifieds-grid">
+          {listings.map((listing) => (
+            <article class="listing-card">
+              <a href={`/ilanlar/${listing.slug}`} class="listing-media" aria-label={`${listing.title} detay`}>
+                {listing.images?.[0] ? <img src={listing.images[0]} alt={listing.title} loading="lazy" /> : <span>İlan</span>}
+              </a>
+              <div class="listing-body">
+                <div class="listing-meta">
+                  <span>{listing.parent_category_name || listing.category_name}</span>
+                  <span>{listing.district}</span>
+                </div>
+                <h3><a href={`/ilanlar/${listing.slug}`}>{listing.title}</a></h3>
+                <p>{listing.description}</p>
+                <div class="listing-bottom">
+                  <strong>{listing.price ? formatter.format(Number(listing.price)) : 'Fiyat belirtilmedi'}</strong>
+                  {listing.status !== 'active' && <em>Onay bekliyor</em>}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .classifieds-shell {
+    background: #fffaf0;
+    color: #24170f;
+    min-height: 100vh;
+    padding: 2rem clamp(1rem, 3vw, 2.5rem) 4rem;
+  }
+  .classifieds-hero,
+  .classifieds-filter,
+  .classifieds-layout {
+    margin-inline: auto;
+    max-width: 82rem;
+  }
+  .classifieds-hero {
+    align-items: end;
+    background: linear-gradient(135deg, #24170f, #6d2f1d);
+    border-radius: 2rem;
+    color: white;
+    display: flex;
+    gap: 2rem;
+    justify-content: space-between;
+    padding: clamp(1.5rem, 4vw, 3rem);
+  }
+  .eyebrow {
+    color: #f3c45f;
+    font-size: .8rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 4.5rem);
+    line-height: .95;
+    margin: .7rem 0 1rem;
+  }
+  .classifieds-hero p:last-child {
+    color: #eadcc4;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    max-width: 46rem;
+  }
+  .primary-cta,
+  .classifieds-filter button,
+  .filter-clear {
+    background: #f3c45f;
+    border: 0;
+    border-radius: 999px;
+    color: #24170f;
+    font-weight: 900;
+    padding: .9rem 1.25rem;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .classifieds-filter {
+    background: white;
+    border: 1px solid #eadcc4;
+    border-radius: 1.4rem;
+    box-shadow: 0 20px 55px rgb(36 23 15 / 8%);
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr auto;
+    margin-top: 1rem;
+    padding: .75rem;
+  }
+  .classifieds-filter input,
+  .classifieds-filter select {
+    border: 1px solid #e2c79d;
+    border-radius: 1rem;
+    color: #2b1c12;
+    font: inherit;
+    min-width: 0;
+    padding: .85rem 1rem;
+  }
+  .classifieds-layout {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 18rem 1fr;
+    margin-top: 1rem;
+  }
+  .classifieds-sidebar,
+  .classifieds-results {
+    background: white;
+    border: 1px solid #eadcc4;
+    border-radius: 1.5rem;
+    padding: 1rem;
+  }
+  .classifieds-sidebar {
+    align-self: start;
+    position: sticky;
+    top: 5.5rem;
+  }
+  .classifieds-sidebar h2,
+  .results-head h2 {
+    font-size: 1.05rem;
+    margin: 0 0 .8rem;
+  }
+  .classifieds-facet {
+    border-top: 1px solid #f1e3ce;
+    margin-top: .55rem;
+    padding-top: .8rem;
+  }
+  .classifieds-facet h3 {
+    font-size: .9rem;
+    margin: 0 0 .55rem;
+  }
+  .classifieds-facet ul {
+    display: grid;
+    gap: .35rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .classifieds-facet li {
+    align-items: center;
+    color: #604c3a;
+    display: flex;
+    justify-content: space-between;
+    gap: .75rem;
+  }
+  .classifieds-facet li a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .classifieds-facet li a.active {
+    color: #78331d;
+    font-weight: 900;
+    text-decoration: underline;
+  }
+  .classifieds-facet li em {
+    background: #fffaf0;
+    border: 1px solid #eadcc4;
+    border-radius: 999px;
+    color: #8a6a4d;
+    font-size: .72rem;
+    font-style: normal;
+    font-weight: 900;
+    min-width: 1.7rem;
+    padding: .1rem .35rem;
+    text-align: center;
+  }
+  .classifieds-sidebar details {
+    border-top: 1px solid #f1e3ce;
+    padding: .65rem 0;
+  }
+  .classifieds-sidebar summary {
+    cursor: pointer;
+    font-weight: 900;
+  }
+  .classifieds-sidebar nav {
+    display: grid;
+    gap: .2rem;
+    margin-top: .55rem;
+  }
+  .classifieds-sidebar a {
+    align-items: center;
+    border-radius: .75rem;
+    color: #604c3a;
+    display: flex;
+    justify-content: space-between;
+    gap: .7rem;
+    padding: .45rem .6rem;
+    text-decoration: none;
+  }
+  .classifieds-sidebar a em {
+    background: #fffaf0;
+    border: 1px solid #eadcc4;
+    border-radius: 999px;
+    color: #8a6a4d;
+    font-size: .72rem;
+    font-style: normal;
+    font-weight: 900;
+    min-width: 1.7rem;
+    padding: .1rem .35rem;
+    text-align: center;
+  }
+  .classifieds-sidebar a:hover,
+  .classifieds-sidebar a.active {
+    background: #f7ecd9;
+    color: #78331d;
+  }
+  .results-head {
+    align-items: start;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .results-head p {
+    color: #6a5847;
+    margin: .25rem 0 0;
+  }
+  .results-head span {
+    background: #f7ecd9;
+    border-radius: 999px;
+    color: #78331d;
+    font-weight: 900;
+    padding: .5rem .75rem;
+  }
+  .classifieds-intro {
+    background: #fff7e7;
+    border: 1px solid #eadcc4;
+    border-radius: 1.1rem;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1.35fr .95fr;
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  .classifieds-intro h2,
+  .classifieds-intro h3 {
+    margin: 0 0 .45rem;
+  }
+  .classifieds-intro p {
+    color: #5f4a39;
+    line-height: 1.7;
+    margin: 0;
+  }
+  .market-metrics {
+    display: grid;
+    gap: .8rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0 0 1rem;
+  }
+  .market-metrics article {
+    background: #f7ecd9;
+    border: 1px solid #eadcc4;
+    border-radius: 1.2rem;
+    display: grid;
+    gap: .25rem;
+    padding: 1rem;
+  }
+  .market-metrics strong {
+    color: #78331d;
+    font-size: 1.2rem;
+  }
+  .market-metrics span {
+    color: #8a6a4d;
+    font-size: .78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  .market-metrics p {
+    color: #6a5847;
+    font-size: .82rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .classifieds-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .listing-card {
+    border: 1px solid #eadcc4;
+    border-radius: 1.25rem;
+    overflow: hidden;
+  }
+  .listing-media {
+    align-items: center;
+    aspect-ratio: 4 / 3;
+    background: #f1e3ce;
+    color: #8a3d22;
+    display: flex;
+    font-weight: 900;
+    justify-content: center;
+  }
+  .listing-media img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+  .listing-body {
+    padding: .9rem;
+  }
+  .listing-meta,
+  .listing-bottom {
+    align-items: center;
+    display: flex;
+    gap: .5rem;
+    justify-content: space-between;
+  }
+  .listing-meta span {
+    color: #8a6a4d;
+    font-size: .78rem;
+    font-weight: 800;
+  }
+  .listing-body h3 {
+    font-size: 1rem;
+    line-height: 1.25;
+    margin: .5rem 0;
+  }
+  .listing-body h3 a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .listing-body p {
+    color: #665241;
+    display: -webkit-box;
+    font-size: .9rem;
+    line-height: 1.55;
+    margin: 0 0 .8rem;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  .listing-bottom strong {
+    color: #78331d;
+  }
+  .listing-bottom em {
+    color: #9c6a13;
+    font-size: .78rem;
+    font-style: normal;
+    font-weight: 900;
+  }
+  .state-card {
+    background: #fff7e7;
+    border: 1px dashed #d9b77c;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  .state-card--error {
+    background: #fff1f0;
+    border-color: #e4a098;
+    color: #8a2418;
+  }
+  @media (max-width: 62rem) {
+    .classifieds-hero,
+    .results-head {
+      display: block;
+    }
+    .primary-cta {
+      display: inline-flex;
+      margin-top: 1rem;
+    }
+    .classifieds-filter,
+    .classifieds-layout,
+    .classifieds-grid,
+    .classifieds-intro,
+    .market-metrics {
+      grid-template-columns: 1fr;
+    }
+    .classifieds-sidebar {
+      position: static;
+    }
+  }
+</style>

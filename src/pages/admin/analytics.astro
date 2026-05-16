@@ -36,9 +36,9 @@ const sections = [
      <p class="ax-section-sub">Gerçek kullanıcı performans verileri — LCP, CLS, INP</p>
     </div>
    </header>
-   <div class="ax-section-body">
-    <WebVitalsCard client:visible />
-   </div>
+  <div class="ax-section-body">
+    <WebVitalsCard client:visible={{ rootMargin: '160px' }} />
+  </div>
   </section>
 
   <section id="perf" class="ax-section">
@@ -49,9 +49,9 @@ const sections = [
      <p class="ax-section-sub">API gecikme, cache hit oranı, hata yüzdesi</p>
     </div>
    </header>
-   <div class="ax-section-body">
-    <AdminPerformanceDashboard client:visible />
-   </div>
+  <div class="ax-section-body">
+    <AdminPerformanceDashboard client:idle />
+  </div>
   </section>
 
   <section id="platform" class="ax-section">
@@ -62,9 +62,9 @@ const sections = [
      <p class="ax-section-sub">Kullanıcı davranışları ve dönüşüm akışı</p>
     </div>
    </header>
-   <div class="ax-section-body">
-    <AdminAnalyticsDashboard client:visible />
-   </div>
+  <div class="ax-section-body">
+    <AdminAnalyticsDashboard client:idle />
+  </div>
   </section>
 
   <section id="system" class="ax-section">
@@ -75,9 +75,9 @@ const sections = [
      <p class="ax-section-sub">CPU, bellek, DB, Redis sağlık göstergeleri</p>
     </div>
    </header>
-   <div class="ax-section-body">
-    <AnalyticsPanel client:visible />
-   </div>
+  <div class="ax-section-body">
+    <AnalyticsPanel client:idle />
+  </div>
   </section>
  </div>
 

@@ -12,6 +12,7 @@ Bu proje production'da **CWP (CentOS Web Panel) shared hosting** ve
 - App port: `4321` (localhost)
 - Public erişim: CWP webserver reverse proxy (80/443 -> 127.0.0.1:4321)
 - Runtime: Node.js `22.13.0+` (`.nvmrc` önerilen: `22.19.0`)
+- Medya depolama: CDN/object storage yok; `public/images` ve `public/uploads` local filesystem
 
 ## 1) CWP panel hazırlığı
 
@@ -52,6 +53,23 @@ Kurulum/build:
 npm install --legacy-peer-deps --production
 npm run build
 ```
+
+Not: `npm run build` artık `dist/client/uploads` kopyasını build sonunda temizler. `/uploads/**`
+istekleri SSR runtime tarafından doğrudan `public/uploads` dizininden servis edilir; büyük upload
+artefact'ını deploy bundle içine taşımak artık gerekmez.
+
+Upload optimizasyonu:
+
+```bash
+npm run images:uploads:audit
+npm run images:uploads:optimize
+npm run images:static:audit
+npm run images:static:optimize
+```
+
+`/uploads/**` cache'i mutable local medya için günlük revalidation kullanır; dosya aynı path altında
+optimize edildiğinde istemci tarafı eski immutable kopyaya kilitlenmez.
+Admin medya sağlık özeti `/api/admin/site/media-health` endpoint'inden okunur.
 
 PM2 başlatma:
 
@@ -96,6 +114,27 @@ Desteklenen env değişkenleri:
 - `PM2_NAME` (default: `sanliurfa-app`)
 - `PORT` (default: `4321`)
 - `BRANCH` (default: `main`)
+- `LOG_PROFILE` (`development | test | staging | release | production`)
+- `LOG_LEVEL` (`debug | info | warn | error | fatal`) — `LOG_PROFILE` üstüne explicit override
+
+Önerilen log profilleri:
+
+```bash
+# local geliştirme
+LOG_PROFILE=development
+
+# release gate / smoke / CI local doğrulama
+LOG_PROFILE=release
+
+# staging
+LOG_PROFILE=staging
+
+# production runtime
+LOG_PROFILE=production
+```
+
+`LOG_LEVEL` verilmezse logger bu profile göre minimum seviyeyi seçer. `release` profili gereksiz `info`
+gürültüsünü bastırmak için `warn` seviyesini baz alır.
 
 ## 4) Reboot sonrası otomatik kalkış
 

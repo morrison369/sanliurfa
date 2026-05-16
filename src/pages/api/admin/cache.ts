@@ -42,6 +42,7 @@ export const GET: APIRoute = async ({ locals }) => {
 
     return apiResponse({
       patterns: KNOWN_PATTERNS,
+      checks,
       note: 'Cache Redis\'te saklanır, TTL dolduğunda otomatik temizlenir. Manuel temizleme için POST isteği gönderin.',
     }, HttpStatus.OK);
   } catch (error) {
@@ -74,6 +75,12 @@ export const POST: APIRoute = async ({ request, locals }) => {
       await deleteCachePattern(body.pattern).catch(() => null);
       logger.info(`Admin cache pattern cleared [pattern=${body.pattern} userId=${locals.user?.id}]`);
       return apiResponse({ cleared: true, pattern: body.pattern }, HttpStatus.OK);
+    }
+
+    if (body.key) {
+      await deleteCache(body.key).catch(() => null);
+      logger.info(`Admin cache key cleared [key=${body.key} userId=${locals.user?.id}]`);
+      return apiResponse({ cleared: true, key: body.key }, HttpStatus.OK);
     }
 
     return problemJson({ status: 422, title: 'Geçersiz İstek', detail: 'pattern, key veya all parametresi gerekli', type: '/problems/missing-param', instance: '/api/admin/cache' });

@@ -50,20 +50,20 @@ Sanliurfa.com'un üye/sosyal özelliklerinin durum ve iyileştirme önerileri.
 
 ---
 
-## 2. Üye Etkinlik Ekleme (YOK)
+## 2. Üye Etkinlik Ekleme
 
 ### Mevcut Durum
-- ❌ **Sayfa yok** (`/etkinlik-ekle` mevcut değil)
-- ❌ **User-facing Action yok**
-- ❌ **event_submissions tablosu yok**
+- ✅ `/etkinlik-ekle` sayfası mevcut
+- ✅ `submitEventApplication` Astro Action mevcut
+- ✅ `event_submissions` tablosu mevcut
 - ✅ Admin için `createAdminEvent` mevcut
 
 ### Öneriler
-- 🆕 Migration: `event_submissions` tablosu (user_id, title, description, start_date, location, image_url, status, admin_note)
-- 🆕 `/etkinlik-ekle` sayfası (login zorunlu, places ile aynı form pattern)
-- 🆕 `submitEventApplication` Astro Action
-- 🆕 Admin onay flow: `/admin/event-submissions`
-- 🆕 Onaylanan etkinlik → `events` tablosuna kopyalanır + sitemap günceller
+- ✅ Temel event submission yüzeyi açılmış durumda
+- 🔶 Durum görünürlüğü eksik: başvuran kullanıcı kendi etkinlik önerisinin durumunu panelden izleyemiyor
+- 🔶 Karar e-postaları mevcut mailer katmanına bağlanmış olsa da uçtan uca smoke doğrulaması gerekli
+- 🆕 Admin onay flow: `/admin/event-submissions` görünürlüğü ve işlem sonrası kullanıcı geri bildirimi güçlendirilmeli
+- 🆕 Onaylanan etkinlik → `events` tablosuna kopyalanır + sitemap günceller akışı release checklist’e bağlanmalı
 
 ---
 
@@ -181,9 +181,9 @@ CREATE INDEX idx_user_match_profiles_active ON user_match_profiles (is_active, u
 ## Sonraki Adımlar (Önerilen Sıra)
 
 1. **Bu commit'i GitHub'a push** ✅ (yapıldı)
-2. **Migration 180**: event_submissions tablosu + indexes + FK constraints
-3. **Üye mekan ekleme login + footer CTA + email notification** (Hafta 1)
-4. **Yorum sistem genişletme**: foto upload, helpful vote, vendor response (Hafta 2)
+2. **Üye mekan ekleme login + footer CTA + email notification** (Hafta 1)
+3. **Yorum sistem genişletme**: foto upload, helpful vote, vendor response (Hafta 2)
+4. **Etkinlik başvuru durum görünürlüğü + karar bildirim smoke** (Hafta 2)
 5. **Tinder onboarding wizard + anasayfa CTA** (Hafta 3)
 6. **Sosyal feed `/akis`** (Hafta 4)
 

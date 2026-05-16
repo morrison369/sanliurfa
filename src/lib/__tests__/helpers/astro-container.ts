@@ -1,5 +1,3 @@
-import { experimental_AstroContainer as AstroContainer } from 'astro/container';
-
 type LocalsInput = Partial<App.Locals> & Record<string, unknown>;
 
 type RenderOptions = {
@@ -18,9 +16,10 @@ type RenderOptions = {
  * expect(html).toContain('<h1>Test</h1>');
  */
 export async function renderAstroComponent(
-  Component: Parameters<AstroContainer['renderToString']>[0],
+  Component: any,
   options: RenderOptions = {}
 ): Promise<string> {
+  const AstroContainer = await getAstroContainerApi();
   const container = await AstroContainer.create();
   const { props = {}, request, locals = {}, slots } = options;
 
@@ -39,9 +38,10 @@ export async function renderAstroComponent(
  * Renders to Response for status code / header assertions.
  */
 export async function renderAstroToResponse(
-  Component: Parameters<AstroContainer['renderToString']>[0],
+  Component: any,
   options: RenderOptions = {}
 ): Promise<Response> {
+  const AstroContainer = await getAstroContainerApi();
   const container = await AstroContainer.create();
   const { props = {}, request, locals = {}, slots } = options;
 
@@ -60,4 +60,13 @@ function buildLocals(overrides: LocalsInput = {}): App.Locals {
     isAuthenticated: false,
     ...overrides,
   } as App.Locals;
+}
+
+async function getAstroContainerApi(): Promise<{ create: () => Promise<any> }> {
+  const mod = await import('astro/container');
+  const api = (mod as any).AstroContainer ?? (mod as any).experimental_AstroContainer;
+  if (!api?.create) {
+    throw new Error('Astro Container API export bulunamadı');
+  }
+  return api;
 }

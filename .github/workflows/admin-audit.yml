@@ -25,6 +25,11 @@ concurrency:
   group: admin-audit-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   audit:
     runs-on: ubuntu-latest
@@ -34,11 +39,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Workflow standards verify
+        run: npm run workflow:standards:verify
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
@@ -66,6 +74,18 @@ jobs:
           name: admin-audit-reports-${{ github.run_number }}
           path: /tmp/*.txt
           retention-days: 30
+
+      - name: Upload workflow standards report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-standards-report-${{ github.job }}
+          path: docs/workflow-standards-report.md
+          retention-days: 30
+
+      - name: Orphan process check
+        if: always()
+        run: npm run dev:isolated:check-no-orphan
 
       - name: Comment PR with summary
         if: github.event_name == 'pull_request' && always()

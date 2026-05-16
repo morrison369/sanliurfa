@@ -19,6 +19,24 @@ export interface AnalyticsCampaignMetrics {
   revenue: number;
 }
 
+let campaignPerformanceColumnsCache: Set<string> | null = null;
+
+async function getCampaignPerformanceColumns(): Promise<Set<string>> {
+  if (campaignPerformanceColumnsCache) return campaignPerformanceColumnsCache;
+
+  const columns = await queryMany(
+    `
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+      AND table_name = 'campaign_performance'
+    `,
+  );
+
+  campaignPerformanceColumnsCache = new Set(columns.map((column: any) => String(column.column_name)));
+  return campaignPerformanceColumnsCache;
+}
+
 /**
  * Get campaign performance overview
  */
@@ -119,15 +137,32 @@ export async function getDailyMetrics(
   daysBack: number = 30,
 ): Promise<AnalyticsCampaignMetrics[]> {
   try {
+    const columns = await getCampaignPerformanceColumns();
+    const has = (column: string) => columns.has(column);
+    const dateColumn = has('metric_date') ? 'metric_date' : has('date') ? 'date' : null;
+
+    if (!dateColumn || !has('campaign_id')) return [];
+
+    const selectColumns = [
+      'campaign_id',
+      `${dateColumn} AS metric_date`,
+      has('sends') ? 'sends' : '0::int AS sends',
+      has('opens') ? 'opens' : '0::int AS opens',
+      has('clicks') ? 'clicks' : '0::int AS clicks',
+      has('conversions') ? 'conversions' : '0::int AS conversions',
+      has('bounces') ? 'bounces' : '0::int AS bounces',
+      has('unsubscribes') ? 'unsubscribes' : '0::int AS unsubscribes',
+      has('complaints') ? 'complaints' : '0::int AS complaints',
+      has('revenue_cents') ? 'revenue_cents' : '0::int AS revenue_cents',
+    ];
+
     const metrics = await queryMany(`
       SELECT
-        campaign_id, metric_date,
-        sends, opens, clicks, conversions, bounces, unsubscribes, complaints,
-        revenue_cents
+        ${selectColumns.join(',\n        ')}
       FROM campaign_performance
       WHERE campaign_id = $1
-      AND metric_date >= NOW()::DATE - INTERVAL '$2 days'
-      ORDER BY metric_date DESC
+      AND ${dateColumn} >= NOW()::DATE - ($2::int * INTERVAL '1 day')
+      ORDER BY ${dateColumn} DESC
     `, [campaignId, daysBack]);
 
     return metrics.map((m: any) => ({
@@ -163,7 +198,7 @@ export async function getEngagementTimeline(
         COUNT(*) as count
       FROM email_engagement
       WHERE campaign_id = $1
-      AND created_at >= NOW() - INTERVAL '$2 hours'
+      AND created_at >= NOW() - ($2::int * INTERVAL '1 hour')
       GROUP BY DATE_TRUNC('hour', created_at), engagement_type
       ORDER BY hour DESC
     `, [campaignId, hours]);

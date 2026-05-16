@@ -39,7 +39,7 @@ test.describe('Real-time Analytics - Metrics SSE', () => {
     const response = await request.get('/api/realtime/analytics');
     
     if (response.status() === 401) {
-      test.skip();
+      test.skip(true, 'Admin auth seed is unavailable for SSE header check in this E2E profile');
     }
 
     const headers = response.headers();

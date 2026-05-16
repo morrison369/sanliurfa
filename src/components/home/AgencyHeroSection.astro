@@ -1,0 +1,44 @@
+---
+import Image from '@/components/Image.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = 'Urfa’da nereye gidilir?',
+  description = 'Balıklıgöl, Göbeklitepe, Harran ve Halfeti rotalarını yerel şehir rehberi akışıyla keşfet.',
+} = Astro.props as Props;
+---
+
+<section class="bg-[#fbf1df] text-[#24170f]" aria-labelledby="agency-hero-title">
+  <div class="mx-auto grid w-full max-w-7xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+    <div>
+      <p class="text-sm font-black uppercase tracking-[0.18em] text-[#b8652b]">Şanlıurfa rota rehberi</p>
+      <h1 id="agency-hero-title" class="mt-4 font-display text-4xl font-semibold leading-tight sm:text-5xl">
+        {title}
+      </h1>
+      <p class="mt-5 max-w-2xl text-lg leading-8 text-[#6b5540]">{description}</p>
+      <div class="mt-7 flex flex-wrap gap-3">
+        <a href="/mekanlar" class="rounded-full bg-[#1f5f55] px-5 py-3 text-sm font-black text-white">
+          Mekanları Keşfet
+        </a>
+        <a href="/gezilecek-yerler" class="rounded-full border border-[#b8652b] px-5 py-3 text-sm font-black text-[#7c3b24]">
+          Tarihi Rotalar
+        </a>
+      </div>
+    </div>
+    <div class="overflow-hidden rounded-3xl border border-[#e4c7a0] bg-[#f4e6d0]">
+      <Image
+        src="/images/blog/halfeti.jpg"
+        alt="Şanlıurfa Halfeti tarihi rota görseli"
+        width={900}
+        height={640}
+        loading="eager"
+        fetchpriority="high"
+        class="h-full min-h-80 w-full object-cover"
+      />
+    </div>
+  </div>
+</section>

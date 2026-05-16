@@ -306,14 +306,79 @@ describe('homepage.mvpQuickStart', () => {
   });
 });
 
-describe('siteSettingSchemas — schema registry', () => {
-  it('11 anasayfa section schema kayıtlı', () => {
-    expect(Object.keys(siteSettingSchemas)).toHaveLength(11);
+describe('adsense.slots', () => {
+  const KEY = 'adsense.slots';
+
+  it('valid config ile success', () => {
+    const value = {
+      client: 'ca-pub-7160871802649062',
+      autoAdsEnabled: true,
+      homepageBanner: '1234567890',
+      blogListSidebar: '',
+      blogDetailInline: '2345678901',
+      blogDetailSidebar: '',
+      classifiedDetail: '3456789012',
+    };
+    expect(validateSiteSettingValue(KEY, value)).toEqual(value);
   });
 
-  it('tüm anahtar adları homepage. prefix ile başlar', () => {
-    for (const key of Object.keys(siteSettingSchemas)) {
-      expect(key).toMatch(/^homepage\./);
-    }
+  it('client optional', () => {
+    const value = {
+      autoAdsEnabled: false,
+      homepageBanner: '',
+    };
+    expect(validateSiteSettingValue(KEY, value)).toEqual(value);
+  });
+
+  it('client boş ise null', () => {
+    expect(validateSiteSettingValue(KEY, { client: '' })).toBeNull();
+  });
+});
+
+describe('adsense.smokeCache', () => {
+  const KEY = 'adsense.smokeCache';
+
+  it('valid smoke cache ile success', () => {
+    const value = {
+      generatedAt: '2026-05-16T02:00:00.000Z',
+      rows: [
+        {
+          placement: 'homepage-banner',
+          url: 'https://sanliurfa.com/',
+          ok: true,
+          placementDetected: true,
+          slotDetected: true,
+          statusCode: 200,
+          note: 'Public HTML icinde reklam blogu dogrulandi.',
+        },
+      ],
+    };
+    expect(validateSiteSettingValue(KEY, value)).toEqual(value);
+  });
+
+  it('placement bos ise null', () => {
+    expect(
+      validateSiteSettingValue(KEY, {
+        rows: [{ placement: '', note: 'x' }],
+      }),
+    ).toBeNull();
+  });
+});
+
+describe('siteSettingSchemas — schema registry', () => {
+  it('schema registry genişletilmiş durumda', () => {
+    expect(Object.keys(siteSettingSchemas)).toHaveLength(15);
+  });
+
+  it('homepage ve adsense namespace anahtarları kayıtlı', () => {
+    expect(Object.keys(siteSettingSchemas)).toEqual(
+      expect.arrayContaining([
+        'homepage.primaryActions',
+        'homepage.sections',
+        'homepage.mvpQuickStart',
+        'adsense.slots',
+        'adsense.smokeCache',
+      ]),
+    );
   });
 });

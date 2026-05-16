@@ -1,0 +1,513 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getPublicAppUrl } from '../../../lib/public-app-url';
+import {
+  getFlatClassifiedCategories,
+  getClassifiedCategoryCounts,
+  getClassifiedDistricts,
+  getClassifiedPriceFacetCounts,
+  listClassifieds,
+  type ClassifiedListing,
+} from '../../../lib/classifieds';
+
+const user = Astro.locals.user;
+const slug = Astro.params.slug || '';
+const categories = getFlatClassifiedCategories();
+const current = categories.find((category) => category.slug === slug);
+
+if (!current) {
+  return Astro.redirect('/ilanlar');
+}
+
+const district = Astro.url.searchParams.get('ilce') || '';
+const priceBand = Astro.url.searchParams.get('fiyat') || '';
+const q = Astro.url.searchParams.get('q') || '';
+let listings: ClassifiedListing[] = [];
+let loadError = '';
+try {
+  listings = await listClassifieds({
+    categorySlug: slug,
+    district,
+    priceBand,
+    q,
+    includePendingForUserId: user?.id ?? null,
+    limit: 36,
+  });
+} catch (error) {
+  loadError = error instanceof Error ? error.message : 'Kategori ilanları yüklenemedi.';
+}
+
+const districts = getClassifiedDistricts();
+const childCategories = categories.filter((category) => category.parentSlug === current.slug);
+const categoryCounts = await getClassifiedCategoryCounts().catch(() => new Map<string, number>());
+const formatter = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 });
+const priceFacets = await getClassifiedPriceFacetCounts({
+  categorySlug: slug,
+  district: district || null,
+  q: q || null,
+  includePendingForUserId: user?.id ?? null,
+}).catch(() => []);
+const baseUrl = getPublicAppUrl();
+const canonical = `/ilanlar/kategori/${current.slug}`;
+const seo = {
+  title: `${current.name} İlanları | Şanlıurfa Ücretsiz İlanlar`,
+  description: `Şanlıurfa ${current.name} kategorisindeki ücretsiz üye ilanlarını inceleyin.`,
+  canonical,
+  noIndex: listings.length === 0,
+};
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Ana Sayfa', item: `${baseUrl}/` },
+    { '@type': 'ListItem', position: 2, name: 'İlanlar', item: `${baseUrl}/ilanlar` },
+    { '@type': 'ListItem', position: 3, name: current.name, item: `${baseUrl}${canonical}` },
+  ],
+};
+const itemListSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: `${current.name} ilanları`,
+  numberOfItems: listings.length,
+  itemListElement: listings.slice(0, 20).map((listing, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    url: `${baseUrl}/ilanlar/${listing.slug}`,
+    name: listing.title,
+  })),
+};
+const hasActiveFilters = Boolean(district || q || priceBand);
+const pricedListings = listings.filter((listing) => Number(listing.price || 0) > 0);
+const averagePrice =
+  pricedListings.length > 0
+    ? Math.round(pricedListings.reduce((sum, listing) => sum + Number(listing.price || 0), 0) / pricedListings.length)
+    : 0;
+const districtCoverage = new Set(listings.map((listing) => listing.district).filter(Boolean)).size;
+const qualityStrongCount = listings.filter(
+  (listing) =>
+    Array.isArray(listing.images) &&
+    listing.images.length > 0 &&
+    Boolean(listing.phone) &&
+    Boolean(listing.address),
+).length;
+const qualityStrongRate = listings.length > 0 ? Math.round((qualityStrongCount / listings.length) * 100) : 0;
+const newestListingDate = listings[0]?.created_at ? new Date(listings[0].created_at).toLocaleDateString('tr-TR') : null;
+const categorySummary = {
+  active: listings.length > 0 ? String(listings.length) : 'Veri yok',
+  activeNote:
+    listings.length > 0
+      ? 'Bu filtre kombinasyonunda görünen toplam ilan sayısı.'
+      : 'Bu kategori görünümünde henüz kayıt görünmüyor.',
+  average: pricedListings.length > 0 ? formatter.format(averagePrice) : 'Fiyat verisi yok',
+  averageNote:
+    pricedListings.length > 0
+      ? 'Fiyat girilmiş ilanlar üzerinden hesaplanır.'
+      : 'Ortalama hesaplamak için yeterli fiyatlı kayıt yok.',
+  quality: listings.length > 0 ? `%${qualityStrongRate}` : 'Kalite verisi yok',
+  qualityNote:
+    listings.length > 0
+      ? 'Görsel, telefon ve adres alanı birlikte dolu kayıtların payı.'
+      : 'Kalite oranı için görünür kategori verisi bekleniyor.',
+  coverage: districtCoverage > 0 ? String(districtCoverage) : 'İlçe verisi yok',
+  coverageNote: newestListingDate ? `Son yeni ilan: ${newestListingDate}` : 'Henüz tarih sinyali yok.',
+};
+---
+
+<Layout seo={seo}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} is:inline />
+    <script type="application/ld+json" set:html={JSON.stringify(itemListSchema)} is:inline />
+  </Fragment>
+  <main class="category-listing">
+    <section class="cat-hero">
+      <nav aria-label="Sayfa yolu">
+        <a href="/ilanlar">İlanlar</a>
+        <span>/</span>
+        <strong>{current.name}</strong>
+      </nav>
+      <div>
+        <p>Şanlıurfa ücretsiz ilan kategorisi</p>
+        <h1>{current.name} ilanları</h1>
+        <span>{current.description || 'Bu kategorideki ilanlar sadece Şanlıurfa ilçeleri için listelenir.'}</span>
+      </div>
+      <a href={user ? '/ilan-ekle' : '/giris?redirect=/ilan-ekle'}>Bu kategoride ilan ver</a>
+    </section>
+
+    {childCategories.length > 0 && (
+      <section class="cat-children">
+        {childCategories.map((child) => <a href={`/ilanlar/kategori/${child.slug}`}>{child.name} <span>{categoryCounts.get(child.slug) || 0}</span></a>)}
+      </section>
+    )}
+
+    <form class="cat-filter" method="get">
+      <input type="search" name="q" value={q} placeholder={`${current.name} içinde ara`} />
+      <select name="ilce">
+        <option value="">Tüm Şanlıurfa ilçeleri</option>
+        {districts.map((item) => <option value={item} selected={district === item}>{item}</option>)}
+      </select>
+      <select name="fiyat">
+        <option value="">Tüm fiyatlar</option>
+        <option value="0-25000" selected={priceBand === '0-25000'}>0 - 25.000 TL</option>
+        <option value="25001-100000" selected={priceBand === '25001-100000'}>25.001 - 100.000 TL</option>
+        <option value="100001-500000" selected={priceBand === '100001-500000'}>100.001 - 500.000 TL</option>
+        <option value="500001-plus" selected={priceBand === '500001-plus'}>500.000 TL+</option>
+      </select>
+      <button type="submit">Filtrele</button>
+      {hasActiveFilters && <a class="cat-clear" href={`/ilanlar/kategori/${current.slug}`}>Temizle</a>}
+    </form>
+
+    <section class="cat-results">
+      <div class="cat-results-head">
+        <h2>{listings.length} ilan</h2>
+        <a href="/ilanlar">Tüm ilanlara dön</a>
+      </div>
+      <section class="cat-intro" aria-label="Kategori rehberi">
+        <div>
+          <h2>{current.name} kategorisinde nelere dikkat edilmeli?</h2>
+          <p>
+            {current.name} ilanlarında ilçe, fiyat, görsel ve açıklama birlikte değerlendirilmelidir. Aynı ilçedeki kayıtlar
+            yerel teslim, hızlı görüşme ve daha doğru karşılaştırma avantajı sağlar.
+          </p>
+        </div>
+        <div>
+          <h3>Yerel filtre önerisi</h3>
+          <p>
+            {district ? `${district} ilçesi filtresi aktif.` : 'Henüz ilçe filtresi seçilmedi.'} Şanlıurfa içinde doğru ilçe
+            eşleşmesi arama kalitesini artırır.
+          </p>
+        </div>
+      </section>
+      <section class="cat-metrics" aria-label="Kategori kalite ve yoğunluk özeti">
+        <article>
+          <strong>{categorySummary.active}</strong>
+          <span>Aktif sonuç</span>
+          <p>{categorySummary.activeNote}</p>
+        </article>
+        <article>
+          <strong>{categorySummary.average}</strong>
+          <span>Ortalama fiyat</span>
+          <p>{categorySummary.averageNote}</p>
+        </article>
+        <article>
+          <strong>{categorySummary.quality}</strong>
+          <span>Güçlü kalite oranı</span>
+          <p>{categorySummary.qualityNote}</p>
+        </article>
+        <article>
+          <strong>{categorySummary.coverage}</strong>
+          <span>İlçe kapsaması</span>
+          <p>{categorySummary.coverageNote}</p>
+        </article>
+      </section>
+      {priceFacets.length > 0 && (
+        <section class="cat-facets" aria-label="Kategori fiyat bandı">
+          {priceFacets.map((facet) => (
+            <a
+              class:list={[priceBand === facet.value && 'active']}
+              href={`/ilanlar/kategori/${current.slug}?${new URLSearchParams({ ...(district ? { ilce: district } : {}), ...(q ? { q } : {}), fiyat: facet.value }).toString()}`}
+            >
+              <span>{facet.label}</span>
+              <em>{facet.count}</em>
+            </a>
+          ))}
+        </section>
+      )}
+      {loadError && <div class="cat-state cat-state--error">{loadError}</div>}
+      {!loadError && listings.length === 0 && (
+        <div class="cat-state">
+          <strong>Bu kategoride henüz yayınlanan ilan yok.</strong>
+          <p>İlk ilanı eklemek için üye girişi yapabilirsiniz.</p>
+        </div>
+      )}
+      <div class="cat-grid">
+        {listings.map((listing) => (
+          <article class="cat-card">
+            <a href={`/ilanlar/${listing.slug}`} class="cat-media">
+              {listing.images?.[0] ? <img src={listing.images[0]} alt={listing.title} loading="lazy" /> : <span>İlan</span>}
+            </a>
+            <div>
+              <p>{listing.district}</p>
+              <h3><a href={`/ilanlar/${listing.slug}`}>{listing.title}</a></h3>
+              <span>{listing.price ? formatter.format(Number(listing.price)) : 'Fiyat belirtilmedi'}</span>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .category-listing {
+    background: #fffaf0;
+    color: #24170f;
+    min-height: 100vh;
+    padding: 2rem clamp(1rem, 3vw, 2.5rem) 4rem;
+  }
+  .cat-hero,
+  .cat-children,
+  .cat-filter,
+  .cat-results {
+    margin-inline: auto;
+    max-width: 78rem;
+  }
+  .cat-hero {
+    background: #24170f;
+    border-radius: 2rem;
+    color: white;
+    display: grid;
+    gap: 1rem;
+    padding: clamp(1.5rem, 4vw, 3rem);
+  }
+  .cat-hero nav,
+  .cat-hero nav a {
+    color: #eadcc4;
+    display: flex;
+    gap: .5rem;
+    text-decoration: none;
+  }
+  .cat-hero p {
+    color: #f3c45f;
+    font-weight: 900;
+    letter-spacing: .08em;
+    margin: 0 0 .5rem;
+    text-transform: uppercase;
+  }
+  .cat-hero h1 {
+    font-size: clamp(2.2rem, 5vw, 4.2rem);
+    line-height: .95;
+    margin: 0 0 .75rem;
+  }
+  .cat-hero > a {
+    background: #f3c45f;
+    border-radius: 999px;
+    color: #24170f;
+    font-weight: 900;
+    justify-self: start;
+    padding: .85rem 1rem;
+    text-decoration: none;
+  }
+  .cat-children,
+  .cat-filter,
+  .cat-results {
+    background: white;
+    border: 1px solid #eadcc4;
+    border-radius: 1.5rem;
+    margin-top: 1rem;
+    padding: 1rem;
+  }
+  .cat-children {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  .cat-children a {
+    align-items: center;
+    background: #f7ecd9;
+    border-radius: 999px;
+    color: #78331d;
+    display: inline-flex;
+    font-weight: 900;
+    gap: .45rem;
+    padding: .55rem .8rem;
+    text-decoration: none;
+  }
+  .cat-children a span {
+    background: white;
+    border-radius: 999px;
+    color: #8a6a4d;
+    font-size: .72rem;
+    padding: .1rem .4rem;
+  }
+  .cat-filter {
+    display: grid;
+    gap: .7rem;
+    grid-template-columns: 1fr 16rem 16rem auto auto;
+  }
+  .cat-filter input,
+  .cat-filter select {
+    border: 1px solid #e2c79d;
+    border-radius: 1rem;
+    font: inherit;
+    padding: .85rem 1rem;
+  }
+  .cat-filter button {
+    background: #78331d;
+    border: 0;
+    border-radius: 999px;
+    color: white;
+    font: inherit;
+    font-weight: 900;
+    padding: .85rem 1rem;
+  }
+  .cat-clear {
+    align-items: center;
+    background: #f7ecd9;
+    border-radius: 999px;
+    color: #78331d;
+    display: inline-flex;
+    font-weight: 900;
+    justify-content: center;
+    padding: .85rem 1rem;
+    text-decoration: none;
+  }
+  .cat-results-head {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+  }
+  .cat-facets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+    margin: 1rem 0;
+  }
+  .cat-metrics {
+    display: grid;
+    gap: .8rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 1rem 0;
+  }
+  .cat-metrics article {
+    background: #f7ecd9;
+    border: 1px solid #eadcc4;
+    border-radius: 1.2rem;
+    display: grid;
+    gap: .25rem;
+    padding: 1rem;
+  }
+  .cat-metrics strong {
+    color: #78331d;
+    font-size: 1.25rem;
+  }
+  .cat-metrics span {
+    color: #8a6a4d;
+    font-size: .78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+  }
+  .cat-metrics p {
+    color: #6a5847;
+    font-size: .82rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+  .cat-facets a {
+    align-items: center;
+    background: #f7ecd9;
+    border-radius: 999px;
+    color: #78331d;
+    display: inline-flex;
+    gap: .45rem;
+    padding: .5rem .8rem;
+    text-decoration: none;
+  }
+  .cat-facets a.active {
+    background: #78331d;
+    color: white;
+  }
+  .cat-facets a.active em {
+    color: #78331d;
+  }
+  .cat-facets a em {
+    background: white;
+    border-radius: 999px;
+    color: #8a6a4d;
+    font-size: .72rem;
+    font-style: normal;
+    font-weight: 900;
+    padding: .1rem .4rem;
+  }
+  .cat-results-head h2 {
+    margin: 0 0 1rem;
+  }
+  .cat-results-head a {
+    color: #78331d;
+    font-weight: 900;
+    text-decoration: none;
+  }
+  .cat-intro {
+    background: #fff7e7;
+    border: 1px solid #eadcc4;
+    border-radius: 1rem;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1.35fr .95fr;
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  .cat-intro h2,
+  .cat-intro h3 {
+    margin: 0 0 .45rem;
+  }
+  .cat-intro p {
+    color: #5f4a39;
+    line-height: 1.65;
+    margin: 0;
+  }
+  .cat-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .cat-card {
+    border: 1px solid #eadcc4;
+    border-radius: 1rem;
+    overflow: hidden;
+  }
+  .cat-media {
+    align-items: center;
+    aspect-ratio: 4 / 3;
+    background: #f1e3ce;
+    color: #8a3d22;
+    display: flex;
+    font-weight: 900;
+    justify-content: center;
+  }
+  .cat-media img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+  .cat-card div {
+    padding: .85rem;
+  }
+  .cat-card p {
+    color: #8a6a4d;
+    font-size: .78rem;
+    font-weight: 900;
+    margin: 0 0 .35rem;
+  }
+  .cat-card h3 {
+    font-size: 1rem;
+    margin: 0 0 .55rem;
+  }
+  .cat-card h3 a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .cat-card span {
+    color: #78331d;
+    font-weight: 900;
+  }
+  .cat-state {
+    background: #fff7e7;
+    border: 1px dashed #d9b77c;
+    border-radius: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  .cat-state--error {
+    background: #fff1f0;
+    border-color: #e4a098;
+    color: #8a2418;
+  }
+  @media (max-width: 62rem) {
+    .cat-metrics,
+    .cat-filter,
+    .cat-grid,
+    .cat-intro {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

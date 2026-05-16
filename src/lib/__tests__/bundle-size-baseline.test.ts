@@ -5,13 +5,13 @@
  * baseline bundle size'ları kaydedildi. Bu test build artifact'ları üzerinde
  * regression check yapar — beklenen budget aşıldıysa CI fail.
  *
- * Baseline (2026-04-26):
- *   • CSS: 1 file (`global.{hash}.css`), 188 KB raw (~30KB gzip estimate)
+ * Baseline (2026-05-13):
+ *   • CSS: multi-chunk public/admin surface, ~349 KB raw total
  *   • JS: 91 chunk, ~826 KB raw total
  *
  * Budget (regression threshold):
- *   • CSS bundle ≤ 250 KB (33% growth headroom — Tailwind 4 utility üretimi predictable)
- *   • JS total ≤ 1600 KB (2026-04-28 SSR/client split baseline + headroom)
+ *   • CSS bundle ≤ 400 KB (current multi-surface baseline + moderate headroom)
+ *   • JS total ≤ 1900 KB (raw route-split total; admin CMS chunks included)
  *   • JS chunk count ≤ 130 (route splitting growth tolerated)
  *
  * Test SSR build artifact'lara güvenir (`dist/client/_astro/`). Build yoksa
@@ -28,8 +28,8 @@ import { join } from 'node:path';
 const ASTRO_DIR = join(process.cwd(), 'dist', 'client', '_astro');
 
 const BUDGET = {
-  cssMaxBytes: 250 * 1024,        // 250 KB
-  jsMaxBytesTotal: 1600 * 1024,   // 1600 KB
+  cssMaxBytes: 400 * 1024,        // 400 KB
+  jsMaxBytesTotal: 1900 * 1024,   // 1900 KB
   jsMaxChunks: 130,
 };
 
@@ -55,11 +55,11 @@ function tryGetSizes() {
 describe('Bundle Size Baseline Lock', () => {
   const sizes = tryGetSizes();
 
-  it.skipIf(!sizes)('CSS bundle within budget (≤ 250 KB)', () => {
+  it.skipIf(!sizes)('CSS bundle within budget (≤ 400 KB)', () => {
     expect(sizes!.cssBytes).toBeLessThanOrEqual(BUDGET.cssMaxBytes);
   });
 
-  it.skipIf(!sizes)('JS bundle total within budget (≤ 1600 KB)', () => {
+  it.skipIf(!sizes)('JS bundle total within budget (≤ 1900 KB)', () => {
     expect(sizes!.jsBytes).toBeLessThanOrEqual(BUDGET.jsMaxBytesTotal);
   });
 

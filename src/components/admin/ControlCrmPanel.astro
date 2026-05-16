@@ -1,0 +1,47 @@
+---
+import SharedCrmLivePanel from './SharedCrmLivePanel.astro';
+import { getControlPanelConfig, type ControlMode } from '../../lib/admin/crm-live-panel-config';
+
+interface Props {
+  mode: ControlMode;
+}
+
+const { mode } = Astro.props as Props;
+const config = getControlPanelConfig(mode);
+---
+
+<SharedCrmLivePanel
+  panelClass="crm-control-crm"
+  dataAttrName="data-control-crm"
+  dataAttrValue={config.resource}
+  extraAttrs={{ 'data-control-mode': mode }}
+  title={config.title}
+  description={config.description}
+  loadAttr="data-control-load"
+>
+  <div slot="toolbar" class="crm-live-toolbar">
+    <input type="search" data-control-search placeholder="Ad, içerik, slug veya mekan ara..." />
+    <select data-control-filter>
+      <option value="all">Tüm kayıtlar</option>
+      {config.filterOptions.map(([value, label]) => <option value={value}>{label}</option>)}
+    </select>
+    <button type="button" data-control-load>Filtrele</button>
+  </div>
+  <div slot="table" class="crm-table-wrap">
+    <table class="crm-table crm-live-table">
+      <thead>
+        <tr>
+          <th>Birincil</th>
+          <th>İkincil</th>
+          <th>Durum</th>
+          <th>Detay</th>
+          <th>Kalite</th>
+          <th>Aksiyon</th>
+        </tr>
+      </thead>
+      <tbody data-control-body>
+        <tr><td colspan="6">Veri yüklemek için butona basın.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</SharedCrmLivePanel>

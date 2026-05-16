@@ -5,14 +5,20 @@ kararlarını kanonik hale getirir.
 
 ## Mevcut Durum
 
-- Toplam script: `237`
-- Script family: `50`
+- Toplam script: `305`
+- Script family: `55`
+- Top-level script: `1` (`astro`)
+- Exact command alias: `0`
 - En büyük aileler:
-  - `ops`: `51`
+  - `ops`: `54`
+  - `test`: `21`
   - `dev`: `19`
-  - `test`: `16`
-  - `images`: `12`
-  - `smoke`: `11`
+  - `db`: `18`
+  - `images`: `16`
+  - `smoke`: `16`
+
+Bu sayılar `npm run quality:metrics` çalıştığında otomatik yenilenen
+`docs/script-surface-report.json` artefaktından okunur.
 
 ## Hedef
 
@@ -28,6 +34,8 @@ kararlarını kanonik hale getirir.
 - Aynı komut zincirinin sadece farklı isimli alias'ları varsa biri korunur, diğeri kaldırma adayı olur.
 - `ops:cwp:*` ailesi runtime operasyonları içindir; benzer işi yapan `ops:targeted:*` scriptleri karar verilmeden büyütülmez.
 - `test:e2e:*` ailesinde sadece farklı kullanım modu varsa ayrı komut korunur.
+- Repo içi operasyon raporları için mümkünse yeni `npm script` eklenmez; `node scripts/ci/*.mjs`
+  doğrudan çağrılır ve ana girişler `quality:metrics` / `jobs:nightly:core` altında toplanır.
 
 ## İlk Kaldırma Batch'i
 
@@ -39,11 +47,15 @@ Bu batch tamamlandı; alias kaldırmaları source seviyesinde uygulandı.
   - Kaldırıldı. Kanonik komut `gate:isolated`.
 - `redis:health`
   - Kaldırıldı. Kanonik komut `redis:isolated:health`.
+- `start`
+  - Kaldırıldı. Kanonik giriş komutu `npm run dev`.
+- `scripts:surface:report`
+  - Kaldırıldı. Rapor için kanonik çağrı `node scripts/ci/script-surface-report.mjs`.
 
 ## Sıradaki Adaylar
 
-- `start`
-  - `dev` ile aynı davranışta; CLI beklentisi yoksa sadeleştirilebilir.
+- `ops:targeted:*`
+  - Kanonik `ops:cwp:*` ve `release:*` hatlarıyla usage-audit karşılaştırması yapılmalı.
 
 ## İnceleme Gerektiren Büyük Aileler
 
@@ -57,7 +69,7 @@ Bu batch tamamlandı; alias kaldırmaları source seviyesinde uygulandı.
 
 - `dev`, `dev:raw`, `dev:isolated:*` aile yapısı doğru.
 - `start:isolated` kaldırıldı.
-- `start` şimdilik top-level CLI girişi olarak tutuluyor; ileride `dev` ile birleştirme kararı ayrı alınmalı.
+- `dev` artık tek kanonik giriş; top-level alias kalmadı.
 
 ### `test`
 
@@ -67,12 +79,14 @@ Bu batch tamamlandı; alias kaldırmaları source seviyesinde uygulandı.
 ## Uygulama Sırası
 
 1. Kullanılmayan alias scriptleri raporla.
-2. README / docs referanslarını kanonik script adına taşı.
-3. Kaldırılacak scriptleri küçük batch'lerle sil.
-4. Her batch sonrası `script-surface-report` yeniden üret.
+2. `ops:targeted:*` ailesini kanonik `ops:cwp:*` ve `release:*` akışlarına karşı usage-audit ile daralt.
+3. `test:e2e:*` ailesinde yalnızca farklı runtime modunu temsil etmeyen alias'ları batch halinde sil.
+4. Nightly kritik E2E akışları için yeni `npm script` açmak yerine doğrudan `node scripts/e2e/nightly-critical-suite.mjs` gibi source-level girişler kullan.
+5. Her batch sonrası `quality:metrics` veya `script-surface-report` yeniden üret.
 
 ## Başarı Ölçütü
 
 - Toplam script sayısı düşmeli.
 - `top-level` ve tekil aileler azalmalı.
 - Büyük ailelerde çakışan alias sayısı ölçülebilir biçimde küçülmeli.
+- `exactCommandAliases` listesi sıfıra yaklaşmalı.

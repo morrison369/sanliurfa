@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-05-15T12:07:45.836Z",
+  "status": "passed",
+  "lint": {
+    "command": "npm run -s lint",
+    "exitCode": 0,
+    "problems": 0,
+    "errors": 0,
+    "warnings": 0
+  },
+  "typecheck": {
+    "command": "npm run -s type-check",
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": 0,
+    "hints": 0
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "generatedAt": "2026-05-15T12:07:53.271Z",
+  "status": "ok",
+  "mode": "dry-run",
+  "inputFile": "scripts/gmaps-discovery-queries.txt",
+  "candidateCount": 447,
+  "existingDraftCount": 447,
+  "pendingDraftCount": 0,
+  "insertedOrUpdatedCount": 0,
+  "policy": {
+    "autoPublish": false,
+    "draftStatus": "pending",
+    "localStorageOnly": true
+  },
+  "sample": [
+    {
+      "entityKey": "kategori-yeme-i-cme-restoranlar",
+      "title": "Restoranlar aday keşfi",
+      "query": "Restoranlar Şanlıurfa"
+    },
+    {
+      "entityKey": "kategori-yeme-i-cme-kebapcilar",
+      "title": "Kebapçılar aday keşfi",
+      "query": "Kebapçılar Şanlıurfa"
+    },
+    {
+      "entityKey": "kategori-yeme-i-cme-cigerciler",
+      "title": "Ciğerciler aday keşfi",
+      "query": "Ciğerciler Şanlıurfa"
+    },
+    {
+      "entityKey": "kategori-yeme-i-cme-lahmacuncular",
+      "title": "Lahmacuncular aday keşfi",
+      "query": "Lahmacuncular Şanlıurfa"
+    },
+    {
+      "entityKey": "kategori-yeme-i-cme-pide-salonlari",
+      "title": "Pide salonları aday keşfi",
+      "query": "Pide salonları Şanlıurfa"
+    },
+    {
+      "entityKey": "kategori-yeme-i-cme-donerciler",
+      "title": "Dönerciler aday keşfi",
+      "query": "Dönerciler Şanlıurfa"
+    },
+    {
+      "entityKey": "kategori-yeme-i-cme-et-lokantalari",
+      "title": "Et lokantaları aday keşfi",
+      "query": "Et lokantaları Şanlıurfa"
+    },
+    {
+      "entityKey": "kategori-yeme-i-cme-tavukcular",
+      "title": "Tavukçular aday keşfi",
+      "query": "Tavukçular Şanlıurfa"
+    },
+    {
+      "entityKey": "kategori-yeme-i-cme-cig-kofteciler",
+      "title": "Çiğ köfteciler aday keşfi",
+      "query": "Çiğ köfteciler Şanlıurfa"
+    },
+    {
+      "entityKey": "kategori-yeme-i-cme-ev-yemekleri",
+      "title": "Ev yemekleri aday keşfi",
+      "query": "Ev yemekleri Şanlıurfa"
+    }
+  ]
+}

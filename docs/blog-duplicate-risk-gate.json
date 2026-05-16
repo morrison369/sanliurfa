@@ -1,0 +1,18 @@
+{
+  "generatedAt": "2026-05-15T12:06:31.962Z",
+  "status": "ok",
+  "policy": {
+    "noDuplicateProdBlogs": true,
+    "autoPublish": false,
+    "requiresProdInventory": true,
+    "blockerWhenSelectedTopicHasDuplicateRisk": true
+  },
+  "source": "docs/blog-keyword-research-report.json",
+  "summary": {
+    "selected": 0,
+    "selectedDuplicateRisk": 0,
+    "skippedDuplicateRisk": 43,
+    "prodBlogInventoryTotal": 314
+  },
+  "selectedDuplicateRisk": []
+}

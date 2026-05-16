@@ -5,6 +5,7 @@
 import { query, queryOne, queryMany, insert, update } from '../postgres';
 import { logger } from '../logger';
 import { hasColumn, pickFirstExistingColumn } from './schema-compat';
+import { canonicalizeSearchQuery } from './search-normalization';
 
 export async function getSearchSuggestions(
   prefix: string,
@@ -252,6 +253,7 @@ export async function recordZeroResultSearch(
   filters?: any
 ): Promise<void> {
   try {
+    const normalizedQuery = canonicalizeSearchQuery(searchQuery);
     const zeroResultHasType = await hasColumn('zero_result_searches', 'search_type');
     const searchQueryColumn = await pickFirstExistingColumn('search_history', ['query', 'search_query']);
     const historyTypeColumn = await pickFirstExistingColumn('search_history', ['search_type']);
@@ -259,7 +261,7 @@ export async function recordZeroResultSearch(
 
     const existing = await queryOne(
       `SELECT id FROM zero_result_searches WHERE search_query = $1 ${zeroResultHasType ? 'AND search_type = $2' : ''}`,
-      zeroResultHasType ? [searchQuery, searchType] : [searchQuery]
+      zeroResultHasType ? [normalizedQuery, searchType] : [normalizedQuery]
     );
 
     if (existing) {
@@ -268,7 +270,7 @@ export async function recordZeroResultSearch(
         const historyWhere = historyTypeColumn
           ? `${searchQueryColumn} = $1 AND ${historyTypeColumn} = $2 AND ${resultCountColumn} = 0`
           : `${searchQueryColumn} = $1 AND ${resultCountColumn} = 0`;
-        const historyParams = historyTypeColumn ? [searchQuery, searchType] : [searchQuery];
+        const historyParams = historyTypeColumn ? [normalizedQuery, searchType] : [normalizedQuery];
         const result = await queryOne<{ count?: string }>(
           `SELECT COUNT(*) as count FROM search_history WHERE ${historyWhere}`,
           historyParams
@@ -279,22 +281,22 @@ export async function recordZeroResultSearch(
       await update(
         'zero_result_searches',
         zeroResultHasType
-          ? { search_query: searchQuery, search_type: searchType }
-          : { search_query: searchQuery },
+          ? { search_query: normalizedQuery, search_type: searchType }
+          : { search_query: normalizedQuery },
         {
           occurrence_count: occurrenceCount
         }
       );
     } else {
       await insert('zero_result_searches', {
-        search_query: searchQuery,
+        search_query: normalizedQuery,
         ...(zeroResultHasType ? { search_type: searchType } : {}),
         filters: filters ? JSON.stringify(filters) : null,
         occurrence_count: 1
       });
     }
 
-    logger.info('Zero result search recorded', { searchQuery, searchType });
+    logger.info('Zero result search recorded', { searchQuery: normalizedQuery, searchType });
   } catch (error) {
     logger.error('Failed to record zero result', error instanceof Error ? error : new Error(String(error)));
   }
@@ -305,12 +307,13 @@ export async function getZeroResultSearches(limit: number = 10): Promise<any[]> 
     const zeroResultHasType = await hasColumn('zero_result_searches', 'search_type');
     const searches = await queryMany(`
       SELECT
-        search_query,
+        LOWER(BTRIM(search_query)) AS search_query,
         ${zeroResultHasType ? 'search_type' : `'places' AS search_type`},
-        occurrence_count,
-        is_resolved
+        SUM(occurrence_count)::int AS occurrence_count,
+        false AS is_resolved
       FROM zero_result_searches
       WHERE is_resolved = false
+      GROUP BY LOWER(BTRIM(search_query)), ${zeroResultHasType ? 'search_type' : `'places'`}
       ORDER BY occurrence_count DESC
       LIMIT $1
     `, [limit]);
@@ -321,5 +324,3 @@ export async function getZeroResultSearches(limit: number = 10): Promise<any[]> 
     return [];
   }
 }
-
-

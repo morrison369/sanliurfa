@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
-const required = ['e2e/home.spec.ts', 'playwright.config.ts'];
-const specPath = path.join(root, 'e2e/home.spec.ts');
+const required = ['e2e/home.visual.spec.ts', 'playwright.config.ts'];
+const specPath = path.join(root, 'e2e/home.visual.spec.ts');
 
 for (const rel of required) {
   if (!fs.existsSync(path.join(root, rel))) {
@@ -19,18 +19,19 @@ const hasScreenshotAssertion =
 const hasDesktopOrMobileProject =
   /project\s*:\s*['"`](chromium|mobile|desktop)['"`]/i.test(spec) ||
   /devices\./.test(spec) ||
-  /test\.use\s*\(\s*\{[^}]*viewport/i.test(spec);
+  /test\.use\s*\(\s*\{[^}]*viewport/i.test(spec) ||
+  /setViewportSize\s*\(/.test(spec);
 
 if (!hasScreenshotAssertion) {
   console.error(
-    'visual-regression-gate: e2e/home.spec.ts must include screenshot assertion (toHaveScreenshot)',
+    'visual-regression-gate: e2e/home.visual.spec.ts must include screenshot assertion (toHaveScreenshot)',
   );
   process.exit(1);
 }
 
 if (!hasDesktopOrMobileProject) {
   console.error(
-    'visual-regression-gate: e2e/home.spec.ts should include desktop/mobile visual context (project/device/viewport)',
+    'visual-regression-gate: e2e/home.visual.spec.ts should include desktop/mobile visual context (project/device/viewport)',
   );
   process.exit(1);
 }

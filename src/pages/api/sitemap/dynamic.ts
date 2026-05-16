@@ -43,6 +43,9 @@ export const GET: APIRoute = async () => {
     { loc: '/blog', priority: 0.8, changefreq: 'daily' },
     { loc: '/hakkinda', priority: 0.5, changefreq: 'monthly' },
     { loc: '/iletisim', priority: 0.5, changefreq: 'monthly' },
+    { loc: '/kunye', priority: 0.45, changefreq: 'monthly' },
+    { loc: '/yazarlar', priority: 0.5, changefreq: 'monthly' },
+    { loc: '/yayin-politikasi', priority: 0.5, changefreq: 'monthly' },
     
     // Dynamic pages
     ...(places?.map(p => ({ loc: `/isletme/${p.slug}`, priority: 0.7, changefreq: 'weekly', lastmod: p.updated_at })) || []),

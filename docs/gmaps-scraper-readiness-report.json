@@ -1,0 +1,80 @@
+{
+  "generatedAt": "2026-05-15T12:07:53.042Z",
+  "status": "ok",
+  "binary": {
+    "path": "D:\\sanliurfa.com\\tools\\google-maps-scraper.exe",
+    "found": true,
+    "cliOk": true,
+    "supports": {
+      "results": true,
+      "json": true,
+      "email": true,
+      "extraReviews": true,
+      "concurrency": true,
+      "depth": true
+    }
+  },
+  "files": {
+    "runner": {
+      "rel": "scripts/lib/google-maps-scraper-runner.mjs",
+      "ok": true
+    },
+    "prodInstaller": {
+      "rel": "scripts/cwp-gmaps-install.sh",
+      "ok": true
+    },
+    "enrichScript": {
+      "rel": "scripts/enrich-places-from-gmaps.mjs",
+      "ok": true
+    },
+    "queryPlanScript": {
+      "rel": "scripts/generate-gmaps-query-plan.mjs",
+      "ok": true
+    },
+    "discoveryPlanScript": {
+      "rel": "scripts/generate-gmaps-discovery-plan.mjs",
+      "ok": true
+    },
+    "runbook": {
+      "rel": "DEPLOY-OPS-RUNBOOK.md",
+      "ok": true
+    }
+  },
+  "packageScripts": [
+    {
+      "name": "gmaps:query-plan",
+      "ok": true
+    },
+    {
+      "name": "gmaps:query-plan:all",
+      "ok": true
+    },
+    {
+      "name": "gmaps:discovery-plan",
+      "ok": true
+    },
+    {
+      "name": "gmaps:prod:install",
+      "ok": true
+    },
+    {
+      "name": "gmaps:prod:check",
+      "ok": true
+    },
+    {
+      "name": "gmaps:enrich:full",
+      "ok": true
+    },
+    {
+      "name": "gmaps:enrich:dry",
+      "ok": true
+    }
+  ],
+  "policy": {
+    "sharedHostingMode": true,
+    "dockerRequired": false,
+    "localStorageOnly": true,
+    "recommendedConcurrency": 1,
+    "recommendedDepth": 1
+  }
+}

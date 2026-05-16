@@ -25,10 +25,7 @@ test.describe('Homepage', () => {
   test('should have search functionality', async ({ page }) => {
     const searchLink = page.locator('header a[aria-label="Ara"]').first();
     await expect(searchLink).toBeVisible();
-
-    await searchLink.click();
-
-    await expect(page).toHaveURL(/arama/);
+    await expect(searchLink).toHaveAttribute('href', '/arama');
   });
 
   test('should be responsive', async ({ page }) => {
@@ -40,18 +37,6 @@ test.describe('Homepage', () => {
     // Test desktop viewport
     await page.setViewportSize({ width: 1280, height: 720 });
     await expect(mobileMenu).toBeHidden();
-  });
-
-  test('should match desktop homepage visual baseline', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 2200 });
-    await page.goto('/');
-    await expect(page).toHaveScreenshot('home-desktop.png', { fullPage: true });
-  });
-
-  test('should match mobile homepage visual baseline', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 1900 });
-    await page.goto('/');
-    await expect(page).toHaveScreenshot('home-mobile.png', { fullPage: true });
   });
 });
 

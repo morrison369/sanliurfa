@@ -1,0 +1,1191 @@
+---
+import { Icon } from 'astro-icon/components';
+import Layout from '../../layouts/Layout.astro';
+import ProfileSidebar from '../../components/profile/ProfileSidebar.astro';
+import { listUserClassifieds, type ClassifiedListing } from '../../lib/classifieds';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/profil/ilanlar');
+}
+
+let listings: ClassifiedListing[] = [];
+let loadError = '';
+try {
+  listings = await listUserClassifieds(user.id);
+} catch (error) {
+  loadError = error instanceof Error ? error.message : 'İlanlar yüklenemedi.';
+}
+
+const counts = listings.reduce(
+  (acc, item) => {
+    acc.total += 1;
+    if (item.status === 'active') acc.active += 1;
+    if (item.status === 'pending') acc.pending += 1;
+    if (item.status === 'rejected') acc.rejected += 1;
+    if (item.status === 'archived') acc.archived += 1;
+    return acc;
+  },
+  { total: 0, active: 0, pending: 0, rejected: 0, archived: 0 },
+);
+const totalViews = listings.reduce((sum, item) => sum + Number(item.view_count || 0), 0);
+const totalContacts = listings.reduce((sum, item) => sum + Number(item.contact_count || 0), 0);
+const contactRate = totalViews > 0 ? Math.round((totalContacts / totalViews) * 1000) / 10 : 0;
+const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+const weeklyListings = listings.filter((item) => {
+  const createdAt = item.created_at ? new Date(item.created_at).getTime() : 0;
+  return createdAt >= sevenDaysAgo;
+});
+const weeklyViews = weeklyListings.reduce((sum, item) => sum + Number(item.view_count || 0), 0);
+const weeklyContacts = weeklyListings.reduce((sum, item) => sum + Number(item.contact_count || 0), 0);
+const weeklyActive = weeklyListings.filter((item) => item.status === 'active').length;
+const weeklyContactRate = weeklyViews > 0 ? Math.round((weeklyContacts / weeklyViews) * 1000) / 10 : 0;
+const recentRejectedCount = listings.filter((item) => {
+  if (item.status !== 'rejected') return false;
+  const timestamp = item.moderated_at ? new Date(item.moderated_at).getTime() : item.updated_at ? new Date(item.updated_at).getTime() : 0;
+  return timestamp >= Date.now() - (14 * 24 * 60 * 60 * 1000);
+}).length;
+const moderationNoteDensity =
+  listings.length > 0 ? listings.filter((item) => (item.moderation_note || '').trim().length > 0).length / listings.length : 0;
+const dailyTrend = Array.from({ length: 7 }, (_, index) => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() - (6 - index));
+  const dayStart = date.getTime();
+  const dayEnd = dayStart + (24 * 60 * 60 * 1000);
+  const dayListings = listings.filter((item) => {
+    const createdAt = item.created_at ? new Date(item.created_at).getTime() : 0;
+    return createdAt >= dayStart && createdAt < dayEnd;
+  });
+  const dayViews = dayListings.reduce((sum, item) => sum + Number(item.view_count || 0), 0);
+  const dayContacts = dayListings.reduce((sum, item) => sum + Number(item.contact_count || 0), 0);
+  return {
+    label: date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }),
+    views: dayViews,
+    contacts: dayContacts,
+    total: dayViews + dayContacts,
+  };
+});
+const dailyTrendMax = Math.max(...dailyTrend.map((item) => item.total), 1);
+const firstHalfTrendTotal = dailyTrend.slice(0, 3).reduce((sum, item) => sum + item.total, 0);
+const secondHalfTrendTotal = dailyTrend.slice(-3).reduce((sum, item) => sum + item.total, 0);
+const hasWeeklyDropTrend = secondHalfTrendTotal < firstHalfTrendTotal * 0.8;
+const trendDeltaAverage =
+  dailyTrend.length > 1
+    ? dailyTrend
+        .slice(1)
+        .reduce((sum, item, index) => sum + Math.abs(item.total - dailyTrend[index].total), 0) / (dailyTrend.length - 1)
+    : 0;
+const trendTotalAverage = dailyTrend.reduce((sum, item) => sum + item.total, 0) / Math.max(dailyTrend.length, 1);
+const trendVolatilityScore =
+  trendTotalAverage > 0 ? Math.round((trendDeltaAverage / trendTotalAverage) * 1000) / 10 : 0;
+const hasVolatileTrend = trendVolatilityScore >= 65 && dailyTrend.filter((item) => item.total > 0).length >= 4;
+const trendFilterOptions = [
+  { value: 'all', label: 'Tüm ilanlar' },
+  { value: 'high', label: 'Yüksek ivme' },
+  { value: 'mid', label: 'Dengeli ivme' },
+  { value: 'low', label: 'İvme zayıf' },
+];
+const statusFilterOptions = [
+  { value: 'all', label: 'Tüm durumlar' },
+  { value: 'active', label: 'Yayında' },
+  { value: 'pending', label: 'Onay bekliyor' },
+  { value: 'rejected', label: 'Reddedildi' },
+  { value: 'archived', label: 'Arşiv' },
+];
+const recommendedPreset =
+  recentRejectedCount > 0 || moderationNoteDensity >= 0.35 || counts.rejected > 0
+    ? 'rejected'
+    : counts.pending > 0
+      ? 'pending'
+      : weeklyActive > 0 && weeklyViews >= 20 && weeklyContactRate >= 4 && !hasWeeklyDropTrend && !hasVolatileTrend
+        ? 'high-active'
+        : 'all';
+const recommendedPresetReason =
+  recommendedPreset === 'rejected'
+    ? `${recentRejectedCount} yeni red ve moderasyon notu yogunlugu nedeniyle once revizyon gereken ilanlar one cikiyor.`
+    : recommendedPreset === 'pending'
+      ? `${counts.pending} ilan onay bekledigi icin once bekleyen akis oneriliyor.`
+      : recommendedPreset === 'high-active'
+        ? `Son 7 gunde ${weeklyViews} goruntulenme ve %${weeklyContactRate} donusum ile en guclu akisin yayindaki ilanlar oldugu goruluyor.`
+        : hasVolatileTrend
+          ? `Gunluk trend oynakligi %${trendVolatilityScore} oldugu icin once tum ilanlari birlikte izlemek daha saglikli.`
+          : hasWeeklyDropTrend
+            ? 'Son gunlerde performans dususu goruldugu icin once tum ilan gorunumu oneriliyor.'
+            : 'Filtre onerisi icin yeterli sabit sinyal yok; tum ilan gorunumu varsayilan olarak tutuluyor.';
+const recommendedPresetVisibleCount = listings.filter((listing) => matchesPreset(listing, recommendedPreset)).length;
+const performanceSegments = [
+  {
+    label: 'Yayında',
+    value: counts.active,
+    hint: `${counts.total > 0 ? Math.round((counts.active / counts.total) * 100) : 0}% yayın oranı`,
+  },
+  {
+    label: 'İletişim',
+    value: totalContacts,
+    hint: `${contactRate}% görüntüleme dönüşümü`,
+  },
+  {
+    label: 'Görüntülenme',
+    value: totalViews,
+    hint: 'Toplam ilgi hacmi',
+  },
+  {
+    label: 'Revizyon ihtiyacı',
+    value: counts.rejected + counts.pending,
+    hint: `${counts.rejected} red · ${counts.pending} bekleyen`,
+  },
+];
+const performanceMax = Math.max(...performanceSegments.map((item) => item.value), 1);
+const performanceSuggestions = [
+  totalViews < 50 ? 'Görseli zayıf ilanları yeni kapak görseli ile güncelle.' : null,
+  contactRate < 3 ? 'Başlık ve fiyatı daha net yazarak iletişim oranını yükselt.' : null,
+  counts.pending > 0 ? 'Onay bekleyen ilanlarda kategori ve açıklama alanlarını tekrar kontrol et.' : null,
+  counts.rejected > 0 ? 'Reddedilen ilanları moderasyon notuna göre düzenleyip yeniden gönder.' : null,
+].filter(Boolean);
+function getListingPerformanceBadge(listing: ClassifiedListing) {
+  const views = Number(listing.view_count || 0);
+  const contacts = Number(listing.contact_count || 0);
+  const rate = views > 0 ? (contacts / views) * 100 : 0;
+  if (contacts >= 5 || rate >= 10) {
+    return { label: 'Yüksek dönüşüm', className: 'perf-badge perf-badge--high' };
+  }
+  if (views >= 40 || rate >= 4) {
+    return { label: 'İzleniyor', className: 'perf-badge perf-badge--mid' };
+  }
+  return { label: 'Geliştirilebilir', className: 'perf-badge perf-badge--low' };
+}
+function getListingImprovementCta(listing: ClassifiedListing) {
+  const views = Number(listing.view_count || 0);
+  const contacts = Number(listing.contact_count || 0);
+  if (!listing.images?.length) return 'Görsel ekle';
+  if (!listing.phone) return 'Telefon alanını tamamla';
+  if ((listing.description || '').length < 120) return 'Açıklamayı uzat';
+  if (views > 25 && contacts === 0) return 'Fiyatı ve başlığı gözden geçir';
+  return 'İlan iyi durumda';
+}
+function getListingImprovementHref(listing: ClassifiedListing) {
+  if (listing.status === 'archived') return `/ilanlar/${listing.slug}`;
+  if (!listing.images?.length) return `/profil/ilanlar/${listing.id}/duzenle?focus=media`;
+  if (!listing.phone) return `/profil/ilanlar/${listing.id}/duzenle?focus=contact`;
+  if ((listing.description || '').length < 120) return `/profil/ilanlar/${listing.id}/duzenle?focus=content`;
+  if (Number(listing.view_count || 0) > 25 && Number(listing.contact_count || 0) === 0) {
+    return `/profil/ilanlar/${listing.id}/duzenle?focus=pricing`;
+  }
+  return `/profil/ilanlar/${listing.id}/duzenle?focus=overview`;
+}
+function getListingMiniTrend(listing: ClassifiedListing) {
+  const views = Number(listing.view_count || 0);
+  const contacts = Number(listing.contact_count || 0);
+  const rate = views > 0 ? (contacts / views) * 100 : 0;
+  return {
+    viewsWidth: Math.max(Math.min(views, 100), views > 0 ? 8 : 0),
+    contactsWidth: Math.max(Math.min(contacts * 12, 100), contacts > 0 ? 8 : 0),
+    label: rate >= 10 ? 'Yüksek ivme' : rate >= 4 ? 'Dengeli ivme' : 'İvme zayıf',
+  };
+}
+function matchesPreset(listing: ClassifiedListing, preset: string) {
+  const trendLabel = getListingMiniTrend(listing).label;
+  const trendKey = trendLabel === 'Yüksek ivme' ? 'high' : trendLabel === 'Dengeli ivme' ? 'mid' : 'low';
+  if (preset === 'high-active') return trendKey === 'high' && listing.status === 'active';
+  if (preset === 'pending') return listing.status === 'pending';
+  if (preset === 'rejected') return listing.status === 'rejected';
+  return true;
+}
+
+const statusLabels: Record<string, string> = {
+  draft: 'Taslak',
+  pending: 'Onay bekliyor',
+  active: 'Yayında',
+  rejected: 'Reddedildi',
+  archived: 'Arşiv',
+  expired: 'Süresi doldu',
+};
+
+const formatter = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 });
+const seo = {
+  title: 'İlanlarım | Sanliurfa.com',
+  description: 'Sanliurfa.com ücretsiz ilan yönetim ekranı.',
+  noIndex: true,
+};
+---
+
+<Layout seo={seo}>
+  <main class="classified-profile">
+    <div class="sf-container classified-grid">
+      <ProfileSidebar activeKey="classifieds" />
+
+      <section class="classified-main">
+        <div class="classified-head">
+          <div>
+            <p>Ücretsiz ilan yönetimi</p>
+            <h1>İlanlarım</h1>
+            <span>İlanlar sadece Şanlıurfa ilçelerinde yayınlanır. Silme yerine arşivleme kullanılır.</span>
+          </div>
+          <a href="/ilan-ekle" class="classified-add"><Icon name="lucide:plus" class="w-4 h-4" /> Yeni ilan ver</a>
+        </div>
+
+        <div class="classified-stats">
+          <article><strong>{counts.total}</strong><span>Toplam</span></article>
+          <article><strong>{counts.pending}</strong><span>Onay bekleyen</span></article>
+          <article><strong>{counts.active}</strong><span>Yayında</span></article>
+          <article><strong>{counts.archived}</strong><span>Arşiv</span></article>
+        </div>
+
+        <div class="classified-stats classified-stats--performance">
+          <article><strong>{totalViews}</strong><span>Toplam görüntülenme</span></article>
+          <article><strong>{totalContacts}</strong><span>Toplam iletişim</span></article>
+          <article><strong>%{contactRate}</strong><span>İletişim oranı</span></article>
+          <article><strong>{counts.rejected}</strong><span>Reddedilen ilan</span></article>
+        </div>
+
+        <section class="classified-performance-panel" aria-labelledby="classified-performance-title">
+          <div class="classified-performance-head">
+            <div>
+              <p>İlan performans özeti</p>
+              <h2 id="classified-performance-title">Hızlı durum grafiği</h2>
+            </div>
+            <span>Son toplam görünüm</span>
+          </div>
+          <div class="classified-performance-list">
+            {performanceSegments.map((item) => (
+              <article class="classified-performance-item">
+                <div class="classified-performance-copy">
+                  <strong>{item.label}</strong>
+                  <span>{item.hint}</span>
+                </div>
+                <div class="classified-performance-bar" aria-hidden="true">
+                  <span style={`width:${Math.max((item.value / performanceMax) * 100, item.value > 0 ? 12 : 0)}%`}></span>
+                </div>
+                <strong class="classified-performance-value">{item.value}</strong>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section class="classified-weekly-panel" aria-labelledby="classified-weekly-title">
+          <div class="classified-performance-head">
+            <div>
+              <p>Son 7 gün</p>
+              <h2 id="classified-weekly-title">Haftalık ilan özeti</h2>
+            </div>
+            <span>{weeklyListings.length} yeni/kalan ilan</span>
+          </div>
+          <div class="classified-stats classified-stats--weekly">
+            <article><strong>{weeklyActive}</strong><span>Aktif ilan</span></article>
+            <article><strong>{weeklyViews}</strong><span>Haftalık görüntülenme</span></article>
+            <article><strong>{weeklyContacts}</strong><span>Haftalık iletişim</span></article>
+            <article><strong>{weeklyViews > 0 ? `%${Math.round((weeklyContacts / weeklyViews) * 1000) / 10}` : '%0'}</strong><span>Haftalık dönüşüm</span></article>
+          </div>
+          <div class="classified-daily-trend" aria-label="Günlük performans trendi">
+            {dailyTrend.map((item) => (
+              <article class="classified-daily-item">
+                <span>{item.label}</span>
+                <div class="classified-daily-bars" aria-hidden="true">
+                  <em style={`width:${Math.max((item.views / dailyTrendMax) * 100, item.views > 0 ? 8 : 0)}%`}></em>
+                  <i style={`width:${Math.max((item.contacts / dailyTrendMax) * 100, item.contacts > 0 ? 8 : 0)}%`}></i>
+                </div>
+                <strong>{item.views}/{item.contacts}</strong>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section class="classified-suggestion-panel" aria-labelledby="classified-suggestion-title">
+          <div class="classified-performance-head">
+            <div>
+              <p>Panel içi öneriler</p>
+              <h2 id="classified-suggestion-title">Performans öneri kutusu</h2>
+            </div>
+          </div>
+          <ul class="classified-suggestion-list">
+            {(performanceSuggestions.length ? performanceSuggestions : ['İlan performansı temel seviyede stabil görünüyor.']).map((item) => (
+              <li>{item}</li>
+            ))}
+          </ul>
+        </section>
+
+        {loadError && <div class="classified-state classified-state--error">{loadError}</div>}
+        {!loadError && listings.length === 0 && (
+          <div class="classified-state">
+            <strong>Henüz ilanınız yok.</strong>
+            <p>Emlak, vasıta, yedek parça veya ikinci el alışveriş ilanınızı ücretsiz ekleyebilirsiniz.</p>
+            <a href="/ilan-ekle">İlk ilanı ekle</a>
+          </div>
+        )}
+
+        {listings.length > 0 && (
+          <div class="classified-list">
+            <div class="classified-list-toolbar">
+              <div class="classified-filter-presets">
+                <button type="button" data-filter-preset="all" data-recommended={recommendedPreset === 'all' ? 'true' : 'false'}>Tümü</button>
+                <button type="button" data-filter-preset="high-active" data-recommended={recommendedPreset === 'high-active' ? 'true' : 'false'}>Yüksek ivme + yayında</button>
+                <button type="button" data-filter-preset="pending" data-recommended={recommendedPreset === 'pending' ? 'true' : 'false'}>Onay bekleyenler</button>
+                <button type="button" data-filter-preset="rejected" data-recommended={recommendedPreset === 'rejected' ? 'true' : 'false'}>Revizyon gerekenler</button>
+              </div>
+              <label>
+                Mini trend filtresi
+                <select data-trend-filter>
+                  {trendFilterOptions.map((option) => <option value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              <label>
+                Durum filtresi
+                <select data-status-filter>
+                  {statusFilterOptions.map((option) => <option value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              <div class="classified-filter-summary" data-filter-summary>
+                <strong data-filter-count>{listings.length}</strong>
+                <span>ilan görünür</span>
+              </div>
+              <button type="button" class="classified-filter-clear" data-filter-clear hidden>Filtreleri temizle</button>
+            </div>
+            <div class="classified-recommendation-note">
+              <div class="classified-recommendation-head">
+                <strong>Önerilen görünüm: {recommendedPreset === 'high-active' ? 'Yüksek ivme + yayında' : recommendedPreset === 'pending' ? 'Onay bekleyenler' : recommendedPreset === 'rejected' ? 'Revizyon gerekenler' : 'Tümü'}</strong>
+                <button type="button" data-apply-recommended-preset data-preset={recommendedPreset}>Uygula</button>
+              </div>
+              <em>{recommendedPresetVisibleCount} ilan bu görünümde öne çıkıyor.</em>
+              <span>{recommendedPresetReason}</span>
+            </div>
+            <div class="classified-active-filters" data-active-filters hidden>
+              <strong>Aktif filtreler</strong>
+              <button type="button" data-clear-filter="trend" data-active-filter-trend>Trend: tümü</button>
+              <button type="button" data-clear-filter="status" data-active-filter-status>Durum: tümü</button>
+            </div>
+            <div class="classified-state classified-state--filtered" data-filter-empty hidden>
+              <strong>Bu filtrelerde ilan görünmüyor.</strong>
+              <p>Trend veya durum filtresini genişleterek daha fazla ilan görebilirsiniz.</p>
+            </div>
+            {listings.map((listing) => (
+              (() => {
+                const performanceBadge = getListingPerformanceBadge(listing);
+                const miniTrend = getListingMiniTrend(listing);
+                return (
+              <article
+                class="classified-row"
+                data-trend-card={miniTrend.label === 'Yüksek ivme' ? 'high' : miniTrend.label === 'Dengeli ivme' ? 'mid' : 'low'}
+                data-status-card={listing.status}
+              >
+                <a href={`/ilanlar/${listing.slug}`} class="classified-thumb" aria-label={`${listing.title} detay`}>
+                  {listing.images?.[0] ? <img src={listing.images[0]} alt={listing.title} loading="lazy" /> : <Icon name="lucide:image" class="w-5 h-5" />}
+                </a>
+                <div class="classified-info">
+                  <div class="classified-meta">
+                    <span>{listing.parent_category_name ? `${listing.parent_category_name} / ` : ''}{listing.category_name}</span>
+                    <span>{listing.city} / {listing.district}</span>
+                    <span class={performanceBadge.className}>{performanceBadge.label}</span>
+                  </div>
+                  <h2><a href={`/ilanlar/${listing.slug}`}>{listing.title}</a></h2>
+                  <p>{listing.description}</p>
+                  <div class="classified-foot">
+                    <strong>{listing.price ? formatter.format(Number(listing.price)) : 'Fiyat belirtilmedi'}</strong>
+                    <span>{listing.view_count || 0} görüntülenme</span>
+                    <span>{listing.contact_count || 0} iletişim</span>
+                    <span>{listing.created_at ? new Date(listing.created_at).toLocaleDateString('tr-TR') : ''}</span>
+                  </div>
+                  <div class="classified-mini-trend">
+                    <strong>{miniTrend.label}</strong>
+                    <div class="classified-mini-bars" aria-hidden="true">
+                      <em style={`width:${miniTrend.viewsWidth}%`}></em>
+                      <i style={`width:${miniTrend.contactsWidth}%`}></i>
+                    </div>
+                  </div>
+                  <div class="classified-inline-cta">
+                    <strong>İyileştir:</strong>
+                    <a href={getListingImprovementHref(listing)}>{getListingImprovementCta(listing)}</a>
+                  </div>
+                  {listing.moderation_note && (
+                    <div class={`classified-note classified-note--${listing.status}`}>
+                      <strong>{listing.status === 'rejected' ? 'Admin notu / red sebebi' : 'Moderasyon notu'}</strong>
+                      <p>{listing.moderation_note}</p>
+                    </div>
+                  )}
+                  {(listing.moderated_at || listing.moderated_by) && (
+                    <div class="classified-moderation-log">
+                      <strong>Son moderasyon</strong>
+                      <span>{listing.moderated_at ? new Date(listing.moderated_at).toLocaleString('tr-TR') : 'Tarih yok'}</span>
+                      <span>{listing.moderated_by ? `Yönetici: ${listing.moderated_by}` : 'Yönetici bilgisi yok'}</span>
+                    </div>
+                  )}
+                </div>
+                <div class="classified-actions">
+                  <span class={`status status--${listing.status}`}>{statusLabels[listing.status] || listing.status}</span>
+                  <a href={`/ilanlar/${listing.slug}`}>Önizle</a>
+                  {listing.status !== 'archived' && <a href={`/profil/ilanlar/${listing.id}/duzenle`}>Düzenle</a>}
+                  {listing.status !== 'archived' && (
+                    <form method="post" action={`/api/classifieds/${listing.id}?_method=PATCH`}>
+                      <input type="hidden" name="action" value="archive" />
+                      <button type="submit" formmethod="post" data-archive>Arşivle</button>
+                    </form>
+                  )}
+                  {(listing.status === 'rejected' || listing.status === 'expired') && (
+                    <form method="post" action={`/api/classifieds/${listing.id}?_method=PATCH`}>
+                      <input type="hidden" name="action" value="review" />
+                      <button type="submit">Tekrar incelemeye gönder</button>
+                    </form>
+                  )}
+                </div>
+              </article>
+                );
+              })()
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
+  </main>
+</Layout>
+
+<script is:inline>
+  const CLASSIFIED_FILTER_STORAGE_KEY = 'sanliurfa-classified-filters';
+  const updateClassifiedFilterUrl = (trendValue, statusValue) => {
+    const url = new URL(window.location.href);
+    if (trendValue && trendValue !== 'all') url.searchParams.set('trend', trendValue);
+    else url.searchParams.delete('trend');
+    if (statusValue && statusValue !== 'all') url.searchParams.set('durum', statusValue);
+    else url.searchParams.delete('durum');
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
+  };
+  const persistClassifiedFilters = (trendValue, statusValue) => {
+    try {
+      window.localStorage.setItem(
+        CLASSIFIED_FILTER_STORAGE_KEY,
+        JSON.stringify({ trend: trendValue, durum: statusValue }),
+      );
+    } catch {}
+  };
+  const hydrateClassifiedFiltersFromUrl = () => {
+    const url = new URL(window.location.href);
+    const trend = url.searchParams.get('trend');
+    const status = url.searchParams.get('durum');
+    const trendSelect = document.querySelector('[data-trend-filter]');
+    const statusSelect = document.querySelector('[data-status-filter]');
+    if (trend && trendSelect?.querySelector(`option[value="${trend}"]`)) trendSelect.value = trend;
+    if (status && statusSelect?.querySelector(`option[value="${status}"]`)) statusSelect.value = status;
+    if (!trend && !status) {
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(CLASSIFIED_FILTER_STORAGE_KEY) || '{}');
+        if (stored.trend && trendSelect?.querySelector(`option[value="${stored.trend}"]`)) trendSelect.value = stored.trend;
+        if (stored.durum && statusSelect?.querySelector(`option[value="${stored.durum}"]`)) statusSelect.value = stored.durum;
+      } catch {}
+    }
+  };
+  const applyClassifiedFilters = () => {
+    const trendSelect = document.querySelector('[data-trend-filter]');
+    const statusSelect = document.querySelector('[data-status-filter]');
+    const recommendedButton = document.querySelector('[data-apply-recommended-preset]');
+    const trendValue = trendSelect?.value || 'all';
+    const statusValue = statusSelect?.value || 'all';
+    let visibleCount = 0;
+    document.querySelectorAll('[data-trend-card]').forEach((card) => {
+      const matchesTrend = trendValue === 'all' || card.getAttribute('data-trend-card') === trendValue;
+      const matchesStatus = statusValue === 'all' || card.getAttribute('data-status-card') === statusValue;
+      card.hidden = !(matchesTrend && matchesStatus);
+      if (!card.hidden) visibleCount += 1;
+    });
+    const countNode = document.querySelector('[data-filter-count]');
+    if (countNode) countNode.textContent = String(visibleCount);
+    const emptyState = document.querySelector('[data-filter-empty]');
+    if (emptyState) emptyState.hidden = visibleCount > 0;
+    const clearButton = document.querySelector('[data-filter-clear]');
+    if (clearButton) clearButton.hidden = trendValue === 'all' && statusValue === 'all';
+    const activeFilters = document.querySelector('[data-active-filters]');
+    if (activeFilters) activeFilters.hidden = trendValue === 'all' && statusValue === 'all';
+    const trendText = document.querySelector('[data-active-filter-trend]');
+    const statusText = document.querySelector('[data-active-filter-status]');
+    if (trendText) trendText.textContent = `Trend: ${trendSelect?.selectedOptions?.[0]?.textContent || 'Tümü'}`;
+    if (statusText) statusText.textContent = `Durum: ${statusSelect?.selectedOptions?.[0]?.textContent || 'Tümü'}`;
+    document.querySelectorAll('[data-filter-preset]').forEach((button) => {
+      const preset = button.getAttribute('data-filter-preset');
+      const active =
+        (preset === 'all' && trendValue === 'all' && statusValue === 'all') ||
+        (preset === 'high-active' && trendValue === 'high' && statusValue === 'active') ||
+        (preset === 'pending' && statusValue === 'pending') ||
+        (preset === 'rejected' && statusValue === 'rejected');
+      button.dataset.active = active ? 'true' : 'false';
+    });
+    if (recommendedButton) {
+      const recommendedPreset = recommendedButton.getAttribute('data-preset');
+      const recommendedIsActive =
+        (recommendedPreset === 'all' && trendValue === 'all' && statusValue === 'all') ||
+        (recommendedPreset === 'high-active' && trendValue === 'high' && statusValue === 'active') ||
+        (recommendedPreset === 'pending' && statusValue === 'pending') ||
+        (recommendedPreset === 'rejected' && statusValue === 'rejected');
+      recommendedButton.disabled = recommendedIsActive;
+      recommendedButton.textContent = recommendedIsActive ? 'Aktif' : 'Uygula';
+    }
+    updateClassifiedFilterUrl(trendValue, statusValue);
+    persistClassifiedFilters(trendValue, statusValue);
+  };
+  hydrateClassifiedFiltersFromUrl();
+  document.querySelector('[data-trend-filter]')?.addEventListener('change', applyClassifiedFilters);
+  document.querySelector('[data-status-filter]')?.addEventListener('change', applyClassifiedFilters);
+  document.querySelector('[data-filter-clear]')?.addEventListener('click', () => {
+    const trendSelect = document.querySelector('[data-trend-filter]');
+    const statusSelect = document.querySelector('[data-status-filter]');
+    if (trendSelect) trendSelect.value = 'all';
+    if (statusSelect) statusSelect.value = 'all';
+    applyClassifiedFilters();
+  });
+  document.querySelectorAll('[data-clear-filter]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const type = button.getAttribute('data-clear-filter');
+      const trendSelect = document.querySelector('[data-trend-filter]');
+      const statusSelect = document.querySelector('[data-status-filter]');
+      if (type === 'trend' && trendSelect) trendSelect.value = 'all';
+      if (type === 'status' && statusSelect) statusSelect.value = 'all';
+      applyClassifiedFilters();
+    });
+  });
+  document.querySelectorAll('[data-filter-preset]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const preset = button.getAttribute('data-filter-preset');
+      const trendSelect = document.querySelector('[data-trend-filter]');
+      const statusSelect = document.querySelector('[data-status-filter]');
+      if (!trendSelect || !statusSelect) return;
+      if (preset === 'all') {
+        trendSelect.value = 'all';
+        statusSelect.value = 'all';
+      } else if (preset === 'high-active') {
+        trendSelect.value = 'high';
+        statusSelect.value = 'active';
+      } else if (preset === 'pending') {
+        trendSelect.value = 'all';
+        statusSelect.value = 'pending';
+      } else if (preset === 'rejected') {
+        trendSelect.value = 'all';
+        statusSelect.value = 'rejected';
+      }
+      applyClassifiedFilters();
+    });
+  });
+  document.querySelector('[data-apply-recommended-preset]')?.addEventListener('click', () => {
+    const button = document.querySelector('[data-apply-recommended-preset]');
+    const preset = button?.getAttribute('data-preset');
+    const presetButton = preset ? document.querySelector(`[data-filter-preset="${preset}"]`) : null;
+    if (presetButton instanceof HTMLElement) presetButton.click();
+  });
+  applyClassifiedFilters();
+  document.querySelectorAll('form[action*="/api/classifieds/"]').forEach((form) => {
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const button = form.querySelector('button');
+      const original = button?.textContent || 'Kaydet';
+      if (button) button.textContent = 'İşleniyor...';
+      try {
+        const response = await fetch(form.action.replace('?_method=PATCH', ''), {
+          method: 'PATCH',
+          body: new FormData(form),
+          headers: { accept: 'application/json' },
+        });
+        if (!response.ok) throw new Error('İşlem başarısız');
+        window.location.reload();
+      } catch {
+        if (button) button.textContent = 'Hata';
+        setTimeout(() => {
+          if (button) button.textContent = original;
+        }, 1400);
+      }
+    });
+  });
+</script>
+
+<style>
+  .classified-profile {
+    background: var(--public-bg);
+    min-height: 100vh;
+    padding: 2rem 0 4rem;
+  }
+  .classified-grid {
+    display: grid;
+    gap: 1.75rem;
+  }
+  @media (min-width: 64rem) {
+    .classified-grid {
+      grid-template-columns: 280px 1fr;
+    }
+  }
+  .classified-main {
+    display: grid;
+    gap: 1rem;
+  }
+  .classified-head,
+  .classified-stats,
+  .classified-state,
+  .classified-row {
+    background: var(--public-surface);
+    border: 1px solid var(--public-border);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--public-text) 4%, transparent);
+  }
+  .classified-head {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 1.25rem;
+  }
+  .classified-head p {
+    color: var(--public-accent);
+    font-size: .75rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    margin: 0 0 .3rem;
+    text-transform: uppercase;
+  }
+  .classified-head h1 {
+    color: var(--public-text);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1;
+    margin: 0 0 .4rem;
+  }
+  .classified-head span,
+  .classified-info p,
+  .classified-state p {
+    color: var(--public-muted);
+  }
+  .classified-add {
+    align-items: center;
+    background: linear-gradient(135deg, var(--public-accent), var(--public-warning));
+    border-radius: 999px;
+    color: white;
+    display: inline-flex;
+    font-weight: 900;
+    gap: .45rem;
+    padding: .8rem 1rem;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .classified-stats {
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: .75rem;
+  }
+  .classified-stats article {
+    background: var(--public-surface-muted);
+    border: 1px solid var(--public-border-soft);
+    border-radius: 10px;
+    padding: .9rem;
+  }
+  .classified-stats strong {
+    color: var(--public-accent);
+    display: block;
+    font-size: 1.7rem;
+  }
+  .classified-stats span {
+    color: var(--public-muted);
+    font-size: .8rem;
+    font-weight: 800;
+  }
+  .classified-list {
+    display: grid;
+    gap: .8rem;
+  }
+  .classified-performance-panel {
+    background: var(--public-surface);
+    border: 1px solid var(--public-border);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--public-text) 4%, transparent);
+    padding: 1rem;
+  }
+  .classified-performance-head {
+    align-items: flex-end;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: .9rem;
+  }
+  .classified-performance-head p {
+    color: var(--public-accent);
+    font-size: .75rem;
+    font-weight: 900;
+    letter-spacing: .08em;
+    margin: 0 0 .2rem;
+    text-transform: uppercase;
+  }
+  .classified-performance-head h2 {
+    font-size: 1.05rem;
+    margin: 0;
+  }
+  .classified-performance-head span {
+    color: var(--public-muted);
+    font-size: .78rem;
+    font-weight: 800;
+  }
+  .classified-performance-list {
+    display: grid;
+    gap: .7rem;
+  }
+  .classified-performance-item {
+    align-items: center;
+    display: grid;
+    gap: .75rem;
+    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto;
+  }
+  .classified-performance-copy strong,
+  .classified-performance-value {
+    color: var(--public-text);
+  }
+  .classified-performance-copy span {
+    color: var(--public-muted);
+    display: block;
+    font-size: .78rem;
+    font-weight: 700;
+    margin-top: .15rem;
+  }
+  .classified-performance-bar {
+    background: var(--public-surface-muted);
+    border: 1px solid var(--public-border-soft);
+    border-radius: 999px;
+    height: .8rem;
+    overflow: hidden;
+  }
+  .classified-performance-bar span {
+    background: linear-gradient(90deg, var(--public-accent), var(--public-warning));
+    border-radius: inherit;
+    display: block;
+    height: 100%;
+  }
+  .classified-row {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 8rem minmax(0, 1fr) 12rem;
+    padding: .9rem;
+  }
+  .classified-thumb {
+    align-items: center;
+    aspect-ratio: 1;
+    background: var(--public-surface-muted);
+    border: 1px solid var(--public-border-soft);
+    border-radius: 10px;
+    color: var(--public-accent);
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .classified-thumb img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+  .classified-meta,
+  .classified-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  .classified-meta span,
+  .classified-foot span {
+    color: var(--public-muted);
+    font-size: .78rem;
+    font-weight: 800;
+  }
+  .classified-info h2 {
+    font-size: 1.1rem;
+    margin: .35rem 0;
+  }
+  .classified-info h2 a {
+    color: var(--public-text);
+    text-decoration: none;
+  }
+  .perf-badge {
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 900;
+    padding: .25rem .5rem;
+  }
+  .perf-badge--high {
+    background: #e7f7ec;
+    color: #177245 !important;
+  }
+  .perf-badge--mid {
+    background: #fff1d8;
+    color: #946200 !important;
+  }
+  .perf-badge--low {
+    background: #f1f1f1;
+    color: #666 !important;
+  }
+  .classified-info p {
+    display: -webkit-box;
+    font-size: .88rem;
+    line-height: 1.55;
+    margin: 0 0 .65rem;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .classified-foot strong {
+    color: var(--public-accent);
+  }
+  .classified-mini-trend {
+    display: grid;
+    gap: .35rem;
+    margin-top: .7rem;
+  }
+  .classified-mini-trend strong {
+    color: var(--public-text);
+    font-size: .78rem;
+  }
+  .classified-mini-bars {
+    display: grid;
+    gap: .28rem;
+  }
+  .classified-mini-bars em,
+  .classified-mini-bars i {
+    border-radius: 999px;
+    display: block;
+    height: .45rem;
+  }
+  .classified-mini-bars em {
+    background: linear-gradient(90deg, #78331d 0%, #f3c45f 100%);
+  }
+  .classified-mini-bars i {
+    background: linear-gradient(90deg, #2f7d4f 0%, #85c48b 100%);
+  }
+  .classified-inline-cta {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-top: .55rem;
+  }
+  .classified-inline-cta strong {
+    color: var(--public-text);
+    font-size: .78rem;
+  }
+  .classified-inline-cta a {
+    background: var(--public-surface-muted);
+    border: 1px solid var(--public-border-soft);
+    border-radius: 999px;
+    color: var(--public-muted);
+    font-size: .75rem;
+    font-weight: 800;
+    padding: .25rem .55rem;
+    text-decoration: none;
+  }
+  .classified-note {
+    background: var(--public-surface-muted);
+    border: 1px dashed var(--public-border);
+    border-radius: 10px;
+    margin-top: .7rem;
+    padding: .7rem .8rem;
+  }
+  .classified-note strong {
+    display: block;
+    font-size: .76rem;
+    letter-spacing: .04em;
+    margin-bottom: .35rem;
+    text-transform: uppercase;
+  }
+  .classified-note p {
+    -webkit-line-clamp: unset;
+    color: var(--public-text);
+    display: block;
+    margin: 0;
+  }
+  .classified-note--rejected {
+    background: #fff3f1;
+    border-color: #f0b2a9;
+  }
+  .classified-moderation-log {
+    display: grid;
+    gap: .2rem;
+    margin-top: .65rem;
+  }
+  .classified-moderation-log strong {
+    color: var(--public-text);
+    font-size: .76rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .classified-moderation-log span {
+    color: var(--public-muted);
+    font-size: .78rem;
+    font-weight: 700;
+  }
+  .classified-weekly-panel {
+    background: var(--public-surface);
+    border: 1px solid var(--public-border);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--public-text) 4%, transparent);
+    padding: 1rem;
+  }
+  .classified-daily-trend {
+    display: grid;
+    gap: .7rem;
+    margin-top: 1rem;
+  }
+  .classified-daily-item {
+    align-items: center;
+    display: grid;
+    gap: .8rem;
+    grid-template-columns: 4.2rem 1fr 4.5rem;
+  }
+  .classified-daily-item span {
+    color: var(--public-muted);
+    font-size: .78rem;
+    font-weight: 800;
+  }
+  .classified-daily-item strong {
+    color: var(--public-text);
+    font-size: .78rem;
+    text-align: right;
+  }
+  .classified-daily-bars {
+    display: grid;
+    gap: .32rem;
+  }
+  .classified-daily-bars em,
+  .classified-daily-bars i {
+    border-radius: 999px;
+    display: block;
+    height: .5rem;
+  }
+  .classified-daily-bars em {
+    background: linear-gradient(90deg, #78331d 0%, #f3c45f 100%);
+  }
+  .classified-daily-bars i {
+    background: linear-gradient(90deg, #2f7d4f 0%, #85c48b 100%);
+  }
+  .classified-suggestion-panel {
+    background: var(--public-surface);
+    border: 1px solid var(--public-border);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--public-text) 4%, transparent);
+    padding: 1rem;
+  }
+  .classified-suggestion-list {
+    color: var(--public-muted);
+    display: grid;
+    gap: .55rem;
+    line-height: 1.6;
+    margin: .2rem 0 0;
+    padding-left: 1rem;
+  }
+  .classified-actions {
+    align-items: flex-start;
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+  }
+  .classified-actions a,
+  .classified-actions button,
+  .classified-state a {
+    background: var(--public-surface-muted);
+    border: 1px solid var(--public-border);
+    border-radius: 8px;
+    color: var(--public-accent);
+    cursor: pointer;
+    font: inherit;
+    font-size: .8rem;
+    font-weight: 900;
+    padding: .45rem .65rem;
+    text-decoration: none;
+  }
+  .classified-list-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-bottom: .75rem;
+  }
+  .classified-filter-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+  }
+  .classified-filter-presets button,
+  .classified-filter-clear {
+    background: var(--public-surface);
+    border: 1px solid var(--public-border);
+    border-radius: 999px;
+    color: var(--public-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: .77rem;
+    font-weight: 850;
+    min-height: 42px;
+    padding: 0 .85rem;
+  }
+  .classified-filter-presets button[data-active='true'] {
+    background: color-mix(in srgb, var(--public-accent) 14%, var(--public-surface));
+    border-color: color-mix(in srgb, var(--public-accent) 30%, var(--public-border));
+    color: var(--public-accent);
+  }
+  .classified-filter-presets button[data-recommended='true']::after {
+    color: var(--public-accent);
+    content: ' onerilen';
+    font-size: .68rem;
+    font-weight: 900;
+    margin-left: .3rem;
+    text-transform: uppercase;
+  }
+  .classified-list-toolbar label {
+    color: var(--public-muted);
+    display: grid;
+    font-size: .78rem;
+    font-weight: 800;
+    gap: .35rem;
+  }
+  .classified-list-toolbar select {
+    background: var(--public-surface);
+    border: 1px solid var(--public-border);
+    border-radius: 10px;
+    color: var(--public-text);
+    font: inherit;
+    min-width: 11rem;
+    padding: .55rem .7rem;
+  }
+  .classified-filter-summary {
+    align-items: center;
+    background: color-mix(in srgb, var(--public-accent) 10%, var(--public-surface));
+    border: 1px solid color-mix(in srgb, var(--public-accent) 22%, var(--public-border));
+    border-radius: 999px;
+    display: inline-flex;
+    gap: .45rem;
+    min-height: 42px;
+    padding: 0 .9rem;
+  }
+  .classified-filter-summary strong {
+    color: var(--public-text);
+    font-size: .94rem;
+  }
+  .classified-filter-summary span {
+    color: var(--public-muted);
+    font-size: .8rem;
+  }
+  .classified-recommendation-note {
+    align-items: flex-start;
+    background: color-mix(in srgb, var(--public-accent) 8%, var(--public-surface));
+    border: 1px solid color-mix(in srgb, var(--public-accent) 20%, var(--public-border));
+    border-radius: 14px;
+    display: grid;
+    gap: .3rem;
+    margin: -.1rem 0 .75rem;
+    padding: .9rem 1rem;
+  }
+  .classified-recommendation-head {
+    align-items: center;
+    display: flex;
+    gap: .7rem;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .classified-recommendation-note strong {
+    color: var(--public-text);
+    font-size: .84rem;
+  }
+  .classified-recommendation-note em {
+    color: var(--public-accent);
+    font-size: .77rem;
+    font-style: normal;
+    font-weight: 800;
+  }
+  .classified-recommendation-note button {
+    background: color-mix(in srgb, var(--public-text) 92%, transparent);
+    border: 1px solid color-mix(in srgb, var(--public-text) 78%, transparent);
+    border-radius: 999px;
+    color: var(--public-bg);
+    cursor: pointer;
+    font: inherit;
+    font-size: .76rem;
+    font-weight: 800;
+    padding: .4rem .8rem;
+    white-space: nowrap;
+  }
+  .classified-recommendation-note button:disabled {
+    background: color-mix(in srgb, var(--public-accent) 14%, var(--public-surface));
+    border-color: color-mix(in srgb, var(--public-accent) 26%, var(--public-border));
+    color: var(--public-text);
+    cursor: default;
+    opacity: .92;
+  }
+  .classified-recommendation-note span {
+    color: var(--public-muted);
+    font-size: .8rem;
+    line-height: 1.5;
+  }
+  @media (max-width: 40rem) {
+    .classified-recommendation-head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+  .classified-active-filters {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    margin: -.2rem 0 .75rem;
+  }
+  .classified-active-filters strong,
+  .classified-active-filters button {
+    background: color-mix(in srgb, var(--public-surface) 90%, var(--public-text) 10%);
+    border: 1px solid var(--public-border);
+    border-radius: 999px;
+    color: var(--public-muted);
+    font-size: .76rem;
+    font-weight: 800;
+    padding: .38rem .7rem;
+  }
+  .classified-active-filters strong {
+    color: var(--public-text);
+  }
+  .classified-active-filters button {
+    cursor: pointer;
+    font: inherit;
+  }
+  .classified-filter-clear[hidden] {
+    display: none;
+  }
+  .status {
+    border-radius: 999px;
+    font-size: .75rem;
+    font-weight: 900;
+    padding: .35rem .55rem;
+  }
+  .status--active { background: #e6f7ed; color: #177245; }
+  .status--pending { background: #fff3d6; color: #946200; }
+  .status--rejected { background: #ffe4e1; color: #9b1c12; }
+  .status--archived,
+  .status--expired,
+  .status--draft { background: #f1f1f1; color: #555; }
+  .classified-state {
+    padding: 1.25rem;
+  }
+  .classified-state--filtered {
+    margin-bottom: .75rem;
+    padding: 1rem 1.1rem;
+  }
+  .classified-state--error {
+    border-color: #e4a098;
+    color: #8a2418;
+  }
+  @media (max-width: 56rem) {
+    .classified-head,
+    .classified-row {
+      display: block;
+    }
+    .classified-performance-item {
+      grid-template-columns: 1fr;
+    }
+    .classified-daily-item {
+      grid-template-columns: 1fr;
+    }
+    .classified-add,
+    .classified-actions {
+      margin-top: .9rem;
+    }
+    .classified-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .classified-thumb {
+      max-width: 10rem;
+      margin-bottom: .8rem;
+    }
+  }
+</style>

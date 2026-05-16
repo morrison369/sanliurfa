@@ -87,8 +87,8 @@ for (const rel of [
 assert(categoryHub.includes('FAQ') || categoryHub.includes('Hızlı Cevap'), 'CategoryHub hızlı cevap bloğu eksik');
 assert(homepage.includes('getSiteSetting'), 'Ana sayfa admin/site-content fallback sistemine bağlı değil');
 assert(homepage.includes('getPrimaryCityTaxonomyCategories'), 'Ana sayfa merkezi taxonomy kullanmıyor');
-assert(homepage.includes('/images/places/balikligol.jpg'), 'Ana sayfa Balıklıgöl gerçek görselini kullanmıyor');
-assert(homepage.includes('/images/places/gobeklitepe.jpg'), 'Ana sayfa Göbeklitepe gerçek görselini kullanmıyor');
+assert(homepage.includes('/images/home/collage/balikligol.webp'), 'Ana sayfa Balıklıgöl gerçek local görselini kullanmıyor');
+assert(homepage.includes('/images/home/collage/gobeklitepe.webp'), 'Ana sayfa Göbeklitepe gerçek local görselini kullanmıyor');
 assert(!homepage.includes('/images/blog/balikligol.jpg'), 'Ana sayfa alakasız Balıklıgöl blog görselini kullanıyor');
 assert(header.includes('/yeme-icme') && header.includes('/saglik') && header.includes('/konaklama'), 'Header kategori omurgası eksik');
 assert(header.includes('/topluluk') && header.includes('/eslesme'), 'Header sosyal/eşleşme girişleri eksik');

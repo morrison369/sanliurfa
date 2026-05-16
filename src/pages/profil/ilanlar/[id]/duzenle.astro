@@ -1,0 +1,592 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+import { CLASSIFIED_CITY } from '../../../../data/classified-categories';
+import {
+  getClassifiedCategoryTree,
+  getClassifiedDistricts,
+  getUserClassifiedById,
+} from '../../../../lib/classifieds';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+const id = Astro.params.id || '';
+const listing = await getUserClassifiedById(user.id, id);
+if (!listing) {
+  return Astro.redirect('/profil/ilanlar');
+}
+
+const categories = getClassifiedCategoryTree();
+const districts = getClassifiedDistricts();
+const imageText = Array.isArray(listing.images) ? listing.images.join('\n') : '';
+const seo = {
+  title: 'İlan Düzenle | Sanliurfa.com',
+  description: 'Ücretsiz ilan düzenleme ekranı.',
+  noIndex: true,
+};
+---
+
+<Layout seo={seo}>
+  <main class="edit-listing">
+    <section class="edit-hero">
+      <p>İlan düzenleme</p>
+      <h1>{listing.title}</h1>
+      <span>Güncellenen ilanlar tekrar admin onayına düşer. Şehir alanı yine {CLASSIFIED_CITY} olarak kilitlidir.</span>
+    </section>
+
+    {listing.status === 'archived' ? (
+      <section class="edit-state">
+        <strong>Arşivlenmiş ilan düzenlenemez.</strong>
+        <p>İlanı tekrar incelemeye gönderip ardından düzenleyebilirsiniz.</p>
+        <a href="/profil/ilanlar">İlanlarıma dön</a>
+      </section>
+    ) : (
+      <form class="listing-form" method="post" action={`/api/classifieds/${listing.id}`} enctype="multipart/form-data" data-dirty-form>
+        <input type="hidden" name="action" value="update" />
+        <div class="draft-bar" data-draft-bar hidden>
+          <strong>Kaydedilmiş yerel taslak bulundu.</strong>
+          <div class="draft-actions">
+            <button type="button" data-draft-restore>Taslağı geri yükle</button>
+            <button type="button" data-draft-discard>Sil</button>
+          </div>
+        </div>
+        <nav class="form-tabs" aria-label="Düzenleme sekmeleri">
+          <button type="button" class="active" data-tab-trigger="overview">Temel</button>
+          <button type="button" data-tab-trigger="pricing">Fiyat ve konum</button>
+          <button type="button" data-tab-trigger="media">İletişim ve görsel</button>
+        </nav>
+        <section class="quality-panel" aria-live="polite">
+          <div>
+            <strong data-quality-score>0/100 kalite skoru</strong>
+            <span data-quality-label>İlan alanları kontrol ediliyor</span>
+          </div>
+          <div class="quality-actions">
+            <button type="button" data-quality-action="title">Başlığı güçlendir</button>
+            <button type="button" data-quality-action="content">Açıklamayı uzat</button>
+            <button type="button" data-quality-action="pricing">Fiyatı tamamla</button>
+            <button type="button" data-quality-action="contact">Telefon ekle</button>
+            <button type="button" data-quality-action="location">Konumu netleştir</button>
+            <button type="button" data-quality-action="media">Görsel bölümüne git</button>
+          </div>
+          <ul data-quality-checks></ul>
+        </section>
+        <section data-focus-section="overview" data-tab-panel="overview">
+          <h2>Temel bilgiler</h2>
+          <label>
+            İlan başlığı
+            <input name="title" required minlength="8" maxlength="180" value={listing.title} />
+          </label>
+          <label>
+            Kategori
+            <select name="categorySlug" required>
+              <option value="">Alt kategori seçin</option>
+              {categories.map((parent) => (
+                <optgroup label={parent.name}>
+                  {(parent.children ?? []).map((child) => (
+                    <option value={child.slug} selected={listing.category_slug === child.slug}>{child.name}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+          <label>
+            Açıklama
+            <textarea name="description" data-focus-target="content" required minlength="30" maxlength="6000" rows="8">{listing.description}</textarea>
+          </label>
+        </section>
+
+        <section data-focus-section="pricing" data-tab-panel="pricing" hidden>
+          <h2>Fiyat ve konum</h2>
+          <div class="form-grid">
+            <label>
+              Fiyat
+              <input name="price" data-focus-target="pricing" inputmode="decimal" value={listing.price ? String(listing.price) : ''} />
+            </label>
+            <label>
+              İlçe
+              <select name="district" required>
+                {districts.map((district) => <option value={district} selected={listing.district === district}>{district}</option>)}
+              </select>
+            </label>
+          </div>
+          <div class="form-grid">
+            <label>
+              Mahalle
+              <input name="neighborhood" maxlength="120" value={listing.neighborhood || ''} />
+            </label>
+            <label>
+              Ürün/ilan durumu
+              <select name="condition">
+                {['belirtilmedi', 'sifir', 'ikinci-el', 'hasarli', 'kiralik', 'satilik'].map((condition) => (
+                  <option value={condition} selected={listing.condition === condition}>{condition}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <label>
+            Adres notu
+            <input name="address" maxlength="600" value={listing.address || ''} />
+          </label>
+        </section>
+
+        <section data-focus-section="media" data-tab-panel="media" hidden>
+          <h2>İletişim ve görsel</h2>
+          <label>
+            Telefon
+            <input name="phone" data-focus-target="contact" maxlength="30" value={listing.phone || ''} />
+          </label>
+          <label>
+            Yeni görsel yükle
+            <input type="file" name="photos" data-focus-target="media" accept="image/jpeg,image/png,image/webp,image/gif" multiple />
+            <small>Yeni yüklenen görseller aşağıdaki mevcut local yolların sonuna eklenir.</small>
+          </label>
+          <label>
+            Mevcut local görsel yolları
+            <textarea name="images" rows="4">{imageText}</textarea>
+            <small>CDN kullanılmaz. Sadece local `/uploads/` veya `/images/` yolları kabul edilir.</small>
+          </label>
+        </section>
+
+        <footer class="form-actions">
+          <span class="dirty-note" data-dirty-note hidden>Kaydedilmemiş değişiklikler var.</span>
+          <a href="/profil/ilanlar" data-cancel-link>Vazgeç</a>
+          <button type="submit">Güncelle ve onaya gönder</button>
+        </footer>
+      </form>
+    )}
+  </main>
+</Layout>
+
+<script is:inline>
+  const tabTriggers = Array.from(document.querySelectorAll('[data-tab-trigger]'));
+  const tabPanels = Array.from(document.querySelectorAll('[data-tab-panel]'));
+  const form = document.querySelector('[data-dirty-form]');
+  const dirtyNote = document.querySelector('[data-dirty-note]');
+  const draftBar = document.querySelector('[data-draft-bar]');
+  const draftRestore = document.querySelector('[data-draft-restore]');
+  const draftDiscard = document.querySelector('[data-draft-discard]');
+  const draftKey = form instanceof HTMLFormElement ? `classified-edit-draft:${form.action}` : '';
+  const qualityScore = document.querySelector('[data-quality-score]');
+  const qualityLabel = document.querySelector('[data-quality-label]');
+  const qualityChecks = document.querySelector('[data-quality-checks]');
+  const qualityActions = document.querySelectorAll('[data-quality-action]');
+  const activateTab = (tab) => {
+    tabTriggers.forEach((button) => button.classList.toggle('active', button.getAttribute('data-tab-trigger') === tab));
+    tabPanels.forEach((panel) => {
+      panel.hidden = panel.getAttribute('data-tab-panel') !== tab;
+    });
+  };
+  const buildSnapshot = (targetForm) => {
+    const snapshot = new URLSearchParams();
+    for (const [key, value] of new FormData(targetForm).entries()) {
+      if (value instanceof File) {
+        if (value.name) snapshot.append(key, `${value.name}:${value.size}`);
+        continue;
+      }
+      snapshot.append(key, String(value));
+    }
+    return snapshot.toString();
+  };
+  let initialSnapshot = form instanceof HTMLFormElement ? buildSnapshot(form) : '';
+  let isDirty = false;
+  let saveTimer = null;
+  const readDraft = () => {
+    if (!draftKey) return null;
+    try {
+      return JSON.parse(window.localStorage.getItem(draftKey) || 'null');
+    } catch {
+      return null;
+    }
+  };
+  const writeDraft = () => {
+    if (!(form instanceof HTMLFormElement) || !draftKey) return;
+    const payload = {};
+    const fields = form.querySelectorAll('input[name]:not([type="file"]), select[name], textarea[name]');
+    fields.forEach((field) => {
+      payload[field.name] = field.value;
+    });
+    window.localStorage.setItem(draftKey, JSON.stringify(payload));
+  };
+  const clearDraft = () => {
+    if (!draftKey) return;
+    window.localStorage.removeItem(draftKey);
+    if (draftBar) draftBar.hidden = true;
+  };
+  const scheduleDraftSave = () => {
+    if (saveTimer) window.clearTimeout(saveTimer);
+    saveTimer = window.setTimeout(writeDraft, 280);
+  };
+  const applyDraft = (payload) => {
+    if (!(form instanceof HTMLFormElement) || !payload || typeof payload !== 'object') return;
+    Object.entries(payload).forEach(([name, value]) => {
+      const field = form.querySelector(`[name="${name}"]`);
+      if (!field || typeof value !== 'string') return;
+      field.value = value;
+    });
+    syncDirtyState();
+    if (draftBar) draftBar.hidden = true;
+  };
+  const syncDirtyState = () => {
+    if (!(form instanceof HTMLFormElement)) return;
+    isDirty = buildSnapshot(form) !== initialSnapshot;
+    if (dirtyNote) dirtyNote.hidden = !isDirty;
+    form.dataset.dirty = isDirty ? 'true' : 'false';
+  };
+  const updateQualityPanel = () => {
+    if (!(form instanceof HTMLFormElement) || !qualityScore || !qualityLabel || !qualityChecks) return;
+    const title = form.querySelector('[name="title"]')?.value.trim() || '';
+    const description = form.querySelector('[name="description"]')?.value.trim() || '';
+    const price = form.querySelector('[name="price"]')?.value.trim() || '';
+    const neighborhood = form.querySelector('[name="neighborhood"]')?.value.trim() || '';
+    const address = form.querySelector('[name="address"]')?.value.trim() || '';
+    const phone = form.querySelector('[name="phone"]')?.value.trim() || '';
+    const images = form.querySelector('[name="images"]')?.value
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean) || [];
+    const checks = [
+      { ok: title.length >= 18, label: 'Başlık yeterince açıklayıcı' },
+      { ok: description.length >= 140, label: 'Açıklama yeterli derinlikte' },
+      { ok: Boolean(price), label: 'Fiyat alanı dolu' },
+      { ok: Boolean(phone), label: 'Telefon bilgisi mevcut' },
+      { ok: Boolean(address) || Boolean(neighborhood), label: 'Konum detayı var' },
+      { ok: images.length > 0, label: 'En az bir görsel mevcut' },
+    ];
+    const score = checks.reduce((sum, item) => sum + (item.ok ? Math.round(100 / checks.length) : 0), 0);
+    qualityScore.textContent = `${Math.min(score, 100)}/100 kalite skoru`;
+    qualityLabel.textContent =
+      score >= 84 ? 'İlan yayına hazır seviyeye yakın' : score >= 50 ? 'İlan orta seviyede, birkaç alan geliştirilmeli' : 'İlan kalite eşiğinin altında';
+    qualityChecks.innerHTML = '';
+    checks.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = item.ok ? 'ok' : 'warn';
+      li.textContent = item.label;
+      qualityChecks.appendChild(li);
+    });
+  };
+  const focusMap = {
+    title: '[name="title"]',
+    content: '[data-focus-target="content"]',
+    pricing: '[data-focus-target="pricing"]',
+    contact: '[data-focus-target="contact"]',
+    location: '[name="address"]',
+    media: '[data-focus-target="media"]',
+  };
+  qualityActions.forEach((button) => {
+    button.addEventListener('click', () => {
+      const action = button.getAttribute('data-quality-action');
+      const selector = focusMap[action];
+      if (!selector) return;
+      const target = document.querySelector(selector);
+      if (!target) return;
+      const sectionKey = target.getAttribute('data-focus-section') || target.closest('[data-focus-section]')?.getAttribute('data-focus-section');
+      if (sectionKey) activateTab(sectionKey);
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (typeof target.focus === 'function') {
+        window.setTimeout(() => target.focus(), 120);
+      }
+      const section = target.closest('[data-focus-section]');
+      if (section) {
+        section.classList.add('focus-highlight');
+        window.setTimeout(() => section.classList.remove('focus-highlight'), 2200);
+      }
+    });
+  });
+  tabTriggers.forEach((button) => {
+    button.addEventListener('click', () => activateTab(button.getAttribute('data-tab-trigger')));
+  });
+  if (form instanceof HTMLFormElement) {
+    form.addEventListener('input', syncDirtyState);
+    form.addEventListener('change', syncDirtyState);
+    form.addEventListener('input', scheduleDraftSave);
+    form.addEventListener('change', scheduleDraftSave);
+    form.addEventListener('input', updateQualityPanel);
+    form.addEventListener('change', updateQualityPanel);
+    form.addEventListener('submit', () => {
+      initialSnapshot = buildSnapshot(form);
+      isDirty = false;
+      if (dirtyNote) dirtyNote.hidden = true;
+      form.dataset.dirty = 'false';
+      clearDraft();
+    });
+  }
+  const existingDraft = readDraft();
+  if (existingDraft && JSON.stringify(existingDraft) !== '{}') {
+    const currentSnapshot = (() => {
+      const live = {};
+      if (!(form instanceof HTMLFormElement)) return '{}';
+      form.querySelectorAll('input[name]:not([type="file"]), select[name], textarea[name]').forEach((field) => {
+        live[field.name] = field.value;
+      });
+      return JSON.stringify(live);
+    })();
+    if (JSON.stringify(existingDraft) !== currentSnapshot && draftBar) {
+      draftBar.hidden = false;
+    }
+  }
+  draftRestore?.addEventListener('click', () => {
+    const draft = readDraft();
+    if (!draft) return;
+    applyDraft(draft);
+  });
+  draftDiscard?.addEventListener('click', () => clearDraft());
+  updateQualityPanel();
+  window.addEventListener('beforeunload', (event) => {
+    if (!isDirty) return;
+    event.preventDefault();
+  });
+  document.querySelectorAll('[data-cancel-link]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      if (!isDirty) return;
+      const confirmed = window.confirm('Kaydedilmemiş değişiklikler var. Bu sayfadan çıkmak istediğinize emin misiniz?');
+      if (!confirmed) event.preventDefault();
+    });
+  });
+  const focus = new URL(window.location.href).searchParams.get('focus');
+  if (focus) {
+    const target = document.querySelector(`[data-focus-target="${focus}"]`) || document.querySelector(`[data-focus-section="${focus}"]`);
+    if (target) {
+      const sectionKey = target.getAttribute('data-focus-section') || target.closest('[data-focus-section]')?.getAttribute('data-focus-section');
+      if (sectionKey) activateTab(sectionKey);
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (typeof target.focus === 'function') {
+        setTimeout(() => target.focus(), 120);
+      }
+      const section = target.closest('[data-focus-section]');
+      if (section) {
+        section.classList.add('focus-highlight');
+        setTimeout(() => section.classList.remove('focus-highlight'), 2200);
+      }
+    }
+  }
+</script>
+
+<style>
+  .edit-listing {
+    background: #fffaf0;
+    color: #24170f;
+    min-height: 100vh;
+    padding: 2rem clamp(1rem, 3vw, 2.5rem) 4rem;
+  }
+  .edit-hero,
+  .listing-form,
+  .edit-state {
+    margin-inline: auto;
+    max-width: 58rem;
+  }
+  .edit-hero {
+    background: #24170f;
+    border-radius: 2rem;
+    color: white;
+    margin-bottom: 1rem;
+    padding: clamp(1.5rem, 4vw, 3rem);
+  }
+  .edit-hero p {
+    color: #f3c45f;
+    font-weight: 900;
+    letter-spacing: .08em;
+    margin: 0 0 .7rem;
+    text-transform: uppercase;
+  }
+  .edit-hero h1 {
+    font-size: clamp(2rem, 5vw, 3.6rem);
+    line-height: 1;
+    margin: 0 0 1rem;
+  }
+  .edit-hero span {
+    color: #eadcc4;
+  }
+  .listing-form {
+    display: grid;
+    gap: 1rem;
+  }
+  .draft-bar {
+    align-items: center;
+    background: #fff1cf;
+    border: 1px solid #f3c45f;
+    border-radius: 1rem;
+    display: flex;
+    gap: .9rem;
+    justify-content: space-between;
+    padding: .85rem 1rem;
+  }
+  .quality-panel {
+    align-items: start;
+    background: #fff7e7;
+    border: 1px solid #eadcc4;
+    border-radius: 1.2rem;
+    display: grid;
+    gap: .85rem;
+    grid-template-columns: .95fr 1.05fr;
+    padding: 1rem;
+  }
+  .quality-panel strong {
+    color: #78331d;
+    display: block;
+    font-size: 1.15rem;
+    margin-bottom: .25rem;
+  }
+  .quality-panel span {
+    color: #6a5847;
+    font-size: .88rem;
+    font-weight: 800;
+  }
+  .quality-panel ul {
+    display: grid;
+    gap: .45rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .quality-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  .quality-actions button {
+    background: white;
+    border: 1px solid #e2c79d;
+    border-radius: 999px;
+    color: #78331d;
+    cursor: pointer;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 900;
+    padding: .55rem .8rem;
+  }
+  .quality-panel li {
+    border-radius: .85rem;
+    font-size: .82rem;
+    font-weight: 900;
+    padding: .55rem .7rem;
+  }
+  .quality-panel li.ok {
+    background: #ebf6ee;
+    color: #2f7d4f;
+  }
+  .quality-panel li.warn {
+    background: #fff1e7;
+    color: #a64b1c;
+  }
+  .draft-bar strong {
+    color: #78331d;
+  }
+  .draft-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+  }
+  .draft-actions button {
+    background: white;
+    border: 1px solid #e2c79d;
+    border-radius: 999px;
+    color: #78331d;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 900;
+    padding: .6rem .9rem;
+  }
+  .form-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+  }
+  .form-tabs button {
+    background: white;
+    border: 1px solid #eadcc4;
+    border-radius: 999px;
+    color: #78331d;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 900;
+    padding: .7rem 1rem;
+  }
+  .form-tabs button.active {
+    background: #78331d;
+    color: white;
+  }
+  .listing-form section,
+  .edit-state {
+    background: white;
+    border: 1px solid #eadcc4;
+    border-radius: 1.5rem;
+    padding: 1rem;
+  }
+  .listing-form section.focus-highlight {
+    border-color: #f3c45f;
+    box-shadow: 0 0 0 3px rgb(243 196 95 / 22%);
+  }
+  .listing-form h2 {
+    font-size: 1.1rem;
+    margin: 0 0 1rem;
+  }
+  label {
+    color: #604c3a;
+    display: grid;
+    font-weight: 900;
+    gap: .45rem;
+    margin-bottom: .9rem;
+  }
+  input,
+  select,
+  textarea {
+    border: 1px solid #e2c79d;
+    border-radius: 1rem;
+    color: #24170f;
+    font: inherit;
+    padding: .9rem 1rem;
+  }
+  textarea {
+    resize: vertical;
+  }
+  small {
+    color: #8a6a4d;
+    font-weight: 600;
+  }
+  .form-grid {
+    display: grid;
+    gap: .9rem;
+    grid-template-columns: 1fr 1fr;
+  }
+  .form-actions {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+  .dirty-note {
+    color: #a64b1c;
+    font-size: .9rem;
+    font-weight: 900;
+    margin-right: auto;
+  }
+  .form-actions a,
+  .edit-state a {
+    color: #78331d;
+    font-weight: 900;
+    text-decoration: none;
+  }
+  .form-actions button {
+    background: #78331d;
+    border: 0;
+    border-radius: 999px;
+    color: white;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 900;
+    padding: .95rem 1.25rem;
+  }
+  @media (max-width: 42rem) {
+    .form-grid,
+    .form-actions,
+    .form-tabs,
+    .draft-bar,
+    .quality-panel {
+      align-items: stretch;
+      grid-template-columns: 1fr;
+      flex-direction: column;
+    }
+  }
+</style>

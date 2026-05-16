@@ -533,6 +533,15 @@ const agencyModernPreset: SitePreset = {
       youtube: { enabled: false, handle: '', url: '' },
       x: { enabled: false, handle: '', url: '' },
     },
+    'adsense.slots': {
+      client: 'ca-pub-7160871802649062',
+      autoAdsEnabled: true,
+      homepageBanner: '',
+      blogListSidebar: '',
+      blogDetailInline: '',
+      blogDetailSidebar: '',
+      classifiedDetail: '',
+    },
     'footer.links': {
       explore: [
         { label: 'Mekanlar', href: '/mekanlar' },

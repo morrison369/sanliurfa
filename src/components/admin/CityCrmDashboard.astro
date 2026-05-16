@@ -1,0 +1,206 @@
+---
+import { Icon } from 'astro-icon/components';
+import { ADMIN_CRM_BOTS, ADMIN_CRM_MODULES, buildBotFindings, getAdminCrmCounts } from '../../lib/admin/city-crm';
+
+const counts = await getAdminCrmCounts();
+
+const healthCards = [
+  {
+    label: 'Rehber Sağlığı',
+    value: `${counts.placesActive || 0}/${counts.placesTotal || 0}`,
+    detail: `${counts.placesPending || 0} onay bekliyor`,
+    tone: 'green',
+    icon: 'lucide:map-pin',
+  },
+  {
+    label: 'SEO Sağlığı',
+    value: counts.placesSeoMissing || 0,
+    detail: 'SEO bilgisi eksik mekan',
+    tone: counts.placesSeoMissing > 0 ? 'amber' : 'green',
+    icon: 'lucide:search-check',
+  },
+  {
+    label: 'İçerik Eksikleri',
+    value: (counts.placesImageMissing || 0) + (counts.placesLocationMissing || 0),
+    detail: 'Görsel veya konum eksiği',
+    tone: 'red',
+    icon: 'lucide:alert-triangle',
+  },
+  {
+    label: 'Veri Tazeliği',
+    value: counts.pharmaciesDuty || 0,
+    detail: 'Aktif nöbetçi eczane kaydı',
+    tone: counts.pharmaciesDuty > 0 ? 'green' : 'amber',
+    icon: 'lucide:cross',
+  },
+  {
+    label: 'Topluluk Moderasyon',
+    value: (counts.pendingReviews || 0) + (counts.reportsOpen || 0),
+    detail: 'Bekleyen yorum/rapor',
+    tone: 'amber',
+    icon: 'lucide:shield-alert',
+  },
+  {
+    label: 'Gelir / Reklam',
+    value: counts.adsActive || 0,
+    detail: 'Aktif reklam/sponsor alanı',
+    tone: counts.adsActive > 0 ? 'green' : 'stone',
+    icon: 'lucide:badge-dollar-sign',
+  },
+];
+
+const statCards = [
+  { label: 'Toplam mekan', value: counts.placesTotal || 0, href: '/admin/businesses' },
+  { label: 'Aktif mekan', value: counts.placesActive || 0, href: '/admin/businesses?status=active' },
+  { label: 'Başvurular', value: counts.submissionsPending || 0, href: '/admin/submissions' },
+  { label: 'Etkinlikler', value: counts.eventsActive || 0, href: '/admin/events' },
+  { label: 'Kullanıcılar', value: counts.users || 0, href: '/admin/community/users' },
+  { label: 'Eşleşme profilleri', value: counts.matchProfiles || 0, href: '/admin/community/profiles' },
+  { label: 'Yorumlar', value: counts.reviews || 0, href: '/admin/reviews' },
+  { label: 'Site ayarları', value: counts.siteSettings || 0, href: '/admin/settings' },
+];
+---
+
+<div class="crm-dash">
+  <section class="crm-hero">
+    <div>
+      <p class="crm-kicker">Şanlıurfa şehir rehberi CRM</p>
+      <h2>Public site, işletme verisi, SEO, topluluk ve reklam akışı tek panelde.</h2>
+      <p>
+        Botlar otomatik değişiklik yapmaz. Her analiz panel içinde manuel tetiklenir, öneri üretir ve
+        admin onayından sonra uygulanır.
+      </p>
+    </div>
+    <div class="crm-hero-actions">
+      <a href="/admin/businesses" class="crm-btn crm-btn--primary">Mekanlar CRM</a>
+      <a href="/admin/settings" class="crm-btn">Frontend yönetimi</a>
+    </div>
+  </section>
+
+  <section class="crm-health-grid">
+    {healthCards.map((card) => (
+      <a href={card.label === 'SEO Sağlığı' ? '/admin/seo' : card.label === 'Gelir / Reklam' ? '/admin/ads' : '/admin/bots'} class={`crm-health crm-health--${card.tone}`}>
+        <span class="crm-health-icon"><Icon name={card.icon} class="w-4 h-4" /></span>
+        <span class="crm-health-label">{card.label}</span>
+        <strong>{typeof card.value === 'number' ? card.value.toLocaleString('tr-TR') : card.value}</strong>
+        <small>{card.detail}</small>
+      </a>
+    ))}
+  </section>
+
+  <section class="crm-stat-grid">
+    {statCards.map((card) => (
+      <a href={card.href} class="crm-stat">
+        <span>{card.label}</span>
+        <strong>{Number(card.value).toLocaleString('tr-TR')}</strong>
+      </a>
+    ))}
+  </section>
+
+  <section class="crm-section">
+    <div class="crm-section-head">
+      <div>
+        <h2>CRM Modülleri</h2>
+        <p>Sanliurfa.com public site yapısına göre ana yönetim yüzeyleri.</p>
+      </div>
+      <a href="/admin/command" class="crm-link">Komut merkezi</a>
+    </div>
+    <div class="crm-module-grid">
+      {ADMIN_CRM_MODULES.filter((module) => module.slug !== 'audit-log').map((module) => (
+        <a href={`/admin/${module.slug}`} class="crm-module">
+          <span class="crm-module-icon"><Icon name={module.icon} class="w-4 h-4" /></span>
+          <span class="crm-module-eyebrow">{module.eyebrow}</span>
+          <strong>{module.title}</strong>
+          <p>{module.description}</p>
+          <span class="crm-module-meta">{module.filters.length} filtre · {module.botKeys.length} bot</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="crm-section">
+    <div class="crm-section-head">
+      <div>
+        <h2>Botlar Merkezi</h2>
+        <p>Manuel çalışan, öneri üreten ve admin onayı isteyen yardımcılar.</p>
+      </div>
+      <a href="/admin/bots" class="crm-link">Tüm botlar</a>
+    </div>
+    <div class="crm-bot-grid">
+      {ADMIN_CRM_BOTS.slice(0, 8).map((bot) => {
+        const finding = buildBotFindings(counts, bot);
+        return (
+          <a href={bot.moduleHref} class={`crm-bot crm-bot--${bot.risk}`}>
+            <span class="crm-bot-risk">{bot.risk}</span>
+            <strong>{bot.title}</strong>
+            <p>{bot.description}</p>
+            <small>{finding.status} · {finding.suggestions} öneri</small>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+</div>
+
+<style>
+  .crm-dash { display: flex; flex-direction: column; gap: 1rem; }
+  .crm-hero {
+    display: flex; justify-content: space-between; gap: 1rem; align-items: flex-end;
+    border: 1px solid var(--adm-border); border-radius: 18px; padding: 1.5rem;
+    background: linear-gradient(180deg, var(--adm-bg-elev), var(--adm-bg-hover));
+  }
+  .crm-kicker { margin: 0 0 .5rem; color: var(--adm-accent); font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+  .crm-hero h2 { margin: 0; color: var(--adm-text); font-size: clamp(1.5rem, 3vw, 2.3rem); letter-spacing: -.03em; max-width: 760px; }
+  .crm-hero p { margin: .65rem 0 0; color: var(--adm-text-muted); max-width: 760px; line-height: 1.6; }
+  .crm-hero-actions { display: flex; gap: .55rem; flex-wrap: wrap; justify-content: flex-end; }
+  .crm-btn {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 38px;
+    padding: .55rem .9rem; border: 1px solid var(--adm-border); border-radius: 10px;
+    color: var(--adm-text); text-decoration: none; font-weight: 700; font-size: .84rem;
+    background: var(--adm-bg-elev);
+  }
+  .crm-btn--primary { background: var(--adm-text); color: var(--adm-bg); border-color: var(--adm-text); }
+  .crm-health-grid, .crm-stat-grid, .crm-module-grid, .crm-bot-grid { display: grid; gap: .8rem; }
+  .crm-health-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .crm-stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .crm-module-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .crm-bot-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .crm-health, .crm-stat, .crm-module, .crm-bot {
+    background: var(--adm-bg-elev); border: 1px solid var(--adm-border); border-radius: 14px;
+    padding: 1rem; text-decoration: none; color: var(--adm-text); transition: border-color .15s, transform .15s, background .15s;
+  }
+  .crm-health:hover, .crm-stat:hover, .crm-module:hover, .crm-bot:hover { border-color: var(--adm-accent); transform: translateY(-1px); background: var(--adm-bg-hover); }
+  .crm-health { display: flex; flex-direction: column; gap: .35rem; min-height: 132px; }
+  .crm-health-icon { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 9px; background: var(--adm-accent-soft); color: var(--adm-accent); }
+  .crm-health-label, .crm-stat span, .crm-module-eyebrow, .crm-bot-risk { color: var(--adm-text-soft); font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; }
+  .crm-health strong { font-size: 1.55rem; letter-spacing: -.03em; }
+  .crm-health small, .crm-module p, .crm-bot p, .crm-bot small, .crm-section-head p { color: var(--adm-text-muted); line-height: 1.5; }
+  .crm-health--green { --adm-accent: var(--adm-success); }
+  .crm-health--amber { --adm-accent: var(--adm-warning); }
+  .crm-health--red { --adm-accent: var(--adm-danger); }
+  .crm-health--stone { --adm-accent: var(--adm-text-soft); }
+  .crm-stat strong { display: block; margin-top: .35rem; font-size: 1.7rem; letter-spacing: -.03em; }
+  .crm-section { background: var(--adm-bg-elev); border: 1px solid var(--adm-border); border-radius: 18px; padding: 1rem; }
+  .crm-section-head { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; margin-bottom: 1rem; }
+  .crm-section-head h2 { margin: 0; font-size: 1.05rem; }
+  .crm-section-head p { margin: .25rem 0 0; font-size: .84rem; }
+  .crm-link { color: var(--adm-accent); text-decoration: none; font-weight: 800; font-size: .82rem; }
+  .crm-module, .crm-bot { display: flex; flex-direction: column; gap: .45rem; min-height: 176px; }
+  .crm-module-icon { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 10px; background: var(--adm-bg-hover); color: var(--adm-accent); }
+  .crm-module strong, .crm-bot strong { font-size: .98rem; }
+  .crm-module p, .crm-bot p { margin: 0; font-size: .82rem; flex: 1; }
+  .crm-module-meta { color: var(--adm-text-soft); font-size: .75rem; }
+  .crm-bot-risk { align-self: flex-start; padding: .18rem .5rem; border-radius: 999px; background: var(--adm-bg-hover); }
+  .crm-bot--yüksek .crm-bot-risk { color: var(--adm-danger); }
+  .crm-bot--orta .crm-bot-risk { color: var(--adm-warning); }
+  .crm-bot--düşük .crm-bot-risk { color: var(--adm-success); }
+  @media (max-width: 1180px) {
+    .crm-health-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .crm-module-grid, .crm-bot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 760px) {
+    .crm-hero { align-items: flex-start; flex-direction: column; }
+    .crm-health-grid, .crm-stat-grid, .crm-module-grid, .crm-bot-grid { grid-template-columns: 1fr; }
+  }
+</style>
+

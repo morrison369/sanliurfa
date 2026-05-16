@@ -19,7 +19,7 @@
 import { Icon } from 'astro-icon/components';
 
 export type ProfileNavKey =
- | 'profile' | 'reviews' | 'favorites' | 'notifications' | 'activity' | 'settings' | 'fotolar' | 'vendor-panel' | 'vendor-reviews';
+ | 'profile' | 'reviews' | 'favorites' | 'classifieds' | 'notifications' | 'activity' | 'settings' | 'fotolar' | 'social' | 'matches' | 'messages' | 'loyalty' | 'subscription' | 'vendor-panel' | 'vendor-reviews';
 
 interface Props {
  activeKey: ProfileNavKey;
@@ -37,7 +37,13 @@ const baseLinks: Array<{ key: ProfileNavKey; href: string; icon: string; label: 
  { key: 'profile', href: '/profil', icon: 'user', label: 'Profil' },
  { key: 'reviews', href: '/profil/yorumlar', icon: 'star', label: reviewCount !== undefined ? `Yorumlarım (${reviewCount})` : 'Yorumlarım' },
  { key: 'favorites', href: '/profil/favoriler', icon: 'heart', label: favoritesCount !== undefined ? `Favorilerim (${favoritesCount})` : 'Favorilerim' },
+ { key: 'classifieds', href: '/profil/ilanlar', icon: 'badge-plus', label: 'İlanlarım' },
  { key: 'fotolar', href: '/profil/fotolar', icon: 'image', label: 'Fotoğraflarım' },
+ { key: 'social', href: '/sosyal', icon: 'users', label: 'Sosyal Akış' },
+ { key: 'matches', href: '/eslesme', icon: 'sparkles', label: 'Eşleşme' },
+ { key: 'messages', href: '/mesajlar', icon: 'mail', label: 'Mesajlar' },
+ { key: 'loyalty', href: '/kullanici/sadakat', icon: 'award', label: 'Sadakat' },
+ { key: 'subscription', href: '/abonelik', icon: 'badge-check', label: 'Abonelik' },
  { key: 'notifications', href: '/profil/bildirimler', icon: 'bell', label: unreadCount && unreadCount > 0 ? `Bildirimler (${unreadCount})` : 'Bildirimler' },
  { key: 'activity', href: '/profil/aktivite', icon: 'activity', label: 'Aktivite' },
  { key: 'settings', href: '/profil/ayarlar', icon: 'settings', label: 'Ayarlar' },

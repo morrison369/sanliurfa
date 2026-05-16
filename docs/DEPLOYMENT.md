@@ -15,7 +15,7 @@ Bu dosya CLAUDE.md'den ayrılmıştır. PM2/CWP setup, graceful shutdown, monito
 - `web-vitals` library (Google official, ~3KB gzipped) ile CLS/INP/LCP/FCP/TTFB toplar.
 - `navigator.sendBeacon` ile `/api/analytics/performance` endpoint'ine gönderir.
 - `client_performance_metrics` tablosuna yazılır (TTFB/FCP/LCP dedicated column, CLS/INP JSONB).
-- Layout.astro'da `<PerformanceMonitor client:only="react" />` zaten var.
+- Production'da Core Web Vitals RUM varsayilan kapali tutulur; React runtime'i her public sayfaya bindirmemek icin yalnizca `PUBLIC_ENABLE_PERFORMANCE_MONITOR=true` veya dev modda acilir.
 
 ### Hata Takibi — DB-only
 - **`error_logs` tablosu**: tüm `logger.error(...)` çağrıları DB'ye yazılır
@@ -29,6 +29,7 @@ Bu dosya CLAUDE.md'den ayrılmıştır. PM2/CWP setup, graceful shutdown, monito
 
 ### Build & Deploy
 - Build: `npm run build` (~10-11s) → `dist/` (server entry + client assets).
+- Media storage: CDN veya harici object storage yok; `public/images` ve `public/uploads` doğrudan aynı sunucudan servis edilir.
 - PM2 start: `pm2 start ecosystem.config.cjs` (CWP shared hosting).
 - Required env: `DATABASE_URL`, `JWT_SECRET`, `REDIS_URL`, `INTERNAL_API_TOKEN`.
 - PM2 ecosystem.config: `kill_timeout: 10000` zorunlu (graceful shutdown 8s + buffer).

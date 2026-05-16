@@ -8,7 +8,7 @@ import { readdirSync, statSync, readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import SftpClient from 'ssh2-sftp-client';
-import { Client } from 'ssh2';
+import { restartRemotePm2AndCheck } from './lib/remote-pm2.mjs';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(scriptDir, '..');
@@ -49,19 +49,6 @@ function walkDir(dir, base) {
     }
   }
   return results;
-}
-
-function runRemoteCommand(connection, command) {
-  return new Promise((resolve, reject) => {
-    connection.exec(command, (error, stream) => {
-      if (error) { reject(error); return; }
-      let stdout = '';
-      let stderr = '';
-      stream.on('close', (code) => { resolve({ code, stdout, stderr }); });
-      stream.on('data', (chunk) => { const t = chunk.toString(); stdout += t; process.stdout.write(t); });
-      stream.stderr.on('data', (chunk) => { const t = chunk.toString(); stderr += t; process.stderr.write(t); });
-    });
-  });
 }
 
 async function main() {
@@ -135,25 +122,15 @@ async function main() {
   }
 
   console.log('\nPM2 restart yapılıyor...');
-  const connection = new Client();
-  await new Promise((resolve, reject) => connection.on('ready', resolve).on('error', reject).connect(sshConfig));
-
-  const remotePrefix = `cd ${REMOTE_DIR} && export NVM_DIR="$HOME/.nvm" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && `;
-  const restartResult = await runRemoteCommand(connection, `${remotePrefix}pm2 restart ${PM2_NAME}`);
-  if (restartResult.code !== 0) {
-    connection.end();
-    throw new Error(`PM2 restart başarısız (exit ${restartResult.code})`);
-  }
-
-  console.log('8 saniye bekleniyor...');
-  await new Promise(r => setTimeout(r, 8000));
-
-  const healthResult = await runRemoteCommand(connection,
-    `curl -s --max-time 15 -o /dev/null -w "%{http_code}" http://127.0.0.1:4321/api/health`
-  );
-  connection.end();
-
-  const code = healthResult.stdout.trim();
+  const { healthOutput } = await restartRemotePm2AndCheck({
+    sshConfig,
+    remoteDir: REMOTE_DIR,
+    pm2Name: PM2_NAME,
+    healthMode: 'http-code',
+    restartFallback: false,
+    settleMs: 8000,
+  });
+  const code = healthOutput.trim();
   if (code.startsWith('2')) {
     console.log(`\n✓ Health: ${code} — prod AYAKTA`);
   } else {

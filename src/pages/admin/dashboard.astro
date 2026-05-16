@@ -51,7 +51,7 @@ const tabs = [
   </div>
 
   <div id="overview-section" class="dx-pane">
-   <AdminDashboardOverview client:visible />
+   <AdminDashboardOverview client:visible={{ rootMargin: '160px' }} />
   </div>
 
   <div id="moderation-section" class="dx-pane" hidden>
@@ -62,9 +62,9 @@ const tabs = [
      </h2>
     </header>
     <div class="dx-panel-body">
-     <ModerationQueueManager client:visible />
+     <ModerationQueueManager client:idle />
     </div>
-   </div>
+  </div>
   </div>
 
   <div id="users-section" class="dx-pane" hidden>
@@ -75,9 +75,9 @@ const tabs = [
      </h2>
     </header>
     <div class="dx-panel-body">
-     <UserManagementTable client:visible />
+     <UserManagementTable client:idle />
     </div>
-   </div>
+  </div>
   </div>
  </div>
 

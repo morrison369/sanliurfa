@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Zap } from 'lucide-react';
 import { realtimeManager } from '../lib/realtime/realtime-sse';
 
 interface MetricsData {

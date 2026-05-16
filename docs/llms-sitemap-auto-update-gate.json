@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-05-15T12:07:52.985Z",
+  "status": "ok",
+  "policy": {
+    "language": "tr",
+    "autoPublish": false,
+    "llmsDynamic": true,
+    "sitemapDynamic": true,
+    "localStorageOnly": true
+  },
+  "summary": {
+    "checks": 6,
+    "ok": 6,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "label": "llms.txt dynamic blog source",
+      "file": "src/pages/llms.txt.ts",
+      "status": "ok",
+      "missing": []
+    },
+    {
+      "label": "llms-full.txt dynamic source",
+      "file": "src/pages/llms-full.txt.ts",
+      "status": "ok",
+      "missing": []
+    },
+    {
+      "label": "sitemap index auto lastmod",
+      "file": "src/pages/sitemap.xml.ts",
+      "status": "ok",
+      "missing": []
+    },
+    {
+      "label": "section sitemap db-driven content",
+      "file": "src/pages/sitemap-[name].xml.ts",
+      "status": "ok",
+      "missing": []
+    },
+    {
+      "label": "critical dynamic sitemap",
+      "file": "src/pages/sitemap-dynamic.xml.ts",
+      "status": "ok",
+      "missing": []
+    },
+    {
+      "label": "robots sitemap discovery",
+      "file": "src/pages/robots.txt.ts",
+      "status": "ok",
+      "missing": []
+    }
+  ]
+}

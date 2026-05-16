@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-05-15T12:07:58.905Z",
+  "status": "ok",
+  "project": "sanliurfa-com-2026",
+  "service": {
+    "name": "pagespeedonline.googleapis.com",
+    "enabled": true
+  },
+  "officialDocs": {
+    "getStarted": "https://developers.google.com/speed/docs/insights/v5/get-started",
+    "rest": "https://developers.google.com/speed/docs/insights/rest",
+    "runPagespeed": "https://developers.google.com/speed/docs/insights/rest/v5/pagespeedapi/runpagespeed",
+    "cruxApi": "https://developer.chrome.com/docs/crux/api"
+  },
+  "usagePolicy": {
+    "apiKey": "Sık otomatik sorgu için API key önerilir; key yoksa da API Explorer/cURL ile test mümkündür.",
+    "categories": [
+      "performance",
+      "accessibility",
+      "best-practices",
+      "seo"
+    ],
+    "strategies": [
+      "mobile",
+      "desktop"
+    ],
+    "localStorageRule": "PageSpeed sadece ölçüm için kullanılır; CDN veya object storage entegrasyonu yapmaz.",
+    "recommendedTargets": [
+      "https://sanliurfa.com/",
+      "https://sanliurfa.com/blog",
+      "https://sanliurfa.com/gezilecek-yerler"
+    ]
+  },
+  "limits": {
+    "pagespeed": "Güncel kota Cloud Console > APIs & Services > PageSpeed Insights API > Quotas ekranından izlenmelidir.",
+    "crux": "Chrome UX Report API resmi dokümana göre 150 sorgu/dakika/proje ve ücretsizdir."
+  },
+  "nextAutomation": {
+    "commandTemplate": "node scripts/ci/pagespeed-live-check.mjs --url=https://sanliurfa.com/ --strategy=mobile",
+    "reason": "Canlı PageSpeed koşusu kota ve süre tükettiği için bu rapor varsayılan olarak araştırma/servis durumu üretir."
+  }
+}

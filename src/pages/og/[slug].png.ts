@@ -178,7 +178,7 @@ export const GET: APIRoute = async ({ request }) => {
       return new Response(new Uint8Array(buffer), {
         headers: {
           'Content-Type': 'image/svg+xml; charset=utf-8',
-          'Cache-Control': 'public, max-age=86400, s-maxage=604800', // 1 gun CDN, 1 hafta edge
+          'Cache-Control': 'public, max-age=86400, s-maxage=604800', // 1 gun browser, 1 hafta shared cache
           'Content-Length': buffer.length.toString(),
         },
       });

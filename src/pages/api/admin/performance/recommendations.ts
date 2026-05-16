@@ -15,6 +15,8 @@ interface Recommendation {
   description: string;
   estimatedImpact: string;
   action: string;
+  destructive?: boolean;
+  requiresEvidence?: boolean;
 }
 
 export const GET: APIRoute = async ({ locals }) => {
@@ -44,10 +46,12 @@ export const GET: APIRoute = async ({ locals }) => {
         recommendations.push({
           priority: 'medium',
           category: 'Database Indexes',
-          title: `${unusedIndexes.length} Unused Indexes Found`,
-          description: `Found ${unusedIndexes.length} indexes that are never used. Removing them will free up disk space and speed up writes.`,
-          estimatedImpact: 'Medium - Improves write performance',
-          action: `DROP INDEX IF EXISTS ${unusedIndexes.map((r) => r.indexname).join(', ')};`
+          title: `${unusedIndexes.length} Reviewable Zero-Scan Indexes Found`,
+          description: `Found ${unusedIndexes.length} zero-scan index candidates. Zero-scan alone is not safe deletion evidence; keep these in EXPLAIN review and production observation before any migration.`,
+          estimatedImpact: 'Medium - Potential write-performance improvement after verified cleanup',
+          action: 'Run npm run -s db:index:review:plan and review EXPLAIN/production evidence. Do not drop automatically.',
+          destructive: false,
+          requiresEvidence: true
         });
       }
     } catch (e) {

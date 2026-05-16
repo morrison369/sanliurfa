@@ -32,6 +32,7 @@ try {
   run('npm run -s dev:isolated:stop');
   run('npm run -s runtime:cleanup:listeners');
   run('npm run -s dev:isolated:check-no-orphan');
+  run('npm run -s redis:isolated:stop');
 }
 
 process.exit(exitCode);

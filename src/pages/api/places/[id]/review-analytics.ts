@@ -31,8 +31,8 @@ export const GET: APIRoute = async ({ request, locals, params }) => {
     }
 
     // Verify ownership
-    const place = await queryOne('SELECT user_id FROM places WHERE id = $1', [placeId]);
-    if (!place || place.user_id !== locals.user.id) {
+    const place = await queryOne('SELECT owner_id FROM places WHERE id = $1', [placeId]);
+    if (!place || place.owner_id !== locals.user.id) {
       recordRequest('GET', '/api/places/[id]/review-analytics', HttpStatus.FORBIDDEN, Date.now() - startTime);
       return apiError(ErrorCode.FORBIDDEN, 'Access denied', HttpStatus.FORBIDDEN, undefined, requestId);
     }

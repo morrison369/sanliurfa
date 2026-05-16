@@ -47,11 +47,26 @@ Anlamı:
 Script yüzeyi envanteri ve küçültme planı:
 
 ```bash
-npm run scripts:surface:report
+node scripts/ci/script-surface-report.mjs
 ```
 
 - çıktı: `docs/script-surface-report.md`
 - karar planı: `docs/SCRIPT_SURFACE_REDUCTION_PLAN.md`
+
+Operasyonel raporlar:
+
+```bash
+npm run quality:metrics
+node scripts/ci/build-artifact-report.mjs
+node scripts/ci/db-usage-audit.mjs
+node scripts/ci/search-zero-result-report.mjs
+```
+
+- `quality:metrics` script/build/OpenAPI snapshot üretir
+- `build-artifact-report` `dist/client` ve `_astro` boyutlarını döker
+- `db-usage-audit` cold table / unused index örneklerini raporlar
+- `search-zero-result-report` arama tarafındaki boş sonuç sorgularını toplar
+- `jobs:nightly:core` gerekirse `NIGHTLY_INCLUDE_CRITICAL_E2E=1` ile homepage + auth + admin kritik E2E turunu da ekler
 
 ### Smoke ve Job Scriptleri
 

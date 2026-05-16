@@ -1,5 +1,11 @@
 {
-  "generatedAt": "2026-05-07T15:49:30.255Z",
+  "generatedAt": "2026-05-15T12:08:17.735Z",
+  "sourceMode": "read-only",
+  "qualityReportsRefresh": {
+    "status": "passed",
+    "generatedAt": "2026-05-15T12:08:14.330Z"
+  },
+  "qualityCheckReportPresent": true,
   "lint": {
     "errors": 0,
     "warnings": 0,
@@ -11,15 +17,479 @@
     "hints": 0
   },
   "apiReleaseGate": {
-    "passed": true
+    "passed": true,
+    "status": "passed",
+    "passedChecks": 5,
+    "totalChecks": 5
+  },
+  "blockerGates": {
+    "lintOk": true,
+    "typecheckOk": true,
+    "openapiOk": true,
+    "apiReleaseGateOk": true,
+    "apiDebugEnvelopeOk": true,
+    "scriptCanonicalSurfaceOk": true,
+    "migrationDuplicateDriftOk": true,
+    "buildArtifactsOk": true,
+    "localUploadMissingRefsOk": true,
+    "localUploadQuotaOk": true,
+    "localUploadArchiveOk": true,
+    "localUploadBucketQuotaOk": true,
+    "unitSkipsDocumentedOk": true,
+    "e2eCriticalCoverageOk": true,
+    "localStorageModelOk": true,
+    "mediaReadinessOk": true,
+    "adminStrictRoleOk": true,
+    "warmupSafetyOk": true,
+    "cronReadinessOk": true,
+    "internalLinkingOk": true,
+    "llmsSitemapAutoUpdateOk": true,
+    "gmapsScraperReadinessOk": true,
+    "gmapsQueryPlanOk": true,
+    "gmapsDiscoveryPlanOk": true,
+    "gmapsDiscoveryDraftsOk": true,
+    "ollamaReadinessOk": true,
+    "blogKeywordResearchOk": true,
+    "blogDuplicateRiskOk": true,
+    "blogDraftQualityOk": true,
+    "blogDraftRichResultsOk": true,
+    "blogPublishReadinessOk": true,
+    "blogAdminPublishQueueOk": true,
+    "dbAdvisoryEvidenceOk": true,
+    "pagespeedApiResearchOk": true,
+    "pagespeedApiLessLighthouseOk": true,
+    "pagespeedLiveCheckOk": true,
+    "pagespeedQuotaManagementOk": true,
+    "backendFrontendImprovementsOk": true,
+    "socialUxReportOk": true,
+    "blogDraftApplyOk": true,
+    "contentAgentDraftsOk": true,
+    "publishAllContentDraftsOk": true,
+    "sqlParameterSafetyOk": true,
+    "releaseReadinessOk": true,
+    "releaseNextActionsOk": true,
+    "releaseArtifactFreshnessOk": true
+  },
+  "unitTests": {
+    "status": "passed",
+    "testFilesPassed": 381,
+    "testFilesFailed": 0,
+    "testFilesTotal": 381,
+    "testsPassed": 4957,
+    "testsFailed": 0,
+    "testsTotal": 4957
+  },
+  "unitSkips": {
+    "status": "ok",
+    "observedSkippedFiles": 0,
+    "observedSkippedTests": 0,
+    "declarationCount": 4,
+    "undocumentedCount": 0
+  },
+  "e2e": {
+    "status": "passed",
+    "suite": "critical",
+    "project": "chromium",
+    "passed": 30,
+    "failed": 0,
+    "skipped": 1,
+    "testsTotal": 31
+  },
+  "e2eSkips": {
+    "status": "ok",
+    "declarationCount": 17,
+    "undocumentedCount": 0
+  },
+  "e2eCriticalCoverage": {
+    "status": "ok",
+    "flowCount": 10,
+    "coveredCount": 10,
+    "missingCount": 0
   },
   "openapi": {
-    "documentedPaths": 456,
-    "fileRoutes": 456,
+    "documentedPaths": 466,
+    "fileRoutes": 466,
     "missingInSpec": 0,
     "currentMissingInSpec": 0,
     "baselineMissingInSpec": 0,
     "newlyMissingVsBaseline": 0,
     "resolvedVsBaseline": 0
+  },
+  "scriptSurface": {
+    "totalScripts": 370,
+    "familyCount": 65,
+    "topLevelCount": 0,
+    "exactCommandAliasCount": 0
+  },
+  "scriptCanonicalSurface": {
+    "status": "ok",
+    "totalScripts": 370,
+    "familyCount": 65,
+    "canonicalCount": 15,
+    "missingCanonicalCount": 0
+  },
+  "migrationDuplicateDrift": {
+    "status": "ok",
+    "duplicateNumberGroups": 3,
+    "duplicateSlugGroups": 14,
+    "numberDrift": false,
+    "slugDrift": false
+  },
+  "buildArtifacts": {
+    "status": "ok",
+    "distClientTotalMb": 14.64,
+    "distClientWithinSoftBudget": true,
+    "astroWithinBudget": true,
+    "publicUploadsTotalMb": 200.7,
+    "publicUploadsOversizedFileCount": 0,
+    "publicImagesTotalMb": 12.83,
+    "publicImagesOversizedFileCount": 0
+  },
+  "dbUsageAudit": {
+    "status": "ok",
+    "tableCount": 497,
+    "databaseSource": "DATABASE_URL",
+    "zeroScanIndexCount": 1046,
+    "protectedZeroScanIndexCount": 280,
+    "unusedIndexCount": 766,
+    "speculativeCandidateCount": 3
+  },
+  "dbRetirementObservation": {
+    "status": "observation_required",
+    "p0DropCandidateCount": 3,
+    "p0QuarantineCandidateCount": 2,
+    "p0RuntimeHoldCount": 1,
+    "p1ReviewCandidateCount": 0,
+    "p2UnusedIndexCandidateCount": 766
+  },
+  "dbP0QuarantinePlan": {
+    "status": "advisory",
+    "quarantineCandidateCount": 2,
+    "runtimeHoldCount": 1,
+    "automaticDropAllowed": false
+  },
+  "dbObservationCadence": {
+    "status": "observing",
+    "snapshotCount": 3,
+    "observationDays": 14,
+    "missingDays": 11,
+    "stableEnoughForAction": false
+  },
+  "dbObservationCalendar": {
+    "status": "observing",
+    "completeCount": 3,
+    "observationDays": 14,
+    "missingOrPendingCount": 11,
+    "nextSnapshotDueAt": "2026-05-16T12:04:43.938Z",
+    "earliestActionAt": "2026-05-29T12:04:43.938Z",
+    "automaticDropAllowed": false
+  },
+  "dbManualDecisionReadiness": {
+    "status": "waiting",
+    "readyForManualPrCount": 0,
+    "waitingForEvidenceCount": 2,
+    "runtimeHoldCount": 1
+  },
+  "dbRegistryClassification": {
+    "status": "advisory",
+    "tableCount": 497,
+    "unclassifiedCount": 0,
+    "zeroScanIndexCount": 1046,
+    "protectedZeroScanIndexCount": 280,
+    "unusedIndexCount": 766,
+    "automaticDbDropAllowed": false
+  },
+  "dbRuntimeHoldPlan": {
+    "status": "runtime_hold",
+    "table": "public.campaign_performance",
+    "runtimeReferenceCount": 2,
+    "incompatibleContractCount": 1,
+    "automaticDropAllowed": false
+  },
+  "sqlParameterSafety": {
+    "status": "ok",
+    "findingCount": 0
+  },
+  "dbProdVersionCompare": {
+    "status": "ok",
+    "databaseSource": "DATABASE_URL",
+    "database": "sanliurfa",
+    "sourceMigrationFileCount": 188,
+    "schemaMigrationCount": 192,
+    "appliedSourceMatchCount": 188,
+    "sourcePendingCount": 0,
+    "dbOnlyCount": 4
+  },
+  "dbIndexReviewPlan": {
+    "status": "advisory",
+    "reviewableIndexCount": 766,
+    "highRiskCount": 505,
+    "automaticIndexDropAllowed": false
+  },
+  "dbAdvisoryEvidence": {
+    "status": "observation_required",
+    "p0QuarantineCandidateCount": 2,
+    "runtimeHoldCount": 1,
+    "observationSnapshots": 3,
+    "observationDaysRequired": 14,
+    "automaticDbDropAllowed": false
+  },
+  "searchZeroResult": {
+    "status": "ok",
+    "unresolvedCount": 0,
+    "unresolvedOccurrences": 0
+  },
+  "localUploadParity": {
+    "status": "ok",
+    "uploadFileCount": 928,
+    "missingReferencedFileCount": 0,
+    "unreferencedCandidateCount": 0,
+    "softLimitMb": 512,
+    "usedPercent": 39.2,
+    "quotaStatus": "ok",
+    "withinSoftLimit": true
+  },
+  "localUploadBucketQuota": {
+    "status": "ok",
+    "bucketCount": 5,
+    "blockerCount": 0,
+    "reviewCount": 0,
+    "advisoryCount": 0
+  },
+  "localUploadClassification": {
+    "status": "empty",
+    "total": 0,
+    "observed": 0,
+    "archiveCandidate": 0,
+    "deletableReview": 0,
+    "ageSource": "firstSeenAt"
+  },
+  "localUploadArchiveCandidates": {
+    "status": "empty",
+    "total": 0,
+    "archiveCandidate": 0,
+    "deletableReview": 0
+  },
+  "releaseArtifactFreshness": {
+    "status": "passed",
+    "maxAgeMinutes": 180,
+    "staleOrMissingCount": 0
+  },
+  "releaseNextActions": {
+    "status": "ok",
+    "actionCount": 7,
+    "blockingActionCount": 0,
+    "waitingActionCount": 1
+  },
+  "releaseReadiness": {
+    "status": "ready_with_advisories",
+    "advisoryCount": 1,
+    "checkCount": 57
+  },
+  "socialUx": {
+    "status": "ok",
+    "passed": 6,
+    "failed": 0,
+    "checkCount": 6
+  },
+  "redisRuntimeHealth": {
+    "status": "idle",
+    "host": "127.0.0.1",
+    "port": 6381,
+    "pingOk": false,
+    "latencyMs": 1,
+    "runtimeMode": "optional-fail-open",
+    "releaseBlocker": false,
+    "fallbackAllowed": true
+  },
+  "warmupSafety": {
+    "status": "ok",
+    "reviewCount": 0
+  },
+  "cronReadiness": {
+    "status": "ok",
+    "requiredJobCount": 16,
+    "presentJobCount": 16,
+    "missingJobCount": 0
+  },
+  "gmapsScraperReadiness": {
+    "status": "ok",
+    "binaryFound": true,
+    "cliOk": true,
+    "binaryPath": "D:\\sanliurfa.com\\tools\\google-maps-scraper.exe",
+    "localStorageOnly": true,
+    "dockerRequired": false
+  },
+  "gmapsQueryPlan": {
+    "status": "ok",
+    "source": "database-empty-fallback",
+    "queryCount": 2,
+    "dbAvailable": false,
+    "localStorageOnly": true
+  },
+  "gmapsDiscoveryPlan": {
+    "status": "ok",
+    "queryCount": 447,
+    "sectionCount": 29,
+    "localStorageOnly": true,
+    "doesNotUpdatePlaces": true
+  },
+  "gmapsDiscoveryDrafts": {
+    "status": "ok",
+    "mode": "dry-run",
+    "candidateCount": 447,
+    "existingDraftCount": 447,
+    "pendingDraftCount": 0,
+    "insertedOrUpdatedCount": 0,
+    "autoPublish": false
+  },
+  "ollamaReadiness": {
+    "status": "ok",
+    "mode": "cloud",
+    "apiKeyPresent": true,
+    "liveChecked": false,
+    "liveOk": null,
+    "model": "gemma4:31b",
+    "fallbackModel": "ministral-3:14b"
+  },
+  "contentAgentDrafts": {
+    "status": "ok",
+    "total": 487,
+    "pending": 0,
+    "stalePendingCount": 0,
+    "autoPublish": false
+  },
+  "publishAllContentDrafts": {
+    "status": "ok",
+    "remainingDraftLike": 0,
+    "moderationPending": 0,
+    "updated": {
+      "blog_posts": 0,
+      "events": 0,
+      "recipes": 0,
+      "historical_sites": 0,
+      "places": 0,
+      "city_content_drafts": 0
+    },
+    "moderationQueuesAutoApproved": false
+  },
+  "blogKeywordResearch": {
+    "status": "ok",
+    "selected": 0,
+    "duplicateRisk": 43,
+    "coverageComplete": true,
+    "prodPublishedTotal": 314,
+    "googleAdsReady": false,
+    "volumeFallback": "intent-priority-and-coverage-gap"
+  },
+  "blogDraftApply": {
+    "applied": 26,
+    "pendingBlogDrafts": 0,
+    "autoPublish": false,
+    "supersededByPublishReadiness": true
+  },
+  "blogDraftRichResults": {
+    "status": "ok",
+    "drafts": 40,
+    "ok": 40,
+    "review": 0
+  },
+  "blogDraftQuality": {
+    "status": "ok",
+    "drafts": 40,
+    "ok": 40,
+    "review": 0
+  },
+  "blogPublishReadiness": {
+    "status": "published",
+    "pendingBlogDrafts": 0,
+    "publishedOrExisting": 40,
+    "issues": 0
+  },
+  "blogAdminPublishQueue": {
+    "status": "published",
+    "draftCount": 40,
+    "qualityOk": 40,
+    "richResultsOk": 40,
+    "issues": 0
+  },
+  "localMediaStorageGate": {
+    "status": "ok",
+    "localStorageOnly": true,
+    "externalObjectStorageConfigured": false,
+    "liveChecks": 5,
+    "liveOk": 5,
+    "failedPatterns": 0
+  },
+  "mediaReadiness": {
+    "status": "ok",
+    "checks": 5,
+    "passed": 5,
+    "failed": 0,
+    "uploadFiles": 928,
+    "publicImages": 200,
+    "localStorageOnly": true,
+    "cdnOrObjectStorageAllowed": false
+  },
+  "adminStrictRoleGate": {
+    "status": "ok",
+    "checked": 32,
+    "ok": 32,
+    "review": 0
+  },
+  "blogDuplicateRiskGate": {
+    "status": "ok",
+    "selected": 0,
+    "selectedDuplicateRisk": 0,
+    "skippedDuplicateRisk": 43,
+    "autoPublish": false
+  },
+  "pagespeedLiveCheck": {
+    "status": "review",
+    "checks": 0,
+    "ok": 0,
+    "review": 1,
+    "quotaLimited": 1
+  },
+  "pagespeedApiLessLighthouse": {
+    "status": "review",
+    "checks": 1,
+    "ok": 0,
+    "review": 1,
+    "failed": 0,
+    "apiUsed": false,
+    "performance": 0.85,
+    "bestPractices": 0.77,
+    "seo": 1,
+    "reviewClassification": "external_expected_review",
+    "externalExpectedReview": true
+  },
+  "pagespeedQuotaManagement": {
+    "status": "managed_with_live_quota_review",
+    "managementMarked": true,
+    "quotaManagementCompleted": true,
+    "liveStatus": "review",
+    "quotaLimited": 1
+  },
+  "backendFrontendImprovements": {
+    "status": "ok",
+    "passed": 14,
+    "total": 14,
+    "backendPassed": 9,
+    "backendTotal": 9,
+    "frontendPassed": 5,
+    "frontendTotal": 5
+  },
+  "internalLinking": {
+    "status": "passed",
+    "ruleCount": 33,
+    "uniqueUrlCount": 32,
+    "missingCriticalUrls": 0
+  },
+  "llmsSitemapAutoUpdate": {
+    "status": "ok",
+    "checks": 6,
+    "ok": 6,
+    "failed": 0
   }
 }

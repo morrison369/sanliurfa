@@ -7634,8 +7634,8 @@ npm run build
 
 ```bash
 npx eslint "src/pages/api/**/*.ts"          # 0 violation (boş çıktı)
-npm run codemod:validation:dry              # 0 dosya
-npm run codemod:ast:dry                     # 0 dosya
+npx tsx scripts/codemod-validation.ts --dry-run --verbose  # 0 dosya
+npx tsx scripts/codemod-ast.ts --dry-run --verbose         # 0 dosya
 ```
 
 ### Validation sweep özeti (Batch #157-#163)
@@ -7657,7 +7657,7 @@ Toplam düzeltilen dosya sayısı: **~50 endpoint**, **~150 satır** — tüm st
 |---|---|
 | `eslint-local-rules.js` | `fixable: 'code'` + her `context.report()` çağrısına `fix(fixer)` eklendi; `formData.get()?.toString?.()` false positive exlcuded |
 | `scripts/codemod-ast.ts` | ts-morph tabanlı AST codemod — optional chaining, property access, tüm edge case'ler |
-| `package.json` | `npm run codemod:ast` ve `npm run codemod:ast:dry` script'leri |
+| `package.json` | `npm run codemod:ast` kanonik script'i; dry-run için doğrudan `npx tsx scripts/codemod-ast.ts --dry-run --verbose` |
 
 ### Araç karşılaştırması
 
@@ -7674,8 +7674,8 @@ Toplam düzeltilen dosya sayısı: **~50 endpoint**, **~150 satır** — tüm st
 
 ```bash
 npm run lint:fix                        # ESLint — mevcut violation yok, gelecekte otomatik fix
-npm run codemod:ast:dry                 # AST codemod — 0 dosya (idempotent)
-npm run codemod:validation:dry          # Regex codemod — 0 dosya (idempotent)
+npx tsx scripts/codemod-ast.ts --dry-run --verbose          # AST codemod — 0 dosya (idempotent)
+npx tsx scripts/codemod-validation.ts --dry-run --verbose   # Regex codemod — 0 dosya (idempotent)
 ```
 
 ### False positive notu
@@ -7749,7 +7749,7 @@ npx tsx scripts/codemod-validation.ts --dry-run  # 0 dosya beklenir (idempotent)
 | `scripts/codemod-validation.ts` | Tek seferlik otomatik fixer — `src/pages/api/**/*.ts` tüm dosyaları tarar, 6 anti-pattern'i dönüştürür |
 | `eslint-local-rules.js` | ESLint v9 flat config local plugin — `local/no-validation-coercion` kuralı |
 | `eslint.config.mjs` (güncellendi) | `src/pages/api/**/*.ts` için `local/no-validation-coercion: error` aktif |
-| `package.json` (güncellendi) | `npm run codemod:validation` ve `npm run codemod:validation:dry` script'leri |
+| `package.json` (güncellendi) | `npm run codemod:validation` kanonik script'i; dry-run için doğrudan `npx tsx scripts/codemod-validation.ts --dry-run --verbose` |
 
 ### Codemod düzelttiği pattern'ler
 
@@ -7767,7 +7767,7 @@ npx tsx scripts/codemod-validation.ts --dry-run  # 0 dosya beklenir (idempotent)
 ### Kullanım
 
 ```bash
-npm run codemod:validation:dry   # önizle (değiştirmez)
+npx tsx scripts/codemod-validation.ts --dry-run --verbose   # önizle (değiştirmez)
 npm run codemod:validation       # uygula
 npm run lint                     # ESLint — yeni kod anti-pattern içerirse error
 ```
@@ -12970,7 +12970,7 @@ Tüm `.tsx` ve `.astro` dosyalarında "Harran Scripts" dark tema geçişi tamaml
 ### Manuel Test — Google Maps Scraper Entegrasyonu (enrich-places-from-gmaps.mjs)
 
 1. `scripts/google-maps-scraper.exe` dosyası `scripts/` dizininde mevcut olmalı (Windows binary, manual download)
-2. `npm run gmaps:enrich:dry -- --input scripts/gmaps-results.json` → gerçek DB update yapmadan "dry-run" çıktı göstermeli
+2. `node scripts/enrich-places-from-gmaps.mjs --input scripts/gmaps-results.json --dry-run` → gerçek DB update yapmadan "dry-run" çıktı göstermeli
 3. `npm run gmaps:enrich -- --input scripts/gmaps-results.json` → eşleşen mekanları DB'de günceller:
    - `phone` alanı güncellenmeli (eğer Google'da varsa ve DB'de yoksa)
    - `website` alanı güncellenmeli
@@ -13992,4 +13992,3 @@ halfeti, gobeklitepe, harran, balikligol, sanliurfa, birecik, akcakale, bozova, 
 - [ ] `node scripts/enrich-phones-playwright.mjs --limit 5` → sadece 5 mekan işlemeli
 - [ ] Playwright browser headless modda başarıyla başlıyor
 - [ ] Google Maps arama sonuçları için `[role="article"]` selector çalışıyor
-

@@ -1,0 +1,660 @@
+{
+  "generatedAt": "2026-05-15T12:08:14.330Z",
+  "status": "passed",
+  "qualityCheck": {
+    "status": "passed",
+    "lint": {
+      "command": "npm run -s lint",
+      "exitCode": 0,
+      "problems": 0,
+      "errors": 0,
+      "warnings": 0
+    },
+    "typecheck": {
+      "command": "npm run -s type-check",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 0,
+      "hints": 0
+    }
+  },
+  "openapiRouteSync": {
+    "documentedPaths": 466,
+    "fileRoutes": 466,
+    "currentMissingInSpec": 0,
+    "baselineMissingInSpec": 0,
+    "newlyMissingVsBaseline": 0,
+    "resolvedVsBaseline": 0
+  },
+  "steps": [
+    {
+      "label": "lint",
+      "command": "npm run -s lint",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:06:51.962Z",
+      "endedAt": "2026-05-15T12:07:03.139Z",
+      "durationMs": 11177,
+      "outputTail": [
+        ""
+      ]
+    },
+    {
+      "label": "typecheck",
+      "command": "npm run -s type-check",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:03.139Z",
+      "endedAt": "2026-05-15T12:07:45.835Z",
+      "durationMs": 42696,
+      "outputTail": [
+        "\u001b[2m14:07:04\u001b[22m \u001b[34m[@astrojs/node]\u001b[39m Enabling sessions with filesystem storage",
+        "\u001b[2m14:07:05\u001b[22m \u001b[34m[content]\u001b[39m Syncing content",
+        "\u001b[2m14:07:05\u001b[22m \u001b[34m[content]\u001b[39m Synced content",
+        "\u001b[2m14:07:05\u001b[22m \u001b[34m[types]\u001b[39m Generated \u001b[2m389ms\u001b[22m",
+        "\u001b[2m14:07:05\u001b[22m \u001b[34m[check]\u001b[39m Getting diagnostics for Astro files in D:\\sanliurfa.com\\sanliurfa...",
+        "Result (1472 files): ",
+        "- 0 errors",
+        "- 0 warnings",
+        "- 0 hints"
+      ]
+    },
+    {
+      "label": "openapi route sync",
+      "command": "npx tsx scripts/openapi/sync-routes.ts --quiet-list",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:45.836Z",
+      "endedAt": "2026-05-15T12:07:46.639Z",
+      "durationMs": 803,
+      "outputTail": [
+        "OpenAPI route sync report",
+        " - documented paths: 466",
+        " - file routes: 466",
+        " - missing in spec (current): 0",
+        " - missing in spec (baseline): 0",
+        " - newly missing vs baseline: 0",
+        " - resolved vs baseline: 0",
+        "",
+        "No route drift detected."
+      ]
+    },
+    {
+      "label": "script surface",
+      "command": "node scripts/ci/script-surface-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:46.639Z",
+      "endedAt": "2026-05-15T12:07:46.683Z",
+      "durationMs": 44,
+      "outputTail": [
+        "script-surface-report: PASS (370 scripts / 65 families)"
+      ]
+    },
+    {
+      "label": "script canonical surface",
+      "command": "node scripts/ci/script-canonical-surface-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:46.683Z",
+      "endedAt": "2026-05-15T12:07:46.725Z",
+      "durationMs": 42,
+      "outputTail": [
+        "script-canonical-surface-report: OK (15 canonical, 0 missing)"
+      ]
+    },
+    {
+      "label": "build artifact",
+      "command": "node scripts/ci/build-artifact-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:46.725Z",
+      "endedAt": "2026-05-15T12:07:46.817Z",
+      "durationMs": 92,
+      "outputTail": [
+        "build-artifact-report: OK (14.64 MB)"
+      ]
+    },
+    {
+      "label": "migration duplicate drift",
+      "command": "node scripts/ci/migration-duplicate-drift-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:46.818Z",
+      "endedAt": "2026-05-15T12:07:46.853Z",
+      "durationMs": 35,
+      "outputTail": [
+        "migration-duplicate-drift-report: OK (3 number groups, 14 slug groups)"
+      ]
+    },
+    {
+      "label": "db usage audit",
+      "command": "node scripts/ci/db-usage-audit.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:46.853Z",
+      "endedAt": "2026-05-15T12:07:47.127Z",
+      "durationMs": 274,
+      "outputTail": [
+        "db-usage-audit: OK"
+      ]
+    },
+    {
+      "label": "db retirement observation",
+      "command": "node scripts/ci/db-retirement-observation-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:47.127Z",
+      "endedAt": "2026-05-15T12:07:47.335Z",
+      "durationMs": 208,
+      "outputTail": [
+        "db-retirement-observation-report: OBSERVATION_REQUIRED (P0=3, P1=0, P2=766)"
+      ]
+    },
+    {
+      "label": "db p0 quarantine plan",
+      "command": "node scripts/ci/db-p0-quarantine-plan.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:47.335Z",
+      "endedAt": "2026-05-15T12:07:47.371Z",
+      "durationMs": 36,
+      "outputTail": [
+        "db-p0-quarantine-plan: ADVISORY (2 candidates, 1 runtime holds)"
+      ]
+    },
+    {
+      "label": "db observation cadence",
+      "command": "node scripts/ci/db-observation-cadence-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:47.371Z",
+      "endedAt": "2026-05-15T12:07:47.408Z",
+      "durationMs": 37,
+      "outputTail": [
+        "db-observation-cadence-report: OBSERVING (3/14 snapshots)"
+      ]
+    },
+    {
+      "label": "db manual decision readiness",
+      "command": "node scripts/ci/db-manual-decision-readiness-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:47.408Z",
+      "endedAt": "2026-05-15T12:07:47.443Z",
+      "durationMs": 35,
+      "outputTail": [
+        "db-manual-decision-readiness-report: WAITING (0/2 ready)"
+      ]
+    },
+    {
+      "label": "db registry classification",
+      "command": "node scripts/ci/db-registry-classification-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:47.443Z",
+      "endedAt": "2026-05-15T12:07:47.482Z",
+      "durationMs": 39,
+      "outputTail": [
+        "db-registry-classification-report: ADVISORY (0 unclassified, 766 reviewable unused indexes)"
+      ]
+    },
+    {
+      "label": "db prod version compare",
+      "command": "node scripts/ci/db-prod-version-compare-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:47.482Z",
+      "endedAt": "2026-05-15T12:07:47.580Z",
+      "durationMs": 98,
+      "outputTail": [
+        "db-prod-version-compare-report: OK (188/188 source migrations matched)"
+      ]
+    },
+    {
+      "label": "db index review plan",
+      "command": "node scripts/ci/db-index-review-plan.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:47.580Z",
+      "endedAt": "2026-05-15T12:07:47.626Z",
+      "durationMs": 46,
+      "outputTail": [
+        "db-index-review-plan: ADVISORY (766 candidates, high=505)"
+      ]
+    },
+    {
+      "label": "db advisory evidence bundle",
+      "command": "node scripts/ci/db-advisory-evidence-bundle.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:47.626Z",
+      "endedAt": "2026-05-15T12:07:47.662Z",
+      "durationMs": 36,
+      "outputTail": [
+        "db-advisory-evidence-bundle: OBSERVATION_REQUIRED candidates=2 holds=1"
+      ]
+    },
+    {
+      "label": "search zero result",
+      "command": "node scripts/ci/search-zero-result-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:47.662Z",
+      "endedAt": "2026-05-15T12:07:47.751Z",
+      "durationMs": 89,
+      "outputTail": [
+        "search-zero-result-report: OK"
+      ]
+    },
+    {
+      "label": "local upload parity",
+      "command": "node scripts/ci/local-upload-parity-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:47.751Z",
+      "endedAt": "2026-05-15T12:07:48.313Z",
+      "durationMs": 562,
+      "outputTail": [
+        "local-upload-parity-report: OK (928 files, 0 missing refs, 0 unreferenced candidates)"
+      ]
+    },
+    {
+      "label": "local upload bucket quota",
+      "command": "node scripts/ci/local-upload-bucket-quota-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:48.313Z",
+      "endedAt": "2026-05-15T12:07:48.349Z",
+      "durationMs": 36,
+      "outputTail": [
+        "local-upload-bucket-quota-report: OK (5 buckets, 0 blockers)"
+      ]
+    },
+    {
+      "label": "local upload classification",
+      "command": "node scripts/ci/local-upload-candidate-classification.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:48.349Z",
+      "endedAt": "2026-05-15T12:07:48.389Z",
+      "durationMs": 40,
+      "outputTail": [
+        "local-upload-candidate-classification: EMPTY (0 candidates, 0 archive, 0 delete-review)"
+      ]
+    },
+    {
+      "label": "local upload archive candidates",
+      "command": "node scripts/ci/local-upload-archive-candidates.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:48.389Z",
+      "endedAt": "2026-05-15T12:07:48.426Z",
+      "durationMs": 37,
+      "outputTail": [
+        "local-upload-archive-candidates: EMPTY (0 candidates)"
+      ]
+    },
+    {
+      "label": "local media storage gate",
+      "command": "node scripts/ci/local-media-storage-gate.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:48.426Z",
+      "endedAt": "2026-05-15T12:07:48.688Z",
+      "durationMs": 262,
+      "outputTail": [
+        "[local-media-storage-gate] ok"
+      ]
+    },
+    {
+      "label": "redis runtime health",
+      "command": "node scripts/ci/redis-runtime-health-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:48.688Z",
+      "endedAt": "2026-05-15T12:07:50.113Z",
+      "durationMs": 1425,
+      "outputTail": [
+        "redis-runtime-health-report: IDLE (connect ECONNREFUSED 127.0.0.1:6381)"
+      ]
+    },
+    {
+      "label": "warmup safety",
+      "command": "node scripts/ci/warmup-safety-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:50.113Z",
+      "endedAt": "2026-05-15T12:07:50.153Z",
+      "durationMs": 40,
+      "outputTail": [
+        "warmup-safety-report: OK (0 review)"
+      ]
+    },
+    {
+      "label": "cron readiness",
+      "command": "node scripts/ci/cron-readiness-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:50.153Z",
+      "endedAt": "2026-05-15T12:07:52.918Z",
+      "durationMs": 2765,
+      "outputTail": [
+        "cron-readiness-report: OK (16/16 jobs)"
+      ]
+    },
+    {
+      "label": "internal linking",
+      "command": "node scripts/ci/internal-linking-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:52.918Z",
+      "endedAt": "2026-05-15T12:07:52.955Z",
+      "durationMs": 37,
+      "outputTail": [
+        "internal-linking-report: passed (33 rules, 32 URLs)"
+      ]
+    },
+    {
+      "label": "llms sitemap auto update",
+      "command": "node scripts/ci/llms-sitemap-auto-update-gate.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:52.955Z",
+      "endedAt": "2026-05-15T12:07:52.991Z",
+      "durationMs": 36,
+      "outputTail": [
+        "llms-sitemap-auto-update-gate: OK ok=6 failed=0"
+      ]
+    },
+    {
+      "label": "gmaps scraper readiness",
+      "command": "node scripts/ci/gmaps-scraper-readiness-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:52.991Z",
+      "endedAt": "2026-05-15T12:07:53.048Z",
+      "durationMs": 57,
+      "outputTail": [
+        "gmaps-scraper-readiness: OK (binary=D:\\sanliurfa.com\\tools\\google-maps-scraper.exe, cli=ok)"
+      ]
+    },
+    {
+      "label": "gmaps query plan",
+      "command": "node scripts/generate-gmaps-query-plan.mjs --only-missing",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:53.048Z",
+      "endedAt": "2026-05-15T12:07:53.141Z",
+      "durationMs": 93,
+      "outputTail": [
+        "gmaps-query-plan: OK (source=database-empty-fallback, queries=2, output=scripts/gmaps-queries.txt)"
+      ]
+    },
+    {
+      "label": "gmaps discovery plan",
+      "command": "node scripts/generate-gmaps-discovery-plan.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:53.141Z",
+      "endedAt": "2026-05-15T12:07:53.180Z",
+      "durationMs": 39,
+      "outputTail": [
+        "gmaps-discovery-plan: OK (queries=447, sections=29, output=scripts/gmaps-discovery-queries.txt)"
+      ]
+    },
+    {
+      "label": "gmaps discovery drafts",
+      "command": "node scripts/import-gmaps-discovery-drafts.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:53.180Z",
+      "endedAt": "2026-05-15T12:07:53.276Z",
+      "durationMs": 96,
+      "outputTail": [
+        "gmaps-discovery-drafts: OK (mode=dry-run, candidates=447, existing=447, upsert=0)"
+      ]
+    },
+    {
+      "label": "ollama readiness",
+      "command": "node scripts/ci/ollama-readiness-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:53.276Z",
+      "endedAt": "2026-05-15T12:07:53.312Z",
+      "durationMs": 36,
+      "outputTail": [
+        "ollama-readiness: OK (mode=cloud, key=present, live=skipped)"
+      ]
+    },
+    {
+      "label": "blog keyword research",
+      "command": "node scripts/ci/blog-keyword-research-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:53.312Z",
+      "endedAt": "2026-05-15T12:07:56.806Z",
+      "durationMs": 3494,
+      "outputTail": [
+        "blog-keyword-research-report: OK selected=0 skipped=43"
+      ]
+    },
+    {
+      "label": "blog draft quality",
+      "command": "node scripts/ci/blog-draft-quality-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:56.806Z",
+      "endedAt": "2026-05-15T12:07:56.880Z",
+      "durationMs": 74,
+      "outputTail": [
+        "blog-draft-quality-report: OK ok=40 review=0"
+      ]
+    },
+    {
+      "label": "blog draft rich results",
+      "command": "node scripts/ci/blog-draft-rich-results-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:56.880Z",
+      "endedAt": "2026-05-15T12:07:56.939Z",
+      "durationMs": 59,
+      "outputTail": [
+        "blog-draft-rich-results-report: OK ok=40 review=0"
+      ]
+    },
+    {
+      "label": "blog publish readiness",
+      "command": "node scripts/ci/blog-publish-readiness-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:56.939Z",
+      "endedAt": "2026-05-15T12:07:56.981Z",
+      "durationMs": 42,
+      "outputTail": [
+        "blog-publish-readiness-report: PUBLISHED drafts=40 issues=0"
+      ]
+    },
+    {
+      "label": "blog admin publish queue",
+      "command": "node scripts/ci/blog-admin-publish-queue-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:56.981Z",
+      "endedAt": "2026-05-15T12:07:57.034Z",
+      "durationMs": 53,
+      "outputTail": [
+        "blog-admin-publish-queue-report: PUBLISHED drafts=40 issues=0"
+      ]
+    },
+    {
+      "label": "pagespeed api research",
+      "command": "node scripts/ci/pagespeed-api-research-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:57.034Z",
+      "endedAt": "2026-05-15T12:07:58.911Z",
+      "durationMs": 1877,
+      "outputTail": [
+        "pagespeed-api-research-report: OK enabled=true"
+      ]
+    },
+    {
+      "label": "pagespeed api-less lighthouse",
+      "command": "node scripts/ci/pagespeed-api-less-lighthouse-report.mjs --max-urls=1 --strategy=mobile",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:07:58.911Z",
+      "endedAt": "2026-05-15T12:08:13.796Z",
+      "durationMs": 14885,
+      "outputTail": [
+        "lighthouse mobile https://sanliurfa.com/ review",
+        "pagespeed-api-less-lighthouse-report: REVIEW ok=0 review=1 failed=0"
+      ]
+    },
+    {
+      "label": "pagespeed live check",
+      "command": "node scripts/ci/pagespeed-live-check.mjs --max-urls=1 --strategy=mobile",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:13.796Z",
+      "endedAt": "2026-05-15T12:08:13.833Z",
+      "durationMs": 37,
+      "outputTail": [
+        "pagespeed-live-check: REVIEW skipped=quota-retry-window-not-due nextRetryAt=2026-05-15T12:57:53.133Z"
+      ]
+    },
+    {
+      "label": "pagespeed quota management",
+      "command": "node scripts/ci/pagespeed-quota-management-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:13.833Z",
+      "endedAt": "2026-05-15T12:08:13.869Z",
+      "durationMs": 36,
+      "outputTail": [
+        "pagespeed-quota-management-report: MANAGED_WITH_LIVE_QUOTA_REVIEW quotaLimited=1"
+      ]
+    },
+    {
+      "label": "content agent drafts",
+      "command": "node scripts/ci/content-agent-drafts-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:13.869Z",
+      "endedAt": "2026-05-15T12:08:13.972Z",
+      "durationMs": 103,
+      "outputTail": [
+        "content-agent-drafts-report: OK (total=487, pending=0, stale=0)"
+      ]
+    },
+    {
+      "label": "backend frontend improvements",
+      "command": "node scripts/ci/backend-frontend-improvement-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:13.972Z",
+      "endedAt": "2026-05-15T12:08:14.017Z",
+      "durationMs": 45,
+      "outputTail": [
+        "backend-frontend-improvement-report: OK backend=9/9 frontend=5/5"
+      ]
+    },
+    {
+      "label": "social ux report",
+      "command": "node scripts/ci/social-ux-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:14.017Z",
+      "endedAt": "2026-05-15T12:08:14.052Z",
+      "durationMs": 35,
+      "outputTail": [
+        "social-ux-report: OK (6/6)"
+      ]
+    },
+    {
+      "label": "unit skip report",
+      "command": "node scripts/ci/unit-skip-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:14.052Z",
+      "endedAt": "2026-05-15T12:08:14.106Z",
+      "durationMs": 54,
+      "outputTail": [
+        "unit-skip-report: OK (4 declarations, 0 undocumented)"
+      ]
+    },
+    {
+      "label": "e2e skip report",
+      "command": "node scripts/ci/e2e-skip-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:14.106Z",
+      "endedAt": "2026-05-15T12:08:14.145Z",
+      "durationMs": 39,
+      "outputTail": [
+        "e2e-skip-report: OK (17 declarations, 0 undocumented)"
+      ]
+    },
+    {
+      "label": "e2e critical coverage",
+      "command": "node scripts/ci/e2e-critical-coverage-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:14.145Z",
+      "endedAt": "2026-05-15T12:08:14.183Z",
+      "durationMs": 38,
+      "outputTail": [
+        "e2e-critical-coverage-report: OK (10/10 covered)"
+      ]
+    },
+    {
+      "label": "api release gate report",
+      "command": "node scripts/ci/api-release-gate-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:14.183Z",
+      "endedAt": "2026-05-15T12:08:14.219Z",
+      "durationMs": 36,
+      "outputTail": [
+        "api-release-gate-report: PASSED (0 failed)"
+      ]
+    },
+    {
+      "label": "api debug envelope",
+      "command": "node scripts/ci/api-debug-envelope-gate.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:14.219Z",
+      "endedAt": "2026-05-15T12:08:14.255Z",
+      "durationMs": 36,
+      "outputTail": [
+        "api-debug-envelope-gate: OK (3/3)"
+      ]
+    },
+    {
+      "label": "adsense readiness",
+      "command": "node scripts/ci/adsense-readiness-gate.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:14.255Z",
+      "endedAt": "2026-05-15T12:08:14.292Z",
+      "durationMs": 37,
+      "outputTail": [
+        "adsense-readiness-gate: PASSED (0 failed)"
+      ]
+    },
+    {
+      "label": "release next actions",
+      "command": "node scripts/ci/release-next-actions-report.mjs",
+      "status": 0,
+      "ok": true,
+      "startedAt": "2026-05-15T12:08:14.292Z",
+      "endedAt": "2026-05-15T12:08:14.330Z",
+      "durationMs": 38,
+      "outputTail": [
+        "release-next-actions-report: OK (7 actions, 0 blocking, 1 waiting)"
+      ]
+    }
+  ]
+}

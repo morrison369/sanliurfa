@@ -1,19 +1,9 @@
 ---
 /**
- * Consolidated Analytics — GA4 + Microsoft Clarity + Yandex Metrika tek component'te.
+ * Consent-gated analytics loader.
  *
- * Tasarım:
- *   - 3 servis tek bir component, ortak consent gate (KVKK uyumlu)
- *   - Hepsi `type="text/partytown"` → web worker'da çalışır, ana thread'i bloklamaz
- *   - `window.sfTrack(name, params)` — 3 servise birden event fire (zaten Layout'taydı, buraya taşındı)
- *   - 2026 update: gtag.js + GTM converging → ileride tek GTM container'a geçiş kolay
- *
- * Neden ayrı GTM container DEĞİL?
- *   - GTM ~30-50KB bundle ekler, mevcut 3 inline script toplam <5KB
- *   - GTM container Console UI'dan oluşturulmalı (CLI ile mümkün değil, hesap gerekli)
- *   - 2026'da gtag.js ve GTM birleşiyor (Google Marketing Live), prematür migrasyon riskli
- *
- * Future migration: tek GTM container ekleneceği zaman, bu component'i GTM snippet ile değiştir.
+ * GA4, Microsoft Clarity ve Yandex Metrika sadece KVKK cookie tercihinde
+ * analytics veya marketing izni varsa client tarafında dinamik yüklenir.
  */
 interface Props {
   ga4MeasurementId?: string;
@@ -22,100 +12,120 @@ interface Props {
   debug?: boolean;
 }
 
-const { ga4MeasurementId, clarityProjectId, yandexMetricaId, debug = false } = Astro.props;
-
-// Hiç servis ID yoksa render etme
+const { ga4MeasurementId, clarityProjectId, yandexMetricaId, debug = false } = Astro.props as Props;
 const hasAny = ga4MeasurementId || clarityProjectId || yandexMetricaId;
 if (!hasAny) return;
 ---
 
-{/* GA4 — Google tag (gtag.js) via Partytown */}
-{ga4MeasurementId && (
-  <>
-    <script type="text/partytown" is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${ga4MeasurementId}`}></script>
-    <script type="text/partytown" is:inline define:vars={{ ga4MeasurementId, debug }}>
+<script is:inline define:vars={{ ga4MeasurementId, clarityProjectId, yandexMetricaId, debug }}>
+  (function () {
+    var loaded = { ga4: false, clarity: false, yandex: false };
+
+    function consentAllowsAnalytics() {
+      try {
+        var raw = localStorage.getItem('sf_cookie');
+        if (!raw) return false;
+        var pref = JSON.parse(raw);
+        return Boolean(pref && (pref.analytics === true || pref.marketing === true));
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function appendScript(src, onload) {
+      if (!src) return;
+      var script = document.createElement('script');
+      script.async = true;
+      script.src = src;
+      if (onload) script.onload = onload;
+      document.head.appendChild(script);
+    }
+
+    function loadGa4() {
+      if (!ga4MeasurementId || loaded.ga4) return;
+      loaded.ga4 = true;
       window.dataLayer = window.dataLayer || [];
-      function gtag() { dataLayer.push(arguments); }
-      window.gtag = gtag;
-      gtag('js', new Date());
-      gtag('config', ga4MeasurementId, {
-        send_page_view: true,
-        transport_type: 'beacon',
-        anonymize_ip: true,
-        allow_google_signals: true,
-        allow_ad_personalization_signals: false,
-        cookie_flags: 'SameSite=None;Secure',
-        cookie_expires: 63072000,
-        ...(debug && { debug_mode: true }),
+      window.gtag = function () { window.dataLayer.push(arguments); };
+      appendScript('https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(ga4MeasurementId), function () {
+        window.gtag('js', new Date());
+        window.gtag('config', ga4MeasurementId, {
+          send_page_view: true,
+          transport_type: 'beacon',
+          anonymize_ip: true,
+          allow_google_signals: true,
+          allow_ad_personalization_signals: false,
+          cookie_flags: 'SameSite=None;Secure',
+          cookie_expires: 63072000,
+          ...(debug ? { debug_mode: true } : {}),
+        });
       });
-    </script>
-  </>
-)}
+    }
 
-{/* Microsoft Clarity — Partytown ile off-main-thread */}
-{clarityProjectId && (
-  <script type="text/partytown" is:inline define:vars={{ clarityProjectId }}>
-    (function(c,l,a,r,i,t,y){
-      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";
-      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-    })(window, document, "clarity", "script", clarityProjectId);
-  </script>
-)}
+    function loadClarity() {
+      if (!clarityProjectId || loaded.clarity) return;
+      loaded.clarity = true;
+      window.clarity = window.clarity || function () {
+        (window.clarity.q = window.clarity.q || []).push(arguments);
+      };
+      appendScript('https://www.clarity.ms/tag/' + encodeURIComponent(clarityProjectId) + '?ref=bwt');
+    }
 
-{/* Yandex Metrika — Partytown ile off-main-thread */}
-{yandexMetricaId && (
-  <>
-    <script type="text/partytown" is:inline define:vars={{ yandexMetricaId }}>
-      (function(m,e,t,r,i,k,a){
-        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-        m[i].l=1*new Date();
-        k=e.createElement(t);
-        a=e.getElementsByTagName(t)[0];
-        k.async=1;k.src=r;a.parentNode.insertBefore(k,a);
-      })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
-      ym(Number(yandexMetricaId), "init", {
-        clickmap: true,
-        trackLinks: true,
-        accurateTrackBounce: true,
-        webvisor: true,
+    function loadYandex() {
+      if (!yandexMetricaId || loaded.yandex) return;
+      loaded.yandex = true;
+      window.ym = window.ym || function () {
+        (window.ym.a = window.ym.a || []).push(arguments);
+      };
+      window.ym.l = 1 * new Date();
+      appendScript('https://mc.yandex.ru/metrika/tag.js', function () {
+        window.ym(Number(yandexMetricaId), 'init', {
+          clickmap: true,
+          trackLinks: true,
+          accurateTrackBounce: true,
+          webvisor: true,
+        });
       });
-    </script>
-    <noscript><div><img src={`https://mc.yandex.ru/watch/${yandexMetricaId}`} style="position:absolute;left:-9999px" alt="" /></div></noscript>
-  </>
-)}
+    }
 
-{/* Merkezi event tracking + auth_success cleanup — main thread (gtag/clarity/ym proxy'leri var) */}
-<script is:inline define:vars={{ yandexMetricaId }}>
-  window.sfTrack = function(eventName, params) {
-    if (!eventName) return;
-    try {
-      if (typeof window.gtag === 'function') {
-        window.gtag('event', eventName, params || {});
-      }
-      if (typeof window.ym === 'function' && yandexMetricaId) {
-        window.ym(Number(yandexMetricaId), 'reachGoal', eventName, params || {});
-      }
-      if (typeof window.clarity === 'function') {
-        window.clarity('event', eventName);
-        if (params) {
-          Object.entries(params).forEach(function(entry) {
-            try { window.clarity('set', String(entry[0]), String(entry[1])); } catch (_) {}
-          });
+    function loadAllowedAnalytics() {
+      if (!consentAllowsAnalytics()) return;
+      loadGa4();
+      loadClarity();
+      loadYandex();
+    }
+
+    window.sfTrack = function (eventName, params) {
+      if (!eventName) return;
+      try {
+        if (typeof window.gtag === 'function') {
+          window.gtag('event', eventName, params || {});
         }
+        if (typeof window.ym === 'function' && yandexMetricaId) {
+          window.ym(Number(yandexMetricaId), 'reachGoal', eventName, params || {});
+        }
+        if (typeof window.clarity === 'function') {
+          window.clarity('event', eventName);
+          if (params) {
+            Object.entries(params).forEach(function (entry) {
+              try { window.clarity('set', String(entry[0]), String(entry[1])); } catch (_) {}
+            });
+          }
+        }
+      } catch (_) { /* sessiz */ }
+    };
+
+    window.addEventListener('sf-cookie-consent-changed', loadAllowedAnalytics);
+    loadAllowedAnalytics();
+
+    try {
+      var sp = new URLSearchParams(window.location.search);
+      var as = sp.get('auth_success');
+      if (as) {
+        setTimeout(function () { window.sfTrack('auth_success', { method: as }); }, 200);
+        sp.delete('auth_success');
+        var clean = window.location.pathname + (sp.toString() ? '?' + sp.toString() : '') + window.location.hash;
+        window.history.replaceState({}, document.title, clean);
       }
     } catch (_) { /* sessiz */ }
-  };
-
-  // auth_success query param → event + URL temizleme
-  try {
-    var sp = new URLSearchParams(window.location.search);
-    var as = sp.get('auth_success');
-    if (as) {
-      setTimeout(function() { window.sfTrack('auth_success', { method: as }); }, 200);
-      sp.delete('auth_success');
-      var clean = window.location.pathname + (sp.toString() ? '?' + sp.toString() : '') + window.location.hash;
-      window.history.replaceState({}, document.title, clean);
-    }
-  } catch (_) { /* sessiz */ }
+  })();
 </script>

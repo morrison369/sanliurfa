@@ -53,11 +53,13 @@ test.describe('Authentication - Login', () => {
   });
 
   test('registration link navigates to signup page', async ({ page }) => {
-    const registerLink = page.locator('a[href*="kayit"], a:has-text("Kayıt Ol"), a:has-text("Üye Ol")').first();
+    const registerLink = page.locator('[data-testid="login-register-link"]').first();
     await expect(registerLink).toBeVisible();
 
-    await registerLink.click();
-    await expect(page).toHaveURL(/kayit/);
+    await Promise.all([
+      page.waitForURL(/kayit/, { timeout: 5000 }),
+      registerLink.click(),
+    ]);
   });
 });
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
 
-const scopeArg = process.argv.find((arg) => arg.startsWith('--scope='));
-const scope = (scopeArg ? scopeArg.split('=')[1] : 'all').toLowerCase();
+const scopeArg = process.argv.filter((arg) => arg.startsWith('--scope=')).at(-1);
+const scope = (scopeArg ? scopeArg.split('=')[1] : process.env.npm_config_scope || 'all').toLowerCase();
 
 const scopeSteps = {
   core: ['npm run astro:sync', 'npm run type-check'],
@@ -15,7 +15,11 @@ const scopeSteps = {
     'npm run content:cluster:quality',
     'npm run content:programmatic:quality',
   ],
-  social: ['npm run social:db:first:gate', 'npm run social:core:gate', 'npm run smoke:api:critical'],
+  social: [
+    'npm run social:db:first:gate',
+    'set ISOLATED_HEALTH_TIMEOUT_MS=30000&& npm run social:core:gate',
+    'npm run smoke:api:critical',
+  ],
   landing: ['npm run smoke:pages:critical', 'npm run seo:geo:gate', 'npm run canonical:domain:gate'],
   security: ['npm run env:gate', 'npm run security:scan-secrets', 'npm run security:defaults:gate'],
   release: [
@@ -73,6 +77,7 @@ try {
   run('npm run -s dev:isolated:stop');
   run('npm run -s runtime:cleanup:listeners');
   run('npm run -s dev:isolated:check-no-orphan');
+  run('npm run -s redis:isolated:stop');
 }
 
 process.exit(exitCode);

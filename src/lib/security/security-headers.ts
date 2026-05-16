@@ -36,12 +36,12 @@ export function getSecurityHeaders(config: SecurityHeadersConfig = {}): Record<s
   if (contentSecurityPolicy) {
     headers['Content-Security-Policy'] = [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://www.googletagmanager.com https://cdn.ampproject.org",
-      "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://cdn.ampproject.org https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://ep2.adtrafficquality.google https://*.adtrafficquality.google",
+      "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https: blob:",
       "font-src 'self' data: https:",
       "connect-src 'self' https:",
-      "frame-src 'self' https://www.youtube.com",
+      "frame-src 'self' https://www.youtube.com https://www.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://ep2.adtrafficquality.google https://*.adtrafficquality.google",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

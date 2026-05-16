@@ -51,19 +51,19 @@ npm run build
 Dev E2E, desktop/tablet/mobile + axe:
 
 ```bash
-npm run test:e2e:astro:dev
+npm run test:e2e:astro
 ```
 
 Production SSR entrypoint E2E:
 
 ```bash
-npm run test:e2e:astro:preview
+$env:ASTRO_E2E_MODE="preview"; $env:ASTRO_E2E_BASE_URL="http://127.0.0.1:4322"; node scripts/e2e/astro-homepage-a11y.mjs
 ```
 
 Canli domain E2E:
 
 ```bash
-npm run test:e2e:astro:prod
+$env:ASTRO_E2E_MODE="remote"; $env:ASTRO_E2E_BASE_URL="https://sanliurfa.com"; node scripts/e2e/astro-homepage-a11y.mjs
 ```
 
 ## Gate Kapsami

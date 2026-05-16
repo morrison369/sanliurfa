@@ -5,6 +5,7 @@
  */
 
 import type { APIContext } from 'astro';
+import { queryMany } from '../postgres';
 
 export interface AuthenticatedUser {
   id: string;
@@ -12,6 +13,7 @@ export interface AuthenticatedUser {
   name: string;
   role: 'admin' | 'vendor' | 'user' | 'moderator';
   placeId?: string;
+  placeIds?: string[];
 }
 
 /**
@@ -20,11 +22,27 @@ export interface AuthenticatedUser {
  */
 export async function authenticateUser(
   context: APIContext
-): Promise<{ user: AuthenticatedUser; placeId?: string } | null> {
+): Promise<{ user: AuthenticatedUser; placeId?: string; placeIds?: string[] } | null> {
   const localUser = (context as any).locals?.user;
 
   if (!localUser) {
     return null;
+  }
+
+  let placeIds: string[] = [];
+  if (localUser.role === 'vendor') {
+    try {
+      const places = await queryMany<{ id: string }>(
+        `SELECT id
+         FROM places
+         WHERE owner_id = $1 AND status != 'deleted'
+         ORDER BY created_at DESC`,
+        [localUser.id]
+      );
+      placeIds = places.map((place) => place.id);
+    } catch {
+      placeIds = [];
+    }
   }
 
   return {
@@ -33,7 +51,9 @@ export async function authenticateUser(
       email: localUser.email,
       name: localUser.fullName || localUser.email,
       role: localUser.role || 'user',
+      ...(placeIds.length > 0 ? { placeId: placeIds[0], placeIds } : {}),
     },
+    ...(placeIds.length > 0 ? { placeId: placeIds[0], placeIds } : {}),
   };
 }
 

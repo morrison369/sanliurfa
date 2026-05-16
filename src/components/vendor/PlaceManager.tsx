@@ -18,8 +18,25 @@ interface Place {
  features: string[];
 }
 
+interface PlaceStats {
+ monthViews: number;
+ monthViewChange: number;
+ phoneClicks: number;
+ phoneClickChange: number;
+ directionClicks: number;
+ directionClickChange: number;
+}
+
 const DAYS = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+const EMPTY_STATS: PlaceStats = {
+ monthViews: 0,
+ monthViewChange: 0,
+ phoneClicks: 0,
+ phoneClickChange: 0,
+ directionClicks: 0,
+ directionClickChange: 0,
+};
 
 export default function PlaceManager({ placeId }: { placeId: string }) {
  const [place, setPlace] = useState<Place | null>(null);
@@ -29,9 +46,11 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
  const [isSaving, setIsSaving] = useState(false);
  const [loadError, setLoadError] = useState<string | null>(null);
  const [saveError, setSaveError] = useState<string | null>(null);
+ const [stats, setStats] = useState<PlaceStats>(EMPTY_STATS);
 
  useEffect(() => {
- fetchPlace();
+ void fetchPlace();
+ void fetchStats();
  }, [placeId]);
 
  const fetchPlace = async () => {
@@ -40,7 +59,7 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
   const res = await fetch(`/api/places/${placeId}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
-  const data = json.data ?? json;
+  const data = json.data?.data ?? json.data ?? json;
   const mapped: Place = {
    id: data.id ?? placeId,
    name: data.name ?? '',
@@ -48,8 +67,8 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
    address: data.address ?? '',
    phone: data.phone ?? '',
    description: data.description ?? data.short_description ?? '',
-   price_min: Number(data.price_min ?? data.price_range?.split('-')[0] ?? 0),
-   price_max: Number(data.price_max ?? data.price_range?.split('-')[1] ?? 0),
+   price_min: Number(data.price_min ?? 0),
+   price_max: Number(data.price_max ?? 0),
    rating: Number(data.rating ?? data.average_rating ?? 0),
    review_count: Number(data.review_count ?? data.total_reviews ?? 0),
    views: Number(data.views ?? data.view_count ?? 0),
@@ -58,10 +77,34 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
    features: Array.isArray(data.features) ? data.features : [],
   };
   setPlace(mapped);
-  setEditedPlace(mapped);
+ setEditedPlace(mapped);
  } catch (err) {
   setLoadError('Mekan bilgileri yüklenemedi. Lütfen sayfayı yenileyin.');
  }
+ };
+
+ const fetchStats = async () => {
+ try {
+  const res = await fetch(`/api/analytics/dashboard?placeId=${placeId}&period=30d`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  const data = json.data ?? json;
+  const summary = data.summary ?? {};
+  setStats({
+   monthViews: Number(summary.views?.total ?? 0),
+   monthViewChange: Number(summary.views?.change ?? 0),
+   phoneClicks: Number(summary.phoneClicks?.total ?? 0),
+   phoneClickChange: Number(summary.phoneClicks?.change ?? 0),
+   directionClicks: Number(summary.directionClicks ?? 0),
+   directionClickChange: 0,
+  });
+ } catch {
+  setStats(EMPTY_STATS);
+ }
+ };
+
+ const updateEditedPlace = <K extends keyof Place>(key: K, value: Place[K]) => {
+ setEditedPlace(current => (current ? { ...current, [key]: value } : current));
  };
 
  const handleSave = async () => {
@@ -87,7 +130,26 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
    const json = await res.json().catch(() => ({}));
    throw new Error(json.error ?? json.detail ?? `HTTP ${res.status}`);
   }
-  setPlace(editedPlace);
+  const json = await res.json();
+  const data = json.data?.data ?? json.data ?? json;
+  const mapped: Place = {
+   id: data.id ?? placeId,
+   name: data.name ?? '',
+   category: data.category ?? data.category_name ?? '',
+   address: data.address ?? '',
+   phone: data.phone ?? '',
+   description: data.description ?? data.short_description ?? '',
+   price_min: Number(data.price_min ?? 0),
+   price_max: Number(data.price_max ?? 0),
+   rating: Number(data.rating ?? data.average_rating ?? 0),
+   review_count: Number(data.review_count ?? data.total_reviews ?? 0),
+   views: Number(data.views ?? data.view_count ?? 0),
+   is_active: data.status === 'active' || data.is_active === true,
+   opening_hours: data.opening_hours ?? {},
+   features: Array.isArray(data.features) ? data.features : [],
+  };
+  setPlace(mapped);
+  setEditedPlace(mapped);
   setIsEditing(false);
  } catch (err) {
   setSaveError(err instanceof Error ? err.message : 'Kaydedilemedi. Lütfen tekrar deneyin.');
@@ -102,6 +164,12 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
  setIsEditing(false);
  };
 
+ const formatChange = (value: number) => {
+ if (value > 0) return `↑ %${value} artış`;
+ if (value < 0) return `↓ %${Math.abs(value)} düşüş`;
+ return 'Son 30 günde değişim yok';
+ };
+
  if (loadError) return (
  <div className="p-8 flex items-center gap-3 text-red-400 bg-[rgba(239,68,68,0.06)] rounded-sm border border-[rgba(239,68,68,0.2)]">
   <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -109,6 +177,9 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
  </div>
  );
  if (!place) return <div className="p-8 text-[#7A6B58]">Yükleniyor…</div>;
+
+ const priceRangeLabel =
+  place.price_min || place.price_max ? `₺${place.price_min || 0}-${place.price_max || 0}` : 'Belirtilmedi';
 
  return (
  <div className="max-w-6xl mx-auto p-4">
@@ -178,7 +249,7 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
  <div className="text-sm text-[#7A6B58]">Ortalama Puan</div>
  </div>
  <div className="text-center">
- <div className="text-2xl font-bold text-[#1F1410]">₺{place.price_min}-{place.price_max}</div>
+ <div className="text-2xl font-bold text-[#1F1410]">{priceRangeLabel}</div>
  <div className="text-sm text-[#7A6B58]">Fiyat Aralığı</div>
  </div>
  </div>
@@ -211,11 +282,11 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
  <div className="space-y-6">
  <div>
  <label className="block text-sm font-medium text-[#7A6B58] mb-2">Mekan Adı</label>
- <input type="text" value={editedPlace?.name} disabled={!isEditing} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" />
+ <input type="text" value={editedPlace?.name ?? ''} onChange={e => updateEditedPlace('name', e.target.value)} disabled={!isEditing} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" />
  </div>
  <div>
  <label className="block text-sm font-medium text-[#7A6B58] mb-2">Adres</label>
- <textarea value={editedPlace?.address} disabled={!isEditing} rows={3} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" />
+ <textarea value={editedPlace?.address ?? ''} onChange={e => updateEditedPlace('address', e.target.value)} disabled={!isEditing} rows={3} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" />
  </div>
  <div className="grid grid-cols-2 gap-4">
  <div>
@@ -223,7 +294,7 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
  <Phone className="w-4 h-4" />
  Telefon
  </label>
- <input type="tel" value={editedPlace?.phone} disabled={!isEditing} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" />
+ <input type="tel" value={editedPlace?.phone ?? ''} onChange={e => updateEditedPlace('phone', e.target.value)} disabled={!isEditing} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" />
  </div>
  <div>
  <label className="block text-sm font-medium text-[#7A6B58] mb-2 flex items-center gap-1">
@@ -231,14 +302,14 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
  Fiyat Aralığı
  </label>
  <div className="flex gap-2">
- <input type="number" value={editedPlace?.price_min} disabled={!isEditing} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" placeholder="Min" />
- <input type="number" value={editedPlace?.price_max} disabled={!isEditing} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" placeholder="Max" />
+ <input type="number" value={editedPlace?.price_min ?? 0} onChange={e => updateEditedPlace('price_min', Number(e.target.value || 0))} disabled={!isEditing} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" placeholder="Min" />
+ <input type="number" value={editedPlace?.price_max ?? 0} onChange={e => updateEditedPlace('price_max', Number(e.target.value || 0))} disabled={!isEditing} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" placeholder="Max" />
  </div>
  </div>
  </div>
  <div>
  <label className="block text-sm font-medium text-[#7A6B58] mb-2">Açıklama</label>
- <textarea value={editedPlace?.description} disabled={!isEditing} rows={4} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" />
+ <textarea value={editedPlace?.description ?? ''} onChange={e => updateEditedPlace('description', e.target.value)} disabled={!isEditing} rows={4} className="w-full px-4 py-2 border rounded-sm disabled:bg-[rgba(184,115,51,0.04)]" />
  </div>
  </div>
  )}
@@ -248,7 +319,7 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
  {DAY_KEYS.map((day, index) => (
  <div key={day} className="flex items-center gap-4 p-3 bg-[rgba(184,115,51,0.04)] rounded-sm">
  <span className="w-20 font-medium text-[#7A6B58]">{DAYS[index]}</span>
- <span className="text-[#1F1410]">{place.opening_hours[day] || 'Kapalı'}</span>
+ <span className="text-[#1F1410]">{editedPlace?.opening_hours?.[day] || 'Kapalı'}</span>
  </div>
  ))}
  </div>
@@ -258,16 +329,19 @@ export default function PlaceManager({ placeId }: { placeId: string }) {
  <div className="space-y-6">
  <div className="grid grid-cols-3 gap-4">
  <div className="bg-[rgba(184,115,51,0.06)] p-4 rounded-sm">
- <div className="text-3xl font-bold text-blue-300">2,847</div>
+ <div className="text-3xl font-bold text-blue-300">{stats.monthViews.toLocaleString()}</div>
  <div className="text-sm text-[#7A6B58]">Bu Ay Görüntülenme</div>
+ <div className="text-xs text-[#7A6B58] mt-2">{formatChange(stats.monthViewChange)}</div>
  </div>
  <div className="bg-[rgba(184,115,51,0.06)] p-4 rounded-sm">
- <div className="text-3xl font-bold text-green-400">89</div>
+ <div className="text-3xl font-bold text-green-400">{stats.phoneClicks.toLocaleString()}</div>
  <div className="text-sm text-green-600">Telefon Tıklaması</div>
+ <div className="text-xs text-[#7A6B58] mt-2">{formatChange(stats.phoneClickChange)}</div>
  </div>
  <div className="bg-[rgba(184,115,51,0.06)] p-4 rounded-sm">
- <div className="text-3xl font-bold text-purple-300">156</div>
+ <div className="text-3xl font-bold text-purple-300">{stats.directionClicks.toLocaleString()}</div>
  <div className="text-sm text-[#B87333]">Yol Tarifi</div>
+ <div className="text-xs text-[#7A6B58] mt-2">{formatChange(stats.directionClickChange)}</div>
  </div>
  </div>
  </div>

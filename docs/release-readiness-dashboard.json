@@ -1,6 +1,7 @@
 {
-  "generatedAt": "2026-05-07T14:13:51.728Z",
+  "generatedAt": "2026-05-15T12:08:16.211Z",
   "ready": true,
+  "decision": "ADVISORY",
   "checks": [
     {
       "rel": "docs/FRONTEND_RELEASE_CHECKLIST.md",
@@ -57,6 +58,485 @@
     {
       "rel": "src/pages/admin/release-readiness.astro",
       "ok": true
+    }
+  ],
+  "gateSummary": {
+    "releaseReadiness": "ready_with_advisories",
+    "releaseNextActions": "ok",
+    "artifactFreshness": "passed",
+    "releaseHandoffSummary": "ready_with_advisories",
+    "lintOk": true,
+    "typecheckOk": true,
+    "openapiOk": true,
+    "localUploadMissingRefsOk": true,
+    "localUploadQuotaOk": true,
+    "e2eStatus": "passed",
+    "e2eCriticalCoverage": "ok",
+    "uploadStatus": "ok",
+    "qualityRefresh": "passed",
+    "unitSkipsDocumentedOk": true,
+    "uploadArchiveStatus": "empty",
+    "uploadArchiveCandidates": 0,
+    "uploadDeleteReviewCandidates": 0,
+    "apiReleaseGate": "passed",
+    "apiDebugEnvelope": "ok",
+    "apiContractGroups": "passed",
+    "buildArtifacts": "ok",
+    "scriptCanonicalSurface": "ok",
+    "migrationDuplicateDrift": "ok",
+    "dbRetirementP0": 2,
+    "dbRetirementRuntimeHolds": 1,
+    "dbP0QuarantinePlan": "advisory",
+    "dbObservationCadence": "observing",
+    "dbObservationCalendar": "observing",
+    "dbManualDecisionReadiness": "waiting",
+    "dbRegistryClassification": "advisory",
+    "dbRuntimeHoldPlan": "runtime_hold",
+    "sqlParameterSafety": "ok",
+    "localUploadBucketQuota": "ok",
+    "localMediaStorageGate": "ok",
+    "mediaReadiness": "ok",
+    "adminStrictRoleGate": "ok",
+    "localStorageModelOk": true,
+    "mediaReadinessOk": true,
+    "adminStrictRoleOk": true,
+    "redisRuntimeHealth": "idle",
+    "warmupSafety": "ok",
+    "cronReadiness": "ok",
+    "gmapsScraperReadiness": "ok",
+    "gmapsQueryPlan": "ok",
+    "gmapsDiscoveryPlan": "ok",
+    "gmapsDiscoveryDrafts": "ok",
+    "ollamaReadiness": "ok",
+    "contentAgentDrafts": "ok",
+    "publishAllContentDrafts": "ok",
+    "llmsSitemapAutoUpdate": "ok",
+    "blogDuplicateRiskGate": "ok",
+    "blogDraftRichResults": "ok",
+    "pagespeedApiResearch": "ok",
+    "pagespeedApiLessLighthouse": "review",
+    "pagespeedApiLessClassification": "external_expected_review",
+    "pagespeedApiLessExternalExpected": true,
+    "pagespeedLiveCheck": "review",
+    "pagespeedQuotaManagement": "managed_with_live_quota_review",
+    "backendFrontendImprovements": "ok",
+    "pagespeedQuotaLimited": 1,
+    "searchZeroUnresolved": 0
+  },
+  "qualityRefresh": {
+    "status": "passed",
+    "generatedAt": "2026-05-15T12:08:14.330Z",
+    "lintOk": true,
+    "typecheckOk": true,
+    "openapiOk": true
+  },
+  "releaseNextActions": {
+    "status": "ok",
+    "actionCount": 7,
+    "blockingActionCount": 0,
+    "waitingActionCount": 1,
+    "actions": [
+      {
+        "priority": "P1",
+        "area": "database",
+        "title": "DB P0 quarantine adaylarını production gözlem sürecinde tut",
+        "status": "waiting_for_evidence",
+        "blocker": "14 günlük production gözlem ve rollback planı eksik",
+        "dueAfter": "2026-05-29T12:07:47.159Z",
+        "destructive": false,
+        "command": "npm run -s db:retirement:observe && npm run -s db:p0:quarantine:plan",
+        "detail": "2 quarantine candidate, 1 runtime hold. Cadence=observing (3/14). Otomatik drop yok."
+      },
+      {
+        "priority": "P2",
+        "area": "database-indexes",
+        "title": "DB P2 index adaylarını EXPLAIN review planında tut",
+        "status": "observed",
+        "blocker": null,
+        "dueAfter": "2026-05-29T12:07:47.159Z",
+        "destructive": false,
+        "command": "npm run -s db:index:review:plan",
+        "detail": "766 reviewable index candidate, 505 high-risk keep/review. Otomatik index drop yok."
+      },
+      {
+        "priority": "P3",
+        "area": "storage",
+        "title": "Local media storage kanıtını periyodik tazele",
+        "status": "ok",
+        "blocker": null,
+        "dueAfter": null,
+        "destructive": false,
+        "command": "npm run -s storage:local:gate",
+        "detail": "local-only=yes, external-object-storage=no, live=5/5, failed-patterns=0."
+      },
+      {
+        "priority": "P3",
+        "area": "adsense",
+        "title": "Canlı AdSense kanıtını periyodik tazele",
+        "status": "ok",
+        "blocker": null,
+        "dueAfter": null,
+        "destructive": false,
+        "command": "npm run -s adsense:readiness:live",
+        "detail": "ads.txt, meta ve robots canlıda geçti."
+      },
+      {
+        "priority": "P3",
+        "area": "scripts",
+        "title": "Script yüzeyini kanonik komutlarla yönet",
+        "status": "ok",
+        "blocker": null,
+        "dueAfter": null,
+        "destructive": false,
+        "command": "npm run -s scripts:canonical:report",
+        "detail": "370 package script var; 15 kanonik komut, 0 eksik. Script silme yok; CI kanonik komutları kullanır."
+      },
+      {
+        "priority": "P2",
+        "area": "pagespeed",
+        "title": "PageSpeed live quota yenilenince tekrar kontrol et",
+        "status": "observed",
+        "blocker": null,
+        "dueAfter": "2026-05-15T12:57:53.133Z",
+        "destructive": false,
+        "command": "npm run -s pagespeed:live && npm run -s pagespeed:quota:management",
+        "detail": "quotaLimited=1, live=review, service=enabled. Quota-limited advisory; release blocker değil."
+      },
+      {
+        "priority": "P3",
+        "area": "cron",
+        "title": "Managed cron tanımını güncel tut",
+        "status": "ok",
+        "blocker": null,
+        "dueAfter": null,
+        "destructive": false,
+        "command": "npm run -s cron:readiness:report",
+        "detail": "16/16 managed cron job preview içinde mevcut."
+      }
+    ]
+  },
+  "freshness": {
+    "status": "passed",
+    "generatedAt": "2026-05-15T12:06:25.723Z",
+    "staleOrMissingCount": 0
+  },
+  "releaseHandoffSummary": {
+    "generatedAt": "2026-05-15T12:05:13.615Z",
+    "releaseStatus": "ready_with_advisories",
+    "localMediaStorage": "ok",
+    "pagespeedApiLessLighthouse": "review",
+    "artifactCount": 23,
+    "advisoryCount": 1
+  },
+  "uploadArchive": {
+    "status": "empty",
+    "generatedAt": "2026-05-15T12:07:48.419Z",
+    "total": 0,
+    "archiveCandidate": 0,
+    "deletableReview": 0
+  },
+  "unitSkips": {
+    "status": "ok",
+    "generatedAt": "2026-05-15T12:08:14.100Z",
+    "observedSkippedFiles": 0,
+    "observedSkippedTests": 0,
+    "declarationCount": 4,
+    "undocumentedCount": 0
+  },
+  "e2eSkips": {
+    "status": "ok",
+    "generatedAt": "2026-05-15T12:08:14.139Z",
+    "declarationCount": 17,
+    "undocumentedCount": 0
+  },
+  "e2eCriticalCoverage": {
+    "status": "ok",
+    "generatedAt": "2026-05-15T12:08:14.178Z",
+    "flowCount": 10,
+    "coveredCount": 10,
+    "missingCount": 0
+  },
+  "api": {
+    "releaseGate": {
+      "status": "passed",
+      "passedChecks": 5,
+      "totalChecks": 5,
+      "failedChecks": 0
+    },
+    "contractGroups": {
+      "status": "passed",
+      "groupCount": 11,
+      "coverageGapCount": 0
+    },
+    "debugEnvelope": {
+      "status": "ok",
+      "passed": 3,
+      "total": 3,
+      "failed": 0
+    }
+  },
+  "buildArtifacts": {
+    "status": "ok",
+    "distClientTotalMb": 14.64,
+    "distClientWithinSoftBudget": true,
+    "astroWithinBudget": true
+  },
+  "scriptCanonicalSurface": {
+    "status": "ok",
+    "totalScripts": 370,
+    "familyCount": 65,
+    "canonicalCount": 15,
+    "missingCanonicalCount": 0
+  },
+  "migrationDuplicateDrift": {
+    "status": "ok",
+    "duplicateNumberGroups": 3,
+    "duplicateSlugGroups": 14,
+    "numberDrift": false,
+    "slugDrift": false
+  },
+  "dbRetirement": {
+    "status": "observation_required",
+    "p0DropCandidateCount": 3,
+    "p0QuarantineCandidateCount": 2,
+    "p0RuntimeHoldCount": 1,
+    "p1ReviewCandidateCount": 0,
+    "p2UnusedIndexCandidateCount": 766,
+    "automaticDropAllowed": false
+  },
+  "dbP0QuarantinePlan": {
+    "status": "advisory",
+    "quarantineCandidateCount": 2,
+    "runtimeHoldCount": 1,
+    "earliestActionAt": "2026-05-29T12:07:47.159Z",
+    "automaticDropAllowed": false
+  },
+  "dbObservationCadence": {
+    "status": "observing",
+    "snapshotCount": 3,
+    "observationDays": 14,
+    "missingDays": 11,
+    "stableEnoughForAction": false,
+    "earliestActionAt": "2026-05-29T12:07:47.159Z"
+  },
+  "dbObservationCalendar": {
+    "status": "observing",
+    "completeCount": 3,
+    "observationDays": 14,
+    "missingOrPendingCount": 11,
+    "nextSnapshotDueAt": "2026-05-16T12:04:43.938Z",
+    "earliestActionAt": "2026-05-29T12:04:43.938Z",
+    "actionWindowOpen": false,
+    "automaticDropAllowed": false
+  },
+  "dbManualDecisionReadiness": {
+    "status": "waiting",
+    "readyForManualPrCount": 0,
+    "waitingForEvidenceCount": 2,
+    "runtimeHoldCount": 1,
+    "actionWindowOpen": false
+  },
+  "dbRegistryClassification": {
+    "status": "advisory",
+    "tableCount": 497,
+    "unclassifiedCount": 0,
+    "unusedIndexCount": 766,
+    "automaticDbDropAllowed": false
+  },
+  "dbRuntimeHoldPlan": {
+    "status": "runtime_hold",
+    "table": "public.campaign_performance",
+    "runtimeReferenceCount": 2,
+    "incompatibleContractCount": 1,
+    "automaticDropAllowed": false
+  },
+  "sqlParameterSafety": {
+    "status": "ok",
+    "findingCount": 0
+  },
+  "localUploadBucketQuota": {
+    "status": "ok",
+    "bucketCount": 5,
+    "blockerCount": 0,
+    "reviewCount": 0,
+    "advisoryCount": 0
+  },
+  "localMediaStorageGate": {
+    "status": "ok",
+    "localStorageOnly": true,
+    "externalObjectStorageConfigured": false,
+    "liveChecks": 5,
+    "liveOk": 5,
+    "failedPatterns": 0
+  },
+  "mediaReadiness": {
+    "status": "ok",
+    "checks": 5,
+    "passed": 5,
+    "failed": 0,
+    "uploadFiles": 928,
+    "publicImages": 200,
+    "localStorageOnly": true,
+    "externalObjectStorageAllowed": false,
+    "automaticDeleteAllowed": false
+  },
+  "redisRuntimeHealth": {
+    "status": "idle",
+    "host": "127.0.0.1",
+    "port": 6381,
+    "pingOk": false,
+    "latencyMs": 1,
+    "runtimeMode": "optional-fail-open",
+    "releaseBlocker": false,
+    "fallbackAllowed": true
+  },
+  "warmupSafety": {
+    "status": "ok",
+    "reviewCount": 0
+  },
+  "cronReadiness": {
+    "status": "ok",
+    "requiredJobCount": 16,
+    "presentJobCount": 16,
+    "missingJobCount": 0
+  },
+  "gmapsScraperReadiness": {
+    "status": "ok",
+    "binaryFound": true,
+    "cliOk": true,
+    "binaryPath": "D:\\sanliurfa.com\\tools\\google-maps-scraper.exe",
+    "sharedHostingMode": true,
+    "localStorageOnly": true
+  },
+  "gmapsQueryPlan": {
+    "status": "ok",
+    "source": "database-empty-fallback",
+    "queryCount": 2,
+    "dbAvailable": false,
+    "outputFile": "scripts/gmaps-queries.txt"
+  },
+  "gmapsDiscoveryPlan": {
+    "status": "ok",
+    "queryCount": 447,
+    "sectionCount": 29,
+    "doesNotUpdatePlaces": true
+  },
+  "gmapsDiscoveryDrafts": {
+    "status": "ok",
+    "mode": "dry-run",
+    "candidateCount": 447,
+    "existingDraftCount": 447,
+    "pendingDraftCount": 0,
+    "insertedOrUpdatedCount": 0,
+    "autoPublish": false
+  },
+  "ollamaReadiness": {
+    "status": "ok",
+    "mode": "cloud",
+    "apiKeyPresent": true,
+    "liveChecked": false,
+    "liveOk": null,
+    "model": "gemma4:31b",
+    "fallbackModel": "ministral-3:14b"
+  },
+  "contentAgentDrafts": {
+    "status": "ok",
+    "total": 487,
+    "pending": 0,
+    "stalePendingCount": 0,
+    "autoPublish": false
+  },
+  "publishAllContentDrafts": {
+    "status": "ok",
+    "remainingDraftLike": 0,
+    "moderationPending": 0,
+    "cityContentUpdated": 0,
+    "moderationQueuesAutoApproved": false
+  },
+  "llmsSitemapAutoUpdate": {
+    "status": "ok",
+    "checks": 6,
+    "ok": 6,
+    "failed": 0
+  },
+  "blogDraftRichResults": {
+    "status": "ok",
+    "drafts": 40,
+    "ok": 40,
+    "review": 0
+  },
+  "blogDuplicateRiskGate": {
+    "status": "ok",
+    "selected": 0,
+    "selectedDuplicateRisk": 0,
+    "skippedDuplicateRisk": 43,
+    "autoPublish": false
+  },
+  "pagespeedApiResearch": {
+    "status": "ok",
+    "enabled": true
+  },
+  "pagespeedApiLessLighthouse": {
+    "status": "review",
+    "checks": 1,
+    "ok": 0,
+    "review": 1,
+    "failed": 0,
+    "apiUsed": false,
+    "performance": 0.85,
+    "accessibility": 0.96,
+    "bestPractices": 0.77,
+    "seo": 1,
+    "reviewClassification": "external_expected_review",
+    "externalExpectedReview": true
+  },
+  "adminStrictRoleGate": {
+    "status": "ok",
+    "checked": 32,
+    "ok": 32,
+    "review": 0
+  },
+  "pagespeedLiveCheck": {
+    "status": "review",
+    "checks": 0,
+    "ok": 0,
+    "review": 1,
+    "quotaLimited": 1
+  },
+  "pagespeedQuotaManagement": {
+    "status": "managed_with_live_quota_review",
+    "managementMarked": true,
+    "quotaManagementCompleted": true,
+    "liveStatus": "review",
+    "quotaLimited": 1
+  },
+  "backendFrontendImprovements": {
+    "status": "ok",
+    "passed": 14,
+    "total": 14,
+    "backendPassed": 9,
+    "backendTotal": 9,
+    "frontendPassed": 5,
+    "frontendTotal": 5
+  },
+  "searchZeroResult": {
+    "status": "ok",
+    "unresolvedCount": 0,
+    "unresolvedOccurrences": 0
+  },
+  "e2eFailures": [],
+  "advisoryReasons": [
+    {
+      "code": "release-readiness-advisory",
+      "detail": "Release readiness raporu advisory maddeleri iceriyor."
+    },
+    {
+      "code": "db-retirement-p0-observation",
+      "detail": "2 DB P0 quarantine adayi gozlem kuyruğunda; otomatik drop yok. Runtime hold: 1."
+    },
+    {
+      "code": "db-p0-quarantine-plan",
+      "detail": "2 quarantine candidate; en erken aksiyon 2026-05-29T12:07:47.159Z."
     }
   ]
 }

@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-05-15T12:08:14.249Z",
+  "status": "ok",
+  "summary": {
+    "total": 3,
+    "passed": 3,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "id": "problem-json-request-id",
+      "file": "src/lib/api.ts",
+      "ok": true,
+      "detail": "Problem+JSON hata yanıtları requestId ve X-Request-ID taşır."
+    },
+    {
+      "id": "client-fetch-debug-helper",
+      "file": "src/lib/client/api-debug.ts",
+      "ok": true,
+      "detail": "Frontend fetch wrapper endpoint/status/requestId bilgisini tek formatta verir."
+    },
+    {
+      "id": "admin-operations-debug-endpoint",
+      "file": "src/pages/api/admin/operations/summary.ts",
+      "ok": true,
+      "detail": "Admin operasyon endpointi debug payload ve requestId header üretir."
+    }
+  ]
+}

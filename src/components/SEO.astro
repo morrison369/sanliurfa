@@ -1,6 +1,7 @@
 ---
 import { getSiteSetting } from '../lib/site-content';
 import { resolveSeoOgImage } from '../lib/seo-image';
+import { PUBLISHER_PROFILE } from '../lib/transparency';
 
 interface Props {
  title: string;
@@ -32,7 +33,7 @@ const {
  noIndex = false,
  noFollow = false,
  keywords = SANLIURFA_DEFAULT_KEYWORDS,
- author = 'Sanliurfa.com',
+ author = PUBLISHER_PROFILE.publisherName,
  publishedTime,
  modifiedTime,
  type = 'website',
@@ -74,8 +75,13 @@ const ogImageType = ogImageExt === 'webp' ? 'image/webp' : ogImageExt === 'png' 
 <!-- AEO/AI hint -->
 <meta name="ai-content-declaration" content="human-curated, city-guide, Şanlıurfa-focused" />
 <meta name="author" content={author} />
+<meta name="publisher" content={PUBLISHER_PROFILE.publisherName} />
+<meta name="contact" content={PUBLISHER_PROFILE.generalEmail} />
+<meta name="copyright" content={`© ${new Date().getFullYear()} ${PUBLISHER_PROFILE.siteName}`} />
 <meta name="robots" content={`${noIndex ? 'noindex' : 'index'}, ${noFollow ? 'nofollow' : 'follow'}`} />
 <link rel="canonical" href={canonicalUrl} />
+<link rel="author" href={`${siteUrl}${PUBLISHER_PROFILE.authorsPath}`} />
+<link rel="help" href={`${siteUrl}${PUBLISHER_PROFILE.contactPath}`} />
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content={type} />
@@ -96,7 +102,7 @@ const ogImageType = ogImageExt === 'webp' ? 'image/webp' : ogImageExt === 'png' 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:url" content={canonicalUrl} />
 <meta name="twitter:title" content={fullTitle} />
-<meta name="twitter:description" content={description} />
+<meta name="twitter:description" content={finalDescription} />
 <meta name="twitter:image" content={ogImageUrl} />
 <meta name="twitter:image:alt" content={fullTitle} />
 

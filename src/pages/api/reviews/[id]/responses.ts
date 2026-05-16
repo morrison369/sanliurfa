@@ -17,6 +17,24 @@ import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../.
 import { recordRequest } from '../../../../lib/metrics';
 import { logger } from '../../../../lib/logging';
 
+function handleResponseMutationError(
+  error: unknown,
+  requestId: string,
+  fallbackMessage: string
+) {
+  const detail = error instanceof Error ? error.message : '';
+
+  if (detail === 'Access denied') {
+    return apiError(ErrorCode.FORBIDDEN, 'Bu işlem için yetkiniz yok', HttpStatus.FORBIDDEN, undefined, requestId);
+  }
+
+  if (detail === 'Review not found') {
+    return apiError(ErrorCode.NOT_FOUND, 'Yorum bulunamadı', HttpStatus.NOT_FOUND, undefined, requestId);
+  }
+
+  return apiError(ErrorCode.INTERNAL_ERROR, fallbackMessage, HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+}
+
 export const GET: APIRoute = async ({ request, params }) => {
   const requestId = getRequestId(request);
   const startTime = Date.now();
@@ -89,9 +107,14 @@ export const POST: APIRoute = async ({ request, locals, params }) => {
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('POST', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    const status = error instanceof Error && error.message === 'Access denied'
+      ? HttpStatus.FORBIDDEN
+      : error instanceof Error && error.message === 'Review not found'
+        ? HttpStatus.NOT_FOUND
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+    recordRequest('POST', '/api/reviews/[id]/responses', status, duration);
     logger.error('Add response failed', error instanceof Error ? error : new Error(String(error)), {});
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to add response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return handleResponseMutationError(error, requestId, 'Failed to add response');
   }
 };
 
@@ -131,9 +154,12 @@ export const PUT: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('PUT', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    const status = error instanceof Error && error.message === 'Access denied'
+      ? HttpStatus.FORBIDDEN
+      : HttpStatus.INTERNAL_SERVER_ERROR;
+    recordRequest('PUT', '/api/reviews/[id]/responses', status, duration);
     logger.error('Update response failed', error instanceof Error ? error : new Error(String(error)), {});
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to update response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return handleResponseMutationError(error, requestId, 'Failed to update response');
   }
 };
 
@@ -173,8 +199,11 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     );
   } catch (error) {
     const duration = Date.now() - startTime;
-    recordRequest('DELETE', '/api/reviews/[id]/responses', HttpStatus.INTERNAL_SERVER_ERROR, duration);
+    const status = error instanceof Error && error.message === 'Access denied'
+      ? HttpStatus.FORBIDDEN
+      : HttpStatus.INTERNAL_SERVER_ERROR;
+    recordRequest('DELETE', '/api/reviews/[id]/responses', status, duration);
     logger.error('Delete response failed', error instanceof Error ? error : new Error(String(error)), {});
-    return apiError(ErrorCode.INTERNAL_ERROR, 'Failed to delete response', HttpStatus.INTERNAL_SERVER_ERROR, undefined, requestId);
+    return handleResponseMutationError(error, requestId, 'Failed to delete response');
   }
 };

@@ -2,9 +2,15 @@
 import Icon from '../Icon.astro';
 import Image from '../Image.astro';
 import { getPrimaryCityTaxonomyCategories } from '../../data/city-taxonomy';
+import type { HomepageCoreData } from '../../lib/home-data';
 import { getSiteSetting } from '../../lib/site-content';
 import { getSanliurfaWeather } from '../../lib/weather/open-meteo';
-import { query } from '../../lib/postgres';
+
+interface Props {
+  coreData?: HomepageCoreData;
+}
+
+const { coreData } = Astro.props as Props;
 
 const searchChipsFallback = [
   { label: 'Kebapçılar', href: '/mekanlar/yeme-icme-kebapcilar' },
@@ -25,33 +31,33 @@ const collageCards = [
     title: 'Balıklıgöl',
     subtitle: 'Tarihi merkez',
     href: '/gezilecek-yerler/balikligol',
-    image: '/images/places/balikligol.jpg',
+    image: '/images/home/collage/balikligol.webp',
     className: 'lg:col-span-7',
   },
   {
     title: 'Göbeklitepe',
     subtitle: 'Arkeoloji rotası',
     href: '/gezilecek-yerler/gobeklitepe',
-    image: '/images/places/gobeklitepe.jpg',
+    image: '/images/home/collage/gobeklitepe.webp',
     className: 'lg:col-span-5 lg:mt-10',
   },
   {
     title: 'Harran',
     subtitle: 'Kümbet evler',
     href: '/ilceler/harran',
-    image: '/images/tarihi-yerler/harran-kumbet-evleri.jpg',
+    image: '/images/home/collage/harran.webp',
     className: 'lg:col-span-5 lg:-mt-4',
   },
   {
     title: 'Halfeti',
     subtitle: 'Saklı cennet',
     href: '/ilceler/halfeti',
-    image: '/images/blog/halfeti.jpg',
+    image: '/images/home/collage/halfeti.webp',
     className: 'lg:col-span-7',
   },
 ];
 
-const quickAccess = [
+const quickAccessFallback = [
   {
     icon: 'map-pin',
     title: 'Mekanları Keşfet',
@@ -95,6 +101,11 @@ const quickAccess = [
     cta: 'İlçeleri İncele',
   },
 ];
+const quickAccessSetting = await getSiteSetting('homepage.quickAccess', {
+  items: quickAccessFallback,
+});
+const quickAccess =
+  quickAccessSetting.items.length > 0 ? quickAccessSetting.items : quickAccessFallback;
 
 const categories = getPrimaryCityTaxonomyCategories(14).map((category) => ({
   icon: category.icon,
@@ -103,26 +114,30 @@ const categories = getPrimaryCityTaxonomyCategories(14).map((category) => ({
   href: category.href,
 }));
 
-const routes = [
+const routesFallback = [
   {
     title: 'Balıklıgöl ve Tarihi Çarşı Rotası',
     desc: 'Balıklıgöl çevresi, hanlar bölgesi, bakırcılar çarşısı ve geleneksel Urfa dokusunu aynı yürüyüşte birleştiren merkez rota.',
     href: '/gezilecek-yerler/balikligol',
-    image: '/images/places/balikligol.jpg',
+    image: '/images/home/routes/balikligol-tarihi-carsi.jpg',
   },
   {
     title: 'Göbeklitepe ve Arkeoloji Rotası',
     desc: 'Tarihin sıfır noktasını, müze ziyaretini ve çevredeki arkeoloji duraklarını planlı bir gezi akışına dönüştür.',
     href: '/blog/gobeklitepe-rehberi-ziyaret-bilgileri',
-    image: '/images/places/gobeklitepe.jpg',
+    image: '/images/home/routes/gobeklitepe-arkeoloji.jpg',
   },
   {
     title: 'Halfeti ve Fırat Rotası',
     desc: 'Sakin şehir Halfeti, Fırat kıyısı, tekne rotaları ve fotoğraf duraklarıyla günü dolu geçiren keşif planı.',
     href: '/blog/halfetide-1-gun-tekne-turu',
-    image: '/images/blog/halfeti.jpg',
+    image: '/images/home/routes/halfeti-firat.jpg',
   },
 ];
+const routesSetting = await getSiteSetting('homepage.routes', {
+  items: routesFallback,
+});
+const routes = routesSetting.items.length > 0 ? routesSetting.items : routesFallback;
 
 const districts = [
   ['Haliliye', 'Şehir merkezi, müzeler, çarşı ve yeme içme durakları.', 'haliliye'],
@@ -183,7 +198,7 @@ const communityPanel = await getSiteSetting('homepage.communityPanel', {
     { label: 'Mesajları Gör', href: '/mesajlar' },
   ],
 });
-const communityPanelTitle = 'Şanlıurfa Topluluğu ve Eşleşme';
+const communityPanelTitle = communityPanel.title || 'Şanlıurfa Topluluğu ve Eşleşme';
 const communityFeatures = [
   {
     icon: 'heart-handshake',
@@ -238,26 +253,16 @@ const popularLinks = [
 
 let weatherTemp: number | null = null;
 let weatherLabel = 'Güncel';
-let weatherHumidity: number | null = null;
-let pharmacyCount = 0;
-let totalPlaceCount = 0;
-let upcomingEventsCount = 0;
+const pharmacyCount = Number(coreData?.pharmacyCount || 0);
+const totalPlaceCount = Number(coreData?.totalPlaceCount || 0);
+const upcomingEventsCount = Number(coreData?.upcomingEventsCount || 0);
 
 try {
-  const [weatherResult, pharmacyResult, placeResult, eventResult] = await Promise.all([
-    getSanliurfaWeather().catch(() => null),
-    query('SELECT COUNT(*)::int AS count FROM pharmacies WHERE is_on_duty = true').catch(() => ({ rows: [] })),
-    query("SELECT COUNT(*)::int AS count FROM places WHERE status = 'active'").catch(() => ({ rows: [] })),
-    query("SELECT COUNT(*)::int AS count FROM events WHERE status = 'published' AND (end_date IS NULL OR end_date >= CURRENT_DATE) AND start_date <= CURRENT_DATE + INTERVAL '90 days'").catch(() => ({ rows: [] })),
-  ]);
+  const weatherResult = await getSanliurfaWeather().catch(() => null);
   if (weatherResult?.payload?.current) {
     weatherTemp = weatherResult.payload.current.temperature;
     weatherLabel = weatherResult.payload.current.weatherLabel;
-    weatherHumidity = weatherResult.payload.current.humidity;
   }
-  pharmacyCount = Number(pharmacyResult.rows[0]?.count || 0);
-  totalPlaceCount = Number(placeResult.rows[0]?.count || 0);
-  upcomingEventsCount = Number(eventResult.rows[0]?.count || 0);
 } catch { /* silent */ }
 
 const guidePosts = [
@@ -273,10 +278,6 @@ const guidePosts = [
 <!-- LCP boost: ana sayfa hero collage'ında ilk 2 görseli preload (AVIF first, WebP fallback).
      href + type ile browser format negotiation — sadece desteklenen formatı yükler.
      ~150-300ms LCP iyileştirmesi + JPG fallback eliminated (2026-05-13 perf optimization). -->
-<link rel="preload" as="image" href="/images/places/balikligol.avif" type="image/avif" fetchpriority="high" />
-<link rel="preload" as="image" href="/images/places/balikligol.webp" type="image/webp" fetchpriority="high" />
-<link rel="preload" as="image" href="/images/places/gobeklitepe.avif" type="image/avif" />
-<link rel="preload" as="image" href="/images/places/gobeklitepe.webp" type="image/webp" />
 
 <div class="overflow-hidden bg-[#fff8ec] text-[#201711]">
   <section class="relative overflow-hidden bg-[#120c06]">
@@ -315,13 +316,14 @@ const guidePosts = [
           Balıklıgöl’den Göbeklitepe’ye, kebapçılardan nöbetçi eczanelere kadar Şanlıurfa’daki mekanları, rotaları ve günlük ihtiyaçları tek rehberde keşfet.
         </p>
 
-        <form action="/arama" method="get" class="mt-8 rounded-2xl border border-white/15 bg-white p-2 shadow-2xl shadow-black/50">
+        <form action="/arama" method="get" data-testid="homepage-search-form" class="mt-8 rounded-2xl border border-white/15 bg-white p-2 shadow-2xl shadow-black/50">
           <div class="flex flex-col gap-2 sm:flex-row">
             <label class="sr-only" for="home-search">Şanlıurfa rehberinde ara</label>
             <div class="flex min-h-14 flex-1 items-center gap-3 rounded-xl bg-[#fff8ec] px-4">
               <Icon name="search" size={22} class="shrink-0 text-[#a4552e]" />
               <input
                 id="home-search"
+                data-testid="homepage-search-input"
                 name="q"
                 type="search"
                 autocomplete="off"
@@ -329,11 +331,28 @@ const guidePosts = [
                 class="h-14 w-full bg-transparent text-base font-semibold text-[#2b1c12] outline-none placeholder:text-[#8b765f]"
               />
             </div>
-            <button class="min-h-14 rounded-xl bg-[#78331d] px-6 text-base font-black text-white shadow-lg shadow-[#78331d]/30 transition hover:bg-[#652918]">
+            <button type="submit" data-testid="homepage-search-submit" class="min-h-14 rounded-xl bg-[#78331d] px-6 text-base font-black text-white shadow-lg shadow-[#78331d]/30 transition hover:bg-[#652918]">
               Ara
             </button>
           </div>
         </form>
+        <script is:inline>
+          document
+            .querySelector('[data-testid="homepage-search-form"]')
+            ?.addEventListener('submit', (event) => {
+              const form = event.currentTarget;
+              if (!(form instanceof HTMLFormElement)) return;
+
+              const value = new FormData(form).get('q');
+              if (typeof value !== 'string' || value.trim() === '') {
+                event.preventDefault();
+                return;
+              }
+
+              event.preventDefault();
+              window.location.assign(`/arama?q=${encodeURIComponent(value.trim())}`);
+            });
+        </script>
 
         <div class="mt-4 flex flex-wrap gap-2" aria-label="Hızlı arama bağlantıları">
           {searchChips.map((chip) => (
@@ -369,7 +388,7 @@ const guidePosts = [
       <div class="grid grid-cols-2 gap-4 lg:grid-cols-12">
         {collageCards.map((card, idx) => (
           <a href={card.href} class={`group relative min-w-0 min-h-44 overflow-hidden rounded-2xl border border-white/20 shadow-2xl shadow-black/50 ring-1 ring-white/10 transition duration-300 hover:ring-[#f4c56e]/30 ${card.className}`}>
-            <Image src={card.image} alt={`${card.title} Şanlıurfa rehberi`} width={640} height={500} loading="eager" fetchpriority={idx === 0 ? 'high' : 'auto'} class="h-full min-h-44 w-full object-cover transition duration-700 group-hover:scale-[1.06]" />
+            <Image src={card.image} alt={`${card.title} Şanlıurfa rehberi`} width={640} height={500} loading={idx === 0 ? 'eager' : 'lazy'} fetchpriority={idx === 0 ? 'high' : 'auto'} class="hist-img home-collage-img h-full min-h-44 w-full object-cover transition duration-700 group-hover:scale-[1.06]" />
             <span class="absolute inset-0 bg-gradient-to-t from-[#120c06]/88 via-[#120c06]/22 to-transparent"></span>
             <span class="absolute inset-0 bg-gradient-to-t from-[#78331d]/40 to-transparent opacity-0 transition duration-500 group-hover:opacity-100"></span>
             <span class="absolute bottom-4 left-4 right-4">
@@ -460,7 +479,7 @@ const guidePosts = [
             <Icon name={item.icon} size={22} />
           </span>
           <h3 class="mt-4 font-display text-xl font-bold text-[#201711]">{item.title}</h3>
-          <p class="mt-2 min-h-14 text-sm leading-6 text-[#6a5643]">{item.desc}</p>
+          <p class="mt-2 min-h-14 text-base leading-7 text-[#6a5643]">{item.desc}</p>
           <span class="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#78331d]">
             {item.cta}
             <Icon name="arrow-right" size={16} class="transition group-hover:translate-x-1" />
@@ -481,7 +500,7 @@ const guidePosts = [
           <a href={item.href} class="rounded-2xl border border-[#e3d0b0] bg-[#fffaf0] p-5 transition hover:border-[#78331d] hover:bg-white">
             <Icon name={item.icon} size={24} class="text-[#155344]" />
             <h3 class="mt-4 text-lg font-black text-[#201711]">{item.title}</h3>
-            <p class="mt-2 text-sm leading-6 text-[#6a5643]">{item.desc}</p>
+            <p class="mt-2 text-base leading-7 text-[#6a5643]">{item.desc}</p>
           </a>
         ))}
       </div>
@@ -498,31 +517,45 @@ const guidePosts = [
     </div>
     <div class="mt-8 grid gap-5 lg:grid-cols-3">
       {routes.map((route) => (
-        <article class="overflow-hidden rounded-2xl border border-[#eadcc4] bg-white shadow-lg shadow-[#7a3d1e]/8">
-          <a href={route.href} class="block">
-            <Image src={route.image} alt={`${route.title} görseli`} width={760} height={520} class="aspect-[16/10] w-full object-cover" />
-          </a>
-          <div class="p-5">
-            <h3 class="font-display text-2xl font-semibold text-[#201711]">{route.title}</h3>
-            <p class="mt-2 text-sm leading-6 text-[#66513d]">{route.desc}</p>
-            <a href={route.href} class="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-[#155344] px-5 text-sm font-black text-white hover:bg-[#0f4034]">
-              Rotayı Gör
-              <Icon name="arrow-right" size={16} />
+          <article class="flex h-full overflow-hidden rounded-2xl border border-[#eadcc4] bg-white shadow-lg shadow-[#7a3d1e]/8">
+            <div class="flex w-full flex-col">
+            <a href={route.href} class="block">
+              <Image src={route.image} alt={`${route.title} görseli`} width={760} height={520} class="editorial-img home-route-img aspect-[16/10] w-full object-cover" />
             </a>
-          </div>
-        </article>
+            <div class="flex flex-1 flex-col p-5">
+              <h3 class="font-display text-2xl font-semibold text-[#201711]">{route.title}</h3>
+              <p class="mt-2 flex-1 text-base leading-7 text-[#66513d]">{route.desc}</p>
+              <a href={route.href} class="mt-5 inline-flex min-h-11 w-max items-center gap-2 rounded-full bg-[#155344] px-5 text-sm font-black text-white hover:bg-[#0f4034]">
+                Rotayı Gör
+                <Icon name="arrow-right" size={16} />
+              </a>
+            </div>
+            </div>
+          </article>
       ))}
     </div>
   </section>
 
   <section class="border-y border-[#eadcc4] bg-[#fffdf7] py-16">
     <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-      <h2 class="font-display text-3xl font-semibold text-[#201711] sm:text-4xl">İlçe Bazlı Keşif</h2>
-      <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p class="text-sm font-black uppercase tracking-[0.14em] text-[#8a3d22]">13 ilçe eksiksiz</p>
+          <h2 class="mt-2 font-display text-3xl font-semibold text-[#201711] sm:text-4xl">İlçe Bazlı Keşif</h2>
+          <p class="mt-3 max-w-2xl text-base leading-7 text-[#66513d]">Haliliye, Eyyübiye, Karaköprü ve tüm Şanlıurfa ilçelerini tek ekranda hızlıca aç.</p>
+        </div>
+        <a href="/ilceler" class="inline-flex min-h-11 items-center justify-center rounded-full border border-[#c99b6d] px-5 text-sm font-black text-[#7c3b24] hover:bg-[#fff4e1]">Tüm İlçeler</a>
+      </div>
+      <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         {districts.map(([name, desc, slug]) => (
-          <a href={`/ilceler/${slug}`} class="rounded-2xl border border-[#eadcc4] bg-white p-5 transition hover:border-[#78331d] hover:shadow-lg hover:shadow-[#78331d]/8">
-            <h3 class="text-lg font-black text-[#201711]">{name}</h3>
-            <p class="mt-2 text-sm leading-6 text-[#6a5643]">{desc}</p>
+          <a href={`/ilceler/${slug}`} class="group rounded-2xl border border-[#eadcc4] bg-white p-4 transition hover:-translate-y-0.5 hover:border-[#78331d] hover:shadow-lg hover:shadow-[#78331d]/8">
+            <div class="flex items-start justify-between gap-3">
+              <h3 class="text-lg font-black text-[#201711]">{name}</h3>
+              <span class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f3e4cc] text-[#78331d] transition group-hover:bg-[#78331d] group-hover:text-white">
+                <Icon name="map-pin" size={16} />
+              </span>
+            </div>
+            <p class="mt-2 min-h-14 text-sm leading-6 text-[#6a5643]">{desc}</p>
             <span class="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#78331d]">
               İlçeyi Keşfet
               <Icon name="chevron-right" size={16} />
@@ -534,19 +567,31 @@ const guidePosts = [
   </section>
 
   <section class="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-    <div class="rounded-[1.75rem] border border-[#e2c79d] bg-[#24170f] p-5 text-white shadow-2xl shadow-[#24170f]/18 sm:p-8">
-      <div class="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-        <div>
-          <p class="text-sm font-black text-[#f3c45f]">Canlı şehir modülü</p>
-          <h2 class="mt-3 font-display text-3xl font-semibold text-white sm:text-4xl">Bugün Şanlıurfa’da</h2>
-          <p class="mt-3 text-base leading-7 text-[#eadcc4]">Günün ihtiyacını tek noktadan karşılayan etkinlik, eczane, arama ve ulaşım bağlantıları.</p>
+    <div class="relative overflow-hidden rounded-[2rem] border border-[#e2c79d] bg-[#24170f] p-5 text-white shadow-2xl shadow-[#24170f]/18 sm:p-8 lg:p-10">
+      <div class="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-[#f3c45f]/18 blur-3xl"></div>
+      <div class="pointer-events-none absolute -bottom-28 left-20 h-72 w-72 rounded-full bg-[#155344]/35 blur-3xl"></div>
+      <div class="relative grid gap-7 lg:grid-cols-12 lg:items-stretch">
+        <div class="flex flex-col justify-between rounded-[1.5rem] border border-white/10 bg-white/8 p-6 lg:col-span-4">
+          <div>
+            <p class="text-sm font-black uppercase tracking-[0.14em] text-[#f3c45f]">Canlı şehir modülü</p>
+            <h2 class="mt-3 font-display text-3xl font-semibold text-white sm:text-4xl">Bugün Şanlıurfa’da</h2>
+            <p class="mt-3 text-base leading-7 text-[#eadcc4]">Günün ihtiyacını tek noktadan karşılayan etkinlik, eczane, arama, ulaşım ve sosyal keşif bağlantıları.</p>
+          </div>
+          <a href="/kesfet" class="mt-7 inline-flex min-h-12 w-fit items-center gap-2 rounded-full bg-[#f3c45f] px-5 text-sm font-black text-[#24170f] hover:bg-[#ffd875]">
+            Şehri Keşfet
+            <Icon name="arrow-right" size={16} />
+          </a>
         </div>
-        <div class="grid gap-3 sm:grid-cols-2">
-          {todayItems.map((item) => (
-            <a href={item.href} class="rounded-2xl border border-white/12 bg-white/8 p-5 transition hover:bg-white/12">
+        <div class="grid gap-3 sm:grid-cols-2 lg:col-span-8 xl:grid-cols-3">
+          {todayItems.map((item, index) => (
+            <a href={item.href} class={`group rounded-2xl border border-white/12 bg-white/8 p-5 transition hover:-translate-y-0.5 hover:bg-white/12 hover:shadow-xl hover:shadow-black/15 ${index === 0 ? 'xl:col-span-2' : ''}`}>
               <Icon name={item.icon} size={24} class="text-[#f3c45f]" />
               <h3 class="mt-3 text-lg font-black text-white">{item.title}</h3>
-              <p class="mt-2 text-sm leading-6 text-[#eadcc4]">{item.desc}</p>
+              <p class="mt-2 text-base leading-7 text-[#eadcc4]">{item.desc}</p>
+              <span class="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#f3c45f]">
+                Aç
+                <Icon name="arrow-right" size={16} class="transition group-hover:translate-x-1" />
+              </span>
             </a>
           ))}
         </div>
@@ -581,7 +626,7 @@ const guidePosts = [
               <Icon name={item.icon} size={22} />
             </span>
             <h3 class="mt-4 text-lg font-black text-[#201711]">{item.title}</h3>
-            <p class="mt-2 min-h-24 text-sm leading-6 text-[#6a5643]">{item.desc}</p>
+            <p class="mt-2 min-h-24 text-base leading-7 text-[#6a5643]">{item.desc}</p>
             <span class="mt-4 inline-flex items-center gap-2 text-sm font-black text-[#78331d]">
               {item.cta}
               <Icon name="arrow-right" size={16} />
@@ -606,7 +651,7 @@ const guidePosts = [
               <Icon name={item.icon} size={20} />
             </span>
             <h3 class="mt-3 text-base font-black text-[#201711]">{item.title}</h3>
-            <p class="mt-1.5 text-sm leading-5 text-[#6a5643]">{item.desc}</p>
+            <p class="mt-1.5 text-base leading-6 text-[#6a5643]">{item.desc}</p>
             <span class="mt-3 inline-flex items-center gap-1.5 text-xs font-black text-[#78331d]">
               Keşfet <Icon name="arrow-right" size={13} class="transition group-hover:translate-x-0.5" />
             </span>
@@ -644,7 +689,7 @@ const guidePosts = [
       {guidePosts.map(([title, desc, href]) => (
         <article class="rounded-2xl border border-[#eadcc4] bg-white p-5 shadow-sm">
           <h3 class="font-display text-xl font-semibold text-[#201711]">{title}</h3>
-          <p class="mt-2 min-h-16 text-sm leading-6 text-[#66513d]">{desc}</p>
+          <p class="mt-2 min-h-16 text-base leading-7 text-[#66513d]">{desc}</p>
           <a href={href} class="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-black text-[#78331d]">
             Rehberi Oku
             <Icon name="arrow-right" size={16} />
@@ -663,33 +708,33 @@ const guidePosts = [
       <div class="grid gap-5 lg:grid-cols-2">
         <div class="rounded-2xl border border-[#eadcc4] bg-white p-6">
           <h3 class="font-display text-lg font-bold text-[#201711]">Şanlıurfa’da gezilecek en güzel yerler hangileridir?</h3>
-          <p class="mt-3 text-sm leading-7 text-[#5d3928]">Göbeklitepe, Balıklıgöl, Harran Kümbet Evleri, Halfeti ve Şanlıurfa Kalesi başlıca turistik noktalardır. MÖ 10.000’e tarihlenen Göbeklitepe dünyanın en eski tapınak kompleksidir; Balıklıgöl ise Hz. İbrahim ile bağlantılı kutsal havuzdur.</p>
-          <a href="/gezilecek-yerler" class="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-[#78331d]">Tüm gezi noktaları <Icon name="arrow-right" size={14} /></a>
+          <p class="mt-3 text-base leading-7 text-[#5d3928]">Göbeklitepe, Balıklıgöl, Harran Kümbet Evleri, Halfeti ve Şanlıurfa Kalesi başlıca turistik noktalardır. MÖ 10.000’e tarihlenen Göbeklitepe dünyanın en eski tapınak kompleksidir; Balıklıgöl ise Hz. İbrahim ile bağlantılı kutsal havuzdur.</p>
+          <a href="/gezilecek-yerler" class="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[#d7b98e] px-4 py-2 text-sm font-black text-[#78331d] transition hover:border-[#78331d] hover:bg-[#fff6e8]">Tüm gezi noktaları <Icon name="arrow-right" size={14} /></a>
         </div>
         <div class="rounded-2xl border border-[#eadcc4] bg-white p-6">
           <h3 class="font-display text-lg font-bold text-[#201711]">Şanlıurfa’da ne yenir, yöresel lezzetler nelerdir?</h3>
-          <p class="mt-3 text-sm leading-7 text-[#5d3928]">Urfa Kebabı, çiğ köfte, lahmacun, ciğer ve mırra kahvesi öne çıkan yerel lezzetlerdir. Sıra gecesi geleneğiyle müzik eşliğinde kurulan sofralar Urfa mutfağının ayrılmaz parçasıdır; kebapçılar çarşısı ve ciğerciler bölgesi en bilinen duraklardır.</p>
-          <a href="/sanliurfada-ne-yenir" class="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-[#78331d]">Lezzet rehberi <Icon name="arrow-right" size={14} /></a>
+          <p class="mt-3 text-base leading-7 text-[#5d3928]">Urfa Kebabı, çiğ köfte, lahmacun, ciğer ve mırra kahvesi öne çıkan yerel lezzetlerdir. Sıra gecesi geleneğiyle müzik eşliğinde kurulan sofralar Urfa mutfağının ayrılmaz parçasıdır; kebapçılar çarşısı ve ciğerciler bölgesi en bilinen duraklardır.</p>
+          <a href="/sanliurfada-ne-yenir" class="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[#d7b98e] px-4 py-2 text-sm font-black text-[#78331d] transition hover:border-[#78331d] hover:bg-[#fff6e8]">Lezzet rehberi <Icon name="arrow-right" size={14} /></a>
         </div>
         <div class="rounded-2xl border border-[#eadcc4] bg-white p-6">
           <h3 class="font-display text-lg font-bold text-[#201711]">Göbeklitepe’ye nasıl gidilir, ziyaret saatleri nedir?</h3>
-          <p class="mt-3 text-sm leading-7 text-[#5d3928]">Şanlıurfa şehir merkezinden yaklaşık 15 km uzaktadır. Oranlı köyüne kalkan minibüslerle veya özel araçla ulaşılır. Ziyaret saatleri sabah 08.00 ile akşam 19.00 arasındadır; giriş ücretlidir ve alan günlük açıktır.</p>
-          <a href="/blog/gobeklitepe-rehberi-ziyaret-bilgileri" class="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-[#78331d]">Göbeklitepe rehberi <Icon name="arrow-right" size={14} /></a>
+          <p class="mt-3 text-base leading-7 text-[#5d3928]">Şanlıurfa şehir merkezinden yaklaşık 15 km uzaktadır. Oranlı köyüne kalkan minibüslerle veya özel araçla ulaşılır. Ziyaret saatleri sabah 08.00 ile akşam 19.00 arasındadır; giriş ücretlidir ve alan günlük açıktır.</p>
+          <a href="/blog/gobeklitepe-rehberi-ziyaret-bilgileri" class="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[#d7b98e] px-4 py-2 text-sm font-black text-[#78331d] transition hover:border-[#78331d] hover:bg-[#fff6e8]">Göbeklitepe rehberi <Icon name="arrow-right" size={14} /></a>
         </div>
         <div class="rounded-2xl border border-[#eadcc4] bg-white p-6">
           <h3 class="font-display text-lg font-bold text-[#201711]">Halfeti nerede ve nasıl gidilir?</h3>
-          <p class="mt-3 text-sm leading-7 text-[#5d3928]">Halfeti, Şanlıurfa şehir merkezine 110 km uzaklıkta Fırat Nehri kıyısında küçük bir ilçedir. Şanlıurfa otogarından düzenli minibüs seferleri işler. İlçeye ulaşınca tekne turlarıyla sular altındaki Rum Kale ve kanyonlar gezilir.</p>
-          <a href="/ilceler/halfeti" class="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-[#78331d]">Halfeti rehberi <Icon name="arrow-right" size={14} /></a>
+          <p class="mt-3 text-base leading-7 text-[#5d3928]">Halfeti, Şanlıurfa şehir merkezine 110 km uzaklıkta Fırat Nehri kıyısında küçük bir ilçedir. Şanlıurfa otogarından düzenli minibüs seferleri işler. İlçeye ulaşınca tekne turlarıyla sular altındaki Rum Kale ve kanyonlar gezilir.</p>
+          <a href="/ilceler/halfeti" class="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[#d7b98e] px-4 py-2 text-sm font-black text-[#78331d] transition hover:border-[#78331d] hover:bg-[#fff6e8]">Halfeti rehberi <Icon name="arrow-right" size={14} /></a>
         </div>
         <div class="rounded-2xl border border-[#eadcc4] bg-white p-6">
           <h3 class="font-display text-lg font-bold text-[#201711]">Şanlıurfa’da konaklama için hangi ilçeler önerilir?</h3>
-          <p class="mt-3 text-sm leading-7 text-[#5d3928]">Tarihi merkeze yakın kalmak isteyenler Eyyübiye ve Haliliye’yi tercih eder; Balıklıgöl ile tarihi çarşı yürüme mesafesindedir. Harran’ı görmek isteyenler için Harran’da geleneksel kümbet ev konaklaması da mümkündür.</p>
-          <a href="/konaklama" class="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-[#78331d]">Konaklama seçenekleri <Icon name="arrow-right" size={14} /></a>
+          <p class="mt-3 text-base leading-7 text-[#5d3928]">Tarihi merkeze yakın kalmak isteyenler Eyyübiye ve Haliliye’yi tercih eder; Balıklıgöl ile tarihi çarşı yürüme mesafesindedir. Harran’ı görmek isteyenler için Harran’da geleneksel kümbet ev konaklaması da mümkündür.</p>
+          <a href="/konaklama" class="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[#d7b98e] px-4 py-2 text-sm font-black text-[#78331d] transition hover:border-[#78331d] hover:bg-[#fff6e8]">Konaklama seçenekleri <Icon name="arrow-right" size={14} /></a>
         </div>
         <div class="rounded-2xl border border-[#eadcc4] bg-white p-6">
           <h3 class="font-display text-lg font-bold text-[#201711]">Şanlıurfa’da nöbetçi eczaneye nasıl ulaşılır?</h3>
-          <p class="mt-3 text-sm leading-7 text-[#5d3928]">Sanliurfa.com’un nöbetçi eczane sayfası Eyyübiye, Haliliye, Karaköprü ve diğer ilçeler için günlük olarak güncellenir. Adres ve iletişim bilgileriyle birlikte listeye anında ulaşabilirsiniz.</p>
-          <a href="/saglik/nobetci-eczaneler" class="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-[#78331d]">Nöbetçi eczane listesi <Icon name="arrow-right" size={14} /></a>
+          <p class="mt-3 text-base leading-7 text-[#5d3928]">Sanliurfa.com’un nöbetçi eczane sayfası Eyyübiye, Haliliye, Karaköprü ve diğer ilçeler için günlük olarak güncellenir. Adres ve iletişim bilgileriyle birlikte listeye anında ulaşabilirsiniz.</p>
+          <a href="/saglik/nobetci-eczaneler" class="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[#d7b98e] px-4 py-2 text-sm font-black text-[#78331d] transition hover:border-[#78331d] hover:bg-[#fff6e8]">Nöbetçi eczane listesi <Icon name="arrow-right" size={14} /></a>
         </div>
       </div>
     </div>

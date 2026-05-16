@@ -14,7 +14,7 @@
  *   - Top mekanlar (rating > 4.5)
  *   - Tüm aktif etkinlikler
  *
- * Cache: 1h browser, 24h CDN (büyük dosya, sık değişmez).
+ * Cache: 1h browser, 24h shared cache (buyuk dosya, sik degismez).
  */
 import type { APIRoute } from 'astro';
 import { query } from '../lib/postgres';

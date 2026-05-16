@@ -262,7 +262,8 @@ Detay: [`docs/ASTRO_DETAILED.md`](docs/ASTRO_DETAILED.md) "SEO & Structured Data
 ### gcloud Built-in Client (public, SDK'da gömülü)
 ```
 client_id: 764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.apps.googleusercontent.com
-client_secret: d-FL95Q19q7MQmFpd7hHD0Ty
+client_secret: repo dışında tutulmalı; local `gcloud auth application-default login`
+veya `GSC_REFRESH_TOKEN` env ile kullanılmalı
 ```
 
 ### Required for ADC user creds (zorunlu header)

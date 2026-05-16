@@ -11,10 +11,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { queryMock, queryOneMock, queryManyMock, getCacheMock, setCacheMock, deleteCacheMock } = vi.hoisted(() => ({
+const { queryMock, queryOneMock, queryReadOneMock, queryReadManyMock, getCacheMock, setCacheMock, deleteCacheMock } = vi.hoisted(() => ({
   queryMock: vi.fn(),
   queryOneMock: vi.fn(),
-  queryManyMock: vi.fn(),
+  queryReadOneMock: vi.fn(),
+  queryReadManyMock: vi.fn(),
   getCacheMock: vi.fn(),
   setCacheMock: vi.fn(),
   deleteCacheMock: vi.fn(),
@@ -23,7 +24,9 @@ const { queryMock, queryOneMock, queryManyMock, getCacheMock, setCacheMock, dele
 vi.mock('../postgres', () => ({
   query: queryMock,
   queryOne: queryOneMock,
-  queryMany: queryManyMock,
+  queryMany: vi.fn(),
+  queryReadOne: queryReadOneMock,
+  queryReadMany: queryReadManyMock,
 }));
 
 vi.mock('../cache', () => ({
@@ -39,7 +42,8 @@ vi.mock('../content-images', () => ({
 beforeEach(() => {
   queryMock.mockReset();
   queryOneMock.mockReset();
-  queryManyMock.mockReset();
+  queryReadOneMock.mockReset();
+  queryReadManyMock.mockReset();
   getCacheMock.mockReset();
   setCacheMock.mockReset();
   deleteCacheMock.mockReset();
@@ -72,11 +76,11 @@ describe('getEventById', () => {
     getCacheMock.mockResolvedValueOnce(mkEvent());
     const r = await getEventById('event-1');
     expect(r?.id).toBe('event-1');
-    expect(queryOneMock).not.toHaveBeenCalled();
+    expect(queryReadOneMock).not.toHaveBeenCalled();
   });
 
   it('cache miss + DB + view_count increment + 600s TTL', async () => {
-    queryOneMock.mockResolvedValueOnce(mkEvent());
+    queryReadOneMock.mockResolvedValueOnce(mkEvent());
     await getEventById('event-1');
     expect(queryMock).toHaveBeenCalled(); // view_count UPDATE
     const setCall = setCacheMock.mock.calls[0];
@@ -84,35 +88,35 @@ describe('getEventById', () => {
   });
 
   it('not found - null + cache skip', async () => {
-    queryOneMock.mockResolvedValueOnce(null);
+    queryReadOneMock.mockResolvedValueOnce(null);
     expect(await getEventById('non-existent')).toBeNull();
   });
 });
 
 describe('getEvents', () => {
-  it('default limit 20 + status active filter', async () => {
-    queryOneMock.mockResolvedValueOnce({ count: '5' });
-    queryManyMock.mockResolvedValueOnce([mkEvent()]);
+  it('default limit 20 + status published filter', async () => {
+    queryReadOneMock.mockResolvedValueOnce({ count: '5' });
+    queryReadManyMock.mockResolvedValueOnce([mkEvent()]);
     const r = await getEvents();
     expect(r.total).toBe(5);
     expect(r.events).toHaveLength(1);
-    const sqlCall = queryOneMock.mock.calls[0];
-    expect(sqlCall[1]).toContain('active');
+    const sqlCall = queryReadOneMock.mock.calls[0];
+    expect(sqlCall[1]).toContain('published');
   });
 
   it('category filter', async () => {
-    queryOneMock.mockResolvedValueOnce({ count: '3' });
-    queryManyMock.mockResolvedValueOnce([]);
+    queryReadOneMock.mockResolvedValueOnce({ count: '3' });
+    queryReadManyMock.mockResolvedValueOnce([]);
     await getEvents(20, 0, { category: 'music' });
-    const sqlCall = queryOneMock.mock.calls[0];
+    const sqlCall = queryReadOneMock.mock.calls[0];
     expect(sqlCall[1]).toContain('music');
   });
 
   it('placeId filter', async () => {
-    queryOneMock.mockResolvedValueOnce({ count: '2' });
-    queryManyMock.mockResolvedValueOnce([]);
+    queryReadOneMock.mockResolvedValueOnce({ count: '2' });
+    queryReadManyMock.mockResolvedValueOnce([]);
     await getEvents(20, 0, { placeId: 'p-1' });
-    const sqlCall = queryOneMock.mock.calls[0];
+    const sqlCall = queryReadOneMock.mock.calls[0];
     expect(sqlCall[1]).toContain('p-1');
   });
 
@@ -120,11 +124,11 @@ describe('getEvents', () => {
     getCacheMock.mockResolvedValueOnce({ events: [mkEvent()], total: 1 });
     const r = await getEvents();
     expect(r.total).toBe(1);
-    expect(queryOneMock).not.toHaveBeenCalled();
+    expect(queryReadOneMock).not.toHaveBeenCalled();
   });
 
   it('exception - empty array fallback', async () => {
-    queryOneMock.mockRejectedValueOnce(new Error('DB error'));
+    queryReadOneMock.mockRejectedValueOnce(new Error('DB error'));
     const r = await getEvents();
     expect(r.events).toEqual([]);
     expect(r.total).toBe(0);
@@ -132,17 +136,17 @@ describe('getEvents', () => {
 });
 
 describe('searchEvents', () => {
-  it('ILIKE wildcard pattern + status active filter', async () => {
-    queryManyMock.mockResolvedValueOnce([mkEvent()]);
+  it('ILIKE wildcard pattern + status published filter', async () => {
+    queryReadManyMock.mockResolvedValueOnce([mkEvent()]);
     await searchEvents('konser');
-    const sqlCall = queryManyMock.mock.calls[0];
+    const sqlCall = queryReadManyMock.mock.calls[0];
     expect(sqlCall[1]).toEqual(['%konser%', 20]);
     expect(sqlCall[0]).toContain('ILIKE');
-    expect(sqlCall[0]).toContain('active');
+    expect(sqlCall[0]).toContain('published');
   });
 
   it('exception - empty array', async () => {
-    queryManyMock.mockRejectedValueOnce(new Error('DB error'));
+    queryReadManyMock.mockRejectedValueOnce(new Error('DB error'));
     expect(await searchEvents('x')).toEqual([]);
   });
 });

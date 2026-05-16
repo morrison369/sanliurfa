@@ -2,7 +2,7 @@
 
 import Layout from '../layouts/Layout.astro';
 import RankedPlaceCard from '../components/landing/RankedPlaceCard.astro';
-import { query } from '../lib/postgres';
+import { queryReadMany } from '../lib/postgres';
 import { getCachedPublicRouteData } from '../lib/public-route-cache';
 import { getPublicAppUrl } from '../lib/public-app-url';
 import { logger } from '../lib/logging';
@@ -13,12 +13,13 @@ import {
   type LandingPlace,
 } from '../lib/landing/landing-schema';
 const baseUrl = getPublicAppUrl();
+const LANDING_CACHE_TTL_MS = 300_000;
 
 let cigerciler: LandingPlace[] = [];
 try {
  cigerciler = await getCachedPublicRouteData('page:guide:en-iyi-cigerciler', async () => {
-  const result = await query(`
- SELECT p.id, p.slug, p.name, p.address, p.rating, p.review_count, p.image_url, p.images, p.short_description,
+  return queryReadMany<LandingPlace>(`
+ SELECT p.slug, p.name, p.address, p.rating, p.review_count, p.image_url, p.images, LEFT(COALESCE(p.short_description, ''), 180) AS short_description,
  c.name AS category_name
  FROM places p
  LEFT JOIN categories c ON p.category_id = c.id
@@ -31,8 +32,7 @@ try {
  ORDER BY p.rating DESC NULLS LAST, p.review_count DESC NULLS LAST
  LIMIT 20
  `);
-  return result.rows;
- });
+ }, LANDING_CACHE_TTL_MS);
 } catch (e) {
  logger.error('Ciğerciler yüklenemedi:', e instanceof Error ? e : new Error(String(e)));
 }
@@ -141,9 +141,9 @@ const faqItems = [
  <details style="background:var(--bg-card);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;overflow:hidden">
  <summary style="padding:1rem 1.25rem;font-weight:600;color:#1F1410;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:1rem">
  {item.S}
- <span style="flex-shrink:0;color:#B87333;font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
+ <span style="flex-shrink:0;color:var(--public-accent);font-size:1.25rem;transition:transform .2s" class="faq-arrow">▾</span>
  </summary>
- <div style="padding:.75rem 1.25rem 1rem;color:#4A3828;font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
+ <div style="padding:.75rem 1.25rem 1rem;color:var(--public-muted);font-size:.95rem;line-height:1.7;border-top:1px solid rgba(184,115,51,.08)">
  {item.C}
  </div>
  </details>

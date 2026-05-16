@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-05-13T21:04:23.726Z",
+  "mode": "dry-run",
+  "settings": {
+    "thresholdKb": 1024,
+    "maxWidth": 2400,
+    "maxHeight": 2400,
+    "quality": 82
+  },
+  "summary": {
+    "candidateCount": 0,
+    "optimizedCount": 0,
+    "totalBeforeBytes": 0,
+    "totalBeforeMb": 0,
+    "totalAfterBytes": 0,
+    "totalAfterMb": 0,
+    "totalSavedBytes": 0,
+    "totalSavedMb": 0
+  },
+  "results": []
+}

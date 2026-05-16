@@ -11,6 +11,24 @@ import { logger } from '../../../lib/logging';
 import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../lib/api';
 import { assertPlaceStatusTransition } from '../../../lib/place/lifecycle';
 import { recordPlaceLifecycleEvent } from '../../../lib/place/lifecycle-events';
+import { invalidatePlace } from '../../../lib/cache/invalidation';
+import { notifyPlaceSubmissionDecision } from '../../../lib/email/submission-notifications';
+
+async function loadPlaceSubmissionModerationContext(id: string) {
+  const result = await query(
+    `SELECT
+       p.status,
+       p.name,
+       u.email AS owner_email,
+       COALESCE(NULLIF(u.full_name, ''), NULLIF(u.name, ''), 'Değerli Kullanıcı') AS owner_name
+     FROM places p
+     LEFT JOIN users u ON u.id = p.owner_id
+     WHERE p.id = $1`,
+    [id],
+  );
+
+  return result.rows[0] || null;
+}
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
@@ -158,8 +176,12 @@ export const POST: APIRoute = async ({ request }) => {
         return apiResponse({ error: 'Geçersiz submission action. Beklenen: approve | reject | requestInfo' }, HttpStatus.BAD_REQUEST);
       }
       if (action === 'approve') {
-        const existing = await query(`SELECT status FROM places WHERE id = $1`, [id]);
-        const currentStatus = existing.rows[0]?.status;
+        const current = await loadPlaceSubmissionModerationContext(String(id));
+        if (!current) {
+          return apiResponse({ error: 'Başvuru bulunamadı' }, HttpStatus.NOT_FOUND);
+        }
+
+        const currentStatus = current.status;
         const transition = assertPlaceStatusTransition(currentStatus, 'active', 'admin');
         if (!transition.ok) {
           return problemJson({
@@ -186,6 +208,19 @@ export const POST: APIRoute = async ({ request }) => {
           actorUserId: auth.user.id,
           reason: 'admin_approve',
         }).catch(() => null);
+
+        await invalidatePlace(String(id)).catch(() => null);
+
+        if (current.owner_email) {
+          notifyPlaceSubmissionDecision(
+            String(current.owner_email),
+            String(current.owner_name || 'Değerli Kullanıcı'),
+            String(result.rows[0]?.name || current.name || 'İşletmeniz'),
+            true,
+            typeof notes === 'string' && notes.trim().length > 0 ? notes.trim() : undefined,
+          ).catch(() => null);
+        }
+
         return apiResponse({ success: true, submission: result.rows[0] }, HttpStatus.OK);
       }
 
@@ -193,8 +228,12 @@ export const POST: APIRoute = async ({ request }) => {
         if (!reason) {
           return apiResponse({ error: 'Reddetme için reason gereklidir' }, HttpStatus.BAD_REQUEST);
         }
-        const existing = await query(`SELECT status FROM places WHERE id = $1`, [id]);
-        const currentStatus = existing.rows[0]?.status;
+        const current = await loadPlaceSubmissionModerationContext(String(id));
+        if (!current) {
+          return apiResponse({ error: 'Başvuru bulunamadı' }, HttpStatus.NOT_FOUND);
+        }
+
+        const currentStatus = current.status;
         const transition = assertPlaceStatusTransition(currentStatus, 'rejected', 'admin');
         if (!transition.ok) {
           return problemJson({
@@ -219,6 +258,19 @@ export const POST: APIRoute = async ({ request }) => {
           reason: reason || 'admin_reject',
           ...(notes ? { metadata: { notes } } : {}),
         }).catch(() => null);
+
+        await invalidatePlace(String(id)).catch(() => null);
+
+        if (current.owner_email) {
+          notifyPlaceSubmissionDecision(
+            String(current.owner_email),
+            String(current.owner_name || 'Değerli Kullanıcı'),
+            String(result.rows[0]?.name || current.name || 'İşletmeniz'),
+            false,
+            typeof reason === 'string' && reason.trim().length > 0 ? reason.trim() : undefined,
+          ).catch(() => null);
+        }
+
         return apiResponse({ success: true, submission: result.rows[0], reason }, HttpStatus.OK);
       }
 
@@ -226,8 +278,12 @@ export const POST: APIRoute = async ({ request }) => {
         if (!reason) {
           return apiResponse({ error: 'Bilgi için reason gereklidir' }, HttpStatus.BAD_REQUEST);
         }
-        const existing = await query(`SELECT status FROM places WHERE id = $1`, [id]);
-        const currentStatus = existing.rows[0]?.status;
+        const current = await loadPlaceSubmissionModerationContext(String(id));
+        if (!current) {
+          return apiResponse({ error: 'Başvuru bulunamadı' }, HttpStatus.NOT_FOUND);
+        }
+
+        const currentStatus = current.status;
         const transition = assertPlaceStatusTransition(currentStatus, 'needs_info', 'admin');
         if (!transition.ok) {
           return problemJson({
@@ -252,6 +308,7 @@ export const POST: APIRoute = async ({ request }) => {
           reason: reason || 'admin_request_info',
           ...(notes ? { metadata: { notes } } : {}),
         }).catch(() => null);
+        await invalidatePlace(String(id)).catch(() => null);
         return apiResponse({ success: true, submission: result.rows[0], requestedInfo: reason }, HttpStatus.OK);
       }
     }

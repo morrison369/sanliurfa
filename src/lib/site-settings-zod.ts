@@ -183,6 +183,21 @@ const LiveStatusCardItem = z.object({
   badgeClass: z.string().min(1),
 });
 
+const HomepageQuickAccessItem = z.object({
+  icon: z.string().min(1).optional(),
+  title: z.string().min(1),
+  desc: z.string().min(1),
+  href: InternalHref,
+  cta: z.string().min(1),
+});
+
+const HomepageRouteItem = z.object({
+  title: z.string().min(1),
+  desc: z.string().min(1),
+  href: InternalHref,
+  image: z.string().startsWith('/images/'),
+});
+
 const ServiceQuickLinkItem = z.object({
   key: z.string().min(1),
   categoryLabel: z.string().min(1),
@@ -491,6 +506,8 @@ const SettingSchemaMap: Record<string, z.ZodTypeAny> = {
   'homepage.featuredGuides': z.object({ items: z.array(LinkItem) }),
   'homepage.faq': z.object({ items: z.array(FaqItem) }),
   'homepage.heroQuickLinks': z.object({ items: z.array(LinkItem) }),
+  'homepage.quickAccess': z.object({ items: z.array(HomepageQuickAccessItem) }),
+  'homepage.routes': z.object({ items: z.array(HomepageRouteItem) }),
   'homepage.liveStatusCards': z.object({ items: z.array(LiveStatusCardItem) }),
   'homepage.serviceQuickLinks': z.object({ items: z.array(ServiceQuickLinkItem) }),
   'homepage.communityPanel': CommunityPanelSchema,

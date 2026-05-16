@@ -1,0 +1,86 @@
+{
+  "generatedAt": "2026-05-15T12:07:47.365Z",
+  "status": "advisory",
+  "source": "docs/db-retirement-observation-report.json",
+  "policy": {
+    "automaticDropAllowed": false,
+    "automaticQuarantineAllowed": false,
+    "earliestActionAt": "2026-05-29T12:07:47.159Z"
+  },
+  "summary": {
+    "quarantineCandidateCount": 2,
+    "runtimeHoldCount": 1
+  },
+  "candidates": [
+    {
+      "table": "public.campaign_metrics",
+      "owner": "marketing campaign analytics",
+      "action": "observe_then_quarantine_migration",
+      "blocker": "production observation evidence missing",
+      "runtimeReferenceCount": 0,
+      "migrationSources": [
+        "104_marketing_campaigns.ts"
+      ],
+      "sourceFiles": [
+        "src/migrations/104_marketing_campaigns.ts",
+        "src/components/MarketingCampaignBuilder.tsx",
+        "src/pages/api/marketing-campaigns/[id]/analytics.ts"
+      ],
+      "replacementTables": [
+        "marketing_campaigns",
+        "campaign_performance"
+      ],
+      "requiredEvidence": [
+        "14 gun production pg_stat_user_tables gozlemi",
+        "runtime source reference taramasi",
+        "migration ownership ve rollback plani",
+        "DB backup/restore kaniti",
+        "manuel quarantine PR review"
+      ]
+    },
+    {
+      "table": "public.campaign_segments",
+      "owner": "marketing campaign targeting",
+      "action": "observe_then_quarantine_migration",
+      "blocker": "production observation evidence missing",
+      "runtimeReferenceCount": 0,
+      "migrationSources": [
+        "104_marketing_campaigns.ts"
+      ],
+      "sourceFiles": [
+        "src/migrations/104_marketing_campaigns.ts",
+        "src/pages/api/marketing-campaigns/[id]/targeting.ts",
+        "src/lib/marketing/marketing-campaigns.ts"
+      ],
+      "replacementTables": [
+        "campaign_targeting"
+      ],
+      "requiredEvidence": [
+        "14 gun production pg_stat_user_tables gozlemi",
+        "runtime source reference taramasi",
+        "migration ownership ve rollback plani",
+        "DB backup/restore kaniti",
+        "manuel quarantine PR review"
+      ]
+    }
+  ],
+  "runtimeHolds": [
+    {
+      "table": "public.campaign_performance",
+      "owner": "email/marketing campaign performance",
+      "blocker": "runtime source references present",
+      "runtimeReferenceCount": 2,
+      "runtimeReferences": [
+        {
+          "file": "src/lib/marketing/marketing-campaigns.ts",
+          "migrationOnly": false
+        },
+        {
+          "file": "src/lib/email/email-analytics.ts",
+          "migrationOnly": false
+        }
+      ],
+      "requiredAction": "Once runtime references are removed or migrated, re-run db:retirement:observe."
+    }
+  ]
+}

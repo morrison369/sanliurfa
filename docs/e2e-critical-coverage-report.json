@@ -1,0 +1,231 @@
+{
+  "generatedAt": "2026-05-15T12:08:14.178Z",
+  "status": "ok",
+  "policy": {
+    "thisReportRunsBrowsers": false,
+    "fullCriticalRunCommand": "node scripts/e2e/nightly-critical-suite.mjs"
+  },
+  "summary": {
+    "flowCount": 10,
+    "coveredCount": 10,
+    "missingCount": 0
+  },
+  "flows": [
+    {
+      "key": "home",
+      "status": "covered",
+      "existingSpecCount": 3,
+      "testCount": 22,
+      "skipCount": 0,
+      "specs": [
+        {
+          "rel": "e2e/homepage.spec.ts",
+          "exists": true,
+          "testCount": 13,
+          "skipCount": 0
+        },
+        {
+          "rel": "e2e/home.spec.ts",
+          "exists": true,
+          "testCount": 8,
+          "skipCount": 0
+        },
+        {
+          "rel": "e2e/smoke.spec.ts",
+          "exists": true,
+          "testCount": 1,
+          "skipCount": 0
+        }
+      ]
+    },
+    {
+      "key": "auth",
+      "status": "covered",
+      "existingSpecCount": 2,
+      "testCount": 27,
+      "skipCount": 4,
+      "specs": [
+        {
+          "rel": "e2e/auth.spec.ts",
+          "exists": true,
+          "testCount": 16,
+          "skipCount": 0
+        },
+        {
+          "rel": "e2e/2fa.spec.ts",
+          "exists": true,
+          "testCount": 11,
+          "skipCount": 4
+        }
+      ]
+    },
+    {
+      "key": "admin",
+      "status": "covered",
+      "existingSpecCount": 2,
+      "testCount": 9,
+      "skipCount": 2,
+      "specs": [
+        {
+          "rel": "e2e/admin.spec.ts",
+          "exists": true,
+          "testCount": 6,
+          "skipCount": 0
+        },
+        {
+          "rel": "e2e/admin-site-content-live.spec.ts",
+          "exists": true,
+          "testCount": 3,
+          "skipCount": 2
+        }
+      ]
+    },
+    {
+      "key": "places",
+      "status": "covered",
+      "existingSpecCount": 2,
+      "testCount": 32,
+      "skipCount": 0,
+      "specs": [
+        {
+          "rel": "e2e/places.spec.ts",
+          "exists": true,
+          "testCount": 28,
+          "skipCount": 0
+        },
+        {
+          "rel": "e2e/tests/places.spec.ts",
+          "exists": true,
+          "testCount": 4,
+          "skipCount": 0
+        }
+      ]
+    },
+    {
+      "key": "blog",
+      "status": "covered",
+      "existingSpecCount": 2,
+      "testCount": 13,
+      "skipCount": 1,
+      "specs": [
+        {
+          "rel": "e2e/blog.spec.ts",
+          "exists": true,
+          "testCount": 8,
+          "skipCount": 1
+        },
+        {
+          "rel": "e2e/tests/blog.spec.ts",
+          "exists": true,
+          "testCount": 5,
+          "skipCount": 0
+        }
+      ]
+    },
+    {
+      "key": "search",
+      "status": "covered",
+      "existingSpecCount": 2,
+      "testCount": 14,
+      "skipCount": 0,
+      "specs": [
+        {
+          "rel": "e2e/smoke.spec.ts",
+          "exists": true,
+          "testCount": 1,
+          "skipCount": 0
+        },
+        {
+          "rel": "e2e/homepage.spec.ts",
+          "exists": true,
+          "testCount": 13,
+          "skipCount": 0
+        }
+      ]
+    },
+    {
+      "key": "reservations",
+      "status": "covered",
+      "existingSpecCount": 1,
+      "testCount": 28,
+      "skipCount": 0,
+      "specs": [
+        {
+          "rel": "e2e/places.spec.ts",
+          "exists": true,
+          "testCount": 28,
+          "skipCount": 0
+        }
+      ]
+    },
+    {
+      "key": "payments",
+      "status": "covered",
+      "existingSpecCount": 3,
+      "testCount": 35,
+      "skipCount": 0,
+      "specs": [
+        {
+          "rel": "e2e/payment.spec.ts",
+          "exists": true,
+          "testCount": 6,
+          "skipCount": 0
+        },
+        {
+          "rel": "e2e/stripe-integration.spec.ts",
+          "exists": true,
+          "testCount": 23,
+          "skipCount": 0
+        },
+        {
+          "rel": "e2e/subscription.spec.ts",
+          "exists": true,
+          "testCount": 6,
+          "skipCount": 0
+        }
+      ]
+    },
+    {
+      "key": "social",
+      "status": "covered",
+      "existingSpecCount": 3,
+      "testCount": 20,
+      "skipCount": 3,
+      "specs": [
+        {
+          "rel": "e2e/social-features.spec.ts",
+          "exists": true,
+          "testCount": 7,
+          "skipCount": 0
+        },
+        {
+          "rel": "e2e/social-phase1.spec.ts",
+          "exists": true,
+          "testCount": 8,
+          "skipCount": 3
+        },
+        {
+          "rel": "e2e/social/profiles.spec.ts",
+          "exists": true,
+          "testCount": 5,
+          "skipCount": 0
+        }
+      ]
+    },
+    {
+      "key": "media",
+      "status": "covered",
+      "existingSpecCount": 1,
+      "testCount": 4,
+      "skipCount": 0,
+      "specs": [
+        {
+          "rel": "e2e/photos.spec.ts",
+          "exists": true,
+          "testCount": 4,
+          "skipCount": 0
+        }
+      ]
+    }
+  ]
+}

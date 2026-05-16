@@ -1,0 +1,1896 @@
+{
+  "generatedAt": "2026-05-15T12:42:39.527Z",
+  "status": "pass",
+  "imageRoot": "public/images",
+  "summary": {
+    "scanned": 209,
+    "failed": 0,
+    "review": 0,
+    "passed": 209
+  },
+  "failures": [],
+  "review": [],
+  "results": [
+    {
+      "path": "public/images/blog/balikligol-cevresi-yuruyus-rotasi-2026-thumb.jpg",
+      "bytes": 15753,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/balikligol-cevresi-yuruyus-rotasi-2026.jpg",
+      "bytes": 49591,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/balikligol-gezi.webp",
+      "bytes": 235151,
+      "width": 1200,
+      "height": 1800,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/balikligol-thumb.jpg",
+      "bytes": 22252,
+      "width": 400,
+      "height": 267,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/balikligol.jpg",
+      "bytes": 127450,
+      "width": 1080,
+      "height": 720,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/birecik-kelaynak-firat-gezi-rotasi-thumb.jpg",
+      "bytes": 14523,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/birecik-kelaynak-firat-gezi-rotasi.jpg",
+      "bytes": 46217,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/bozova-ataturk-baraji-gunubirlik-gezi-thumb.jpg",
+      "bytes": 14597,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/bozova-ataturk-baraji-gunubirlik-gezi.jpg",
+      "bytes": 46679,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/gobeklitepe-2026.webp",
+      "bytes": 74188,
+      "width": 1200,
+      "height": 802,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/gobeklitepe-thumb.jpg",
+      "bytes": 17545,
+      "width": 400,
+      "height": 267,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/gobeklitepe.jpg",
+      "bytes": 142166,
+      "width": 1080,
+      "height": 720,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/haleplibahce-mozaik-muzesi-rehberi-thumb.jpg",
+      "bytes": 13991,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/haleplibahce-mozaik-muzesi-rehberi.jpg",
+      "bytes": 44937,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/halfeti-tekne-turu-rehberi-2026-thumb.jpg",
+      "bytes": 15513,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/halfeti-tekne-turu-rehberi-2026.jpg",
+      "bytes": 48673,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/halfeti-thumb.jpg",
+      "bytes": 15695,
+      "width": 400,
+      "height": 300,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/halfeti.avif",
+      "bytes": 86431,
+      "width": 1000,
+      "height": 750,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/halfeti.jpg",
+      "bytes": 118817,
+      "width": 1000,
+      "height": 750,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/halfeti.webp",
+      "bytes": 102646,
+      "width": 1000,
+      "height": 750,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/harran-konik-evleri-fotograf-gezi-rehberi-thumb.jpg",
+      "bytes": 15795,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/harran-konik-evleri-fotograf-gezi-rehberi.jpg",
+      "bytes": 49016,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/harran-thumb.jpg",
+      "bytes": 8279,
+      "width": 400,
+      "height": 267,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/harran.jpg",
+      "bytes": 82413,
+      "width": 1080,
+      "height": 720,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/karahantepe-tas-tepeler-rehberi-2026-thumb.jpg",
+      "bytes": 16605,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/karahantepe-tas-tepeler-rehberi-2026.jpg",
+      "bytes": 52856,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/kizilkoyun-nekropolu-gezi-rehberi-thumb.jpg",
+      "bytes": 16095,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/kizilkoyun-nekropolu-gezi-rehberi.jpg",
+      "bytes": 51003,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/mozaik-muzesi-thumb.jpg",
+      "bytes": 21701,
+      "width": 400,
+      "height": 266,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/mozaik-muzesi.jpg",
+      "bytes": 229876,
+      "width": 1200,
+      "height": 798,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-2-gunluk-gezi-plani-2026-thumb.jpg",
+      "bytes": 15366,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-2-gunluk-gezi-plani-2026.jpg",
+      "bytes": 47833,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-arkeoloji-muzesi-derin-rehber-thumb.jpg",
+      "bytes": 16010,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-arkeoloji-muzesi-derin-rehber.jpg",
+      "bytes": 50799,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi-thumb.jpg",
+      "bytes": 15620,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi.jpg",
+      "bytes": 49968,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-carsilari-rehberi-thumb.jpg",
+      "bytes": 14937,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-carsilari-rehberi.jpg",
+      "bytes": 46928,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-cografi-isaretli-lezzetler-thumb.jpg",
+      "bytes": 17374,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-cografi-isaretli-lezzetler.jpg",
+      "bytes": 55137,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-fotograf-rotasi-thumb.jpg",
+      "bytes": 15125,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-fotograf-rotasi.jpg",
+      "bytes": 47483,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-gap-havalimani-ulasim-rehberi-thumb.jpg",
+      "bytes": 16451,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-gap-havalimani-ulasim-rehberi.jpg",
+      "bytes": 51512,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir-thumb.jpg",
+      "bytes": 15454,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir.jpg",
+      "bytes": 47981,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-hediyelik-alisveris-rehberi-thumb.jpg",
+      "bytes": 15902,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-hediyelik-alisveris-rehberi.jpg",
+      "bytes": 49709,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-kultur-yolu-festivali-rehberi-thumb.jpg",
+      "bytes": 17303,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-kultur-yolu-festivali-rehberi.jpg",
+      "bytes": 54271,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-lezzetler-2026.webp",
+      "bytes": 106851,
+      "width": 1200,
+      "height": 1800,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-muzekart-muze-ziyaret-rehberi-thumb.jpg",
+      "bytes": 16362,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-muzekart-muze-ziyaret-rehberi.jpg",
+      "bytes": 51018,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-otel-2026.webp",
+      "bytes": 228795,
+      "width": 1200,
+      "height": 800,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-pencer-boranisi-rehberi-thumb.jpg",
+      "bytes": 17849,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfa-pencer-boranisi-rehberi.jpg",
+      "bytes": 55335,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-cocukla-gezilecek-yerler-thumb.jpg",
+      "bytes": 16598,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-cocukla-gezilecek-yerler.jpg",
+      "bytes": 51953,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-gezilecek-yerler-2026-thumb.jpg",
+      "bytes": 16514,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-gezilecek-yerler-2026.jpg",
+      "bytes": 51683,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-ne-yenir-2026-thumb.jpg",
+      "bytes": 17339,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-ne-yenir-2026.jpg",
+      "bytes": 54587,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-ramazan-iftar-kulturu-thumb.jpg",
+      "bytes": 15541,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-ramazan-iftar-kulturu.jpg",
+      "bytes": 49604,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-sabah-kahvaltisi-rehberi-thumb.jpg",
+      "bytes": 16931,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-sabah-kahvaltisi-rehberi.jpg",
+      "bytes": 53214,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-sicak-havada-gezi-plani-thumb.jpg",
+      "bytes": 16065,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-sicak-havada-gezi-plani.jpg",
+      "bytes": 50311,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-yagmurlu-soguk-havada-ne-yapilir-thumb.jpg",
+      "bytes": 15301,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/sanliurfada-yagmurlu-soguk-havada-ne-yapilir.jpg",
+      "bytes": 47863,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/siverek-takoran-disi-gezi-noktalari-thumb.jpg",
+      "bytes": 15480,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/siverek-takoran-disi-gezi-noktalari.jpg",
+      "bytes": 48438,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/takoran-vadisi-rehberi-2026-thumb.jpg",
+      "bytes": 15090,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/takoran-vadisi-rehberi-2026.jpg",
+      "bytes": 48021,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/tarihi-yerler-rehberi-thumb.jpg",
+      "bytes": 15120,
+      "width": 400,
+      "height": 266,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/tarihi-yerler-rehberi.jpg",
+      "bytes": 144764,
+      "width": 1200,
+      "height": 800,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/tas-tepeler-rotasi-sanliurfa-thumb.jpg",
+      "bytes": 15909,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/tas-tepeler-rotasi-sanliurfa.jpg",
+      "bytes": 50623,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-3-gunluk-sanliurfa-gezi-plani-thumb.jpg",
+      "bytes": 15479,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-3-gunluk-sanliurfa-gezi-plani.jpg",
+      "bytes": 48979,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-aile-cocuk-rehberi-thumb.jpg",
+      "bytes": 17284,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-aile-cocuk-rehberi.jpg",
+      "bytes": 54392,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-hyperloop-sanliurfa-final-rehberi-thumb.jpg",
+      "bytes": 17091,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-hyperloop-sanliurfa-final-rehberi.jpg",
+      "bytes": 54658,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-sanliurfa-konaklama-bolgeleri-thumb.jpg",
+      "bytes": 16432,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-sanliurfa-konaklama-bolgeleri.jpg",
+      "bytes": 51894,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-sanliurfa-rehberi-thumb.jpg",
+      "bytes": 17629,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-sanliurfa-rehberi.jpg",
+      "bytes": 55376,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-world-drone-cup-sanliurfa-thumb.jpg",
+      "bytes": 16508,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-world-drone-cup-sanliurfa.jpg",
+      "bytes": 52586,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-yarismalari-sanliurfa-thumb.jpg",
+      "bytes": 17017,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/teknofest-2026-yarismalari-sanliurfa.jpg",
+      "bytes": 53348,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/urfa-kalesi-thumb.jpg",
+      "bytes": 16604,
+      "width": 400,
+      "height": 225,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/urfa-kalesi.jpg",
+      "bytes": 177251,
+      "width": 1200,
+      "height": 675,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/urfa-keme-boranisi-rehberi-thumb.jpg",
+      "bytes": 16301,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/urfa-keme-boranisi-rehberi.jpg",
+      "bytes": 51183,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/urfa-kultur-gecesi-rezervasyon-kontrol-listesi-thumb.jpg",
+      "bytes": 16209,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/urfa-kultur-gecesi-rezervasyon-kontrol-listesi.jpg",
+      "bytes": 50533,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/urfa-tarihi.webp",
+      "bytes": 165773,
+      "width": 1200,
+      "height": 800,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/viransehir-gezi-rehberi-eyyup-nebi-thumb.jpg",
+      "bytes": 15431,
+      "width": 600,
+      "height": 315,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/blog/viransehir-gezi-rehberi-eyyup-nebi.jpg",
+      "bytes": 49887,
+      "width": 1200,
+      "height": 630,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/etkinlikler/sanliurfa-kultur-festivali-thumb.jpg",
+      "bytes": 19603,
+      "width": 400,
+      "height": 266,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/etkinlikler/sanliurfa-kultur-festivali.jpg",
+      "bytes": 184566,
+      "width": 1200,
+      "height": 800,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/foods/default.jpg",
+      "bytes": 39710,
+      "width": 1600,
+      "height": 900,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/foods/homepage/borani-card.png",
+      "bytes": 85498,
+      "width": 1200,
+      "height": 800,
+      "format": "png",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/foods/homepage/cig-kofte-card.png",
+      "bytes": 85262,
+      "width": 1200,
+      "height": 800,
+      "format": "png",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/foods/homepage/lebeni-card.png",
+      "bytes": 86708,
+      "width": 1200,
+      "height": 800,
+      "format": "png",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/foods/homepage/patlican-kebabi-card.png",
+      "bytes": 84927,
+      "width": 1200,
+      "height": 800,
+      "format": "png",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/foods/homepage/sillik-tatlisi-card.png",
+      "bytes": 84558,
+      "width": 1200,
+      "height": 800,
+      "format": "png",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/foods/homepage/urfa-kebabi-card.png",
+      "bytes": 84740,
+      "width": 1200,
+      "height": 800,
+      "format": "png",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/hero/hero-food.webp",
+      "bytes": 271781,
+      "width": 1920,
+      "height": 2880,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/hero/hero-home.webp",
+      "bytes": 224186,
+      "width": 1920,
+      "height": 1280,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/hero/hero-hotel.webp",
+      "bytes": 300156,
+      "width": 1920,
+      "height": 1280,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/hero/sanliurfa-landing.avif",
+      "bytes": 287787,
+      "width": 1600,
+      "height": 1067,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/hero/sanliurfa-landing.jpg",
+      "bytes": 302364,
+      "width": 1400,
+      "height": 933,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/hero/sanliurfa-landing.webp",
+      "bytes": 282986,
+      "width": 1400,
+      "height": 934,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/historical/balikligol.jpg",
+      "bytes": 127450,
+      "width": 1080,
+      "height": 720,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/historical/balikligol.webp",
+      "bytes": 127450,
+      "width": 1080,
+      "height": 720,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/historical/gobeklitepe.jpg",
+      "bytes": 142166,
+      "width": 1080,
+      "height": 720,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/historical/gobeklitepe.webp",
+      "bytes": 142166,
+      "width": 1080,
+      "height": 720,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/collage/balikligol.avif",
+      "bytes": 37517,
+      "width": 640,
+      "height": 500,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/collage/balikligol.webp",
+      "bytes": 49078,
+      "width": 640,
+      "height": 500,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/collage/gobeklitepe.avif",
+      "bytes": 77117,
+      "width": 640,
+      "height": 500,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/collage/gobeklitepe.webp",
+      "bytes": 77572,
+      "width": 640,
+      "height": 500,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/collage/halfeti.avif",
+      "bytes": 25327,
+      "width": 640,
+      "height": 500,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/collage/halfeti.webp",
+      "bytes": 34206,
+      "width": 640,
+      "height": 500,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/collage/harran.avif",
+      "bytes": 29025,
+      "width": 640,
+      "height": 500,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/collage/harran.webp",
+      "bytes": 39060,
+      "width": 640,
+      "height": 500,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/routes/balikligol-tarihi-carsi.avif",
+      "bytes": 81242,
+      "width": 1200,
+      "height": 820,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/routes/balikligol-tarihi-carsi.jpg",
+      "bytes": 203959,
+      "width": 1200,
+      "height": 820,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/routes/balikligol-tarihi-carsi.webp",
+      "bytes": 136938,
+      "width": 1200,
+      "height": 820,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/routes/gobeklitepe-arkeoloji.avif",
+      "bytes": 69138,
+      "width": 1200,
+      "height": 820,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/routes/gobeklitepe-arkeoloji.jpg",
+      "bytes": 171191,
+      "width": 1200,
+      "height": 820,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/routes/gobeklitepe-arkeoloji.webp",
+      "bytes": 111820,
+      "width": 1200,
+      "height": 820,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/routes/halfeti-firat.avif",
+      "bytes": 61220,
+      "width": 1200,
+      "height": 820,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/routes/halfeti-firat.jpg",
+      "bytes": 157786,
+      "width": 1200,
+      "height": 820,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/home/routes/halfeti-firat.webp",
+      "bytes": 100542,
+      "width": 1200,
+      "height": 820,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/placeholder-blog.jpg",
+      "bytes": 41812,
+      "width": 1600,
+      "height": 900,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/placeholder-event.jpg",
+      "bytes": 40529,
+      "width": 1600,
+      "height": 900,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/placeholder-historical.jpg",
+      "bytes": 37727,
+      "width": 1600,
+      "height": 900,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/placeholder-place.jpg",
+      "bytes": 41589,
+      "width": 1600,
+      "height": 900,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/placeholder.jpg",
+      "bytes": 40529,
+      "width": 1600,
+      "height": 900,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/balikligol/main-card.webp",
+      "bytes": 127766,
+      "width": 800,
+      "height": 1200,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/balikligol/main-hero.webp",
+      "bytes": 304910,
+      "width": 1600,
+      "height": 2400,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/balikligol/main-thumb.webp",
+      "bytes": 33432,
+      "width": 400,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/balikligol/main.jpg",
+      "bytes": 261721,
+      "width": 1280,
+      "height": 1920,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/balikligol/main.webp",
+      "bytes": 277776,
+      "width": 1600,
+      "height": 2400,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/balikligol-thumb.jpg",
+      "bytes": 20828,
+      "width": 400,
+      "height": 266,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/balikligol.avif",
+      "bytes": 99701,
+      "width": 1000,
+      "height": 667,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/balikligol.jpg",
+      "bytes": 197210,
+      "width": 1200,
+      "height": 800,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/balikligol.webp",
+      "bytes": 118948,
+      "width": 1000,
+      "height": 667,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/cigerci-aziz-usta/food-card.webp",
+      "bytes": 40824,
+      "width": 800,
+      "height": 1200,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/cigerci-aziz-usta/food-hero.webp",
+      "bytes": 69236,
+      "width": 1200,
+      "height": 1800,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/cigerci-aziz-usta/food-thumb.webp",
+      "bytes": 17526,
+      "width": 400,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/cigerci-aziz-usta/food.jpg",
+      "bytes": 80488,
+      "width": 1200,
+      "height": 1800,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/cigerci-aziz-usta/food.webp",
+      "bytes": 69994,
+      "width": 1200,
+      "height": 1800,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/cigerci-aziz-usta/placeholder-card.webp",
+      "bytes": 2242,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/cigerci-aziz-usta/placeholder-hero.webp",
+      "bytes": 2242,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/cigerci-aziz-usta/placeholder-thumb.webp",
+      "bytes": 11668,
+      "width": 400,
+      "height": 300,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/cigerci-aziz-usta/placeholder.jpg",
+      "bytes": 9564,
+      "width": 800,
+      "height": 600,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/cigerci-aziz-usta/placeholder.webp",
+      "bytes": 2328,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/culcuoglu/placeholder-card.webp",
+      "bytes": 1570,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/culcuoglu/placeholder-hero.webp",
+      "bytes": 1570,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/culcuoglu/placeholder-thumb.webp",
+      "bytes": 17236,
+      "width": 400,
+      "height": 300,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/culcuoglu/placeholder.jpg",
+      "bytes": 8909,
+      "width": 800,
+      "height": 600,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/culcuoglu/placeholder.webp",
+      "bytes": 1632,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe/detail-1-card.webp",
+      "bytes": 58080,
+      "width": 800,
+      "height": 533,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe/detail-1-hero.webp",
+      "bytes": 103122,
+      "width": 1200,
+      "height": 800,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe/detail-1-thumb.webp",
+      "bytes": 17828,
+      "width": 400,
+      "height": 267,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe/detail-1.jpg",
+      "bytes": 165773,
+      "width": 1200,
+      "height": 800,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe/detail-1.webp",
+      "bytes": 105988,
+      "width": 1200,
+      "height": 800,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe/hero-card.webp",
+      "bytes": 23584,
+      "width": 800,
+      "height": 535,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe/hero-hero.webp",
+      "bytes": 102244,
+      "width": 1920,
+      "height": 1283,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe/hero-thumb.webp",
+      "bytes": 8174,
+      "width": 400,
+      "height": 267,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe/hero.jpg",
+      "bytes": 243022,
+      "width": 1920,
+      "height": 1283,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe/hero.webp",
+      "bytes": 106560,
+      "width": 1920,
+      "height": 1283,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe-thumb.jpg",
+      "bytes": 20714,
+      "width": 400,
+      "height": 225,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe.avif",
+      "bytes": 161846,
+      "width": 1200,
+      "height": 675,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe.jpg",
+      "bytes": 240528,
+      "width": 1200,
+      "height": 675,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gobeklitepe.webp",
+      "bytes": 229150,
+      "width": 1200,
+      "height": 675,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gumruk-han/placeholder-card.webp",
+      "bytes": 1952,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gumruk-han/placeholder-hero.webp",
+      "bytes": 1952,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gumruk-han/placeholder-thumb.webp",
+      "bytes": 19052,
+      "width": 400,
+      "height": 300,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gumruk-han/placeholder.jpg",
+      "bytes": 9308,
+      "width": 800,
+      "height": 600,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/gumruk-han/placeholder.webp",
+      "bytes": 2008,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/exterior-card.webp",
+      "bytes": 96924,
+      "width": 800,
+      "height": 533,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/exterior-hero.webp",
+      "bytes": 178300,
+      "width": 1200,
+      "height": 800,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/exterior-thumb.webp",
+      "bytes": 28926,
+      "width": 400,
+      "height": 267,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/exterior.jpg",
+      "bytes": 228795,
+      "width": 1200,
+      "height": 800,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/exterior.webp",
+      "bytes": 181026,
+      "width": 1200,
+      "height": 800,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/placeholder-card.webp",
+      "bytes": 2010,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/placeholder-hero.webp",
+      "bytes": 2010,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/placeholder-thumb.webp",
+      "bytes": 23556,
+      "width": 400,
+      "height": 300,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/placeholder.jpg",
+      "bytes": 9400,
+      "width": 800,
+      "height": 600,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/placeholder.webp",
+      "bytes": 2032,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/room-card.webp",
+      "bytes": 89640,
+      "width": 800,
+      "height": 640,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/room-hero.webp",
+      "bytes": 157652,
+      "width": 1200,
+      "height": 960,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/room-thumb.webp",
+      "bytes": 29214,
+      "width": 400,
+      "height": 320,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/room.jpg",
+      "bytes": 233065,
+      "width": 1200,
+      "height": 960,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/hanehan-otel/room.webp",
+      "bytes": 161120,
+      "width": 1200,
+      "height": 960,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/sembol-ocakbasi/placeholder-card.webp",
+      "bytes": 1916,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/sembol-ocakbasi/placeholder-hero.webp",
+      "bytes": 1916,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/sembol-ocakbasi/placeholder-thumb.webp",
+      "bytes": 21794,
+      "width": 400,
+      "height": 300,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/sembol-ocakbasi/placeholder.jpg",
+      "bytes": 9271,
+      "width": 800,
+      "height": 600,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/places/sembol-ocakbasi/placeholder.webp",
+      "bytes": 1988,
+      "width": 800,
+      "height": 600,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/tarihi-yerler/harran-kumbet-evleri-thumb.jpg",
+      "bytes": 14007,
+      "width": 400,
+      "height": 225,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/tarihi-yerler/harran-kumbet-evleri.avif",
+      "bytes": 179053,
+      "width": 1280,
+      "height": 800,
+      "format": "heif",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/tarihi-yerler/harran-kumbet-evleri.jpg",
+      "bytes": 144121,
+      "width": 1200,
+      "height": 675,
+      "format": "jpeg",
+      "status": "pass",
+      "issues": []
+    },
+    {
+      "path": "public/images/tarihi-yerler/harran-kumbet-evleri.webp",
+      "bytes": 237504,
+      "width": 1280,
+      "height": 800,
+      "format": "webp",
+      "status": "pass",
+      "issues": []
+    }
+  ]
+}

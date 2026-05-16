@@ -20,7 +20,7 @@ const { title, items = [] } = Astro.props;
 
 {items.length > 0 && (
   <section class="prg">
-    <h2 class="prg-title">{title}</h2>
+    <p class="prg-title">{title}</p>
     <div class="prg-grid">
       {items.map((item) => (
         <a href={item.href} class="prg-card">
@@ -39,7 +39,7 @@ const { title, items = [] } = Astro.props;
           )}
           <div class="prg-body">
             {item.meta && <p class="prg-meta">{item.meta}</p>}
-            <h3 class="prg-name">{item.title}</h3>
+            <p class="prg-name">{item.title}</p>
             {item.description && <p class="prg-desc">{item.description}</p>}
           </div>
         </a>

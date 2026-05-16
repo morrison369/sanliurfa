@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-05-15T12:07:53.173Z",
+  "status": "ok",
+  "sourceFile": "../kategoriler.txt",
+  "outputFile": "scripts/gmaps-discovery-queries.txt",
+  "queryCount": 447,
+  "sectionCount": 29,
+  "inputIdFormat": "category query #!#kategori-section-name",
+  "policy": {
+    "discoveryOnly": true,
+    "doesNotUpdatePlaces": true,
+    "localStorageOnly": true,
+    "recommendedConcurrency": 1,
+    "recommendedDepth": 1
+  },
+  "sample": [
+    "Restoranlar Şanlıurfa #!#kategori-yeme-i-cme-restoranlar",
+    "Kebapçılar Şanlıurfa #!#kategori-yeme-i-cme-kebapcilar",
+    "Ciğerciler Şanlıurfa #!#kategori-yeme-i-cme-cigerciler",
+    "Lahmacuncular Şanlıurfa #!#kategori-yeme-i-cme-lahmacuncular",
+    "Pide salonları Şanlıurfa #!#kategori-yeme-i-cme-pide-salonlari",
+    "Dönerciler Şanlıurfa #!#kategori-yeme-i-cme-donerciler",
+    "Et lokantaları Şanlıurfa #!#kategori-yeme-i-cme-et-lokantalari",
+    "Tavukçular Şanlıurfa #!#kategori-yeme-i-cme-tavukcular",
+    "Çiğ köfteciler Şanlıurfa #!#kategori-yeme-i-cme-cig-kofteciler",
+    "Ev yemekleri Şanlıurfa #!#kategori-yeme-i-cme-ev-yemekleri"
+  ]
+}

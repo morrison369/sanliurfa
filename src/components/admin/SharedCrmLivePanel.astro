@@ -1,0 +1,41 @@
+---
+interface Props {
+  panelClass?: string;
+  dataAttrName?: string;
+  dataAttrValue?: string;
+  extraAttrs?: Record<string, string>;
+  title: string;
+  description: string;
+  loadAttr: string;
+  loadLabel?: string;
+}
+
+const {
+  panelClass = '',
+  dataAttrName,
+  dataAttrValue,
+  extraAttrs = {},
+  title,
+  description,
+  loadAttr,
+  loadLabel = 'Verileri yükle',
+} = Astro.props as Props;
+
+const sectionAttrs = {
+  class: `crm-panel ${panelClass}`.trim(),
+  ...(dataAttrName ? { [dataAttrName]: dataAttrValue ?? '' } : {}),
+  ...extraAttrs,
+};
+---
+
+<section {...sectionAttrs}>
+  <div class="crm-panel-head">
+    <div>
+      <h3>{title}</h3>
+      <p>{description}</p>
+    </div>
+    <button class="crm-btn crm-btn--primary" type="button" {...{ [loadAttr]: true }}>{loadLabel}</button>
+  </div>
+  <slot name="toolbar" />
+  <slot name="table" />
+</section>

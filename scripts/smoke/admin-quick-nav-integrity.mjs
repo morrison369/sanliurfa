@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
+const verbose = process.env.ADMIN_SURFACE_VERBOSE !== '0';
 const repoRoot = process.cwd();
 const componentPath = path.join(repoRoot, 'src', 'components', 'admin', 'SiteContentManager.tsx');
 const source = fs.readFileSync(componentPath, 'utf8');
@@ -30,14 +31,16 @@ const summary = {
   duplicateQuickLinks,
 };
 
-console.log('admin quick nav integrity smoke');
-console.log(` - quick links: ${summary.quickCount}`);
-console.log(` - form cards: ${summary.formCount}`);
-console.log(` - manual anchors: ${summary.manualAnchorCount}`);
+if (verbose) {
+  console.log('admin quick nav integrity smoke');
+  console.log(` - quick links: ${summary.quickCount}`);
+  console.log(` - form cards: ${summary.formCount}`);
+  console.log(` - manual anchors: ${summary.manualAnchorCount}`);
+}
 
 if (missingTargets.length || missingQuickLinks.length || duplicateQuickLinks.length) {
   console.error(JSON.stringify(summary, null, 2));
   process.exit(1);
 }
 
-console.log('OK: admin quick nav targets are complete');
+console.log(verbose ? 'OK: admin quick nav targets are complete' : 'admin-quick-nav-integrity: PASS');

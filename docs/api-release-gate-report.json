@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-05-15T12:08:14.213Z",
+  "status": "passed",
+  "summary": {
+    "totalChecks": 5,
+    "passedChecks": 5,
+    "failedChecks": 0
+  },
+  "checks": [
+    {
+      "name": "api contract groups",
+      "ok": true,
+      "artifact": "docs/api-contract-group-report.json",
+      "detail": "11 groups"
+    },
+    {
+      "name": "openapi p0 closure",
+      "ok": true,
+      "artifact": "docs/openapi-p0-closure-report.json",
+      "detail": "0 missing"
+    },
+    {
+      "name": "problem json strict",
+      "ok": true,
+      "artifact": "docs/problem-json-report.json",
+      "detail": "0 offenders"
+    },
+    {
+      "name": "openapi baseline present",
+      "ok": true,
+      "artifact": "docs/openapi-route-gap-baseline.json",
+      "detail": "0 baseline gaps"
+    },
+    {
+      "name": "sdk generated client",
+      "ok": true,
+      "artifact": "sdk/generated/client.ts",
+      "detail": "present"
+    }
+  ]
+}

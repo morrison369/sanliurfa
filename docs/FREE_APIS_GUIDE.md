@@ -356,26 +356,20 @@ const { data } = await supabase
 ### PlanetScale (Free Tier)
 **Limit:** 5GB storage, 1 billion rows
 
-## ☁️ CDN ve Hosting
+## ☁️ Hosting ve Local Static Dağıtım
 
-### Cloudflare (Free Tier)
-- CDN
-- DDoS koruması
-- Analytics
-- Workers (100,000 istek/gün)
+### CWP Shared Hosting + PM2 (Kanonik)
+- Astro SSR Node süreci PM2 ile ayakta tutulur
+- `public/images` ve `public/uploads` aynı sunucudan servis edilir
+- Statik cache davranışı Apache header'ları ve uygulama response cache'i ile yönetilir
 
 ### GitHub Pages (Ücretsiz)
-Statik site hosting
+- Yalnızca statik prototip veya belge önizleme için düşünülebilir
+- Şanlıurfa.com production hattının yerine geçmez
 
-### Vercel (Hobby Tier)
-- Serverless functions
-- Edge network
-- Analytics
-
-### Netlify (Starter Tier)
-- 100GB bant genişliği/ay
-- Form handling
-- Identity
+### Vercel / Netlify
+- Referans araştırma seçenekleridir
+- Şanlıurfa.com için kanonik production hattı değildir
 
 ## 🔒 Authentication
 
@@ -485,8 +479,8 @@ export default {
 | Images | Unsplash API + Local |
 | Email | Resend |
 | Analytics | Umami (self-hosted) |
-| Hosting | Vercel + Cloudflare |
-| CDN | Cloudflare |
+| Hosting | CWP Shared Hosting + PM2 |
+| Medya dağıtımı | Local filesystem + static cache headers |
 
 ## 💡 Tasarruf İpuçları
 
@@ -494,7 +488,7 @@ export default {
 2. **API Cache:** Redis veya in-memory cache kullan
 3. **Rate Limiting:** Kendi limitlerini belirle
 4. **Static Generation:** Build time'da sayfaları oluştur
-5. **Edge Functions:** Vercel/Cloudflare edge'de çalıştır
+5. **Local Cache Headers:** route ve static asset cache kurallarını sıkı tut
 
 ## 🔗 Faydalı Linkler
 

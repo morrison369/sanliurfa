@@ -1,0 +1,47 @@
+---
+import SharedCrmLivePanel from './SharedCrmLivePanel.astro';
+import { getSocialPanelConfig, type SocialMode } from '../../lib/admin/crm-live-panel-config';
+
+interface Props {
+  mode: SocialMode;
+}
+
+const { mode } = Astro.props as Props;
+const config = getSocialPanelConfig(mode);
+---
+
+<SharedCrmLivePanel
+  panelClass="crm-social-crm"
+  dataAttrName="data-social-crm"
+  dataAttrValue={config.resource}
+  extraAttrs={{ 'data-social-mode': mode }}
+  title={config.title}
+  description={config.description}
+  loadAttr="data-social-load"
+>
+  <div slot="toolbar" class="crm-live-toolbar">
+    <input type="search" data-social-search placeholder="Ad, e-posta, bio, rapor veya mesaj ara..." />
+    <select data-social-filter>
+      <option value="all">Tüm kayıtlar</option>
+      {config.filterOptions.map(([value, label]) => <option value={value}>{label}</option>)}
+    </select>
+    <button type="button" data-social-load>Filtrele</button>
+  </div>
+  <div slot="table" class="crm-table-wrap">
+    <table class="crm-table crm-live-table">
+      <thead>
+        <tr>
+          <th>Birincil</th>
+          <th>İkincil</th>
+          <th>Durum</th>
+          <th>Detay</th>
+          <th>Risk/Kalite</th>
+          <th>Aksiyon</th>
+        </tr>
+      </thead>
+      <tbody data-social-body>
+        <tr><td colspan="6">Veri yüklemek için butona basın.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</SharedCrmLivePanel>

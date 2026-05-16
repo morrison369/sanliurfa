@@ -22,7 +22,7 @@ test.describe('Social Features - Hashtags', () => {
     const { data: hashtags } = await listRes.json();
 
     if (hashtags.length === 0) {
-      test.skip();
+      test.skip(true, 'No hashtag seed data is available in this E2E profile');
     }
 
     const slug = hashtags[0].slug;

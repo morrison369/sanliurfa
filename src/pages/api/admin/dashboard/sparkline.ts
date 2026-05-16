@@ -4,7 +4,7 @@
  */
 import type { APIRoute } from 'astro';
 import { query } from '../../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeErrorDetail } from '../../../../lib/api';
 
 export const GET: APIRoute = async ({ request, locals }) => {
  const requestId = getRequestId(request);
@@ -41,6 +41,12 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   return apiResponse({ days, series }, HttpStatus.OK, requestId);
  } catch (err) {
-  return apiError(ErrorCode.INTERNAL_ERROR, 'Sparkline yüklenemedi', HttpStatus.INTERNAL_SERVER_ERROR, { detail: err instanceof Error ? err.message : String(err) }, requestId);
+  return apiError(
+   ErrorCode.INTERNAL_ERROR,
+   'Sparkline yüklenemedi',
+   HttpStatus.INTERNAL_SERVER_ERROR,
+   { detail: safeErrorDetail(err, 'sparkline_fetch_failed') },
+   requestId,
+  );
  }
 };

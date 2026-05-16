@@ -46,11 +46,17 @@ function resolveFamily(name) {
 }
 
 const familyMap = new Map();
+const commandMap = new Map();
 for (const [name, command] of scriptEntries) {
   const family = resolveFamily(name);
   const current = familyMap.get(family) || [];
   current.push({ name, command });
   familyMap.set(family, current);
+
+  const commandKey = String(command).trim();
+  const aliases = commandMap.get(commandKey) || [];
+  aliases.push(name);
+  commandMap.set(commandKey, aliases);
 }
 
 const families = Array.from(familyMap.entries())
@@ -61,10 +67,44 @@ const families = Array.from(familyMap.entries())
   }))
   .sort((a, b) => b.count - a.count || a.family.localeCompare(b.family));
 
+const topLevelScripts = (familyMap.get('top-level') || []).map((entry) => entry.name).sort();
+const exactCommandAliases = Array.from(commandMap.entries())
+  .filter(([, names]) => names.length > 1)
+  .map(([command, names]) => ({
+    command,
+    names: names.sort((a, b) => a.localeCompare(b)),
+  }))
+  .sort((a, b) => b.names.length - a.names.length || a.command.localeCompare(b.command))
+  .slice(0, 25);
+
+const retirementCandidates = scriptEntries
+  .filter(([name]) =>
+    name.startsWith('ops:targeted:') ||
+    name.startsWith('test:e2e:astro:') ||
+    name.endsWith(':dry') ||
+    name.endsWith(':dry-run') ||
+    name.includes(':debug') ||
+    name.includes(':ui')
+  )
+  .map(([name, command]) => ({
+    name,
+    command,
+    reason: name.startsWith('ops:targeted:')
+      ? 'ops:targeted ana komutu scope argumani destekliyor'
+      : 'niche/manual runner; kanonik gate disinda tutulabilir',
+  }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
 const report = {
   generatedAt: new Date().toISOString(),
   totalScripts: scriptEntries.length,
   familyCount: families.length,
+  topLevelCount: topLevelScripts.length,
+  topLevelScripts,
+  exactCommandAliasCount: exactCommandAliases.length,
+  exactCommandAliases,
+  retirementCandidateCount: retirementCandidates.length,
+  retirementCandidates,
   largestFamilies: families.slice(0, 10).map((family) => ({
     family: family.family,
     count: family.count,
@@ -80,10 +120,29 @@ const lines = [
   `- Generated at: ${report.generatedAt}`,
   `- Total scripts: ${report.totalScripts}`,
   `- Script families: ${report.familyCount}`,
+  `- Top-level scripts: ${report.topLevelCount}`,
+  `- Exact command alias count: ${report.exactCommandAliasCount}`,
+  `- Retirement candidate count: ${report.retirementCandidateCount}`,
   '',
   '## Largest Families',
   '',
   ...report.largestFamilies.map((item) => `- \`${item.family}\`: ${item.count}`),
+  '',
+  '## Top-Level Scripts',
+  '',
+  ...(report.topLevelScripts.length > 0 ? report.topLevelScripts.map((name) => `- \`${name}\``) : ['- yok']),
+  '',
+  '## Exact Command Aliases',
+  '',
+  ...(report.exactCommandAliases.length > 0
+    ? report.exactCommandAliases.map((item) => `- ${item.names.map((name) => `\`${name}\``).join(', ')} → \`${item.command}\``)
+    : ['- exact alias bulunmadı']),
+  '',
+  '## Retirement Candidates',
+  '',
+  ...(report.retirementCandidates.length > 0
+    ? report.retirementCandidates.map((item) => `- \`${item.name}\`: ${item.reason}`)
+    : ['- retirement candidate bulunmadı']),
   '',
   '## Family Inventory',
   '',

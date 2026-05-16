@@ -1,0 +1,667 @@
+# Script Surface Report
+
+- Generated at: 2026-05-15T12:07:46.676Z
+- Total scripts: 370
+- Script families: 65
+- Top-level scripts: 0
+- Exact command alias count: 0
+- Retirement candidate count: 2
+
+## Largest Families
+
+- `ops`: 49
+- `db`: 28
+- `images`: 25
+- `dev`: 19
+- `test`: 19
+- `smoke`: 16
+- `blog`: 15
+- `gmaps`: 13
+- `release`: 13
+- `jobs`: 10
+
+## Top-Level Scripts
+
+- yok
+
+## Exact Command Aliases
+
+- exact alias bulunmadı
+
+## Retirement Candidates
+
+- `api:debug:gate`: niche/manual runner; kanonik gate disinda tutulabilir
+- `gmaps:enrich:dry`: niche/manual runner; kanonik gate disinda tutulabilir
+
+## Family Inventory
+
+### ops
+
+- Count: 49
+- `ops:contracts:gate`: `node scripts/ci/ops-contract-gate.mjs`
+- `ops:cwp:access-log:probe`: `node scripts/ops/access-log-probe.mjs`
+- `ops:cwp:audit`: `bash scripts/prod-cwp-ops.sh audit`
+- `ops:cwp:bootstrap`: `bash scripts/prod-cwp-ops.sh bootstrap`
+- `ops:cwp:bootstrap:audit`: `bash scripts/cwp-bootstrap-audit.sh`
+- `ops:cwp:bootstrap:audit:summary`: `bash scripts/prod-cwp-ops.sh bootstrap-audit-summary`
+- `ops:cwp:cache:warm`: `node scripts/cache-warm.mjs`
+- `ops:cwp:cleanup`: `bash scripts/prod-cwp-ops.sh cleanup`
+- `ops:cwp:cron:apply-safe`: `bash scripts/cwp-cron-install.sh apply-safe`
+- `ops:cwp:cron:diff`: `bash scripts/cwp-cron-install.sh diff`
+- `ops:cwp:cron:doctor`: `bash scripts/prod-cwp-ops.sh cron-doctor`
+- `ops:cwp:cron:freshness`: `bash scripts/prod-cwp-ops.sh cron-freshness`
+- `ops:cwp:cron:freshness:strict`: `bash -lc 'CRON_FRESHNESS_STRICT=1 bash scripts/prod-cwp-ops.sh cron-freshness'`
+- `ops:cwp:cron:install`: `bash scripts/cwp-cron-install.sh install`
+- `ops:cwp:cron:install:if-needed`: `bash scripts/cwp-cron-install.sh install-if-needed`
+- `ops:cwp:cron:preview`: `bash scripts/cwp-cron-install.sh preview`
+- `ops:cwp:cron:remove`: `bash scripts/cwp-cron-install.sh remove`
+- `ops:cwp:cron:show`: `bash scripts/cwp-cron-install.sh show`
+- `ops:cwp:daily`: `bash scripts/prod-cwp-ops.sh daily-ops`
+- `ops:cwp:deploy`: `bash scripts/prod-cwp-ops.sh deploy`
+- `ops:cwp:deploy:client`: `node scripts/deploy-client-chunks.mjs --restart`
+- `ops:cwp:deploy:evidence`: `bash scripts/cwp-deploy-evidence.sh`
+- `ops:cwp:deploy:full`: `npm run build && node scripts/deploy-server-chunks.mjs && node scripts/deploy-client-chunks.mjs --restart && node scripts/cache-warm.mjs`
+- `ops:cwp:deploy:server`: `node scripts/deploy-server-chunks.mjs --restart`
+- `ops:cwp:doctor`: `bash scripts/prod-cwp-ops.sh doctor`
+- `ops:cwp:env-check`: `bash scripts/prod-cwp-ops.sh env-check`
+- `ops:cwp:health`: `bash scripts/prod-cwp-ops.sh health`
+- `ops:cwp:incident-bundle`: `bash scripts/prod-cwp-ops.sh incident-bundle`
+- `ops:cwp:incident-cleanup`: `bash scripts/prod-cwp-ops.sh incident-cleanup`
+- `ops:cwp:oneshot`: `npm run ops:cwp:preflight && npm run ops:cwp:safe-deploy && npm run ops:cwp:release-readiness`
+- `ops:cwp:pipeline`: `bash scripts/prod-cwp-ops.sh pipeline`
+- `ops:cwp:pipeline:strict`: `bash scripts/prod-cwp-ops.sh pipeline-strict`
+- `ops:cwp:predeploy-checks`: `bash scripts/prod-cwp-ops.sh predeploy-checks`
+- `ops:cwp:preflight`: `bash scripts/prod-cwp-ops.sh preflight`
+- `ops:cwp:release-readiness`: `bash scripts/prod-cwp-ops.sh release-readiness`
+- `ops:cwp:release:bundle`: `bash scripts/cwp-release-bundle.sh`
+- `ops:cwp:releases`: `bash scripts/prod-cwp-ops.sh releases`
+- `ops:cwp:report`: `bash scripts/prod-cwp-ops.sh report`
+- `ops:cwp:rollback`: `bash scripts/prod-cwp-ops.sh rollback`
+- `ops:cwp:rotate-events`: `bash scripts/prod-cwp-ops.sh rotate-events`
+- `ops:cwp:safe-deploy`: `bash scripts/prod-cwp-ops.sh safe-deploy`
+- `ops:cwp:smoke`: `bash scripts/prod-cwp-ops.sh smoke`
+- `ops:cwp:status`: `bash scripts/prod-cwp-ops.sh status`
+- `ops:cwp:sync`: `node scripts/prod-sync.mjs`
+- `ops:cwp:triage`: `bash scripts/prod-cwp-ops.sh triage`
+- `ops:cwp:unlock`: `bash scripts/prod-cwp-ops.sh unlock`
+- `ops:cwp:weekly`: `bash scripts/prod-cwp-ops.sh weekly-audit`
+- `ops:next:bulk`: `node scripts/ci/next-bulk-ops.mjs`
+- `ops:targeted`: `node scripts/ci/targeted-delivery-batch.mjs`
+
+### db
+
+- Count: 28
+- `db:advisory:evidence`: `node scripts/ci/db-advisory-evidence-bundle.mjs`
+- `db:backup`: `bash scripts/backup.sh`
+- `db:index:review:plan`: `node scripts/ci/db-index-review-plan.mjs`
+- `db:indexes:extended`: `npx tsx scripts/add-indexes-extended.ts`
+- `db:indexes:extended:status`: `npx tsx scripts/add-indexes-extended.ts status`
+- `db:indexes:fk`: `npx tsx scripts/add-fk-indexes.ts`
+- `db:indexes:fk:status`: `npx tsx scripts/add-fk-indexes.ts status`
+- `db:indexes:tier1`: `npx tsx scripts/add-tier1-indexes.ts`
+- `db:indexes:tier1:status`: `npx tsx scripts/add-tier1-indexes.ts status`
+- `db:indexes:tier2`: `npx tsx scripts/add-indexes-extended.ts tier2`
+- `db:indexes:tier3`: `npx tsx scripts/add-indexes-extended.ts tier3`
+- `db:manual:decision:readiness`: `node scripts/ci/db-manual-decision-readiness-report.mjs`
+- `db:migrate`: `npx tsx scripts/migrate.ts`
+- `db:migrate:check-duplicates`: `node scripts/migrations/check-duplicates.mjs`
+- `db:migrate:check-duplicates:write-baseline`: `node scripts/migrations/check-duplicates.mjs --write-baseline`
+- `db:migrate:down`: `npx tsx scripts/migrate.ts down`
+- `db:migrate:duplicate-drift`: `node scripts/ci/migration-duplicate-drift-report.mjs`
+- `db:migrate:status`: `npx tsx scripts/migrate.ts status`
+- `db:observation:cadence`: `node scripts/ci/db-observation-cadence-report.mjs`
+- `db:observation:calendar`: `node scripts/ci/db-observation-calendar-report.mjs`
+- `db:p0:quarantine:plan`: `node scripts/ci/db-p0-quarantine-plan.mjs`
+- `db:prod:version:compare`: `node scripts/ci/db-prod-version-compare-report.mjs`
+- `db:refs:check`: `node scripts/check-db-table-references.mjs`
+- `db:refs:gate`: `node scripts/check-db-table-references.mjs --strict`
+- `db:registry:classification`: `node scripts/ci/db-registry-classification-report.mjs`
+- `db:retirement:observe`: `node scripts/ci/db-retirement-observation-report.mjs`
+- `db:runtime-hold:plan`: `node scripts/ci/db-runtime-hold-plan.mjs`
+- `db:seed`: `npx tsx scripts/seed.ts`
+
+### images
+
+- Count: 25
+- `images:avif:from-webp`: `node scripts/avif-from-webp.mjs`
+- `images:backfill:pexels`: `node scripts/backfill-images-pexels.mjs`
+- `images:check-external`: `npx tsx scripts/content-scraper/check-external-content-images.ts`
+- `images:check-keys`: `node scripts/content-scraper/check-image-api-keys.mjs`
+- `images:cleanup:broken-refs`: `node scripts/cleanup-broken-image-refs.cjs`
+- `images:download`: `npx tsx scripts/content-scraper/image-downloader.ts`
+- `images:integrity:gate`: `node scripts/ci/static-image-integrity-gate.mjs`
+- `images:map`: `npx tsx scripts/content-scraper/map-images-to-content.ts`
+- `images:moderate`: `npx tsx scripts/content-scraper/moderate-images.ts`
+- `images:moderation:sync-db`: `npx tsx scripts/content-scraper/sync-image-moderation-to-site-media.ts`
+- `images:pipeline`: `npm run images:check-keys && npm run images:download && npm run images:map && npm run images:check-external && npm run images:validate && npm run images:quality && npm run images:moderate`
+- `images:pipeline:db`: `npm run images:pipeline && npm run images:sync-db && npm run images:moderation:sync-db`
+- `images:quality`: `npx tsx scripts/content-scraper/check-image-quality.ts`
+- `images:slug:gate`: `node scripts/ci/slug-image-naming-gate.mjs`
+- `images:static:audit`: `node scripts/optimize-static-images.mjs --enforce-budget`
+- `images:static:optimize`: `node scripts/optimize-static-images.mjs --apply --enforce-budget`
+- `images:sync-db`: `npx tsx scripts/content-scraper/import-image-manifest-to-site-media.ts`
+- `images:uploads:archive-candidates`: `node scripts/ci/local-upload-archive-candidates.mjs`
+- `images:uploads:audit`: `node scripts/optimize-local-uploads.mjs`
+- `images:uploads:bucket-quota`: `node scripts/ci/local-upload-bucket-quota-report.mjs`
+- `images:uploads:classify`: `node scripts/ci/local-upload-candidate-classification.mjs`
+- `images:uploads:optimize`: `node scripts/optimize-local-uploads.mjs --apply`
+- `images:uploads:parity`: `node scripts/ci/local-upload-parity-report.mjs`
+- `images:validate`: `npx tsx scripts/content-scraper/validate-place-images.ts`
+- `images:webp:convert`: `node scripts/convert-uploads-webp.mjs`
+
+### dev
+
+- Count: 19
+- `dev`: `npm run -s dev:isolated:ensure`
+- `dev:isolated`: `node scripts/runtime/run-isolated.mjs npm run dev`
+- `dev:isolated:check-no-orphan`: `node scripts/runtime/check-no-orphan-dev.mjs`
+- `dev:isolated:doctor`: `node scripts/runtime/doctor.mjs`
+- `dev:isolated:doctor:fix`: `node scripts/runtime/doctor.mjs --fix`
+- `dev:isolated:ensure`: `npm run -s runtime:preflight:dev && node scripts/runtime/dev-daemon.mjs ensure`
+- `dev:isolated:health`: `node scripts/runtime/dev-daemon.mjs health`
+- `dev:isolated:health:report`: `node scripts/runtime/health-report.mjs`
+- `dev:isolated:health:report:fix`: `node scripts/runtime/health-report.mjs --fix`
+- `dev:isolated:logs`: `node scripts/runtime/dev-daemon.mjs logs`
+- `dev:isolated:restart`: `npm run -s runtime:preflight:dev && node scripts/runtime/dev-daemon.mjs restart`
+- `dev:isolated:start`: `npm run -s runtime:preflight:dev && node scripts/runtime/dev-daemon.mjs start`
+- `dev:isolated:status`: `node scripts/runtime/dev-daemon.mjs status`
+- `dev:isolated:stop`: `node scripts/runtime/dev-daemon.mjs stop`
+- `dev:isolated:stop:all`: `npm run -s dev:isolated:stop && npm run -s dev:isolated:check-no-orphan && npm run -s redis:isolated:stop`
+- `dev:isolated:watchdog:start`: `node scripts/runtime/dev-watchdog.mjs start`
+- `dev:isolated:watchdog:status`: `node scripts/runtime/dev-watchdog.mjs status`
+- `dev:isolated:watchdog:stop`: `node scripts/runtime/dev-watchdog.mjs stop`
+- `dev:raw`: `astro dev --host 0.0.0.0 --port 4321`
+
+### test
+
+- Count: 19
+- `test`: `npm run test:unit && npm run test:e2e`
+- `test:api-contract`: `node ./node_modules/vitest/vitest.mjs run --config vitest.api-contract.config.ts`
+- `test:api-contract:coverage`: `node ./node_modules/vitest/vitest.mjs run --config vitest.api-contract.config.ts --coverage`
+- `test:api-contract:groups`: `node scripts/ci/api-contract-group-report.mjs --group=all`
+- `test:changed`: `node scripts/ci/test-changed.mjs`
+- `test:e2e`: `npm run test:e2e:preflight && node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts`
+- `test:e2e:astro`: `node scripts/e2e/astro-homepage-a11y.mjs`
+- `test:e2e:batch:clean`: `node scripts/runtime/run-with-cleanup.mjs "npm run test:e2e:preflight && node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts e2e/home.spec.ts e2e/analytics/realtime-feed.spec.ts e2e/analytics/realtime-metrics.spec.ts --project=chromium --workers=2"`
+- `test:e2e:chromium`: `npm run test:e2e:preflight && node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts --project=chromium`
+- `test:e2e:chromium:clean`: `node scripts/runtime/run-with-cleanup.mjs "npm run test:e2e:chromium"`
+- `test:e2e:clean`: `node scripts/runtime/run-with-cleanup.mjs "npm run test:e2e"`
+- `test:e2e:preflight`: `node scripts/e2e-preflight.mjs`
+- `test:e2e:report`: `node scripts/runtime/run-with-cleanup.mjs "node scripts/ci/e2e-report.mjs --suite=critical"`
+- `test:e2e:social:phase1`: `npm run test:e2e:preflight && node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts e2e/social-phase1.spec.ts --project=chromium`
+- `test:e2e:social:phase1:clean`: `node scripts/runtime/run-with-cleanup.mjs "npm run test:e2e:social:phase1"`
+- `test:e2e:visual`: `node scripts/e2e/run-visual-suite.mjs`
+- `test:e2e:visual:clean`: `node scripts/runtime/run-with-cleanup.mjs "npm run test:e2e:visual"`
+- `test:unit`: `node scripts/ci/unit-test-report.mjs`
+- `test:unit:watch`: `node ./node_modules/vitest/vitest.mjs`
+
+### smoke
+
+- Count: 16
+- `smoke:admin:preset-surface`: `node scripts/smoke/admin-preset-surface.mjs`
+- `smoke:admin:quick-nav`: `node scripts/smoke/admin-quick-nav-integrity.mjs`
+- `smoke:admin:surface`: `node scripts/smoke/admin-surface.mjs`
+- `smoke:api:critical`: `npx tsx scripts/smoke/critical-api-smoke.ts`
+- `smoke:city-content-agents`: `node scripts/smoke/city-content-agents-surface.mjs`
+- `smoke:city-content:acceptance`: `node scripts/smoke/city-content-acceptance.mjs`
+- `smoke:db:backup-restore`: `npx tsx scripts/smoke/db-backup-restore.ts`
+- `smoke:http:local`: `node scripts/smoke/http-route-smoke.mjs --mode=local`
+- `smoke:http:prod`: `node scripts/smoke/http-route-smoke.mjs --mode=prod --base-url=https://sanliurfa.com`
+- `smoke:images:critical`: `npx tsx scripts/smoke/critical-image-url-smoke.ts`
+- `smoke:landing:theme-surface`: `node scripts/smoke/landing-theme-surface.mjs`
+- `smoke:pages:critical`: `npx tsx scripts/smoke/critical-pages-smoke.ts`
+- `smoke:schema:ready`: `npx tsx scripts/smoke/schema-ready-db.ts`
+- `smoke:site-settings:schema`: `npx tsx scripts/smoke/site-settings-schema.ts`
+- `smoke:social-place:phase1`: `node scripts/smoke/social-place-phase1.mjs`
+- `smoke:transport:freshness`: `npx tsx scripts/smoke/transport-freshness.ts`
+
+### blog
+
+- Count: 15
+- `blog:admin:queue`: `node scripts/ci/blog-admin-publish-queue-report.mjs`
+- `blog:content:ops`: `npm run -s blog:keyword:research && npm run -s ollama:readiness && npm run -s blog:ollama:drafts && npm run -s blog:ollama:expand && npm run -s blog:rich-results:report && npm run -s pagespeed:api:research`
+- `blog:drafts:repair`: `node scripts/repair-generated-blog-drafts.mjs`
+- `blog:duplicate-risk:gate`: `node scripts/ci/blog-duplicate-risk-gate.mjs`
+- `blog:images:local`: `node scripts/generate-local-blog-cover-images.mjs`
+- `blog:keyword:research`: `node scripts/ci/blog-keyword-research-report.mjs`
+- `blog:ollama:drafts`: `node scripts/ollama-generate-blog-drafts-from-plan.mjs`
+- `blog:ollama:drafts:apply`: `node scripts/ollama-generate-blog-drafts-from-plan.mjs --apply-db`
+- `blog:ollama:drafts:apply-existing`: `node scripts/apply-generated-blog-drafts.mjs`
+- `blog:ollama:drafts:prod`: `node scripts/ollama-generate-blog-drafts-from-plan.mjs --apply-db --apply-prod-ssh`
+- `blog:ollama:expand`: `node scripts/ollama-expand-blog-drafts.mjs`
+- `blog:publish:generated`: `node scripts/publish-generated-blog-drafts.mjs`
+- `blog:publish:readiness`: `node scripts/ci/blog-publish-readiness-report.mjs`
+- `blog:quality:report`: `node scripts/ci/blog-draft-quality-report.mjs`
+- `blog:rich-results:report`: `node scripts/ci/blog-draft-rich-results-report.mjs`
+
+### gmaps
+
+- Count: 13
+- `gmaps:discovery-drafts`: `node scripts/import-gmaps-discovery-drafts.mjs`
+- `gmaps:discovery-drafts:apply`: `node scripts/import-gmaps-discovery-drafts.mjs --apply`
+- `gmaps:discovery-plan`: `node scripts/generate-gmaps-discovery-plan.mjs`
+- `gmaps:enrich`: `node scripts/enrich-places-from-gmaps.mjs --input scripts/gmaps-results.json`
+- `gmaps:enrich:dry`: `node scripts/enrich-places-from-gmaps.mjs --input scripts/gmaps-results.json --images --dry-run`
+- `gmaps:enrich:full`: `node scripts/enrich-places-from-gmaps.mjs --scrape --images --email --extra-reviews --depth=1 --concurrency=1`
+- `gmaps:enrich:images`: `node scripts/enrich-places-from-gmaps.mjs --input scripts/gmaps-results.json --images`
+- `gmaps:prod:check`: `bash scripts/cwp-gmaps-install.sh check`
+- `gmaps:prod:install`: `bash scripts/cwp-gmaps-install.sh install`
+- `gmaps:query-plan`: `node scripts/generate-gmaps-query-plan.mjs --only-missing`
+- `gmaps:query-plan:all`: `node scripts/generate-gmaps-query-plan.mjs`
+- `gmaps:readiness`: `node scripts/ci/gmaps-scraper-readiness-report.mjs`
+- `gmaps:scrape`: `node scripts/enrich-places-from-gmaps.mjs --scrape`
+
+### release
+
+- Count: 13
+- `release:artifacts:fresh`: `node scripts/ci/release-artifact-freshness-gate.mjs`
+- `release:astro:gate`: `node scripts/ci/astro-release-gate.mjs`
+- `release:candidate`: `npm run frontend:release:ready:gate && npm run gate:done && npm run release:readiness:report`
+- `release:daily:readiness`: `node scripts/cron/release-daily-readiness.mjs`
+- `release:executive:summary`: `node scripts/ci/release-executive-summary.mjs`
+- `release:final`: `node scripts/ci/release-final.mjs`
+- `release:handoff`: `node scripts/ci/release-handoff-summary.mjs`
+- `release:local:fast`: `node scripts/ci/release-local-fast.mjs`
+- `release:next-actions`: `node scripts/ci/release-next-actions-report.mjs`
+- `release:public`: `node scripts/ci/release-public-gate.mjs`
+- `release:readiness:admin:gate`: `node scripts/ci/release-readiness-admin-gate.mjs`
+- `release:readiness:dashboard`: `node scripts/ci/release-readiness-dashboard.mjs`
+- `release:readiness:report`: `node scripts/ci/release-readiness-report.mjs`
+
+### jobs
+
+- Count: 10
+- `jobs:content:quality`: `npx tsx scripts/jobs/content-quality-refresh.ts`
+- `jobs:nightly:core`: `node scripts/jobs/nightly-core.mjs`
+- `jobs:pharmacy:refresh`: `npx tsx scripts/jobs/pharmacy-refresh.ts`
+- `jobs:places:sla-alert`: `npx tsx scripts/jobs/places-sla-alert.ts`
+- `jobs:reports:social-lifecycle`: `npx tsx scripts/jobs/social-lifecycle-report.ts`
+- `jobs:social:archive-partitions`: `npx tsx scripts/jobs/social-archive-partitions.ts`
+- `jobs:social:archive-partitions:daily`: `npx tsx scripts/jobs/social-archive-partitions-daily.ts`
+- `jobs:social:retention`: `npx tsx scripts/jobs/social-event-retention.ts`
+- `jobs:transit:refresh`: `npx tsx scripts/jobs/transit-refresh.ts`
+- `jobs:weather:refresh`: `npx tsx scripts/jobs/weather-refresh.ts`
+
+### gsc
+
+- Count: 9
+- `gsc:cron:daily`: `node scripts/cron/gsc-daily.mjs`
+- `gsc:indexing:notify`: `node scripts/gsc-indexing-notify.mjs`
+- `gsc:indexing:request`: `node scripts/gsc-request-indexing.mjs`
+- `gsc:indexnow:ping`: `node scripts/sitemap-ping-search-engines.mjs`
+- `gsc:oauth:bootstrap`: `node scripts/gsc-oauth-bootstrap.mjs`
+- `gsc:search:analytics`: `node scripts/gsc-search-analytics.mjs`
+- `gsc:sitemap:status`: `node scripts/gsc-sitemap-submit.mjs --status-only`
+- `gsc:sitemap:submit`: `node scripts/gsc-sitemap-submit.mjs`
+- `gsc:url:inspect`: `node scripts/gsc-url-inspect.mjs`
+
+### lint
+
+- Count: 9
+- `lint`: `node ./node_modules/eslint/bin/eslint.js "src/**/*.{ts,tsx,astro}"`
+- `lint:changed`: `node scripts/ci/lint-changed.mjs`
+- `lint:ci`: `astro check && npm run lint && npm run images:check-external && npm run images:validate`
+- `lint:fix`: `node ./node_modules/eslint/bin/eslint.js "src/**/*.{ts,tsx,astro}" --fix`
+- `lint:phase:api`: `node ./node_modules/eslint/bin/eslint.js src/pages/api --ext .ts,.tsx,.astro`
+- `lint:phase:components`: `node ./node_modules/eslint/bin/eslint.js src/components --ext .ts,.tsx,.astro`
+- `lint:phase:gate`: `npm run lint:phase:api && npm run lint:phase:lib && npm run lint:phase:components`
+- `lint:phase:lib`: `node ./node_modules/eslint/bin/eslint.js src/lib --ext .ts,.tsx`
+- `lint:strict`: `node ./node_modules/eslint/bin/eslint.js src --ext .ts,.tsx,.astro --max-warnings=0`
+
+### public
+
+- Count: 8
+- `public:cache:contract:gate`: `node scripts/ci/public-route-cache-contract-gate.mjs`
+- `public:city:gate`: `node scripts/ci/public-city-acceptance-gate.mjs`
+- `public:city:gate:build`: `node scripts/ci/public-city-acceptance-gate.mjs --build`
+- `public:city:structure:gate`: `node scripts/ci/public-city-structure-gate.mjs`
+- `public:design:contract:gate`: `node scripts/ci/public-design-contract-gate.mjs`
+- `public:performance:local`: `node scripts/ci/public-route-performance-gate.mjs --mode=local`
+- `public:performance:prod`: `node scripts/ci/public-route-performance-gate.mjs --mode=prod --base-url=https://sanliurfa.com`
+- `public:theme:surface:gate`: `node scripts/ci/public-theme-surface-gate.mjs`
+
+### home
+
+- Count: 7
+- `home:any:ratchet:gate`: `node scripts/ci/home-any-ratchet-gate.mjs`
+- `home:any:report`: `node scripts/ci/home-any-report.mjs`
+- `home:images:html:local`: `node scripts/ci/homepage-image-html-gate.mjs --mode=local`
+- `home:images:html:prod`: `node scripts/ci/homepage-image-html-gate.mjs --mode=prod --base-url=https://sanliurfa.com`
+- `home:performance:local`: `node scripts/ci/homepage-performance-gate.mjs --mode=local`
+- `home:performance:prod`: `node scripts/ci/homepage-performance-gate.mjs --mode=prod --base-url=https://sanliurfa.com`
+- `home:section:contract:gate`: `node scripts/ci/home-section-contract-gate.mjs`
+
+### openapi
+
+- Count: 7
+- `openapi:city-services:gate`: `npx tsx scripts/ci/openapi-city-services-gate.ts`
+- `openapi:gap:summary`: `npx tsx scripts/openapi/gap-summary.ts`
+- `openapi:p0:regression-gate`: `npx tsx scripts/openapi/p0-regression-gate.ts`
+- `openapi:p0:report`: `npx tsx scripts/openapi/p0-closure-report.ts`
+- `openapi:sync:routes`: `npx tsx scripts/openapi/sync-routes.ts`
+- `openapi:sync:routes:baseline`: `npx tsx scripts/openapi/sync-routes.ts --write-baseline --quiet-list`
+- `openapi:sync:routes:gate`: `npx tsx scripts/openapi/sync-routes.ts --quiet-list`
+
+### audit
+
+- Count: 6
+- `audit:admin`: `npm run audit:admin:browser && npm run audit:admin:mobile && npm run audit:admin:a11y && npm run audit:admin:perf`
+- `audit:admin:a11y`: `node scripts/admin-a11y-audit.mjs`
+- `audit:admin:browser`: `node scripts/admin-browser-audit.mjs`
+- `audit:admin:mobile`: `node scripts/admin-mobile-audit.mjs`
+- `audit:admin:perf`: `node scripts/admin-perf-audit.mjs`
+- `audit:public:mobile`: `node scripts/public-mobile-audit.mjs`
+
+### content
+
+- Count: 6
+- `content:agents:drafts:report`: `node scripts/ci/content-agent-drafts-report.mjs`
+- `content:cluster:quality`: `npx tsx scripts/content/cluster-quality-gate.ts`
+- `content:image:relevance:gate`: `node scripts/ci/content-image-relevance-gate.mjs`
+- `content:programmatic:quality`: `npx tsx scripts/content/programmatic-quality-gate.ts`
+- `content:publish:all`: `node scripts/publish-all-content-drafts.mjs`
+- `content:seo:seed`: `node scripts/content/seed-local-seo-content.mjs --apply`
+
+### redis
+
+- Count: 6
+- `redis:isolated:ensure`: `node scripts/runtime/redis-daemon.mjs ensure`
+- `redis:isolated:health`: `node scripts/runtime/redis-daemon.mjs health`
+- `redis:isolated:start`: `node scripts/runtime/redis-daemon.mjs start`
+- `redis:isolated:status`: `node scripts/runtime/redis-daemon.mjs status`
+- `redis:isolated:stop`: `node scripts/runtime/redis-daemon.mjs stop`
+- `redis:runtime:health:report`: `node scripts/ci/redis-runtime-health-report.mjs`
+
+### social
+
+- Count: 6
+- `social:core:gate`: `node scripts/smoke/run-social-core-gate.mjs`
+- `social:core:gate:non-strict`: `node scripts/smoke/run-social-core-gate.mjs --non-strict`
+- `social:core:gate:strict`: `node scripts/smoke/run-social-core-gate.mjs --strict`
+- `social:db:first:gate`: `node scripts/ci/social-db-first-import-gate.mjs`
+- `social:safety:gate`: `node scripts/ci/social-safety-gate.mjs`
+- `social:ux:report`: `node scripts/ci/social-ux-report.mjs`
+
+### workflow
+
+- Count: 6
+- `workflow:standards:all`: `npm run workflow:standards:gate && npm run workflow:standards:report`
+- `workflow:standards:autofix`: `node scripts/ci/workflow-standards-autofix.mjs --write`
+- `workflow:standards:autofix:check`: `node scripts/ci/workflow-standards-autofix.mjs`
+- `workflow:standards:gate`: `node scripts/ci/workflow-standards-gate.mjs`
+- `workflow:standards:report`: `node scripts/ci/workflow-standards-report.mjs`
+- `workflow:standards:verify`: `npm run workflow:standards:autofix:check && npm run workflow:standards:gate && npm run workflow:standards:report`
+
+### runtime
+
+- Count: 5
+- `runtime:cleanup:listeners`: `node scripts/runtime/cleanup-project-listeners.mjs --port=4321`
+- `runtime:preflight:dev`: `npm run -s runtime:preflight:redis && npm run -s runtime:preflight:isolation`
+- `runtime:preflight:isolation`: `node scripts/runtime/preflight-isolation.mjs`
+- `runtime:preflight:redis`: `npm run -s redis:isolated:ensure`
+- `runtime:single-process:gate`: `node scripts/ci/runtime-single-process-gate.mjs`
+
+### frontend
+
+- Count: 4
+- `frontend:quality:gate`: `node scripts/ci/frontend-quality-gate.mjs`
+- `frontend:release:checklist:gate`: `node scripts/ci/frontend-release-checklist-gate.mjs`
+- `frontend:release:ready:gate`: `npm run frontend:quality:gate && npm run design:drift:gate && npm run public:design:contract:gate && npm run content:image:relevance:gate && npm run home:images:html:local && npm run responsive:readability:local && npm run home:section:contract:gate && npm run smoke:landing:theme-surface && npm run page:template:system:gate && npm run page:template:adoption:gate && npm run seo:helper:adoption:gate && npm run route:ownership:gate && npm run visual:regression:gate && npm run frontend:release:checklist:gate && npm run home:any:report && npm run home:any:ratchet:gate && npm run release:readiness:dashboard && npm run release:readiness:admin:gate && npm run smoke:admin:surface`
+- `frontend:theme:gate`: `node scripts/ci/theme-consistency-gate.mjs`
+
+### pagespeed
+
+- Count: 4
+- `pagespeed:api-less`: `node scripts/ci/pagespeed-api-less-lighthouse-report.mjs`
+- `pagespeed:api:research`: `node scripts/ci/pagespeed-api-research-report.mjs`
+- `pagespeed:live`: `node scripts/ci/pagespeed-live-check.mjs`
+- `pagespeed:quota:management`: `node scripts/ci/pagespeed-quota-management-report.mjs`
+
+### quality
+
+- Count: 4
+- `quality:improvements`: `node scripts/ci/backend-frontend-improvement-report.mjs`
+- `quality:metrics`: `node scripts/ci/collect-quality-metrics.mjs`
+- `quality:metrics:ci`: `node scripts/ci/collect-quality-metrics.mjs --lint lint.log --type type-check.log --api api-release-gate.log --openapi docs/openapi-route-gap-baseline.json`
+- `quality:reports:refresh`: `node scripts/ci/refresh-quality-reports.mjs`
+
+### security
+
+- Count: 4
+- `security:check`: `npm run security:scan-secrets && npm run security:defaults:gate`
+- `security:defaults:gate`: `node scripts/security/check-insecure-defaults.mjs`
+- `security:public-readiness`: `node scripts/security/public-readiness-gate.mjs`
+- `security:scan-secrets`: `node scripts/security/scan-secrets.mjs`
+
+### seo
+
+- Count: 4
+- `seo:geo:gate`: `node scripts/ci/seo-geo-surface-gate.mjs && node scripts/ci/llms-sitemap-auto-update-gate.mjs`
+- `seo:helper:adoption:gate`: `node scripts/ci/seo-helper-adoption-gate.mjs`
+- `seo:internal-links:report`: `node scripts/ci/internal-linking-report.mjs`
+- `seo:llms-sitemap:gate`: `node scripts/ci/llms-sitemap-auto-update-gate.mjs`
+
+### api
+
+- Count: 3
+- `api:debug:gate`: `node scripts/ci/api-debug-envelope-gate.mjs`
+- `api:release:gate`: `npm run test:api-contract:coverage && npm run test:api-contract:groups && npm run openapi:sync:routes:gate && npm run openapi:city-services:gate && npm run sdk:generate:check && npm run smoke:api:critical && npm run smoke:site-settings:schema && npm run openapi:p0:report && npm run openapi:p0:regression-gate && npm run problemjson:strict`
+- `api:release:report`: `node scripts/ci/api-release-gate-report.mjs`
+
+### astro
+
+- Count: 3
+- `astro:stack:audit`: `node scripts/ci/astro-stack-audit-gate.mjs`
+- `astro:stack:ensure`: `node scripts/ci/ensure-astro-stack.mjs`
+- `astro:sync`: `astro sync`
+
+### categories
+
+- Count: 3
+- `categories:coverage:gate`: `node scripts/ci/category-coverage-gate.mjs`
+- `categories:gap:report`: `npx tsx scripts/content/category-gap-report.ts`
+- `categories:sync:txt`: `npx tsx scripts/content/sync-categories-from-txt.ts`
+
+### docs
+
+- Count: 3
+- `docs:build`: `cd docs && npm run build`
+- `docs:dev`: `cd docs && npm run dev`
+- `docs:terminology:gate`: `node scripts/ci/docs-terminology-gate.mjs`
+
+### problemjson
+
+- Count: 3
+- `problemjson:baseline`: `node scripts/ci/problem-json-gate.mjs --write-baseline`
+- `problemjson:report`: `node scripts/ci/problem-json-gate.mjs`
+- `problemjson:strict`: `node scripts/ci/problem-json-gate.mjs --require-zero`
+
+### recommendations
+
+- Count: 3
+- `recommendations:apply`: `node scripts/ci/apply-all-recommendations.mjs --mode=full`
+- `recommendations:apply:quick`: `node scripts/ci/apply-all-recommendations.mjs --mode=quick`
+- `recommendations:master:gate`: `node scripts/ci/recommendations-master-gate.mjs`
+
+### tsnocheck
+
+- Count: 3
+- `tsnocheck:audit`: `node scripts/ci/ts-nocheck-audit.mjs`
+- `tsnocheck:clean:core`: `node scripts/ci/ts-nocheck-audit.mjs --clean-core`
+- `tsnocheck:core:gate`: `node scripts/ci/ts-nocheck-audit.mjs --check-core`
+
+### admin
+
+- Count: 2
+- `admin:db:first:gate`: `node scripts/ci/admin-db-first-gate.mjs`
+- `admin:strict-role:gate`: `node scripts/ci/admin-strict-role-gate.mjs`
+
+### adsense
+
+- Count: 2
+- `adsense:readiness`: `node scripts/ci/adsense-readiness-gate.mjs`
+- `adsense:readiness:live`: `node scripts/ci/adsense-readiness-gate.mjs --live`
+
+### build
+
+- Count: 2
+- `build`: `node scripts/build-server-artifacts.mjs`
+- `build:isolated`: `node scripts/runtime/run-isolated.mjs npm run build`
+
+### city
+
+- Count: 2
+- `city:data:freshness:gate`: `npx tsx scripts/ci/city-data-freshness-gate.mjs`
+- `city:data:freshness:prod`: `node scripts/ci/city-data-freshness-gate.mjs --prod`
+
+### codemod
+
+- Count: 2
+- `codemod:ast`: `npx tsx scripts/codemod-ast.ts`
+- `codemod:validation`: `npx tsx scripts/codemod-validation.ts`
+
+### e2e
+
+- Count: 2
+- `e2e:critical:coverage`: `node scripts/ci/e2e-critical-coverage-report.mjs`
+- `e2e:skip:report`: `node scripts/ci/e2e-skip-report.mjs`
+
+### gate
+
+- Count: 2
+- `gate:done`: `npm run env:gate && npm run runtime:single-process:gate && npm run workflow:standards:verify && npm run ops:contracts:gate && npm run canonical:domain:gate && npm run phase1:free:gate && npm run admin:db:first:gate && npm run social:safety:gate && npm run social:db:first:gate && npm run db:refs:gate && npm run lifecycle:standard:gate && npm run landing:agency:gate && npm run recommendations:master:gate && npm run hosting:panel:gate && npm run frontend:release:ready:gate && npm run type-check && npm run build && npm run db:migrate:check-duplicates && npm run api:release:gate && npm run smoke:pages:critical && npm run smoke:images:critical && npm run smoke:db:backup-restore && npm run images:check-external && npm run images:validate && npm run images:quality && npm run images:moderate && npm run images:slug:gate && npm run images:integrity:gate && npm run categories:coverage:gate && npm run public:city:gate && npm run seo:geo:gate && npm run content:cluster:quality && npm run content:programmatic:quality && npm run social:core:gate:strict && npm run problemjson:strict && npm run security:scan-secrets && npm run security:defaults:gate && npm run storage:local:gate && npm run pagespeed:api-less && npm run release:readiness:report`
+- `gate:isolated`: `node scripts/runtime/run-with-cleanup.mjs npm run gate:done`
+
+### ollama
+
+- Count: 2
+- `ollama:readiness`: `node scripts/ci/ollama-readiness-report.mjs`
+- `ollama:readiness:live`: `node scripts/ci/ollama-readiness-report.mjs --live`
+
+### page
+
+- Count: 2
+- `page:template:adoption:gate`: `node scripts/ci/template-adoption-gate.mjs`
+- `page:template:system:gate`: `node scripts/ci/page-template-system-gate.mjs`
+
+### preview
+
+- Count: 2
+- `preview`: `astro preview --host 0.0.0.0 --port 4321`
+- `preview:isolated`: `node scripts/runtime/run-isolated.mjs npm run preview`
+
+### publisher
+
+- Count: 2
+- `publisher:center:readiness`: `node scripts/ci/publisher-center-readiness-report.mjs`
+- `publisher:center:readiness:live`: `node scripts/ci/publisher-center-readiness-report.mjs --live`
+
+### responsive
+
+- Count: 2
+- `responsive:readability:local`: `node scripts/ci/responsive-readability-gate.mjs --mode=local`
+- `responsive:readability:prod`: `node scripts/ci/responsive-readability-gate.mjs --mode=prod --base-url=https://sanliurfa.com`
+
+### route
+
+- Count: 2
+- `route:legacy:report`: `node scripts/ci/legacy-route-usage-report.mjs`
+- `route:ownership:gate`: `node scripts/ci/route-ownership-gate.mjs`
+
+### sdk
+
+- Count: 2
+- `sdk:generate`: `npx tsx scripts/openapi/generate-sdk.ts`
+- `sdk:generate:check`: `npm run sdk:generate && node -e "const fs=require('fs'); if(!fs.existsSync('sdk/generated/client.ts')) process.exit(1)"`
+
+### sitemap
+
+- Count: 2
+- `sitemap:routes:local`: `node scripts/ci/sitemap-route-integrity-gate.mjs --mode=local --max-urls=200`
+- `sitemap:routes:prod`: `node scripts/ci/sitemap-route-integrity-gate.mjs --mode=prod --base-url=https://sanliurfa.com`
+
+### canonical
+
+- Count: 1
+- `canonical:domain:gate`: `node scripts/ci/canonical-domain-gate.mjs`
+
+### cron
+
+- Count: 1
+- `cron:readiness:report`: `node scripts/ci/cron-readiness-report.mjs`
+
+### design
+
+- Count: 1
+- `design:drift:gate`: `node scripts/ci/design-drift-gate.mjs`
+
+### env
+
+- Count: 1
+- `env:gate`: `node scripts/ci/no-dynamic-import-meta-env.mjs`
+
+### hosting
+
+- Count: 1
+- `hosting:panel:gate`: `node scripts/ci/hosting-panel-gate.mjs`
+
+### landing
+
+- Count: 1
+- `landing:agency:gate`: `node scripts/ci/landing-agency-gate.mjs`
+
+### lifecycle
+
+- Count: 1
+- `lifecycle:standard:gate`: `node scripts/ci/lifecycle-standard-gate.mjs`
+
+### load
+
+- Count: 1
+- `load:test`: `k6 run load-tests/load-test.js`
+
+### media
+
+- Count: 1
+- `media:readiness`: `node scripts/ci/media-readiness-report.mjs`
+
+### phase1
+
+- Count: 1
+- `phase1:free:gate`: `node scripts/ci/phase1-free-mode-gate.mjs`
+
+### scripts
+
+- Count: 1
+- `scripts:canonical:report`: `node scripts/ci/script-canonical-surface-report.mjs`
+
+### sql
+
+- Count: 1
+- `sql:parameter:safety`: `node scripts/ci/sql-parameter-safety-gate.mjs`
+
+### storage
+
+- Count: 1
+- `storage:local:gate`: `node scripts/ci/local-media-storage-gate.mjs`
+
+### type-check
+
+- Count: 1
+- `type-check`: `astro check`
+
+### visual
+
+- Count: 1
+- `visual:regression:gate`: `node scripts/ci/visual-regression-gate.mjs`
+
+### warmup
+
+- Count: 1
+- `warmup:safety:report`: `node scripts/ci/warmup-safety-report.mjs`
+
+### warning
+
+- Count: 1
+- `warning:debt:summary`: `node scripts/ci/warning-debt-summary.mjs`
+

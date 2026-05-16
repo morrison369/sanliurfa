@@ -1,0 +1,110 @@
+{
+  "generatedAt": "2026-05-15T12:06:25.336Z",
+  "status": "ok",
+  "policy": {
+    "localStorageOnly": true,
+    "publishGeneratedBlogDrafts": true,
+    "approveCityContentDrafts": true,
+    "moderationQueuesAutoApproved": false
+  },
+  "before": {
+    "blog_posts": {
+      "published": 40
+    },
+    "events": {},
+    "recipes": {
+      "published": 6
+    },
+    "historical_sites": {},
+    "places": {
+      "active": 1
+    },
+    "city_content_drafts": {
+      "approved": 487
+    },
+    "blog_comments": {},
+    "reviews": {
+      "active": 13
+    },
+    "community_photos": {},
+    "event_submissions": {},
+    "moderation_queue": {}
+  },
+  "updates": [
+    {
+      "table": "blog_posts",
+      "from": [
+        "draft",
+        "scheduled"
+      ],
+      "to": "published",
+      "updated": 0
+    },
+    {
+      "table": "events",
+      "from": [
+        "draft"
+      ],
+      "to": "published",
+      "updated": 0
+    },
+    {
+      "table": "recipes",
+      "from": [
+        "draft"
+      ],
+      "to": "published",
+      "updated": 0
+    },
+    {
+      "table": "historical_sites",
+      "from": [
+        "draft"
+      ],
+      "to": "published",
+      "updated": 0
+    },
+    {
+      "table": "places",
+      "from": [
+        "draft",
+        "pending"
+      ],
+      "to": "active",
+      "updated": 0
+    },
+    {
+      "table": "city_content_drafts",
+      "from": [
+        "pending"
+      ],
+      "to": "approved",
+      "updated": 0
+    }
+  ],
+  "after": {
+    "blog_posts": {
+      "published": 40
+    },
+    "events": {},
+    "recipes": {
+      "published": 6
+    },
+    "historical_sites": {},
+    "places": {
+      "active": 1
+    },
+    "city_content_drafts": {
+      "approved": 487
+    },
+    "blog_comments": {},
+    "reviews": {
+      "active": 13
+    },
+    "community_photos": {},
+    "event_submissions": {},
+    "moderation_queue": {}
+  },
+  "remainingDraftLike": [],
+  "moderationPending": []
+}

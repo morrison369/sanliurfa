@@ -4,6 +4,23 @@
  */
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
+type RuntimeProfile = 'development' | 'test' | 'staging' | 'production' | 'release';
+
+const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
+  debug: 10,
+  info: 20,
+  warn: 30,
+  error: 40,
+  fatal: 50,
+};
+
+const PROFILE_DEFAULT_LEVEL: Record<RuntimeProfile, LogLevel> = {
+  development: 'debug',
+  test: 'debug',
+  staging: 'info',
+  production: 'info',
+  release: 'warn',
+};
 
 interface LogContext {
   userId?: string;
@@ -24,6 +41,41 @@ interface LogEntry {
 
 class Logger {
   private isProduction = process.env.NODE_ENV === 'production';
+  private runtimeProfile: RuntimeProfile = this.resolveRuntimeProfile();
+  private minLevel: LogLevel = this.resolveMinLevel();
+
+  private resolveRuntimeProfile(): RuntimeProfile {
+    const raw = (process.env.LOG_PROFILE || process.env.APP_RUNTIME_PROFILE || '').toLowerCase();
+    if (raw in PROFILE_DEFAULT_LEVEL) {
+      return raw as RuntimeProfile;
+    }
+
+    if (process.env.NODE_ENV === 'test') {
+      return 'test';
+    }
+
+    if (process.env.NODE_ENV === 'staging') {
+      return 'staging';
+    }
+
+    if (process.env.RELEASE_MODE === '1' || process.env.CI_RELEASE === '1') {
+      return 'release';
+    }
+
+    return this.isProduction ? 'production' : 'development';
+  }
+
+  private resolveMinLevel(): LogLevel {
+    const raw = (process.env.LOG_LEVEL || '').toLowerCase();
+    if (raw in LOG_LEVEL_PRIORITY) {
+      return raw as LogLevel;
+    }
+    return PROFILE_DEFAULT_LEVEL[this.runtimeProfile];
+  }
+
+  private shouldLog(level: LogLevel): boolean {
+    return LOG_LEVEL_PRIORITY[level] >= LOG_LEVEL_PRIORITY[this.minLevel];
+  }
 
   private getTimestamp(): string {
     return new Date().toISOString();
@@ -38,12 +90,13 @@ class Logger {
   }
 
   private log(entry: LogEntry): void {
+    if (!this.shouldLog(entry.level)) return;
     const formatted = this.formatMessage(entry);
 
     // Console output
     switch (entry.level) {
       case 'debug':
-        if (!this.isProduction) console.debug(formatted);
+        console.debug(formatted);
         break;
       case 'info':
         console.info(formatted);

@@ -1,0 +1,41 @@
+---
+import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+import CityCrmDashboard from '../../components/admin/CityCrmDashboard.astro';
+import CityCrmModulePage from '../../components/admin/CityCrmModulePage.astro';
+import { findAdminCrmModule, ADMIN_CRM_MODULES } from '../../data/admin-city-crm';
+
+const rawSlug = String(Astro.params.crm || '').replace(/^\/+|\/+$/g, '');
+const normalizedSlug = rawSlug.startsWith('bots/') ? 'bots' : rawSlug;
+
+const commandModule = {
+  slug: 'command',
+  title: 'Komut Merkezi',
+  eyebrow: 'Ctrl+K',
+  description:
+    'İşletme, kullanıcı, kategori, etkinlik, blog, eczane, ilçe, reklam ve başvuru araması için global admin komut yüzeyi.',
+  icon: 'lucide:command',
+  filters: ['İşletme', 'Kullanıcı', 'Kategori', 'Etkinlik', 'Blog', 'Eczane', 'İlçe', 'Reklam', 'Başvuru'],
+  fields: ['Arama terimi', 'Kaynak', 'Sonuç tipi', 'Hızlı aksiyon', 'Önizleme linki'],
+  actions: ['Ctrl+K ile aç', 'Sonuca git', 'Public önizle', 'Admin düzenle'],
+  botKeys: ['seo', 'business-data', 'moderation'],
+};
+
+const module =
+  normalizedSlug === 'command'
+    ? commandModule
+    : findAdminCrmModule(normalizedSlug) || ADMIN_CRM_MODULES.find((item) => item.slug === 'bots');
+
+if (!module) {
+  return Astro.redirect('/admin');
+}
+---
+
+<AdminLayout
+  title={module.title}
+  subtitle={module.description}
+  breadcrumbs={[{ label: 'CRM', href: '/admin' }, { label: module.title }]}
+  seo={{ title: `${module.title} - Admin`, noIndex: true }}
+>
+  {rawSlug === '' ? <CityCrmDashboard /> : <CityCrmModulePage module={module as any} />}
+</AdminLayout>
+

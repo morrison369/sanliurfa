@@ -10,7 +10,7 @@ import { apiResponse, problemJson, HttpStatus } from '../../../lib/api';
  * Generate cache key for user user_favorites
  */
 function generateFavoritesCacheKey(userId: string): string {
-  return `user_favorites:user:${userId}`;
+  return `favorites:user:${userId}`;
 }
 
 // Get user user_favorites
@@ -184,4 +184,3 @@ export const DELETE: APIRoute = async ({ request, locals }) => {
     });
   }
 };
-

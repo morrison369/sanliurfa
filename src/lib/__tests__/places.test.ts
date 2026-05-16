@@ -1,6 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { getPlaces, getPlaceBySlug, searchPlaces } from '../places/db';
 
+const { queryReadMock, queryReadOneMock } = vi.hoisted(() => ({
+  queryReadMock: vi.fn(),
+  queryReadOneMock: vi.fn(),
+}));
+
 // Mock postgres
 vi.mock('../postgres', () => ({
   query: vi.fn().mockResolvedValue({
@@ -15,18 +20,9 @@ vi.mock('../postgres', () => ({
       },
     ],
   }),
-  queryOne: vi.fn().mockImplementation((sql) => {
-    // Return null for non-existent slug queries
-    if (sql.includes('WHERE') && sql.includes('slug')) {
-      return Promise.resolve({
-        id: 'place-1',
-        name: 'Göbeklitepe',
-        slug: 'gobeklitepe',
-        category_name: 'Tarihi Yerler',
-      });
-    }
-    return Promise.resolve(null);
-  }),
+  queryOne: vi.fn().mockResolvedValue(null),
+  queryRead: queryReadMock,
+  queryReadOne: queryReadOneMock,
 }));
 
 // Mock cache
@@ -39,14 +35,27 @@ vi.mock('../cache', () => ({
 describe('Places Module', () => {
   describe('getPlaces', () => {
     it('should return places with filters', async () => {
+      queryReadOneMock.mockResolvedValueOnce({ count: 1 });
+      queryReadMock.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'place-1',
+            name: 'Göbeklitepe',
+            slug: 'gobeklitepe',
+            category_name: 'Tarihi Yerler',
+            rating: 4.8,
+            review_count: 150,
+          },
+        ],
+      });
       const result = await getPlaces({ category: 'tarihi-yerler' });
       expect(result.places).toHaveLength(1);
       expect(result.places[0].name).toBe('Göbeklitepe');
     });
 
     it('should return total count', async () => {
-      // Mock returns one place, so total should be 1
-      // Note: actual implementation may count differently
+      queryReadOneMock.mockResolvedValueOnce({ count: 1 });
+      queryReadMock.mockResolvedValueOnce({ rows: [] });
       const result = await getPlaces({});
       expect(result.total).toBeGreaterThanOrEqual(0);
     });
@@ -54,20 +63,38 @@ describe('Places Module', () => {
 
   describe('getPlaceBySlug', () => {
     it('should return place by slug', async () => {
+      queryReadOneMock.mockResolvedValueOnce({
+        id: 'place-1',
+        name: 'Göbeklitepe',
+        slug: 'gobeklitepe',
+        category_name: 'Tarihi Yerler',
+      });
       const place = await getPlaceBySlug('gobeklitepe');
       expect(place).toBeDefined();
       expect(place?.slug).toBe('gobeklitepe');
     });
 
     it('should handle slug lookup', async () => {
+      queryReadOneMock.mockResolvedValueOnce(null);
       const place = await getPlaceBySlug('any-slug');
-      // The mock returns a place object for any slug
-      expect(place).toBeDefined();
+      expect(place).toBeNull();
     });
   });
 
   describe('searchPlaces', () => {
     it('should search places by query', async () => {
+      queryReadMock.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'place-1',
+            name: 'Göbeklitepe',
+            slug: 'gobeklitepe',
+            category_name: 'Tarihi Yerler',
+            rating: 4.8,
+            review_count: 150,
+          },
+        ],
+      });
       const result = await searchPlaces('göbekli');
       expect(result.places).toHaveLength(1);
     });

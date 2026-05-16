@@ -1,0 +1,103 @@
+{
+  "generatedAt": "2026-05-15T12:18:47.419Z",
+  "status": "ok",
+  "summary": {
+    "total": 14,
+    "passed": 14,
+    "failed": 0,
+    "backend": {
+      "passed": 9,
+      "total": 9
+    },
+    "frontend": {
+      "passed": 5,
+      "total": 5
+    }
+  },
+  "checks": [
+    {
+      "area": "backend",
+      "name": "API/OpenAPI parity",
+      "ok": true,
+      "detail": "466/466 route documented"
+    },
+    {
+      "area": "backend",
+      "name": "DB retirement safe observation",
+      "ok": true,
+      "detail": "3/14 snapshots; automatic drop disabled"
+    },
+    {
+      "area": "backend",
+      "name": "Redis local idle/runtime split",
+      "ok": true,
+      "detail": "redis=idle"
+    },
+    {
+      "area": "backend",
+      "name": "Content draft admin approval",
+      "ok": true,
+      "detail": "pending=0; autopublish=no"
+    },
+    {
+      "area": "backend",
+      "name": "Google Maps local-storage draft pipeline",
+      "ok": true,
+      "detail": "candidates=447; local-storage=yes"
+    },
+    {
+      "area": "backend",
+      "name": "PageSpeed quota management tracked separately",
+      "ok": true,
+      "detail": "quota-management=managed_with_live_quota_review; live=review"
+    },
+    {
+      "area": "backend",
+      "name": "API debug envelope standard",
+      "ok": true,
+      "detail": "requestId/debug checks=3/3"
+    },
+    {
+      "area": "backend",
+      "name": "DB registry classification visibility",
+      "ok": true,
+      "detail": "0 unclassified; auto-drop=no"
+    },
+    {
+      "area": "backend",
+      "name": "Admin DB recommendations are review-only",
+      "ok": true,
+      "detail": "unused/zero-scan index önerileri otomatik DROP SQL üretmez"
+    },
+    {
+      "area": "frontend",
+      "name": "Editorial transparency retained without global block",
+      "ok": true,
+      "detail": "global transparency card removed; publisher schema and policy links remain available"
+    },
+    {
+      "area": "frontend",
+      "name": "Internal backlink UX enriched",
+      "ok": true,
+      "detail": "cluster labels and explanatory note present"
+    },
+    {
+      "area": "frontend",
+      "name": "Admin operations center coverage",
+      "ok": true,
+      "detail": "decision=ADVISORY; content=ok; gmaps=ok"
+    },
+    {
+      "area": "frontend",
+      "name": "Local storage media budget",
+      "ok": true,
+      "detail": "928 uploads; used=39.2%"
+    },
+    {
+      "area": "frontend",
+      "name": "Admin publishing center UX",
+      "ok": true,
+      "detail": "project content, places, moderation, agents, media and safe ops cards visible"
+    }
+  ]
+}

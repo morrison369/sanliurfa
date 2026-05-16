@@ -1,0 +1,208 @@
+{
+  "generatedAt": "2026-05-15T12:06:31.585Z",
+  "status": "ok",
+  "policy": {
+    "highImpactAdminEndpointsRequireStrictAdminRole": true,
+    "moderatorIsNotEnoughForHighImpactActions": true
+  },
+  "summary": {
+    "checked": 32,
+    "ok": 32,
+    "review": 0
+  },
+  "review": [],
+  "results": [
+    {
+      "file": "src/pages/api/admin/bulk-action.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": false,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/exports/token/clipboard.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/exports/token.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/flags.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": false,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/moderation/flags.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": false,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/places/lifecycle/export.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/quotas/[userId].ts",
+      "status": "ok",
+      "usesBroadIsAdmin": false,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/reports/generate.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": false,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/reports/schedule.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": false,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/security/audit.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": false,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/security/guidelines.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": false,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/settings/marketing.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": false,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/audit/export.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/homepage-sections.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/integrations/test.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/integrations.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/media/import.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/media/index.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/media/search.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/media-health.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/media-usage.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/platform.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/seo-overrides.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/services.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/settings/diff.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/settings/presets/preview.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/settings/presets.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/settings/rollback-preview.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/settings/rollback.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/settings/schema.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/site/settings.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    },
+    {
+      "file": "src/pages/api/admin/social/events/export.ts",
+      "status": "ok",
+      "usesBroadIsAdmin": true,
+      "strictAdminRoleCheck": true
+    }
+  ]
+}

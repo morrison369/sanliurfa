@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-05-15T12:06:31.202Z",
+  "status": "ok",
+  "policy": {
+    "localStorageOnly": true,
+    "cdnOrObjectStorageAllowed": false,
+    "automaticDeleteAllowed": false
+  },
+  "summary": {
+    "checks": 5,
+    "passed": 5,
+    "failed": 0,
+    "uploadFiles": 928,
+    "publicImages": 200
+  },
+  "checks": [
+    {
+      "name": "Local storage policy",
+      "ok": true,
+      "detail": "local-only=yes, external-object-storage=no",
+      "artifact": "docs/local-media-storage-gate.json"
+    },
+    {
+      "name": "Upload reference parity",
+      "ok": true,
+      "detail": "928 uploads, 0 missing refs, 0 unreferenced candidates",
+      "artifact": "docs/local-upload-parity-report.json"
+    },
+    {
+      "name": "Bucket quota",
+      "ok": true,
+      "detail": "5 buckets, blockers=0, review=0",
+      "artifact": "docs/local-upload-bucket-quota-report.json"
+    },
+    {
+      "name": "Upload archive queue",
+      "ok": true,
+      "detail": "0 total, 0 archive, 0 delete-review",
+      "artifact": "docs/local-upload-archive-candidates.json"
+    },
+    {
+      "name": "Static image integrity",
+      "ok": true,
+      "detail": "200 public images, failed=0, review=0",
+      "artifact": "docs/static-image-integrity-report.json"
+    }
+  ]
+}

@@ -15,6 +15,9 @@ const measuredCount = Math.max(1, Number(args.get('runs') || process.env.HOMEPAG
 const timeoutMs = Math.max(1000, Number(args.get('timeout-ms') || process.env.HOMEPAGE_PERF_TIMEOUT_MS || '45000'));
 const maxWarmMs = Math.max(1000, Number(args.get('max-warm-ms') || process.env.HOMEPAGE_PERF_MAX_WARM_MS || '8000'));
 const brandPattern = /Şanlıurfa|sanliurfa\.com/i;
+const verbose =
+  args.get('verbose') === '1' ||
+  process.env.HOMEPAGE_PERF_VERBOSE === '1';
 
 function fail(message, details = []) {
   console.error(`[homepage-performance-gate] ${message}`);
@@ -56,9 +59,24 @@ for (let i = 0; i < measuredCount; i += 1) {
   results.push(await fetchHomepage(`run-${i + 1}`));
 }
 
-for (const result of results) {
-  const marker = result.status >= 200 && result.status < 400 && result.branded ? 'ok' : 'fail';
-  console.log(`${marker} ${result.label} ${result.status} ${result.durationMs}ms -> ${url.href}`);
+const warmups = results.filter((result) => result.label.startsWith('warmup-'));
+const measured = results.filter((result) => result.label.startsWith('run-'));
+
+if (verbose) {
+  for (const result of results) {
+    const marker = result.status >= 200 && result.status < 400 && result.branded ? 'ok' : 'fail';
+    console.log(`${marker} ${result.label} ${result.status} ${result.durationMs}ms -> ${url.href}`);
+  }
+} else {
+  const warmupMax = warmups.length > 0 ? Math.max(...warmups.map((result) => result.durationMs)) : 0;
+  const warmupAvg = warmups.length > 0
+    ? Math.round(warmups.reduce((total, result) => total + result.durationMs, 0) / warmups.length)
+    : 0;
+  if (warmups.length > 0) {
+    console.log(
+      `homepage-performance-gate: warmup complete (${mode}, count=${warmups.length}, max=${warmupMax}ms, avg=${warmupAvg}ms)`,
+    );
+  }
 }
 
 const failures = results.filter(
@@ -73,7 +91,6 @@ if (failures.length > 0) {
   );
 }
 
-const measured = results.filter((result) => result.label.startsWith('run-'));
 const maxMeasured = Math.max(...measured.map((result) => result.durationMs));
 const avgMeasured = Math.round(
   measured.reduce((total, result) => total + result.durationMs, 0) / measured.length,

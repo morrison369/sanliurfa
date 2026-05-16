@@ -1,4 +1,18 @@
-import { resolveContentImage } from './content-images';
+const SAFE_SLUG_RE = /^[a-z0-9-]+$/;
+
+function sanitizeSegment(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function buildSlugImagePath(category: string, slug: string, thumb = false): string | null {
+  const safeCategory = sanitizeSegment(category);
+  const safeSlug = sanitizeSegment(slug);
+  if (!safeCategory || !safeSlug) return null;
+  if (!SAFE_SLUG_RE.test(safeCategory) || !SAFE_SLUG_RE.test(safeSlug)) return null;
+  return `/images/${safeCategory}/${safeSlug}${thumb ? '-thumb' : ''}.jpg`;
+}
 
 type PlaceLike = {
   slug?: string | null;
@@ -42,65 +56,83 @@ function firstNonEmpty(values: Array<string | null | undefined>): string | undef
 function isPublicLocalImage(value: string | null | undefined): value is string {
   if (typeof value !== 'string') return false;
   const trimmed = value.trim();
-  return trimmed.startsWith('/images/') || trimmed.startsWith('/uploads/');
+  return trimmed.startsWith('/images/')
+    || trimmed.startsWith('/uploads/')
+    || trimmed === '/og-image.png'
+    || trimmed.startsWith('/og/');
+}
+
+function resolvePublicContentImage(input: {
+  category: string;
+  slug?: string | null | undefined;
+  explicit?: string | null | undefined;
+  placeholder: string;
+  thumb?: boolean;
+  allowExternalExplicit?: boolean;
+}) {
+  const explicit = firstNonEmpty([input.explicit]);
+  if (isPublicLocalImage(explicit)) return explicit;
+
+  const slug = sanitizeSegment(input.slug || undefined);
+  if (slug) {
+    const generated = buildSlugImagePath(input.category, slug, input.thumb === true);
+    if (generated) return generated;
+  }
+
+  return input.placeholder;
 }
 
 export function resolvePlaceImage(place: PlaceLike, options?: { thumb?: boolean }) {
-  return resolveContentImage({
+  return resolvePublicContentImage({
     category: 'places',
     slug: place.slug,
     explicit: firstNonEmpty([place.image_url, place.cover_image, place.images?.[0] || undefined]),
     placeholder: '/images/placeholder-place.jpg',
     thumb: options?.thumb === true,
-    preferLocal: true,
     allowExternalExplicit: false,
   });
 }
 
 export function resolveRecipeImage(recipe: RecipeLike, options?: { thumb?: boolean }) {
-  return resolveContentImage({
+  return resolvePublicContentImage({
     category: 'foods',
     slug: recipe.slug,
     explicit: firstNonEmpty([recipe.cover_image, recipe.image_url, recipe.images?.[0] || undefined]),
     placeholder: '/images/foods/default.jpg',
     thumb: options?.thumb === true,
-    preferLocal: true,
     allowExternalExplicit: false,
   });
 }
 
 export function resolveBlogImage(post: BlogLike, options?: { thumb?: boolean }) {
-  return resolveContentImage({
+  return resolvePublicContentImage({
     category: 'blog',
     slug: post.slug,
     explicit: firstNonEmpty([post.featured_image, post.cover_image, post.image]),
     placeholder: '/images/placeholder-blog.jpg',
     thumb: options?.thumb === true,
-    preferLocal: true,
     allowExternalExplicit: false,
   });
 }
 
 export function resolveHistoricalImage(site: HistoricalLike, options?: { thumb?: boolean }) {
-  return resolveContentImage({
+  return resolvePublicContentImage({
     category: 'tarihi-yerler',
     slug: site.slug,
     explicit: firstNonEmpty([site.image_url, site.cover_image, site.image]),
     placeholder: '/images/placeholder-historical.jpg',
     thumb: options?.thumb === true,
-    preferLocal: true,
     allowExternalExplicit: false,
   });
 }
 
 export function resolveEventImage(event: EventLike, options?: { thumb?: boolean }) {
-  return resolveContentImage({
+  return resolvePublicContentImage({
     category: 'etkinlikler',
     slug: event.slug,
     explicit: firstNonEmpty([event.image_url, event.cover_image, event.image]),
     placeholder: '/images/placeholder-event.jpg',
     thumb: options?.thumb === true,
-    preferLocal: true,
     allowExternalExplicit: false,
   });
 }

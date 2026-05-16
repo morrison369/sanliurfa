@@ -5,6 +5,7 @@ import net from 'node:net';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { createRequire } from 'node:module';
+import { getAdminCredentials, readRequiredEnv } from './lib/admin-script-auth.mjs';
 
 const require = createRequire(import.meta.url);
 const { Client: SshClient } = require('ssh2');
@@ -26,8 +27,11 @@ loadEnv(path.join(scriptDir, '.env.scripts'));
 loadEnv(path.join(projectRoot, '.env'));
 
 const LOCAL_TUNNEL_PORT = 15736;
-const TEST_EMAIL = 'admin@sanliurfa.com';
-const TEST_PASSWORD = 'Urfa2026!';
+const { email: TEST_EMAIL } = getAdminCredentials();
+const TEST_PASSWORD = readRequiredEnv(
+  'ADMIN_TEST_PASSWORD',
+  'scripts/.env.scripts veya process env içinde ADMIN_TEST_PASSWORD tanımlayın.'
+);
 
 function openSshTunnel() {
   return new Promise((resolve, reject) => {

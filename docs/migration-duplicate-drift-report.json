@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-05-15T12:07:46.847Z",
+  "status": "ok",
+  "source": {
+    "report": "docs/migration-duplicate-report.json",
+    "baseline": "docs/migration-duplicate-baseline.json"
+  },
+  "policy": {
+    "existingDuplicateRenameAllowed": false,
+    "newDuplicateAllowed": false,
+    "reason": "Production schema_migrations history can be broken by renaming old migration files."
+  },
+  "summary": {
+    "duplicateNumberGroups": 3,
+    "duplicateSlugGroups": 14,
+    "numberDrift": false,
+    "slugDrift": false
+  }
+}

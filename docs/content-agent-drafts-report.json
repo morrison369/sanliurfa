@@ -1,0 +1,24 @@
+{
+  "generatedAt": "2026-05-15T12:08:13.961Z",
+  "status": "ok",
+  "summary": {
+    "total": 487,
+    "pending": 0,
+    "approved": 487,
+    "rejected": 0,
+    "stalePendingCount": 0
+  },
+  "byStatus": {
+    "approved": 487
+  },
+  "byType": {
+    "blog-draft": 40,
+    "place-discovery-draft": 447
+  },
+  "policy": {
+    "autoPublish": false,
+    "adminApprovalRequired": true,
+    "stalePendingReviewDays": 30
+  },
+  "stalePendingSamples": []
+}

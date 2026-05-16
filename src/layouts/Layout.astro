@@ -1,5 +1,4 @@
 ---
-import { ClientRouter } from 'astro:transitions';
 import SEO from '../components/SEO.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
@@ -11,7 +10,10 @@ import ErrorBoundary from '../components/ErrorBoundary.astro';
 import Analytics from '../components/Analytics.astro';
 import PWARegister from '../components/PWARegister.astro';
 import PerformanceMonitor from '../components/PerformanceMonitor.tsx';
+import { getPublicAppUrl } from '../lib/public-app-url';
 import { getSiteSetting } from '../lib/site-content';
+import { PUBLISHER_PROFILE } from '../lib/transparency';
+import { buildHomepageThemeRootCss, HOMEPAGE_THEME_TOKENS } from '../data/homepage-theme';
 import '../styles/global.css';
 
 export interface Props {
@@ -35,13 +37,19 @@ export interface Props {
  class?: string;
 }
 
-const { seo, hideHeader = false, hideFooter = false, disableViewTransitions = false, class: className = '' } = Astro.props;
+const { seo, hideHeader = false, hideFooter = false, class: className = '' } = Astro.props;
 
-// Admin sayfalarda View Transitions devre dışı — inline script re-execute sorununu önler
+// ClientRouter public sayfalarda gereksiz JS maliyeti ve reklam script re-execute riski oluşturuyor.
 const isAdminPath = Astro.url.pathname.startsWith('/admin');
 const isAuthPath = ['/giris', '/kayit', '/sifre'].some(p => Astro.url.pathname.startsWith(p));
-const skipPerfMonitor = isAdminPath || isAuthPath;
-const skipViewTransitions = disableViewTransitions || isAdminPath;
+const enablePerformanceMonitor = import.meta.env.DEV || import.meta.env.PUBLIC_ENABLE_PERFORMANCE_MONITOR === 'true';
+const skipPerfMonitor = !enablePerformanceMonitor || isAdminPath || isAuthPath;
+const baseUrl = getPublicAppUrl();
+
+function toAbsoluteUrl(pathname: string): string {
+ const normalized = pathname === '/' ? '/' : pathname.replace(/\/$/, '');
+ return `${baseUrl}${normalized === '/' ? '' : normalized}`;
+}
 
 let GA_MEASUREMENT_ID = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
  || import.meta.env.GA_TRACKING_ID
@@ -57,6 +65,15 @@ let siteName = 'Sanliurfa.com';
 try {
  const schema = await getSiteSetting('homepage.schema', { siteName: 'Sanliurfa.com' });
  siteName = String((schema as any)?.siteName || 'Sanliurfa.com');
+} catch { /* sessiz */ }
+
+let frontendThemeCss = buildHomepageThemeRootCss(HOMEPAGE_THEME_TOKENS);
+try {
+ const theme = await getSiteSetting('homepage.theme', HOMEPAGE_THEME_TOKENS);
+ frontendThemeCss = [
+  buildHomepageThemeRootCss(theme),
+  ':root{--bg:var(--landing-sand);--text-1:var(--landing-ink);--copper:var(--landing-copper-strong);--text-on-deep:var(--landing-sand)}',
+ ].join('\n');
 } catch { /* sessiz */ }
 
 // GSC + Bing webmaster verification meta tag'leri (admin panel veya env var ile)
@@ -85,6 +102,94 @@ try {
 } catch { /* sessiz */ }
 
 const user = Astro.locals.user;
+const canonicalPath = seo?.canonical || Astro.url.pathname || '/';
+const pageUrl = toAbsoluteUrl(canonicalPath);
+const transparencyAuthor = seo?.author || PUBLISHER_PROFILE.publisherName;
+const pagePublishedIso = seo?.publishedTime || PUBLISHER_PROFILE.sitePublishedAtIso;
+const pageModifiedIso = seo?.modifiedTime || PUBLISHER_PROFILE.transparencyReviewedAtIso;
+const publisherStructuredData = {
+ '@context': 'https://schema.org',
+ '@type': ['Organization', 'NewsMediaOrganization'],
+ name: PUBLISHER_PROFILE.siteName,
+ alternateName: PUBLISHER_PROFILE.siteAltName,
+ legalName: PUBLISHER_PROFILE.legalName,
+ url: baseUrl,
+ publishingPrinciples: `${baseUrl}${PUBLISHER_PROFILE.policyPath}`,
+ ownershipFundingInfo: `${baseUrl}${PUBLISHER_PROFILE.imprintPath}`,
+ correctionsPolicy: `${baseUrl}${PUBLISHER_PROFILE.policyPath}#duzeltme-ve-geri-bildirim-sureci`,
+ ethicsPolicy: `${baseUrl}${PUBLISHER_PROFILE.policyPath}`,
+ logo: {
+  '@type': 'ImageObject',
+  url: `${baseUrl}${PUBLISHER_PROFILE.logoPath}`,
+ },
+ email: PUBLISHER_PROFILE.generalEmail,
+ foundingDate: PUBLISHER_PROFILE.foundedYear,
+ address: {
+  '@type': 'PostalAddress',
+  streetAddress: 'Eyyübiye',
+  addressLocality: 'Şanlıurfa',
+  addressRegion: 'Şanlıurfa',
+  addressCountry: 'TR',
+ },
+ contactPoint: [
+  {
+   '@type': 'ContactPoint',
+   contactType: 'customer service',
+   email: PUBLISHER_PROFILE.generalEmail,
+   availableLanguage: 'Turkish',
+  },
+  {
+   '@type': 'ContactPoint',
+   contactType: 'business inquiry',
+   email: PUBLISHER_PROFILE.businessEmail,
+   availableLanguage: 'Turkish',
+  },
+  {
+   '@type': 'ContactPoint',
+   contactType: 'privacy',
+   email: PUBLISHER_PROFILE.privacyEmail,
+   availableLanguage: 'Turkish',
+  },
+ ],
+ sameAs: PUBLISHER_PROFILE.sameAs,
+};
+const websiteStructuredData = {
+ '@context': 'https://schema.org',
+ '@type': 'WebSite',
+ name: siteName,
+ alternateName: PUBLISHER_PROFILE.siteAltName,
+ url: baseUrl,
+ inLanguage: 'tr-TR',
+};
+const webPageStructuredData = {
+ '@context': 'https://schema.org',
+ '@type': 'WebPage',
+ name: seo?.title || siteName,
+ url: pageUrl,
+ inLanguage: 'tr-TR',
+ isPartOf: {
+  '@type': 'WebSite',
+  name: siteName,
+  url: baseUrl,
+ },
+ about: {
+  '@type': 'Thing',
+  name: 'Şanlıurfa',
+ },
+ author: {
+  '@type': transparencyAuthor === PUBLISHER_PROFILE.publisherName ? 'Organization' : 'Person',
+  name: transparencyAuthor,
+  url: `${baseUrl}${PUBLISHER_PROFILE.authorsPath}`,
+ },
+ publisher: {
+  '@type': 'Organization',
+  name: PUBLISHER_PROFILE.siteName,
+  url: baseUrl,
+  email: PUBLISHER_PROFILE.generalEmail,
+ },
+ datePublished: pagePublishedIso,
+ dateModified: pageModifiedIso,
+};
 ---
 
 <!DOCTYPE html>
@@ -93,7 +198,14 @@ const user = Astro.locals.user;
  <meta charset="UTF-8" />
  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+ <meta name="author" content={transparencyAuthor} />
+ <meta name="publisher" content={PUBLISHER_PROFILE.publisherName} />
+ <meta name="copyright" content={`© ${new Date().getFullYear()} ${PUBLISHER_PROFILE.siteName}`} />
+ <meta name="date" content={pagePublishedIso} />
+ <meta property="article:published_time" content={pagePublishedIso} />
+ <meta property="article:modified_time" content={pageModifiedIso} />
  <meta name="google-adsense-account" content="ca-pub-7160871802649062" />
+ <Fragment set:html={'<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7160871802649062" crossorigin="anonymous"></script>'} />
  {gscVerification && <meta name="google-site-verification" content={gscVerification} />}
  {bingVerification && <meta name="msvalidate.01" content={bingVerification} />}
 
@@ -111,26 +223,33 @@ const user = Astro.locals.user;
 
  <!-- SEO -->
  {seo && <SEO {...seo} />}
+ <script type="application/ld+json" set:html={JSON.stringify(publisherStructuredData)} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify(websiteStructuredData)} is:inline />
+ <script type="application/ld+json" set:html={JSON.stringify(webPageStructuredData)} is:inline />
 
  <!-- Feeds -->
  <link rel="alternate" type="application/rss+xml" title={`${siteName} Blog`} href="/rss.xml" />
  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
 
- <!-- Fonts -->
- <link rel="preconnect" href="https://fonts.googleapis.com" />
- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
- <!-- Remote image CDN (Pexels/Unsplash) — LCP iyileştirmesi için DNS+TLS önceden açılır -->
+ <!-- Harici görsel kaynak ipuçları (yalnızca içerik toplama/fallback yüzeyleri için) -->
  <link rel="dns-prefetch" href="https://images.pexels.com" />
  <link rel="dns-prefetch" href="https://images.unsplash.com" />
- <!-- Preload the CSS itself with high priority — fonts load asap without guessing woff2 hashes -->
- <link rel="preload" as="style"
-   href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600;0,700&family=Jost:wght@300;400;500;600;700&display=swap" />
- <link
- rel="stylesheet"
- href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600;0,700&family=Jost:wght@300;400;500;600;700&display=swap"
- />
- <!-- Fallback font metrics override — keep layout stable while Cormorant loads -->
+ <!-- Local-only font policy: no Google Fonts request on the critical path. -->
  <style is:inline>
+ @font-face {
+   font-family: 'Jost';
+   src: local('Segoe UI'), local('Arial');
+   font-display: swap;
+ }
+ @font-face {
+   font-family: 'Cormorant Garamond';
+   src: local('Georgia'), local('Times New Roman');
+   font-display: swap;
+   ascent-override: 100%;
+   descent-override: 31%;
+   line-gap-override: 0%;
+   size-adjust: 105%;
+ }
  @font-face {
    font-family: 'Cormorant Garamond Fallback';
    src: local('Georgia'), local('Times New Roman');
@@ -154,8 +273,8 @@ const user = Astro.locals.user;
  #main-content{outline:none}
  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
  </style>
+ <style is:inline set:html={frontendThemeCss} />
  <ThemeScript />
- {!skipViewTransitions && <ClientRouter />}
  {/* Consolidated analytics: GA4 + Clarity + Yandex (all via Partytown, sfTrack helper) */}
  <Analytics
   ga4MeasurementId={GA_MEASUREMENT_ID}
@@ -227,16 +346,18 @@ const user = Astro.locals.user;
  // Cookie banner — KVKK uyumlu 3-button
  const banner = document.getElementById('sf-cookie');
  if (!localStorage.getItem('sf_cookie')) {
- setTimeout(() => banner && (banner.style.display = 'block'), 1500);
+ if (banner) banner.style.display = 'block';
  }
  // Tümünü kabul
  document.getElementById('sf-cookie-accept')?.addEventListener('click', () => {
  localStorage.setItem('sf_cookie', JSON.stringify({ essential: true, analytics: true, marketing: true, ts: Date.now() }));
+ window.dispatchEvent(new CustomEvent('sf-cookie-consent-changed'));
  if (banner) banner.style.display = 'none';
  });
  // Sadece gerekli
  document.getElementById('sf-cookie-decline')?.addEventListener('click', () => {
  localStorage.setItem('sf_cookie', JSON.stringify({ essential: true, analytics: false, marketing: false, ts: Date.now() }));
+ window.dispatchEvent(new CustomEvent('sf-cookie-consent-changed'));
  if (banner) banner.style.display = 'none';
  });
  // Tercihler → /cerez-politikasi'ne yönlendir (advanced settings ileride)

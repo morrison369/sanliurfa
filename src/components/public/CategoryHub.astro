@@ -2,14 +2,12 @@
 import Icon from '../Icon.astro';
 import type { CityTaxonomyCategory } from '../../data/city-taxonomy';
 import { CITY_DISTRICT_LABELS } from '../../data/city-taxonomy';
-import { getPublicAppUrl } from '../../lib/public-app-url';
 
 interface Props {
   category: CityTaxonomyCategory;
 }
 
 const { category } = Astro.props;
-const baseUrl = getPublicAppUrl();
 
 const pageTitle = `Şanlıurfa ${category.title}`;
 

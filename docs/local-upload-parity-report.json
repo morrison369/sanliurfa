@@ -1,0 +1,260 @@
+{
+  "generatedAt": "2026-05-15T12:07:48.303Z",
+  "status": "ok",
+  "db": {
+    "status": "ok",
+    "detail": "",
+    "referencedFileCount": 0
+  },
+  "summary": {
+    "uploadFileCount": 928,
+    "uploadTotalMb": 200.7,
+    "uploadTotalKb": 205519,
+    "sourceReferencedFileCount": 13,
+    "dbReferencedFileCount": 0,
+    "conventionManagedFileCount": 928,
+    "unreferencedCandidateCount": 0,
+    "missingReferencedFileCount": 0
+  },
+  "quota": {
+    "softLimitMb": 512,
+    "usedMb": 200.7,
+    "usedPercent": 39.2,
+    "status": "ok",
+    "withinSoftLimit": true,
+    "thresholds": {
+      "advisoryPercent": 70,
+      "reviewPercent": 85,
+      "blockerPercent": 95
+    }
+  },
+  "missingReferencedFiles": [],
+  "unreferencedCandidates": [],
+  "unreferencedCandidateInventory": [],
+  "byBucket": [
+    {
+      "key": "places",
+      "fileCount": 534,
+      "totalBytes": 118909873,
+      "referencedCount": 534,
+      "candidateCount": 0,
+      "totalMb": 113.4
+    },
+    {
+      "key": "blogs",
+      "fileCount": 278,
+      "totalBytes": 59081274,
+      "referencedCount": 278,
+      "candidateCount": 0,
+      "totalMb": 56.34
+    },
+    {
+      "key": "historical",
+      "fileCount": 39,
+      "totalBytes": 12406737,
+      "referencedCount": 39,
+      "candidateCount": 0,
+      "totalMb": 11.83
+    },
+    {
+      "key": "recipes",
+      "fileCount": 57,
+      "totalBytes": 10860134,
+      "referencedCount": 57,
+      "candidateCount": 0,
+      "totalMb": 10.36
+    },
+    {
+      "key": "events",
+      "fileCount": 20,
+      "totalBytes": 9193236,
+      "referencedCount": 20,
+      "candidateCount": 0,
+      "totalMb": 8.77
+    }
+  ],
+  "byExtension": [
+    {
+      "key": ".jpg",
+      "fileCount": 928,
+      "totalBytes": 210451254,
+      "referencedCount": 928,
+      "candidateCount": 0,
+      "totalMb": 200.7
+    }
+  ],
+  "ownershipModel": [
+    {
+      "bucket": "places",
+      "owner": "place media",
+      "sourceOfTruth": "src/data place records and DB place media rows",
+      "reviewRule": "Slug, route and DB media ownership must be verified before archive/delete.",
+      "totalMb": 113.4,
+      "fileCount": 534,
+      "candidateCount": 0
+    },
+    {
+      "bucket": "blogs",
+      "owner": "blog content",
+      "sourceOfTruth": "blog_posts, generated blog drafts and source page references",
+      "reviewRule": "Blog body, OG image and schema references must be verified before archive/delete.",
+      "totalMb": 56.34,
+      "fileCount": 278,
+      "candidateCount": 0
+    },
+    {
+      "bucket": "historical",
+      "owner": "city history content",
+      "sourceOfTruth": "historical/city guide source references",
+      "reviewRule": "City guide, district guide and OG references must be verified before archive/delete.",
+      "totalMb": 11.83,
+      "fileCount": 39,
+      "candidateCount": 0
+    },
+    {
+      "bucket": "recipes",
+      "owner": "recipe content",
+      "sourceOfTruth": "recipe data and source page references",
+      "reviewRule": "Recipe page, schema image and related content references must be verified before archive/delete.",
+      "totalMb": 10.36,
+      "fileCount": 57,
+      "candidateCount": 0
+    },
+    {
+      "bucket": "events",
+      "owner": "event content",
+      "sourceOfTruth": "events/event submissions and source page references",
+      "reviewRule": "Event status and historical route references must be verified before archive/delete.",
+      "totalMb": 8.77,
+      "fileCount": 20,
+      "candidateCount": 0
+    }
+  ],
+  "largestFiles": [
+    {
+      "path": "public/uploads/events/harran-arkeoloji-okulu-seminerleri-2026-kasim.jpg",
+      "sizeMb": 0.98,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/recipes/sini-koftesi.jpg",
+      "sizeMb": 0.96,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/events/sanliurfa-kitap-fuari-2026-kasim.jpg",
+      "sizeMb": 0.86,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/events/harran-gunes-festivali-sonbahar-2026.jpg",
+      "sizeMb": 0.86,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/events/gobeklitepe-fotograf-yarismasi-sergi-2026.jpg",
+      "sizeMb": 0.72,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/recipes/bittim-corbasi.jpg",
+      "sizeMb": 0.69,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/blogs/sanliurfadan-gaziantep-gunubirlik-gezi-rehberi.jpg",
+      "sizeMb": 0.69,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/events/sanliurfa-kultur-turizm-festivali-2026-ekim.jpg",
+      "sizeMb": 0.62,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/events/halfeti-kis-turu-kara-guller-2026-kasim.jpg",
+      "sizeMb": 0.61,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/places/firat-nehri-piknik.jpg",
+      "sizeMb": 0.6,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/places/sanliurfa-mesire-piknik.jpg",
+      "sizeMb": 0.6,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/places/hz-eyyub-peygamber-makami.jpg",
+      "sizeMb": 0.56,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/recipes/tirit.jpg",
+      "sizeMb": 0.54,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/recipes/icli-kofte.jpg",
+      "sizeMb": 0.53,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/blogs/karakopru-ilce-rehberi-sanliurfanin-modern-yuzu.jpg",
+      "sizeMb": 0.53,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/blogs/karakopru-i-lce-rehberi-sanliurfa-nin-modern-yuzu.jpg",
+      "sizeMb": 0.53,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/blogs/sanliurfa-el-sanatlari-bakir-kilim-telkari.jpg",
+      "sizeMb": 0.53,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/blogs/sanliurfada-el-sanatlari-bakir-kilim-ve-hediyelik-esya-rehberi.jpg",
+      "sizeMb": 0.53,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/blogs/sanliurfa-da-cocuklarla-yapilacaklar-aile-aktiviteleri-ve-mekanlari.jpg",
+      "sizeMb": 0.52,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/blogs/hilvan-ve-bozova-kaplicalari-karsilastirmasi-sanliurfa-termal-rehberi.jpg",
+      "sizeMb": 0.5,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/places/haliliye-market.jpg",
+      "sizeMb": 0.5,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/places/sanliurfa-market.jpg",
+      "sizeMb": 0.5,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/recipes/sac-kavurma.jpg",
+      "sizeMb": 0.49,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/historical/hz-eyup-makami.jpg",
+      "sizeMb": 0.48,
+      "referenced": true
+    },
+    {
+      "path": "public/uploads/blogs/harrandan-gobeklitepeye-neolitik-medeniyet-turu-rotasi.jpg",
+      "sizeMb": 0.48,
+      "referenced": true
+    }
+  ]
+}

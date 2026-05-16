@@ -1,0 +1,16 @@
+{
+  "generatedAt": "2026-05-15T12:07:48.419Z",
+  "status": "empty",
+  "source": "docs/local-upload-candidate-classification.json",
+  "policy": {
+    "automaticDeleteAllowed": false,
+    "requiredAction": "manual archive PR with owner approval and rollback path"
+  },
+  "summary": {
+    "total": 0,
+    "archiveCandidate": 0,
+    "deletableReview": 0,
+    "byBucket": {}
+  },
+  "candidates": []
+}

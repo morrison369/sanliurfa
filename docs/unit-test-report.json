@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2026-05-15T12:05:54.867Z",
+  "command": "node ./node_modules/vitest/vitest.mjs run",
+  "status": "passed",
+  "testFiles": {
+    "passed": 381,
+    "failed": 0,
+    "skipped": 0,
+    "total": 381
+  },
+  "tests": {
+    "passed": 4957,
+    "failed": 0,
+    "skipped": 0,
+    "total": 4957
+  }
+}

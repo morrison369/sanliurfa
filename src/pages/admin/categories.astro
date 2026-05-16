@@ -10,10 +10,13 @@ interface Category {
  id: string;
  name: string;
  slug: string;
+ description?: string | null;
  icon?: string;
  color?: string;
  is_active: boolean;
  sort_order: number | null;
+ meta_title?: string | null;
+ meta_description?: string | null;
  place_count: number;
 }
 
@@ -24,7 +27,8 @@ let stats = { total: 0, active: 0, inactive: 0, empty: 0 };
 try {
  const [catResult, placeCount] = await Promise.all([
   query<Category>(`
-   SELECT c.id, c.name, c.slug, c.icon, c.color, c.is_active, c.sort_order,
+   SELECT c.id, c.name, c.slug, c.description, c.icon, c.color, c.is_active, c.sort_order,
+    c.meta_title, c.meta_description,
     COUNT(p.id)::int AS place_count
    FROM categories c
    LEFT JOIN places p ON p.category_id = c.id AND p.status = 'active'
@@ -64,7 +68,7 @@ try {
 
   <div class="cat-info">
    <Icon name="lucide:info" class="w-4 h-4 cat-info-icon" />
-   <span>Kategori ekleme/düzenleme migration scriptleri ile yapılır. Slug değişiklikleri tüm mekan URL'lerini etkiler.</span>
+   <span>Kategori düzenleme artık admin panelinden yapılır. Slug değişiklikleri tüm kategori ve mekan bağlantılarını etkileyebileceği için kontrollü uygulanmalıdır.</span>
   </div>
 
   <div class="cat-table-wrap">
@@ -84,6 +88,7 @@ try {
        <th class="cat-th cat-th-num">Mekan</th>
        <th class="cat-th cat-th-num">Sıra</th>
        <th class="cat-th">Durum</th>
+       <th class="cat-th">İşlem</th>
       </tr>
      </thead>
      <tbody>
@@ -112,9 +117,25 @@ try {
         </td>
         <td class="cat-td cat-td-num cat-td-soft">{cat.sort_order ?? '—'}</td>
         <td class="cat-td">
-         <span class:list={['cat-badge', cat.is_active ? 'cat-badge--ok' : 'cat-badge--muted']}>
+        <span class:list={['cat-badge', cat.is_active ? 'cat-badge--ok' : 'cat-badge--muted']}>
           {cat.is_active ? 'Aktif' : 'Pasif'}
          </span>
+        </td>
+        <td class="cat-td">
+         <button
+          type="button"
+          class="cat-edit"
+          data-cat-edit
+          data-id={cat.id}
+          data-name={cat.name}
+          data-slug={cat.slug}
+          data-description={cat.description || ''}
+          data-meta-title={cat.meta_title || ''}
+          data-meta-description={cat.meta_description || ''}
+          data-is-active={String(cat.is_active)}
+         >
+          Düzenle
+         </button>
         </td>
        </tr>
       ))}
@@ -122,7 +143,105 @@ try {
     </table>
    )}
   </div>
+
+  <dialog class="cat-modal" id="cat-edit-modal">
+   <form method="dialog" class="cat-modal-card" id="cat-edit-form">
+    <div class="cat-modal-head">
+     <div>
+      <p>Kategori CRM</p>
+      <h2>Kategori düzenle</h2>
+     </div>
+     <button type="button" class="cat-modal-close" data-cat-close aria-label="Kapat">×</button>
+    </div>
+    <input type="hidden" name="id" />
+    <label>
+     <span>Kategori adı</span>
+     <input name="name" required maxlength="160" />
+    </label>
+    <label>
+     <span>Slug</span>
+     <input name="slug" required pattern="[a-z0-9-]+" maxlength="180" />
+    </label>
+    <label>
+     <span>Açıklama</span>
+     <textarea name="description" rows="3" maxlength="1000"></textarea>
+    </label>
+    <label>
+     <span>SEO title</span>
+     <input name="meta_title" maxlength="180" />
+    </label>
+    <label>
+     <span>SEO description</span>
+     <textarea name="meta_description" rows="3" maxlength="1000"></textarea>
+    </label>
+    <label class="cat-check">
+     <input type="checkbox" name="is_active" />
+     <span>Aktif kategori</span>
+    </label>
+    <p class="cat-modal-status" data-cat-status></p>
+    <div class="cat-modal-actions">
+     <button type="button" class="cat-action" data-cat-close>Vazgeç</button>
+     <button type="submit" class="cat-save">Kaydet</button>
+    </div>
+   </form>
+  </dialog>
  </div>
+
+ <script>
+  const modal = document.getElementById('cat-edit-modal') as HTMLDialogElement | null;
+  const form = document.getElementById('cat-edit-form') as HTMLFormElement | null;
+  const status = document.querySelector('[data-cat-status]');
+
+  document.querySelectorAll('[data-cat-edit]').forEach((button) => {
+   button.addEventListener('click', () => {
+    if (!modal || !form || !(button instanceof HTMLElement)) return;
+    (form.elements.namedItem('id') as HTMLInputElement).value = button.dataset.id || '';
+    (form.elements.namedItem('name') as HTMLInputElement).value = button.dataset.name || '';
+    (form.elements.namedItem('slug') as HTMLInputElement).value = button.dataset.slug || '';
+    (form.elements.namedItem('description') as HTMLTextAreaElement).value = button.dataset.description || '';
+    (form.elements.namedItem('meta_title') as HTMLInputElement).value = button.dataset.metaTitle || '';
+    (form.elements.namedItem('meta_description') as HTMLTextAreaElement).value = button.dataset.metaDescription || '';
+    (form.elements.namedItem('is_active') as HTMLInputElement).checked = button.dataset.isActive === 'true';
+    if (status) status.textContent = '';
+    modal.showModal();
+   });
+  });
+
+  document.querySelectorAll('[data-cat-close]').forEach((button) => {
+   button.addEventListener('click', () => modal?.close());
+  });
+
+  form?.addEventListener('submit', async (event) => {
+   event.preventDefault();
+   if (!form || !status) return;
+   status.textContent = 'Kaydediliyor...';
+   const body = {
+    id: (form.elements.namedItem('id') as HTMLInputElement).value,
+    name: (form.elements.namedItem('name') as HTMLInputElement).value,
+    slug: (form.elements.namedItem('slug') as HTMLInputElement).value,
+    description: (form.elements.namedItem('description') as HTMLTextAreaElement).value,
+    meta_title: (form.elements.namedItem('meta_title') as HTMLInputElement).value,
+    meta_description: (form.elements.namedItem('meta_description') as HTMLTextAreaElement).value,
+    is_active: (form.elements.namedItem('is_active') as HTMLInputElement).checked,
+   };
+   try {
+    const response = await fetch('/api/admin/crm/categories', {
+     method: 'PATCH',
+     headers: { 'content-type': 'application/json' },
+     body: JSON.stringify(body),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.data?.success) {
+     status.textContent = payload.data?.error || 'Kategori güncellenemedi.';
+     return;
+    }
+    status.textContent = 'Kaydedildi. Sayfa yenileniyor...';
+    window.location.reload();
+   } catch {
+    status.textContent = 'Kategori güncellenemedi.';
+   }
+  });
+ </script>
 
  <style>
   .cat-page { display: flex; flex-direction: column; gap: 1.25rem; }
@@ -220,5 +339,73 @@ try {
   }
   .cat-badge--ok { background: rgba(16,185,129,0.12); color: rgb(5,150,105); }
   .cat-badge--muted { background: rgba(100,116,139,0.12); color: rgb(71,85,105); }
+  .cat-edit, .cat-save {
+   border: 1px solid var(--adm-border);
+   background: var(--adm-text);
+   color: var(--adm-bg);
+   border-radius: 8px;
+   padding: 0.42rem 0.7rem;
+   font-size: 0.78rem;
+   font-weight: 800;
+   cursor: pointer;
+  }
+  .cat-modal {
+   width: min(680px, calc(100vw - 2rem));
+   border: 0;
+   padding: 0;
+   border-radius: 18px;
+   background: transparent;
+  }
+  .cat-modal::backdrop { background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(4px); }
+  .cat-modal-card {
+   display: grid;
+   gap: 0.8rem;
+   background: var(--adm-bg-elev);
+   color: var(--adm-text);
+   border: 1px solid var(--adm-border);
+   border-radius: 18px;
+   padding: 1rem;
+   box-shadow: var(--adm-shadow);
+  }
+  .cat-modal-head {
+   display: flex;
+   justify-content: space-between;
+   align-items: flex-start;
+   gap: 1rem;
+  }
+  .cat-modal-head p {
+   margin: 0;
+   color: var(--adm-text-soft);
+   font-size: 0.7rem;
+   font-weight: 850;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
+  }
+  .cat-modal-head h2 { margin: 0.15rem 0 0; font-size: 1.2rem; }
+  .cat-modal-close {
+   border: 1px solid var(--adm-border);
+   background: var(--adm-bg);
+   color: var(--adm-text);
+   width: 34px;
+   height: 34px;
+   border-radius: 10px;
+   font-size: 1.3rem;
+   cursor: pointer;
+  }
+  .cat-modal-card label { display: grid; gap: 0.35rem; }
+  .cat-modal-card label span { color: var(--adm-text-muted); font-size: 0.78rem; font-weight: 750; }
+  .cat-modal-card input,
+  .cat-modal-card textarea {
+   border: 1px solid var(--adm-border);
+   border-radius: 10px;
+   background: var(--adm-bg);
+   color: var(--adm-text);
+   padding: 0.62rem 0.7rem;
+   font: inherit;
+  }
+  .cat-check { display: flex !important; align-items: center; grid-template-columns: auto 1fr; }
+  .cat-check input { width: 16px; height: 16px; }
+  .cat-modal-status { min-height: 1.2rem; margin: 0; color: var(--adm-text-muted); font-size: 0.82rem; }
+  .cat-modal-actions { display: flex; justify-content: flex-end; gap: 0.55rem; }
  </style>
 </AdminLayout>

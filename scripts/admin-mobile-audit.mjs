@@ -14,10 +14,10 @@
  *   node scripts/admin-mobile-audit.mjs /admin/places # tek sayfa
  */
 import { chromium, devices } from 'playwright';
+import { getAdminCredentials } from './lib/admin-script-auth.mjs';
 
 const BASE = 'https://sanliurfa.com';
-const EMAIL = 'admin@sanliurfa.com';
-const PASS = 'Urfa2026!';
+const { email: EMAIL, password: PASS } = getAdminCredentials();
 
 const ROUTES = [
  '/admin', '/admin/places', '/admin/blog/posts', '/admin/users',

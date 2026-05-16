@@ -46,10 +46,9 @@
  }
  }
  
- // Install prompt handler — yakalayıp daha sonra göstermek için sakla
+ // Install prompt handler — native banner davranışını engellemeden butonu hazırla.
  let deferredInstallPrompt: any = null;
  window.addEventListener('beforeinstallprompt', (e) => {
-   e.preventDefault();
    deferredInstallPrompt = e;
    // Custom install butonu visible yap
    document.querySelectorAll<HTMLButtonElement>('[data-pwa-install]').forEach((btn) => {

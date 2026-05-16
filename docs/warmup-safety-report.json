@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-05-15T12:07:50.146Z",
+  "status": "ok",
+  "policy": {
+    "warmupMayOpenPorts": false,
+    "warmupMayStartDevServer": false,
+    "warmupShouldOnlyFetchExistingBaseUrl": true
+  },
+  "checks": [
+    {
+      "rel": "scripts/cache-warm.mjs",
+      "exists": true,
+      "startsServer": false,
+      "nullPathRisk": false,
+      "ok": true
+    },
+    {
+      "rel": "scripts/cache-warmup.sh",
+      "exists": true,
+      "startsServer": false,
+      "nullPathRisk": false,
+      "ok": true
+    },
+    {
+      "rel": "scripts/prod-cwp-ops.sh",
+      "exists": true,
+      "startsServer": false,
+      "nullPathRisk": false,
+      "ok": true
+    }
+  ]
+}

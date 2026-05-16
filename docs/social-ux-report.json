@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-05-15T12:08:14.047Z",
+  "status": "ok",
+  "summary": {
+    "checkCount": 6,
+    "passed": 6,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "id": "profile-sidebar-social-links",
+      "label": "Profil yan menüsünde sosyal/üyelik linkleri",
+      "file": "src/components/profile/ProfileSidebar.astro",
+      "status": "ok",
+      "missing": []
+    },
+    {
+      "id": "profile-membership-hub",
+      "label": "Profil panelinde üyelik ve sosyal merkez",
+      "file": "src/pages/profil/index.astro",
+      "status": "ok",
+      "missing": []
+    },
+    {
+      "id": "settings-privacy-social",
+      "label": "Ayarlar sayfasında gizlilik ve sosyal görünürlük özeti",
+      "file": "src/pages/profil/ayarlar/index.astro",
+      "status": "ok",
+      "missing": []
+    },
+    {
+      "id": "match-experience-guidance",
+      "label": "Eşleşme ekranında kota, boş durum ve neden önerildi açıklamaları",
+      "file": "src/components/SwipeMatchExperience.tsx",
+      "status": "ok",
+      "missing": []
+    },
+    {
+      "id": "messaging-safety-starters",
+      "label": "Mesajlaşmada güvenlik aksiyonları ve hazır başlangıçlar",
+      "file": "src/components/MessagingInbox.tsx",
+      "status": "ok",
+      "missing": []
+    },
+    {
+      "id": "quota-reset-backend",
+      "label": "Swipe kota API reset zamanı döndürüyor",
+      "file": "src/lib/social/matchmaking-db.ts",
+      "status": "ok",
+      "missing": []
+    }
+  ]
+}

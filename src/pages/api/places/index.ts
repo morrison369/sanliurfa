@@ -1,6 +1,6 @@
 // API: Mekan listesi (PostgreSQL + Redis cache)
 import type { APIRoute } from 'astro';
-import { query, insert, queryRead } from '../../../lib/postgres';
+import { insert, queryRead } from '../../../lib/postgres';
 import { getCache, setCache, deleteCachePattern } from '../../../lib/cache';
 import { logger } from '../../../lib/logging';
 import { resolveContentImage } from '../../../lib/content-images';

@@ -116,7 +116,7 @@ export const migration = {
     console.log(`  📊 user_activities toplam: ${total.rows[0].c}`);
   },
 
-  async down(pool: any) {
+  async down(_pool: any) {
     // Sadece backfill ile eklenenleri sil (existing manual 12 kalsın)
     // Heuristic: bu migration'ın backfill yaptığı türlerden eski/aynı saniye row'lar
     console.log('  ⊘ down() no-op: backfill geri alınmaz (idempotent UP)');

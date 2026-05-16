@@ -5,6 +5,7 @@ import net from 'node:net';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { createRequire } from 'node:module';
+import { getAdminCredentials, readRequiredEnv } from './lib/admin-script-auth.mjs';
 
 const require = createRequire(import.meta.url);
 const { Client: SshClient } = require('ssh2');
@@ -26,7 +27,11 @@ loadEnv(path.join(scriptDir, '.env.scripts'));
 loadEnv(path.join(projectRoot, '.env'));
 
 const LOCAL_TUNNEL_PORT = 15728;
-const NEW_PASSWORD = 'Urfa2026!';
+const { email: ADMIN_EMAIL } = getAdminCredentials();
+const NEW_PASSWORD = readRequiredEnv(
+  'NEW_ADMIN_PASSWORD',
+  'Yeni şifreyi repo dışında tutmak için NEW_ADMIN_PASSWORD env değişkenini kullanın.'
+);
 
 function openSshTunnel() {
   return new Promise((resolve, reject) => {
@@ -55,8 +60,8 @@ async function main() {
   await db.connect();
 
   const r = await db.query(
-    `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = 'admin@sanliurfa.com' AND role = 'admin' RETURNING email`,
-    [hash]
+    `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2 AND role = 'admin' RETURNING email`,
+    [hash, ADMIN_EMAIL]
   );
 
   if (r.rowCount > 0) {

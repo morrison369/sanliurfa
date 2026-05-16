@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-05-15T12:07:47.437Z",
+  "status": "waiting",
+  "policy": {
+    "automaticDropAllowed": false,
+    "automaticMigrationGenerationAllowed": false,
+    "earliestActionAt": "2026-05-29T12:07:47.159Z",
+    "actionWindowOpen": false
+  },
+  "summary": {
+    "candidateCount": 2,
+    "readyForManualPrCount": 0,
+    "waitingForEvidenceCount": 2,
+    "runtimeHoldCount": 1
+  },
+  "candidates": [
+    {
+      "table": "public.campaign_metrics",
+      "owner": "marketing campaign analytics",
+      "status": "waiting_for_evidence",
+      "missingEvidence": [
+        "observationWindowComplete"
+      ],
+      "evidence": {
+        "observationWindowComplete": false,
+        "runtimeReferencesClear": true,
+        "migrationSourceKnown": true,
+        "rollbackPlanRequired": true,
+        "ownerKnown": true
+      },
+      "recommendedAction": "Continue observation; do not create destructive migration."
+    },
+    {
+      "table": "public.campaign_segments",
+      "owner": "marketing campaign targeting",
+      "status": "waiting_for_evidence",
+      "missingEvidence": [
+        "observationWindowComplete"
+      ],
+      "evidence": {
+        "observationWindowComplete": false,
+        "runtimeReferencesClear": true,
+        "migrationSourceKnown": true,
+        "rollbackPlanRequired": true,
+        "ownerKnown": true
+      },
+      "recommendedAction": "Continue observation; do not create destructive migration."
+    }
+  ],
+  "runtimeHolds": [
+    {
+      "table": "public.campaign_performance",
+      "owner": "email/marketing campaign performance",
+      "status": "runtime_hold",
+      "runtimeReferenceCount": 2,
+      "recommendedAction": "Once runtime references are removed or migrated, re-run db:retirement:observe."
+    }
+  ]
+}

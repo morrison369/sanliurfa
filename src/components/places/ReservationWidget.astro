@@ -43,7 +43,7 @@ const maxDateStr = maxDate.toISOString().slice(0, 10);
       Rezervasyon için giriş yap
     </a>
   ) : (
-    <form class="rsv-form" data-place-id={placeId} onsubmit="return window.__sfReserve(event, this)">
+    <form class="rsv-form" data-place-id={placeId}>
       <div class="rsv-msg" data-rsv-msg hidden></div>
       <div class="rsv-fields">
         <div class="rsv-row">
@@ -101,9 +101,11 @@ const maxDateStr = maxDate.toISOString().slice(0, 10);
 </style>
 
 <script is:inline>
-  window.__sfReserve = async (e, form) => {
+  if (!window.__sfReserve) {
+    window.__sfReserve = async (e, form) => {
     e.preventDefault();
     const btn = form.querySelector('button[type="submit"]');
+    if (!(btn instanceof HTMLButtonElement)) return;
     const data = Object.fromEntries(new FormData(form));
     data.placeId = form.dataset.placeId;
     data.party_size = parseInt(data.party_size, 10);
@@ -147,6 +149,14 @@ const maxDateStr = maxDate.toISOString().slice(0, 10);
       btn.textContent = 'Rezervasyon Talebi Gönder';
       alert('Hata: ' + (err.message || err));
     }
-    return false;
-  };
+    };
+  }
+
+  document.querySelectorAll('.rsv-form').forEach((reservationForm) => {
+    if (reservationForm.dataset.bound === '1') return;
+    reservationForm.dataset.bound = '1';
+    reservationForm.addEventListener('submit', (event) => {
+      window.__sfReserve(event, reservationForm);
+    });
+  });
 </script>

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Cache Warm-up Script
-# Pre-populates CDN cache with critical pages after deployment
+# PM2 restart sonrasinda local route/static cache'i kritik sayfalarla isitır.
 
 set -e
 
@@ -32,6 +32,7 @@ CRITICAL_PAGES=(
     "/"
     "/hakkinda"
     "/iletisim"
+    "/yayin-politikasi"
     "/gizlilik-politikasi"
     "/kullanim-kosullari"
 )
@@ -152,15 +153,14 @@ warmup_sitemap() {
     done
 }
 
-# Check CDN cache status
-check_cdn_cache() {
-    log "Checking CDN cache status..."
-    
-    local cache_status=$(curl -s -I "${BASE_URL}/" | grep -i "cf-cache-status" || echo "No CF-Cache-Status header")
-    log "CDN Status: $cache_status"
-    
-    # Also check Age header if present
-    local age=$(curl -s -I "${BASE_URL}/" | grep -i "age" || echo "No Age header")
+# Check cache headers
+check_cache_headers() {
+    log "Checking local/static cache headers..."
+
+    local cache_control=$(curl -s -I "${BASE_URL}/" | grep -i "^cache-control:" || echo "No Cache-Control header")
+    log "Cache-Control: $cache_control"
+
+    local age=$(curl -s -I "${BASE_URL}/" | grep -i "^age:" || echo "No Age header")
     log "Cache Age: $age"
 }
 
@@ -194,7 +194,7 @@ main() {
     warmup_static
     warmup_api
     warmup_sitemap
-    check_cdn_cache
+    check_cache_headers
     
     local end_time=$(date +%s)
     local duration=$((end_time - start_time))

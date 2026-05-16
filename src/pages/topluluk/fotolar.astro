@@ -4,32 +4,54 @@ import Image from '../../components/Image.astro';
 import { Icon } from 'astro-icon/components';
 import { query } from '../../lib/postgres';
 import { getPublicAppUrl } from '../../lib/public-app-url';
+import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import { logger } from '../../lib/logging';
 
 const baseUrl = getPublicAppUrl();
 const isAuthenticated = Boolean(Astro.locals.user);
 
-let photos: any[] = [];
-let totalCount = 0;
+type CommunityPhotoRow = {
+  id: string;
+  full_name?: string | null;
+  username?: string | null;
+  avatar_url?: string | null;
+  caption?: string | null;
+  file_path: string;
+  like_count?: number | string | null;
+  view_count?: number | string | null;
+  location?: string | null;
+};
 
-try {
-  const [photosResult, countResult] = await Promise.all([
-    query(
-      `SELECT cp.*, u.full_name, u.username, u.avatar_url
-       FROM community_photos cp
-       JOIN users u ON u.id = cp.user_id
-       WHERE cp.status = 'approved'
-       ORDER BY cp.created_at DESC
-       LIMIT 24`,
-      []
-    ),
-    query("SELECT COUNT(*)::int AS count FROM community_photos WHERE status = 'approved'", []),
-  ]);
-  photos = photosResult.rows;
-  totalCount = parseInt(countResult.rows[0]?.count || '0');
-} catch (e) {
-  logger.error('Community photos load error:', e instanceof Error ? e : new Error(String(e)));
-}
+const communityPhotoData = await getCachedPublicRouteData(
+  'page:topluluk:fotolar:index',
+  async (): Promise<{ photos: CommunityPhotoRow[]; totalCount: number }> => {
+    try {
+      const [photosResult, countResult] = await Promise.all([
+        query(
+          `SELECT cp.*, u.full_name, u.username, u.avatar_url
+           FROM community_photos cp
+           JOIN users u ON u.id = cp.user_id
+           WHERE cp.status = 'approved'
+           ORDER BY cp.created_at DESC
+           LIMIT 24`,
+          []
+        ),
+        query("SELECT COUNT(*)::int AS count FROM community_photos WHERE status = 'approved'", []),
+      ]);
+
+      return {
+        photos: (photosResult.rows || []) as CommunityPhotoRow[],
+        totalCount: Number.parseInt(String(countResult.rows[0]?.count || '0'), 10),
+      };
+    } catch (e) {
+      logger.error('Community photos load error:', e instanceof Error ? e : new Error(String(e)));
+      return { photos: [], totalCount: 0 };
+    }
+  }
+);
+
+const photos = communityPhotoData.photos;
+const totalCount = communityPhotoData.totalCount;
 
 const seo = {
   title: 'Şanlıurfa Topluluk Fotoğrafları',
@@ -117,7 +139,14 @@ const seo = {
                 <div class="cf-user">
                   <div class="cf-avatar">
                     {photo.avatar_url ? (
-                      <Image src={photo.avatar_url} alt={photo.full_name} class="cf-avatar-img" width={28} height={28} loading="lazy" />
+                      <Image
+                        src={photo.avatar_url}
+                        alt={photo.full_name || photo.username || 'Topluluk üyesi'}
+                        class="cf-avatar-img"
+                        width={28}
+                        height={28}
+                        loading="lazy"
+                      />
                     ) : (
                       <Icon name="lucide:user" style="width:100%;height:100%;padding:.25rem;color:var(--public-muted)" />
                     )}
@@ -126,7 +155,7 @@ const seo = {
                 </div>
                 {photo.caption && <p class="cf-caption">{photo.caption}</p>}
                 <div class="cf-meta">
-                  <button class="cf-like-btn" data-photo-id={photo.id} onclick={`toggleLike(this,'${photo.id}')`}>
+                  <button class="cf-like-btn" data-photo-id={photo.id} onclick={`window.toggleLike(this,'${photo.id}')`}>
                     <Icon name="lucide:heart" style="width:.9rem;height:.9rem" />
                     <span class="like-count">{photo.like_count || 0}</span>
                   </button>
@@ -150,7 +179,7 @@ const seo = {
   </div>
 
   <script is:inline>
-  async function toggleLike(btn, photoId) {
+  window.toggleLike = async (btn, photoId) => {
     if (!btn || !photoId) return;
     try {
       const res = await fetch(`/api/community/photos/${photoId}?action=like`, { method: 'POST' });
@@ -162,7 +191,7 @@ const seo = {
       const icon = btn.querySelector('svg');
       if (icon) icon.style.color = data.data?.liked ? '#e05263' : '';
     } catch {}
-  }
+  };
   // Track views on scroll
   if ('IntersectionObserver' in window) {
     const seen = new Set();

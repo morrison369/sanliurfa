@@ -18,16 +18,19 @@ import { queryRead as query } from '../lib/postgres';
 import { getSiteBranding } from '../lib/site-branding';
 import { logger } from '../lib/logging';
 import { ILCE_GEZI_REHBERI } from '../data/ilce-gezi-rehberi';
+import { flattenClassifiedCategories } from '../data/classified-categories';
 import {
   buildUrlsetXml,
   SITEMAP_CACHE_HEADERS,
   toIsoLastmod,
   resolveImageUrl,
+  withSitemapSourceFallback,
   type SitemapEntry,
   type ChangeFreq,
 } from '../lib/sitemap/sitemap-helpers';
 
 const NEWS_WINDOW_HOURS = 48;
+const SITEMAP_VERBOSE = process.env.SITEMAP_VERBOSE === '1';
 
 type SitemapName =
   | 'pages' | 'categories' | 'ilceler' | 'places' | 'historical'
@@ -108,6 +111,7 @@ function buildPagesEntries(nowIso: string): SitemapEntry[] {
     { url: '/saglik/nobetci-eczaneler', priority: 0.8, changefreq: 'daily' },
     { url: '/emlak/satilik-daire', priority: 0.7, changefreq: 'daily' },
     { url: '/emlak/kiralik-daire', priority: 0.7, changefreq: 'daily' },
+    { url: '/ilanlar', priority: 0.75, changefreq: 'daily' },
   ];
 
   const institutionalPages: Static[] = [
@@ -115,6 +119,7 @@ function buildPagesEntries(nowIso: string): SitemapEntry[] {
     { url: '/iletisim', priority: 0.4, changefreq: 'monthly' },
     { url: '/kunye', priority: 0.45, changefreq: 'monthly' },
     { url: '/yazarlar', priority: 0.5, changefreq: 'monthly' },
+    { url: '/yayin-politikasi', priority: 0.5, changefreq: 'monthly' },
     { url: '/sss', priority: 0.5, changefreq: 'monthly' },
     { url: '/gizlilik-politikasi', priority: 0.2, changefreq: 'yearly' },
     { url: '/kullanim-kosullari', priority: 0.2, changefreq: 'yearly' },
@@ -123,7 +128,14 @@ function buildPagesEntries(nowIso: string): SitemapEntry[] {
     { url: '/fiyatlandirma', priority: 0.4, changefreq: 'monthly' },
   ];
 
-  return [...corPages, ...categoryHubs, ...landingPages, ...institutionalPages]
+  const classifiedPages: Static[] = flattenClassifiedCategories()
+    .map((category) => ({
+      url: `/ilanlar/kategori/${category.slug}`,
+      priority: category.depth === 0 ? 0.72 : 0.68,
+      changefreq: 'daily' as ChangeFreq,
+    }));
+
+  return [...corPages, ...categoryHubs, ...landingPages, ...classifiedPages, ...institutionalPages]
     .map((p) => ({ url: p.url, lastmod: nowIso, changefreq: p.changefreq, priority: p.priority }));
 }
 
@@ -266,7 +278,7 @@ async function buildBlogEntries(nowIso: string, baseUrl: string, siteName: strin
     query(`
       SELECT slug, published_at, updated_at, title, featured_image, excerpt
       FROM blog_posts
-      WHERE status = 'published' AND published_at <= CURRENT_DATE
+      WHERE status = 'published' AND published_at <= NOW()
       ORDER BY published_at DESC
     `).catch(() => ({ rows: [] })),
     query(`
@@ -349,7 +361,11 @@ export const GET: APIRoute = async ({ params }) => {
   }
 
   const start = Date.now();
-  const { baseUrl, siteName } = await getSiteBranding();
+  const { baseUrl, siteName } = await withSitemapSourceFallback(
+    () => getSiteBranding(),
+    { siteName: 'Sanliurfa.com', baseUrl: 'https://sanliurfa.com' },
+    { label: `sitemap:${name}:branding`, timeoutMs: 600 },
+  );
   const nowIso = new Date().toISOString();
   const safeSiteName = siteName ?? 'Sanliurfa.com';
 
@@ -360,16 +376,56 @@ export const GET: APIRoute = async ({ params }) => {
     switch (name) {
       case 'pages':       entries = buildPagesEntries(nowIso); break;
       case 'guides':      entries = buildGuidesEntries(nowIso); break;
-      case 'categories':  entries = await buildCategoriesEntries(nowIso); break;
-      case 'ilceler':     entries = await buildIlcelerEntries(nowIso); break;
-      case 'places':      entries = await buildPlacesEntries(nowIso, baseUrl); break;
-      case 'historical':  entries = await buildHistoricalEntries(nowIso, baseUrl); break;
+      case 'categories':
+        entries = await withSitemapSourceFallback(
+          () => buildCategoriesEntries(nowIso),
+          [],
+          { label: 'sitemap:categories:entries' },
+        );
+        break;
+      case 'ilceler':
+        entries = await withSitemapSourceFallback(
+          () => buildIlcelerEntries(nowIso),
+          [],
+          { label: 'sitemap:ilceler:entries' },
+        );
+        break;
+      case 'places':
+        entries = await withSitemapSourceFallback(
+          () => buildPlacesEntries(nowIso, baseUrl),
+          [],
+          { label: 'sitemap:places:entries' },
+        );
+        break;
+      case 'historical':
+        entries = await withSitemapSourceFallback(
+          () => buildHistoricalEntries(nowIso, baseUrl),
+          [],
+          { label: 'sitemap:historical:entries' },
+        );
+        break;
       case 'blog':
-        entries = await buildBlogEntries(nowIso, baseUrl, safeSiteName);
+        entries = await withSitemapSourceFallback(
+          () => buildBlogEntries(nowIso, baseUrl, safeSiteName),
+          [],
+          { label: 'sitemap:blog:entries' },
+        );
         withNewsNs = true;
         break;
-      case 'events':      entries = await buildEventsEntries(nowIso); break;
-      case 'recipes':     entries = await buildRecipesEntries(nowIso, baseUrl); break;
+      case 'events':
+        entries = await withSitemapSourceFallback(
+          () => buildEventsEntries(nowIso),
+          [],
+          { label: 'sitemap:events:entries' },
+        );
+        break;
+      case 'recipes':
+        entries = await withSitemapSourceFallback(
+          () => buildRecipesEntries(nowIso, baseUrl),
+          [],
+          { label: 'sitemap:recipes:entries' },
+        );
+        break;
     }
   } catch (err) {
     logger.error(`Sitemap ${name} build error`, err instanceof Error ? err : new Error(String(err)));
@@ -377,7 +433,9 @@ export const GET: APIRoute = async ({ params }) => {
 
   const xml = buildUrlsetXml(entries, baseUrl, { news: withNewsNs });
   const ms = Date.now() - start;
-  logger.info('Sitemap section served', { section: name, urls: entries.length, ms });
+  if (SITEMAP_VERBOSE) {
+    logger.info('Sitemap section served', { section: name, urls: entries.length, ms });
+  }
 
   return new Response(xml, {
     headers: {

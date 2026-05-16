@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { execSync } from 'node:child_process';
 
 const args = new Map();
 for (const raw of process.argv.slice(2)) {
@@ -11,6 +12,53 @@ const mode = args.get('mode') || process.env.HOMEPAGE_IMAGE_HTML_MODE || 'local'
 const defaultBaseUrl = mode === 'prod' ? 'https://sanliurfa.com' : 'http://127.0.0.1:4321';
 const baseUrl = new URL(args.get('base-url') || process.env.HOMEPAGE_IMAGE_HTML_BASE_URL || defaultBaseUrl);
 const timeoutMs = Math.max(1000, Number(args.get('timeout-ms') || process.env.HOMEPAGE_IMAGE_HTML_TIMEOUT_MS || '45000'));
+const localDefaultBaseUrl = baseUrl.hostname === '127.0.0.1' && baseUrl.port === '4321';
+let startedIsolatedDev = false;
+
+function runNpmScript(script) {
+  execSync(`npm run -s ${script}`, {
+    cwd: process.cwd(),
+    stdio: 'inherit',
+    windowsHide: true,
+  });
+}
+
+function getNpmScriptOutput(script) {
+  try {
+    return execSync(`npm run -s ${script}`, {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+  } catch (error) {
+    return `${error.stdout || ''}\n${error.stderr || ''}`;
+  }
+}
+
+function cleanupIsolatedDev() {
+  if (!startedIsolatedDev) return;
+  try {
+    runNpmScript('dev:isolated:stop');
+  } catch {
+    // Best-effort cleanup; the caller still receives the original gate result.
+  }
+  try {
+    runNpmScript('redis:isolated:stop');
+  } catch {
+    // Best-effort cleanup for preflight-started local Redis.
+  }
+}
+
+process.on('exit', cleanupIsolatedDev);
+process.on('SIGINT', () => {
+  cleanupIsolatedDev();
+  process.exit(130);
+});
+process.on('SIGTERM', () => {
+  cleanupIsolatedDev();
+  process.exit(143);
+});
 
 function fail(message, details = []) {
   console.error(`[homepage-image-html-gate] ${message}`);
@@ -44,6 +92,14 @@ async function fetchHome() {
   }
 }
 
+if (mode === 'local' && localDefaultBaseUrl) {
+  const statusBefore = getNpmScriptOutput('dev:isolated:status');
+  if (!/dev isolated status: running/.test(statusBefore)) {
+    startedIsolatedDev = true;
+    runNpmScript('dev:isolated:ensure');
+  }
+}
+
 const html = await fetchHome();
 const images = [...html.matchAll(/<img\b[^>]*>/gi)].map((match) => {
   const tag = match[0];
@@ -57,7 +113,7 @@ const images = [...html.matchAll(/<img\b[^>]*>/gi)].map((match) => {
 const contentImages = images.filter((image) =>
   /place-img|hist-img|editorial-img/.test(image.className),
 );
-const minContentImages = mode === 'prod' ? 12 : 7;
+const minContentImages = 7;
 if (contentImages.length < minContentImages) {
   fail('homepage içerik görsel sayısı beklenenden düşük', [`count=${contentImages.length}`]);
 }

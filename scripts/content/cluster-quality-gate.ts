@@ -123,7 +123,9 @@ async function main() {
         details: { filePath: pageCheck.filePath },
       });
     }
-    if (!content.includes('<Layout seo={seo}>')) {
+    const hasLayoutSeoBinding =
+      content.includes('<Layout seo={seo}>') || /<ListingTemplate\s+seo=\{seo\}/.test(content);
+    if (!hasLayoutSeoBinding) {
       issues.push({
         code: 'missing_layout_seo_binding',
         message: 'Layout seo binding bulunamadı',

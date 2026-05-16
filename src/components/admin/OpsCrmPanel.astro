@@ -1,0 +1,46 @@
+---
+import SharedCrmLivePanel from './SharedCrmLivePanel.astro';
+import { getOpsPanelConfig, type OpsMode } from '../../lib/admin/crm-live-panel-config';
+
+interface Props {
+  mode: OpsMode;
+}
+
+const { mode } = Astro.props as Props;
+const config = getOpsPanelConfig(mode);
+---
+
+<SharedCrmLivePanel
+  panelClass="crm-ops-crm"
+  dataAttrName="data-ops-crm"
+  dataAttrValue={config.resource}
+  title={config.title}
+  description={config.description}
+  loadAttr="data-ops-load"
+>
+  <div slot="toolbar" class="crm-live-toolbar">
+    <input type="search" data-ops-search placeholder="Ad, slug, konum veya adres ara..." />
+    <select data-ops-filter>
+      <option value="all">Tüm kayıtlar</option>
+      {config.filterOptions.map(([value, label]) => <option value={value}>{label}</option>)}
+    </select>
+    <button type="button" data-ops-load>Filtrele</button>
+  </div>
+  <div slot="table" class="crm-table-wrap">
+    <table class="crm-table crm-live-table">
+      <thead>
+        <tr>
+          <th>Ad</th>
+          <th>Slug</th>
+          <th>{config.tertiaryColumn}</th>
+          <th>{config.quaternaryColumn}</th>
+          <th>Kalite</th>
+          <th>Aksiyon</th>
+        </tr>
+      </thead>
+      <tbody data-ops-body>
+        <tr><td colspan="6">Veri yüklemek için butona basın.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</SharedCrmLivePanel>

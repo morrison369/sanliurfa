@@ -45,6 +45,11 @@ const days = [
  </a>
 
  <div class="plf-wrap">
+ <nav class="plf-tabs" aria-label="Mekan form sekmeleri">
+  {['Genel Bilgiler', 'İletişim', 'Çalışma Saatleri', 'Lokasyon', 'Medya / SEO', 'Durum / Bot Önerileri'].map((tab, index) => (
+   <button type="button" class:list={['plf-tab', index === 0 && 'plf-tab--active']} data-place-form-tab={tab}>{tab}</button>
+  ))}
+ </nav>
  <form action="/api/admin/places/create" method="POST" class="grid lg:grid-cols-3 gap-6" enctype="multipart/form-data">
  <div class="lg:col-span-2 space-y-5">
  <div class="bg-[var(--bg-card)] border border-[var(--adm-border)] rounded-sm p-6">
@@ -61,6 +66,33 @@ const days = [
  placeholder="Örn: Ciğerci Aziz Usta"
  />
  </div>
+
+ <script is:inline>
+  const placeTabButtons = Array.from(document.querySelectorAll('[data-place-form-tab]'));
+  const placeCards = Array.from(document.querySelectorAll('.plf-wrap form > div > div, .plf-wrap form > aside > div'));
+  const tabMatchers = {
+   'Genel Bilgiler': ['Temel Bilgiler'],
+   'İletişim': ['İletişim Bilgileri'],
+   'Çalışma Saatleri': ['Çalışma Saatleri'],
+   'Lokasyon': ['Konum'],
+   'Medya / SEO': ['Fotoğraflar', 'SEO', 'Olanaklar', 'Etiketler'],
+   'Durum / Bot Önerileri': ['Yayınla', 'Bot', 'Durum'],
+  };
+  function cardTitle(card) {
+   return (card.querySelector('h2,h3')?.textContent || '').trim();
+  }
+  function showPlaceTab(tab) {
+   placeTabButtons.forEach((btn) => btn.classList.toggle('plf-tab--active', btn.dataset.placeFormTab === tab));
+   const needles = tabMatchers[tab] || [];
+   placeCards.forEach((card) => {
+    const title = cardTitle(card);
+    const show = needles.some((needle) => title.includes(needle));
+    card.hidden = !show;
+   });
+  }
+  placeTabButtons.forEach((btn) => btn.addEventListener('click', () => showPlaceTab(btn.dataset.placeFormTab)));
+  showPlaceTab('Genel Bilgiler');
+ </script>
 
  <div class="grid sm:grid-cols-2 gap-4">
  <div>
@@ -395,7 +427,7 @@ const days = [
 
  <style>
   .plf-wrap { display: flex; flex-direction: column; gap: 1.25rem; }
-  .plf-back {
+ .plf-back {
    display: inline-flex; align-items: center; gap: 0.4rem;
    padding: 0.5rem 1rem;
    background: var(--adm-bg-elev);
@@ -405,7 +437,34 @@ const days = [
    border-radius: 8px;
    text-decoration: none;
    transition: all 0.15s;
-  }
+ }
+ .plf-tabs {
+  position: sticky;
+  top: 60px;
+  z-index: 5;
+  display: flex;
+  gap: .35rem;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+  padding: .35rem;
+  border: 1px solid var(--adm-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--adm-bg-elev) 92%, transparent);
+  backdrop-filter: blur(12px);
+ }
+ .plf-tab {
+  white-space: nowrap;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--adm-text-muted);
+  padding: .55rem .8rem;
+  font-size: .82rem;
+  font-weight: 800;
+  cursor: pointer;
+ }
+ .plf-tab:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+ .plf-tab--active { background: var(--adm-text); color: var(--adm-bg); }
   .plf-back:hover { border-color: var(--adm-accent); color: var(--adm-accent); }
  </style>
 </AdminLayout>

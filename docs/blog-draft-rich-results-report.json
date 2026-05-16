@@ -1,0 +1,1027 @@
+{
+  "generatedAt": "2026-05-15T12:12:30.262Z",
+  "status": "ok",
+  "note": "Google Rich Results Test icin resmi public API yok; bu rapor local schema/visible-content parity kontrolu yapar ve deploy sonrasi manuel test URLleri uretir.",
+  "policy": {
+    "visibleContentParity": true,
+    "schemaTypes": [
+      "BlogPosting",
+      "FAQPage",
+      "BreadcrumbList"
+    ],
+    "noAutoPublish": true,
+    "minWords": 1200,
+    "h2Range": [
+      3,
+      7
+    ],
+    "faqMinimum": 2
+  },
+  "summary": {
+    "drafts": 40,
+    "ok": 40,
+    "review": 0
+  },
+  "results": [
+    {
+      "slug": "balikligol-cevresi-yuruyus-rotasi-2026",
+      "title": "Balıklıgöl Çevresi Yürüyüş Rotası 2026: Dergah, Çarşı ve Gümrük Hanı Planı",
+      "status": "ok",
+      "wordCount": 2096,
+      "h2Count": 7,
+      "faqCount": 5,
+      "answerBlockWordCounts": [
+        44,
+        37,
+        41,
+        41,
+        32,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fbalikligol-cevresi-yuruyus-rotasi-2026",
+      "issues": []
+    },
+    {
+      "slug": "birecik-kelaynak-firat-gezi-rotasi",
+      "title": "Birecik Kelaynak ve Fırat Günübirlik Gezi Rotası",
+      "status": "ok",
+      "wordCount": 1839,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        32,
+        36,
+        34,
+        31,
+        24,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fbirecik-kelaynak-firat-gezi-rotasi",
+      "issues": []
+    },
+    {
+      "slug": "bozova-ataturk-baraji-gunubirlik-gezi",
+      "title": "Bozova ve Atatürk Barajı Günübirlik Gezi Rotası",
+      "status": "ok",
+      "wordCount": 1683,
+      "h2Count": 7,
+      "faqCount": 4,
+      "answerBlockWordCounts": [
+        40,
+        39,
+        35,
+        39,
+        34,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fbozova-ataturk-baraji-gunubirlik-gezi",
+      "issues": []
+    },
+    {
+      "slug": "haleplibahce-mozaik-muzesi-rehberi",
+      "title": "Haleplibahçe Mozaik Müzesi Rehberi",
+      "status": "ok",
+      "wordCount": 1595,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        36,
+        36,
+        36,
+        39,
+        39,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fhaleplibahce-mozaik-muzesi-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "halfeti-tekne-turu-rehberi-2026",
+      "title": "Halfeti Tekne Turu Rehberi 2026: Rumkale, Savaşan Köyü ve Siyah Gül Rotası",
+      "status": "ok",
+      "wordCount": 2022,
+      "h2Count": 7,
+      "faqCount": 5,
+      "answerBlockWordCounts": [
+        37,
+        34,
+        30,
+        31,
+        33,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fhalfeti-tekne-turu-rehberi-2026",
+      "issues": []
+    },
+    {
+      "slug": "harran-konik-evleri-fotograf-gezi-rehberi",
+      "title": "Harran Konik Evleri Fotoğraf ve Gezi Rehberi: Işık, Rota ve Ziyaret İpuçları",
+      "status": "ok",
+      "wordCount": 1658,
+      "h2Count": 7,
+      "faqCount": 4,
+      "answerBlockWordCounts": [
+        37,
+        36,
+        32,
+        40,
+        23,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fharran-konik-evleri-fotograf-gezi-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "karahantepe-tas-tepeler-rehberi-2026",
+      "title": "Karahantepe ve Taş Tepeler Rehberi 2026: Göbeklitepe’den Sonra Nereye Gidilir?",
+      "status": "ok",
+      "wordCount": 1907,
+      "h2Count": 7,
+      "faqCount": 5,
+      "answerBlockWordCounts": [
+        38,
+        33,
+        34,
+        32,
+        31,
+        19,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fkarahantepe-tas-tepeler-rehberi-2026",
+      "issues": []
+    },
+    {
+      "slug": "kizilkoyun-nekropolu-gezi-rehberi",
+      "title": "Kızılkoyun Nekropolü Gezi Rehberi: Kaya Mezarları ve Fotoğraf Noktaları",
+      "status": "ok",
+      "wordCount": 1565,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        39,
+        30,
+        32,
+        30,
+        32,
+        20,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fkizilkoyun-nekropolu-gezi-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-2-gunluk-gezi-plani-2026",
+      "title": "Şanlıurfa 2 Günlük Gezi Planı 2026: İlk Kez Gelenler İçin Gün Gün Rota",
+      "status": "ok",
+      "wordCount": 2017,
+      "h2Count": 7,
+      "faqCount": 4,
+      "answerBlockWordCounts": [
+        39,
+        35,
+        39,
+        32,
+        22,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-2-gunluk-gezi-plani-2026",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-arkeoloji-muzesi-derin-rehber",
+      "title": "Şanlıurfa Arkeoloji Müzesi Derin Rehber: Ne Görülür, Kaç Saat Ayrılır?",
+      "status": "ok",
+      "wordCount": 1688,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        38,
+        36,
+        31,
+        25,
+        22,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-arkeoloji-muzesi-derin-rehber",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi",
+      "title": "Şanlıurfa Bilim Merkezi ve Çocuklarla Teknoloji Gezisi",
+      "status": "ok",
+      "wordCount": 1812,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        37,
+        34,
+        38,
+        33,
+        23,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-carsilari-rehberi",
+      "title": "Şanlıurfa Çarşıları Rehberi: Bakırcılar, Gümrük Hanı ve Baharatçılar",
+      "status": "ok",
+      "wordCount": 1669,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        34,
+        36,
+        32,
+        33,
+        21,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-carsilari-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-cografi-isaretli-lezzetler",
+      "title": "Şanlıurfa’da Coğrafi İşaretli Lezzetler Rehberi: Keme, Pencer, İsot ve Sadeyağ",
+      "status": "ok",
+      "wordCount": 1637,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        38,
+        35,
+        35,
+        35,
+        24,
+        20,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-cografi-isaretli-lezzetler",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-fotograf-rotasi",
+      "title": "Şanlıurfa Fotoğraf Rotası: Gün Doğumu, Gün Batımı ve Gece Çekimleri",
+      "status": "ok",
+      "wordCount": 1776,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        35,
+        35,
+        32,
+        23,
+        24,
+        24,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-fotograf-rotasi",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-gap-havalimani-ulasim-rehberi",
+      "title": "Şanlıurfa GAP Havalimanı Ulaşım Rehberi: Merkez, Siverek ve Etkinlik Dönemi Planı",
+      "status": "ok",
+      "wordCount": 1777,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        38,
+        33,
+        39,
+        29,
+        23,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-gap-havalimani-ulasim-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir",
+      "title": "Şanlıurfa’da Resmi Kaynaklarla Güncel Gezi Bilgisi Nasıl Kontrol Edilir?",
+      "status": "ok",
+      "wordCount": 1785,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        40,
+        38,
+        35,
+        35,
+        21,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-hediyelik-alisveris-rehberi",
+      "title": "Şanlıurfa Hediyelik ve Yerel Alışveriş Rehberi: İsot, Bakır, Mırra ve Çarşılar",
+      "status": "ok",
+      "wordCount": 1672,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        35,
+        35,
+        37,
+        34,
+        39,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-hediyelik-alisveris-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-kultur-yolu-festivali-rehberi",
+      "title": "Şanlıurfa Kültür Yolu Festivali Rehberi: Konserler, Sergiler ve Tarihi Merkez Rotası",
+      "status": "ok",
+      "wordCount": 1733,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        39,
+        34,
+        33,
+        38,
+        22,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-kultur-yolu-festivali-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-muzekart-muze-ziyaret-rehberi",
+      "title": "Şanlıurfa MüzeKart ve Müze Ziyaret Rehberi 2026: Saat, Bilet ve Rota Kontrolü",
+      "status": "ok",
+      "wordCount": 1719,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        38,
+        37,
+        35,
+        35,
+        20,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-muzekart-muze-ziyaret-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfa-pencer-boranisi-rehberi",
+      "title": "Şanlıurfa Pencer Boranısı Rehberi: Pazı, Yuvalak Köfte ve Yoğurtlu Sofra Kültürü",
+      "status": "ok",
+      "wordCount": 1592,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        33,
+        33,
+        34,
+        26,
+        23,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfa-pencer-boranisi-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfada-cocukla-gezilecek-yerler",
+      "title": "Şanlıurfa’da Çocukla Gezilecek Yerler: Aileler İçin Güvenli ve Kolay Rotalar",
+      "status": "ok",
+      "wordCount": 1654,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        38,
+        34,
+        34,
+        29,
+        22,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfada-cocukla-gezilecek-yerler",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfada-gezilecek-yerler-2026",
+      "title": "Şanlıurfa’da Gezilecek Yerler 2026: Balıklıgöl, Göbeklitepe, Harran ve Halfeti Rotası",
+      "status": "ok",
+      "wordCount": 1905,
+      "h2Count": 7,
+      "faqCount": 4,
+      "answerBlockWordCounts": [
+        35,
+        33,
+        32,
+        34,
+        23,
+        23,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfada-gezilecek-yerler-2026",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfada-ne-yenir-2026",
+      "title": "Şanlıurfa’da Ne Yenir 2026: Urfa Kebabı, Ciğer, Lahmacun ve Sıra Gecesi Sofrası",
+      "status": "ok",
+      "wordCount": 2066,
+      "h2Count": 7,
+      "faqCount": 5,
+      "answerBlockWordCounts": [
+        38,
+        37,
+        32,
+        34,
+        26,
+        23,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfada-ne-yenir-2026",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfada-ramazan-iftar-kulturu",
+      "title": "Şanlıurfa’da Ramazan ve İftar Kültürü Rehberi",
+      "status": "ok",
+      "wordCount": 1600,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        39,
+        36,
+        32,
+        33,
+        22,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfada-ramazan-iftar-kulturu",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfada-sabah-kahvaltisi-rehberi",
+      "title": "Şanlıurfa’da Sabah Kahvaltısı Rehberi: Ciğer, Katmer ve Yerel Lezzetler",
+      "status": "ok",
+      "wordCount": 1755,
+      "h2Count": 7,
+      "faqCount": 4,
+      "answerBlockWordCounts": [
+        34,
+        34,
+        29,
+        31,
+        39,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfada-sabah-kahvaltisi-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfada-sicak-havada-gezi-plani",
+      "title": "Şanlıurfa’da Sıcak Havada Gezi Planı: Sabah-Erken Rota, Mola ve Akşam Önerileri",
+      "status": "ok",
+      "wordCount": 1801,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        42,
+        40,
+        37,
+        34,
+        38,
+        19,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfada-sicak-havada-gezi-plani",
+      "issues": []
+    },
+    {
+      "slug": "sanliurfada-yagmurlu-soguk-havada-ne-yapilir",
+      "title": "Şanlıurfa’da Yağmurlu veya Soğuk Havada Ne Yapılır?",
+      "status": "ok",
+      "wordCount": 1655,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        35,
+        35,
+        36,
+        34,
+        23,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsanliurfada-yagmurlu-soguk-havada-ne-yapilir",
+      "issues": []
+    },
+    {
+      "slug": "siverek-takoran-disi-gezi-noktalari",
+      "title": "Siverek Takoran Dışı Gezi Noktaları: Nissibi, Karacadağ ve Fırat Hattı",
+      "status": "ok",
+      "wordCount": 1777,
+      "h2Count": 7,
+      "faqCount": 4,
+      "answerBlockWordCounts": [
+        39,
+        32,
+        34,
+        33,
+        34,
+        25,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fsiverek-takoran-disi-gezi-noktalari",
+      "issues": []
+    },
+    {
+      "slug": "takoran-vadisi-rehberi-2026",
+      "title": "Takoran Vadisi Rehberi 2026: Siverek’te Tekne, Fotoğraf ve Fırat Rotası",
+      "status": "ok",
+      "wordCount": 1734,
+      "h2Count": 7,
+      "faqCount": 2,
+      "answerBlockWordCounts": [
+        43,
+        43,
+        46,
+        21,
+        21,
+        20,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Ftakoran-vadisi-rehberi-2026",
+      "issues": []
+    },
+    {
+      "slug": "tas-tepeler-rotasi-sanliurfa",
+      "title": "Taş Tepeler Rotası: Göbeklitepe, Karahantepe ve Yakın Arkeoloji Noktaları",
+      "status": "ok",
+      "wordCount": 1580,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        41,
+        33,
+        34,
+        31,
+        24,
+        19,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Ftas-tepeler-rotasi-sanliurfa",
+      "issues": []
+    },
+    {
+      "slug": "teknofest-2026-3-gunluk-sanliurfa-gezi-plani",
+      "title": "TEKNOFEST 2026 İçin 3 Günlük Şanlıurfa Gezi Planı",
+      "status": "ok",
+      "wordCount": 1735,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        35,
+        32,
+        31,
+        28,
+        25,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fteknofest-2026-3-gunluk-sanliurfa-gezi-plani",
+      "issues": []
+    },
+    {
+      "slug": "teknofest-2026-aile-cocuk-rehberi",
+      "title": "TEKNOFEST 2026 Şanlıurfa Aile ve Çocuk Rehberi: Giriş, Güvenlik ve Gün Planı",
+      "status": "ok",
+      "wordCount": 1594,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        39,
+        35,
+        36,
+        34,
+        32,
+        20,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fteknofest-2026-aile-cocuk-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "teknofest-2026-hyperloop-sanliurfa-final-rehberi",
+      "title": "TEKNOFEST 2026 Hyperloop Yarışması Şanlıurfa Final Rehberi",
+      "status": "ok",
+      "wordCount": 1630,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        37,
+        39,
+        32,
+        35,
+        20,
+        19,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fteknofest-2026-hyperloop-sanliurfa-final-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "teknofest-2026-sanliurfa-konaklama-bolgeleri",
+      "title": "TEKNOFEST 2026 Şanlıurfa Konaklama Bölgeleri Rehberi",
+      "status": "ok",
+      "wordCount": 1625,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        41,
+        36,
+        36,
+        32,
+        23,
+        23,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fteknofest-2026-sanliurfa-konaklama-bolgeleri",
+      "issues": []
+    },
+    {
+      "slug": "teknofest-2026-sanliurfa-rehberi",
+      "title": "TEKNOFEST 2026 Şanlıurfa Rehberi: GAP Havalimanı, Ulaşım, Konaklama ve Gezi Planı",
+      "status": "ok",
+      "wordCount": 1674,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        39,
+        36,
+        35,
+        36,
+        22,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fteknofest-2026-sanliurfa-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "teknofest-2026-world-drone-cup-sanliurfa",
+      "title": "TEKNOFEST 2026 World Drone Cup Şanlıurfa Rehberi",
+      "status": "ok",
+      "wordCount": 1716,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        37,
+        35,
+        31,
+        30,
+        25,
+        25,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fteknofest-2026-world-drone-cup-sanliurfa",
+      "issues": []
+    },
+    {
+      "slug": "teknofest-2026-yarismalari-sanliurfa",
+      "title": "TEKNOFEST 2026 Şanlıurfa Yarışmaları: Başvuru, Takvim ve Hazırlık Rehberi",
+      "status": "ok",
+      "wordCount": 1732,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        38,
+        31,
+        38,
+        32,
+        22,
+        19,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fteknofest-2026-yarismalari-sanliurfa",
+      "issues": []
+    },
+    {
+      "slug": "urfa-keme-boranisi-rehberi",
+      "title": "Urfa Keme Boranısı Rehberi: Mevsimi, Malzemesi ve Nerede Denenir?",
+      "status": "ok",
+      "wordCount": 1703,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        39,
+        35,
+        30,
+        36,
+        20,
+        21,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Furfa-keme-boranisi-rehberi",
+      "issues": []
+    },
+    {
+      "slug": "urfa-kultur-gecesi-rezervasyon-kontrol-listesi",
+      "title": "Urfa Kültür Gecesi Rezervasyon Kontrol Listesi: Aile Ortamı, Menü ve Ulaşım",
+      "status": "ok",
+      "wordCount": 1720,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        35,
+        38,
+        33,
+        36,
+        23,
+        23,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Furfa-kultur-gecesi-rezervasyon-kontrol-listesi",
+      "issues": []
+    },
+    {
+      "slug": "viransehir-gezi-rehberi-eyyup-nebi",
+      "title": "Viranşehir Gezi Rehberi: Eyyüp Nebi, Tarih ve Yol Planı",
+      "status": "ok",
+      "wordCount": 1706,
+      "h2Count": 7,
+      "faqCount": 3,
+      "answerBlockWordCounts": [
+        42,
+        34,
+        29,
+        27,
+        22,
+        22,
+        39
+      ],
+      "invalidHtmlTags": [],
+      "schemas": {
+        "BlogPosting": true,
+        "FAQPage": true,
+        "BreadcrumbList": true
+      },
+      "richResultsManualTestUrl": "https://search.google.com/test/rich-results?url=https%3A%2F%2Fsanliurfa.com%2Fblog%2Fviransehir-gezi-rehberi-eyyup-nebi",
+      "issues": []
+    }
+  ]
+}

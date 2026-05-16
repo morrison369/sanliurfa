@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import PublicPageIntro from '../../components/public/PublicPageIntro.astro';
+import AdSenseSlot from '../../components/ads/AdSenseSlot.astro';
 import Image from '../../components/Image.astro';
 import { query } from '../../lib/postgres';
 import { logger } from '../../lib/logging';
@@ -18,13 +19,13 @@ try {
   if (etiket) {
     // Etiket filtresi — cache'leme yok (dinamik)
     const r = await query(
-      `SELECT * FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND $1=ANY(tags) ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 50`,
+      `SELECT * FROM blog_posts WHERE status='published' AND published_at <= NOW() AND $1=ANY(tags) ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 50`,
       [etiket]
     );
     posts = r.rows;
   } else if (category) {
     const r = await query(
-      `SELECT * FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND category=$1 ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 50`,
+      `SELECT * FROM blog_posts WHERE status='published' AND published_at <= NOW() AND category=$1 ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 50`,
       [category]
     );
     posts = r.rows;
@@ -32,9 +33,9 @@ try {
     const today = new Date().toISOString().slice(0, 10);
     const data = await getCachedPublicRouteData(`page:blog:index:${today}`, async () => {
       const [postsResult, catResult, tagResult] = await Promise.all([
-        query("SELECT * FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 12"),
-        query("SELECT category, COUNT(*) as count FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND category IS NOT NULL GROUP BY category ORDER BY count DESC"),
-        query("SELECT unnest(tags) as tag, COUNT(*) as cnt FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND tags IS NOT NULL GROUP BY tag ORDER BY cnt DESC LIMIT 20"),
+        query("SELECT * FROM blog_posts WHERE status='published' AND published_at <= NOW() ORDER BY published_at DESC NULLS LAST, created_at DESC LIMIT 12"),
+        query("SELECT category, COUNT(*) as count FROM blog_posts WHERE status='published' AND published_at <= NOW() AND category IS NOT NULL GROUP BY category ORDER BY count DESC"),
+        query("SELECT unnest(tags) as tag, COUNT(*) as cnt FROM blog_posts WHERE status='published' AND published_at <= NOW() AND tags IS NOT NULL GROUP BY tag ORDER BY cnt DESC LIMIT 20"),
       ]);
       return {
         posts: postsResult.rows,
@@ -48,11 +49,11 @@ try {
   }
 
   if (!categories.length) {
-    const catResult = await query("SELECT category, COUNT(*) as count FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND category IS NOT NULL GROUP BY category ORDER BY count DESC");
+    const catResult = await query("SELECT category, COUNT(*) as count FROM blog_posts WHERE status='published' AND published_at <= NOW() AND category IS NOT NULL GROUP BY category ORDER BY count DESC");
     categories = catResult.rows;
   }
   if (!popularTags.length) {
-    const tagResult = await query("SELECT unnest(tags) as tag, COUNT(*) as cnt FROM blog_posts WHERE status='published' AND published_at <= CURRENT_DATE AND tags IS NOT NULL GROUP BY tag ORDER BY cnt DESC LIMIT 20");
+    const tagResult = await query("SELECT unnest(tags) as tag, COUNT(*) as cnt FROM blog_posts WHERE status='published' AND published_at <= NOW() AND tags IS NOT NULL GROUP BY tag ORDER BY cnt DESC LIMIT 20");
     popularTags = tagResult.rows.map((r: any) => r.tag as string);
   }
 } catch (e) {
@@ -195,6 +196,8 @@ const formatDate = (d: string | null) => d ? new Date(d).toLocaleDateString('tr-
             <a href={l.href} class="bl-cat-link">{l.label}</a>
           ))}
         </div>
+
+        <AdSenseSlot placement="blog-list-sidebar" label="Sponsorlu Reklam" minHeight={250} />
 
         <a href="/isletme-kayit" class="sf-btn-primary" style="text-align:center;justify-content:center">
           İşletme Ekle

@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-05-15T12:08:13.827Z",
+  "status": "review",
+  "source": "Google PageSpeed Insights API",
+  "skipped": true,
+  "skipReason": "quota-retry-window-not-due",
+  "nextRetryAt": "2026-05-15T12:57:53.133Z",
+  "apiKeyPresent": false,
+  "apiKeyMode": "anonymous",
+  "threshold": {
+    "performance": 0.6,
+    "accessibility": 0.85,
+    "bestPractices": 0.85,
+    "seo": 0.9
+  },
+  "summary": {
+    "checks": 0,
+    "ok": 0,
+    "review": 1,
+    "failed": 0,
+    "quotaLimited": 1
+  },
+  "results": [
+    {
+      "url": "https://sanliurfa.com/",
+      "strategy": "mobile",
+      "status": "quota-retry-window-not-due",
+      "advisory": "PageSpeed quota retry window 2026-05-15T12:57:53.133Z sonrasına kadar bekliyor. Zorlamak için --force veya PAGESPEED_FORCE_LIVE=1 kullan."
+    }
+  ]
+}

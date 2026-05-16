@@ -1,0 +1,470 @@
+{
+  "generatedAt": "2026-05-15T12:08:17.356Z",
+  "status": "passed",
+  "maxAgeMinutes": 180,
+  "results": [
+    {
+      "artifact": "quality-metrics.json",
+      "status": "fresh",
+      "ageMinutes": 0,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.694Z"
+    },
+    {
+      "artifact": "docs/quality-reports-refresh.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.330Z"
+    },
+    {
+      "artifact": "docs/quality-check-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:45.836Z"
+    },
+    {
+      "artifact": "docs/release-readiness.json",
+      "status": "fresh",
+      "ageMinutes": 0,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:15.833Z"
+    },
+    {
+      "artifact": "docs/release-readiness-dashboard.json",
+      "status": "fresh",
+      "ageMinutes": 0,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:16.211Z"
+    },
+    {
+      "artifact": "docs/release-next-actions-report.json",
+      "status": "fresh",
+      "ageMinutes": 0,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:15.454Z"
+    },
+    {
+      "artifact": "docs/release-handoff-summary.json",
+      "status": "fresh",
+      "ageMinutes": 0,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:16.602Z"
+    },
+    {
+      "artifact": "docs/release-executive-summary.json",
+      "status": "fresh",
+      "ageMinutes": 0,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:16.983Z"
+    },
+    {
+      "artifact": "docs/local-upload-parity-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:48.303Z"
+    },
+    {
+      "artifact": "docs/local-upload-candidate-classification.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:48.378Z"
+    },
+    {
+      "artifact": "docs/local-upload-archive-candidates.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:48.419Z"
+    },
+    {
+      "artifact": "docs/local-media-storage-gate.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:48.669Z"
+    },
+    {
+      "artifact": "docs/media-readiness-report.json",
+      "status": "fresh",
+      "ageMinutes": 1.8,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:06:31.202Z"
+    },
+    {
+      "artifact": "docs/admin-strict-role-gate.json",
+      "status": "fresh",
+      "ageMinutes": 1.8,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:06:31.585Z"
+    },
+    {
+      "artifact": "docs/unit-skip-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.100Z"
+    },
+    {
+      "artifact": "docs/db-retirement-observation-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:47.159Z"
+    },
+    {
+      "artifact": "docs/db-p0-quarantine-plan.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:47.365Z"
+    },
+    {
+      "artifact": "docs/db-observation-cadence-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:47.401Z"
+    },
+    {
+      "artifact": "docs/db-observation-calendar-report.json",
+      "status": "fresh",
+      "ageMinutes": 1.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:06:50.676Z"
+    },
+    {
+      "artifact": "docs/db-manual-decision-readiness-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:47.437Z"
+    },
+    {
+      "artifact": "docs/db-registry-classification-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:47.475Z"
+    },
+    {
+      "artifact": "docs/db-runtime-hold-plan.json",
+      "status": "fresh",
+      "ageMinutes": 1.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:06:51.104Z"
+    },
+    {
+      "artifact": "docs/sql-parameter-safety-gate.json",
+      "status": "fresh",
+      "ageMinutes": 1.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:06:51.589Z"
+    },
+    {
+      "artifact": "docs/db-prod-version-compare-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:47.536Z"
+    },
+    {
+      "artifact": "docs/db-index-review-plan.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:47.618Z"
+    },
+    {
+      "artifact": "docs/db-advisory-evidence-bundle.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:47.656Z"
+    },
+    {
+      "artifact": "docs/unit-test-report.json",
+      "status": "fresh",
+      "ageMinutes": 2.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:05:54.867Z"
+    },
+    {
+      "artifact": "docs/unit-skip-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.100Z"
+    },
+    {
+      "artifact": "docs/e2e-skip-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.139Z"
+    },
+    {
+      "artifact": "docs/e2e-critical-coverage-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.178Z"
+    },
+    {
+      "artifact": "docs/api-contract-group-report.json",
+      "status": "fresh",
+      "ageMinutes": 1.9,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:06:23.703Z"
+    },
+    {
+      "artifact": "docs/api-release-gate-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.213Z"
+    },
+    {
+      "artifact": "docs/api-debug-envelope-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.249Z"
+    },
+    {
+      "artifact": "docs/adsense-readiness-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.285Z"
+    },
+    {
+      "artifact": "docs/adsense-live-readiness-report.json",
+      "status": "fresh",
+      "ageMinutes": 1.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:06:48.678Z"
+    },
+    {
+      "artifact": "docs/openapi-p0-closure-report.json",
+      "status": "fresh",
+      "ageMinutes": 1.9,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:06:24.797Z"
+    },
+    {
+      "artifact": "docs/build-artifact-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:46.786Z"
+    },
+    {
+      "artifact": "docs/script-surface-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:46.676Z"
+    },
+    {
+      "artifact": "docs/script-canonical-surface-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:46.713Z"
+    },
+    {
+      "artifact": "docs/migration-duplicate-drift-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:46.847Z"
+    },
+    {
+      "artifact": "docs/local-upload-bucket-quota-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:48.343Z"
+    },
+    {
+      "artifact": "docs/redis-runtime-health-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:48.901Z"
+    },
+    {
+      "artifact": "docs/warmup-safety-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.5,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:50.146Z"
+    },
+    {
+      "artifact": "docs/cron-readiness-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:52.911Z"
+    },
+    {
+      "artifact": "docs/internal-linking-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:52.949Z"
+    },
+    {
+      "artifact": "docs/llms-sitemap-auto-update-gate.json",
+      "status": "fresh",
+      "ageMinutes": 0.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:52.985Z"
+    },
+    {
+      "artifact": "docs/gmaps-scraper-readiness-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:53.042Z"
+    },
+    {
+      "artifact": "docs/gmaps-query-plan-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:53.135Z"
+    },
+    {
+      "artifact": "docs/gmaps-discovery-plan-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:53.173Z"
+    },
+    {
+      "artifact": "docs/gmaps-discovery-drafts-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:53.271Z"
+    },
+    {
+      "artifact": "docs/ollama-readiness-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.4,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:53.306Z"
+    },
+    {
+      "artifact": "docs/blog-keyword-research-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.3,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:56.799Z"
+    },
+    {
+      "artifact": "docs/blog-duplicate-risk-gate.json",
+      "status": "fresh",
+      "ageMinutes": 1.8,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:06:31.962Z"
+    },
+    {
+      "artifact": "docs/blog-draft-quality-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.3,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:56.873Z"
+    },
+    {
+      "artifact": "docs/blog-draft-rich-results-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.3,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:56.931Z"
+    },
+    {
+      "artifact": "docs/blog-publish-readiness-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.3,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:56.974Z"
+    },
+    {
+      "artifact": "docs/blog-admin-publish-queue-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.3,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:57.027Z"
+    },
+    {
+      "artifact": "docs/publish-all-content-drafts-report.json",
+      "status": "fresh",
+      "ageMinutes": 1.9,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:06:25.336Z"
+    },
+    {
+      "artifact": "docs/pagespeed-api-research-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.3,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:07:58.905Z"
+    },
+    {
+      "artifact": "docs/pagespeed-api-less-lighthouse-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:13.785Z"
+    },
+    {
+      "artifact": "docs/pagespeed-live-check-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:13.827Z"
+    },
+    {
+      "artifact": "docs/pagespeed-quota-management-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:13.863Z"
+    },
+    {
+      "artifact": "docs/backend-frontend-improvement-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.012Z"
+    },
+    {
+      "artifact": "docs/social-ux-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:14.047Z"
+    },
+    {
+      "artifact": "docs/generated-blog-drafts/apply-summary.json",
+      "status": "fresh",
+      "ageMinutes": 1293.2,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-14T14:35:05.584Z",
+      "freshnessPolicy": "blog-publish-readiness-published-supersedes-apply-summary"
+    },
+    {
+      "artifact": "docs/content-agent-drafts-report.json",
+      "status": "fresh",
+      "ageMinutes": 0.1,
+      "timestampSource": "generatedAt",
+      "timestamp": "2026-05-15T12:08:13.961Z"
+    }
+  ]
+}

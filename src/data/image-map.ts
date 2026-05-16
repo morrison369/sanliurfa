@@ -23,8 +23,8 @@ export const IMAGE_MAP = {
   },
   homepage: {
     places: {
-      balikligol: '/images/places/balikligol/main-card.webp',
-      gobeklitepe: '/images/places/gobeklitepe/hero-card.webp',
+      balikligol: '/images/home/collage/balikligol.webp',
+      gobeklitepe: '/images/home/collage/gobeklitepe.webp',
       'cigerci-aziz-usta': '/images/places/cigerci-aziz-usta/food-card.webp',
       'hanehan-otel': '/images/places/hanehan-otel/exterior-card.webp',
     },
@@ -60,9 +60,10 @@ export const IMAGE_MAP = {
     },
     pools: {
       places: [
-        '/images/places/balikligol/main-card.webp',
-        '/images/places/gobeklitepe/hero-card.webp',
-        '/images/places/gobeklitepe/detail-1-card.webp',
+        '/images/home/collage/balikligol.webp',
+        '/images/home/collage/gobeklitepe.webp',
+        '/images/home/collage/harran.webp',
+        '/images/home/collage/halfeti.webp',
         '/images/places/cigerci-aziz-usta/food-card.webp',
         '/images/places/hanehan-otel/exterior-card.webp',
         '/images/places/hanehan-otel/room-card.webp',

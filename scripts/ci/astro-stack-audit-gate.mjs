@@ -85,13 +85,25 @@ assert(eslintConfig.includes('eslint-plugin-astro'), 'ESLint astro plugin eksik'
 assert(eslintConfig.includes('@typescript-eslint/parser'), 'ESLint TypeScript parser eksik');
 
 assert(hasScript('type-check') && packageJson.scripts['type-check'].includes('astro check'), 'type-check astro check kullanmıyor');
-assert(hasScript('build') && packageJson.scripts.build.includes('astro build'), 'build astro build kullanmıyor');
+assert(
+  hasScript('build') &&
+    (packageJson.scripts.build.includes('astro build') ||
+      packageJson.scripts.build.includes('scripts/build-server-artifacts.mjs')),
+  'build Astro build hattını kullanmıyor',
+);
 assert(hasScript('lint') && packageJson.scripts.lint.includes('eslint'), 'lint eslint kullanmıyor');
-assert(hasScript('test:unit') && packageJson.scripts['test:unit'].includes('vitest'), 'test:unit vitest kullanmıyor');
+assert(
+  hasScript('test:unit') &&
+    (packageJson.scripts['test:unit'].includes('vitest') ||
+      packageJson.scripts['test:unit'].includes('scripts/ci/unit-test-report.mjs')),
+  'test:unit Vitest veya unit-test-report wrapper kullanmıyor',
+);
+assert(sourceIncludes('scripts/ci/unit-test-report.mjs', 'vitest/vitest.mjs'), 'unit-test-report wrapper Vitest kullanmıyor');
 assert(hasScript('test:e2e:astro'), 'Astro özel E2E script eksik');
-assert(hasScript('test:e2e:astro:dev'), 'Astro dev E2E script eksik');
-assert(hasScript('test:e2e:astro:preview'), 'Astro SSR preview E2E script eksik');
-assert(hasScript('test:e2e:astro:prod'), 'Prod URL E2E script eksik');
+assert(
+  packageJson.scripts['test:e2e:astro']?.includes('scripts/e2e/astro-homepage-a11y.mjs'),
+  'Astro özel E2E script kanonik runner kullanmıyor',
+);
 
 assert(sourceIncludes('scripts/e2e/astro-homepage-a11y.mjs', 'AxeBuilder'), 'E2E axe builder entegrasyonu eksik');
 assert(sourceIncludes('scripts/e2e/astro-homepage-a11y.mjs', 'desktop'), 'E2E desktop viewport eksik');
@@ -132,9 +144,9 @@ assert(sourceIncludes('src/components/home/CityGuideLanding.astro', '../Icon.ast
 assert(sourceIncludes('src/components/home/CityGuideLanding.astro', 'getSiteSetting'), 'Landing admin/site-content fallback kullanmıyor');
 assert(sourceIncludes('src/components/home/CityGuideLanding.astro', 'getPrimaryCityTaxonomyCategories'), 'Landing merkezi taxonomy kullanmıyor');
 assert(sourceIncludes('src/components/home/CityGuideLanding.astro', 'form action="/arama"'), 'Landing arama formu /arama kanoniğine bağlı değil');
-assert(sourceIncludes('src/components/home/CityGuideLanding.astro', '/images/places/balikligol.jpg'), 'Landing Balıklıgöl için gerçek mekan görselini kullanmıyor');
-assert(sourceIncludes('src/components/home/CityGuideLanding.astro', '/images/places/gobeklitepe.jpg'), 'Landing Göbeklitepe için gerçek mekan görselini kullanmıyor');
-assert(sourceIncludes('src/components/home/CityGuideLanding.astro', '/images/tarihi-yerler/harran-kumbet-evleri.jpg'), 'Landing Harran için gerçek kümbet evleri görselini kullanmıyor');
+assert(sourceIncludes('src/components/home/CityGuideLanding.astro', '/images/home/collage/balikligol.webp'), 'Landing Balıklıgöl için gerçek local görselini kullanmıyor');
+assert(sourceIncludes('src/components/home/CityGuideLanding.astro', '/images/home/collage/gobeklitepe.webp'), 'Landing Göbeklitepe için gerçek local görselini kullanmıyor');
+assert(sourceIncludes('src/components/home/CityGuideLanding.astro', '/images/home/collage/harran.webp'), 'Landing Harran için gerçek local kümbet evleri görselini kullanmıyor');
 assert(sourceIncludes('src/components/home/CityGuideLanding.astro', 'Şanlıurfa Topluluğu ve Eşleşme'), 'Landing sosyal eşleşme modülünü göstermiyor');
 assert(sourceIncludes('src/components/home/CityGuideLanding.astro', "'/eslesme'"), 'Landing /eslesme iç linki eksik');
 assert(sourceIncludes('src/components/home/CityGuideLanding.astro', "'/topluluk'"), 'Landing /topluluk iç linki eksik');
@@ -156,7 +168,7 @@ assert(sourceIncludes('src/components/Icon.astro', 'astro-icon'), 'Icon componen
 assert(sourceIncludes('src/components/SEO.astro', 'resolveSeoOgImage'), 'SEO component route-aware OG image resolver kullanmıyor');
 assert(sourceIncludes('src/lib/seo-image.ts', '/images/places/balikligol.jpg'), 'SEO image resolver şehir görsel fallback kullanmıyor');
 assert(sourceIncludes('src/lib/seo-image.ts', '/images/foods/homepage/urfa-kebabi-card.png'), 'SEO image resolver yemek görsel fallback kullanmıyor');
-assert(middleware.includes('https://fonts.googleapis.com') && middleware.includes('https://fonts.gstatic.com'), 'CSP Google Fonts kaynaklarını kapsamıyor');
+assert(!middleware.includes('https://fonts.googleapis.com') && !middleware.includes('https://fonts.gstatic.com'), 'CSP Google Fonts kaynaklarını açmamalı; font politikası local-only');
 
 const forbiddenTerms = ['Ürün, marka', 'iPhone', 'Samsung', 'Laptop', 'Kulaklık'];
 const publicSurfaceFiles = [

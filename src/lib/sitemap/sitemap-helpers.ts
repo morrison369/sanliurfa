@@ -13,6 +13,22 @@
  *   /sitemap-historical.xml   → tarihi yerler + image
  *   /sitemap-guides.xml       → gezi rehberleri (master + 10 ilçe)
  */
+import { logger } from '../logging';
+
+const DEFAULT_SITEMAP_SOURCE_TIMEOUT_MS = 1200;
+
+function resolveSitemapSourceTimeoutMs(timeoutMs?: number): number {
+  if (typeof timeoutMs === 'number' && Number.isFinite(timeoutMs) && timeoutMs >= 100) {
+    return timeoutMs;
+  }
+
+  const envTimeout = Number(process.env.SITEMAP_SOURCE_TIMEOUT_MS || DEFAULT_SITEMAP_SOURCE_TIMEOUT_MS);
+  if (Number.isFinite(envTimeout) && envTimeout >= 100) {
+    return envTimeout;
+  }
+
+  return DEFAULT_SITEMAP_SOURCE_TIMEOUT_MS;
+}
 
 export type ChangeFreq =
   | 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly' | 'never';
@@ -108,6 +124,50 @@ export interface IndexedSitemap {
   path: string;
   /** ISO datetime — son güncelleme */
   lastmod: string;
+}
+
+export async function withSitemapSourceFallback<T>(
+  source: Promise<T> | (() => Promise<T>),
+  fallback: T,
+  opts: { label: string; timeoutMs?: number },
+): Promise<T> {
+  const timeoutMs = resolveSitemapSourceTimeoutMs(opts.timeoutMs);
+  const start = Date.now();
+  let settled = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  return new Promise<T>((resolve) => {
+    timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      logger.warn('Sitemap source timeout, fallback applied', {
+        label: opts.label,
+        timeoutMs,
+        elapsedMs: Date.now() - start,
+      });
+      resolve(fallback);
+    }, timeoutMs);
+
+    const promise = typeof source === 'function' ? source() : source;
+    void promise
+      .then((result) => {
+        if (settled) return;
+        settled = true;
+        if (timer) clearTimeout(timer);
+        resolve(result);
+      })
+      .catch((error) => {
+        if (settled) return;
+        settled = true;
+        if (timer) clearTimeout(timer);
+        logger.warn('Sitemap source failed, fallback applied', {
+          label: opts.label,
+          error: error instanceof Error ? error.message : String(error),
+          elapsedMs: Date.now() - start,
+        });
+        resolve(fallback);
+      });
+  });
 }
 
 export function buildSitemapIndexXml(items: IndexedSitemap[], baseUrl: string): string {

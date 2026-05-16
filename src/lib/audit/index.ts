@@ -282,7 +282,7 @@ export async function archiveOldAuditLogs(
   const logs = result.rows.map(mapAuditRow);
   const fileName = `audit_archive_${new Date().toISOString().split('T')[0]}.json`;
 
-  // In production, save to file/S3
+  // In production, save to file/local archival storage
   // await saveToStorage(fileName, JSON.stringify(logs));
 
   // Delete archived logs

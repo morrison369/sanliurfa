@@ -1,0 +1,50 @@
+---
+import SharedCrmLivePanel from './SharedCrmLivePanel.astro';
+import { getLocationPanelConfig, type LocationMode } from '../../lib/admin/crm-live-panel-config';
+
+interface Props {
+  mode: LocationMode;
+}
+
+const { mode } = Astro.props as Props;
+const config = getLocationPanelConfig(mode);
+const isNeighborhoods = mode === 'locations/neighborhoods';
+---
+
+<SharedCrmLivePanel
+  panelClass="crm-location-crm"
+  dataAttrName="data-location-crm"
+  dataAttrValue={config.resource}
+  title={config.title}
+  description={config.description}
+  loadAttr="data-location-load"
+>
+  <div slot="toolbar" class="crm-live-toolbar">
+    <input type="search" data-location-search placeholder="Ad veya slug ara..." />
+    <select data-location-filter>
+      <option value="all">Tüm kayıtlar</option>
+      <option value="seo-missing">SEO eksik</option>
+      <option value="image-missing">Görsel eksik</option>
+      <option value="coordinate-missing">Koordinat eksik</option>
+    </select>
+    <button type="button" data-location-load>Filtrele</button>
+  </div>
+  <div slot="table" class="crm-table-wrap">
+    <table class="crm-table crm-live-table">
+      <thead>
+        <tr>
+          <th>Ad</th>
+          <th>Slug</th>
+          {isNeighborhoods && <th>İlçe ID</th>}
+          <th>SEO / Açıklama</th>
+          <th>Koordinat</th>
+          <th>Mekan</th>
+          <th>Aksiyon</th>
+        </tr>
+      </thead>
+      <tbody data-location-body>
+        <tr><td colspan={config.columns}>Veri yüklemek için butona basın.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</SharedCrmLivePanel>

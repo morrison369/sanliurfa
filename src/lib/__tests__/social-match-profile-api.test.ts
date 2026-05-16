@@ -86,10 +86,13 @@ describe('social match profile api', () => {
 
     expect(response.status).toBe(200);
     expect(body?.data?.success ?? body?.success).toBe(true);
-    expect(upsertMatchProfileMock).toHaveBeenCalledWith('u1', {
-      bio: 'Merhaba',
-      photos: ['a', 'b', 'c', 'd'],
-      isDiscoverable: true,
-    });
+    expect(upsertMatchProfileMock).toHaveBeenCalledWith(
+      'u1',
+      expect.objectContaining({
+        bio: 'Merhaba',
+        photos: ['a', 'b', 'c', 'd'],
+        isDiscoverable: true,
+      }),
+    );
   });
 });

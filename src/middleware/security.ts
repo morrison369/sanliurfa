@@ -19,13 +19,13 @@ export const securityHeaders: MiddlewareHandler = async (context, next) => {
   // Content Security Policy
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://analytics.sanliurfa.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://analytics.sanliurfa.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://ep2.adtrafficquality.google https://*.adtrafficquality.google",
+    "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https: blob:",
-    "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://api.sanliurfa.com https://analytics.sanliurfa.com https://fonts.googleapis.com https://fonts.gstatic.com",
+    "font-src 'self'",
+    "connect-src 'self' https://api.sanliurfa.com https://analytics.sanliurfa.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://ep1.adtrafficquality.google https://*.adtrafficquality.google",
     "media-src 'self' https: blob:",
-    "frame-src 'self' https://www.youtube.com https://www.google.com",
+    "frame-src 'self' https://www.youtube.com https://www.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://ep2.adtrafficquality.google https://*.adtrafficquality.google",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

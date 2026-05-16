@@ -42,6 +42,7 @@ Yeni oturumda hızlı yönlendirme için:
 - Production: CWP shared hosting + PM2 + Apache reverse proxy
 - Dil politikası: yalnızca Türkçe
 - İçerik modeli: DB-first admin yönetimi
+- Medya depolama: yalnızca local filesystem (`public/images`, `public/uploads`)
 
 Not:
 - Docker dosyaları repoda bulunabilir, ancak bu proje için kanonik runtime değildir.

@@ -5,6 +5,7 @@ import { verifyToken } from './lib/auth';
 import { query, queryOne } from './lib/postgres';
 import { checkRateLimit } from './lib/cache';
 import { getRedisClient, prefixKey } from './lib/cache/cache';
+import { PUBLIC_IMAGE_CACHE_CONTROL, PUBLIC_UPLOAD_CACHE_CONTROL } from './lib/http/cache-policies';
 import { logger } from './lib/logging';
 function getCanonicalDomain(): string {
   const raw = process.env.SITE_URL || process.env.PUBLIC_SITE_URL || 'https://sanliurfa.com';
@@ -32,11 +33,12 @@ function getAllowedOriginsFromEnv(raw?: string): string[] {
 // Public paths that don't require authentication
 const PUBLIC_PATHS = [
   '/', '/giris', '/kayit', '/places', '/tarihi-yerler', '/blog',
-  '/vendor', // self-hosted CDN: Swagger UI + Leaflet (public/vendor/*)
-  '/gastronomi', '/arama', '/hakkinda', '/iletisim', '/kunye', '/yazarlar', '/etkinlikler',
+  '/vendor', // self-hosted static vendor assets: Swagger UI + Leaflet (public/vendor/*)
+  '/gastronomi', '/arama', '/hakkinda', '/iletisim', '/kunye', '/yazarlar', '/yayin-politikasi', '/etkinlikler',
   '/gizlilik-politikasi', '/kullanim-kosullari', '/kvkk',
   '/fiyatlandirma', '/sss', '/cerez-politikasi', '/404', '/500', '/loading',
   '/mekanlar', '/ilceler', '/gezilecek-yerler', '/saglik', '/mahalleler', '/yeme-icme',
+  '/ilanlar',
   '/topluluk', '/eslesme', '/yemek-tarifleri',
   '/egitim', '/ulasim', '/alisveris', '/hizmetler', '/emlak', '/konaklama', '/etkinlikler', '/isletme',
   '/otomotiv', '/acil-durum', '/hukuk-ve-finans', '/ev-ve-yasam', '/spor-ve-fitness',
@@ -58,6 +60,7 @@ const PUBLIC_PATHS = [
   '/api/auth/reset-password', '/api/auth/callback',
   '/api/places', '/api/health',
   '/api/contact', '/api/reviews', '/api/hashtags', '/api/leaderboards',
+  '/api/classifieds',
   '/api/saglik/nobetci', '/api/places/apply',
   '/api/security/csp-report',
   '/api/social/stats',
@@ -66,7 +69,7 @@ const PUBLIC_PATHS = [
   '/sitemap.xml', '/sitemap-pages.xml', '/sitemap-categories.xml', '/sitemap-ilceler.xml',
   '/sitemap-places.xml', '/sitemap-historical.xml', '/sitemap-blog.xml',
   '/sitemap-events.xml', '/sitemap-recipes.xml', '/sitemap-guides.xml',
-  '/rss.xml', '/robots.txt', '/llms.txt', '/llms-full.txt', '/ads.txt',
+  '/rss.xml', '/robots.txt', '/llms.txt', '/llms-full.txt', '/ads.txt', '/publisher-center.json',
  '/uploads', '/images', '/icons', '/_astro', '/_server-islands', '/favicon.svg', '/favicon.ico',
  '/manifest.json', '/sw.js', '/og-image.png', '/apple-touch-icon.png', '/og-image.jpg',
 ];
@@ -273,7 +276,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const contentLengthHeader = request.headers.get('content-length');
     if (contentLengthHeader) {
       const contentLength = parseInt(contentLengthHeader, 10);
-      const isUpload = pathname.startsWith('/api/upload') || pathname.startsWith('/api/photos/upload') || pathname.startsWith('/api/files/upload') || pathname.startsWith('/api/community/photos') || pathname.startsWith('/api/social/tinder-photos') || pathname.startsWith('/api/admin/blog/upload');
+      const isUpload = pathname.startsWith('/api/upload') || pathname.startsWith('/api/photos/upload') || pathname.startsWith('/api/files/upload') || pathname.startsWith('/api/community/photos') || pathname.startsWith('/api/social/tinder-photos') || pathname.startsWith('/api/admin/blog/upload') || pathname.startsWith('/api/classifieds');
       const maxBytes = isUpload ? 15 * 1024 * 1024 : 1 * 1024 * 1024; // 15MB upload, 1MB other
       if (Number.isFinite(contentLength) && contentLength > maxBytes) {
         return new Response(
@@ -429,12 +432,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Swagger UI ve Leaflet artık public/vendor/ altında self-host — unpkg.com whitelist gerekmez
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com",
-    "script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://ep2.adtrafficquality.google https://*.adtrafficquality.google https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com",
+    "script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://ep2.adtrafficquality.google https://*.adtrafficquality.google https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com",
+    "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https: https://mc.yandex.ru https://mc.yandex.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://cloudflareinsights.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com",
+    "font-src 'self'",
+    "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://ep1.adtrafficquality.google https://*.adtrafficquality.google https://cloudflareinsights.com https://static.cloudflareinsights.com https://www.clarity.ms https://*.clarity.ms https://mc.yandex.ru https://mc.yandex.com",
+    "frame-src 'self' https://www.google.com https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://ep2.adtrafficquality.google https://*.adtrafficquality.google",
     "media-src 'self' blob:",
     "worker-src 'self' blob:",
     "object-src 'none'",
@@ -457,14 +461,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
   }
 
-  // Static images & uploads — 30 day immutable (LCP optimization, PageSpeed cache-insight fix)
-  // Content rarely changes; filename rename = effective cache bust. Bandwidth savings + repeat-visit speed.
-  if (
-    (pathname.startsWith('/images/') || pathname.startsWith('/uploads/')) &&
-    /\.(webp|avif|jpe?g|png|svg|gif|ico)$/i.test(pathname)
-  ) {
-    response.headers.set('Cache-Control', 'public, max-age=2592000, immutable');
-  }
+    // Static project images are immutable; local uploads are mutable and revalidate daily.
+    if (
+      response.status < 400 &&
+      pathname.startsWith('/images/') &&
+      /\.(webp|avif|jpe?g|png|svg|gif|ico)$/i.test(pathname)
+    ) {
+      response.headers.set('Cache-Control', PUBLIC_IMAGE_CACHE_CONTROL);
+    }
+
+    if (
+      response.status < 400 &&
+      pathname.startsWith('/uploads/') &&
+      /\.(webp|avif|jpe?g|png|svg|gif|ico)$/i.test(pathname)
+    ) {
+      response.headers.set('Cache-Control', PUBLIC_UPLOAD_CACHE_CONTROL);
+    }
 
   // Stale asset hash protection: yeni deploy sonrası eski HTML hala eski CSS/JS hash isteyebilir.
   // _astro/ path'lerinde 404/500 olursa Astro default error HTML render eder → tarayıcı MIME hatası

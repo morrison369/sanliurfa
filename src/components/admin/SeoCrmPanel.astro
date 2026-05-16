@@ -1,0 +1,42 @@
+---
+import SharedCrmLivePanel from './SharedCrmLivePanel.astro';
+import { getSeoPanelConfig } from '../../lib/admin/crm-live-panel-config';
+
+const config = getSeoPanelConfig();
+---
+
+<SharedCrmLivePanel
+  panelClass="crm-seo-crm"
+  dataAttrName="data-seo-crm"
+  dataAttrValue={config.resource}
+  title={config.title}
+  description={config.description}
+  loadAttr="data-seo-load"
+  loadLabel="SEO kayıtlarını yükle"
+>
+  <div slot="toolbar" class="crm-live-toolbar">
+    <input type="search" data-seo-search placeholder="Slug, title, heading veya meta ara..." />
+    <select data-seo-filter>
+      <option value="all">Tüm SEO sayfaları</option>
+      {config.filterOptions.map(([value, label]) => <option value={value}>{label}</option>)}
+    </select>
+    <button type="button" data-seo-load>Filtrele</button>
+  </div>
+  <div slot="table" class="crm-table-wrap">
+    <table class="crm-table crm-live-table">
+      <thead>
+        <tr>
+          <th>URL / Başlık</th>
+          <th>Meta</th>
+          <th>Sayfa İçeriği</th>
+          <th>Skor</th>
+          <th>Durum</th>
+          <th>Aksiyon</th>
+        </tr>
+      </thead>
+      <tbody data-seo-body>
+        <tr><td colspan="6">Veri yüklemek için butona basın.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</SharedCrmLivePanel>

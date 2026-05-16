@@ -1,0 +1,84 @@
+---
+import {
+  getAdSenseClient,
+  getAdSenseSlot,
+  type AdSensePlacement,
+} from '../../lib/adsense';
+
+interface Props {
+  placement: AdSensePlacement;
+  slot?: string;
+  label?: string;
+  format?: 'auto' | 'fluid' | 'rectangle' | 'horizontal';
+  minHeight?: number;
+  className?: string;
+}
+
+const {
+  placement,
+  slot: slotOverride,
+  label = 'Reklam',
+  format = 'auto',
+  minHeight = 120,
+  className = '',
+} = Astro.props;
+
+const slot =
+  typeof slotOverride === 'string' && slotOverride.trim()
+    ? slotOverride.trim()
+    : await getAdSenseSlot(placement);
+const adClient = await getAdSenseClient();
+
+if (!slot) {
+  return null;
+}
+
+const adFormat = format === 'rectangle' || format === 'horizontal' ? 'auto' : format;
+const fullWidthResponsive = format === 'horizontal' || format === 'auto' ? 'true' : 'false';
+---
+
+<aside class:list={['sf-ad-slot', className]} aria-label={label} data-placement={placement}>
+  <p class="sf-ad-slot__label">{label}</p>
+  <ins
+    class="adsbygoogle sf-ad-slot__unit"
+    style={`display:block; min-height:${minHeight}px;`}
+    data-ad-client={adClient}
+    data-ad-slot={slot}
+    data-ad-format={adFormat}
+    data-full-width-responsive={fullWidthResponsive}
+  ></ins>
+  <script is:inline>
+    (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+</aside>
+
+<style>
+  .sf-ad-slot {
+    background: linear-gradient(180deg, rgba(251, 246, 236, 0.9), rgba(255, 255, 255, 0.96));
+    border: 1px solid rgba(184, 115, 51, 0.18);
+    border-radius: 1.25rem;
+    display: grid;
+    gap: 0.65rem;
+    margin: 2rem auto;
+    max-width: 78rem;
+    padding: 0.9rem 1rem 1rem;
+  }
+  .sf-ad-slot__label {
+    color: #8a5a2b;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    margin: 0;
+    text-transform: uppercase;
+  }
+  .sf-ad-slot__unit {
+    width: 100%;
+  }
+  .sf-ad-slot[data-placement='blog-detail-sidebar'],
+  .sf-ad-slot[data-placement='blog-list-sidebar'] {
+    border-radius: 1rem;
+    margin: 0;
+    max-width: none;
+    padding: 0.85rem;
+  }
+</style>

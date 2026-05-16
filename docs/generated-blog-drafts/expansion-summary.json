@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-05-14T15:27:10.242Z",
+  "status": "ok",
+  "minWords": 1500,
+  "segmentWords": 250,
+  "maxSegments": 8,
+  "expanded": 4,
+  "failed": 0,
+  "results": [
+    {
+      "slug": "sanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi",
+      "status": "ready-for-admin-review",
+      "beforeWords": 1468,
+      "afterWords": 1742,
+      "plannedSegments": 1,
+      "segmentResults": [
+        {
+          "segment": 1,
+          "targetWords": 250,
+          "addedWords": 274,
+          "totalWords": 1742
+        }
+      ],
+      "validationFailures": []
+    },
+    {
+      "slug": "sanliurfada-sabah-kahvaltisi-rehberi",
+      "status": "ready-for-admin-review",
+      "beforeWords": 1484,
+      "afterWords": 1699,
+      "plannedSegments": 1,
+      "segmentResults": [
+        {
+          "segment": 1,
+          "targetWords": 250,
+          "addedWords": 215,
+          "totalWords": 1699
+        }
+      ],
+      "validationFailures": []
+    },
+    {
+      "slug": "siverek-takoran-disi-gezi-noktalari",
+      "status": "ready-for-admin-review",
+      "beforeWords": 1422,
+      "afterWords": 1712,
+      "plannedSegments": 1,
+      "segmentResults": [
+        {
+          "segment": 1,
+          "targetWords": 250,
+          "addedWords": 290,
+          "totalWords": 1712
+        }
+      ],
+      "validationFailures": []
+    },
+    {
+      "slug": "viransehir-gezi-rehberi-eyyup-nebi",
+      "status": "ready-for-admin-review",
+      "beforeWords": 1456,
+      "afterWords": 1635,
+      "plannedSegments": 1,
+      "segmentResults": [
+        {
+          "segment": 1,
+          "targetWords": 250,
+          "addedWords": 179,
+          "totalWords": 1635
+        }
+      ],
+      "validationFailures": []
+    }
+  ]
+}

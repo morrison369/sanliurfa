@@ -35,7 +35,7 @@ Disallow: /raporlar
 Disallow: /canli-analitik
 Disallow: /veri-ambar
 Disallow: /api/
-Disallow: /_astro/
+Allow: /_astro/
 
 # Arama sonuçları - indekslenmemeli (gelismis arama UI sayfası hariç)
 Disallow: /ara
@@ -53,6 +53,11 @@ Crawl-delay: 1
 User-agent: Googlebot
 Allow: /
 Crawl-delay: 0.5
+
+# Google AdSense crawler
+User-agent: Mediapartners-Google
+Allow: /
+Allow: /ads.txt
 
 User-agent: Bingbot
 Allow: /

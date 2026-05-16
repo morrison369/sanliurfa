@@ -1,0 +1,913 @@
+---
+import { Icon } from 'astro-icon/components';
+import type { AdminCrmModule } from '../../data/admin-city-crm';
+import AdsCrmPanel from './AdsCrmPanel.astro';
+import ClassifiedsCrmPanel from './ClassifiedsCrmPanel.astro';
+import ControlCrmPanel from './ControlCrmPanel.astro';
+import LocationsCrmPanel from './LocationsCrmPanel.astro';
+import OpsCrmPanel from './OpsCrmPanel.astro';
+import SeoCrmPanel from './SeoCrmPanel.astro';
+import SocialCrmPanel from './SocialCrmPanel.astro';
+import { getAdSenseAdminSummary } from '../../lib/admin/adsense-admin';
+import { buildBotFindings, getAdminCrmCounts, getAdminCrmPreview, getBotCards } from '../../lib/admin/city-crm';
+
+interface Props {
+  module: AdminCrmModule;
+}
+
+const { module } = Astro.props as Props;
+const counts = await getAdminCrmCounts();
+const rows = await getAdminCrmPreview(module);
+const bots = getBotCards(module.botKeys);
+const adsenseSummary = module.slug === 'ads' ? await getAdSenseAdminSummary() : null;
+---
+
+<div class="crm-page" data-city-crm-live>
+  <section class="crm-module-hero">
+    <div class="crm-module-title">
+      <span><Icon name={module.icon} class="w-4 h-4" /></span>
+      <div>
+        <p>{module.eyebrow}</p>
+        <h2>{module.title}</h2>
+      </div>
+    </div>
+    <p class="crm-module-desc">{module.description}</p>
+    <div class="crm-actions">
+      {module.primaryHref && <a href={module.primaryHref} class="crm-btn crm-btn--primary">{module.primaryLabel || 'Yeni kayıt'}</a>}
+      {module.existingHref && <a href={module.existingHref} class="crm-btn">Mevcut ekranı aç</a>}
+      <a href="/admin/bots" class="crm-btn">Botlar</a>
+    </div>
+  </section>
+
+  <section class="crm-grid-3">
+    <div class="crm-card">
+      <span class="crm-card-label">Filtre/segment</span>
+      <strong>{module.filters.length}</strong>
+      <p>Liste ekranında kullanılacak ana filtreler tanımlı.</p>
+    </div>
+    <div class="crm-card">
+      <span class="crm-card-label">Form alanı</span>
+      <strong>{module.fields.length}</strong>
+      <p>Büyük formlar sekmeli UX ile yönetilecek alan haritası.</p>
+    </div>
+    <div class="crm-card">
+      <span class="crm-card-label">Manuel bot</span>
+      <strong>{module.botKeys.length}</strong>
+      <p>Otomatik işlem yok; öneriler admin onayına düşer.</p>
+    </div>
+  </section>
+
+  <section class="crm-panel">
+    <div class="crm-panel-head">
+      <div>
+        <h3>Liste ve segmentleme</h3>
+        <p>Vercel/Linear tarzı kompakt tablo için kullanılacak filtreler.</p>
+      </div>
+      <div class="crm-search-row">
+        <input type="search" placeholder={`${module.title} içinde ara...`} data-crm-filter />
+        <button type="button">Filtrele</button>
+      </div>
+    </div>
+    <div class="crm-chip-row">
+      {module.filters.map((filter) => <span>{filter}</span>)}
+    </div>
+  </section>
+
+  {module.slug === 'businesses' && (
+    <section class="crm-panel crm-business-crm">
+      <div class="crm-panel-head">
+        <div>
+          <h3>Canlı Mekanlar CRM tablosu</h3>
+          <p>Mevcut `/api/admin/places` endpoint’i ile çalışır. Bulk işlemler soft status değiştirir; veri silmez.</p>
+        </div>
+        <a class="crm-btn crm-btn--primary" href="/admin/places/add">Yeni işletme</a>
+      </div>
+      <div class="crm-live-toolbar">
+        <input type="search" id="crm-place-search" placeholder="İşletme adı, adres veya kategori ara..." />
+        <select id="crm-place-status">
+          <option value="all">Tüm durumlar</option>
+          <option value="active">Yayında</option>
+          <option value="pending">Onay bekliyor</option>
+          <option value="suspended">Pasif</option>
+          <option value="rejected">Reddedildi</option>
+        </select>
+        <button type="button" id="crm-place-load">Ara</button>
+      </div>
+      <div class="crm-table-wrap">
+        <table class="crm-table crm-live-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="crm-place-all" aria-label="Tümünü seç" /></th>
+              <th>İşletme</th>
+              <th>Kategori</th>
+              <th>Durum</th>
+              <th>Kalite</th>
+              <th>Aksiyon</th>
+            </tr>
+          </thead>
+          <tbody id="crm-place-body">
+            <tr><td colspan="6">Yükleniyor...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="crm-bulkbar" id="crm-place-bulk" hidden>
+        <strong><span id="crm-place-selected">0</span> kayıt seçildi</strong>
+        <button type="button" data-place-bulk="approve">Yayına al</button>
+        <button type="button" data-place-bulk="suspend">Pasife çek</button>
+        <button type="button" data-place-bulk="feature">Öne çıkar</button>
+        <button type="button" data-place-bulk="delete">Arşivle</button>
+      </div>
+    </section>
+  )}
+
+  {module.slug === 'submissions' && (
+    <section class="crm-panel">
+      <div class="crm-panel-head">
+        <div>
+          <h3>Başvuru pipeline</h3>
+          <p>Başvurular onaylanmadan public siteye otomatik çıkmaz. Tek tıkla işletmeye dönüştürme mevcut kayıt akışına bağlanır.</p>
+        </div>
+        <a class="crm-btn" href="/admin/claims">Eski talepler ekranı</a>
+      </div>
+      <div class="crm-pipeline">
+        {['Yeni başvuru', 'İnceleniyor', 'Eksik bilgi', 'Onaylandı', 'Yayına alındı', 'Reddedildi', 'Arşiv'].map((column, index) => (
+          <section class="crm-pipe-col">
+            <h4>{column}</h4>
+            <div class="crm-pipe-card">
+              <strong>{index === 0 ? `${rows.length} kayıt` : '0 kayıt'}</strong>
+              <p>{index === 0 ? 'Son başvurular veri önizleme tablosunda listelenir.' : 'Bu kolon için durum eşleştirme hazır.'}</p>
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {(module.slug === 'locations/districts' || module.slug === 'locations/neighborhoods') && (
+    <LocationsCrmPanel mode={module.slug} />
+  )}
+
+  {(module.slug === 'events' || module.slug === 'pharmacies') && (
+    <OpsCrmPanel mode={module.slug} />
+  )}
+
+  {(module.slug === 'reviews' || module.slug === 'ads' || module.slug === 'map') && (
+    <ControlCrmPanel mode={module.slug} />
+  )}
+
+  {(module.slug === 'community/users' ||
+    module.slug === 'community/profiles' ||
+    module.slug === 'community/reports' ||
+    module.slug === 'messages') && (
+    <SocialCrmPanel mode={module.slug} />
+  )}
+
+  {module.slug === 'classifieds' && (
+    <ClassifiedsCrmPanel />
+  )}
+
+  {module.slug === 'seo' && (
+    <SeoCrmPanel />
+  )}
+
+  {module.slug === 'bots' && (
+    <section class="crm-panel crm-bot-console">
+      <div class="crm-panel-head">
+        <div>
+          <h3>Manuel bot çalışma sonuçları</h3>
+          <p>Botlar veri değiştirmez. Çıkan öneriler burada listelenir; uygulama kararı admin’e aittir.</p>
+        </div>
+      </div>
+      <div class="crm-bot-result" id="crm-bot-result">
+        <strong>Henüz bot çalıştırılmadı</strong>
+        <p>Alt bölümdeki “Manuel çalıştır” butonlarından biriyle analiz başlatın.</p>
+      </div>
+    </section>
+  )}
+
+  {module.slug === 'settings' && (
+    <section class="crm-panel">
+      <div class="crm-panel-head">
+        <div>
+          <h3>Admin kontrollü frontend anahtarları</h3>
+          <p>Landing page dahil içerik, görsel ve tema değişiklikleri `site_settings` üzerinden draft/publish akışıyla yönetilir.</p>
+        </div>
+        <a class="crm-btn crm-btn--primary" href="/admin/site-content">Site içerik editörü</a>
+      </div>
+      <div class="crm-settings-grid">
+        {['homepage.hero', 'homepage.routes', 'homepage.quickAccess', 'homepage.theme', 'homepage.sectionCopy', 'homepage.sectionStyles', 'header.navLinks', 'footer.links'].map((key) => (
+          <a href={`/admin/site-content?key=${key}`} class="crm-setting-card">
+            <strong>{key}</strong>
+            <span>Taslak / önizleme / yayın</span>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  {module.slug === 'media' && (
+    <section class="crm-panel">
+      <div class="crm-panel-head">
+        <div>
+          <h3>Local medya kütüphanesi</h3>
+          <p>CDN/object storage yok. Görseller local storage + `site_platform` medya kayıtları üzerinden yönetilir.</p>
+        </div>
+        <button class="crm-btn" type="button" id="crm-media-load">Medya yükle</button>
+      </div>
+      <div class="crm-media-grid" id="crm-media-grid">
+        <div class="crm-empty"><strong>Medya bekleniyor</strong><p>Listeyi yüklemek için butona basın.</p></div>
+      </div>
+    </section>
+  )}
+
+  {module.slug === 'ads' && (
+    <AdsCrmPanel adsenseSummary={adsenseSummary} />
+  )}
+
+  {module.slug === 'community/users' && (
+    <section class="crm-panel">
+      <div class="crm-panel-head">
+        <div>
+          <h3>Rol ve yetki matrisi</h3>
+          <p>Mevcut auth korunur. Roller için hangi modülün görülebileceği admin panelinde netleştirildi.</p>
+        </div>
+        <a class="crm-btn" href="/admin/users">Kullanıcı tablosu</a>
+      </div>
+      <div class="crm-role-grid">
+        {[
+          ['Super Admin', 'Her şey'],
+          ['Editor', 'Mekan, kategori, blog, etkinlik'],
+          ['Moderator', 'Yorum, topluluk, eşleşme, başvuru'],
+          ['Sales', 'Reklam ve sponsorlu alanlar'],
+          ['SEO Manager', 'SEO merkezi, içerik önerileri'],
+          ['Support', 'Başvurular ve işletme destek notları'],
+        ].map(([role, scope]) => (
+          <article class="crm-role-card">
+            <strong>{role}</strong>
+            <p>{scope}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <section class="crm-panel">
+    <div class="crm-panel-head">
+      <div>
+        <h3>Alan haritası</h3>
+        <p>CRUD/form geliştirme sözleşmesi. Veri silme yerine pasif/arşiv mantığı kullanılır.</p>
+      </div>
+    </div>
+    <div class="crm-field-grid">
+      {module.fields.map((field) => <span>{field}</span>)}
+    </div>
+  </section>
+
+  <section class="crm-panel">
+    <div class="crm-panel-head">
+      <div>
+        <h3>Veri önizleme</h3>
+        <p>Mevcut DB’den okunur; tablo yoksa boş state gösterir, public siteyi bozmaz.</p>
+      </div>
+    </div>
+    {rows.length > 0 ? (
+      <div class="crm-table-wrap">
+        <table class="crm-table">
+          <thead>
+            <tr>
+              {Object.keys(rows[0]).slice(0, 6).map((key) => <th>{key}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr>
+                {Object.entries(row).slice(0, 6).map(([_, value]) => (
+                  <td>{value === null || value === undefined ? '—' : String(value)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    ) : (
+      <div class="crm-empty">
+        <Icon name="lucide:database" class="w-5 h-5" />
+        <strong>Bu modül için önizleme verisi yok</strong>
+        <p>Tablo henüz boş olabilir veya mevcut şemada farklı adla tutuluyor olabilir. Modül UI sözleşmesi hazır.</p>
+      </div>
+    )}
+  </section>
+
+  {bots.length > 0 && (
+    <section class="crm-panel">
+      <div class="crm-panel-head">
+        <div>
+          <h3>Manuel bot önerileri</h3>
+          <p>Botlar arka planda çalışmaz. Butonlar öneri akışını başlatmak için panel içi manuel tetikleyicidir.</p>
+        </div>
+      </div>
+      <div class="crm-bot-grid">
+        {bots.map((bot) => {
+          const finding = buildBotFindings(counts, bot);
+          return (
+            <article class={`crm-bot crm-bot--${bot.risk}`}>
+              <div>
+                <span class="crm-risk">{bot.risk}</span>
+                <h4>{bot.title}</h4>
+                <p>{bot.description}</p>
+              </div>
+              <ul>
+                {bot.checks.map((check) => <li>{check}</li>)}
+              </ul>
+              <div class="crm-bot-foot">
+                <span>{finding.issues} sorun · {finding.suggestions} öneri</span>
+              <button type="button" data-bot-run={bot.key}>Manuel çalıştır</button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  )}
+</div>
+
+<script is:inline>
+  if (document.querySelector('[data-city-crm-live]')) {
+    import('/admin/city-crm-live.js')
+      .then((module) => module.initCityCrmLive?.())
+      .catch(() => {});
+  }
+
+  if (document.querySelector('[data-classifieds-crm]')) {
+    import('/admin/classifieds-crm.js')
+      .then((module) => module.initClassifiedsCrm?.())
+      .catch(() => {});
+  }
+
+  if (document.querySelector('[data-adsense-live]')) {
+    import('/admin/adsense-live.js')
+      .then((module) => module.initAdsenseLive?.())
+      .catch(() => {});
+  }
+</script>
+
+<style>
+  .crm-page { display: flex; flex-direction: column; gap: 1rem; }
+  .crm-module-hero, .crm-panel, .crm-card {
+    background: var(--adm-bg-elev); border: 1px solid var(--adm-border); border-radius: 16px;
+  }
+  .crm-module-hero { padding: 1.25rem; display: grid; gap: 1rem; }
+  .crm-module-title { display: flex; align-items: center; gap: .8rem; }
+  .crm-module-title > span { width: 42px; height: 42px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: var(--adm-bg-hover); color: var(--adm-accent); }
+  .crm-module-title p, .crm-card-label { margin: 0; color: var(--adm-text-soft); font-size: .7rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+  .crm-module-title h2 { margin: .15rem 0 0; font-size: 1.45rem; letter-spacing: -.02em; }
+  .crm-module-desc { margin: 0; color: var(--adm-text-muted); max-width: 880px; line-height: 1.6; }
+  .crm-actions { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .crm-btn {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 36px;
+    padding: .5rem .85rem; border: 1px solid var(--adm-border); border-radius: 10px;
+    color: var(--adm-text); text-decoration: none; font-weight: 750; font-size: .82rem;
+    background: var(--adm-bg-elev);
+  }
+  .crm-btn--primary { background: var(--adm-text); color: var(--adm-bg); border-color: var(--adm-text); }
+  .crm-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; }
+  .crm-card { padding: 1rem; }
+  .crm-card strong { display: block; margin: .35rem 0; font-size: 1.7rem; }
+  .crm-card p, .crm-panel-head p, .crm-empty p, .crm-bot p { margin: .2rem 0 0; color: var(--adm-text-muted); line-height: 1.5; font-size: .84rem; }
+  .crm-panel { padding: 1rem; }
+  .crm-panel-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: .8rem; }
+  .crm-panel-head h3 { margin: 0; font-size: 1rem; }
+  .crm-search-row { display: flex; gap: .45rem; }
+  .crm-search-row input { min-width: 240px; border: 1px solid var(--adm-border); border-radius: 10px; padding: .55rem .7rem; background: var(--adm-bg); color: var(--adm-text); }
+  .crm-search-row button, .crm-bot-foot button { border: 1px solid var(--adm-border); border-radius: 9px; background: var(--adm-bg); color: var(--adm-text); padding: .5rem .7rem; font-weight: 750; cursor: pointer; }
+  .crm-live-toolbar { display: grid; grid-template-columns: 1fr 180px 220px auto; gap: .55rem; margin-bottom: .8rem; }
+  .crm-export-fields { display: flex; flex-wrap: wrap; gap: .6rem; margin: 0 0 .8rem; }
+  .crm-export-summary {
+    align-items: flex-start;
+    background: var(--adm-bg);
+    border: 1px solid var(--adm-border);
+    border-radius: 14px;
+    display: grid;
+    gap: .18rem;
+    margin: 0 0 .8rem;
+    padding: .8rem .95rem;
+  }
+  .crm-export-summary strong {
+    color: var(--adm-text);
+    font-size: .84rem;
+  }
+  .crm-export-summary span {
+    color: var(--adm-text-muted);
+    font-size: .76rem;
+  }
+  .crm-export-summary code {
+    background: color-mix(in srgb, var(--adm-bg-hover) 80%, transparent);
+    border: 1px solid var(--adm-border);
+    border-radius: 10px;
+    color: var(--adm-text-soft);
+    display: block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .72rem;
+    margin-top: .2rem;
+    overflow-wrap: anywhere;
+    padding: .45rem .55rem;
+  }
+  .crm-search-history {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .7rem;
+    margin: 0 0 .8rem;
+  }
+  .crm-search-history strong {
+    color: var(--adm-text-muted);
+    font-size: .72rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .crm-search-history-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+  }
+  .crm-search-history-list button {
+    align-items: center;
+    background: color-mix(in srgb, var(--adm-bg-hover) 76%, transparent);
+    border: 1px solid var(--adm-border);
+    border-radius: 999px;
+    color: var(--adm-text);
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    gap: .45rem;
+    padding: .38rem .78rem;
+  }
+  .crm-search-history-list button:hover {
+    border-color: color-mix(in srgb, var(--admin-accent) 35%, var(--adm-border));
+    color: var(--admin-accent-strong);
+  }
+  .crm-search-history-list button[data-active='true'] {
+    background: color-mix(in srgb, var(--admin-accent) 12%, var(--adm-bg-hover));
+    border-color: color-mix(in srgb, var(--admin-accent) 36%, var(--adm-border));
+    color: var(--admin-accent-strong);
+  }
+  .crm-search-history-remove {
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: .95rem;
+    line-height: 1;
+    padding: 0;
+  }
+  .crm-search-history-clear {
+    background: transparent;
+    border: 1px solid var(--adm-border);
+    border-radius: 999px;
+    color: var(--adm-text-muted);
+    cursor: pointer;
+    font: inherit;
+    margin-left: auto;
+    padding: .38rem .78rem;
+  }
+  .crm-search-history-clear:hover {
+    border-color: color-mix(in srgb, #d66a5a 45%, var(--adm-border));
+    color: #d66a5a;
+  }
+  .crm-export-preset {
+    align-items: center;
+    background: color-mix(in srgb, var(--admin-accent) 8%, var(--admin-panel));
+    border: 1px solid var(--admin-border);
+    border-radius: 999px;
+    display: inline-flex;
+    gap: .5rem;
+    padding: .45rem .75rem;
+  }
+  .crm-export-mode {
+    align-items: center;
+    background: var(--adm-bg);
+    border: 1px solid var(--adm-border);
+    border-radius: 999px;
+    color: var(--adm-text-muted);
+    display: inline-flex;
+    gap: .5rem;
+    padding: .45rem .75rem;
+  }
+  .crm-export-mode select {
+    background: transparent;
+    border: 0;
+    color: var(--adm-text);
+    font: inherit;
+    outline: 0;
+  }
+  .crm-export-preset select {
+    background: transparent;
+    border: 0;
+    color: var(--admin-text);
+    font: inherit;
+    outline: 0;
+  }
+  .crm-export-fields label {
+    align-items: center; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 999px;
+    color: var(--adm-text-muted); display: inline-flex; font-size: .74rem; font-weight: 800; gap: .35rem; padding: .35rem .65rem;
+  }
+  .crm-export-move {
+    display: inline-flex;
+    gap: .2rem;
+    margin-left: .1rem;
+  }
+  .crm-export-move button {
+    background: transparent;
+    border: 0;
+    color: var(--adm-text-soft);
+    cursor: pointer;
+    font: inherit;
+    font-size: .68rem;
+    padding: 0 .1rem;
+  }
+  .crm-live-toolbar input, .crm-live-toolbar select {
+    border: 1px solid var(--adm-border); border-radius: 10px; padding: .58rem .7rem;
+    background: var(--adm-bg); color: var(--adm-text);
+  }
+  .crm-live-toolbar button {
+    border: 1px solid var(--adm-border); border-radius: 10px; padding: .58rem .8rem;
+    background: var(--adm-text); color: var(--adm-bg); font-weight: 800; cursor: pointer;
+  }
+  .crm-classified-report-grid {
+    display: grid;
+    gap: .7rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    margin: 0 0 .85rem;
+  }
+  .crm-classified-report-grid button {
+    background: var(--adm-bg);
+    border: 1px solid var(--adm-border);
+    border-radius: 14px;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+    padding: .85rem .95rem;
+  }
+  .crm-classified-report-grid button[data-active='true'] {
+    background: color-mix(in srgb, var(--adm-accent) 12%, var(--adm-bg));
+    border-color: color-mix(in srgb, var(--adm-accent) 30%, var(--adm-border));
+  }
+  .crm-classified-report-grid strong {
+    color: var(--adm-text);
+    display: block;
+    font-size: 1rem;
+    font-weight: 900;
+  }
+  .crm-classified-report-grid span {
+    color: var(--adm-text-muted);
+    font-size: .76rem;
+  }
+  .crm-live-table td strong { display: block; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .crm-live-table td small { display: block; color: var(--adm-text-soft); margin-top: .12rem; }
+  .crm-live-table th small {
+    color: var(--adm-text-soft);
+    display: block;
+    font-size: .68rem;
+    font-weight: 700;
+    margin-top: .18rem;
+  }
+  .crm-head-filter {
+    background: transparent;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-align: left;
+  }
+  .crm-location-crm .crm-live-table input,
+  .crm-ops-crm .crm-live-table input,
+  .crm-control-crm .crm-live-table input,
+  .crm-social-crm .crm-live-table input,
+  .crm-seo-crm .crm-live-table input {
+    width: 100%;
+    min-width: 120px;
+    border: 1px solid var(--adm-border);
+    border-radius: 8px;
+    background: var(--adm-bg);
+    color: var(--adm-text);
+    padding: .42rem .5rem;
+    font: inherit;
+    font-size: .78rem;
+  }
+  .crm-location-crm .crm-live-table td { vertical-align: top; }
+  .crm-ops-crm .crm-live-table td { vertical-align: top; }
+  .crm-control-crm .crm-live-table td { vertical-align: top; }
+  .crm-social-crm .crm-live-table td { vertical-align: top; }
+  .crm-seo-crm .crm-live-table td { vertical-align: top; }
+  .crm-location-crm .crm-live-table td:nth-child(4),
+  .crm-location-crm .crm-live-table td:nth-child(5) {
+    min-width: 220px;
+  }
+  .crm-ops-crm .crm-live-table td:nth-child(3),
+  .crm-ops-crm .crm-live-table td:nth-child(4) {
+    min-width: 230px;
+  }
+  .crm-control-crm .crm-live-table td:nth-child(1),
+  .crm-control-crm .crm-live-table td:nth-child(2),
+  .crm-control-crm .crm-live-table td:nth-child(4) {
+    min-width: 220px;
+  }
+  .crm-social-crm .crm-live-table td:nth-child(1),
+  .crm-social-crm .crm-live-table td:nth-child(2),
+  .crm-social-crm .crm-live-table td:nth-child(4) {
+    min-width: 230px;
+  }
+  .crm-seo-crm .crm-live-table td:nth-child(1),
+  .crm-seo-crm .crm-live-table td:nth-child(2),
+  .crm-seo-crm .crm-live-table td:nth-child(3) {
+    min-width: 260px;
+  }
+  .crm-bot-result {
+    border: 1px dashed var(--adm-border);
+    border-radius: 14px;
+    background: var(--adm-bg);
+    padding: 1rem;
+  }
+  .crm-bot-result p { margin: .35rem 0 0; color: var(--adm-text-muted); }
+  .crm-bot-result ul { margin: .75rem 0 0; padding-left: 1rem; color: var(--adm-text-muted); line-height: 1.6; font-size: .82rem; }
+  .crm-inline-check {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    margin-top: .35rem;
+    color: var(--adm-text-muted);
+    font-size: .74rem;
+    font-weight: 750;
+  }
+  .crm-inline-check input { width: 15px !important; min-width: 15px !important; }
+  .crm-row-save {
+    border: 1px solid var(--adm-border);
+    border-radius: 9px;
+    background: var(--adm-text);
+    color: var(--adm-bg);
+    padding: .42rem .65rem;
+    font-weight: 850;
+    cursor: pointer;
+  }
+  .crm-status, .crm-ok, .crm-warn {
+    display: inline-flex; margin: .1rem; padding: .18rem .45rem; border-radius: 999px;
+    font-size: .68rem; font-weight: 850; border: 1px solid var(--adm-border);
+  }
+  .crm-status { background: var(--adm-bg-hover); color: var(--adm-text-muted); }
+  .crm-ok { color: var(--adm-success); background: color-mix(in srgb, var(--adm-success) 10%, transparent); }
+  .crm-warn { color: var(--adm-warning); background: color-mix(in srgb, var(--adm-warning) 10%, transparent); }
+  .crm-bulkbar {
+    position: sticky; bottom: .8rem; z-index: 2; margin-top: .8rem; padding: .7rem;
+    border: 1px solid var(--adm-border); border-radius: 14px; background: var(--adm-bg-elev);
+    box-shadow: var(--adm-shadow); display: flex; align-items: center; gap: .55rem; flex-wrap: wrap;
+  }
+  .crm-bulkbar button {
+    border: 1px solid var(--adm-border); border-radius: 9px; background: var(--adm-bg);
+    color: var(--adm-text); padding: .42rem .65rem; font-weight: 800; cursor: pointer;
+  }
+  .crm-bulkbar select {
+    border: 1px solid var(--adm-border);
+    border-radius: 9px;
+    background: var(--adm-bg);
+    color: var(--adm-text);
+    padding: .42rem .65rem;
+  }
+  .crm-inline-feedback {
+    align-items: center;
+    border: 1px solid var(--adm-border);
+    border-radius: 12px;
+    color: var(--adm-text-muted);
+    display: flex;
+    font-size: .8rem;
+    font-weight: 800;
+    gap: .8rem;
+    justify-content: space-between;
+    margin-top: .6rem;
+    padding: .65rem .8rem;
+  }
+  .crm-inline-feedback-action {
+    background: var(--adm-bg);
+    border: 1px solid var(--adm-border);
+    border-radius: 999px;
+    color: var(--adm-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: .75rem;
+    font-weight: 900;
+    padding: .45rem .8rem;
+    white-space: nowrap;
+  }
+  .crm-inline-feedback[data-tone="progress"] {
+    border-color: color-mix(in srgb, var(--adm-warning) 30%, var(--adm-border));
+    color: var(--adm-warning);
+  }
+  .crm-inline-feedback[data-tone="success"] {
+    border-color: color-mix(in srgb, var(--adm-success) 30%, var(--adm-border));
+    color: var(--adm-success);
+  }
+  .crm-inline-feedback[data-tone="error"] {
+    border-color: color-mix(in srgb, var(--adm-danger) 30%, var(--adm-border));
+    color: var(--adm-danger);
+  }
+  .crm-duplicate-watch { margin-top: .8rem; }
+  .crm-moderation-timeline { margin-top: .8rem; }
+  .crm-reason-summary { margin-top: .8rem; }
+  .crm-risk-summary { margin-top: .8rem; }
+  .crm-risk-trend { margin-top: .8rem; }
+  .crm-duplicate-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-top: .8rem;
+  }
+  .crm-duplicate-actions button {
+    border: 1px solid var(--adm-border);
+    border-radius: 9px;
+    background: var(--adm-bg);
+    color: var(--adm-text);
+    cursor: pointer;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 800;
+    padding: .45rem .65rem;
+  }
+  .crm-duplicate-list {
+    display: grid;
+    gap: .65rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: .8rem;
+  }
+  .crm-reason-list {
+    display: grid;
+    gap: .6rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    margin-top: .8rem;
+  }
+  .crm-reason-item {
+    background: var(--adm-bg);
+    border: 1px solid var(--adm-border);
+    border-radius: 12px;
+    display: grid;
+    gap: .2rem;
+    padding: .8rem;
+  }
+  .crm-reason-item strong {
+    color: var(--adm-text);
+    font-size: .82rem;
+  }
+  .crm-reason-item span {
+    color: var(--adm-text-muted);
+    font-size: .75rem;
+    font-weight: 800;
+  }
+  .crm-risk-grid {
+    display: grid;
+    gap: .8rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: .8rem;
+  }
+  .crm-risk-group {
+    background: var(--adm-bg);
+    border: 1px solid var(--adm-border);
+    border-radius: 12px;
+    padding: .85rem;
+  }
+  .crm-risk-group h4 {
+    color: var(--adm-text);
+    font-size: .82rem;
+    margin: 0 0 .6rem;
+  }
+  .crm-risk-group p {
+    color: var(--adm-text-muted);
+    font-size: .76rem;
+    margin: 0;
+  }
+  .crm-risk-item {
+    border-top: 1px solid var(--adm-border);
+    display: grid;
+    gap: .16rem;
+    padding-top: .55rem;
+    margin-top: .55rem;
+  }
+  .crm-risk-item strong {
+    color: var(--adm-text);
+    font-size: .8rem;
+  }
+  .crm-risk-item span {
+    color: var(--adm-text-muted);
+    font-size: .74rem;
+    font-weight: 800;
+  }
+  .crm-trend-list {
+    display: grid;
+    gap: .7rem;
+    margin-top: .8rem;
+  }
+  .crm-trend-item {
+    display: grid;
+    gap: .3rem;
+  }
+  .crm-trend-item strong {
+    color: var(--adm-text);
+    font-size: .8rem;
+  }
+  .crm-trend-item > span {
+    color: var(--adm-text-muted);
+    font-size: .74rem;
+    font-weight: 800;
+  }
+  .crm-trend-bar {
+    background: var(--adm-bg);
+    border: 1px solid var(--adm-border);
+    border-radius: 999px;
+    height: .7rem;
+    overflow: hidden;
+  }
+  .crm-trend-bar span {
+    background: linear-gradient(90deg, #b94d18 0%, #f3c45f 100%);
+    display: block;
+    height: 100%;
+  }
+  .crm-duplicate-item {
+    border: 1px solid var(--adm-border);
+    border-radius: 12px;
+    background: var(--adm-bg);
+    padding: .8rem;
+  }
+  .crm-duplicate-item p {
+    margin: .3rem 0 .55rem;
+    color: var(--adm-text-muted);
+    font-size: .78rem;
+    line-height: 1.5;
+  }
+  .crm-duplicate-item a {
+    color: var(--adm-accent);
+    font-size: .78rem;
+    font-weight: 800;
+    text-decoration: none;
+  }
+  .crm-timeline-list {
+    display: grid;
+    gap: .65rem;
+    margin-top: .8rem;
+  }
+  .crm-timeline-item {
+    border-left: 2px solid var(--adm-border);
+    padding-left: .8rem;
+  }
+  .crm-timeline-item p,
+  .crm-timeline-item span {
+    color: var(--adm-text-muted);
+    display: block;
+    font-size: .78rem;
+    line-height: 1.5;
+    margin-top: .2rem;
+  }
+  .crm-pipeline { display: grid; grid-template-columns: repeat(7, minmax(180px, 1fr)); gap: .65rem; overflow-x: auto; padding-bottom: .2rem; }
+  .crm-pipe-col { min-height: 180px; border: 1px solid var(--adm-border); border-radius: 14px; padding: .75rem; background: var(--adm-bg); }
+  .crm-pipe-col h4 { margin: 0 0 .65rem; font-size: .82rem; color: var(--adm-text-muted); }
+  .crm-pipe-card { border: 1px solid var(--adm-border); border-radius: 12px; padding: .75rem; background: var(--adm-bg-elev); }
+  .crm-pipe-card p { margin: .25rem 0 0; color: var(--adm-text-muted); font-size: .78rem; line-height: 1.45; }
+  .crm-settings-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .7rem; }
+  .crm-ad-grid, .crm-role-grid, .crm-media-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+  .crm-ad-card, .crm-role-card, .crm-media-card {
+    border: 1px solid var(--adm-border); border-radius: 14px; padding: .9rem;
+    background: var(--adm-bg); color: var(--adm-text);
+  }
+  .crm-ad-card p, .crm-role-card p, .crm-media-card span { color: var(--adm-text-muted); font-size: .8rem; line-height: 1.5; }
+  .crm-media-thumb { aspect-ratio: 16/10; border-radius: 10px; background: var(--adm-bg-hover); overflow: hidden; margin-bottom: .65rem; }
+  .crm-media-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .crm-setting-card {
+    display: flex; flex-direction: column; gap: .25rem; border: 1px solid var(--adm-border);
+    border-radius: 12px; padding: .85rem; color: var(--adm-text); text-decoration: none; background: var(--adm-bg);
+  }
+  .crm-setting-card span { color: var(--adm-text-soft); font-size: .74rem; }
+  .crm-chip-row, .crm-field-grid { display: flex; flex-wrap: wrap; gap: .45rem; }
+  .crm-chip-row span, .crm-field-grid span {
+    border: 1px solid var(--adm-border); background: var(--adm-bg-hover); color: var(--adm-text);
+    border-radius: 999px; padding: .35rem .6rem; font-size: .78rem; font-weight: 650;
+  }
+  .crm-field-grid span { border-radius: 9px; background: var(--adm-bg-elev); }
+  .crm-table-wrap { overflow-x: auto; border: 1px solid var(--adm-border); border-radius: 12px; }
+  .crm-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .crm-table th { text-align: left; color: var(--adm-text-soft); text-transform: uppercase; letter-spacing: .06em; font-size: .68rem; background: var(--adm-bg-hover); }
+  .crm-table th, .crm-table td { padding: .65rem .75rem; border-bottom: 1px solid var(--adm-border); max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .crm-table tr:last-child td { border-bottom: 0; }
+  .crm-empty { display: grid; place-items: center; gap: .35rem; padding: 2rem; border: 1px dashed var(--adm-border); border-radius: 12px; text-align: center; color: var(--adm-text-muted); }
+  .crm-bot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+  .crm-bot { border: 1px solid var(--adm-border); border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; gap: .8rem; background: var(--adm-bg); }
+  .crm-bot h4 { margin: .4rem 0 0; }
+  .crm-risk { color: var(--adm-text-soft); font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 850; }
+  .crm-bot--yüksek .crm-risk { color: var(--adm-danger); }
+  .crm-bot--orta .crm-risk { color: var(--adm-warning); }
+  .crm-bot--düşük .crm-risk { color: var(--adm-success); }
+  .crm-bot ul { margin: 0; padding-left: 1rem; color: var(--adm-text-muted); font-size: .8rem; line-height: 1.6; }
+  .crm-bot-foot { display: flex; justify-content: space-between; gap: .75rem; align-items: center; color: var(--adm-text-soft); font-size: .78rem; }
+  @media (max-width: 900px) {
+    .crm-grid-3, .crm-bot-grid, .crm-live-toolbar, .crm-settings-grid, .crm-ad-grid, .crm-role-grid, .crm-media-grid, .crm-duplicate-list { grid-template-columns: 1fr; }
+    .crm-panel-head { flex-direction: column; }
+    .crm-search-row, .crm-search-row input { width: 100%; }
+  }
+</style>

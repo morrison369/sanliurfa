@@ -30,7 +30,7 @@ export const GET: APIRoute = async () => {
       const result = await query(`
         SELECT title, slug, excerpt
         FROM blog_posts
-        WHERE status = 'published' AND published_at <= CURRENT_DATE
+        WHERE status = 'published' AND published_at <= NOW()
         ORDER BY published_at DESC
         LIMIT 60
       `);
@@ -62,6 +62,7 @@ Sanliurfa.com, Türkiye'nin Şanlıurfa iline odaklanmış bir şehir rehberi pl
 
 ## Ana İçerik Bölümleri
 
+- Odak anahtar kelime: Şanlıurfa
 - [Ana Sayfa](${baseUrl}/) — Platform genel görünümü, öne çıkan mekanlar ve güncel bilgiler
 - [Mekanlar](${baseUrl}/mekanlar) — Restoranlar, kafeler, oteller, turistik mekanlar ve işletmeler
 - [Blog](${baseUrl}/blog) — Şanlıurfa hakkında rehber yazıları ve makaleler
@@ -69,6 +70,17 @@ Sanliurfa.com, Türkiye'nin Şanlıurfa iline odaklanmış bir şehir rehberi pl
 - [Gezilecek Yerler](${baseUrl}/gezilecek-yerler) — Şanlıurfa'da gezilecek tarihi ve turistik yerler
 - [Yemek Tarifleri](${baseUrl}/yemek-tarifleri) — Şanlıurfa mutfağı tarifleri
 - [Gelişmiş Arama](${baseUrl}/arama/gelismis) — Filtre ve AI destekli gelişmiş mekan arama
+
+## Hızlı Alıntı Başlıkları
+
+- Kanonik yollar: /ilceler, /yemek-tarifleri, /ulasim/otobus-saatleri, /ulasim/ucak-saatleri, /etkinlikler, /mekanlar, /topluluk, /eslesme, /isletme-kayit
+- İçerik üretim politikası: şehir içerik ajanları otomatik yayın yapmaz; admin onayı gerekir.
+- Şanlıurfa yemek tarifleri: ${baseUrl}/yemek-tarifleri
+- Şanlıurfa nöbetçi eczaneler: ${baseUrl}/saglik/nobetci-eczaneler
+- Şanlıurfa otobüs saatleri: ${baseUrl}/ulasim/otobus-saatleri
+- Şanlıurfa uçak saatleri: ${baseUrl}/ulasim/ucak-saatleri
+- Şanlıurfa etkinlikleri: ${baseUrl}/etkinlikler
+- Şanlıurfa topluluk: ${baseUrl}/topluluk
 
 ## Sağlık
 

@@ -15,6 +15,7 @@ export interface SEOMeta {
 }
 
 import { getPublicAppUrl } from '../public-app-url';
+import { PUBLISHER_PROFILE } from '../transparency';
 
 const BASE_URL = getPublicAppUrl();
 const DEFAULT_IMAGE = `${BASE_URL}/images/og-default.jpg`;
@@ -187,14 +188,23 @@ export function generateOrganizationStructuredData(): Record<string, any> {
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: 'Sanliurfa.com',
+    name: PUBLISHER_PROFILE.siteName,
     url: BASE_URL,
     logo: `${BASE_URL}/logo.png`,
-    contactPoint: {
-      '@type': 'ContactPoint',
-      contactType: 'customer support',
-      email: 'info@sanliurfa.com',
-    },
+    email: PUBLISHER_PROFILE.generalEmail,
+    foundingDate: PUBLISHER_PROFILE.foundedYear,
+    contactPoint: [
+      {
+        '@type': 'ContactPoint',
+        contactType: 'customer support',
+        email: PUBLISHER_PROFILE.generalEmail,
+      },
+      {
+        '@type': 'ContactPoint',
+        contactType: 'business inquiry',
+        email: PUBLISHER_PROFILE.businessEmail,
+      },
+    ],
   };
 }
 

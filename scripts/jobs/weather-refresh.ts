@@ -56,7 +56,43 @@ async function main() {
   const { query, pool } = await import('../../src/lib/postgres');
   const { getSanliurfaWeather } = await import('../../src/lib/weather/open-meteo');
   const now = new Date().toISOString();
-  const { payload, fromCache } = await getSanliurfaWeather({ forceRefresh: true });
+  let payload: any;
+  let fromCache = false;
+  let upstreamError: string | null = null;
+
+  try {
+    const result = await getSanliurfaWeather({ forceRefresh: true });
+    payload = result.payload;
+    fromCache = result.fromCache;
+  } catch (error) {
+    upstreamError = error instanceof Error ? error.message : String(error);
+    const previous = await query<{ setting_value: Record<string, any> }>(
+      `SELECT setting_value FROM site_settings WHERE setting_key = 'weather.lastUpdated' LIMIT 1`,
+    );
+    const previousValue = previous?.rows?.[0]?.setting_value || {};
+    payload = {
+      fetchedAt: previousValue.updatedAt || now,
+      source: previousValue.source || 'open-meteo',
+      location: previousValue.location || {
+        name: 'Şanlıurfa',
+        latitude: 37.1674,
+        longitude: 38.7955,
+        timezone: 'Europe/Istanbul',
+      },
+      current: previousValue.current || {
+        temperature: null,
+        feelsLike: null,
+        humidity: null,
+        windSpeed: null,
+        visibilityKm: null,
+        uvIndex: null,
+        weatherCode: null,
+        weatherLabel: 'Güncel',
+      },
+      forecast: previousValue.forecast || [],
+    };
+    fromCache = true;
+  }
 
   await upsertSetting(
     query,
@@ -65,13 +101,17 @@ async function main() {
       updatedAt: now,
       source: payload.source,
       fromCache,
+      upstreamError,
       location: payload.location,
       current: payload.current,
+      forecast: payload.forecast || [],
     },
     'Şanlıurfa hava durumu tazeleme metadatası',
   );
 
-  console.log(`weather metadata refreshed at ${now} (fromCache=${fromCache ? '1' : '0'})`);
+  console.log(
+    `weather metadata refreshed at ${now} (fromCache=${fromCache ? '1' : '0'}${upstreamError ? `, upstreamError=${upstreamError}` : ''})`,
+  );
   await pool.end();
 }
 

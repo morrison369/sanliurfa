@@ -22,7 +22,7 @@ export const GET: APIRoute = async (context) => {
     const { id } = context.params;
 
     const result = await query(
-      `SELECT r.*, p.name as place_name, p.slug as place_slug
+      `SELECT r.*, p.name as place_name, p.slug as place_slug, p.owner_id
        FROM reservations r
        JOIN places p ON r.place_id = p.id
        WHERE r.id = $1`,
@@ -45,7 +45,7 @@ export const GET: APIRoute = async (context) => {
     // diğer roller (user, moderator) erişemez (rezervasyonlar guest-only, müşteri user_id'si yok)
     if (auth.user.role === 'admin') {
       // tüm rezervasyonlara erişim
-    } else if (auth.user.role === 'vendor' && auth.placeId === reservation.place_id) {
+    } else if (auth.user.role === 'vendor' && reservation.owner_id === auth.user.id) {
       // kendi mekanına ait rezervasyon
     } else {
       return problemJson({
@@ -93,7 +93,10 @@ export const PUT: APIRoute = async (context) => {
 
     // Mevcut rezervasyonu al
     const existingResult = await query(
-      'SELECT * FROM reservations WHERE id = $1',
+      `SELECT r.*, p.owner_id
+       FROM reservations r
+       JOIN places p ON p.id = r.place_id
+       WHERE r.id = $1`,
       [id]
     );
 
@@ -112,7 +115,7 @@ export const PUT: APIRoute = async (context) => {
     // Yetki: admin tüm rezervasyonları güncelleyebilir, vendor sadece kendi mekanını
     if (auth.user.role === 'admin') {
       // tüm rezervasyonlar güncellenebilir
-    } else if (auth.user.role === 'vendor' && auth.placeId === reservation.place_id) {
+    } else if (auth.user.role === 'vendor' && reservation.owner_id === auth.user.id) {
       // kendi mekanına ait rezervasyon
     } else {
       return problemJson({

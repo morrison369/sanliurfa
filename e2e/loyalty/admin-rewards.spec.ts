@@ -26,7 +26,7 @@ test.describe('Loyalty - Admin Rewards Management', () => {
 
     if (response.status() === 403) {
       // Admin role check - skip if not admin
-      test.skip();
+      test.skip(true, 'Admin role seed is unavailable in this E2E profile');
     }
 
     expect(response.ok()).toBeTruthy();
@@ -49,7 +49,7 @@ test.describe('Loyalty - Admin Rewards Management', () => {
     });
 
     if (response.status() === 403) {
-      test.skip();
+      test.skip(true, 'Admin role seed is unavailable in this E2E profile');
     }
 
     expect(response.status()).toBe(201);
@@ -102,7 +102,7 @@ test.describe('Loyalty - Admin Rewards Management', () => {
     });
 
     if (response.status() === 403) {
-      test.skip();
+      test.skip(true, 'Admin role seed is unavailable in this E2E profile');
     }
 
     expect(response.ok()).toBeTruthy();
@@ -123,7 +123,7 @@ test.describe('Loyalty - Admin Rewards Management', () => {
     });
 
     if (response.status() === 403) {
-      test.skip();
+      test.skip(true, 'Admin role seed is unavailable in this E2E profile');
     }
 
     expect(response.status()).toBe(404);

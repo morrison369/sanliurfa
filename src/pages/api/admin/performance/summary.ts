@@ -134,7 +134,7 @@ export const GET: APIRoute = async ({ locals }) => {
     const recommendations: string[] = [];
 
     if (performanceStats?.p95_lcp && toNumber(performanceStats.p95_lcp) > 4000) {
-      recommendations.push('LCP zayıf (p95 > 4s): görsel optimizasyonu, lazy loading, CDN kontrol edilmeli');
+      recommendations.push('LCP zayıf (p95 > 4s): görsel optimizasyonu, lazy loading ve local static cache headerları kontrol edilmeli');
     } else if (performanceStats?.avg_lcp && toNumber(performanceStats.avg_lcp) > 2500) {
       recommendations.push('LCP iyileştirilmeli (avg > 2.5s): görsel optimizasyonu ve lazy loading kontrol edilmeli');
     }

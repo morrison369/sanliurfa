@@ -37,6 +37,10 @@ const enforceFinalUrl =
   (mode === 'prod' && process.env.SMOKE_STRICT_FINAL_URL !== '0');
 const requireBrand = !flags.has('no-brand') && process.env.SMOKE_REQUIRE_BRAND !== '0';
 const timeoutMs = Math.max(1000, Number(args.get('timeout-ms') || process.env.SMOKE_TIMEOUT_MS || '45000'));
+const verbose =
+  flags.has('verbose') ||
+  args.get('verbose') === '1' ||
+  process.env.SMOKE_VERBOSE === '1';
 
 function fail(message, details = []) {
   console.error(`[http-route-smoke] ${message}`);
@@ -187,21 +191,35 @@ async function main() {
     }
   }
 
-  for (const result of results) {
-    const marker = result.ok ? 'ok' : 'fail';
+  const failures = results.filter((result) => !result.ok);
+  const maxMs = Math.max(...results.map((result) => result.durationMs));
+  const avgMs = Math.round(results.reduce((sum, result) => sum + result.durationMs, 0) / results.length);
+
+  if (verbose) {
+    for (const result of results) {
+      const marker = result.ok ? 'ok' : 'fail';
+      console.log(
+        `${marker} ${result.status} ${result.route} (${result.durationMs}ms/${result.timeoutMs}ms) -> ${result.finalUrl || result.url}`,
+      );
+    }
+  } else {
     console.log(
-      `${marker} ${result.status} ${result.route} (${result.durationMs}ms/${result.timeoutMs}ms) -> ${result.finalUrl || result.url}`,
+      `http-route-smoke: checked ${results.length} routes (${mode}, ok=${results.length - failures.length}, fail=${failures.length}, max=${maxMs}ms, avg=${avgMs}ms)`,
     );
+    for (const result of failures) {
+      console.log(
+        `fail ${result.status} ${result.route} (${result.durationMs}ms/${result.timeoutMs}ms) -> ${result.finalUrl || result.url}`,
+      );
+    }
   }
 
-  const failures = results.filter((result) => !result.ok);
   if (failures.length > 0) {
     fail('HTTP route smoke başarısız', failures.map((result) =>
       `${result.route}: status=${result.status}, statusOk=${result.okStatus}, brandOk=${result.branded}, finalUrlOk=${result.finalUrlOk}, final=${result.finalPath || result.finalUrl}, expected=${result.expectedFinalPath || 'n/a'}, sample=${result.sample}`,
     ));
   }
 
-  console.log(`http-route-smoke: ok (${mode}, ${baseUrl.origin}, routes=${routeSpecs.length})`);
+  console.log(`http-route-smoke: ok (${mode}, ${baseUrl.origin}, routes=${routeSpecs.length}, max=${maxMs}ms, avg=${avgMs}ms)`);
 }
 
 main().catch((error) => {

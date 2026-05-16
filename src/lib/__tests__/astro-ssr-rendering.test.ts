@@ -32,10 +32,11 @@ vi.mock('@/lib/site-branding', () => ({
 
 describe('Astro Container API — SSR bileşen render testleri', () => {
   it('Container API modülü yüklenebiliyor', async () => {
-    const { experimental_AstroContainer } = await import('astro/container');
-    expect(experimental_AstroContainer).toBeDefined();
-    expect(typeof experimental_AstroContainer.create).toBe('function');
-  });
+    const mod = await import('astro/container');
+    const AstroContainer = (mod as any).AstroContainer ?? (mod as any).experimental_AstroContainer;
+    expect(AstroContainer).toBeDefined();
+    expect(typeof AstroContainer.create).toBe('function');
+  }, 20_000);
 
   it('renderAstroComponent helper fonksiyonu çalışıyor', async () => {
     const { renderAstroComponent } = await import('./helpers/astro-container');

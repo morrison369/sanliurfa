@@ -14,6 +14,12 @@ interface ImportMetaEnv {
   readonly PUBLIC_SUPABASE_URL?: string;
   readonly PUBLIC_SUPABASE_ANON_KEY?: string;
   readonly PUBLIC_GA_MEASUREMENT_ID?: string;
+  readonly PUBLIC_ADSENSE_CLIENT?: string;
+  readonly PUBLIC_ADSENSE_SLOT_HOMEPAGE_BANNER?: string;
+  readonly PUBLIC_ADSENSE_SLOT_BLOG_LIST_SIDEBAR?: string;
+  readonly PUBLIC_ADSENSE_SLOT_BLOG_DETAIL_INLINE?: string;
+  readonly PUBLIC_ADSENSE_SLOT_BLOG_DETAIL_SIDEBAR?: string;
+  readonly PUBLIC_ADSENSE_SLOT_CLASSIFIED_DETAIL?: string;
   readonly GOOGLE_ANALYTICS_ID?: string;
   readonly PUBLIC_VAPID_PUBLIC_KEY?: string;
   readonly PUBLIC_APP_URL?: string;
@@ -60,6 +66,12 @@ declare namespace NodeJS {
     readonly EMAIL_FROM?: string;
     readonly SITE_URL?: string;
     readonly PUBLIC_SITE_URL?: string;
+    readonly PUBLIC_ADSENSE_CLIENT?: string;
+    readonly PUBLIC_ADSENSE_SLOT_HOMEPAGE_BANNER?: string;
+    readonly PUBLIC_ADSENSE_SLOT_BLOG_LIST_SIDEBAR?: string;
+    readonly PUBLIC_ADSENSE_SLOT_BLOG_DETAIL_INLINE?: string;
+    readonly PUBLIC_ADSENSE_SLOT_BLOG_DETAIL_SIDEBAR?: string;
+    readonly PUBLIC_ADSENSE_SLOT_CLASSIFIED_DETAIL?: string;
     readonly NODE_ENV?: string;
     readonly PORT?: string;
     readonly SMTP_HOST?: string;

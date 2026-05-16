@@ -1,6 +1,11 @@
 import type { APIRoute } from 'astro';
 import { logger } from '../../../lib/logging';
 import {
+  isPublicUploadPath,
+  OPTIMIZED_STATIC_IMAGE_CACHE_CONTROL,
+  PUBLIC_UPLOAD_CACHE_CONTROL,
+} from '../../../lib/http/cache-policies';
+import {
   type ImageFormat,
   type OptimizeOptions,
   generateCacheKey,
@@ -17,7 +22,6 @@ import {
 
 type ImageFit = Exclude<OptimizeOptions['fit'], undefined>;
 
-const IMAGE_CACHE_TTL_SECONDS = 31536000;
 const DEFAULT_IMAGE_QUALITY = 80;
 
 const parseNumber = (value: string | null): number | undefined => {
@@ -78,29 +82,8 @@ export const GET: APIRoute = async ({ request, params }) => {
       }
     }
     
-    // Generate cache key
-    const cacheKey = generateCacheKey(imagePath, {
-      format,
-      quality,
-      ...(targetWidth !== undefined ? { width: targetWidth } : {}),
-      ...(targetHeight !== undefined ? { height: targetHeight } : {}),
-      ...(fit ? { fit } : {}),
-    });
-    
-    // Check cache
-    const cached = getFromCache(cacheKey);
-    if (cached) {
-      return new Response(cached.buffer as BodyInit, {
-        headers: {
-          'Content-Type': cached.contentType,
-          'Cache-Control': 'public, max-age=31536000, immutable',
-          'X-Cache': 'HIT',
-        },
-      });
-    }
-    
     // Read image from local disk (public/uploads/photos/...)
-    const { readFileSync, existsSync } = await import('fs');
+    const { readFileSync, existsSync, statSync } = await import('fs');
     const { join, resolve, sep } = await import('path');
 
     // imagePath is something like "photos/places/some-file.jpg"
@@ -116,6 +99,30 @@ export const GET: APIRoute = async ({ request, params }) => {
 
     if (!existsSync(diskPath)) {
       return new Response('Image not found', { status: 404 });
+    }
+
+    const sourceStat = statSync(diskPath);
+    const cacheKey = generateCacheKey(`${safePath}@${sourceStat.size}:${Math.trunc(sourceStat.mtimeMs)}`, {
+      format,
+      quality,
+      ...(targetWidth !== undefined ? { width: targetWidth } : {}),
+      ...(targetHeight !== undefined ? { height: targetHeight } : {}),
+      ...(fit ? { fit } : {}),
+    });
+    const responseCacheControl = isPublicUploadPath(safePath)
+      ? PUBLIC_UPLOAD_CACHE_CONTROL
+      : OPTIMIZED_STATIC_IMAGE_CACHE_CONTROL;
+
+    // Check cache
+    const cached = getFromCache(cacheKey);
+    if (cached) {
+      return new Response(cached.buffer as BodyInit, {
+        headers: {
+          'Content-Type': cached.contentType,
+          'Cache-Control': responseCacheControl,
+          'X-Cache': 'HIT',
+        },
+      });
     }
 
     const sourceBuffer = readFileSync(diskPath);
@@ -154,7 +161,7 @@ export const GET: APIRoute = async ({ request, params }) => {
     return new Response(optimizedBuffer as BodyInit, {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': `public, max-age=${IMAGE_CACHE_TTL_SECONDS}, immutable`,
+        'Cache-Control': responseCacheControl,
         'X-Cache': 'MISS',
         'X-Image-Width': dimensions.width.toString(),
         'X-Image-Height': dimensions.height.toString(),

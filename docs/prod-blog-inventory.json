@@ -1,0 +1,1891 @@
+{
+  "generatedAt": "2026-05-14T17:30:57.377842+02:00",
+  "source": "prod ssh DATABASE_URL",
+  "total": 314,
+  "rows": [
+    {
+      "slug": "viransehir-gezi-rehberi-eyyup-nebi",
+      "title": "Viranşehir Gezi Rehberi: Eyyüp Nebi, Tarih ve Yol Planı",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:10.011"
+    },
+    {
+      "slug": "teknofest-2026-world-drone-cup-sanliurfa",
+      "title": "TEKNOFEST 2026 World Drone Cup Şanlıurfa Rehberi",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.997"
+    },
+    {
+      "slug": "teknofest-2026-sanliurfa-konaklama-bolgeleri",
+      "title": "TEKNOFEST 2026 Şanlıurfa Konaklama Bölgeleri Rehberi",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.987"
+    },
+    {
+      "slug": "teknofest-2026-hyperloop-sanliurfa-final-rehberi",
+      "title": "TEKNOFEST 2026 Hyperloop Yarışması Şanlıurfa Final Rehberi",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.978"
+    },
+    {
+      "slug": "teknofest-2026-3-gunluk-sanliurfa-gezi-plani",
+      "title": "TEKNOFEST 2026 İçin 3 Günlük Şanlıurfa Gezi Planı",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.968"
+    },
+    {
+      "slug": "siverek-takoran-disi-gezi-noktalari",
+      "title": "Siverek Takoran Dışı Gezi Noktaları: Nissibi, Karacadağ ve Fırat Hattı",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.955"
+    },
+    {
+      "slug": "sanliurfada-sabah-kahvaltisi-rehberi",
+      "title": "Şanlıurfa’da Sabah Kahvaltısı Rehberi: Ciğer, Katmer ve Yerel Lezzetler",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.943"
+    },
+    {
+      "slug": "sanliurfada-ramazan-iftar-kulturu",
+      "title": "Şanlıurfa’da Ramazan ve İftar Kültürü Rehberi",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.934"
+    },
+    {
+      "slug": "sanliurfa-fotograf-rotasi",
+      "title": "Şanlıurfa Fotoğraf Rotası: Gün Doğumu, Gün Batımı ve Gece Çekimleri",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.909"
+    },
+    {
+      "slug": "sanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi",
+      "title": "Şanlıurfa Bilim Merkezi ve Çocuklarla Teknoloji Gezisi",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.896"
+    },
+    {
+      "slug": "sanliurfa-arkeoloji-muzesi-derin-rehber",
+      "title": "Şanlıurfa Arkeoloji Müzesi Derin Rehber: Ne Görülür, Kaç Saat Ayrılır?",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.887"
+    },
+    {
+      "slug": "kizilkoyun-nekropolu-gezi-rehberi",
+      "title": "Kızılkoyun Nekropolü Gezi Rehberi: Kaya Mezarları ve Fotoğraf Noktaları",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.876"
+    },
+    {
+      "slug": "haleplibahce-mozaik-muzesi-rehberi",
+      "title": "Haleplibahçe Mozaik Müzesi Rehberi",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.862"
+    },
+    {
+      "slug": "bozova-ataturk-baraji-gunubirlik-gezi",
+      "title": "Bozova ve Atatürk Barajı Günübirlik Gezi Rotası",
+      "status": "published",
+      "published_at": "2026-05-14T17:30:09.851"
+    },
+    {
+      "slug": "urfa-kultur-gecesi-rezervasyon-kontrol-listesi",
+      "title": "Urfa Kültür Gecesi Rezervasyon Kontrol Listesi: Aile Ortamı, Menü ve Ulaşım",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.565"
+    },
+    {
+      "slug": "urfa-keme-boranisi-rehberi",
+      "title": "Urfa Keme Boranısı Rehberi: Mevsimi, Malzemesi ve Nerede Denenir?",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.557"
+    },
+    {
+      "slug": "teknofest-2026-yarismalari-sanliurfa",
+      "title": "TEKNOFEST 2026 Şanlıurfa Yarışmaları: Başvuru, Takvim ve Hazırlık Rehberi",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.549"
+    },
+    {
+      "slug": "teknofest-2026-sanliurfa-rehberi",
+      "title": "TEKNOFEST 2026 Şanlıurfa Rehberi: GAP Havalimanı, Ulaşım, Konaklama ve Gezi Planı",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.539"
+    },
+    {
+      "slug": "teknofest-2026-aile-cocuk-rehberi",
+      "title": "TEKNOFEST 2026 Şanlıurfa Aile ve Çocuk Rehberi: Giriş, Güvenlik ve Gün Planı",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.532"
+    },
+    {
+      "slug": "tas-tepeler-rotasi-sanliurfa",
+      "title": "Taş Tepeler Rotası: Göbeklitepe, Karahantepe ve Yakın Arkeoloji Noktaları",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.525"
+    },
+    {
+      "slug": "takoran-vadisi-rehberi-2026",
+      "title": "Takoran Vadisi Rehberi 2026: Siverek’te Tekne, Fotoğraf ve Fırat Rotası",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.517"
+    },
+    {
+      "slug": "sanliurfada-yagmurlu-soguk-havada-ne-yapilir",
+      "title": "Şanlıurfa’da Yağmurlu veya Soğuk Havada Ne Yapılır?",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.509"
+    },
+    {
+      "slug": "sanliurfada-sicak-havada-gezi-plani",
+      "title": "Şanlıurfa’da Sıcak Havada Gezi Planı: Sabah-Erken Rota, Mola ve Akşam Önerileri",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.501"
+    },
+    {
+      "slug": "sanliurfada-ne-yenir-2026",
+      "title": "Şanlıurfa’da Ne Yenir 2026: Urfa Kebabı, Ciğer, Lahmacun ve Sıra Gecesi Sofrası",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.491"
+    },
+    {
+      "slug": "sanliurfada-gezilecek-yerler-2026",
+      "title": "Şanlıurfa’da Gezilecek Yerler 2026: Balıklıgöl, Göbeklitepe, Harran ve Halfeti Rotası",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.483"
+    },
+    {
+      "slug": "sanliurfada-cocukla-gezilecek-yerler",
+      "title": "Şanlıurfa’da Çocukla Gezilecek Yerler: Aileler İçin Güvenli ve Kolay Rotalar",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.475"
+    },
+    {
+      "slug": "sanliurfa-pencer-boranisi-rehberi",
+      "title": "Şanlıurfa Pencer Boranısı Rehberi: Pazı, Yuvalak Köfte ve Yoğurtlu Sofra Kültürü",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.468"
+    },
+    {
+      "slug": "sanliurfa-muzekart-muze-ziyaret-rehberi",
+      "title": "Şanlıurfa MüzeKart ve Müze Ziyaret Rehberi 2026: Saat, Bilet ve Rota Kontrolü",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.46"
+    },
+    {
+      "slug": "sanliurfa-kultur-yolu-festivali-rehberi",
+      "title": "Şanlıurfa Kültür Yolu Festivali Rehberi: Konserler, Sergiler ve Tarihi Merkez Rotası",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.452"
+    },
+    {
+      "slug": "sanliurfa-hediyelik-alisveris-rehberi",
+      "title": "Şanlıurfa Hediyelik ve Yerel Alışveriş Rehberi: İsot, Bakır, Mırra ve Çarşılar",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.444"
+    },
+    {
+      "slug": "sanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir",
+      "title": "Şanlıurfa’da Resmi Kaynaklarla Güncel Gezi Bilgisi Nasıl Kontrol Edilir?",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.435"
+    },
+    {
+      "slug": "sanliurfa-gap-havalimani-ulasim-rehberi",
+      "title": "Şanlıurfa GAP Havalimanı Ulaşım Rehberi: Merkez, Siverek ve Etkinlik Dönemi Planı",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.427"
+    },
+    {
+      "slug": "sanliurfa-cografi-isaretli-lezzetler",
+      "title": "Şanlıurfa’da Coğrafi İşaretli Lezzetler Rehberi: Keme, Pencer, İsot ve Sadeyağ",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.42"
+    },
+    {
+      "slug": "sanliurfa-carsilari-rehberi",
+      "title": "Şanlıurfa Çarşıları Rehberi: Bakırcılar, Gümrük Hanı ve Baharatçılar",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.412"
+    },
+    {
+      "slug": "sanliurfa-2-gunluk-gezi-plani-2026",
+      "title": "Şanlıurfa 2 Günlük Gezi Planı 2026: İlk Kez Gelenler İçin Gün Gün Rota",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.403"
+    },
+    {
+      "slug": "karahantepe-tas-tepeler-rehberi-2026",
+      "title": "Karahantepe ve Taş Tepeler Rehberi 2026: Göbeklitepe’den Sonra Nereye Gidilir?",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.393"
+    },
+    {
+      "slug": "harran-konik-evleri-fotograf-gezi-rehberi",
+      "title": "Harran Konik Evleri Fotoğraf ve Gezi Rehberi: Işık, Rota ve Ziyaret İpuçları",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.385"
+    },
+    {
+      "slug": "halfeti-tekne-turu-rehberi-2026",
+      "title": "Halfeti Tekne Turu Rehberi 2026: Rumkale, Savaşan Köyü ve Siyah Gül Rotası",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.376"
+    },
+    {
+      "slug": "birecik-kelaynak-firat-gezi-rotasi",
+      "title": "Birecik Kelaynak ve Fırat Günübirlik Gezi Rotası",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.367"
+    },
+    {
+      "slug": "balikligol-cevresi-yuruyus-rotasi-2026",
+      "title": "Balıklıgöl Çevresi Yürüyüş Rotası 2026: Dergah, Çarşı ve Gümrük Hanı Planı",
+      "status": "published",
+      "published_at": "2026-05-14T16:57:04.355"
+    },
+    {
+      "slug": "sanliurfa-muhuru-arasta-ve-bedesten-gelenegi-ticaretin-3000-yillik-kalbi",
+      "title": "Şanlıurfa Mühürü: Arasta ve Bedesten Geleneği — Ticaretin 3000 Yıllık Kalbi",
+      "status": "published",
+      "published_at": "2026-05-10T01:53:24.014"
+    },
+    {
+      "slug": "sanliurfa-da-muzeler-ziyaret-rehberi-saatler-ve-oneriler",
+      "title": "Şanlıurfa'da Müzeler: Ziyaret Rehberi, Saatler ve Öneriler",
+      "status": "published",
+      "published_at": "2026-05-10T01:35:09.952"
+    },
+    {
+      "slug": "neolitik-devrimin-merkezi-sanliurfa-dunya-tarihini-degistiren-kazilar",
+      "title": "Neolitik Devrimin Merkezi Şanlıurfa: Dünya Tarihini Değiştiren Kazılar",
+      "status": "published",
+      "published_at": "2026-05-10T01:33:21.491"
+    },
+    {
+      "slug": "bozova-i-lcesi-firat-kiyisinda-sakin-bir-tatil-alternatiifi",
+      "title": "Bozova İlçesi: Fırat Kıyısında Sakin Bir Tatil Alternatiifi",
+      "status": "published",
+      "published_at": "2026-05-09T00:12:06.882"
+    },
+    {
+      "slug": "sanliurfada-butce-dostu-gezi-rehberi",
+      "title": "Şanlıurfa'da Bütçe Dostu Gezi: Ekonomik Seyahat Rehberi",
+      "status": "published",
+      "published_at": "2026-05-08T23:40:49.327251"
+    },
+    {
+      "slug": "mirra-sanliurfa-nin-aci-kahvesinin-derin-kulturu",
+      "title": "Mırra: Şanlıurfa'nın Acı Kahvesinin Derin Kültürü",
+      "status": "published",
+      "published_at": "2026-05-08T22:51:22.515"
+    },
+    {
+      "slug": "sanliurfada-el-sanatlari-atolyeleri-kurs-deneyim-ve-alisveris",
+      "title": "Şanlıurfa'da El Sanatları Atölyeleri: Kurs, Deneyim ve Alışveriş",
+      "status": "published",
+      "published_at": "2026-05-08T14:00:00"
+    },
+    {
+      "slug": "sanliurfa-arkeoloji-muzesi-rehberi-koleksiyonlar-ve-ziyaret-bilgileri",
+      "title": "Şanlıurfa Arkeoloji Müzesi Rehberi: Koleksiyonlar ve Ziyaret Bilgileri",
+      "status": "published",
+      "published_at": "2026-05-08T11:00:00"
+    },
+    {
+      "slug": "gobeklitepe-neden-bu-kadar-onemli-dunya-tarihini-degistiren-kesif",
+      "title": "Göbeklitepe Neden Bu Kadar Önemli? Dünya Tarihini Değiştiren Keşif",
+      "status": "published",
+      "published_at": "2026-05-08T10:00:00"
+    },
+    {
+      "slug": "sanliurfada-kis-gezisi-kasim-mart-arasi-neler-yapilir",
+      "title": "Şanlıurfa'da Kış Gezisi: Kasım-Mart Arası Neler Yapılır?",
+      "status": "published",
+      "published_at": "2026-05-08T09:00:00"
+    },
+    {
+      "slug": "haliliye-ilce-rehberi-sanliurfa-merkezinin-kalbi",
+      "title": "Haliliye İlçe Rehberi: Şanlıurfa Merkezi'nin Kalbi",
+      "status": "published",
+      "published_at": "2026-05-08T08:00:00"
+    },
+    {
+      "slug": "sanliurfa-baklavacilar-rehberi-en-iyi-baklava-ve-tatli-mekanlari",
+      "title": "Şanlıurfa Baklavacılar Rehberi: En İyi Baklava ve Tatlı Mekanları",
+      "status": "published",
+      "published_at": "2026-05-07T15:00:00"
+    },
+    {
+      "slug": "sanliurfa-tarihi-kahvehaneleri-osmanlidan-gunumuze-cay-kulturu",
+      "title": "Şanlıurfa Tarihi Kahvehaneleri: Osmanlı'dan Günümüze Çay Kültürü",
+      "status": "published",
+      "published_at": "2026-05-07T11:00:00"
+    },
+    {
+      "slug": "sanliurfada-iklim-ve-hava-4-mevsim-detayli-bilgi",
+      "title": "Şanlıurfa'da İklim ve Hava: 4 Mevsim Detaylı Bilgi",
+      "status": "published",
+      "published_at": "2026-05-07T10:00:00"
+    },
+    {
+      "slug": "sanliurfada-el-sanatlari-bakir-kilim-ve-hediyelik-esya-rehberi",
+      "title": "Şanlıurfa'da El Sanatları: Bakır, Kilim ve Hediyelik Eşya Rehberi",
+      "status": "published",
+      "published_at": "2026-05-07T10:00:00"
+    },
+    {
+      "slug": "sanliurfada-3-gunluk-gezi-rotasi-kapsamli-planlama-rehberi",
+      "title": "Şanlıurfa'da 3 Günlük Gezi Rotası: Kapsamlı Planlama Rehberi",
+      "status": "published",
+      "published_at": "2026-05-07T07:00:00"
+    },
+    {
+      "slug": "halfeti-tekne-turu-rehberi",
+      "title": "Halfeti Tekne Turu: Bilinmesi Gereken Her Şey",
+      "status": "published",
+      "published_at": "2026-05-07T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-aile-ile-gezilecek-yerler",
+      "title": "Şanlıurfa'da Aile İle Gezilecek Yerler",
+      "status": "published",
+      "published_at": "2026-05-07T00:00:00"
+    },
+    {
+      "slug": "sanliurfada-havuz-ve-dogal-yuzme-yerleri-yazin-serin-kalma-rehberi",
+      "title": "Şanlıurfa'da Havuz ve Doğal Yüzme Yerleri: Yazın Serin Kalma Rehberi",
+      "status": "published",
+      "published_at": "2026-05-06T12:00:00"
+    },
+    {
+      "slug": "ceylanpinar-gezi-rehberi-tigem-ciftligi-ve-sinir-kasabasi-kulturu",
+      "title": "Ceylanpınar Gezi Rehberi: TİGEM Çiftliği ve Sınır Kasabası Kültürü",
+      "status": "published",
+      "published_at": "2026-05-06T11:00:00"
+    },
+    {
+      "slug": "sanliurfada-kahvalti-7-efsane-mekan",
+      "title": "Şanlıurfa'da Kahvaltı: 7 Efsane Mekan",
+      "status": "published",
+      "published_at": "2026-05-06T10:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-spor-ve-aktif-yasam-kosu-yuruyus-ve-fitness-rehberi",
+      "title": "Şanlıurfa'da Spor ve Aktif Yaşam: Koşu, Yürüyüş ve Fitness Rehberi",
+      "status": "published",
+      "published_at": "2026-05-06T00:36:44.833"
+    },
+    {
+      "slug": "sanliurfa-da-balik-restoranlari-ve-firat-lezzetleri-rehberi",
+      "title": "Şanlıurfa'da Balık Restoranları ve Fırat Lezzetleri Rehberi",
+      "status": "published",
+      "published_at": "2026-05-06T00:36:08.534"
+    },
+    {
+      "slug": "sanliurfa-kalesi-tarihi-kale-ve-magaralarin-tam-rehberi",
+      "title": "Şanlıurfa Kalesi: Tarihi Kale ve Mağaraların Tam Rehberi",
+      "status": "published",
+      "published_at": "2026-05-06T00:08:04.413"
+    },
+    {
+      "slug": "sanliurfa-fotograf-rehberi-en-guzel-cekim-noktalari",
+      "title": "Şanlıurfa Fotoğraf Rehberi: En Güzel Çekim Noktaları",
+      "status": "published",
+      "published_at": "2026-05-05T14:00:00"
+    },
+    {
+      "slug": "halfeti-rumkale-firatin-derinliklerindeki-tarihi-kale",
+      "title": "Halfeti Rumkale: Fırat'ın Derinliklerindeki Tarihi Kale",
+      "status": "published",
+      "published_at": "2026-05-05T11:00:00"
+    },
+    {
+      "slug": "halfetiye-nasil-gidilir-ulasim-tekne-turu-ve-pratik-bilgiler-2026",
+      "title": "Halfeti'ye Nasıl Gidilir: Ulaşım, Tekne Turu ve Pratik Bilgiler 2026",
+      "status": "published",
+      "published_at": "2026-05-05T10:00:00"
+    },
+    {
+      "slug": "sanliurfadan-mardine-iki-tarihi-sehri-birlestiren-gezi-rotasi",
+      "title": "Şanlıurfa'dan Mardin'e: İki Tarihi Şehri Birleştiren Gezi Rotası",
+      "status": "published",
+      "published_at": "2026-05-05T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-ne-yenir-mutlaka-tatmaniz-gereken-lezzetler",
+      "title": "Şanlıurfa'da Ne Yenir? Mutlaka Tatmanız Gereken 10 Lezzet",
+      "status": "published",
+      "published_at": "2026-05-05T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-otobus-saatleri-nasil-ogrenilir",
+      "title": "Şanlıurfa Otobüs Saatleri Nasıl Öğrenilir?",
+      "status": "published",
+      "published_at": "2026-05-05T00:00:00"
+    },
+    {
+      "slug": "urfa-sillik-tatlisi-tarihi-tarifi-ve-en-i-yi-tatlicilar",
+      "title": "Urfa Şıllık Tatlısı: Tarihi, Tarifi ve En İyi Tatlıcılar",
+      "status": "published",
+      "published_at": "2026-05-04T22:50:56.285"
+    },
+    {
+      "slug": "eyyubiye-ilce-rehberi-balikligol-ve-tarihi-hanlarin-semti",
+      "title": "Eyyübiye İlçe Rehberi: Balıklıgöl ve Tarihi Hanların Semti",
+      "status": "published",
+      "published_at": "2026-05-04T14:00:00"
+    },
+    {
+      "slug": "sanliurfada-romantik-mekanlar-ciftler-icin-ozel-rehber",
+      "title": "Şanlıurfa'da Romantik Mekanlar: Çiftler İçin Özel Rehber",
+      "status": "published",
+      "published_at": "2026-05-04T11:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-alisveris-kapali-carsidan-avm-ye-nerede-ne-alinir",
+      "title": "Şanlıurfa'da Alışveriş: Kapalı Çarşıdan AVM'ye Nerede Ne Alınır?",
+      "status": "published",
+      "published_at": "2026-05-04T01:35:34.748"
+    },
+    {
+      "slug": "urfa-usulu-katmer-sanliurfanin-gizli-tatlisi",
+      "title": "Urfa Usulü Katmer: Şanlıurfa'nın Gizli Tatlısı",
+      "status": "published",
+      "published_at": "2026-05-03T12:00:00"
+    },
+    {
+      "slug": "sanliurfada-piknik-yerleri-ve-doga-meknlari-rehberi",
+      "title": "Şanlıurfa'da Piknik Yerleri ve Doğa Mekânları Rehberi",
+      "status": "published",
+      "published_at": "2026-05-03T11:00:00"
+    },
+    {
+      "slug": "sanliurfa-universite-sehri-harran-universitesi-ve-ogrenci-yasami-rehberi",
+      "title": "Şanlıurfa Üniversite Şehri: Harran Üniversitesi ve Öğrenci Yaşamı Rehberi",
+      "status": "published",
+      "published_at": "2026-05-03T10:00:00"
+    },
+    {
+      "slug": "urfa-kaburga-sanliurfanin-efsanevi-et-lezzeti",
+      "title": "Urfa Kaburga: Şanlıurfa'nın Efsanevi Et Lezzeti",
+      "status": "published",
+      "published_at": "2026-05-03T09:00:00"
+    },
+    {
+      "slug": "sanliurfadan-nemrut-dagi-adiyaman-gunubirlik-turu-rehberi",
+      "title": "Şanlıurfa'dan Nemrut Dağı: Adıyaman Günübirlik Turu Rehberi",
+      "status": "published",
+      "published_at": "2026-05-03T08:00:00"
+    },
+    {
+      "slug": "sanliurfa-arabayla-gezi-rehberi-kiralik-arac-rotalar-ve-pratik-bilgiler",
+      "title": "Şanlıurfa Arabayla Gezi Rehberi: Kiralık Araç, Rotalar ve Pratik Bilgiler",
+      "status": "published",
+      "published_at": "2026-05-03T08:00:00"
+    },
+    {
+      "slug": "sanliurfada-kahve-kulturu-mirradan-turk-kahvesine-rehber",
+      "title": "Şanlıurfa'da Kahve Kültürü: Mırra'dan Türk Kahvesine Rehber",
+      "status": "published",
+      "published_at": "2026-05-03T08:00:00"
+    },
+    {
+      "slug": "sanliurfa-yerel-pazarlari-rehberi-carsamba-ve-cuma-semt-pazarlari",
+      "title": "Şanlıurfa Yerel Pazarları Rehberi: Çarşamba ve Cuma Semt Pazarları",
+      "status": "published",
+      "published_at": "2026-05-03T07:00:00"
+    },
+    {
+      "slug": "sanliurfa-2-gunluk-gezi-rotasi",
+      "title": "Şanlıurfa'da 2 Gün: Eksiksiz Gezi Rotası ve Öneriler",
+      "status": "published",
+      "published_at": "2026-05-03T00:00:00"
+    },
+    {
+      "slug": "balikligol-ziyaret-rehberi",
+      "title": "Balıklıgöl Ziyaret Rehberi: Tarihin ve İnancın Buluştuğu Nokta",
+      "status": "published",
+      "published_at": "2026-05-03T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-festivalleri-etkinlikleri-2026",
+      "title": "Şanlıurfa Festivalleri ve Etkinlikleri 2026",
+      "status": "published",
+      "published_at": "2026-05-03T00:00:00"
+    },
+    {
+      "slug": "sanliurfada-3-gunluk-gezi-plani",
+      "title": "Şanlıurfa'da 3 Günlük Gezi Planı: Güzergah ve Öneriler",
+      "status": "published",
+      "published_at": "2026-05-02T23:40:29.948493"
+    },
+    {
+      "slug": "ramazan-sofrasi-sanliurfa-da-i-ftar-gelenekleri-ve-ozel-yemekler",
+      "title": "Ramazan Sofrası Şanlıurfa'da: İftar Gelenekleri ve Özel Yemekler",
+      "status": "published",
+      "published_at": "2026-05-02T22:54:47.227"
+    },
+    {
+      "slug": "sanliurfada-solo-seyahat-yalniz-gezginin-tam-rehberi",
+      "title": "Şanlıurfa'da Solo Seyahat: Yalnız Gezginin Tam Rehberi",
+      "status": "published",
+      "published_at": "2026-05-02T13:00:00"
+    },
+    {
+      "slug": "sanliurfada-alisveris-rehberi-kapali-carsidan-avmye",
+      "title": "Şanlıurfa'da Alışveriş Rehberi: Kapalı Çarşıdan AVM'ye",
+      "status": "published",
+      "published_at": "2026-05-02T12:00:00"
+    },
+    {
+      "slug": "akcakale-gezi-rehberi-harran-ovasinda-sinir-kasabasi",
+      "title": "Akçakale Gezi Rehberi: Harran Ovası'nda Sınır Kasabası",
+      "status": "published",
+      "published_at": "2026-05-02T12:00:00"
+    },
+    {
+      "slug": "sanliurfada-dugun-gelenekleri-ve-kina-gecesi-kulturu",
+      "title": "Şanlıurfa'da Düğün Gelenekleri ve Kına Gecesi Kültürü",
+      "status": "published",
+      "published_at": "2026-05-02T10:00:00"
+    },
+    {
+      "slug": "hilvan-kaplicalari-rehberi-sifali-sularla-termal-deneyim",
+      "title": "Hilvan Kaplıcaları Rehberi: Şifalı Sularla Termal Deneyim",
+      "status": "published",
+      "published_at": "2026-05-02T10:00:00"
+    },
+    {
+      "slug": "bakircilar-carsisi-hediyelik-rehberi",
+      "title": "Bakırcılar Çarşısı: Hediyelik Eşya Rehberi",
+      "status": "published",
+      "published_at": "2026-05-02T09:30:00"
+    },
+    {
+      "slug": "sanliurfa-kuyumcular-carsisi-telkari-ve-gumus-taki-rehberi",
+      "title": "Şanlıurfa Kuyumcular Çarşısı: Telkari ve Gümüş Takı Rehberi",
+      "status": "published",
+      "published_at": "2026-05-02T08:00:00"
+    },
+    {
+      "slug": "sanliurfada-cay-bahceleri-ve-nargile-mekanlari-yerel-oturma-kulturu",
+      "title": "Şanlıurfa'da Çay Bahçeleri ve Nargile Mekanları: Yerel Oturma Kültürü",
+      "status": "published",
+      "published_at": "2026-05-01T14:00:00"
+    },
+    {
+      "slug": "sanliurfa-mevsimler-rehberi-hangi-ayda-gidilmeli",
+      "title": "Şanlıurfa Mevsimler Rehberi: Hangi Ayda Gidilmeli?",
+      "status": "published",
+      "published_at": "2026-05-01T10:00:00"
+    },
+    {
+      "slug": "harranda-konaklama-kumbet-evler-ve-antik-atmosferde-gece",
+      "title": "Harran'da Konaklama: Kümbet Evler ve Antik Atmosferde Gece",
+      "status": "published",
+      "published_at": "2026-05-01T09:00:00"
+    },
+    {
+      "slug": "halfetide-konaklama-en-iyi-butik-oteller-ve-konuk-evleri",
+      "title": "Halfeti'de Konaklama: En İyi Butik Oteller ve Konuk Evleri",
+      "status": "published",
+      "published_at": "2026-05-01T08:00:00"
+    },
+    {
+      "slug": "sanliurfa-tren-istasyonu-ve-demiryolu-tarihi",
+      "title": "Şanlıurfa Tren İstasyonu ve Demiryolu Tarihi",
+      "status": "published",
+      "published_at": "2026-05-01T07:00:00"
+    },
+    {
+      "slug": "balikligol-cevresi-yuruyus-rotalari-tarihi-atmosferde-adim-adim",
+      "title": "Balıklıgöl Çevresi Yürüyüş Rotaları: Tarihi Atmosferde Adım Adım",
+      "status": "published",
+      "published_at": "2026-05-01T00:37:09.225"
+    },
+    {
+      "slug": "sanliurfa-nin-tarihi-hanllari-ve-kervansaraylari-osmanli-donemi-mirasi",
+      "title": "Şanlıurfa'nın Tarihi Hanlları ve Kervansarayları: Osmanlı Dönemi Mirası",
+      "status": "published",
+      "published_at": "2026-05-01T00:17:02.926"
+    },
+    {
+      "slug": "balikligol-ziyaret-rehberi-2026",
+      "title": "Balıklıgöl Ziyaret Rehberi: Hz. İbrahim'in Gölü",
+      "status": "published",
+      "published_at": "2026-05-01T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-fotograf-cekimi-rehberi",
+      "title": "Şanlıurfa Fotoğraf Çekim Rehberi: En İyi Noktalar ve İpuçları",
+      "status": "published",
+      "published_at": "2026-04-30T23:41:21.316162"
+    },
+    {
+      "slug": "urfada-ramazan-oruc-ayinda-sehrin-ruhu-ve-gelenek",
+      "title": "Urfa'da Ramazan: Oruç Ayında Şehrin Ruhu ve Gelenek",
+      "status": "published",
+      "published_at": "2026-04-30T14:00:00"
+    },
+    {
+      "slug": "urfa-cig-koftesi-tarih-en-iyi-mekanlar-ve-evde-tarif",
+      "title": "Urfa Çiğ Köftesi: Tarih, En İyi Mekanlar ve Evde Tarif",
+      "status": "published",
+      "published_at": "2026-04-30T14:00:00"
+    },
+    {
+      "slug": "harrandan-gobeklitepeye-neolitik-medeniyet-turu-rotasi",
+      "title": "Harran'dan Göbeklitepe'ye: Neolitik Medeniyet Turu Rotası",
+      "status": "published",
+      "published_at": "2026-04-30T13:00:00"
+    },
+    {
+      "slug": "sanliurfadan-gaziantep-gunubirlik-gezi-rehberi",
+      "title": "Şanlıurfa'dan Gaziantep Günübirlik Gezi Rehberi",
+      "status": "published",
+      "published_at": "2026-04-30T13:00:00"
+    },
+    {
+      "slug": "bozova-gezi-rehberi-ataturk-baraji-kiyisinda-doga-ve-huzur",
+      "title": "Bozova Gezi Rehberi: Atatürk Barajı Kıyısında Doğa ve Huzur",
+      "status": "published",
+      "published_at": "2026-04-30T09:00:00"
+    },
+    {
+      "slug": "urfada-vegan-ve-vejetaryen-yemek-rehberi-et-olmadan-urfa-mutfagi",
+      "title": "Urfa'da Vegan ve Vejetaryen Yemek Rehberi: Et Olmadan Urfa Mutfağı",
+      "status": "published",
+      "published_at": "2026-04-30T08:00:00"
+    },
+    {
+      "slug": "sanliurfa-harran-gunubirlik-tur",
+      "title": "Şanlıurfa Harran Günübirlik Tur Planı",
+      "status": "published",
+      "published_at": "2026-04-30T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-konaklama-otel-rehberi",
+      "title": "Şanlıurfa'da Konaklama: Otel Rehberi",
+      "status": "published",
+      "published_at": "2026-04-30T00:00:00"
+    },
+    {
+      "slug": "halfetide-yemek-rehberi-firat-baliklari-ve-yerel-lokanta-tavsiyeleri",
+      "title": "Halfeti'de Yemek Rehberi: Fırat Balıkları ve Yerel Lokanta Tavsiyeleri",
+      "status": "published",
+      "published_at": "2026-04-29T14:00:00"
+    },
+    {
+      "slug": "balikligol-ve-cevresindeki-en-iyi-kafeler-guzel-manzarali-oturma-noktalari",
+      "title": "Balıklıgöl ve Çevresindeki En İyi Kafeler: Güzel Manzaralı Oturma Noktaları",
+      "status": "published",
+      "published_at": "2026-04-29T13:00:00"
+    },
+    {
+      "slug": "sanliurfa-isot-festivali-ve-biber-kulturu-kapsamli-rehber",
+      "title": "Şanlıurfa İsot Festivali ve Biber Kültürü: Kapsamlı Rehber",
+      "status": "published",
+      "published_at": "2026-04-29T11:00:00"
+    },
+    {
+      "slug": "urfa-mercimek-corbasi-tarih-tarif-ve-en-iyi-mekanlar",
+      "title": "Urfa Mercimek Çorbası: Tarih, Tarif ve En İyi Mekanlar",
+      "status": "published",
+      "published_at": "2026-04-29T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-sokak-lezzetleri-rehberi-tezgahtan-tabaga-yerel-tatlar",
+      "title": "Şanlıurfa Sokak Lezzetleri Rehberi: Tezgahtan Tabağa Yerel Tatlar",
+      "status": "published",
+      "published_at": "2026-04-29T07:00:00"
+    },
+    {
+      "slug": "sanliurfada-turk-hamami-tarihi-hamamlar-deneyim-rehberi",
+      "title": "Şanlıurfa'da Türk Hamamı: Tarihi Hamamlar Deneyim Rehberi",
+      "status": "published",
+      "published_at": "2026-04-29T07:00:00"
+    },
+    {
+      "slug": "urfa-ciger-kebabi-en-iyi-cigerciler-ve-siparis-rehberi",
+      "title": "Urfa Ciğer Kebabı: En İyi Ciğerciler ve Sipariş Rehberi",
+      "status": "published",
+      "published_at": "2026-04-28T14:00:00"
+    },
+    {
+      "slug": "birecik-gezi-rehberi",
+      "title": "Birecik Gezi Rehberi: Fırat'ın İncisi Nasıl Keşfedilir?",
+      "status": "published",
+      "published_at": "2026-04-28T10:00:00"
+    },
+    {
+      "slug": "karahantepe-arkeoloji-alani-ziyaret-rehberi-2026",
+      "title": "Karahantepe Arkeoloji Alanı Ziyaret Rehberi 2026",
+      "status": "published",
+      "published_at": "2026-04-28T09:00:00"
+    },
+    {
+      "slug": "gobeklitepeye-nasil-gidilir-ulasim-rehberi-2026",
+      "title": "Göbeklitepe'ye Nasıl Gidilir: Ulaşım Rehberi 2026",
+      "status": "published",
+      "published_at": "2026-04-28T07:00:00"
+    },
+    {
+      "slug": "suruc-gezi-rehberi-tarihi-dokunuslar-ve-yerel-lezzetler",
+      "title": "Suruç Gezi Rehberi: Tarihi Dokunuşlar ve Yerel Lezzetler",
+      "status": "published",
+      "published_at": "2026-04-28T06:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-cocuklarla-yapilacaklar-aile-aktiviteleri-ve-mekanlari",
+      "title": "Şanlıurfa'da Çocuklarla Yapılacaklar: Aile Aktiviteleri ve Mekanları",
+      "status": "published",
+      "published_at": "2026-04-28T01:34:32.182"
+    },
+    {
+      "slug": "sanliurfa-kalesi-ve-surlari-m-o-2-yuzyildan-osmanli-ya-tarihin-gozetleme-kulesi",
+      "title": "Şanlıurfa Kalesi ve Surları: M.Ö. 2. Yüzyıldan Osmanlı'ya Tarihin Gözetleme Kulesi",
+      "status": "published",
+      "published_at": "2026-04-28T01:33:05.327"
+    },
+    {
+      "slug": "sanliurfa-ciger-kebabi-rehberi",
+      "title": "Şanlıurfa Ciğer Kebabı Rehberi: En İyi Adresler ve Sırlar",
+      "status": "published",
+      "published_at": "2026-04-28T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-ne-alinir-hediyelik-yerel-urun-rehberi",
+      "title": "Şanlıurfa'da Ne Alınır? Hediyelik ve Yerel Ürün Rehberi",
+      "status": "published",
+      "published_at": "2026-04-28T00:00:00"
+    },
+    {
+      "slug": "hilvan-ve-bozova-kaplicalari-karsilastirmasi-sanliurfa-termal-rehberi",
+      "title": "Hilvan ve Bozova Kaplıcaları Karşılaştırması: Şanlıurfa Termal Rehberi",
+      "status": "published",
+      "published_at": "2026-04-27T01:35:49.846"
+    },
+    {
+      "slug": "kunefe-nereden-yenir-sanliurfa",
+      "title": "Künefe Nereden Yenir? Şanlıurfa Mekanları",
+      "status": "published",
+      "published_at": "2026-04-26T11:00:00"
+    },
+    {
+      "slug": "sanliurfa-sira-gecesi-gelenek-muzik-ve-lezzet-rehberi",
+      "title": "Şanlıurfa Sıra Gecesi: Gelenek, Müzik ve Lezzet Rehberi",
+      "status": "published",
+      "published_at": "2026-04-26T06:00:00"
+    },
+    {
+      "slug": "sanliurfa-muzigi-turku-saz-ve-sira-gecesi-kulturu",
+      "title": "Şanlıurfa Müziği: Türkü, Saz ve Sıra Gecesi Kültürü",
+      "status": "published",
+      "published_at": "2026-04-25T01:53:50.779"
+    },
+    {
+      "slug": "harran-kumbet-evleri-dunyanin-hicbir-yerinde-olmayan-mimari-mucize",
+      "title": "Harran Kümbet Evleri: Dünyanın Hiçbir Yerinde Olmayan Mimari Mucize",
+      "status": "published",
+      "published_at": "2026-04-25T00:35:50.997"
+    },
+    {
+      "slug": "harran-gezi-rehberi",
+      "title": "Harran Gezi Rehberi: Kümbet Evler, Kale ve 6000 Yıllık Tarih",
+      "status": "published",
+      "published_at": "2026-04-25T00:00:00"
+    },
+    {
+      "slug": "siverek-gezi-rehberi-tarihi-ve-dogal-guzellikler",
+      "title": "Siverek Gezi Rehberi: Tarihi ve Doğal Güzellikler",
+      "status": "published",
+      "published_at": "2026-04-24T17:00:00"
+    },
+    {
+      "slug": "sanliurfada-butce-gezisi-uygun-fiyatli-tatil-rehberi",
+      "title": "Şanlıurfa'da Bütçe Gezisi: Uygun Fiyatlı Tatil Rehberi",
+      "status": "published",
+      "published_at": "2026-04-24T12:00:00"
+    },
+    {
+      "slug": "sanliurfa-muzleri-tam-rehberi-hangi-muzeye-gitmelisiniz",
+      "title": "Şanlıurfa Müzeleri Tam Rehberi: Hangi Müzeye Gitmelisiniz?",
+      "status": "published",
+      "published_at": "2026-04-24T00:32:02.008"
+    },
+    {
+      "slug": "gobeklitepe-ziyaret-rehberi-2026",
+      "title": "Göbeklitepe Ziyaret Rehberi 2026: Bilmeniz Gereken Her Şey",
+      "status": "published",
+      "published_at": "2026-04-24T00:00:00"
+    },
+    {
+      "slug": "halfeti-siyah-gulleri-dunya-tek-dogal-siyah-gul",
+      "title": "Halfeti Siyah Gülleri: Dünyanın Tek Doğal Siyah Gülü",
+      "status": "published",
+      "published_at": "2026-04-24T00:00:00"
+    },
+    {
+      "slug": "sanliurfada-yaz-tatili-rehberi",
+      "title": "Şanlıurfa'da Yaz Tatili Rehberi: Sıcakla Baş Etmenin Yolları",
+      "status": "published",
+      "published_at": "2026-04-23T23:42:36.242685"
+    },
+    {
+      "slug": "sanliurfada-cocuklarla-gezilecek-yerler-aile-dostu-aktiviteler",
+      "title": "Şanlıurfa'da Çocuklarla Gezilecek Yerler: Aile Dostu Aktiviteler",
+      "status": "published",
+      "published_at": "2026-04-23T15:00:00"
+    },
+    {
+      "slug": "viransehir-gezi-rehberi-tarih-ve-kultur",
+      "title": "Viranşehir Gezi Rehberi: Tarih ve Kültür",
+      "status": "published",
+      "published_at": "2026-04-23T10:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-aktif-turizm-hiking-bisiklet-ve-doga-yuruyusu-rotalari",
+      "title": "Şanlıurfa'da Aktif Turizm: Hiking, Bisiklet ve Doğa Yürüyüşü Rotaları",
+      "status": "published",
+      "published_at": "2026-04-23T01:37:02.836"
+    },
+    {
+      "slug": "suruc-gezi-rehberi-tarih-ve-topragin-sehri-suruc-ta-yapilacaklar",
+      "title": "Suruç Gezi Rehberi: Tarih ve Toprağın Şehri Suruç'ta Yapılacaklar",
+      "status": "published",
+      "published_at": "2026-04-23T00:35:08.431"
+    },
+    {
+      "slug": "sanliurfa-bir-hafta-gezi-plani",
+      "title": "Şanlıurfa'da Bir Hafta: Eksiksiz Gezi Planı",
+      "status": "published",
+      "published_at": "2026-04-22T00:00:00"
+    },
+    {
+      "slug": "gobeklitepeye-nasil-gidilir-ulasim-rehberi",
+      "title": "Göbeklitepe'ye Nasıl Gidilir? Ulaşım ve Ziyaret Rehberi",
+      "status": "published",
+      "published_at": "2026-04-22T00:00:00"
+    },
+    {
+      "slug": "hz-ibrahimin-izinde-sanliurfanin-kutsal-mekanlari-rehberi",
+      "title": "Hz. İbrahim'in İzinde: Şanlıurfa'nın Kutsal Mekanları Rehberi",
+      "status": "published",
+      "published_at": "2026-04-20T13:00:00"
+    },
+    {
+      "slug": "urfa-kebabi-sanliurfanin-en-iyi-kebapcilari-2026",
+      "title": "Urfa Kebabı: Şanlıurfa'nın En İyi Kebapçıları 2026",
+      "status": "published",
+      "published_at": "2026-04-20T10:00:00"
+    },
+    {
+      "slug": "sanliurfa-en-iyi-kebapcilar",
+      "title": "Şanlıurfa'nın En İyi Kebapçıları",
+      "status": "published",
+      "published_at": "2026-04-20T10:00:00"
+    },
+    {
+      "slug": "viransehir-rehberi",
+      "title": "Viranşehir Rehberi: Bozkırın Sessiz İlçesinde Ne Yapılır?",
+      "status": "published",
+      "published_at": "2026-04-20T09:00:00"
+    },
+    {
+      "slug": "urfa-nin-peynir-ve-sut-urunleri-kulturu-tereyagi-yogurt-ve-lor",
+      "title": "Urfa'nın Peynir ve Süt Ürünleri Kültürü: Tereyağı, Yoğurt ve Lor",
+      "status": "published",
+      "published_at": "2026-04-19T22:53:35.472"
+    },
+    {
+      "slug": "sanliurfa-borek-kulturu-su-boregi-el-acmasi-ve-urfa-usulu-borekler",
+      "title": "Şanlıurfa Börek Kültürü: Su Böreği, El Açması ve Urfa Usulü Börekler",
+      "status": "published",
+      "published_at": "2026-04-18T22:50:41.457"
+    },
+    {
+      "slug": "sanliurfada-kahvalti-nerede-yapilir-en-iyi-10-kahvalti-mekani",
+      "title": "Şanlıurfa'da Kahvaltı Nerede Yapılır: En İyi 10 Kahvaltı Mekanı",
+      "status": "published",
+      "published_at": "2026-04-18T17:00:00"
+    },
+    {
+      "slug": "sanliurfa-dan-diyarbakir-a-gunubirlik-tur-rota-ve-pratik-bilgiler",
+      "title": "Şanlıurfa'dan Diyarbakır'a Günübirlik Tur: Rota ve Pratik Bilgiler",
+      "status": "published",
+      "published_at": "2026-04-18T00:16:11.439"
+    },
+    {
+      "slug": "gobeklitepe-ziyaret-rehberi",
+      "title": "Göbeklitepe Ziyaret Rehberi: Bilet, Ulaşım ve Merak Edilenler",
+      "status": "published",
+      "published_at": "2026-04-18T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-yaz-tatili-temmuz-agustos-gezi",
+      "title": "Şanlıurfa'da Yaz Tatili: Temmuz–Ağustos Gezi Planı",
+      "status": "published",
+      "published_at": "2026-04-18T00:00:00"
+    },
+    {
+      "slug": "urfa-usulu-lahmacun-pide-tarif",
+      "title": "Urfa Usulü Lahmacun ve Pide: Tarifte Gizli Olan Sır",
+      "status": "published",
+      "published_at": "2026-04-18T00:00:00"
+    },
+    {
+      "slug": "gobeklitepe-nin-yakinindaki-koyler-orencik-te-yerel-hayat",
+      "title": "Göbeklitepe'nin Yakınındaki Köyler: Örencik'te Yerel Hayat",
+      "status": "published",
+      "published_at": "2026-04-17T00:40:45.667"
+    },
+    {
+      "slug": "siverek-i-lce-rehberi-sanliurfa-nin-en-buyuk-i-lcesinde-gezi-ve-yasam",
+      "title": "Siverek İlçe Rehberi: Şanlıurfa'nın En Büyük İlçesinde Gezi ve Yaşam",
+      "status": "published",
+      "published_at": "2026-04-17T00:34:51.817"
+    },
+    {
+      "slug": "karakopru-rehberi-sanliurfanin-modern-ilcesinde-neler-yapilir",
+      "title": "Karaköprü Rehberi: Şanlıurfa'nın Modern İlçesinde Neler Yapılır",
+      "status": "published",
+      "published_at": "2026-04-16T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-isotu-hikayesi-rehberi",
+      "title": "Şanlıurfa İsotu: Dünyanın En Lezzetli Biberinin Hikayesi",
+      "status": "published",
+      "published_at": "2026-04-16T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-cocuklarla-gezi-aile-rehberi",
+      "title": "Şanlıurfa'da Çocuklarla Gezi: Ailelere Özel Rehber",
+      "status": "published",
+      "published_at": "2026-04-16T00:00:00"
+    },
+    {
+      "slug": "bozova-ataturk-baraji-rehberi",
+      "title": "Bozova ve Atatürk Barajı Rehberi: Şanlıurfa'nın Gizli Mavi Cenneti",
+      "status": "published",
+      "published_at": "2026-04-15T11:00:00"
+    },
+    {
+      "slug": "sanliurfa-osmanli-miraslar-cami-medrese-konak",
+      "title": "Şanlıurfa'da Osmanlı Mirasları: Camiler, Medreseler ve Konak Evler",
+      "status": "published",
+      "published_at": "2026-04-15T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-yaz-tatili-aileler-serin-mekanlar",
+      "title": "Şanlıurfa'da Yaz Tatili: Aileler İçin Serin Mekanlar",
+      "status": "published",
+      "published_at": "2026-04-15T09:00:00"
+    },
+    {
+      "slug": "gobeklitepe-ziyaret-rehberi-biletler-saatler-ve-pratik-bilgiler-2026",
+      "title": "Göbeklitepe Ziyaret Rehberi: Biletler, Saatler ve Pratik Bilgiler 2026",
+      "status": "published",
+      "published_at": "2026-04-15T07:00:00"
+    },
+    {
+      "slug": "birecik-gezi-rehberi-firat-kiyisinda-essiz-bir-ilce",
+      "title": "Birecik Gezi Rehberi: Fırat Kıyısında Eşsiz Bir İlçe",
+      "status": "published",
+      "published_at": "2026-04-14T14:00:00"
+    },
+    {
+      "slug": "cig-kofte-nasil-yapilir-sanliurfa-tarifi",
+      "title": "Çiğ Köfte Nasıl Yapılır? Şanlıurfa Tarifi",
+      "status": "published",
+      "published_at": "2026-04-14T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-konak-ve-butik-oteller-tarihi-atmosferde-konaklama",
+      "title": "Şanlıurfa'da Konak ve Butik Oteller: Tarihi Atmosferde Konaklama",
+      "status": "published",
+      "published_at": "2026-04-14T00:37:43.054"
+    },
+    {
+      "slug": "urfa-tatli-kulturu-kunefe-den-katmer-e-tum-tatlilar",
+      "title": "Urfa Tatlı Kültürü: Künefe'den Katmer'e Tüm Tatlılar",
+      "status": "published",
+      "published_at": "2026-04-12T22:55:03.324"
+    },
+    {
+      "slug": "sanliurfa-pazar-yerleri-taze-sebze-meyve-ve-yerel-uretim-rehberi",
+      "title": "Şanlıurfa Pazar Yerleri: Taze Sebze, Meyve ve Yerel Üretim Rehberi",
+      "status": "published",
+      "published_at": "2026-04-12T22:54:28.454"
+    },
+    {
+      "slug": "sanliurfa-kiyafet-giyim-kulturu-gelenek",
+      "title": "Şanlıurfa Kıyafet ve Giyim Kültürü: Gelenekten Günümüze",
+      "status": "published",
+      "published_at": "2026-04-12T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-kahvalti-kulturu-en-i-yi-8-kahvalti-mekani",
+      "title": "Şanlıurfa'da Kahvaltı Kültürü: En İyi 8 Kahvaltı Mekanı",
+      "status": "published",
+      "published_at": "2026-04-12T00:36:27.562"
+    },
+    {
+      "slug": "birecik-te-gezilecek-yerler-kelaynak-kusu-ve-firat-kiyisinda-bir-gun",
+      "title": "Birecik'te Gezilecek Yerler: Kelaynak Kuşu ve Fırat Kıyısında Bir Gün",
+      "status": "published",
+      "published_at": "2026-04-12T00:07:46.153"
+    },
+    {
+      "slug": "ceylanpinar-da-gezilecek-yerler-sinir-sehrinin-kesfedilmemis-guzellikleri",
+      "title": "Ceylanpınar'da Gezilecek Yerler: Sınır Şehrinin Keşfedilmemiş Güzellikleri",
+      "status": "published",
+      "published_at": "2026-04-12T00:06:49.481"
+    },
+    {
+      "slug": "halfeti-birecik-firat-kiyisi-gezi-guzergahi",
+      "title": "Halfeti'den Birecik'e: Fırat Kıyısı Gezi Güzergâhı",
+      "status": "published",
+      "published_at": "2026-04-12T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-tarihi-carsilari-alisveris-rehberi",
+      "title": "Şanlıurfa'nın Tarihi Çarşıları: Alışveriş Rehberi",
+      "status": "published",
+      "published_at": "2026-04-12T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-carsi-kulturu-kapali-carsi-ve-bedesten-in-tarihi",
+      "title": "Şanlıurfa'da Çarşı Kültürü: Kapalı Çarşı ve Bedesten'in Tarihi",
+      "status": "published",
+      "published_at": "2026-04-11T00:40:10.31"
+    },
+    {
+      "slug": "sanliurfaya-ilk-kez-gidenler-rehberi",
+      "title": "Şanlıurfa'ya İlk Kez Gidenler için Kapsamlı Gezi Rehberi",
+      "status": "published",
+      "published_at": "2026-04-10T23:39:57.669695"
+    },
+    {
+      "slug": "siverek-gezi-rehberi",
+      "title": "Siverek Rehberi: Tarihi Dokusu ve Doğasıyla Keşfedilmemiş Bir Şanlıurfa İlçesi",
+      "status": "published",
+      "published_at": "2026-04-10T09:30:00"
+    },
+    {
+      "slug": "sanliurfa-arkeoloji-muzesi-tam-rehber",
+      "title": "Şanlıurfa Arkeoloji Müzesi: Neolitik'ten Osmanlı'ya Tam Rehber",
+      "status": "published",
+      "published_at": "2026-04-10T09:00:00"
+    },
+    {
+      "slug": "bozova-termal-tesisleri-sanliurfa-saglik-hazinesi",
+      "title": "Bozova Termal Tesisleri: Şanlıurfa'nın Keşfedilmemiş Sağlık Hazinesi",
+      "status": "published",
+      "published_at": "2026-04-10T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-cocuklarla-piknik-en-guzel-yesil-alanlar-ve-park-rehberi",
+      "title": "Şanlıurfa'da Çocuklarla Piknik: En Güzel Yeşil Alanlar ve Park Rehberi",
+      "status": "published",
+      "published_at": "2026-04-10T01:54:25.635"
+    },
+    {
+      "slug": "gobeklitepe-ziyaret-rehberi-tam-kilavuz-ulasim-bilet-ve-gizem",
+      "title": "Göbeklitepe Ziyaret Rehberi: Tam Kılavuz — Ulaşım, Bilet ve Gizem",
+      "status": "published",
+      "published_at": "2026-04-10T01:32:41.415"
+    },
+    {
+      "slug": "sanliurfa-da-dugun-gelenegi-kina-gecesi-mehter-ve-toy-rituelleri",
+      "title": "Şanlıurfa'da Düğün Geleneği: Kına Gecesi, Mehter ve Toy Ritüelleri",
+      "status": "published",
+      "published_at": "2026-04-10T00:38:01.214"
+    },
+    {
+      "slug": "halilurrahman-golu-ziyaret-rehberi-kutsal-golun-tam-anlatimi",
+      "title": "Halilürrahman Gölü Ziyaret Rehberi: Kutsal Gölün Tam Anlatımı",
+      "status": "published",
+      "published_at": "2026-04-10T00:14:31.605"
+    },
+    {
+      "slug": "harran-dunyanin-ilk-universite-sehrinin-hikayesi",
+      "title": "Harran: Dünyanın İlk Üniversite Şehrinin Hikayesi",
+      "status": "published",
+      "published_at": "2026-04-10T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-yaz-sicagindan-korunma-rehberi",
+      "title": "Şanlıurfa'da Yaz Sıcağından Korunma Rehberi",
+      "status": "published",
+      "published_at": "2026-04-10T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-sira-gecesi-mekanlari",
+      "title": "Şanlıurfa Sıra Gecesi Mekanları",
+      "status": "published",
+      "published_at": "2026-04-08T11:30:00"
+    },
+    {
+      "slug": "halfeti-de-konaklama-firat-kiyisinda-butik-otel-ve-konuk-evi-secenekleri",
+      "title": "Halfeti'de Konaklama: Fırat Kıyısında Butik Otel ve Konuk Evi Seçenekleri",
+      "status": "published",
+      "published_at": "2026-04-08T01:38:24.869"
+    },
+    {
+      "slug": "sanliurfa-da-lahmacun-rehberi-en-i-yi-lahmacun-nerede-yenir",
+      "title": "Şanlıurfa'da Lahmacun Rehberi: En İyi Lahmacun Nerede Yenir?",
+      "status": "published",
+      "published_at": "2026-04-08T00:12:46.129"
+    },
+    {
+      "slug": "urfa-da-durum-ve-sandvic-kulturu-hizli-ama-lezzetli-sokak-yemekleri",
+      "title": "Urfa'da Dürüm ve Sandviç Kültürü: Hızlı Ama Lezzetli Sokak Yemekleri",
+      "status": "published",
+      "published_at": "2026-04-06T22:55:48.489"
+    },
+    {
+      "slug": "hz-i-brahim-in-i-zinde-sanliurfa-nin-dini-ziyaret-noktalari-rehberi",
+      "title": "Hz. İbrahim'in İzinde: Şanlıurfa'nın Dini Ziyaret Noktaları Rehberi",
+      "status": "published",
+      "published_at": "2026-04-06T00:37:26.595"
+    },
+    {
+      "slug": "sanliurfa-gastronomi-turu-2-gun",
+      "title": "Şanlıurfa Gastronomi Turu: 2 Günde Şehrin En İyi Lezzetleri",
+      "status": "published",
+      "published_at": "2026-04-06T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-el-sanatlari-bakir-kilim-deri",
+      "title": "Şanlıurfa'nın El Sanatları: Bakır, Kilim ve Deri",
+      "status": "published",
+      "published_at": "2026-04-06T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-tarihi-hanlari-gumruk-hani-rehberi",
+      "title": "Şanlıurfa'nın Tarihi Hanları: Gümrük Hanı'ndan Sipahi Hanı'na",
+      "status": "published",
+      "published_at": "2026-04-05T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-kamp-cadir-tatili-doga",
+      "title": "Şanlıurfa'da Kamp ve Çadır Tatili: Doğayla Baş Başa",
+      "status": "published",
+      "published_at": "2026-04-05T09:00:00"
+    },
+    {
+      "slug": "suruc-gezi-rehberi",
+      "title": "Suruç Rehberi: Tarihin ve Toprağın Buluştuğu Şanlıurfa İlçesi",
+      "status": "published",
+      "published_at": "2026-04-05T08:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-manevi-sifa-ruhsal-yenilenme-ve-meditasyon-mekanlari",
+      "title": "Şanlıurfa'da Manevi Şifa: Ruhsal Yenilenme ve Meditasyon Mekanları",
+      "status": "published",
+      "published_at": "2026-04-05T01:36:18.527"
+    },
+    {
+      "slug": "sanliurfa-2027-yil-sonu-ozeti-2028-bakis",
+      "title": "Şanlıurfa 2026'nin En İyi Anları: İçerik Özeti ve 2028'e Bakış",
+      "status": "published",
+      "published_at": "2026-04-05T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-hostel-ve-butce-konaklama-sirt-cantali-gezgin-rehberi",
+      "title": "Şanlıurfa'da Hostel ve Bütçe Konaklama: Sırt Çantalı Gezgin Rehberi",
+      "status": "published",
+      "published_at": "2026-04-04T01:37:36.562"
+    },
+    {
+      "slug": "sanliurfa-da-cocuklarla-gezi-aileler-i-cin-en-i-yi-8-aktivite",
+      "title": "Şanlıurfa'da Çocuklarla Gezi: Aileler İçin En İyi 8 Aktivite",
+      "status": "published",
+      "published_at": "2026-04-04T00:13:13.214"
+    },
+    {
+      "slug": "viransehir-gezi-rehberi-sanliurfa-nin-tarihi-i-lcesinde-ne-yapilir",
+      "title": "Viranşehir Gezi Rehberi: Şanlıurfa'nın Tarihi İlçesinde Ne Yapılır?",
+      "status": "published",
+      "published_at": "2026-04-04T00:05:58.837"
+    },
+    {
+      "slug": "sanliurfa-tarihi-hanlar-gumruk-hani",
+      "title": "Şanlıurfa'da Tarihi Hanlar: Gümrük Hanı ve Çevresi",
+      "status": "published",
+      "published_at": "2026-04-04T00:00:00"
+    },
+    {
+      "slug": "eylulde-sanliurfa-sonbahar-ziyaret-rehberi",
+      "title": "Eylül'de Şanlıurfa: Sonbaharın En İyi Ziyaret Mevsimi",
+      "status": "published",
+      "published_at": "2026-04-04T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-el-sanatlari-bakir-kilim-telkari",
+      "title": "Şanlıurfa El Sanatları: Bakırcılık, Kilimcilik ve Telkari",
+      "status": "published",
+      "published_at": "2026-04-03T09:00:00"
+    },
+    {
+      "slug": "urfa-mutfagi-tarihi-mezopotamyadan-gunumuze-2027",
+      "title": "Urfa Mutfağının Tarihi: Mezopotamya'dan Günümüze 5.000 Yıllık Sofra",
+      "status": "published",
+      "published_at": "2026-04-03T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-gezilecek-10-tarihi-yer",
+      "title": "Şanlıurfa'da Gezilecek 10 Tarihi Yer",
+      "status": "published",
+      "published_at": "2026-04-02T10:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-yoresel-urunler-nereden-ne-fiyata-nasil-alinir",
+      "title": "Şanlıurfa'da Yöresel Ürünler: Nereden, Ne Fiyata, Nasıl Alınır?",
+      "status": "published",
+      "published_at": "2026-04-02T01:55:13.34"
+    },
+    {
+      "slug": "karakopru-i-lce-rehberi-sanliurfa-nin-modern-yuzu",
+      "title": "Karaköprü İlçe Rehberi: Şanlıurfa'nın Modern Yüzü",
+      "status": "published",
+      "published_at": "2026-04-02T00:38:17.865"
+    },
+    {
+      "slug": "gurcutepe-nevali-cori-sanliurfa-arkeoloji",
+      "title": "Gürcütepe ve Nevali Çori: Şanlıurfa'nın Gizli Arkeoloji Hazineleri",
+      "status": "published",
+      "published_at": "2026-04-01T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-eczaneleri-saglik-merkezleri-pratik-rehber",
+      "title": "Şanlıurfa Eczaneleri ve Sağlık Merkezleri: Pratik Rehber",
+      "status": "published",
+      "published_at": "2026-04-01T09:00:00"
+    },
+    {
+      "slug": "harran-astronomi-bilim-tarihi-mirasi-2027",
+      "title": "Harran ve Astronomi: Dünyanın İlk Gözlemevinin Mirası",
+      "status": "published",
+      "published_at": "2026-04-01T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-ya-tek-basina-gitmek-solo-seyahat-rehberi-2026",
+      "title": "Şanlıurfa'ya Tek Başına Gitmek: Solo Seyahat Rehberi 2026",
+      "status": "published",
+      "published_at": "2026-03-31T01:31:26.345"
+    },
+    {
+      "slug": "hilvan-i-lcesi-ataturk-baraji-golu-kiyisinda-doga-ve-dinginlik",
+      "title": "Hilvan İlçesi: Atatürk Barajı Gölü Kıyısında Doğa ve Dinginlik",
+      "status": "published",
+      "published_at": "2026-03-30T00:35:25.494"
+    },
+    {
+      "slug": "aralikta-sanliurfa-kis-tatili-plani-2027",
+      "title": "Aralık'ta Şanlıurfa: Kış Tatili Planı ve Sıcak Karşılama",
+      "status": "published",
+      "published_at": "2026-03-30T00:00:00"
+    },
+    {
+      "slug": "ekimde-sanliurfa-sonbahar-gezi-rehberi",
+      "title": "Ekim'de Şanlıurfa: Sonbaharın En Güzel Gezi Mevsimi",
+      "status": "published",
+      "published_at": "2026-03-30T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-baklava-en-iyi-adresler",
+      "title": "Şanlıurfa'da Baklava: Ustadan Usul, En İyi Adresler",
+      "status": "published",
+      "published_at": "2026-03-30T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-organik-ve-yerel-gida-saglikli-beslenme-mekanlari-ve-pazarlar",
+      "title": "Şanlıurfa'da Organik ve Yerel Gıda: Sağlıklı Beslenme Mekanları ve Pazarlar",
+      "status": "published",
+      "published_at": "2026-03-29T01:36:46.922"
+    },
+    {
+      "slug": "sanliurfa-sira-geceleri-muzik-siir-gelenek",
+      "title": "Şanlıurfa Sıra Geceleri: Müzik, Şiir ve Geleneğin Buluşması",
+      "status": "published",
+      "published_at": "2026-03-28T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-aile-gezisi-cocuklar-2027",
+      "title": "Şanlıurfa'da Aile Gezisi: Çocuklarla Gezilecek 6 Yer",
+      "status": "published",
+      "published_at": "2026-03-28T00:00:00"
+    },
+    {
+      "slug": "karahantepe-rehberi-gobeklitepe-kardes-kazisi",
+      "title": "Karahantepe Rehberi: Göbeklitepe'nin Kardeş Kazısı",
+      "status": "published",
+      "published_at": "2026-03-28T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-en-guzel-camileri-tarihi",
+      "title": "Şanlıurfa'nın En Güzel Camileri: Tarihi Şaheserler",
+      "status": "published",
+      "published_at": "2026-03-28T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-hediyelik-esya-rehberi-ailenize-ve-dostlariniza-ne-goturursunuz",
+      "title": "Şanlıurfa Hediyelik Eşya Rehberi: Ailenize ve Dostlarınıza Ne Götürürsünüz?",
+      "status": "published",
+      "published_at": "2026-03-27T01:55:34.022"
+    },
+    {
+      "slug": "sanliurfa-gece-rehberi-sira-gecelerinden-balikligol-de-gece-yuruyusune",
+      "title": "Şanlıurfa Gece Rehberi: Sıra Gecelerinden Balıklıgöl'de Gece Yürüyüşüne",
+      "status": "published",
+      "published_at": "2026-03-27T01:34:48.909"
+    },
+    {
+      "slug": "sanliurfa-da-sanat-yerel-sanatcilar-galeriler-ve-el-sanatlari",
+      "title": "Şanlıurfa'da Sanat: Yerel Sanatçılar, Galeriler ve El Sanatları",
+      "status": "published",
+      "published_at": "2026-03-27T00:41:02.733"
+    },
+    {
+      "slug": "sanliurfa-da-alisveris-merkezleri-ve-carsi-rehberi-nerede-ne-alinir",
+      "title": "Şanlıurfa'da Alışveriş Merkezleri ve Çarşı Rehberi: Nerede Ne Alınır?",
+      "status": "published",
+      "published_at": "2026-03-27T00:15:26.23"
+    },
+    {
+      "slug": "akcakale-gezi-rehberi-suriye-sinirindaki-sehirde-1-gunluk-tur",
+      "title": "Akçakale Gezi Rehberi: Suriye Sınırındaki Şehirde 1 Günlük Tur",
+      "status": "published",
+      "published_at": "2026-03-27T00:07:26.362"
+    },
+    {
+      "slug": "sanliurfa-da-pilavcilar-ve-pilav-cesitleri-yerel-pirinc-kulturu-rehberi",
+      "title": "Şanlıurfa'da Pilavcılar ve Pilav Çeşitleri: Yerel Pirinç Kültürü Rehberi",
+      "status": "published",
+      "published_at": "2026-03-26T00:08:25.298"
+    },
+    {
+      "slug": "sanliurfa-kis-lezzetleri-corba-kaburga-2027",
+      "title": "Şanlıurfa Kış Lezzetleri: Sıcak Çorba, Kaburga ve Kış Sofrası",
+      "status": "published",
+      "published_at": "2026-03-26T00:00:00"
+    },
+    {
+      "slug": "halfetide-1-gun-tekne-turu",
+      "title": "Halfeti'de 1 Gün: Tekne Turu ve Gezilecek Yerler",
+      "status": "published",
+      "published_at": "2026-03-25T09:30:00"
+    },
+    {
+      "slug": "sanliurfa-surlari-kalesi-savunma-mimarisi",
+      "title": "Şanlıurfa Surları ve Kalesi: Bin Yıllık Savunma Mimarisinin İzleri",
+      "status": "published",
+      "published_at": "2026-03-25T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-cocuk-muzesi-ve-egitici-mekanlar-ogrenirken-eglenmek",
+      "title": "Şanlıurfa Çocuk Müzesi ve Eğitici Mekanlar: Öğrenirken Eğlenmek",
+      "status": "published",
+      "published_at": "2026-03-24T01:54:56.809"
+    },
+    {
+      "slug": "sanliurfa-dan-komsu-i-llere-gun-turu-gaziantep-mardin-diyarbakir-rotasi",
+      "title": "Şanlıurfa'dan Komşu İllere Gün Turu: Gaziantep, Mardin, Diyarbakır Rotası",
+      "status": "published",
+      "published_at": "2026-03-24T01:31:51.686"
+    },
+    {
+      "slug": "halfeti-kis-sessiz-firat-balikci-2027",
+      "title": "Halfeti'de Kış: Sessiz Fırat ve Yerel Balıkçı Rutinleri",
+      "status": "published",
+      "published_at": "2026-03-24T00:00:00"
+    },
+    {
+      "slug": "harranda-arkeolojik-kesif-tarihin-izleri",
+      "title": "Harran'da Arkeolojik Keşif: 6000 Yıllık Tarihin İzleri",
+      "status": "published",
+      "published_at": "2026-03-22T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-saglikli-yasam-kosu-yuruyus-doga-aktiviteleri",
+      "title": "Şanlıurfa'da Sağlıklı Yaşam: Koşu, Yürüyüş ve Doğa Aktiviteleri",
+      "status": "published",
+      "published_at": "2026-03-22T09:00:00"
+    },
+    {
+      "slug": "kasimda-sanliurfa-deneyim-artiyor-2027",
+      "title": "Kasım'da Şanlıurfa: Turist Azalıyor, Deneyim Artıyor",
+      "status": "published",
+      "published_at": "2026-03-22T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-romantik-mekanlar-sevgililer-rehberi",
+      "title": "Şanlıurfa'da Romantik Mekanlar: Çiftler İçin Rehber",
+      "status": "published",
+      "published_at": "2026-03-22T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-pazar-rehberi-hangi-gun-nerede",
+      "title": "Şanlıurfa Pazar Rehberi: Hangi Gün, Nerede?",
+      "status": "published",
+      "published_at": "2026-03-22T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-nin-osmanli-donemi-mimarisi-hanlar-hamamlar-ve-camiler",
+      "title": "Şanlıurfa'nın Osmanlı Dönemi Mimarisi: Hanlar, Hamamlar ve Camiler",
+      "status": "published",
+      "published_at": "2026-03-21T01:53:06.18"
+    },
+    {
+      "slug": "sanliurfa-da-instagram-fotograf-cekimi-en-i-yi-lokasyonlar-ve-saatler",
+      "title": "Şanlıurfa'da Instagram Fotoğraf Çekimi: En İyi Lokasyonlar ve Saatler",
+      "status": "published",
+      "published_at": "2026-03-21T00:11:14.847"
+    },
+    {
+      "slug": "sanliurfa-pratik-bilgiler-banka-para",
+      "title": "Şanlıurfa'da Para, Banka ve Pratik Bilgiler: Seyahat Öncesi Bilinmesi Gerekenler",
+      "status": "published",
+      "published_at": "2026-03-20T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-kapali-carsi-rehberi-tarih-alisveris",
+      "title": "Şanlıurfa Kapalı Çarşı Rehberi: Tarih ve Alışveriş İçiçe",
+      "status": "published",
+      "published_at": "2026-03-20T09:00:00"
+    },
+    {
+      "slug": "balikligol-un-4000-yillik-sirri-efsaneden-arkeolojiye-hz-i-brahim-ve-nemrut",
+      "title": "Balıklıgöl'ün 4000 Yıllık Sırrı: Efsaneden Arkeolojiye Hz. İbrahim ve Nemrut",
+      "status": "published",
+      "published_at": "2026-03-20T01:33:35.944"
+    },
+    {
+      "slug": "gobeklitepe-kis-ziyaret-aralik-en-iyi-ay-2027",
+      "title": "Göbeklitepe'yi Kışın Ziyaret: Neden Aralık En İyi Ay?",
+      "status": "published",
+      "published_at": "2026-03-20T00:00:00"
+    },
+    {
+      "slug": "urfa-isotu-dunya-en-aromatik-biber",
+      "title": "Urfa İsotu: Dünyanın En Aromatik Biberi",
+      "status": "published",
+      "published_at": "2026-03-20T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-geleneksel-kahvalti-rehberi",
+      "title": "Şanlıurfa'da Geleneksel Kahvaltı: 7 Efsane Lezzet",
+      "status": "published",
+      "published_at": "2026-03-20T00:00:00"
+    },
+    {
+      "slug": "gobeklitepe-yakini-konaklama-orencik-koy",
+      "title": "Göbeklitepe Yakını Konaklama: Örencik Köyü ve Çevresi",
+      "status": "published",
+      "published_at": "2026-03-19T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-uzun-donem-kiralik-aylik-apart-otel-ve-rezidans-rehberi",
+      "title": "Şanlıurfa'da Uzun Dönem Kiralık: Aylık Apart Otel ve Rezidans Rehberi",
+      "status": "published",
+      "published_at": "2026-03-19T01:37:53.201"
+    },
+    {
+      "slug": "sanliurfa-muzeleri-rehberi",
+      "title": "Şanlıurfa Müzeleri Rehberi",
+      "status": "published",
+      "published_at": "2026-03-18T11:00:00"
+    },
+    {
+      "slug": "sanliurfa-butce-seyahat-rehberi",
+      "title": "Şanlıurfa'da Bütçe Seyahat Rehberi: Ucuza Konak, Yemek ve Gezi",
+      "status": "published",
+      "published_at": "2026-03-18T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-butce-seyahati-dusuk-maliyetle-maksimum-kesif-rehberi",
+      "title": "Şanlıurfa'da Bütçe Seyahati: Düşük Maliyetle Maksimum Keşif Rehberi",
+      "status": "published",
+      "published_at": "2026-03-18T01:32:25.992"
+    },
+    {
+      "slug": "urfa-hediyelik-alisveris-tam-rehber-2027",
+      "title": "Şanlıurfa'dan Hediyelik: Neyi, Nereden Alınır — Tam Rehber",
+      "status": "published",
+      "published_at": "2026-03-18T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-cocuklarla-muze-tarihi-yerler",
+      "title": "Şanlıurfa'da Çocuklarla Gidilebilecek Müze ve Tarihi Yerler",
+      "status": "published",
+      "published_at": "2026-03-17T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-sabahlari-tereyagli-pide-kaymak-ve-geleneksel-sofra",
+      "title": "Şanlıurfa Sabahları: Tereyağlı Pide, Kaymak ve Geleneksel Sofra",
+      "status": "published",
+      "published_at": "2026-03-16T22:55:31.494"
+    },
+    {
+      "slug": "sanliurfa-tarihi-dini-mekanlar-camii-turbe-2027",
+      "title": "Şanlıurfa'nın Tarihi Dini Mekanları: Camiler, Türbeler ve Makamlar",
+      "status": "published",
+      "published_at": "2026-03-16T00:00:00"
+    },
+    {
+      "slug": "karahantepe-gobeklitepenin-kardes-kazi-alani",
+      "title": "Karahantepe: Göbeklitepe'nin Kardeş Kazı Alanı",
+      "status": "published",
+      "published_at": "2026-03-15T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-hamam-kulturu-tarihi-hamamlar-modern-spa",
+      "title": "Şanlıurfa'da Hamam Kültürü: Tarihi Hamamlar ve Modern Spa",
+      "status": "published",
+      "published_at": "2026-03-15T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-geleneksel-giyim-salvar-potur-ve-yoresel-kostumler",
+      "title": "Şanlıurfa'da Geleneksel Giyim: Şalvar, Potur ve Yöresel Kostümler",
+      "status": "published",
+      "published_at": "2026-03-15T01:54:08.063"
+    },
+    {
+      "slug": "sanliurfa-ilkbahar-mart-mayis-gezi-rehberi",
+      "title": "Şanlıurfa'da İlkbahar: Mart–Mayıs Gezi Rehberi",
+      "status": "published",
+      "published_at": "2026-03-15T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-geleneksel-icecekler-mirra-salgam",
+      "title": "Şanlıurfa'nın Geleneksel İçecekleri: Mırradan Şalgama",
+      "status": "published",
+      "published_at": "2026-03-15T00:00:00"
+    },
+    {
+      "slug": "ekim-halfeti-sonbahar-renkleri-2027",
+      "title": "Halfeti'de Sonbahar: Ekim Renkleri ve Sakin Sezon Rehberi",
+      "status": "published",
+      "published_at": "2026-03-14T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-sarap-uzumu-ve-bag-kulturu-harran-ovasinin-meyvesi",
+      "title": "Şanlıurfa'da Şarap Üzümü ve Bağ Kültürü: Harran Ovasının Meyvesi",
+      "status": "published",
+      "published_at": "2026-03-13T22:59:09.699"
+    },
+    {
+      "slug": "sanliurfa-da-fotograf-rotalari-en-guzel-cekim-noktalari-ve-isik-saatleri",
+      "title": "Şanlıurfa'da Fotoğraf Rotaları: En Güzel Çekim Noktaları ve Işık Saatleri",
+      "status": "published",
+      "published_at": "2026-03-13T01:32:07.798"
+    },
+    {
+      "slug": "sanliurfada-en-iyi-seyahat-donemi",
+      "title": "Şanlıurfa'da En İyi Seyahat Dönemi: Aylık Hava Durumu ve Etkinlik Takvimi",
+      "status": "published",
+      "published_at": "2026-03-12T09:00:00"
+    },
+    {
+      "slug": "viransehir-siverek-konaklama-ic-ilceler",
+      "title": "Viranşehir ve Siverek'te Konaklama: İç İlçelerde Gece Geçirmek",
+      "status": "published",
+      "published_at": "2026-03-12T09:00:00"
+    },
+    {
+      "slug": "urfa-ev-yemekleri-kavut-cilbir-sirik-kebabi-2027",
+      "title": "Urfa Ev Yemekleri: Kavut, Çılbır ve Sırık Kebabı Tarifleri",
+      "status": "published",
+      "published_at": "2026-03-12T00:00:00"
+    },
+    {
+      "slug": "harran-konik-evleri-mimari-hikayesi",
+      "title": "Harran Konik Evleri: Mimari Hikayesi",
+      "status": "published",
+      "published_at": "2026-03-10T10:30:00"
+    },
+    {
+      "slug": "halfeti-sonbahar-balik-sezonu-firat-sazan-2027",
+      "title": "Halfeti'de Sonbahar Balık Sezonu: Fırat'ta Taze Sazan Rehberi",
+      "status": "published",
+      "published_at": "2026-03-10T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-gece-hayati-kahvehaneler-konserler",
+      "title": "Şanlıurfa'da Gece Hayatı: Kahvehaneler, Konserler ve Şeb-i Arus",
+      "status": "published",
+      "published_at": "2026-03-08T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-dogal-sifali-sular-hilvan-kapli-calari",
+      "title": "Şanlıurfa'da Doğal Şifalı Sular: Hilvan Kaplıcaları Rehberi",
+      "status": "published",
+      "published_at": "2026-03-08T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-hediyelik-esya-tam-liste",
+      "title": "Şanlıurfa'dan Alınacak Hediyelikler: Tam Liste",
+      "status": "published",
+      "published_at": "2026-03-08T09:00:00"
+    },
+    {
+      "slug": "karahantepe-2027-kazi-sezonu-yeni-bulgular",
+      "title": "Karahantepe 2026 Kazı Sezonu: Yeni Bulgular ve Açıklamalar",
+      "status": "published",
+      "published_at": "2026-03-08T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-da-baklava-ve-serbet-dunyasi-tatli-kulturune-yolculuk",
+      "title": "Şanlıurfa'da Baklava ve Şerbet Dünyası: Tatlı Kültürüne Yolculuk",
+      "status": "published",
+      "published_at": "2026-03-07T22:52:51.095"
+    },
+    {
+      "slug": "eylulde-sanliurfa-sonbahar-baslangi-avantajlari-2027",
+      "title": "Eylül'de Şanlıurfa: Sonbahar Başlangıcının 6 Avantajı",
+      "status": "published",
+      "published_at": "2026-03-06T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-3-gunluk-gezi-plani-rota",
+      "title": "Şanlıurfa 3 Günlük Gezi Planı: En İyi Rota ve İpuçları",
+      "status": "published",
+      "published_at": "2026-03-05T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-merkez-otelleri-en-iyi-konaklama-2026",
+      "title": "Şanlıurfa Merkez Otelleri: En İyi Konaklama Seçenekleri 2026",
+      "status": "published",
+      "published_at": "2026-03-05T09:00:00"
+    },
+    {
+      "slug": "gobeklitepe-rehberi-ziyaret-bilgileri",
+      "title": "Göbeklitepe Rehberi: Ziyaret Bilgileri",
+      "status": "published",
+      "published_at": "2026-03-05T09:00:00"
+    },
+    {
+      "slug": "urfa-pide-kulturu-firin-pideleri-etli-ekmek-ve-en-i-yi-pideciler",
+      "title": "Urfa Pide Kültürü: Fırın Pideleri, Etli Ekmek ve En İyi Pideciler",
+      "status": "published",
+      "published_at": "2026-03-04T22:52:07.868"
+    },
+    {
+      "slug": "birecik-kelaynak-agustos-sezon-kapanisi-2027",
+      "title": "Birecik'te Kelaynak Kuşunun Son Görünümü: Ağustos Sezonu Kapanış Rehberi",
+      "status": "published",
+      "published_at": "2026-03-04T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-okul-oncesi-cocuklar-egitim-kurumlari",
+      "title": "Şanlıurfa'da Okul Öncesi Çocuklar İçin Eğitim Kurumları",
+      "status": "published",
+      "published_at": "2026-03-03T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-alisveris-nerede-ne-bulunur",
+      "title": "Şanlıurfa Alışveriş Rehberi: Nerede Ne Bulunur?",
+      "status": "published",
+      "published_at": "2026-03-02T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-tarihi-carsi-el-sanatlari-rehberi-2027",
+      "title": "Şanlıurfa Tarihi Çarşı Rehberi: Bakırcılık, Hasır ve Geleneksel Zanaatlar",
+      "status": "published",
+      "published_at": "2026-03-02T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-baharat-pazari-i-sot-sumak-ve-yoresel-baharatlar-rehberi",
+      "title": "Şanlıurfa Baharat Pazarı: İsot, Sumak ve Yöresel Baharatlar Rehberi",
+      "status": "published",
+      "published_at": "2026-03-01T22:51:48.575"
+    },
+    {
+      "slug": "sanliurfa-isot-biberi-nasil-alinir-kullanilir",
+      "title": "Şanlıurfa İsot Biberi: Nasıl Alınır, Nasıl Kullanılır?",
+      "status": "published",
+      "published_at": "2026-03-01T09:00:00"
+    },
+    {
+      "slug": "harran-gece-yildiz-gozlemi-kumbet-evler-2027",
+      "title": "Harran'da Gece: Kümbet Evler Arasında Yıldız Gözlemi",
+      "status": "published",
+      "published_at": "2026-02-28T00:00:00"
+    },
+    {
+      "slug": "halfeti-su-sporlari-tekne-aktiviteleri-yaz-2027",
+      "title": "Halfeti'de Su Sporları ve Tekne Aktiviteleri: Yaz Rehberi",
+      "status": "published",
+      "published_at": "2026-02-26T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-fotograf-cekimi-en-iyi-noktalar",
+      "title": "Şanlıurfa'da Fotoğraf Çekimi İçin En İyi Noktalar",
+      "status": "published",
+      "published_at": "2026-02-25T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-el-sanatlari-telkari-gumus-bakir",
+      "title": "Şanlıurfa'da El Sanatları: Telkari Gümüş ve Bakır İşleri",
+      "status": "published",
+      "published_at": "2026-02-25T09:00:00"
+    },
+    {
+      "slug": "gobeklitepe-tam-ziyaretci-rehberi-2027",
+      "title": "Göbeklitepe Tam Ziyaretçi Rehberi 2026: Her Şey Bir Arada",
+      "status": "published",
+      "published_at": "2026-02-24T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-mahalleleri-rehberi",
+      "title": "Şanlıurfa'nın Mahalleleri: Tarihi Dokudan Modern Semtlere Rehber",
+      "status": "published",
+      "published_at": "2026-02-22T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-yaz-icecekleri-koruk-serbeti-demirhindi-mirra-2027",
+      "title": "Şanlıurfa'nın Yaz İçecekleri: Koruk Şerbeti, Demirhindi ve Mırra",
+      "status": "published",
+      "published_at": "2026-02-22T00:00:00"
+    },
+    {
+      "slug": "sanliurfaya-nasil-gidilir-ulasim-rehberi-2026",
+      "title": "Şanlıurfa'ya Nasıl Gidilir? Uçak, Otobüs ve Araba ile Ulaşım Rehberi 2026",
+      "status": "published",
+      "published_at": "2026-02-20T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-cocuklarla-yapilacak-10-aktivite",
+      "title": "Şanlıurfa'da Çocuklarla Yapılacak 10 Aktivite",
+      "status": "published",
+      "published_at": "2026-02-20T09:00:00"
+    },
+    {
+      "slug": "halfeti-gunbatimi-fotograf-rehberi-2027",
+      "title": "Halfeti'de Günbatımı: En İyi Fotoğraf Noktaları ve Işık Rehberi",
+      "status": "published",
+      "published_at": "2026-02-20T00:00:00"
+    },
+    {
+      "slug": "temmuzda-sanliurfa-kapali-mekan-rehberi-2027",
+      "title": "Temmuz'da Şanlıurfa: Kapalı Mekan Rehberi — Müzeler, Çarşılar, Kahvehaneler",
+      "status": "published",
+      "published_at": "2026-02-18T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-sira-gecesi-rehberi-2027",
+      "title": "Şanlıurfa Sıra Gecesi Rehberi: Nedir, Nerede Yaşanır?",
+      "status": "published",
+      "published_at": "2026-02-16T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-toplu-tasima-rehberi",
+      "title": "Şanlıurfa'da Toplu Taşıma Rehberi: Otobüs, Minibüs ve Taksi",
+      "status": "published",
+      "published_at": "2026-02-15T09:00:00"
+    },
+    {
+      "slug": "halfeti-birecik-firat-nehri-gezi-rotasi-2027",
+      "title": "Halfeti'den Birecik'e Fırat Nehri Boyunca Gezi Rotası",
+      "status": "published",
+      "published_at": "2026-02-14T00:00:00"
+    },
+    {
+      "slug": "gobeklitepe-karahantepe-harran-arkeoloji-ucgeni-2027",
+      "title": "Göbeklitepe, Karahantepe ve Harran: Neolitik Arkeoloji Üçgeni",
+      "status": "published",
+      "published_at": "2026-02-12T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-sokak-lezzetleri-rehberi",
+      "title": "Şanlıurfa Sokak Lezzetleri Rehberi: Çiğköfte'den Katmerli'ye",
+      "status": "published",
+      "published_at": "2026-02-10T09:00:00"
+    },
+    {
+      "slug": "sanliurfa-yaz-gezi-rehberi-2027",
+      "title": "Şanlıurfa Yaz Rehberi 2026: Sıcakta Gezmenin 8 Sırrı",
+      "status": "published",
+      "published_at": "2026-02-10T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-fotografcilar-icin-rehber-altin-saatler-2027",
+      "title": "Fotoğrafçılar İçin Şanlıurfa Rehberi: Altın Saatler ve 8 Çekim Noktası",
+      "status": "published",
+      "published_at": "2026-02-08T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-sabah-kahvaltisi-rehberi-en-iyi-adresler-2027",
+      "title": "Şanlıurfa Sabah Kahvaltısı Rehberi: En İyi 7 Adres",
+      "status": "published",
+      "published_at": "2026-02-06T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-mayis-5-gunluk-gezi-plani-2027",
+      "title": "Mayıs'ta Şanlıurfa: 5 Günlük Kapsamlı Gezi Planı",
+      "status": "published",
+      "published_at": "2026-02-04T00:00:00"
+    },
+    {
+      "slug": "halfeti-tekne-turu-tam-rehber-2027",
+      "title": "Halfeti Tekne Turu Tam Rehberi 2026: Rotalar, Fiyatlar, İpuçları",
+      "status": "published",
+      "published_at": "2026-02-02T00:00:00"
+    },
+    {
+      "slug": "harran-dogru-gezmek-kumbet-evler-rehberi-2027",
+      "title": "Harran'ı Doğru Gezmek: Kümbet Evlerden İlk Üniversiteye Tam Rehber",
+      "status": "published",
+      "published_at": "2026-01-31T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-bahar-yuruyus-rotalari-2027",
+      "title": "Şanlıurfa'da 5 Bahar Yürüyüş Rotası: Doğa ve Tarih Bir Arada",
+      "status": "published",
+      "published_at": "2026-01-29T00:00:00"
+    },
+    {
+      "slug": "nisan-gobeklitepe-bahar-ziyaret-rehberi-2027",
+      "title": "Nisan'da Göbeklitepe: Bahar Ziyaretinin 7 Avantajı",
+      "status": "published",
+      "published_at": "2026-01-27T00:00:00"
+    },
+    {
+      "slug": "halfeti-siyah-gulu-tam-rehberi-2027",
+      "title": "Halfeti Siyah Gülü Rehberi: Nerede, Ne Zaman ve Nasıl Görülür?",
+      "status": "published",
+      "published_at": "2026-01-25T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-muzeleri-hangi-muze-ne-zaman",
+      "title": "Şanlıurfa Müzeleri: Hangi Müze, Ne Zaman?",
+      "status": "published",
+      "published_at": "2026-01-23T00:00:00"
+    },
+    {
+      "slug": "halfeti-balikcilik-firat-mutfagi",
+      "title": "Halfeti Balıkçılığı ve Fırat Mutfağı",
+      "status": "published",
+      "published_at": "2026-01-21T00:00:00"
+    },
+    {
+      "slug": "yeni-yilda-sanliurfa-kis-tatili-10-neden",
+      "title": "Yeni Yılda Şanlıurfa: Kış Tatili İçin 10 Neden",
+      "status": "published",
+      "published_at": "2026-01-19T00:00:00"
+    },
+    {
+      "slug": "sanliurfa-2-gunluk-kis-gezi-plani",
+      "title": "Şanlıurfa 2 Günlük Kış Gezi Planı",
+      "status": "published",
+      "published_at": "2026-01-17T00:00:00"
+    },
+    {
+      "slug": "kis-gunu-gobeklitepe-ziyaret-rehberi",
+      "title": "Kış Günü Göbeklitepe: Sessiz, Büyülü, Kalabalıksız",
+      "status": "published",
+      "published_at": "2026-01-15T00:00:00"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "generatedAt": "2026-05-15T12:07:52.911Z",
+  "status": "ok",
+  "policy": {
+    "installsCron": false,
+    "previewCommand": "npm run -s ops:cwp:cron:preview",
+    "applyCommand": "npm run -s ops:cwp:cron:apply-safe"
+  },
+  "summary": {
+    "requiredJobCount": 16,
+    "presentJobCount": 16,
+    "missingJobCount": 0
+  },
+  "jobs": [
+    {
+      "job": "doctor-hourly",
+      "present": true
+    },
+    {
+      "job": "weather-refresh-halfhour",
+      "present": true
+    },
+    {
+      "job": "transit-refresh-hourly",
+      "present": true
+    },
+    {
+      "job": "pharmacy-refresh-daily",
+      "present": true
+    },
+    {
+      "job": "smoke-6hour",
+      "present": true
+    },
+    {
+      "job": "report-daily",
+      "present": true
+    },
+    {
+      "job": "rotate-events-daily",
+      "present": true
+    },
+    {
+      "job": "cleanup-weekly",
+      "present": true
+    },
+    {
+      "job": "incident-cleanup-weekly",
+      "present": true
+    },
+    {
+      "job": "daily-ops",
+      "present": true
+    },
+    {
+      "job": "weekly-audit",
+      "present": true
+    },
+    {
+      "job": "release-readiness",
+      "present": true
+    },
+    {
+      "job": "db-backup-daily",
+      "present": true
+    },
+    {
+      "job": "indexnow-daily",
+      "present": true
+    },
+    {
+      "job": "uptime-check-5min",
+      "present": true
+    },
+    {
+      "job": "nightly-evidence",
+      "present": true
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "generatedAt": "2026-05-15T12:06:50.676Z",
+  "status": "observing",
+  "policy": {
+    "observationDays": 14,
+    "cadenceHours": 24,
+    "automaticDropAllowed": false,
+    "automaticIndexDropAllowed": false,
+    "destructiveActionsAllowed": false
+  },
+  "summary": {
+    "completeCount": 3,
+    "missingOrPendingCount": 11,
+    "nextSnapshotDueAt": "2026-05-16T12:04:43.938Z",
+    "nextPendingDay": 4,
+    "nextPendingDate": "2026-05-16",
+    "earliestActionAt": "2026-05-29T12:04:43.938Z",
+    "actionWindowOpen": false,
+    "p0QuarantineCandidateCount": 2,
+    "runtimeHoldCount": 1
+  },
+  "calendar": [
+    {
+      "day": 1,
+      "date": "2026-05-13",
+      "status": "complete",
+      "snapshotFile": "docs/db-retirement-observations/2026-05-13.json",
+      "generatedAt": "2026-05-13T23:57:23.643Z",
+      "p0QuarantineCandidateCount": 2,
+      "p0RuntimeHoldCount": 1
+    },
+    {
+      "day": 2,
+      "date": "2026-05-14",
+      "status": "complete",
+      "snapshotFile": "docs/db-retirement-observations/2026-05-14.json",
+      "generatedAt": "2026-05-14T21:20:59.354Z",
+      "p0QuarantineCandidateCount": 2,
+      "p0RuntimeHoldCount": 1
+    },
+    {
+      "day": 3,
+      "date": "2026-05-15",
+      "status": "complete",
+      "snapshotFile": "docs/db-retirement-observations/2026-05-15.json",
+      "generatedAt": "2026-05-15T12:04:43.938Z",
+      "p0QuarantineCandidateCount": 2,
+      "p0RuntimeHoldCount": 1
+    },
+    {
+      "day": 4,
+      "date": "2026-05-16",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    },
+    {
+      "day": 5,
+      "date": "2026-05-17",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    },
+    {
+      "day": 6,
+      "date": "2026-05-18",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    },
+    {
+      "day": 7,
+      "date": "2026-05-19",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    },
+    {
+      "day": 8,
+      "date": "2026-05-20",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    },
+    {
+      "day": 9,
+      "date": "2026-05-21",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    },
+    {
+      "day": 10,
+      "date": "2026-05-22",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    },
+    {
+      "day": 11,
+      "date": "2026-05-23",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    },
+    {
+      "day": 12,
+      "date": "2026-05-24",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    },
+    {
+      "day": 13,
+      "date": "2026-05-25",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    },
+    {
+      "day": 14,
+      "date": "2026-05-26",
+      "status": "pending",
+      "snapshotFile": null,
+      "generatedAt": null,
+      "p0QuarantineCandidateCount": null,
+      "p0RuntimeHoldCount": null
+    }
+  ]
+}

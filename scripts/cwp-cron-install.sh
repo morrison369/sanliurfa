@@ -66,6 +66,8 @@ $CRON_TAG indexnow-daily
 0 6 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh indexnow-daily node scripts/sitemap-ping-search-engines.mjs >> "$APP_DIR/backups/.ops/cron-indexnow.log" 2>&1
 $CRON_TAG uptime-check-5min
 */5 * * * * $runtime_prefix cd "$APP_DIR" && node scripts/monitoring/uptime-check.mjs >> "$APP_DIR/backups/.ops/cron-uptime.log" 2>&1
+$CRON_TAG nightly-evidence
+50 4 * * * $runtime_prefix cd "$APP_DIR" && bash scripts/cwp-cron-runner.sh nightly-evidence env NIGHTLY_INCLUDE_ADSENSE_LIVE=1 npm run -s jobs:nightly:core >> "$APP_DIR/backups/.ops/cron-nightly-evidence.log" 2>&1
 EOF
 }
 

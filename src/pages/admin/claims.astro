@@ -106,8 +106,8 @@ const statusColor: Record<string, string> = { pending: '#D49718', approved: '#2C
     {c.status === 'pending' && (
      <div class="cl-actions">
       <textarea class="cl-note" placeholder="Admin notu (opsiyonel)" rows="1" id={`note-${c.id}`}></textarea>
-      <button class="cl-btn cl-btn-approve" onclick={`reviewClaim('${c.id}', 'approve')`}>Onayla</button>
-      <button class="cl-btn cl-btn-reject" onclick={`reviewClaim('${c.id}', 'reject')`}>Reddet</button>
+      <button class="cl-btn cl-btn-approve" onclick={`window.reviewClaim('${c.id}', 'approve')`}>Onayla</button>
+      <button class="cl-btn cl-btn-reject" onclick={`window.reviewClaim('${c.id}', 'reject')`}>Reddet</button>
      </div>
     )}
    </div>
@@ -115,10 +115,11 @@ const statusColor: Record<string, string> = { pending: '#D49718', approved: '#2C
  </div>
 
  <script is:inline>
-  async function reviewClaim(id, action) {
+  window.reviewClaim = async (id, action) => {
    const noteEl = document.getElementById('note-' + id);
-   const note = noteEl ? noteEl.value.trim() : '';
+   const note = noteEl instanceof HTMLTextAreaElement ? noteEl.value.trim() : '';
    const card = document.getElementById('claim-' + id);
+   if (!card) return;
    const btns = card.querySelectorAll('button');
    btns.forEach(b => b.disabled = true);
    try {
@@ -141,6 +142,6 @@ const statusColor: Record<string, string> = { pending: '#D49718', approved: '#2C
     alert('Bağlantı hatası.');
     btns.forEach(b => b.disabled = false);
    }
-  }
+  };
  </script>
 </AdminLayout>

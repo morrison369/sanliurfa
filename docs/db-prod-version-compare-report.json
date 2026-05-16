@@ -1,0 +1,171 @@
+{
+  "generatedAt": "2026-05-15T12:07:47.536Z",
+  "status": "ok",
+  "detail": "",
+  "database": {
+    "source": "DATABASE_URL",
+    "host": "localhost",
+    "port": "5432",
+    "database": "sanliurfa"
+  },
+  "runtime": {
+    "pgVersion": "PostgreSQL 16.11, compiled by Visual C++ build 1944, 64-bit",
+    "currentDatabase": "sanliurfa",
+    "serverPort": "5432"
+  },
+  "summary": {
+    "sourceMigrationFileCount": 188,
+    "schemaMigrationCount": 192,
+    "appliedSourceMatchCount": 188,
+    "sourcePendingCount": 0,
+    "dbOnlyCount": 4,
+    "tableCount": 497,
+    "indexCount": 1636
+  },
+  "recentAppliedMigrations": [
+    {
+      "version": "185_place_external_provenance",
+      "filename": "185_place_external_provenance.ts",
+      "executedAt": "2026-05-14T00:09:46.399Z"
+    },
+    {
+      "version": "184_homepage_cta_theme_defaults",
+      "filename": "184_homepage_cta_theme_defaults.ts",
+      "executedAt": "2026-05-13T15:47:14.217Z"
+    },
+    {
+      "version": "183_match_profile_filters",
+      "filename": "183_match_profile_filters.ts",
+      "executedAt": "2026-05-13T03:05:18.212Z"
+    },
+    {
+      "version": "182_backfill_user_activities",
+      "filename": "182_backfill_user_activities.ts",
+      "executedAt": "2026-05-13T03:05:18.173Z"
+    },
+    {
+      "version": "181_drop_legacy_duplicate_tables",
+      "filename": "181_drop_legacy_duplicate_tables.ts",
+      "executedAt": "2026-05-13T03:05:18.134Z"
+    },
+    {
+      "version": "180_event_submissions_and_integrity",
+      "filename": "180_event_submissions_and_integrity.ts",
+      "executedAt": "2026-05-13T03:05:18.073Z"
+    },
+    {
+      "version": "179_historical_sites_default_status",
+      "filename": "179_historical_sites_default_status.ts",
+      "executedAt": "2026-05-13T03:05:18.040Z"
+    },
+    {
+      "version": "178_csp_violations",
+      "filename": "178_csp_violations.ts",
+      "executedAt": "2026-05-11T20:01:56.677Z"
+    },
+    {
+      "version": "177_ssr_perf_metrics",
+      "filename": "177_ssr_perf_metrics.ts",
+      "executedAt": "2026-05-11T20:01:56.586Z"
+    },
+    {
+      "version": "176_turkish_fts",
+      "filename": "176_turkish_fts.ts",
+      "executedAt": "2026-05-11T20:01:56.523Z"
+    },
+    {
+      "version": "175_historical_site_reviews",
+      "filename": "175_historical_site_reviews.ts",
+      "executedAt": "2026-05-11T20:01:56.480Z"
+    },
+    {
+      "version": "174_place_claims",
+      "filename": "174_place_claims.ts",
+      "executedAt": "2026-05-08T15:10:46.198Z"
+    },
+    {
+      "version": "173_community_photos",
+      "filename": "173_community_photos.ts",
+      "executedAt": "2026-05-08T15:10:46.110Z"
+    },
+    {
+      "version": "173_ux_metrics_daily_table",
+      "filename": "173_ux_metrics_daily_table.ts",
+      "executedAt": "2026-05-01T12:32:01.204Z"
+    },
+    {
+      "version": "172_loyalty_tiers_schema_alignment",
+      "filename": "172_loyalty_tiers_schema_alignment.ts",
+      "executedAt": "2026-04-28T13:42:39.090Z"
+    },
+    {
+      "version": "171_notification_preferences_channel_unique",
+      "filename": "171_notification_preferences_channel_unique.ts",
+      "executedAt": "2026-04-28T12:59:50.784Z"
+    },
+    {
+      "version": "170_stripe_billing_unique_constraints",
+      "filename": "170_stripe_billing_unique_constraints.ts",
+      "executedAt": "2026-04-28T12:59:50.768Z"
+    },
+    {
+      "version": "169_drop_dead_backup_tables",
+      "filename": "169_drop_dead_backup_tables.ts",
+      "executedAt": "2026-04-28T12:59:50.757Z"
+    },
+    {
+      "version": "168_perf_metrics_cls_inp",
+      "filename": "168_perf_metrics_cls_inp.ts",
+      "executedAt": "2026-04-26T15:35:57.563Z"
+    },
+    {
+      "version": "167_social_messaging_tables",
+      "filename": "167_social_messaging_tables.ts",
+      "executedAt": "2026-04-25T02:12:28.331Z"
+    },
+    {
+      "version": "166_chat_content_reports",
+      "filename": "166_chat_content_reports.ts",
+      "executedAt": "2026-04-25T01:58:52.654Z"
+    },
+    {
+      "version": "165_users_ban_suspend_columns",
+      "filename": "165_users_ban_suspend_columns.ts",
+      "executedAt": "2026-04-25T01:58:52.605Z"
+    },
+    {
+      "version": "164_recipes",
+      "filename": "164_recipes.ts",
+      "executedAt": "2026-04-23T19:02:51.181Z"
+    },
+    {
+      "version": "163_pharmacy_seed",
+      "filename": "163_pharmacy_seed.ts",
+      "executedAt": "2026-04-23T18:49:43.785Z"
+    },
+    {
+      "version": "162_bus_schedules",
+      "filename": "162_bus_schedules.ts",
+      "executedAt": "2026-04-23T18:49:43.764Z"
+    }
+  ],
+  "sourcePendingSample": [],
+  "dbOnlySample": [
+    {
+      "version": "173_ux_metrics_daily_table",
+      "filename": "173_ux_metrics_daily_table.ts"
+    },
+    {
+      "version": "122_analytics",
+      "filename": "122_analytics.ts"
+    },
+    {
+      "version": "121_notifications",
+      "filename": "121_notifications.ts"
+    },
+    {
+      "version": "059_webhooks",
+      "filename": "059_webhooks.ts"
+    }
+  ]
+}

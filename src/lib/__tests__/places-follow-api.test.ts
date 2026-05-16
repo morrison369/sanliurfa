@@ -6,6 +6,7 @@ const {
   isFollowingPlaceMock,
   followPlaceMock,
   unfollowPlaceMock,
+  invalidatePlaceFollowMock,
   loggerErrorMock,
   loggerSetRequestIdMock,
 } = vi.hoisted(() => ({
@@ -13,6 +14,7 @@ const {
   isFollowingPlaceMock: vi.fn(),
   followPlaceMock: vi.fn(),
   unfollowPlaceMock: vi.fn(),
+  invalidatePlaceFollowMock: vi.fn(),
   loggerErrorMock: vi.fn(),
   loggerSetRequestIdMock: vi.fn(),
 }));
@@ -23,6 +25,9 @@ vi.mock('../place/place-followers', () => ({
   unfollowPlace: unfollowPlaceMock,
   isFollowingPlace: isFollowingPlaceMock,
 }));
+vi.mock('../cache/invalidation', () => ({
+  invalidatePlaceFollow: invalidatePlaceFollowMock,
+}));
 vi.mock('../metrics', () => ({ recordRequest: vi.fn() }));
 vi.mock('../logging', () => ({
   logger: { setRequestId: loggerSetRequestIdMock, error: loggerErrorMock },
@@ -31,7 +36,10 @@ vi.mock('../logging', () => ({
 import { DELETE, POST } from '../../pages/api/places/[id]/follow';
 
 describe('places follow api', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    invalidatePlaceFollowMock.mockResolvedValue(undefined);
+  });
 
   it('POST returns 401 when unauthenticated', async () => {
     const response = await POST(
@@ -76,6 +84,21 @@ describe('places follow api', () => {
     expectApiErrorCode(body, 'NOT_FOUND');
   });
 
+  it('POST returns 400 when place id is missing', async () => {
+    const response = await POST(
+      createApiContext({
+        url: 'http://localhost/api/places//follow',
+        method: 'POST',
+        locals: { user: { id: 'u1' } },
+        params: {},
+      })
+    );
+    const body = await parseJson(response);
+
+    expect(response.status).toBe(400);
+    expectApiErrorCode(body, 'VALIDATION_ERROR');
+  });
+
   it('POST returns 201 on successful follow', async () => {
     queryOneMock.mockResolvedValueOnce({ id: '1' });
     isFollowingPlaceMock.mockResolvedValueOnce(false);
@@ -93,6 +116,38 @@ describe('places follow api', () => {
 
     expect(response.status).toBe(201);
     expect(body?.data?.success).toBe(true);
+  });
+
+  it('POST returns 500 when follow operation fails', async () => {
+    queryOneMock.mockResolvedValueOnce({ id: '1' });
+    isFollowingPlaceMock.mockResolvedValueOnce(false);
+    followPlaceMock.mockResolvedValueOnce(false);
+
+    const response = await POST(
+      createApiContext({
+        url: 'http://localhost/api/places/1/follow',
+        method: 'POST',
+        locals: { user: { id: 'u1' } },
+        params: { id: '1' },
+      })
+    );
+    const body = await parseJson(response);
+
+    expect(response.status).toBe(500);
+    expectApiErrorCode(body, 'INTERNAL_ERROR');
+  });
+
+  it('DELETE returns 401 when unauthenticated', async () => {
+    const response = await DELETE(
+      createApiContext({
+        url: 'http://localhost/api/places/1/follow',
+        method: 'DELETE',
+        locals: {},
+        params: { id: '1' },
+      })
+    );
+
+    expect(response.status).toBe(401);
   });
 
   it('DELETE returns 200 on successful unfollow', async () => {
@@ -124,5 +179,20 @@ describe('places follow api', () => {
 
     expect(response.status).toBe(404);
     expectApiErrorCode(body, 'NOT_FOUND');
+  });
+
+  it('DELETE returns 400 when place id is missing', async () => {
+    const response = await DELETE(
+      createApiContext({
+        url: 'http://localhost/api/places//follow',
+        method: 'DELETE',
+        locals: { user: { id: 'u1' } },
+        params: {},
+      })
+    );
+    const body = await parseJson(response);
+
+    expect(response.status).toBe(400);
+    expectApiErrorCode(body, 'VALIDATION_ERROR');
   });
 });

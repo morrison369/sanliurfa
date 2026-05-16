@@ -197,10 +197,15 @@ export function problemJson(input: {
   instance?: string;
   extensions?: Record<string, unknown>;
 }): Response {
+  const requestId =
+    typeof input.extensions?.requestId === 'string'
+      ? input.extensions.requestId
+      : `req-${Date.now()}-${randomBytes(6).toString('hex')}`;
   const payload: Record<string, unknown> = {
     type: input.type || 'about:blank',
     title: input.title,
     status: input.status,
+    requestId,
   };
   if (input.detail) payload.detail = input.detail;
   if (input.instance) payload.instance = input.instance;
@@ -213,6 +218,7 @@ export function problemJson(input: {
     headers: {
       'Content-Type': 'application/problem+json; charset=utf-8',
       'Cache-Control': 'no-store',
+      'X-Request-ID': requestId,
     },
   });
 }

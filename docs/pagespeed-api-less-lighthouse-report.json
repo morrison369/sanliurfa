@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-05-15T12:08:13.785Z",
+  "status": "review",
+  "source": "Lighthouse CLI without PageSpeed API",
+  "apiUsed": false,
+  "apiKeyRequired": false,
+  "strategy": "mobile",
+  "threshold": {
+    "performance": 0.6,
+    "accessibility": 0.85,
+    "bestPractices": 0.85,
+    "seo": 0.9
+  },
+  "summary": {
+    "checks": 1,
+    "ok": 0,
+    "review": 1,
+    "failed": 0
+  },
+  "policy": {
+    "useAsPrimaryAutomatedPerformanceGate": true,
+    "pageSpeedApiIsOptionalExternalEvidence": true,
+    "localStorageOnly": true,
+    "expectedExternalReviewIsNotReleaseBlocker": true
+  },
+  "results": [
+    {
+      "url": "https://sanliurfa.com/",
+      "finalUrl": "https://sanliurfa.com/",
+      "strategy": "mobile",
+      "status": "review",
+      "lighthouseVersion": "13.3.0",
+      "fetchTime": "2026-05-15T12:08:01.539Z",
+      "scores": {
+        "performance": 0.85,
+        "accessibility": 0.96,
+        "bestPractices": 0.77,
+        "seo": 1
+      },
+      "metrics": {
+        "firstContentfulPaint": {
+          "displayValue": "1.8 s",
+          "numericValue": 1824.4155
+        },
+        "largestContentfulPaint": {
+          "displayValue": "4.1 s",
+          "numericValue": 4120.789
+        },
+        "totalBlockingTime": {
+          "displayValue": "0 ms",
+          "numericValue": 1
+        },
+        "cumulativeLayoutShift": {
+          "displayValue": "0",
+          "numericValue": 0
+        },
+        "speedIndex": {
+          "displayValue": "2.2 s",
+          "numericValue": 2246.043913686393
+        }
+      },
+      "issues": [
+        "best-practices-under-threshold"
+      ],
+      "reviewClassification": {
+        "bestPractices": {
+          "classification": "external_expected_review",
+          "blocker": false,
+          "reason": "AdSense third-party test_cookie is expected while ads are enabled; console/CSP errors are clean.",
+          "externalServices": [
+            "Google AdSense / DoubleClick"
+          ]
+        }
+      },
+      "rawReport": "docs/lighthouse-api-less/sanliurfa-com-mobile.json"
+    }
+  ]
+}

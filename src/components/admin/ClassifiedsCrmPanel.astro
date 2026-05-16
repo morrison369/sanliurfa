@@ -1,0 +1,157 @@
+<section class="crm-panel crm-classifieds-crm" data-classifieds-crm>
+  <div class="crm-panel-head">
+    <div>
+      <h3>Canlı ücretsiz ilan moderasyonu</h3>
+      <p>İlan ekleme üye girişine bağlıdır. Şehir verisi kullanıcıdan alınmaz; tüm kayıtlar Şanlıurfa olarak kilitlenir.</p>
+    </div>
+    <div class="crm-head-actions">
+      <button class="crm-btn" type="button" data-classifieds-export>CSV dışa aktar</button>
+      <button class="crm-btn crm-btn--primary" type="button" data-classifieds-load>İlanları yükle</button>
+    </div>
+  </div>
+  <div class="crm-live-toolbar">
+    <input type="search" data-classifieds-search data-classifieds-search-input list="classified-search-history" placeholder="Başlık, açıklama, kategori, üye veya ilçe ara..." />
+    <datalist id="classified-search-history" data-classifieds-search-history-list></datalist>
+    <select data-classifieds-filter>
+      <option value="all">Tüm ilanlar</option>
+      <option value="pending">Onay bekleyen</option>
+      <option value="active">Yayında</option>
+      <option value="rejected">Reddedildi</option>
+      <option value="archived">Arşiv</option>
+      <option value="risk-only">Sadece riskli</option>
+      <option value="risk-high">Yüksek risk</option>
+      <option value="risk-medium">Orta risk</option>
+      <option value="risk-low">Düşük risk</option>
+      <option value="duplicate-only">Sadece duplicate</option>
+      <option value="phone-missing">Telefon eksik</option>
+      <option value="image-missing">Görsel eksik</option>
+    </select>
+    <select data-classifieds-sort>
+      <option value="risk-desc">Risk puanı yüksekten düşüğe</option>
+      <option value="newest">En yeni ilanlar</option>
+      <option value="views-desc">Görüntülenme yüksekten düşüğe</option>
+      <option value="contacts-desc">İletişim yüksekten düşüğe</option>
+      <option value="duplicate-first">Duplicate olanlar önce</option>
+    </select>
+    <button type="button" data-classifieds-load>Filtrele</button>
+  </div>
+  <div class="crm-search-history" data-classifieds-search-history hidden>
+    <strong>Son aramalar</strong>
+    <div class="crm-search-history-list" data-classifieds-search-history-buttons></div>
+    <button type="button" class="crm-search-history-clear" data-classifieds-search-history-clear>Temizle</button>
+  </div>
+  <div class="crm-export-fields" data-classifieds-export-fields>
+    <label class="crm-export-preset">
+      Export preset
+      <select data-classifieds-export-preset>
+        <option value="">Kolon preset seç</option>
+        <option value="moderation">Temel moderasyon</option>
+        <option value="risk">Risk analizi</option>
+        <option value="contact">İletişim odaklı</option>
+        <option value="duplicate">Duplicate inceleme</option>
+      </select>
+    </label>
+    <label class="crm-export-mode">
+      Mod
+      <select data-classifieds-export-mode>
+        <option value="preset">Preset kilitli</option>
+        <option value="manual">Manuel override</option>
+      </select>
+    </label>
+    <label><input type="checkbox" value="id" checked /> ID</label>
+    <label><input type="checkbox" value="title" checked /> Başlık</label>
+    <label><input type="checkbox" value="category" checked /> Kategori</label>
+    <label><input type="checkbox" value="district" checked /> İlçe</label>
+    <label><input type="checkbox" value="status" checked /> Durum</label>
+    <label><input type="checkbox" value="risk_score" checked /> Risk</label>
+    <label><input type="checkbox" value="views" checked /> Görüntülenme</label>
+    <label><input type="checkbox" value="contacts" checked /> İletişim</label>
+    <label><input type="checkbox" value="reason_code" checked /> Sebep kodu</label>
+    <label><input type="checkbox" value="moderation_note" checked /> Moderasyon notu</label>
+  </div>
+  <div class="crm-export-summary" data-classifieds-export-summary>
+    <strong>Export özeti bekleniyor</strong>
+    <span>İlanlar yüklendiğinde görünür kayıt ve kolon bilgisi burada görünür.</span>
+    <code>Örnek başlık satırı: id,title,...</code>
+  </div>
+  <div class="crm-classified-report-grid" data-classifieds-report-grid>
+    <button type="button" data-report-filter="all"><strong>0</strong><span>Görünür kayıt</span></button>
+    <button type="button" data-report-filter="risk-high"><strong>0</strong><span>Yüksek risk</span></button>
+    <button type="button" data-report-filter="risk-medium"><strong>0</strong><span>Orta risk</span></button>
+    <button type="button" data-report-filter="duplicate-only"><strong>0</strong><span>Duplicate</span></button>
+    <button type="button" data-report-filter="active"><strong>0</strong><span>Yayında</span></button>
+    <button type="button" data-report-filter="pending"><strong>0</strong><span>Bekleyen</span></button>
+    <button type="button" data-report-filter="phone-missing"><strong>0</strong><span>Telefon eksik</span></button>
+    <button type="button" data-report-filter="image-missing"><strong>0</strong><span>Görsel eksik</span></button>
+  </div>
+  <div class="crm-table-wrap">
+    <table class="crm-table crm-live-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" data-classifieds-all aria-label="Tüm ilanları seç" /></th>
+          <th>İlan</th>
+          <th><button type="button" class="crm-head-filter" data-head-filter="risk-high">Risk <small data-classifieds-risk-head>0 yüksek</small></button></th>
+          <th>Kategori</th>
+          <th>Konum</th>
+          <th>Üye / İletişim</th>
+          <th><button type="button" class="crm-head-filter" data-head-filter="pending">Durum <small data-classifieds-status-head>0 aktif / 0 bekleyen</small></button></th>
+          <th>Aksiyon</th>
+        </tr>
+      </thead>
+      <tbody data-classifieds-body>
+        <tr><td colspan="8">Veri yüklemek için butona basın.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="crm-bulkbar" data-classifieds-bulk hidden>
+    <strong><span data-classifieds-selected>0</span> ilan seçildi</strong>
+    <select data-classifieds-note-template>
+      <option value="">Not şablonu seç</option>
+      <option value="Eksik görsel ve açıklama nedeniyle revizyon gerekli.">Revizyon iste</option>
+      <option value="Başlık, fiyat ve kategori alanları kontrol edilerek yayına alındı.">Yayına al notu</option>
+      <option value="Duplicate/kalite sinyali nedeniyle manuel incelemeye alındı.">Duplicate inceleme notu</option>
+    </select>
+    <select data-classifieds-reason-code>
+      <option value="">Sebep kodu</option>
+      <option value="REV_MEDIA">REV_MEDIA</option>
+      <option value="APPROVED_QA">APPROVED_QA</option>
+      <option value="DUP_REVIEW">DUP_REVIEW</option>
+    </select>
+    <button type="button" data-classifieds-bulk-action="active">Toplu yayına al</button>
+    <button type="button" data-classifieds-bulk-action="rejected">Toplu reddet</button>
+    <button type="button" data-classifieds-bulk-action="archived">Toplu arşivle</button>
+    <button type="button" data-classifieds-preset="quick-approve" data-classifieds-preset-status="active">Hızlı onay</button>
+    <button type="button" data-classifieds-preset="send-revision" data-classifieds-preset-status="rejected">Revizyona gönder</button>
+    <button type="button" data-classifieds-preset="mark-duplicate" data-classifieds-preset-status="archived">Duplicate işaretle</button>
+  </div>
+  <div class="crm-inline-feedback" data-classifieds-feedback hidden>
+    <span data-classifieds-feedback-text></span>
+    <button type="button" class="crm-inline-feedback-action" data-classifieds-undo hidden>Son işlemi geri al</button>
+  </div>
+  <div class="crm-bot-result crm-duplicate-watch" data-classifieds-duplicates>
+    <strong>Duplicate inceleme görünümü yüklenmedi</strong>
+    <p>İlanları yükledikten sonra başlık veya telefon tekrarları burada gruplanır.</p>
+    <div class="crm-duplicate-actions">
+      <button type="button" data-duplicate-select>Duplicate ilanları seç</button>
+      <button type="button" data-duplicate-bulk="active">Duplicate ilanları yayına al</button>
+      <button type="button" data-duplicate-bulk="rejected">Duplicate ilanları reddet</button>
+      <button type="button" data-duplicate-bulk="archived">Duplicate ilanları arşivle</button>
+    </div>
+  </div>
+  <div class="crm-bot-result crm-moderation-timeline" data-classifieds-timeline>
+    <strong>Moderasyon timeline yüklenmedi</strong>
+    <p>Son moderasyon notları ve işlem zamanları ilanlar yüklendiğinde burada görünür.</p>
+  </div>
+  <div class="crm-bot-result crm-reason-summary" data-classifieds-reasons>
+    <strong>Sebep kodu özeti yüklenmedi</strong>
+    <p>Moderasyon notlarındaki sebep kodu dağılımı ilanlar yüklendiğinde burada görünür.</p>
+  </div>
+  <div class="crm-bot-result crm-risk-summary" data-classifieds-risk-summary>
+    <strong>Risk özeti yüklenmedi</strong>
+    <p>İlçe ve kategori bazlı risk kümeleri ilanlar yüklendiğinde burada görünür.</p>
+  </div>
+  <div class="crm-bot-result crm-risk-trend" data-classifieds-risk-trend>
+    <strong>Risk trendi yüklenmedi</strong>
+    <p>Son haftalardaki risk eğilimi ilanlar yüklendiğinde burada görünür.</p>
+  </div>
+</section>

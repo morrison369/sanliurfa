@@ -289,7 +289,7 @@ export const server = {
       owner_name: z.string().trim().min(2, 'Ad soyad en az 2 karakter olmalıdır.'),
       owner_email: emailSchema,
     }),
-    handler: async input => {
+    handler: async (input, context) => {
       try {
         return await submitPlaceApplication({
           name: input.name,
@@ -301,6 +301,7 @@ export const server = {
           shortDescription: input.short_description || null,
           ownerName: input.owner_name,
           ownerEmail: input.owner_email,
+          authenticatedUserId: context.locals.user?.id || null,
         });
       } catch (error) {
         throw new ActionError({

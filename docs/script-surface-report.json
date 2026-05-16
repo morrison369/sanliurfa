@@ -1,11 +1,36 @@
 {
-  "generatedAt": "2026-05-06T19:11:51.262Z",
-  "totalScripts": 232,
-  "familyCount": 49,
+  "generatedAt": "2026-05-15T12:07:46.676Z",
+  "totalScripts": 370,
+  "familyCount": 65,
+  "topLevelCount": 0,
+  "topLevelScripts": [],
+  "exactCommandAliasCount": 0,
+  "exactCommandAliases": [],
+  "retirementCandidateCount": 2,
+  "retirementCandidates": [
+    {
+      "name": "api:debug:gate",
+      "command": "node scripts/ci/api-debug-envelope-gate.mjs",
+      "reason": "niche/manual runner; kanonik gate disinda tutulabilir"
+    },
+    {
+      "name": "gmaps:enrich:dry",
+      "command": "node scripts/enrich-places-from-gmaps.mjs --input scripts/gmaps-results.json --images --dry-run",
+      "reason": "niche/manual runner; kanonik gate disinda tutulabilir"
+    }
+  ],
   "largestFamilies": [
     {
       "family": "ops",
-      "count": 50
+      "count": 49
+    },
+    {
+      "family": "db",
+      "count": 28
+    },
+    {
+      "family": "images",
+      "count": 25
     },
     {
       "family": "dev",
@@ -13,41 +38,33 @@
     },
     {
       "family": "test",
-      "count": 15
-    },
-    {
-      "family": "images",
-      "count": 12
+      "count": 19
     },
     {
       "family": "smoke",
-      "count": 11
+      "count": 16
+    },
+    {
+      "family": "blog",
+      "count": 15
+    },
+    {
+      "family": "gmaps",
+      "count": 13
+    },
+    {
+      "family": "release",
+      "count": 13
     },
     {
       "family": "jobs",
       "count": 10
-    },
-    {
-      "family": "lint",
-      "count": 9
-    },
-    {
-      "family": "db",
-      "count": 7
-    },
-    {
-      "family": "openapi",
-      "count": 7
-    },
-    {
-      "family": "release",
-      "count": 6
     }
   ],
   "families": [
     {
       "family": "ops",
-      "count": 50,
+      "count": 49,
       "scripts": [
         {
           "name": "ops:contracts:gate",
@@ -72,6 +89,10 @@
         {
           "name": "ops:cwp:bootstrap:audit:summary",
           "command": "bash scripts/prod-cwp-ops.sh bootstrap-audit-summary"
+        },
+        {
+          "name": "ops:cwp:cache:warm",
+          "command": "node scripts/cache-warm.mjs"
         },
         {
           "name": "ops:cwp:cleanup",
@@ -126,8 +147,20 @@
           "command": "bash scripts/prod-cwp-ops.sh deploy"
         },
         {
+          "name": "ops:cwp:deploy:client",
+          "command": "node scripts/deploy-client-chunks.mjs --restart"
+        },
+        {
           "name": "ops:cwp:deploy:evidence",
           "command": "bash scripts/cwp-deploy-evidence.sh"
+        },
+        {
+          "name": "ops:cwp:deploy:full",
+          "command": "npm run build && node scripts/deploy-server-chunks.mjs && node scripts/deploy-client-chunks.mjs --restart && node scripts/cache-warm.mjs"
+        },
+        {
+          "name": "ops:cwp:deploy:server",
+          "command": "node scripts/deploy-server-chunks.mjs --restart"
         },
         {
           "name": "ops:cwp:doctor",
@@ -227,27 +260,231 @@
         },
         {
           "name": "ops:targeted",
-          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=all"
+          "command": "node scripts/ci/targeted-delivery-batch.mjs"
+        }
+      ]
+    },
+    {
+      "family": "db",
+      "count": 28,
+      "scripts": [
+        {
+          "name": "db:advisory:evidence",
+          "command": "node scripts/ci/db-advisory-evidence-bundle.mjs"
         },
         {
-          "name": "ops:targeted:content",
-          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=content"
+          "name": "db:backup",
+          "command": "bash scripts/backup.sh"
         },
         {
-          "name": "ops:targeted:landing",
-          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=landing"
+          "name": "db:index:review:plan",
+          "command": "node scripts/ci/db-index-review-plan.mjs"
         },
         {
-          "name": "ops:targeted:release-lite",
-          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=release-lite"
+          "name": "db:indexes:extended",
+          "command": "npx tsx scripts/add-indexes-extended.ts"
         },
         {
-          "name": "ops:targeted:security",
-          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=security"
+          "name": "db:indexes:extended:status",
+          "command": "npx tsx scripts/add-indexes-extended.ts status"
         },
         {
-          "name": "ops:targeted:social",
-          "command": "node scripts/ci/targeted-delivery-batch.mjs --scope=social"
+          "name": "db:indexes:fk",
+          "command": "npx tsx scripts/add-fk-indexes.ts"
+        },
+        {
+          "name": "db:indexes:fk:status",
+          "command": "npx tsx scripts/add-fk-indexes.ts status"
+        },
+        {
+          "name": "db:indexes:tier1",
+          "command": "npx tsx scripts/add-tier1-indexes.ts"
+        },
+        {
+          "name": "db:indexes:tier1:status",
+          "command": "npx tsx scripts/add-tier1-indexes.ts status"
+        },
+        {
+          "name": "db:indexes:tier2",
+          "command": "npx tsx scripts/add-indexes-extended.ts tier2"
+        },
+        {
+          "name": "db:indexes:tier3",
+          "command": "npx tsx scripts/add-indexes-extended.ts tier3"
+        },
+        {
+          "name": "db:manual:decision:readiness",
+          "command": "node scripts/ci/db-manual-decision-readiness-report.mjs"
+        },
+        {
+          "name": "db:migrate",
+          "command": "npx tsx scripts/migrate.ts"
+        },
+        {
+          "name": "db:migrate:check-duplicates",
+          "command": "node scripts/migrations/check-duplicates.mjs"
+        },
+        {
+          "name": "db:migrate:check-duplicates:write-baseline",
+          "command": "node scripts/migrations/check-duplicates.mjs --write-baseline"
+        },
+        {
+          "name": "db:migrate:down",
+          "command": "npx tsx scripts/migrate.ts down"
+        },
+        {
+          "name": "db:migrate:duplicate-drift",
+          "command": "node scripts/ci/migration-duplicate-drift-report.mjs"
+        },
+        {
+          "name": "db:migrate:status",
+          "command": "npx tsx scripts/migrate.ts status"
+        },
+        {
+          "name": "db:observation:cadence",
+          "command": "node scripts/ci/db-observation-cadence-report.mjs"
+        },
+        {
+          "name": "db:observation:calendar",
+          "command": "node scripts/ci/db-observation-calendar-report.mjs"
+        },
+        {
+          "name": "db:p0:quarantine:plan",
+          "command": "node scripts/ci/db-p0-quarantine-plan.mjs"
+        },
+        {
+          "name": "db:prod:version:compare",
+          "command": "node scripts/ci/db-prod-version-compare-report.mjs"
+        },
+        {
+          "name": "db:refs:check",
+          "command": "node scripts/check-db-table-references.mjs"
+        },
+        {
+          "name": "db:refs:gate",
+          "command": "node scripts/check-db-table-references.mjs --strict"
+        },
+        {
+          "name": "db:registry:classification",
+          "command": "node scripts/ci/db-registry-classification-report.mjs"
+        },
+        {
+          "name": "db:retirement:observe",
+          "command": "node scripts/ci/db-retirement-observation-report.mjs"
+        },
+        {
+          "name": "db:runtime-hold:plan",
+          "command": "node scripts/ci/db-runtime-hold-plan.mjs"
+        },
+        {
+          "name": "db:seed",
+          "command": "npx tsx scripts/seed.ts"
+        }
+      ]
+    },
+    {
+      "family": "images",
+      "count": 25,
+      "scripts": [
+        {
+          "name": "images:avif:from-webp",
+          "command": "node scripts/avif-from-webp.mjs"
+        },
+        {
+          "name": "images:backfill:pexels",
+          "command": "node scripts/backfill-images-pexels.mjs"
+        },
+        {
+          "name": "images:check-external",
+          "command": "npx tsx scripts/content-scraper/check-external-content-images.ts"
+        },
+        {
+          "name": "images:check-keys",
+          "command": "node scripts/content-scraper/check-image-api-keys.mjs"
+        },
+        {
+          "name": "images:cleanup:broken-refs",
+          "command": "node scripts/cleanup-broken-image-refs.cjs"
+        },
+        {
+          "name": "images:download",
+          "command": "npx tsx scripts/content-scraper/image-downloader.ts"
+        },
+        {
+          "name": "images:integrity:gate",
+          "command": "node scripts/ci/static-image-integrity-gate.mjs"
+        },
+        {
+          "name": "images:map",
+          "command": "npx tsx scripts/content-scraper/map-images-to-content.ts"
+        },
+        {
+          "name": "images:moderate",
+          "command": "npx tsx scripts/content-scraper/moderate-images.ts"
+        },
+        {
+          "name": "images:moderation:sync-db",
+          "command": "npx tsx scripts/content-scraper/sync-image-moderation-to-site-media.ts"
+        },
+        {
+          "name": "images:pipeline",
+          "command": "npm run images:check-keys && npm run images:download && npm run images:map && npm run images:check-external && npm run images:validate && npm run images:quality && npm run images:moderate"
+        },
+        {
+          "name": "images:pipeline:db",
+          "command": "npm run images:pipeline && npm run images:sync-db && npm run images:moderation:sync-db"
+        },
+        {
+          "name": "images:quality",
+          "command": "npx tsx scripts/content-scraper/check-image-quality.ts"
+        },
+        {
+          "name": "images:slug:gate",
+          "command": "node scripts/ci/slug-image-naming-gate.mjs"
+        },
+        {
+          "name": "images:static:audit",
+          "command": "node scripts/optimize-static-images.mjs --enforce-budget"
+        },
+        {
+          "name": "images:static:optimize",
+          "command": "node scripts/optimize-static-images.mjs --apply --enforce-budget"
+        },
+        {
+          "name": "images:sync-db",
+          "command": "npx tsx scripts/content-scraper/import-image-manifest-to-site-media.ts"
+        },
+        {
+          "name": "images:uploads:archive-candidates",
+          "command": "node scripts/ci/local-upload-archive-candidates.mjs"
+        },
+        {
+          "name": "images:uploads:audit",
+          "command": "node scripts/optimize-local-uploads.mjs"
+        },
+        {
+          "name": "images:uploads:bucket-quota",
+          "command": "node scripts/ci/local-upload-bucket-quota-report.mjs"
+        },
+        {
+          "name": "images:uploads:classify",
+          "command": "node scripts/ci/local-upload-candidate-classification.mjs"
+        },
+        {
+          "name": "images:uploads:optimize",
+          "command": "node scripts/optimize-local-uploads.mjs --apply"
+        },
+        {
+          "name": "images:uploads:parity",
+          "command": "node scripts/ci/local-upload-parity-report.mjs"
+        },
+        {
+          "name": "images:validate",
+          "command": "npx tsx scripts/content-scraper/validate-place-images.ts"
+        },
+        {
+          "name": "images:webp:convert",
+          "command": "node scripts/convert-uploads-webp.mjs"
         }
       ]
     },
@@ -335,7 +572,7 @@
     },
     {
       "family": "test",
-      "count": 15,
+      "count": 19,
       "scripts": [
         {
           "name": "test",
@@ -350,8 +587,20 @@
           "command": "node ./node_modules/vitest/vitest.mjs run --config vitest.api-contract.config.ts --coverage"
         },
         {
+          "name": "test:api-contract:groups",
+          "command": "node scripts/ci/api-contract-group-report.mjs --group=all"
+        },
+        {
+          "name": "test:changed",
+          "command": "node scripts/ci/test-changed.mjs"
+        },
+        {
           "name": "test:e2e",
           "command": "npm run test:e2e:preflight && node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts"
+        },
+        {
+          "name": "test:e2e:astro",
+          "command": "node scripts/e2e/astro-homepage-a11y.mjs"
         },
         {
           "name": "test:e2e:batch:clean",
@@ -370,12 +619,12 @@
           "command": "node scripts/runtime/run-with-cleanup.mjs \"npm run test:e2e\""
         },
         {
-          "name": "test:e2e:debug",
-          "command": "node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts --debug"
-        },
-        {
           "name": "test:e2e:preflight",
           "command": "node scripts/e2e-preflight.mjs"
+        },
+        {
+          "name": "test:e2e:report",
+          "command": "node scripts/runtime/run-with-cleanup.mjs \"node scripts/ci/e2e-report.mjs --suite=critical\""
         },
         {
           "name": "test:e2e:social:phase1",
@@ -386,12 +635,16 @@
           "command": "node scripts/runtime/run-with-cleanup.mjs \"npm run test:e2e:social:phase1\""
         },
         {
-          "name": "test:e2e:ui",
-          "command": "node ./node_modules/@playwright/test/cli.js test --config=playwright.config.ts --ui"
+          "name": "test:e2e:visual",
+          "command": "node scripts/e2e/run-visual-suite.mjs"
+        },
+        {
+          "name": "test:e2e:visual:clean",
+          "command": "node scripts/runtime/run-with-cleanup.mjs \"npm run test:e2e:visual\""
         },
         {
           "name": "test:unit",
-          "command": "node ./node_modules/vitest/vitest.mjs run"
+          "command": "node scripts/ci/unit-test-report.mjs"
         },
         {
           "name": "test:unit:watch",
@@ -400,66 +653,20 @@
       ]
     },
     {
-      "family": "images",
-      "count": 12,
-      "scripts": [
-        {
-          "name": "images:check-external",
-          "command": "npx tsx scripts/content-scraper/check-external-content-images.ts"
-        },
-        {
-          "name": "images:check-keys",
-          "command": "node scripts/content-scraper/check-image-api-keys.mjs"
-        },
-        {
-          "name": "images:download",
-          "command": "npx tsx scripts/content-scraper/image-downloader.ts"
-        },
-        {
-          "name": "images:map",
-          "command": "npx tsx scripts/content-scraper/map-images-to-content.ts"
-        },
-        {
-          "name": "images:moderate",
-          "command": "npx tsx scripts/content-scraper/moderate-images.ts"
-        },
-        {
-          "name": "images:moderation:sync-db",
-          "command": "npx tsx scripts/content-scraper/sync-image-moderation-to-site-media.ts"
-        },
-        {
-          "name": "images:pipeline",
-          "command": "npm run images:check-keys && npm run images:download && npm run images:map && npm run images:check-external && npm run images:validate && npm run images:quality && npm run images:moderate"
-        },
-        {
-          "name": "images:pipeline:db",
-          "command": "npm run images:pipeline && npm run images:sync-db && npm run images:moderation:sync-db"
-        },
-        {
-          "name": "images:quality",
-          "command": "npx tsx scripts/content-scraper/check-image-quality.ts"
-        },
-        {
-          "name": "images:slug:gate",
-          "command": "node scripts/ci/slug-image-naming-gate.mjs"
-        },
-        {
-          "name": "images:sync-db",
-          "command": "npx tsx scripts/content-scraper/import-image-manifest-to-site-media.ts"
-        },
-        {
-          "name": "images:validate",
-          "command": "npx tsx scripts/content-scraper/validate-place-images.ts"
-        }
-      ]
-    },
-    {
       "family": "smoke",
-      "count": 11,
+      "count": 16,
       "scripts": [
+        {
+          "name": "smoke:admin:preset-surface",
+          "command": "node scripts/smoke/admin-preset-surface.mjs"
+        },
         {
           "name": "smoke:admin:quick-nav",
           "command": "node scripts/smoke/admin-quick-nav-integrity.mjs"
+        },
+        {
+          "name": "smoke:admin:surface",
+          "command": "node scripts/smoke/admin-surface.mjs"
         },
         {
           "name": "smoke:api:critical",
@@ -478,8 +685,20 @@
           "command": "npx tsx scripts/smoke/db-backup-restore.ts"
         },
         {
+          "name": "smoke:http:local",
+          "command": "node scripts/smoke/http-route-smoke.mjs --mode=local"
+        },
+        {
+          "name": "smoke:http:prod",
+          "command": "node scripts/smoke/http-route-smoke.mjs --mode=prod --base-url=https://sanliurfa.com"
+        },
+        {
           "name": "smoke:images:critical",
           "command": "npx tsx scripts/smoke/critical-image-url-smoke.ts"
+        },
+        {
+          "name": "smoke:landing:theme-surface",
+          "command": "node scripts/smoke/landing-theme-surface.mjs"
         },
         {
           "name": "smoke:pages:critical",
@@ -500,6 +719,188 @@
         {
           "name": "smoke:transport:freshness",
           "command": "npx tsx scripts/smoke/transport-freshness.ts"
+        }
+      ]
+    },
+    {
+      "family": "blog",
+      "count": 15,
+      "scripts": [
+        {
+          "name": "blog:admin:queue",
+          "command": "node scripts/ci/blog-admin-publish-queue-report.mjs"
+        },
+        {
+          "name": "blog:content:ops",
+          "command": "npm run -s blog:keyword:research && npm run -s ollama:readiness && npm run -s blog:ollama:drafts && npm run -s blog:ollama:expand && npm run -s blog:rich-results:report && npm run -s pagespeed:api:research"
+        },
+        {
+          "name": "blog:drafts:repair",
+          "command": "node scripts/repair-generated-blog-drafts.mjs"
+        },
+        {
+          "name": "blog:duplicate-risk:gate",
+          "command": "node scripts/ci/blog-duplicate-risk-gate.mjs"
+        },
+        {
+          "name": "blog:images:local",
+          "command": "node scripts/generate-local-blog-cover-images.mjs"
+        },
+        {
+          "name": "blog:keyword:research",
+          "command": "node scripts/ci/blog-keyword-research-report.mjs"
+        },
+        {
+          "name": "blog:ollama:drafts",
+          "command": "node scripts/ollama-generate-blog-drafts-from-plan.mjs"
+        },
+        {
+          "name": "blog:ollama:drafts:apply",
+          "command": "node scripts/ollama-generate-blog-drafts-from-plan.mjs --apply-db"
+        },
+        {
+          "name": "blog:ollama:drafts:apply-existing",
+          "command": "node scripts/apply-generated-blog-drafts.mjs"
+        },
+        {
+          "name": "blog:ollama:drafts:prod",
+          "command": "node scripts/ollama-generate-blog-drafts-from-plan.mjs --apply-db --apply-prod-ssh"
+        },
+        {
+          "name": "blog:ollama:expand",
+          "command": "node scripts/ollama-expand-blog-drafts.mjs"
+        },
+        {
+          "name": "blog:publish:generated",
+          "command": "node scripts/publish-generated-blog-drafts.mjs"
+        },
+        {
+          "name": "blog:publish:readiness",
+          "command": "node scripts/ci/blog-publish-readiness-report.mjs"
+        },
+        {
+          "name": "blog:quality:report",
+          "command": "node scripts/ci/blog-draft-quality-report.mjs"
+        },
+        {
+          "name": "blog:rich-results:report",
+          "command": "node scripts/ci/blog-draft-rich-results-report.mjs"
+        }
+      ]
+    },
+    {
+      "family": "gmaps",
+      "count": 13,
+      "scripts": [
+        {
+          "name": "gmaps:discovery-drafts",
+          "command": "node scripts/import-gmaps-discovery-drafts.mjs"
+        },
+        {
+          "name": "gmaps:discovery-drafts:apply",
+          "command": "node scripts/import-gmaps-discovery-drafts.mjs --apply"
+        },
+        {
+          "name": "gmaps:discovery-plan",
+          "command": "node scripts/generate-gmaps-discovery-plan.mjs"
+        },
+        {
+          "name": "gmaps:enrich",
+          "command": "node scripts/enrich-places-from-gmaps.mjs --input scripts/gmaps-results.json"
+        },
+        {
+          "name": "gmaps:enrich:dry",
+          "command": "node scripts/enrich-places-from-gmaps.mjs --input scripts/gmaps-results.json --images --dry-run"
+        },
+        {
+          "name": "gmaps:enrich:full",
+          "command": "node scripts/enrich-places-from-gmaps.mjs --scrape --images --email --extra-reviews --depth=1 --concurrency=1"
+        },
+        {
+          "name": "gmaps:enrich:images",
+          "command": "node scripts/enrich-places-from-gmaps.mjs --input scripts/gmaps-results.json --images"
+        },
+        {
+          "name": "gmaps:prod:check",
+          "command": "bash scripts/cwp-gmaps-install.sh check"
+        },
+        {
+          "name": "gmaps:prod:install",
+          "command": "bash scripts/cwp-gmaps-install.sh install"
+        },
+        {
+          "name": "gmaps:query-plan",
+          "command": "node scripts/generate-gmaps-query-plan.mjs --only-missing"
+        },
+        {
+          "name": "gmaps:query-plan:all",
+          "command": "node scripts/generate-gmaps-query-plan.mjs"
+        },
+        {
+          "name": "gmaps:readiness",
+          "command": "node scripts/ci/gmaps-scraper-readiness-report.mjs"
+        },
+        {
+          "name": "gmaps:scrape",
+          "command": "node scripts/enrich-places-from-gmaps.mjs --scrape"
+        }
+      ]
+    },
+    {
+      "family": "release",
+      "count": 13,
+      "scripts": [
+        {
+          "name": "release:artifacts:fresh",
+          "command": "node scripts/ci/release-artifact-freshness-gate.mjs"
+        },
+        {
+          "name": "release:astro:gate",
+          "command": "node scripts/ci/astro-release-gate.mjs"
+        },
+        {
+          "name": "release:candidate",
+          "command": "npm run frontend:release:ready:gate && npm run gate:done && npm run release:readiness:report"
+        },
+        {
+          "name": "release:daily:readiness",
+          "command": "node scripts/cron/release-daily-readiness.mjs"
+        },
+        {
+          "name": "release:executive:summary",
+          "command": "node scripts/ci/release-executive-summary.mjs"
+        },
+        {
+          "name": "release:final",
+          "command": "node scripts/ci/release-final.mjs"
+        },
+        {
+          "name": "release:handoff",
+          "command": "node scripts/ci/release-handoff-summary.mjs"
+        },
+        {
+          "name": "release:local:fast",
+          "command": "node scripts/ci/release-local-fast.mjs"
+        },
+        {
+          "name": "release:next-actions",
+          "command": "node scripts/ci/release-next-actions-report.mjs"
+        },
+        {
+          "name": "release:public",
+          "command": "node scripts/ci/release-public-gate.mjs"
+        },
+        {
+          "name": "release:readiness:admin:gate",
+          "command": "node scripts/ci/release-readiness-admin-gate.mjs"
+        },
+        {
+          "name": "release:readiness:dashboard",
+          "command": "node scripts/ci/release-readiness-dashboard.mjs"
+        },
+        {
+          "name": "release:readiness:report",
+          "command": "node scripts/ci/release-readiness-report.mjs"
         }
       ]
     },
@@ -550,6 +951,48 @@
       ]
     },
     {
+      "family": "gsc",
+      "count": 9,
+      "scripts": [
+        {
+          "name": "gsc:cron:daily",
+          "command": "node scripts/cron/gsc-daily.mjs"
+        },
+        {
+          "name": "gsc:indexing:notify",
+          "command": "node scripts/gsc-indexing-notify.mjs"
+        },
+        {
+          "name": "gsc:indexing:request",
+          "command": "node scripts/gsc-request-indexing.mjs"
+        },
+        {
+          "name": "gsc:indexnow:ping",
+          "command": "node scripts/sitemap-ping-search-engines.mjs"
+        },
+        {
+          "name": "gsc:oauth:bootstrap",
+          "command": "node scripts/gsc-oauth-bootstrap.mjs"
+        },
+        {
+          "name": "gsc:search:analytics",
+          "command": "node scripts/gsc-search-analytics.mjs"
+        },
+        {
+          "name": "gsc:sitemap:status",
+          "command": "node scripts/gsc-sitemap-submit.mjs --status-only"
+        },
+        {
+          "name": "gsc:sitemap:submit",
+          "command": "node scripts/gsc-sitemap-submit.mjs"
+        },
+        {
+          "name": "gsc:url:inspect",
+          "command": "node scripts/gsc-url-inspect.mjs"
+        }
+      ]
+    },
+    {
       "family": "lint",
       "count": 9,
       "scripts": [
@@ -592,36 +1035,74 @@
       ]
     },
     {
-      "family": "db",
+      "family": "public",
+      "count": 8,
+      "scripts": [
+        {
+          "name": "public:cache:contract:gate",
+          "command": "node scripts/ci/public-route-cache-contract-gate.mjs"
+        },
+        {
+          "name": "public:city:gate",
+          "command": "node scripts/ci/public-city-acceptance-gate.mjs"
+        },
+        {
+          "name": "public:city:gate:build",
+          "command": "node scripts/ci/public-city-acceptance-gate.mjs --build"
+        },
+        {
+          "name": "public:city:structure:gate",
+          "command": "node scripts/ci/public-city-structure-gate.mjs"
+        },
+        {
+          "name": "public:design:contract:gate",
+          "command": "node scripts/ci/public-design-contract-gate.mjs"
+        },
+        {
+          "name": "public:performance:local",
+          "command": "node scripts/ci/public-route-performance-gate.mjs --mode=local"
+        },
+        {
+          "name": "public:performance:prod",
+          "command": "node scripts/ci/public-route-performance-gate.mjs --mode=prod --base-url=https://sanliurfa.com"
+        },
+        {
+          "name": "public:theme:surface:gate",
+          "command": "node scripts/ci/public-theme-surface-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "home",
       "count": 7,
       "scripts": [
         {
-          "name": "db:backup",
-          "command": "bash scripts/backup.sh"
+          "name": "home:any:ratchet:gate",
+          "command": "node scripts/ci/home-any-ratchet-gate.mjs"
         },
         {
-          "name": "db:migrate",
-          "command": "npx tsx scripts/migrate.ts"
+          "name": "home:any:report",
+          "command": "node scripts/ci/home-any-report.mjs"
         },
         {
-          "name": "db:migrate:check-duplicates",
-          "command": "node scripts/migrations/check-duplicates.mjs"
+          "name": "home:images:html:local",
+          "command": "node scripts/ci/homepage-image-html-gate.mjs --mode=local"
         },
         {
-          "name": "db:migrate:check-duplicates:write-baseline",
-          "command": "node scripts/migrations/check-duplicates.mjs --write-baseline"
+          "name": "home:images:html:prod",
+          "command": "node scripts/ci/homepage-image-html-gate.mjs --mode=prod --base-url=https://sanliurfa.com"
         },
         {
-          "name": "db:migrate:down",
-          "command": "npx tsx scripts/migrate.ts down"
+          "name": "home:performance:local",
+          "command": "node scripts/ci/homepage-performance-gate.mjs --mode=local"
         },
         {
-          "name": "db:migrate:status",
-          "command": "npx tsx scripts/migrate.ts status"
+          "name": "home:performance:prod",
+          "command": "node scripts/ci/homepage-performance-gate.mjs --mode=prod --base-url=https://sanliurfa.com"
         },
         {
-          "name": "db:seed",
-          "command": "npx tsx scripts/seed.ts"
+          "name": "home:section:contract:gate",
+          "command": "node scripts/ci/home-section-contract-gate.mjs"
         }
       ]
     },
@@ -660,32 +1141,122 @@
       ]
     },
     {
-      "family": "release",
+      "family": "audit",
       "count": 6,
       "scripts": [
         {
-          "name": "release:candidate",
-          "command": "npm run frontend:release:ready:gate && npm run gate:done && npm run release:readiness:report"
+          "name": "audit:admin",
+          "command": "npm run audit:admin:browser && npm run audit:admin:mobile && npm run audit:admin:a11y && npm run audit:admin:perf"
         },
         {
-          "name": "release:final",
-          "command": "npm run release:candidate && npm run release:handoff"
+          "name": "audit:admin:a11y",
+          "command": "node scripts/admin-a11y-audit.mjs"
         },
         {
-          "name": "release:handoff",
-          "command": "node scripts/ci/release-handoff-summary.mjs"
+          "name": "audit:admin:browser",
+          "command": "node scripts/admin-browser-audit.mjs"
         },
         {
-          "name": "release:readiness:admin:gate",
-          "command": "node scripts/ci/release-readiness-admin-gate.mjs"
+          "name": "audit:admin:mobile",
+          "command": "node scripts/admin-mobile-audit.mjs"
         },
         {
-          "name": "release:readiness:dashboard",
-          "command": "node scripts/ci/release-readiness-dashboard.mjs"
+          "name": "audit:admin:perf",
+          "command": "node scripts/admin-perf-audit.mjs"
         },
         {
-          "name": "release:readiness:report",
-          "command": "node scripts/ci/release-readiness-report.mjs"
+          "name": "audit:public:mobile",
+          "command": "node scripts/public-mobile-audit.mjs"
+        }
+      ]
+    },
+    {
+      "family": "content",
+      "count": 6,
+      "scripts": [
+        {
+          "name": "content:agents:drafts:report",
+          "command": "node scripts/ci/content-agent-drafts-report.mjs"
+        },
+        {
+          "name": "content:cluster:quality",
+          "command": "npx tsx scripts/content/cluster-quality-gate.ts"
+        },
+        {
+          "name": "content:image:relevance:gate",
+          "command": "node scripts/ci/content-image-relevance-gate.mjs"
+        },
+        {
+          "name": "content:programmatic:quality",
+          "command": "npx tsx scripts/content/programmatic-quality-gate.ts"
+        },
+        {
+          "name": "content:publish:all",
+          "command": "node scripts/publish-all-content-drafts.mjs"
+        },
+        {
+          "name": "content:seo:seed",
+          "command": "node scripts/content/seed-local-seo-content.mjs --apply"
+        }
+      ]
+    },
+    {
+      "family": "redis",
+      "count": 6,
+      "scripts": [
+        {
+          "name": "redis:isolated:ensure",
+          "command": "node scripts/runtime/redis-daemon.mjs ensure"
+        },
+        {
+          "name": "redis:isolated:health",
+          "command": "node scripts/runtime/redis-daemon.mjs health"
+        },
+        {
+          "name": "redis:isolated:start",
+          "command": "node scripts/runtime/redis-daemon.mjs start"
+        },
+        {
+          "name": "redis:isolated:status",
+          "command": "node scripts/runtime/redis-daemon.mjs status"
+        },
+        {
+          "name": "redis:isolated:stop",
+          "command": "node scripts/runtime/redis-daemon.mjs stop"
+        },
+        {
+          "name": "redis:runtime:health:report",
+          "command": "node scripts/ci/redis-runtime-health-report.mjs"
+        }
+      ]
+    },
+    {
+      "family": "social",
+      "count": 6,
+      "scripts": [
+        {
+          "name": "social:core:gate",
+          "command": "node scripts/smoke/run-social-core-gate.mjs"
+        },
+        {
+          "name": "social:core:gate:non-strict",
+          "command": "node scripts/smoke/run-social-core-gate.mjs --non-strict"
+        },
+        {
+          "name": "social:core:gate:strict",
+          "command": "node scripts/smoke/run-social-core-gate.mjs --strict"
+        },
+        {
+          "name": "social:db:first:gate",
+          "command": "node scripts/ci/social-db-first-import-gate.mjs"
+        },
+        {
+          "name": "social:safety:gate",
+          "command": "node scripts/ci/social-safety-gate.mjs"
+        },
+        {
+          "name": "social:ux:report",
+          "command": "node scripts/ci/social-ux-report.mjs"
         }
       ]
     },
@@ -720,32 +1291,6 @@
       ]
     },
     {
-      "family": "redis",
-      "count": 5,
-      "scripts": [
-        {
-          "name": "redis:isolated:ensure",
-          "command": "node scripts/runtime/redis-daemon.mjs ensure"
-        },
-        {
-          "name": "redis:isolated:health",
-          "command": "node scripts/runtime/redis-daemon.mjs health"
-        },
-        {
-          "name": "redis:isolated:start",
-          "command": "node scripts/runtime/redis-daemon.mjs start"
-        },
-        {
-          "name": "redis:isolated:status",
-          "command": "node scripts/runtime/redis-daemon.mjs status"
-        },
-        {
-          "name": "redis:isolated:stop",
-          "command": "node scripts/runtime/redis-daemon.mjs stop"
-        }
-      ]
-    },
-    {
       "family": "runtime",
       "count": 5,
       "scripts": [
@@ -772,50 +1317,148 @@
       ]
     },
     {
-      "family": "social",
-      "count": 5,
+      "family": "frontend",
+      "count": 4,
       "scripts": [
         {
-          "name": "social:core:gate",
-          "command": "node scripts/smoke/run-social-core-gate.mjs"
+          "name": "frontend:quality:gate",
+          "command": "node scripts/ci/frontend-quality-gate.mjs"
         },
         {
-          "name": "social:core:gate:non-strict",
-          "command": "node scripts/smoke/run-social-core-gate.mjs --non-strict"
+          "name": "frontend:release:checklist:gate",
+          "command": "node scripts/ci/frontend-release-checklist-gate.mjs"
         },
         {
-          "name": "social:core:gate:strict",
-          "command": "node scripts/smoke/run-social-core-gate.mjs --strict"
+          "name": "frontend:release:ready:gate",
+          "command": "npm run frontend:quality:gate && npm run design:drift:gate && npm run public:design:contract:gate && npm run content:image:relevance:gate && npm run home:images:html:local && npm run responsive:readability:local && npm run home:section:contract:gate && npm run smoke:landing:theme-surface && npm run page:template:system:gate && npm run page:template:adoption:gate && npm run seo:helper:adoption:gate && npm run route:ownership:gate && npm run visual:regression:gate && npm run frontend:release:checklist:gate && npm run home:any:report && npm run home:any:ratchet:gate && npm run release:readiness:dashboard && npm run release:readiness:admin:gate && npm run smoke:admin:surface"
         },
         {
-          "name": "social:db:first:gate",
-          "command": "node scripts/ci/social-db-first-import-gate.mjs"
-        },
-        {
-          "name": "social:safety:gate",
-          "command": "node scripts/ci/social-safety-gate.mjs"
+          "name": "frontend:theme:gate",
+          "command": "node scripts/ci/theme-consistency-gate.mjs"
         }
       ]
     },
     {
-      "family": "codemod",
+      "family": "pagespeed",
       "count": 4,
       "scripts": [
         {
-          "name": "codemod:ast",
-          "command": "npx tsx scripts/codemod-ast.ts"
+          "name": "pagespeed:api-less",
+          "command": "node scripts/ci/pagespeed-api-less-lighthouse-report.mjs"
         },
         {
-          "name": "codemod:ast:dry",
-          "command": "npx tsx scripts/codemod-ast.ts --dry-run --verbose"
+          "name": "pagespeed:api:research",
+          "command": "node scripts/ci/pagespeed-api-research-report.mjs"
         },
         {
-          "name": "codemod:validation",
-          "command": "npx tsx scripts/codemod-validation.ts"
+          "name": "pagespeed:live",
+          "command": "node scripts/ci/pagespeed-live-check.mjs"
         },
         {
-          "name": "codemod:validation:dry",
-          "command": "npx tsx scripts/codemod-validation.ts --dry-run --verbose"
+          "name": "pagespeed:quota:management",
+          "command": "node scripts/ci/pagespeed-quota-management-report.mjs"
+        }
+      ]
+    },
+    {
+      "family": "quality",
+      "count": 4,
+      "scripts": [
+        {
+          "name": "quality:improvements",
+          "command": "node scripts/ci/backend-frontend-improvement-report.mjs"
+        },
+        {
+          "name": "quality:metrics",
+          "command": "node scripts/ci/collect-quality-metrics.mjs"
+        },
+        {
+          "name": "quality:metrics:ci",
+          "command": "node scripts/ci/collect-quality-metrics.mjs --lint lint.log --type type-check.log --api api-release-gate.log --openapi docs/openapi-route-gap-baseline.json"
+        },
+        {
+          "name": "quality:reports:refresh",
+          "command": "node scripts/ci/refresh-quality-reports.mjs"
+        }
+      ]
+    },
+    {
+      "family": "security",
+      "count": 4,
+      "scripts": [
+        {
+          "name": "security:check",
+          "command": "npm run security:scan-secrets && npm run security:defaults:gate"
+        },
+        {
+          "name": "security:defaults:gate",
+          "command": "node scripts/security/check-insecure-defaults.mjs"
+        },
+        {
+          "name": "security:public-readiness",
+          "command": "node scripts/security/public-readiness-gate.mjs"
+        },
+        {
+          "name": "security:scan-secrets",
+          "command": "node scripts/security/scan-secrets.mjs"
+        }
+      ]
+    },
+    {
+      "family": "seo",
+      "count": 4,
+      "scripts": [
+        {
+          "name": "seo:geo:gate",
+          "command": "node scripts/ci/seo-geo-surface-gate.mjs && node scripts/ci/llms-sitemap-auto-update-gate.mjs"
+        },
+        {
+          "name": "seo:helper:adoption:gate",
+          "command": "node scripts/ci/seo-helper-adoption-gate.mjs"
+        },
+        {
+          "name": "seo:internal-links:report",
+          "command": "node scripts/ci/internal-linking-report.mjs"
+        },
+        {
+          "name": "seo:llms-sitemap:gate",
+          "command": "node scripts/ci/llms-sitemap-auto-update-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "api",
+      "count": 3,
+      "scripts": [
+        {
+          "name": "api:debug:gate",
+          "command": "node scripts/ci/api-debug-envelope-gate.mjs"
+        },
+        {
+          "name": "api:release:gate",
+          "command": "npm run test:api-contract:coverage && npm run test:api-contract:groups && npm run openapi:sync:routes:gate && npm run openapi:city-services:gate && npm run sdk:generate:check && npm run smoke:api:critical && npm run smoke:site-settings:schema && npm run openapi:p0:report && npm run openapi:p0:regression-gate && npm run problemjson:strict"
+        },
+        {
+          "name": "api:release:report",
+          "command": "node scripts/ci/api-release-gate-report.mjs"
+        }
+      ]
+    },
+    {
+      "family": "astro",
+      "count": 3,
+      "scripts": [
+        {
+          "name": "astro:stack:audit",
+          "command": "node scripts/ci/astro-stack-audit-gate.mjs"
+        },
+        {
+          "name": "astro:stack:ensure",
+          "command": "node scripts/ci/ensure-astro-stack.mjs"
+        },
+        {
+          "name": "astro:sync",
+          "command": "astro sync"
         }
       ]
     },
@@ -838,56 +1481,20 @@
       ]
     },
     {
-      "family": "content",
+      "family": "docs",
       "count": 3,
       "scripts": [
         {
-          "name": "content:cluster:quality",
-          "command": "npx tsx scripts/content/cluster-quality-gate.ts"
+          "name": "docs:build",
+          "command": "cd docs && npm run build"
         },
         {
-          "name": "content:image:relevance:gate",
-          "command": "node scripts/ci/content-image-relevance-gate.mjs"
+          "name": "docs:dev",
+          "command": "cd docs && npm run dev"
         },
         {
-          "name": "content:programmatic:quality",
-          "command": "npx tsx scripts/content/programmatic-quality-gate.ts"
-        }
-      ]
-    },
-    {
-      "family": "frontend",
-      "count": 3,
-      "scripts": [
-        {
-          "name": "frontend:quality:gate",
-          "command": "node scripts/ci/frontend-quality-gate.mjs"
-        },
-        {
-          "name": "frontend:release:checklist:gate",
-          "command": "node scripts/ci/frontend-release-checklist-gate.mjs"
-        },
-        {
-          "name": "frontend:release:ready:gate",
-          "command": "npm run frontend:quality:gate && npm run design:drift:gate && npm run content:image:relevance:gate && npm run home:section:contract:gate && npm run page:template:system:gate && npm run page:template:adoption:gate && npm run seo:helper:adoption:gate && npm run route:ownership:gate && npm run visual:regression:gate && npm run frontend:release:checklist:gate && npm run home:any:report && npm run home:any:ratchet:gate && npm run release:readiness:dashboard && npm run release:readiness:admin:gate"
-        }
-      ]
-    },
-    {
-      "family": "home",
-      "count": 3,
-      "scripts": [
-        {
-          "name": "home:any:ratchet:gate",
-          "command": "node scripts/ci/home-any-ratchet-gate.mjs"
-        },
-        {
-          "name": "home:any:report",
-          "command": "node scripts/ci/home-any-report.mjs"
-        },
-        {
-          "name": "home:section:contract:gate",
-          "command": "node scripts/ci/home-section-contract-gate.mjs"
+          "name": "docs:terminology:gate",
+          "command": "node scripts/ci/docs-terminology-gate.mjs"
         }
       ]
     },
@@ -928,24 +1535,6 @@
       ]
     },
     {
-      "family": "security",
-      "count": 3,
-      "scripts": [
-        {
-          "name": "security:defaults:gate",
-          "command": "node scripts/security/check-insecure-defaults.mjs"
-        },
-        {
-          "name": "security:public-readiness",
-          "command": "node scripts/security/public-readiness-gate.mjs"
-        },
-        {
-          "name": "security:scan-secrets",
-          "command": "node scripts/security/scan-secrets.mjs"
-        }
-      ]
-    },
-    {
       "family": "tsnocheck",
       "count": 3,
       "scripts": [
@@ -964,12 +1553,40 @@
       ]
     },
     {
+      "family": "admin",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "admin:db:first:gate",
+          "command": "node scripts/ci/admin-db-first-gate.mjs"
+        },
+        {
+          "name": "admin:strict-role:gate",
+          "command": "node scripts/ci/admin-strict-role-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "adsense",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "adsense:readiness",
+          "command": "node scripts/ci/adsense-readiness-gate.mjs"
+        },
+        {
+          "name": "adsense:readiness:live",
+          "command": "node scripts/ci/adsense-readiness-gate.mjs --live"
+        }
+      ]
+    },
+    {
       "family": "build",
       "count": 2,
       "scripts": [
         {
           "name": "build",
-          "command": "astro build"
+          "command": "node scripts/build-server-artifacts.mjs"
         },
         {
           "name": "build:isolated",
@@ -978,16 +1595,44 @@
       ]
     },
     {
-      "family": "docs",
+      "family": "city",
       "count": 2,
       "scripts": [
         {
-          "name": "docs:build",
-          "command": "cd docs && npm run build"
+          "name": "city:data:freshness:gate",
+          "command": "npx tsx scripts/ci/city-data-freshness-gate.mjs"
         },
         {
-          "name": "docs:dev",
-          "command": "cd docs && npm run dev"
+          "name": "city:data:freshness:prod",
+          "command": "node scripts/ci/city-data-freshness-gate.mjs --prod"
+        }
+      ]
+    },
+    {
+      "family": "codemod",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "codemod:ast",
+          "command": "npx tsx scripts/codemod-ast.ts"
+        },
+        {
+          "name": "codemod:validation",
+          "command": "npx tsx scripts/codemod-validation.ts"
+        }
+      ]
+    },
+    {
+      "family": "e2e",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "e2e:critical:coverage",
+          "command": "node scripts/ci/e2e-critical-coverage-report.mjs"
+        },
+        {
+          "name": "e2e:skip:report",
+          "command": "node scripts/ci/e2e-skip-report.mjs"
         }
       ]
     },
@@ -997,11 +1642,25 @@
       "scripts": [
         {
           "name": "gate:done",
-          "command": "npm run env:gate && npm run runtime:single-process:gate && npm run workflow:standards:verify && npm run ops:contracts:gate && npm run canonical:domain:gate && npm run phase1:free:gate && npm run admin:db:first:gate && npm run social:safety:gate && npm run social:db:first:gate && npm run lifecycle:standard:gate && npm run landing:agency:gate && npm run recommendations:master:gate && npm run hosting:panel:gate && npm run frontend:release:ready:gate && npm run type-check && npm run build && npm run db:migrate:check-duplicates && npm run api:release:gate && npm run smoke:pages:critical && npm run smoke:images:critical && npm run smoke:db:backup-restore && npm run images:check-external && npm run images:validate && npm run images:quality && npm run images:moderate && npm run images:slug:gate && npm run categories:coverage:gate && npm run public:city:gate && npm run seo:geo:gate && npm run content:cluster:quality && npm run content:programmatic:quality && npm run social:core:gate:strict && npm run problemjson:strict && npm run security:scan-secrets && npm run security:defaults:gate && npm run release:readiness:report"
+          "command": "npm run env:gate && npm run runtime:single-process:gate && npm run workflow:standards:verify && npm run ops:contracts:gate && npm run canonical:domain:gate && npm run phase1:free:gate && npm run admin:db:first:gate && npm run social:safety:gate && npm run social:db:first:gate && npm run db:refs:gate && npm run lifecycle:standard:gate && npm run landing:agency:gate && npm run recommendations:master:gate && npm run hosting:panel:gate && npm run frontend:release:ready:gate && npm run type-check && npm run build && npm run db:migrate:check-duplicates && npm run api:release:gate && npm run smoke:pages:critical && npm run smoke:images:critical && npm run smoke:db:backup-restore && npm run images:check-external && npm run images:validate && npm run images:quality && npm run images:moderate && npm run images:slug:gate && npm run images:integrity:gate && npm run categories:coverage:gate && npm run public:city:gate && npm run seo:geo:gate && npm run content:cluster:quality && npm run content:programmatic:quality && npm run social:core:gate:strict && npm run problemjson:strict && npm run security:scan-secrets && npm run security:defaults:gate && npm run storage:local:gate && npm run pagespeed:api-less && npm run release:readiness:report"
         },
         {
           "name": "gate:isolated",
           "command": "node scripts/runtime/run-with-cleanup.mjs npm run gate:done"
+        }
+      ]
+    },
+    {
+      "family": "ollama",
+      "count": 2,
+      "scripts": [
+        {
+          "name": "ollama:readiness",
+          "command": "node scripts/ci/ollama-readiness-report.mjs"
+        },
+        {
+          "name": "ollama:readiness:live",
+          "command": "node scripts/ci/ollama-readiness-report.mjs --live"
         }
       ]
     },
@@ -1034,30 +1693,30 @@
       ]
     },
     {
-      "family": "public",
+      "family": "publisher",
       "count": 2,
       "scripts": [
         {
-          "name": "public:city:gate",
-          "command": "node scripts/ci/public-city-acceptance-gate.mjs"
+          "name": "publisher:center:readiness",
+          "command": "node scripts/ci/publisher-center-readiness-report.mjs"
         },
         {
-          "name": "public:city:gate:build",
-          "command": "node scripts/ci/public-city-acceptance-gate.mjs --build"
+          "name": "publisher:center:readiness:live",
+          "command": "node scripts/ci/publisher-center-readiness-report.mjs --live"
         }
       ]
     },
     {
-      "family": "quality",
+      "family": "responsive",
       "count": 2,
       "scripts": [
         {
-          "name": "quality:metrics",
-          "command": "node scripts/ci/collect-quality-metrics.mjs"
+          "name": "responsive:readability:local",
+          "command": "node scripts/ci/responsive-readability-gate.mjs --mode=local"
         },
         {
-          "name": "quality:metrics:ci",
-          "command": "node scripts/ci/collect-quality-metrics.mjs --lint lint.log --type type-check.log --api api-release-gate.log --openapi docs/openapi-route-gap-baseline.json"
+          "name": "responsive:readability:prod",
+          "command": "node scripts/ci/responsive-readability-gate.mjs --mode=prod --base-url=https://sanliurfa.com"
         }
       ]
     },
@@ -1090,60 +1749,16 @@
       ]
     },
     {
-      "family": "seo",
+      "family": "sitemap",
       "count": 2,
       "scripts": [
         {
-          "name": "seo:geo:gate",
-          "command": "node scripts/ci/seo-geo-surface-gate.mjs"
+          "name": "sitemap:routes:local",
+          "command": "node scripts/ci/sitemap-route-integrity-gate.mjs --mode=local --max-urls=200"
         },
         {
-          "name": "seo:helper:adoption:gate",
-          "command": "node scripts/ci/seo-helper-adoption-gate.mjs"
-        }
-      ]
-    },
-    {
-      "family": "top-level",
-      "count": 2,
-      "scripts": [
-        {
-          "name": "astro",
-          "command": "astro"
-        },
-        {
-          "name": "start",
-          "command": "npm run -s dev:isolated:ensure"
-        }
-      ]
-    },
-    {
-      "family": "admin",
-      "count": 1,
-      "scripts": [
-        {
-          "name": "admin:db:first:gate",
-          "command": "node scripts/ci/admin-db-first-gate.mjs"
-        }
-      ]
-    },
-    {
-      "family": "api",
-      "count": 1,
-      "scripts": [
-        {
-          "name": "api:release:gate",
-          "command": "npm run test:api-contract:coverage && npm run openapi:sync:routes:gate && npm run openapi:city-services:gate && npm run sdk:generate:check && npm run smoke:api:critical && npm run smoke:site-settings:schema && npm run openapi:p0:report && npm run openapi:p0:regression-gate && npm run problemjson:strict"
-        }
-      ]
-    },
-    {
-      "family": "astro",
-      "count": 1,
-      "scripts": [
-        {
-          "name": "astro:sync",
-          "command": "astro sync"
+          "name": "sitemap:routes:prod",
+          "command": "node scripts/ci/sitemap-route-integrity-gate.mjs --mode=prod --base-url=https://sanliurfa.com"
         }
       ]
     },
@@ -1154,6 +1769,16 @@
         {
           "name": "canonical:domain:gate",
           "command": "node scripts/ci/canonical-domain-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "cron",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "cron:readiness:report",
+          "command": "node scripts/ci/cron-readiness-report.mjs"
         }
       ]
     },
@@ -1218,6 +1843,16 @@
       ]
     },
     {
+      "family": "media",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "media:readiness",
+          "command": "node scripts/ci/media-readiness-report.mjs"
+        }
+      ]
+    },
+    {
       "family": "phase1",
       "count": 1,
       "scripts": [
@@ -1232,8 +1867,28 @@
       "count": 1,
       "scripts": [
         {
-          "name": "scripts:surface:report",
-          "command": "node scripts/ci/script-surface-report.mjs"
+          "name": "scripts:canonical:report",
+          "command": "node scripts/ci/script-canonical-surface-report.mjs"
+        }
+      ]
+    },
+    {
+      "family": "sql",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "sql:parameter:safety",
+          "command": "node scripts/ci/sql-parameter-safety-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "storage",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "storage:local:gate",
+          "command": "node scripts/ci/local-media-storage-gate.mjs"
         }
       ]
     },
@@ -1254,6 +1909,16 @@
         {
           "name": "visual:regression:gate",
           "command": "node scripts/ci/visual-regression-gate.mjs"
+        }
+      ]
+    },
+    {
+      "family": "warmup",
+      "count": 1,
+      "scripts": [
+        {
+          "name": "warmup:safety:report",
+          "command": "node scripts/ci/warmup-safety-report.mjs"
         }
       ]
     },

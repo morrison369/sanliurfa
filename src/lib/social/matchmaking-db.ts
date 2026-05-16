@@ -25,6 +25,7 @@ export interface SwipeQuota {
   dailyLimit: number;
   usedToday: number;
   remaining: number;
+  resetAt: string | null;
 }
 
 let ensurePromise: Promise<void> | null = null;
@@ -283,9 +284,9 @@ export async function getSwipeQuota(userId: string): Promise<SwipeQuota> {
   await ensureMatchTables();
   const { dailySwipeLimit } = getSocialFeatureConfig();
 
-  const row = await queryOne<{ count: number }>(
+  const row = await queryOne<{ count: number; oldest_swipe: string | Date | null }>(
     `
-      SELECT COUNT(*)::int AS count
+      SELECT COUNT(*)::int AS count, MIN(created_at) AS oldest_swipe
       FROM social_swipes
       WHERE swiper_id = $1
         AND created_at >= NOW() - INTERVAL '24 hours'
@@ -295,10 +296,15 @@ export async function getSwipeQuota(userId: string): Promise<SwipeQuota> {
 
   const usedToday = Number(row?.count || 0);
   const remaining = Math.max(0, dailySwipeLimit - usedToday);
+  const oldestSwipe = row?.oldest_swipe ? new Date(row.oldest_swipe) : null;
+  const resetAt = oldestSwipe && usedToday > 0
+    ? new Date(oldestSwipe.getTime() + 24 * 60 * 60 * 1000).toISOString()
+    : null;
 
   return {
     dailyLimit: dailySwipeLimit,
     usedToday,
     remaining,
+    resetAt,
   };
 }

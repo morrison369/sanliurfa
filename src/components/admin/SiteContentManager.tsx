@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
+import { Suspense, lazy, useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
 import { HOMEPAGE_CTA_CONFIG, HOMEPAGE_PUBLIC_SECTION_ORDER } from '../../data/homepage-shell';
 import { HOMEPAGE_THEME_TOKENS } from '../../data/homepage-theme';
 import {
@@ -11,6 +11,8 @@ import {
   type PresetScopeFilter,
 } from '../../lib/admin/preset-summary';
 import { loadPresetStorageState, savePresetStorageState } from '../../lib/admin/preset-storage';
+
+const SiteContentOpsWorkspace = lazy(() => import('./SiteContentOpsWorkspace'));
 
 type HeroConfig = {
  badge: string;
@@ -81,6 +83,76 @@ type HomepageSchemaConfig = {
  webpageName: string;
 };
 
+const DEFAULT_HOME_QUICK_ACCESS = {
+ items: [
+  {
+   icon: 'map-pin',
+   title: 'Mekanları Keşfet',
+   desc: 'Restoran, kafe, otel ve yerel işletmeleri kategoriye göre incele.',
+   href: '/mekanlar',
+   cta: 'Mekanlara Git',
+  },
+  {
+   icon: 'landmark',
+   title: 'Gezilecek Yerler',
+   desc: 'Balıklıgöl, Göbeklitepe, Harran ve şehir merkezindeki gezi noktalarını planla.',
+   href: '/gezilecek-yerler',
+   cta: 'Rotaları Gör',
+  },
+  {
+   icon: 'cross',
+   title: 'Nöbetçi Eczaneler',
+   desc: 'Şanlıurfa ilçe bazlı güncel nöbetçi eczane bilgilerine hızlı ulaş.',
+   href: '/saglik/nobetci-eczaneler',
+   cta: 'Eczane Bul',
+  },
+  {
+   icon: 'bus',
+   title: 'Otobüs Saatleri',
+   desc: 'Şehir içi ulaşım ve sık kullanılan hatlar için pratik bağlantılar.',
+   href: '/ulasim/otobus-saatleri',
+   cta: 'Saatlere Bak',
+  },
+  {
+   icon: 'calendar-days',
+   title: 'Etkinlikler',
+   desc: 'Konser, sergi, festival ve yerel buluşmaları tek takvimde takip et.',
+   href: '/etkinlikler',
+   cta: 'Etkinlikleri Aç',
+  },
+  {
+   icon: 'map',
+   title: 'İlçeler',
+   desc: 'Haliliye’den Halfeti’ye her ilçenin öne çıkan yerlerini keşfet.',
+   href: '/ilceler',
+   cta: 'İlçeleri İncele',
+  },
+ ],
+};
+
+const DEFAULT_HOME_ROUTES = {
+ items: [
+  {
+   title: 'Balıklıgöl ve Tarihi Çarşı Rotası',
+   desc: 'Balıklıgöl çevresi, hanlar bölgesi, bakırcılar çarşısı ve geleneksel Urfa dokusunu aynı yürüyüşte birleştiren merkez rota.',
+   href: '/gezilecek-yerler/balikligol',
+   image: '/images/home/routes/balikligol-tarihi-carsi.jpg',
+  },
+  {
+   title: 'Göbeklitepe ve Arkeoloji Rotası',
+   desc: 'Tarihin sıfır noktasını, müze ziyaretini ve çevredeki arkeoloji duraklarını planlı bir gezi akışına dönüştür.',
+   href: '/blog/gobeklitepe-rehberi-ziyaret-bilgileri',
+   image: '/images/home/routes/gobeklitepe-arkeoloji.jpg',
+  },
+  {
+   title: 'Halfeti ve Fırat Rotası',
+   desc: 'Sakin şehir Halfeti, Fırat kıyısı, tekne rotaları ve fotoğraf duraklarıyla günü dolu geçiren keşif planı.',
+   href: '/blog/halfetide-1-gun-tekne-turu',
+   image: '/images/home/routes/halfeti-firat.jpg',
+  },
+ ],
+};
+
 type HeaderBrandConfig = {
  topStripText: string;
  logoTitle: string;
@@ -125,6 +197,18 @@ type MainCtaConfig = {
  secondaryLabel: string;
  secondaryHref: string;
 };
+
+type AdSenseSlotsConfig = {
+ client: string;
+ autoAdsEnabled: boolean;
+ homepageBanner: string;
+ blogListSidebar: string;
+ blogDetailInline: string;
+ blogDetailSidebar: string;
+ classifiedDetail: string;
+};
+
+type SiteContentOpsTab = 'media' | 'schema' | 'versions' | 'audit';
 
 type HomepageSectionsConfig = {
  order: string[];
@@ -345,6 +429,16 @@ const DEFAULT_MAIN_CTA: MainCtaConfig = {
  primaryHref: '/isletme-kayit',
  secondaryLabel: 'İletişim ve Destek',
  secondaryHref: '/iletisim',
+};
+
+const DEFAULT_ADSENSE_SLOTS: AdSenseSlotsConfig = {
+ client: 'ca-pub-7160871802649062',
+ autoAdsEnabled: true,
+ homepageBanner: '',
+ blogListSidebar: '',
+ blogDetailInline: '',
+ blogDetailSidebar: '',
+ classifiedDetail: '',
 };
 
 const EDITOR_JSON_TEMPLATES: Record<string, string> = {
@@ -720,6 +814,19 @@ const EDITOR_JSON_TEMPLATES: Record<string, string> = {
  null,
  2,
  ),
+ 'adsense.slots': JSON.stringify(
+ {
+ client: 'ca-pub-7160871802649062',
+ autoAdsEnabled: true,
+ homepageBanner: '',
+ blogListSidebar: '',
+ blogDetailInline: '',
+ blogDetailSidebar: '',
+ classifiedDetail: '',
+ },
+ null,
+ 2,
+ ),
 };
 
 type SaveMode = 'draft' | 'publish';
@@ -819,6 +926,7 @@ export default function SiteContentManager() {
  const [headerBrandText, setHeaderBrandText] = useState('');
  const [headerLabelsText, setHeaderLabelsText] = useState('');
  const [socialProfilesText, setSocialProfilesText] = useState('');
+ const [adsenseSlotsText, setAdsenseSlotsText] = useState('');
  const [footerLinksText, setFooterLinksText] = useState('');
  const [footerBrandText, setFooterBrandText] = useState('');
  const [footerBottomText, setFooterBottomText] = useState('');
@@ -827,8 +935,10 @@ export default function SiteContentManager() {
  const [quickCategoriesText, setQuickCategoriesText] = useState('');
  const [featuredGuidesText, setFeaturedGuidesText] = useState('');
  const [faqText, setFaqText] = useState('');
- const [heroQuickLinksText, setHeroQuickLinksText] = useState('');
- const [liveStatusCardsText, setLiveStatusCardsText] = useState('');
+const [heroQuickLinksText, setHeroQuickLinksText] = useState('');
+const [homepageQuickAccessText, setHomepageQuickAccessText] = useState('');
+const [homepageRoutesText, setHomepageRoutesText] = useState('');
+const [liveStatusCardsText, setLiveStatusCardsText] = useState('');
  const [serviceQuickLinksText, setServiceQuickLinksText] = useState('');
 const [communityPanelText, setCommunityPanelText] = useState('');
 const [trendingFallbackQueriesText, setTrendingFallbackQueriesText] = useState('');
@@ -896,6 +1006,7 @@ const [presetScopeFilter, setPresetScopeFilter] = useState<PresetScopeFilter>('a
  const [jsonEditorsExpanded, setJsonEditorsExpanded] = useState(false);
  const [adminQuickFilter, setAdminQuickFilter] = useState('');
  const [adminQuickGroupFilter, setAdminQuickGroupFilter] = useState('Tümü');
+ const [opsTab, setOpsTab] = useState<SiteContentOpsTab>('media');
 
  useEffect(() => {
   const stored = loadPresetStorageState();
@@ -947,6 +1058,7 @@ useEffect(() => {
  'header.brand',
  'header.labels',
  'social.profiles',
+ 'adsense.slots',
  'footer.links',
  'footer.brand',
  'footer.bottom',
@@ -956,6 +1068,8 @@ useEffect(() => {
  'homepage.featuredGuides',
  'homepage.faq',
  'homepage.heroQuickLinks',
+ 'homepage.quickAccess',
+ 'homepage.routes',
  'homepage.liveStatusCards',
  'homepage.serviceQuickLinks',
  'homepage.communityPanel',
@@ -1065,6 +1179,7 @@ useEffect(() => {
  2,
  ),
  );
+ setAdsenseSlotsText(JSON.stringify(map['adsense.slots'] || DEFAULT_ADSENSE_SLOTS, null, 2));
  setFooterLinksText(JSON.stringify(map['footer.links'] || {}, null, 2));
  setFooterBrandText(
  JSON.stringify(
@@ -1108,6 +1223,12 @@ useEffect(() => {
  setFaqText(JSON.stringify(map['homepage.faq'] || { items: [] }, null, 2));
  setHeroQuickLinksText(
  JSON.stringify(map['homepage.heroQuickLinks'] || { items: [] }, null, 2),
+ );
+ setHomepageQuickAccessText(
+ JSON.stringify(map['homepage.quickAccess'] || DEFAULT_HOME_QUICK_ACCESS, null, 2),
+ );
+ setHomepageRoutesText(
+ JSON.stringify(map['homepage.routes'] || DEFAULT_HOME_ROUTES, null, 2),
  );
  setLiveStatusCardsText(
  JSON.stringify(map['homepage.liveStatusCards'] || { items: [] }, null, 2),
@@ -2165,6 +2286,9 @@ useEffect(() => {
  const getSocialProfiles = () =>
  parseJsonSafe<SocialProfilesConfig>(socialProfilesText, DEFAULT_SOCIAL_PROFILES);
 
+ const getAdsenseSlots = () =>
+ parseJsonSafe<AdSenseSlotsConfig>(adsenseSlotsText, DEFAULT_ADSENSE_SLOTS);
+
  const updateSocialProfile = (
  channel: SocialProfileKey,
  field: 'enabled' | 'handle' | 'url',
@@ -2184,6 +2308,11 @@ useEffect(() => {
  2,
  ),
  );
+ };
+
+ const updateAdsenseSlotField = (field: keyof AdSenseSlotsConfig, value: boolean | string) => {
+ const parsed = getAdsenseSlots();
+ setAdsenseSlotsText(JSON.stringify({ ...parsed, [field]: value }, null, 2));
  };
 
  const getFooterBrand = () =>
@@ -2724,6 +2853,11 @@ useEffect(() => {
  description: 'Sosyal medya profil yönetimi',
  },
  {
+ key: 'adsense.slots',
+ value: parseJsonSafe(adsenseSlotsText, DEFAULT_ADSENSE_SLOTS),
+ description: 'AdSense slot ve auto ads ayarları',
+ },
+ {
  key: 'footer.links',
  value: parseJsonSafe(footerLinksText, {}),
  description: 'Footer link grupları',
@@ -2780,6 +2914,16 @@ useEffect(() => {
  key: 'homepage.heroQuickLinks',
  value: parseJsonSafe(heroQuickLinksText, { items: [] }),
  description: 'Ana sayfa hero hızlı linkleri',
+ },
+ {
+ key: 'homepage.quickAccess',
+ value: parseJsonSafe(homepageQuickAccessText, DEFAULT_HOME_QUICK_ACCESS),
+ description: 'Ana sayfa hızlı erişim kartları',
+ },
+ {
+ key: 'homepage.routes',
+ value: parseJsonSafe(homepageRoutesText, DEFAULT_HOME_ROUTES),
+ description: 'Ana sayfa öne çıkan rota kartları',
  },
  {
  key: 'homepage.liveStatusCards',
@@ -4813,6 +4957,52 @@ useEffect(() => {
  </FormEditorCard>
 
  <JsonEditorCard
+ title="Ana Sayfa Hızlı Erişim Kartları JSON (DB)"
+ description="`homepage.quickAccess` anahtarı"
+ value={homepageQuickAccessText}
+ onChange={setHomepageQuickAccessText}
+ onDraft={() =>
+ void saveJsonSetting(
+ 'homepage.quickAccess',
+ 'Ana sayfa hızlı erişim kartları',
+ homepageQuickAccessText,
+ 'draft',
+ )
+ }
+ onPublish={() =>
+ void saveJsonSetting(
+ 'homepage.quickAccess',
+ 'Ana sayfa hızlı erişim kartları',
+ homepageQuickAccessText,
+ 'publish',
+ )
+ }
+ />
+
+ <JsonEditorCard
+ title="Öne Çıkan Rotalar JSON (DB)"
+ description="`homepage.routes` anahtarı"
+ value={homepageRoutesText}
+ onChange={setHomepageRoutesText}
+ onDraft={() =>
+ void saveJsonSetting(
+ 'homepage.routes',
+ 'Ana sayfa öne çıkan rota kartları',
+ homepageRoutesText,
+ 'draft',
+ )
+ }
+ onPublish={() =>
+ void saveJsonSetting(
+ 'homepage.routes',
+ 'Ana sayfa öne çıkan rota kartları',
+ homepageRoutesText,
+ 'publish',
+ )
+ }
+ />
+
+ <JsonEditorCard
  title="Canlı Durum Kartları JSON (DB)"
  description="`homepage.liveStatusCards` anahtarı"
  value={liveStatusCardsText}
@@ -5758,6 +5948,96 @@ useEffect(() => {
  </div>
  );
  })}
+ </div>
+ </FormEditorCard>
+
+ <JsonEditorCard
+ title="AdSense Slotları JSON (DB)"
+ description="`adsense.slots` anahtarı"
+ value={adsenseSlotsText}
+ onChange={setAdsenseSlotsText}
+ onLoadTemplate={() => applyTemplateToEditor('adsense.slots', setAdsenseSlotsText)}
+ onDraft={() =>
+ void saveJsonSetting('adsense.slots', 'AdSense slot ve auto ads yönetimi', adsenseSlotsText, 'draft')
+ }
+ onPublish={() =>
+ void saveJsonSetting(
+ 'adsense.slots',
+ 'AdSense slot ve auto ads yönetimi',
+ adsenseSlotsText,
+ 'publish',
+ )
+ }
+ />
+
+ <FormEditorCard title="AdSense Slot Form Editörü">
+ <p className="text-sm text-[var(--adm-text-muted)]">
+ Slot ID girilmezse ilgili reklam alanı yayında render edilmez. Auto ads açık olsa bile manuel
+ slot alanları için ayrı ID girmek gerekir.
+ </p>
+ <div className="grid gap-3 md:grid-cols-2">
+ <label className="grid gap-1 text-sm text-[var(--adm-text-muted)]">
+ <span className="font-semibold text-[var(--adm-text)]">AdSense Client</span>
+ <input
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
+ value={getAdsenseSlots().client || ''}
+ onChange={(event) => updateAdsenseSlotField('client', event.target.value)}
+ placeholder="ca-pub-7160871802649062"
+ />
+ </label>
+ <label className="inline-flex items-center gap-2 self-end text-sm font-semibold text-[var(--adm-text)]">
+ <input
+ type="checkbox"
+ checked={Boolean(getAdsenseSlots().autoAdsEnabled)}
+ onChange={(event) => updateAdsenseSlotField('autoAdsEnabled', event.target.checked)}
+ />
+ Auto ads açık
+ </label>
+ <label className="grid gap-1 text-sm text-[var(--adm-text-muted)]">
+ <span className="font-semibold text-[var(--adm-text)]">Ana sayfa banner slot</span>
+ <input
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
+ value={getAdsenseSlots().homepageBanner || ''}
+ onChange={(event) => updateAdsenseSlotField('homepageBanner', event.target.value)}
+ placeholder="1234567890"
+ />
+ </label>
+ <label className="grid gap-1 text-sm text-[var(--adm-text-muted)]">
+ <span className="font-semibold text-[var(--adm-text)]">Blog liste sidebar slot</span>
+ <input
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
+ value={getAdsenseSlots().blogListSidebar || ''}
+ onChange={(event) => updateAdsenseSlotField('blogListSidebar', event.target.value)}
+ placeholder="1234567890"
+ />
+ </label>
+ <label className="grid gap-1 text-sm text-[var(--adm-text-muted)]">
+ <span className="font-semibold text-[var(--adm-text)]">Blog detay inline slot</span>
+ <input
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
+ value={getAdsenseSlots().blogDetailInline || ''}
+ onChange={(event) => updateAdsenseSlotField('blogDetailInline', event.target.value)}
+ placeholder="1234567890"
+ />
+ </label>
+ <label className="grid gap-1 text-sm text-[var(--adm-text-muted)]">
+ <span className="font-semibold text-[var(--adm-text)]">Blog detay sidebar slot</span>
+ <input
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
+ value={getAdsenseSlots().blogDetailSidebar || ''}
+ onChange={(event) => updateAdsenseSlotField('blogDetailSidebar', event.target.value)}
+ placeholder="1234567890"
+ />
+ </label>
+ <label className="grid gap-1 text-sm text-[var(--adm-text-muted)]">
+ <span className="font-semibold text-[var(--adm-text)]">İlan detay slot</span>
+ <input
+ className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
+ value={getAdsenseSlots().classifiedDetail || ''}
+ onChange={(event) => updateAdsenseSlotField('classifiedDetail', event.target.value)}
+ placeholder="1234567890"
+ />
+ </label>
  </div>
  </FormEditorCard>
 
@@ -6943,471 +7223,70 @@ useEffect(() => {
  </div>
  </div>
 
- <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
- <h2 className="text-xl font-bold text-[var(--adm-text)]">
- Görsel API Arama ve İçe Aktarma (Unsplash + Pexels)
- </h2>
- <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
- Arama yap, uygun görseli seç ve `site_media_assets` tablosuna kaydet.
- </p>
- <div className="mt-4 grid gap-3 md:grid-cols-3">
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- placeholder="Arama (örn: Göbeklitepe gün batımı)"
- value={imageQuery}
- onChange={(e) => setImageQuery(e.target.value)}
- />
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- placeholder="Görsel anahtarı (örn: homepage.hero.background)"
- value={assetKey}
- onChange={(e) => setAssetKey(e.target.value)}
- />
- <button
- onClick={() => void searchImages()}
- className="rounded-sm bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
- >
- Görsel Ara
- </button>
+ <Suspense
+ fallback={
+ <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5 text-sm text-[var(--adm-text-muted)]">
+ Operasyon araçları yükleniyor…
  </div>
- {imageResults.length > 0 && (
- <div className="mt-4 grid gap-4 md:grid-cols-2">
- {imageResults.map((img, idx) => (
- <div
- key={`${img.provider}-${img.id}-${idx}`}
- className="rounded-sm border border-[var(--adm-border)] p-3"
- >
- <img
- src={img.thumb || img.url}
- alt={img.author || 'görsel'}
- className="h-40 w-full rounded object-cover"
- />
- <p className="mt-2 text-xs text-[var(--adm-text-muted)]">
- {img.provider} / {img.author || 'Bilinmeyen'}
- </p>
- <button
- onClick={() => void importImage(img.url)}
- className="mt-2 rounded bg-urfa-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-urfa-700"
- >
- Bu Görseli Kaydet
- </button>
- </div>
- ))}
- </div>
- )}
- </div>
-
- <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
- <h2 className="text-xl font-bold text-[var(--adm-text)]">Medya Kütüphanesi (DB)</h2>
- <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
- Kaydedilen görselleri filtrele, hero alanına uygula veya gereksiz kayıtları temizle.
- </p>
- <div className="mt-4 grid gap-3 md:grid-cols-3">
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- placeholder="Klasör filtresi (örn: places, blog)"
- value={mediaBucketFilter}
- onChange={(e) => setMediaBucketFilter(e.target.value)}
- />
- <button
- onClick={() => void loadMediaLibrary()}
- className="rounded-sm bg-[var(--adm-border)] px-4 py-2 text-sm font-semibold text-[var(--adm-text)] hover:bg-[rgba(184,115,51,0.22)]"
- >
- {mediaLoading ? 'Yükleniyor…' : 'Kütüphaneyi Yenile'}
- </button>
- </div>
-
- {mediaItems.length > 0 && (
- <div className="mt-4 grid gap-4 md:grid-cols-2">
- {mediaItems.map((item) => (
- <div key={item.asset_key} className="rounded-sm border border-[var(--adm-border)] p-3">
- <img
- src={item.url}
- alt={item.alt || item.asset_key}
- className="h-40 w-full rounded object-cover"
- />
- <p className="mt-2 text-xs text-[var(--adm-text-muted)] break-all">{item.asset_key}</p>
- <p className="mt-1 text-xs text-[var(--adm-text-muted)]">
- {item.metadata?.provider || 'yerel'} / {item.metadata?.bucket || '-'}
- </p>
- <div className="mt-3 grid gap-2 md:grid-cols-2">
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={mediaDrafts[item.asset_key]?.alt || ''}
- onChange={updateMediaDraftField(item.asset_key, 'alt')}
- placeholder="alt metni"
- />
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={mediaDrafts[item.asset_key]?.bucket || ''}
- onChange={updateMediaDraftField(item.asset_key, 'bucket')}
- placeholder="klasör"
- />
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={mediaDrafts[item.asset_key]?.provider || ''}
- onChange={updateMediaDraftField(item.asset_key, 'provider')}
- placeholder="sağlayıcı"
- />
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={mediaDrafts[item.asset_key]?.mimeType || ''}
- onChange={updateMediaDraftField(item.asset_key, 'mimeType')}
- placeholder="MIME tipi"
- />
- </div>
- <input
- className="mt-2 w-full rounded-sm border border-[var(--adm-border-strong)] px-2 py-1 text-xs bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={mediaDrafts[item.asset_key]?.url || item.url}
- onChange={updateMediaDraftField(item.asset_key, 'url')}
- placeholder="görsel URL"
- />
- <div className="mt-2 flex gap-2">
- <button
- onClick={() => applyMediaToHero(item.url)}
- className="rounded bg-urfa-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-urfa-700"
- >
- Hero&apos;ya Uygula
- </button>
- <button
- onClick={() => void saveMediaAsset(item.asset_key)}
- className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
- >
- Güncelle
- </button>
- <button
- onClick={() => void deleteMediaAsset(item.asset_key)}
- className="rounded bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
- >
- Sil
- </button>
- </div>
- </div>
- ))}
- </div>
- )}
- </div>
-
- <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
- <h2 className="text-xl font-bold text-[var(--adm-text)]">Schema Tabanlı Alan Rehberi</h2>
- <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
- Admin form alanlarının zorunlu şema yapısı. JSON editörden önce alan tiplerini doğrular.
- </p>
- <div className="mt-4 flex gap-3">
- <select
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 text-sm bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={schemaKey}
- onChange={(e) => setSchemaKey(e.target.value)}
- >
- {Object.keys(schemaMap).map((key) => (
- <option key={key} value={key}>
- {key}
- </option>
- ))}
- </select>
- </div>
- <div className="mt-3 grid gap-2 md:grid-cols-2">
- {(schemaMap[schemaKey] || []).map((field) => (
- <div
- key={`${schemaKey}-${field.key}`}
- className="rounded border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-2 text-xs"
- >
- <p className="font-mono text-[var(--adm-text)]">{field.key}</p>
- <p className="text-[var(--adm-text-muted)]">
- tip: {field.type} | zorunlu: {field.required ? 'evet' : 'hayır'}
- </p>
- {field.note && <p className="text-[var(--adm-text-muted)]">{field.note}</p>}
- </div>
- ))}
- </div>
- {schemaKey === 'homepage.hero' && (
- <div className="mt-4 rounded-sm border border-[rgba(99,102,241,0.2)] bg-[rgba(99,102,241,0.08)] p-3">
- <p className="text-sm font-semibold text-[var(--adm-text)]">Otomatik Form (homepage.hero)</p>
- <div className="mt-2 grid gap-2 md:grid-cols-2">
- {(schemaMap['homepage.hero'] || [])
- .filter((f) => f.type === 'string')
- .map((f) => (
- <label key={`auto-hero-${f.key}`} className="text-xs text-[var(--adm-text)]">
- <span className="mb-1 block font-mono">{f.key}</span>
- <input
- className="w-full rounded border border-[rgba(99,102,241,0.3)] px-2 py-1"
- value={String((hero as any)[f.key] || '')}
- onChange={(e) =>
- setHero((prev) => ({ ...prev, [f.key]: e.target.value }) as HeroConfig)
  }
- />
- </label>
- ))}
- </div>
- <div className="mt-2">
- <button
- onClick={() =>
- void saveSetting('homepage.hero', hero as any, 'Otomatik form kaydı', 'publish')
- }
- className="rounded bg-urfa-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-urfa-700"
  >
- Otomatik Form ile Yayına Al
- </button>
- </div>
- </div>
- )}
- </div>
-
- <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
- <h2 className="text-xl font-bold text-[var(--adm-text)]">Sürüm Geri Alma</h2>
- <p className="mt-1 text-sm text-[var(--adm-text-muted)]">Yayınlanmış bir ayarı eski sürüme geri döndür.</p>
- <div className="mt-4 grid gap-3 md:grid-cols-3">
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={rollbackKey}
- onChange={(e) => setRollbackKey(e.target.value)}
- placeholder="ayar anahtarı"
+ <SiteContentOpsWorkspace
+ opsTab={opsTab}
+ setOpsTab={setOpsTab}
+ imageQuery={imageQuery}
+ setImageQuery={setImageQuery}
+ assetKey={assetKey}
+ setAssetKey={setAssetKey}
+ searchImages={searchImages}
+ imageResults={imageResults}
+ importImage={importImage}
+ mediaBucketFilter={mediaBucketFilter}
+ setMediaBucketFilter={setMediaBucketFilter}
+ loadMediaLibrary={loadMediaLibrary}
+ mediaLoading={mediaLoading}
+ mediaItems={mediaItems}
+ mediaDrafts={mediaDrafts}
+ updateMediaDraftField={updateMediaDraftField}
+ applyMediaToHero={applyMediaToHero}
+ saveMediaAsset={saveMediaAsset}
+ deleteMediaAsset={deleteMediaAsset}
+ schemaMap={schemaMap}
+ schemaKey={schemaKey}
+ setSchemaKey={setSchemaKey}
+ hero={hero}
+ setHero={setHero}
+ saveSetting={saveSetting}
+ rollbackKey={rollbackKey}
+ setRollbackKey={setRollbackKey}
+ rollbackVersion={rollbackVersion}
+ setRollbackVersion={setRollbackVersion}
+ previewRollback={previewRollback}
+ rollbackSetting={rollbackSetting}
+ rollbackPreviewLoading={rollbackPreviewLoading}
+ rollbackPreview={rollbackPreview}
+ historyKey={historyKey}
+ setHistoryKey={setHistoryKey}
+ loadSettingHistory={loadSettingHistory}
+ historyLoading={historyLoading}
+ historyItems={historyItems}
+ diffKey={diffKey}
+ setDiffKey={setDiffKey}
+ diffFromVersion={diffFromVersion}
+ setDiffFromVersion={setDiffFromVersion}
+ diffToVersion={diffToVersion}
+ setDiffToVersion={setDiffToVersion}
+ loadSettingDiff={loadSettingDiff}
+ diffLoading={diffLoading}
+ diffResult={diffResult}
+ auditKeyFilter={auditKeyFilter}
+ setAuditKeyFilter={setAuditKeyFilter}
+ auditActionFilter={auditActionFilter}
+ setAuditActionFilter={setAuditActionFilter}
+ loadAuditTimeline={loadAuditTimeline}
+ auditLoading={auditLoading}
+ auditItems={auditItems}
  />
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={rollbackVersion}
- onChange={(e) => setRollbackVersion(e.target.value)}
- placeholder="sürüm no"
- />
- <div className="flex gap-2">
- <button
- onClick={() => void previewRollback()}
- className="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700"
- >
- {rollbackPreviewLoading ? 'Önizleme...' : 'Deneme Önizle'}
- </button>
- <button
- onClick={() => void rollbackSetting()}
- className="rounded-sm bg-rose-600 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-700"
- >
- Geri Alma Uygula
- </button>
- </div>
- </div>
- {rollbackPreview && (
- <div className="mt-3 rounded-sm border border-[rgba(234,179,8,0.25)] bg-[rgba(234,179,8,0.08)] p-3 text-xs text-amber-400">
- <p className="font-semibold">
- Deneme sonucu: {rollbackPreview.summary?.changed || 0} alan değişecek
- </p>
- <div className="mt-2 space-y-1">
- {(rollbackPreview.changed || []).slice(0, 20).map((item) => (
- <p key={item.path} className="font-mono">
- {item.path}
- </p>
- ))}
- </div>
- </div>
- )}
- </div>
-
- <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
- <h2 className="text-xl font-bold text-[var(--adm-text)]">Ayar Sürüm Geçmişi</h2>
- <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
- Belirli bir `setting_key` için son sürümleri listele.
- </p>
- <div className="mt-4 grid gap-3 md:grid-cols-3">
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={historyKey}
- onChange={(e) => setHistoryKey(e.target.value)}
- placeholder="ayar anahtarı (örn: homepage.hero)"
- />
- <button
- onClick={() => void loadSettingHistory()}
- className="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700"
- >
- {historyLoading ? 'Yükleniyor…' : 'Geçmişi Getir'}
- </button>
- </div>
-
- {historyItems.length > 0 && (
- <div className="mt-4 overflow-x-auto">
- <table className="min-w-full text-sm">
- <thead>
- <tr className="border-b border-[var(--adm-border)] text-left text-[var(--adm-text-muted)]">
- <th className="px-2 py-2">Sürüm</th>
- <th className="px-2 py-2">Not</th>
- <th className="px-2 py-2">Değiştiren</th>
- <th className="px-2 py-2">Tarih</th>
- </tr>
- </thead>
- <tbody>
- {historyItems.map((item) => (
- <tr
- key={`${item.version_no}-${item.created_at || ''}`}
- className="border-b border-[var(--adm-bg-active)]"
- >
- <td className="px-2 py-2 font-medium text-[var(--adm-text)]">v{item.version_no}</td>
- <td className="px-2 py-2 text-[var(--adm-text-muted)]">{item.note || '-'}</td>
- <td className="px-2 py-2 text-[var(--adm-text-muted)]">{item.changed_by || '-'}</td>
- <td className="px-2 py-2 text-[var(--adm-text-muted)]">
- {item.created_at ? new Date(item.created_at).toLocaleString('tr-TR') : '-'}
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- )}
- </div>
-
- <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
- <h2 className="text-xl font-bold text-[var(--adm-text)]">Ayar Sürüm Karşılaştırma</h2>
- <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
- İki sürüm arasındaki alan bazlı farkları gösterir.
- </p>
- <div className="mt-4 grid gap-3 md:grid-cols-4">
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={diffKey}
- onChange={(e) => setDiffKey(e.target.value)}
- placeholder="ayar anahtarı"
- />
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={diffFromVersion}
- onChange={(e) => setDiffFromVersion(e.target.value)}
- placeholder="önceki sürüm"
- />
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- value={diffToVersion}
- onChange={(e) => setDiffToVersion(e.target.value)}
- placeholder="sonraki sürüm"
- />
- <button
- onClick={() => void loadSettingDiff()}
- className="rounded-sm bg-urfa-600 px-4 py-2 text-sm font-semibold text-white hover:bg-urfa-700"
- >
- {diffLoading ? 'Yükleniyor…' : 'Farkı Getir'}
- </button>
- </div>
-
- {diffResult && (
- <div className="mt-4 space-y-3 text-sm">
- <p className="text-[var(--adm-text-muted)]">
- Özet: +{diffResult.summary.added} / -{diffResult.summary.removed} / ~
- {diffResult.summary.changed}
- </p>
-
- {diffResult.diff.changed.length > 0 && (
- <div>
- <h3 className="font-semibold text-[var(--adm-text)]">Değişen Alanlar</h3>
- <div className="mt-2 space-y-2">
- {diffResult.diff.changed.slice(0, 50).map((item) => (
- <div
- key={`chg-${item.path}`}
- className="rounded border border-[var(--adm-border)] bg-[var(--adm-bg-hover)] p-2"
- >
- <p className="font-mono text-xs text-[var(--adm-text)]">{item.path}</p>
- <p className="text-xs text-rose-400">Eski: {item.prev}</p>
- <p className="text-xs text-emerald-400">Yeni: {item.next}</p>
- </div>
- ))}
- </div>
- </div>
- )}
-
- {diffResult.diff.added.length > 0 && (
- <div>
- <h3 className="font-semibold text-[var(--adm-text)]">Eklenen Alanlar</h3>
- <ul className="mt-2 list-disc pl-5 text-xs text-emerald-400">
- {diffResult.diff.added.slice(0, 50).map((item) => (
- <li key={`add-${item.path}`} className="font-mono">
- {item.path}: {item.next}
- </li>
- ))}
- </ul>
- </div>
- )}
-
- {diffResult.diff.removed.length > 0 && (
- <div>
- <h3 className="font-semibold text-[var(--adm-text)]">Silinen Alanlar</h3>
- <ul className="mt-2 list-disc pl-5 text-xs text-amber-400">
- {diffResult.diff.removed.slice(0, 50).map((item) => (
- <li key={`rem-${item.path}`} className="font-mono">
- {item.path}: {item.prev}
- </li>
- ))}
- </ul>
- </div>
- )}
- </div>
- )}
- </div>
-
- <div className="rounded-sm border border-[var(--adm-border)] bg-[var(--adm-bg-elev)] p-5">
- <h2 className="text-xl font-bold text-[var(--adm-text)]">Denetim Zaman Akışı</h2>
- <p className="mt-1 text-sm text-[var(--adm-text-muted)]">
- İçerik/görsel değişikliklerinin kim-ne-zaman kaydını filtreleyerek görüntüleyin.
- </p>
- <div className="mt-4 grid gap-3 md:grid-cols-4">
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- placeholder="anahtar filtresi (örn: homepage.hero)"
- value={auditKeyFilter}
- onChange={(e) => setAuditKeyFilter(e.target.value)}
- />
- <input
- className="rounded-sm border border-[var(--adm-border-strong)] px-3 py-2 bg-[var(--adm-bg-elev)] text-[var(--adm-text)]"
- placeholder="işlem filtresi (draft_save/publish/rollback/media_import)"
- value={auditActionFilter}
- onChange={(e) => setAuditActionFilter(e.target.value)}
- />
- <button
- onClick={() => void loadAuditTimeline()}
- className="rounded-sm bg-[var(--adm-bg-active)] px-4 py-2 text-sm font-semibold text-[var(--adm-text)] hover:bg-[rgba(184,115,51,0.18)]"
- >
- {auditLoading ? 'Yükleniyor…' : 'Zaman Akışını Getir'}
- </button>
- <a
- href={`/api/admin/site/audit/export?${new URLSearchParams({
- ...(auditKeyFilter.trim() ? { key: auditKeyFilter.trim() } : {}),
- ...(auditActionFilter.trim() ? { action: auditActionFilter.trim() } : {}),
- limit: '2000',
- }).toString()}`}
- className="rounded-sm bg-emerald-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-emerald-700"
- >
- CSV Dışa Aktar
- </a>
- </div>
-
- {auditItems.length > 0 && (
- <div className="mt-4 overflow-x-auto">
- <table className="min-w-full text-sm">
- <thead>
- <tr className="border-b border-[var(--adm-border)] text-left text-[var(--adm-text-muted)]">
- <th className="px-2 py-2">Tarih</th>
- <th className="px-2 py-2">Anahtar</th>
- <th className="px-2 py-2">İşlem</th>
- <th className="px-2 py-2">E-posta</th>
- <th className="px-2 py-2">IP</th>
- <th className="px-2 py-2">Meta Veri</th>
- </tr>
- </thead>
- <tbody>
- {auditItems.map((item) => (
- <tr key={item.id} className="border-b border-[var(--adm-bg-active)]">
- <td className="px-2 py-2 text-xs text-[var(--adm-text-muted)]">
- {item.created_at ? new Date(item.created_at).toLocaleString('tr-TR') : '-'}
- </td>
- <td className="px-2 py-2 font-mono text-xs text-[var(--adm-text)]">
- {item.setting_key}
- </td>
- <td className="px-2 py-2 text-xs text-blue-300">{item.action}</td>
- <td className="px-2 py-2 text-xs text-[var(--adm-text-muted)]">{item.actor_email || '-'}</td>
- <td className="px-2 py-2 text-xs text-[var(--adm-text-muted)]">{item.ip_address || '-'}</td>
- <td className="px-2 py-2 text-xs text-[var(--adm-text-muted)] font-mono">
- {item.metadata ? JSON.stringify(item.metadata).slice(0, 140) : '-'}
- </td>
- </tr>
- ))}
- </tbody>
- </table>
- </div>
- )}
- </div>
+ </Suspense>
 
  {status && <p className="text-sm font-medium text-[var(--adm-text-muted)]">{status}</p>}
  </div>

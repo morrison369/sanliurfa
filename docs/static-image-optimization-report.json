@@ -1,0 +1,25 @@
+{
+  "generatedAt": "2026-05-13T21:19:02.621Z",
+  "mode": "dry-run",
+  "settings": {
+    "thresholdKb": 300,
+    "targetKb": 300,
+    "enforceBudget": true,
+    "maxWidth": 2400,
+    "maxHeight": 2400,
+    "jpegQuality": 82,
+    "webpQuality": 82,
+    "minSavedBytes": 2048,
+    "targetBytes": 307200
+  },
+  "summary": {
+    "candidateCount": 0,
+    "optimizedCount": 0,
+    "totalBeforeMb": 0,
+    "totalAfterMb": 0,
+    "totalSavedMb": 0,
+    "skippedLockedFileCount": 0
+  },
+  "skippedLockedFiles": [],
+  "results": []
+}

@@ -8,10 +8,15 @@ function read(rel) {
   return fs.readFileSync(path.join(root, rel), 'utf8');
 }
 
+function readIfExists(rel) {
+  const absolute = path.join(root, rel);
+  return fs.existsSync(absolute) ? fs.readFileSync(absolute, 'utf8') : '';
+}
+
 const failures = [];
 const layout = read('src/layouts/Layout.astro');
 const themeScript = read('src/components/ThemeScript.astro');
-const darkToggle = read('src/components/DarkModeToggle.astro');
+const darkToggle = readIfExists('src/components/DarkModeToggle.astro');
 const globalCss = read('src/styles/global.css');
 
 if (!layout.includes("import ThemeScript from '../components/ThemeScript.astro'")) {

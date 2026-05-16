@@ -45,32 +45,32 @@ try {
   logger.error('BlogRelatedEvents query failed', e instanceof Error ? e : new Error(String(e)));
 }
 
-if (events.length === 0) return;
-
 const fmt = (d: string) => new Date(d).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
 const getImg = (ev: typeof events[number]) => resolveEventImage(ev, { thumb: true });
 ---
 
-<aside class="bre-wrap">
-  <h3 class="bre-title">Yaklaşan Etkinlikler</h3>
-  <ul class="bre-list">
-    {events.map((ev) => (
-      <li class="bre-item">
-        <a href={`/etkinlikler/${ev.slug}`} class="bre-link">
-          <Image src={getImg(ev)} alt={ev.title} class="bre-img" loading="lazy" width={64} height={64} />
-          <div class="bre-info">
-            <span class="bre-name">{ev.title}</span>
-            <span class="bre-meta">
-              {fmt(ev.start_date)}
-              {ev.is_free && <span class="bre-free">Ücretsiz</span>}
-            </span>
-          </div>
-        </a>
-      </li>
-    ))}
-  </ul>
-  <a href="/etkinlikler" class="bre-all">Tüm Etkinlikler →</a>
-</aside>
+{events.length > 0 && (
+  <aside class="bre-wrap">
+    <h3 class="bre-title">Yaklaşan Etkinlikler</h3>
+    <ul class="bre-list">
+      {events.map((ev) => (
+        <li class="bre-item">
+          <a href={`/etkinlikler/${ev.slug}`} class="bre-link">
+            <Image src={getImg(ev)} alt={ev.title} class="bre-img" loading="lazy" width={64} height={64} />
+            <div class="bre-info">
+              <span class="bre-name">{ev.title}</span>
+              <span class="bre-meta">
+                {fmt(ev.start_date)}
+                {ev.is_free && <span class="bre-free">Ücretsiz</span>}
+              </span>
+            </div>
+          </a>
+        </li>
+      ))}
+    </ul>
+    <a href="/etkinlikler" class="bre-all">Tüm Etkinlikler →</a>
+  </aside>
+)}
 
 <style>
 .bre-wrap {

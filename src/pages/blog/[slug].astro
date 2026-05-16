@@ -1,14 +1,15 @@
 ---
 import EditorialTemplate from '../../components/templates/EditorialTemplate.astro';
-import Image from '../../components/Image.astro';
 import PublicDetailHero from '../../components/public/PublicDetailHero.astro';
 import PublicDetailBody from '../../components/public/PublicDetailBody.astro';
 import PublicStickyCTA from '../../components/public/PublicStickyCTA.astro';
-import { linkifyContent } from '../../lib/seo/internal-linker';
+import AdSenseSlot from '../../components/ads/AdSenseSlot.astro';
+import { getInternalLinkSuggestions, linkifyContent } from '../../lib/seo/internal-linker';
 import PublicSidebarCard from '../../components/public/PublicSidebarCard.astro';
 import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import PublicContentSection from '../../components/public/PublicContentSection.astro';
 import PublicRichProse from '../../components/public/PublicRichProse.astro';
+import InternalBacklinks from '../../components/seo/InternalBacklinks.astro';
 import { queryOne } from '../../lib/postgres';
 import RelatedPosts from '../../components/blog/RelatedPosts.astro';
 import BlogRelatedEvents from '../../components/blog/BlogRelatedEvents.astro';
@@ -19,6 +20,7 @@ import { buildPageSeo } from '../../lib/seo/pageSeo';
 import { getPublicAppUrl } from '../../lib/public-app-url';
 import { resolveBlogImage } from '../../lib/public-image-resolvers';
 import { getCachedPublicRouteData } from '../../lib/public-route-cache';
+import { escapeHTML, sanitizeHTML, sanitizeURL, stripHTML } from '../../lib/security/xss';
 const baseUrl = getPublicAppUrl();
 
 const { slug } = Astro.params;
@@ -35,7 +37,10 @@ try {
  );
 
  if (post) {
- post.content_html = post.content;
+ post.content_html = typeof post.content === 'string' && /<\/?[a-z][\s\S]*>/i.test(post.content)
+  ? post.content
+  : null;
+ post.content_markdown = post.content_html ? null : post.content;
  post.reading_time = Math.ceil((post.content || '').split(/\s+/).length / 200);
  }
 } catch (e) {
@@ -112,6 +117,96 @@ const title = post.title;
 const description = post.excerpt || post.meta_description || '';
 const getBlogImage = (entry: any) => resolveBlogImage(entry);
 
+function isSafeLocalImage(src: string): boolean {
+ return src.startsWith('/') && !src.startsWith('//') && !src.includes('\\');
+}
+
+function normalizeTagLabel(tag: any): string {
+ return typeof tag === 'string' ? tag : (tag?.name || tag?.slug || String(tag || '')).trim();
+}
+
+function normalizeTagSlug(tag: any): string {
+ const label = normalizeTagLabel(tag);
+ return typeof tag === 'string'
+  ? label.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '')
+  : (tag?.slug || label.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, ''));
+}
+
+function renderMarkdownAsHtml(markdown: string): string {
+ const lines = String(markdown || '').replace(/\r\n/g, '\n').split('\n');
+ const parts: string[] = [];
+ let listItems: string[] = [];
+ let paragraph: string[] = [];
+
+ const flushList = () => {
+  if (listItems.length > 0) {
+   parts.push(`<ul>${listItems.map(item => `<li>${item}</li>`).join('')}</ul>`);
+   listItems = [];
+  }
+ };
+ const flushParagraph = () => {
+  if (paragraph.length > 0) {
+   parts.push(`<p>${paragraph.join(' ')}</p>`);
+   paragraph = [];
+  }
+ };
+
+ for (const rawLine of lines) {
+  const line = rawLine.trim();
+  if (!line) {
+   flushParagraph();
+   flushList();
+   continue;
+  }
+
+  const imageMatch = line.match(/^!\[(.*?)\]\((.*?)\)$/);
+  if (imageMatch) {
+   flushParagraph();
+   flushList();
+   const src = imageMatch[2].trim();
+   const safeSrc = isSafeLocalImage(src) ? src : sanitizeURL(src);
+   if (safeSrc) {
+    parts.push(`<figure><${'img'} src="${escapeHTML(safeSrc)}" alt="${escapeHTML(imageMatch[1] || '')}" loading="lazy" /></figure>`);
+   }
+   continue;
+  }
+
+  const heading = line.match(/^(#{1,4})\s+(.+)$/);
+  if (heading) {
+   flushParagraph();
+   flushList();
+   const level = Math.min(heading[1].length, 4);
+   parts.push(`<h${level}>${escapeHTML(heading[2])}</h${level}>`);
+   continue;
+  }
+
+  if (line.startsWith('- ')) {
+   flushParagraph();
+   listItems.push(escapeHTML(line.slice(2)));
+   continue;
+  }
+
+  flushList();
+  paragraph.push(escapeHTML(line));
+ }
+
+ flushParagraph();
+ flushList();
+ return parts.join('\n');
+}
+
+const rawContentHtml = post.content_html
+ ? sanitizeHTML(post.content_html)
+ : renderMarkdownAsHtml(post.content || post.content_markdown || '');
+const linkedContentHtml = linkifyContent(rawContentHtml, `/blog/${post.slug}`);
+const internalBacklinks = getInternalLinkSuggestions({
+ text: `${post.title} ${post.excerpt || ''} ${stripHTML(rawContentHtml)}`,
+ selfUrl: `/blog/${post.slug}`,
+ category: post.category,
+ tags: post.tags,
+ limit: 6,
+});
+
 // İçerikten gerçek FAQ Q&A çiftlerini çıkar (<h2>Sık Sorulan Sorular</h2> sonrasındaki <h3>/<p> blokları)
 function extractContentFaq(html: string): Array<{S: string; C: string}> {
  if (!html || !html.includes('Sık Sorulan Sorular')) return [];
@@ -122,7 +217,7 @@ function extractContentFaq(html: string): Array<{S: string; C: string}> {
   .filter(p => p.S && p.C);
 }
 
-const contentFaq = post?.content ? extractContentFaq(post.content) : [];
+const contentFaq = extractContentFaq(rawContentHtml);
 const staticFaqItems = [
  {
   S: `${post.title} hakkında ne bilinmeli?`,
@@ -198,14 +293,14 @@ const seo = buildPageSeo({
  description,
  ogImage: blogOgImage.includes('placeholder') ? undefined : blogOgImage,
  canonical: `/blog/${post.slug}`,
- keywords: post.tags?.length ? post.tags : ['Şanlıurfa', 'şehir rehberi', post.category || 'blog'],
+ keywords: post.tags?.length ? post.tags.map(normalizeTagLabel).filter(Boolean) : ['Şanlıurfa', 'şehir rehberi', post.category || 'blog'],
  type: 'article',
  publishedTime: post.published_at ? new Date(post.published_at).toISOString() : undefined,
  modifiedTime: post.updated_at ? new Date(post.updated_at).toISOString() : undefined,
 });
 ---
 
-<EditorialTemplate seo={seo}>
+<EditorialTemplate seo={seo} wide>
  <style is:inline>
  .bl-content{max-width:100%}
  .bl-excerpt{font-size:1.05rem;color:var(--public-text-soft);font-style:italic;border-left:3px solid var(--public-accent);padding-left:1.25rem;line-height:1.8;margin:0}
@@ -256,43 +351,21 @@ const seo = buildPageSeo({
  </PublicContentSection>
  )}
 
- <PublicContentSection title="Yazının Tamamı">
+ <PublicContentSection>
  <PublicRichProse>
- {post.content_html ? (
- <Fragment set:html={linkifyContent(post.content_html, `/blog/${post.slug}`)} />
- ) : (
- <div>
- {post.content.split('\n').map((line: string) => {
- if (line.startsWith('# ')) {
- return <h1>{line.slice(2)}</h1>;
- } else if (line.startsWith('## ')) {
- return <h2>{line.slice(3)}</h2>;
- } else if (line.startsWith('### ')) {
- return <h3>{line.slice(4)}</h3>;
- } else if (line.startsWith('- ')) {
- return <li>{line.slice(2)}</li>;
- } else if (line.startsWith('![')) {
- const match = line.match(/!\[(.*?)\]\((.*?)\)/);
- if (match) {
- return <Image src={match[2]} alt={match[1]} width={960} height={540} />;
- }
- } else if (line.trim()) {
- return <p>{line}</p>;
- }
- return null;
- })}
- </div>
- )}
+ <Fragment set:html={linkedContentHtml} />
  </PublicRichProse>
  </PublicContentSection>
 
+ <AdSenseSlot placement="blog-detail-inline" label="Sponsorlu Reklam" minHeight={180} />
+
  {post.tags && post.tags.length > 0 && (
- <PublicContentSection title="Etiketler">
+ <PublicContentSection eyebrow="Etiketler">
  <div class="bl-tags">
  <div>
- {post.tags.map((tag: any) => {
-  const label = typeof tag === 'string' ? tag : (tag.name || tag.slug || String(tag));
-  const slugTag = typeof tag === 'string' ? tag.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') : (tag.slug || label.toLowerCase().replace(/\s+/g, '-'));
+{post.tags.map((tag: any) => {
+  const label = normalizeTagLabel(tag);
+  const slugTag = normalizeTagSlug(tag);
   return <a href={`/blog?etiket=${encodeURIComponent(slugTag)}`} class="bl-tag">{label}</a>;
  })}
  </div>
@@ -322,24 +395,23 @@ const seo = buildPageSeo({
  </div>
 
  <Fragment slot="sidebar">
-  <PublicSidebarCard title="Yazı Özeti">
-   <p class="bl-side-text">
-    {post.excerpt || `${post.title} yazısı ${post.category || 'Genel'} kategorisinde yayınlanmıştır.`}
-   </p>
-  </PublicSidebarCard>
   <PublicSidebarCard title="İlgili Sayfalar">
    <nav style="display:flex;flex-direction:column;gap:.5rem">
     {categoryLinks.map((link) => (
-     <a href={link.href} style="display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;background:rgba(184,115,51,.07);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;color:#B87333;font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s" onmouseenter="this.style.background='rgba(184,115,51,.14)'" onmouseleave="this.style.background='rgba(184,115,51,.07)'">
+     <a href={link.href} style="display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;background:rgba(184,115,51,.07);border:1px solid rgba(184,115,51,.14);border-radius:.375rem;color:var(--public-accent);font-size:.875rem;font-weight:600;text-decoration:none;transition:background .15s" onmouseenter="this.style.background='rgba(184,115,51,.14)'" onmouseleave="this.style.background='rgba(184,115,51,.07)'">
       <span style="flex-shrink:0">›</span>
       {link.label}
      </a>
     ))}
    </nav>
   </PublicSidebarCard>
+  <PublicSidebarCard title="İç Backlinkler">
+   <InternalBacklinks links={internalBacklinks} />
+  </PublicSidebarCard>
   <PublicSidebarCard title="Hızlı Cevaplar">
    <PublicFaqList items={faqItems.map((item) => ({ q: item.S, a: item.C }))} />
   </PublicSidebarCard>
+  <AdSenseSlot placement="blog-detail-sidebar" label="Reklam" minHeight={250} />
  </Fragment>
  </PublicDetailBody>
 
@@ -359,9 +431,7 @@ const seo = buildPageSeo({
  <BlogRelatedEvents category={post.category || 'Kültür'} server:defer>
   <div slot="fallback" style="height:8rem" />
  </BlogRelatedEvents>
- <BlogRelatedPlaces category={post.category || 'Turizm'} server:defer>
-  <div slot="fallback" style="height:6rem" />
- </BlogRelatedPlaces>
+ <BlogRelatedPlaces category={post.category || 'Turizm'} />
  <RelatedPosts category={post.category} excludeSlug={post.slug} />
 
  <script define:vars={{ slug: post.slug, title: post.title }} is:inline>
@@ -407,8 +477,8 @@ const seo = buildPageSeo({
  image: (() => { const img = getBlogImage(post); return img.startsWith('http') ? img : `${baseUrl}${img}`; })(),
  datePublished: post.published_at || post.created_at,
  dateModified: post.updated_at || post.published_at || post.created_at,
- wordCount: post.content ? post.content.replace(/<[^>]+>/g, '').split(/\s+/).length : undefined,
- keywords: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
+ wordCount: rawContentHtml ? stripHTML(rawContentHtml).split(/\s+/).filter(Boolean).length : undefined,
+ keywords: Array.isArray(post.tags) ? post.tags.map(normalizeTagLabel).filter(Boolean).join(', ') : (post.tags || ''),
  author: {
  '@type': post.author_name ? 'Person' : 'Organization',
  name: post.author_name || 'Sanliurfa.com Editöryel Ekibi',

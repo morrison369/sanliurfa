@@ -3,6 +3,7 @@ import { query } from '../../../lib/postgres';
 import { authenticateUser } from '../../../lib/auth/middleware';
 import { logger } from '../../../lib/logging';
 import { apiResponse, problemJson, HttpStatus, safeErrorDetail, safeIntParam } from '../../../lib/api';
+import { derivePlaceCrmFields } from '../../../lib/admin/crm-derived';
 import { canTransitionPlaceStatus } from '../../../lib/place/lifecycle';
 import { recordPlaceLifecycleEvent } from '../../../lib/place/lifecycle-events';
 import { deleteCachePattern } from '../../../lib/cache';
@@ -70,9 +71,14 @@ export const GET: APIRoute = async (context) => {
     ]);
     const total = parseInt(countResult.rows[0]?.count || '0', 10);
 
+    const places = result.rows.map((row) => ({
+      ...row,
+      ...derivePlaceCrmFields(row),
+    }));
+
     return apiResponse({
       success: true,
-      places: result.rows,
+      places,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
     }, HttpStatus.OK);
 

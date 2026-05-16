@@ -1,0 +1,221 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { CLASSIFIED_CITY } from '../data/classified-categories';
+import { getClassifiedCategoryTree, getClassifiedDistricts } from '../lib/classifieds';
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect('/giris?redirect=/ilan-ekle');
+}
+
+const categories = getClassifiedCategoryTree();
+const districts = getClassifiedDistricts();
+const seo = {
+  title: 'Ücretsiz İlan Ver | Sanliurfa.com',
+  description: 'Sanliurfa.com üyelerine özel ücretsiz Şanlıurfa ilanı ekleme ekranı.',
+  noIndex: true,
+};
+---
+
+<Layout seo={seo}>
+  <main class="create-listing">
+    <section class="create-hero">
+      <p>Üyelere özel</p>
+      <h1>Ücretsiz Şanlıurfa ilanı ver</h1>
+      <span>Şehir alanı kilitli: {CLASSIFIED_CITY}. Diğer şehir veya ülke seçimi bulunmaz.</span>
+    </section>
+
+    <form class="listing-form" method="post" action="/api/classifieds" enctype="multipart/form-data">
+      <section>
+        <h2>Temel bilgiler</h2>
+        <label>
+          İlan başlığı
+          <input name="title" required minlength="8" maxlength="180" placeholder="Örn. Karaköprü'de sahibinden temiz daire" />
+        </label>
+        <label>
+          Kategori
+          <select name="categorySlug" required>
+            <option value="">Alt kategori seçin</option>
+            {categories.map((parent) => (
+              <optgroup label={parent.name}>
+                {(parent.children ?? []).map((child) => <option value={child.slug}>{child.name}</option>)}
+              </optgroup>
+            ))}
+          </select>
+        </label>
+        <label>
+          Açıklama
+          <textarea name="description" required minlength="30" maxlength="6000" rows="8" placeholder="İlanın durumunu, öne çıkan özelliklerini ve teslim/görüşme detaylarını yazın."></textarea>
+        </label>
+      </section>
+
+      <section>
+        <h2>Fiyat ve konum</h2>
+        <div class="form-grid">
+          <label>
+            Fiyat
+            <input name="price" inputmode="decimal" placeholder="Örn. 1250000" />
+          </label>
+          <label>
+            İlçe
+            <select name="district" required>
+              <option value="">Şanlıurfa ilçesi seçin</option>
+              {districts.map((district) => <option value={district}>{district}</option>)}
+            </select>
+          </label>
+        </div>
+        <div class="form-grid">
+          <label>
+            Mahalle
+            <input name="neighborhood" maxlength="120" placeholder="Örn. Atakent" />
+          </label>
+          <label>
+            Ürün/ilan durumu
+            <select name="condition">
+              <option value="belirtilmedi">Belirtilmedi</option>
+              <option value="sifir">Sıfır</option>
+              <option value="ikinci-el">İkinci el</option>
+              <option value="hasarli">Hasarlı</option>
+              <option value="kiralik">Kiralık</option>
+              <option value="satilik">Satılık</option>
+            </select>
+          </label>
+        </div>
+        <label>
+          Adres notu
+          <input name="address" maxlength="600" placeholder="Açık adres yerine güvenli, kısa konum notu yazabilirsiniz." />
+        </label>
+      </section>
+
+      <section>
+        <h2>İletişim ve görsel</h2>
+        <label>
+          Telefon
+          <input name="phone" maxlength="30" placeholder="05xx xxx xx xx" />
+        </label>
+        <label>
+          Görsel yükle
+          <input type="file" name="photos" accept="image/jpeg,image/png,image/webp,image/gif" multiple />
+          <small>En fazla 10 görsel, dosya başına 8MB. Dosyalar local storage içine kaydedilir.</small>
+        </label>
+        <label>
+          Mevcut local görsel yolları
+          <textarea name="images" rows="4" placeholder="/uploads/photos/ilan/ornek.webp&#10;/images/yerel-gorsel.webp"></textarea>
+          <small>Opsiyonel. Sadece local `/uploads/` veya `/images/` yolları kabul edilir.</small>
+        </label>
+      </section>
+
+      <footer class="form-actions">
+        <a href="/ilanlar">İlanlara dön</a>
+        <button type="submit">Ücretsiz ilanı gönder</button>
+      </footer>
+    </form>
+  </main>
+</Layout>
+
+<style>
+  .create-listing {
+    background: #fffaf0;
+    color: #24170f;
+    min-height: 100vh;
+    padding: 2rem clamp(1rem, 3vw, 2.5rem) 4rem;
+  }
+  .create-hero,
+  .listing-form {
+    margin-inline: auto;
+    max-width: 58rem;
+  }
+  .create-hero {
+    background: #24170f;
+    border-radius: 2rem;
+    color: white;
+    margin-bottom: 1rem;
+    padding: clamp(1.5rem, 4vw, 3rem);
+  }
+  .create-hero p {
+    color: #f3c45f;
+    font-weight: 900;
+    letter-spacing: .08em;
+    margin: 0 0 .7rem;
+    text-transform: uppercase;
+  }
+  .create-hero h1 {
+    font-size: clamp(2.2rem, 5vw, 4rem);
+    line-height: .95;
+    margin: 0 0 1rem;
+  }
+  .create-hero span {
+    color: #eadcc4;
+  }
+  .listing-form {
+    display: grid;
+    gap: 1rem;
+  }
+  .listing-form section {
+    background: white;
+    border: 1px solid #eadcc4;
+    border-radius: 1.5rem;
+    padding: 1rem;
+  }
+  .listing-form h2 {
+    font-size: 1.1rem;
+    margin: 0 0 1rem;
+  }
+  label {
+    color: #604c3a;
+    display: grid;
+    font-weight: 900;
+    gap: .45rem;
+    margin-bottom: .9rem;
+  }
+  input,
+  select,
+  textarea {
+    border: 1px solid #e2c79d;
+    border-radius: 1rem;
+    color: #24170f;
+    font: inherit;
+    padding: .9rem 1rem;
+  }
+  textarea {
+    resize: vertical;
+  }
+  small {
+    color: #8a6a4d;
+    font-weight: 600;
+  }
+  .form-grid {
+    display: grid;
+    gap: .9rem;
+    grid-template-columns: 1fr 1fr;
+  }
+  .form-actions {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+  .form-actions a {
+    color: #78331d;
+    font-weight: 900;
+    text-decoration: none;
+  }
+  .form-actions button {
+    background: #78331d;
+    border: 0;
+    border-radius: 999px;
+    color: white;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 900;
+    padding: .95rem 1.25rem;
+  }
+  @media (max-width: 42rem) {
+    .form-grid,
+    .form-actions {
+      align-items: stretch;
+      grid-template-columns: 1fr;
+      flex-direction: column;
+    }
+  }
+</style>

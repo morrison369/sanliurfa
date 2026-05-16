@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-05-15T12:06:48.678Z",
+  "mode": "live",
+  "baseUrl": "https://sanliurfa.com",
+  "status": "passed",
+  "checks": [
+    {
+      "name": "public ads.txt exists",
+      "ok": true,
+      "detail": "public/ads.txt"
+    },
+    {
+      "name": "public ads.txt exact publisher line",
+      "ok": true,
+      "detail": "google.com, pub-7160871802649062, DIRECT, f08c47fec0942fa0"
+    },
+    {
+      "name": "layout adsense meta",
+      "ok": true,
+      "detail": "<meta name=\"google-adsense-account\" content=\"ca-pub-7160871802649062\""
+    },
+    {
+      "name": "layout adsense loader script",
+      "ok": true,
+      "detail": "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7160871802649062 via sf-adsense-loader"
+    },
+    {
+      "name": "robots explicit ads access",
+      "ok": true,
+      "detail": "Mediapartners-Google + /ads.txt"
+    },
+    {
+      "name": "live ads.txt status",
+      "ok": true,
+      "detail": "200 https://sanliurfa.com/ads.txt"
+    },
+    {
+      "name": "live ads.txt content-type",
+      "ok": true,
+      "detail": "text/plain; charset=utf-8"
+    },
+    {
+      "name": "live ads.txt exact publisher line",
+      "ok": true,
+      "detail": "google.com, pub-7160871802649062, DIRECT, f08c47fec0942fa0"
+    },
+    {
+      "name": "live ads.txt no html fallback",
+      "ok": true,
+      "detail": "google.com, pub-7160871802649062, DIRECT, f08c47fec0942fa0 "
+    },
+    {
+      "name": "live ads.txt crawler variants",
+      "ok": true,
+      "detail": "Mediapartners-Google:200:sanliurfa.com, AdsBot-Google:200:sanliurfa.com, Googlebot:200:sanliurfa.com, Mediapartners-Google:200:sanliurfa.com, AdsBot-Google:200:sanliurfa.com, Googlebot:200:sanliurfa.com, Mediapartners-Google:200:www.sanliurfa.com, AdsBot-Google:200:www.sanliurfa.com, Googlebot:200:www.sanliurfa.com"
+    },
+    {
+      "name": "live adsense meta",
+      "ok": true,
+      "detail": "200 https://sanliurfa.com/"
+    },
+    {
+      "name": "live adsense loader script",
+      "ok": true,
+      "detail": "200 https://sanliurfa.com/"
+    },
+    {
+      "name": "live robots adsense crawler",
+      "ok": true,
+      "detail": "200 https://sanliurfa.com/robots.txt"
+    }
+  ]
+}

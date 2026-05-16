@@ -5,7 +5,7 @@ import type { MiddlewareHandler } from 'astro';
  * Adds performance-related headers and optimizations
  */
 
-export const performanceOptimizations: MiddlewareHandler = async (context, next) => {
+export const performanceOptimizations: MiddlewareHandler = async (_context, next) => {
   const startTime = Date.now();
   const response = await next();
   const duration = Date.now() - startTime;
@@ -15,12 +15,6 @@ export const performanceOptimizations: MiddlewareHandler = async (context, next)
   // Add Server-Timing header for debugging
   if (process.env.NODE_ENV === 'development') {
     headers.set('Server-Timing', `total;dur=${duration}`);
-  }
-  
-  // Resource hints for critical assets
-  if (context.url.pathname === '/') {
-    // Preconnect to external domains
-    headers.set('Link', '<https://fonts.googleapis.com>; rel=preconnect, <https://fonts.gstatic.com>; rel=preconnect; crossorigin');
   }
   
   // Compression is handled by nginx, but add vary header

@@ -1,0 +1,19 @@
+{
+  "generatedAt": "2026-05-15T12:07:48.901Z",
+  "status": "idle",
+  "redis": {
+    "host": "127.0.0.1",
+    "port": 6381,
+    "hasPassword": true,
+    "pingOk": false,
+    "latencyMs": 1,
+    "detail": "connect ECONNREFUSED 127.0.0.1:6381"
+  },
+  "policy": {
+    "fallbackAllowed": true,
+    "globalPort6379AllowedForProjectRedis": false,
+    "releaseBlocker": false,
+    "idleAccepted": true,
+    "requireRunning": false
+  }
+}

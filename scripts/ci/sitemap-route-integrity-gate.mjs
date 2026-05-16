@@ -26,6 +26,10 @@ const enforceFinalUrl =
   process.env.SITEMAP_ROUTE_STRICT_FINAL_URL === '1' ||
   (mode === 'prod' && process.env.SITEMAP_ROUTE_STRICT_FINAL_URL !== '0');
 const maxUrlsRaw = args.get('max-urls') || process.env.SITEMAP_ROUTE_MAX_URLS || 'all';
+const verbose =
+  flags.has('verbose') ||
+  args.get('verbose') === '1' ||
+  process.env.SITEMAP_ROUTE_VERBOSE === '1';
 
 function fail(message, details = []) {
   console.error(`[sitemap-route-integrity-gate] ${message}`);
@@ -171,10 +175,23 @@ console.log(
 const results = await runQueue(checkedUrls);
 const failures = results.filter((result) => !result.ok);
 
-for (const result of results) {
-  const marker = result.ok ? 'ok' : 'fail';
-  const status = result.status || 0;
-  console.log(`${marker} ${status} ${result.url} (${result.durationMs}ms)`);
+const maxMs = Math.max(...results.map((result) => result.durationMs));
+const avgMs = Math.round(results.reduce((sum, result) => sum + result.durationMs, 0) / results.length);
+
+if (verbose) {
+  for (const result of results) {
+    const marker = result.ok ? 'ok' : 'fail';
+    const status = result.status || 0;
+    console.log(`${marker} ${status} ${result.url} (${result.durationMs}ms)`);
+  }
+} else {
+  console.log(
+    `sitemap-route-integrity-gate: checked ${results.length} URLs (${mode}, ok=${results.length - failures.length}, fail=${failures.length}, max=${maxMs}ms, avg=${avgMs}ms)`,
+  );
+  for (const result of failures) {
+    const status = result.status || 0;
+    console.log(`fail ${status} ${result.url} (${result.durationMs}ms)`);
+  }
 }
 
 if (failures.length > 0) {
@@ -183,6 +200,4 @@ if (failures.length > 0) {
   ));
 }
 
-const maxMs = Math.max(...results.map((result) => result.durationMs));
-const avgMs = Math.round(results.reduce((sum, result) => sum + result.durationMs, 0) / results.length);
 console.log(`sitemap-route-integrity-gate: PASS (${mode}, urls=${results.length}, max=${maxMs}ms, avg=${avgMs}ms)`);

@@ -1,0 +1,268 @@
+{
+  "generatedAt": "2026-05-14T21:20:59.354Z",
+  "status": "observation_required",
+  "sourceAudit": "docs/db-usage-audit.json",
+  "policy": {
+    "observationDays": 14,
+    "earliestActionAt": "2026-05-28T21:20:59.354Z",
+    "automaticDropAllowed": false,
+    "automaticIndexDropAllowed": false,
+    "requiredEvidence": [
+      "14 gun production pg_stat_user_tables / pg_stat_user_indexes gozlemi",
+      "kod referansi ve migration sahipligi kontrolu",
+      "unique/primary/foreign-key constraint etkisi kontrolu",
+      "EXPLAIN/query plan review",
+      "rollback migration veya restore plani"
+    ]
+  },
+  "summary": {
+    "p0DropCandidateCount": 3,
+    "p0QuarantineCandidateCount": 2,
+    "p0RuntimeHoldCount": 1,
+    "p1ReviewCandidateCount": 0,
+    "p2UnusedIndexCandidateCount": 766
+  },
+  "actionQueue": {
+    "p0": [
+      {
+        "table": "public.campaign_metrics",
+        "reason": "speculative_or_legacy + zero rows + no observed activity",
+        "evidence": {
+          "owner": "marketing campaign analytics",
+          "sourceFiles": [
+            "src/migrations/104_marketing_campaigns.ts",
+            "src/components/MarketingCampaignBuilder.tsx",
+            "src/pages/api/marketing-campaigns/[id]/analytics.ts"
+          ],
+          "migrationSources": [
+            "104_marketing_campaigns.ts"
+          ],
+          "replacementTables": [
+            "marketing_campaigns",
+            "campaign_performance"
+          ],
+          "note": "Marketing campaign v2 metrics table. Zero-row signal alone is not enough; confirm analytics endpoint and UI no longer depend on this physical table before quarantine."
+        },
+        "sourceReferences": {
+          "table": "public.campaign_metrics",
+          "runtimeReferenceCount": 0,
+          "migrationReferenceCount": 0,
+          "runtimeReferences": [],
+          "status": "no_runtime_reference"
+        },
+        "action": "observe_then_quarantine_migration",
+        "blocker": "production observation evidence missing"
+      },
+      {
+        "table": "public.campaign_segments",
+        "reason": "speculative_or_legacy + zero rows + no observed activity",
+        "evidence": {
+          "owner": "marketing campaign targeting",
+          "sourceFiles": [
+            "src/migrations/104_marketing_campaigns.ts",
+            "src/pages/api/marketing-campaigns/[id]/targeting.ts",
+            "src/lib/marketing/marketing-campaigns.ts"
+          ],
+          "migrationSources": [
+            "104_marketing_campaigns.ts"
+          ],
+          "replacementTables": [
+            "campaign_targeting"
+          ],
+          "note": "Marketing campaign segment bridge. Confirm targeting API and campaign UI no longer write/read before quarantine."
+        },
+        "sourceReferences": {
+          "table": "public.campaign_segments",
+          "runtimeReferenceCount": 0,
+          "migrationReferenceCount": 0,
+          "runtimeReferences": [],
+          "status": "no_runtime_reference"
+        },
+        "action": "observe_then_quarantine_migration",
+        "blocker": "production observation evidence missing"
+      }
+    ],
+    "p0RuntimeHold": [
+      {
+        "table": "public.campaign_performance",
+        "reason": "speculative_or_legacy + zero rows + no observed activity",
+        "evidence": {
+          "owner": "email/marketing campaign performance",
+          "sourceFiles": [
+            "src/migrations/064_marketing_campaigns.ts",
+            "src/migrations/073_email_campaigns.ts",
+            "src/lib/email/email-campaigns.ts",
+            "src/pages/api/marketing-campaigns/[id]/analytics.ts"
+          ],
+          "migrationSources": [
+            "064_marketing_campaigns.ts",
+            "073_email_campaigns.ts"
+          ],
+          "replacementTables": [],
+          "note": "Duplicate-era campaign performance table. Requires migration ownership review because both marketing and email campaign migrations touched it."
+        },
+        "sourceReferences": {
+          "table": "public.campaign_performance",
+          "runtimeReferenceCount": 2,
+          "migrationReferenceCount": 0,
+          "runtimeReferences": [
+            {
+              "file": "src/lib/marketing/marketing-campaigns.ts",
+              "migrationOnly": false
+            },
+            {
+              "file": "src/lib/email/email-analytics.ts",
+              "migrationOnly": false
+            }
+          ],
+          "status": "runtime_hold"
+        },
+        "action": "runtime_reference_hold",
+        "blocker": "runtime source references present"
+      }
+    ],
+    "p1": [],
+    "p2": [
+      {
+        "table": "blog_posts",
+        "index": "idx_blog_posts_search",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "client_performance_metrics",
+        "index": "idx_perf_metrics_timestamp",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "social_event_store",
+        "index": "idx_social_event_store_tenant_event_created",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "user_social_stats",
+        "index": "idx_social_stats_user",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "users",
+        "index": "idx_users_points",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "user_activities",
+        "index": "idx_activities_type",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "conversations",
+        "index": "idx_conversations_participant_a",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "conversations",
+        "index": "idx_conversations_participant_b",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "direct_messages",
+        "index": "idx_direct_messages_conversation",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "direct_messages",
+        "index": "idx_direct_messages_sender",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "direct_messages",
+        "index": "idx_direct_messages_unread",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "social_event_store",
+        "index": "idx_social_event_store_actor_target",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "user_follows",
+        "index": "idx_user_follows_follower",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "user_follows",
+        "index": "idx_user_follows_following",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "user_match_profiles",
+        "index": "idx_user_match_profiles_discoverable",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "users",
+        "index": "idx_users_email_verified",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "users",
+        "index": "idx_users_language",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "users",
+        "index": "idx_users_last_login_at",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "users",
+        "index": "idx_users_level",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      },
+      {
+        "table": "users",
+        "index": "idx_users_onboarding_completed",
+        "reason": "idx_scan=0 and not unique/constraint protected in current stats",
+        "action": "index_usage_and_query_plan_review",
+        "blocker": "idx_scan=0 alone is not sufficient evidence"
+      }
+    ]
+  }
+}

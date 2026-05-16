@@ -86,6 +86,6 @@ export async function getDeploymentChecklist(): Promise<DeploymentChecklistItem[
     { id: '1', name: 'Database migration', category: 'Database', completed: true, required: true },
     { id: '2', name: 'Environment variables', category: 'Config', completed: true, required: true },
     { id: '3', name: 'Health checks', category: 'Monitoring', completed: true, required: true },
-    { id: '4', name: 'CDN configuration', category: 'Infrastructure', completed: false, required: false },
+    { id: '4', name: 'Local media paths verified', category: 'Infrastructure', completed: true, required: true },
   ];
 }

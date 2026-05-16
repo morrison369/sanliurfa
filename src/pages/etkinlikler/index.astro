@@ -5,7 +5,7 @@ import PublicPageIntro from '../../components/public/PublicPageIntro.astro';
 import PublicCollectionList from '../../components/public/PublicCollectionList.astro';
 import PublicFaqList from '../../components/public/PublicFaqList.astro';
 import EventCalendarToggle from '../../components/events/EventCalendarToggle';
-import { query } from '../../lib/postgres';
+import { queryReadMany } from '../../lib/postgres';
 import { getCachedPublicRouteData } from '../../lib/public-route-cache';
 import { getPublicAppUrl } from '../../lib/public-app-url';
 import { logger } from '../../lib/logging';
@@ -15,8 +15,25 @@ const queryParam = Astro.url.searchParams.get('q') || '';
 const kategoriParam = Astro.url.searchParams.get('kategori') || '';
 const ayParam = Astro.url.searchParams.get('ay') || '';
 const validAy = /^\d{4}-(0[1-9]|1[0-2])$/.test(ayParam) ? ayParam : '';
+const EVENTS_PAGE_CACHE_TTL_MS = 300_000;
+const EVENT_LIST_LIMIT = 80;
+const CALENDAR_EVENT_LIMIT = 42;
 
-const values: any[] = [];
+type EventListRow = {
+ id: string;
+ title: string;
+ slug: string;
+ description: string | null;
+ start_date: string | Date;
+ end_date: string | Date | null;
+ location: string | null;
+ category: string | null;
+ is_featured: boolean;
+ is_free: boolean;
+ image_url: string | null;
+};
+
+const values: Array<string> = [];
 const conditions: string[] = [
   "status = 'published'",
   "(end_date IS NULL OR end_date >= CURRENT_DATE)",
@@ -39,17 +56,73 @@ if (kategoriParam) {
   conditions.push(`category = $${values.length}`);
 }
 
-const sql = `SELECT * FROM events WHERE ${conditions.join(' AND ')} ORDER BY is_featured DESC, start_date ASC LIMIT 80`;
+const sql = `SELECT
+ id,
+ title,
+ slug,
+ LEFT(COALESCE(description, ''), 220) AS description,
+ start_date,
+ end_date,
+ location,
+ category,
+ COALESCE(is_featured, false) AS is_featured,
+ COALESCE(is_free, false) AS is_free,
+ image_url
+FROM events
+WHERE ${conditions.join(' AND ')}
+ORDER BY is_featured DESC, start_date ASC
+LIMIT ${EVENT_LIST_LIMIT}`;
 const filterKey = [queryParam, kategoriParam, validAy].filter(Boolean).join(':') || 'all';
 
-let events: any[] = [];
+let events: EventListRow[] = [];
 let availableCategories: string[] = [];
 let availableMonths: { label: string; value: string }[] = [];
 
-const formatDate = (dateStr: string) =>
- new Date(dateStr).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+const formatDate = (dateValue: string | Date) =>
+ new Date(dateValue).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
 
-const getEventImage = (event: any) => resolveEventImage(event);
+const getEventImage = (event: EventListRow) => resolveEventImage(event);
+const showCalendarToggle = !queryParam && !kategoriParam && !validAy;
+
+function summarizeDescription(value: string | null): string | undefined {
+ if (typeof value !== 'string') return undefined;
+ const normalized = value.replace(/\s+/g, ' ').trim();
+ if (!normalized) return undefined;
+ return normalized.length > 180 ? `${normalized.slice(0, 177).trimEnd()}...` : normalized;
+}
+
+function toCalendarEvent(event: EventListRow) {
+ return {
+  id: String(event.id),
+  title: event.title,
+  slug: event.slug,
+  start_date: event.start_date instanceof Date ? event.start_date.toISOString() : String(event.start_date ?? ''),
+  ...(event.end_date ? { end_date: event.end_date instanceof Date ? event.end_date.toISOString() : String(event.end_date) } : {}),
+  ...(event.location ? { location: event.location } : {}),
+  ...(event.category ? { category: event.category } : {}),
+  is_free: event.is_free,
+  ...(event.image_url ? { image_url: event.image_url } : {}),
+ };
+}
+
+function toCollectionItem(event: EventListRow) {
+ const description = summarizeDescription(event.description);
+ return {
+  href: `/etkinlikler/${event.slug}`,
+  title: event.title,
+  ...(description ? { description } : {}),
+  imageSrc: getEventImage(event),
+  imageAlt: event.title,
+  badges: [
+   ...(event.category ? [{ label: event.category }] : []),
+   ...(event.is_featured ? [{ label: 'Öne Çıkan', tone: 'accent' as const }] : []),
+  ],
+  metaItems: [
+   { label: `${formatDate(event.start_date)}${event.end_date ? ` — ${formatDate(event.end_date)}` : ''}`, icon: 'lucide:calendar' },
+   ...(event.location ? [{ label: event.location, icon: 'lucide:map-pin' }] : []),
+  ],
+ };
+}
 
 const seo = {
  title: 'Etkinlikler — Şanlıurfa\'da Bugün ve Yakında',
@@ -68,21 +141,46 @@ const faqItems = [
 ];
 
 try {
- const data = await getCachedPublicRouteData(`page:etkinlikler:index:${filterKey}`, async () => {
-  const [eventsResult, catsResult, monthsResult] = await Promise.all([
-   query(sql, values),
-   query(`SELECT DISTINCT category FROM events WHERE status='published' AND category IS NOT NULL AND category <> '' ORDER BY category`),
-   query(`SELECT DISTINCT TO_CHAR(DATE_TRUNC('month',start_date),'YYYY-MM') AS m FROM events WHERE status='published' AND start_date >= CURRENT_DATE ORDER BY m LIMIT 12`),
-  ]);
-  return {
-   events: eventsResult.rows,
-   categories: catsResult.rows.map((r: any) => r.category as string),
-   months: monthsResult.rows.map((r: any) => r.m as string),
-  };
- });
- events = data.events;
- availableCategories = data.categories;
- availableMonths = data.months.map((m: string) => {
+ const [eventsData, categoriesData, monthsData] = await Promise.all([
+  getCachedPublicRouteData(
+   `page:etkinlikler:index:${filterKey}:events`,
+   () => queryReadMany<EventListRow>(sql, values),
+   EVENTS_PAGE_CACHE_TTL_MS,
+  ),
+  getCachedPublicRouteData(
+   'page:etkinlikler:index:categories',
+   async () => {
+    const rows = await queryReadMany<{ category: string }>(
+     `SELECT DISTINCT category
+      FROM events
+      WHERE status = 'published'
+        AND category IS NOT NULL
+        AND category <> ''
+      ORDER BY category`,
+    );
+    return rows.map((row) => row.category);
+   },
+   EVENTS_PAGE_CACHE_TTL_MS,
+  ),
+  getCachedPublicRouteData(
+   'page:etkinlikler:index:months',
+   async () => {
+    const rows = await queryReadMany<{ m: string }>(
+     `SELECT DISTINCT TO_CHAR(DATE_TRUNC('month', start_date), 'YYYY-MM') AS m
+      FROM events
+      WHERE status = 'published'
+        AND start_date >= CURRENT_DATE
+      ORDER BY m
+      LIMIT 12`,
+    );
+    return rows.map((row) => row.m);
+   },
+   EVENTS_PAGE_CACHE_TTL_MS,
+  ),
+ ]);
+ events = eventsData;
+ availableCategories = categoriesData;
+ availableMonths = monthsData.map((m: string) => {
   const [y, mo] = m.split('-');
   const label = new Date(parseInt(y), parseInt(mo) - 1, 1).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
   return { label, value: m };
@@ -158,39 +256,15 @@ try {
   </div>
  )}
 
- {events.length > 0 && !queryParam && !kategoriParam && !validAy && (
-  <EventCalendarToggle
-   client:visible={{ rootMargin: '200px' }}
-   events={events.map((e) => ({
-    id: String(e.id),
-    title: e.title,
-    slug: e.slug,
-    start_date: e.start_date instanceof Date ? e.start_date.toISOString() : String(e.start_date ?? ''),
-    end_date: e.end_date ? (e.end_date instanceof Date ? e.end_date.toISOString() : String(e.end_date)) : undefined,
-    location: e.location,
-    category: e.category,
-    is_free: e.is_free,
-    image_url: e.image_url,
-   }))}
+ {events.length > 0 && showCalendarToggle && (
+ <EventCalendarToggle
+  client:visible={{ rootMargin: '200px' }}
+   events={events.slice(0, CALENDAR_EVENT_LIMIT).map((event) => toCalendarEvent(event))}
   />
  )}
  {events.length > 0 ? (
  <PublicCollectionList
-  items={events.map((event) => ({
-   href: `/etkinlikler/${event.slug}`,
-   title: event.title,
-   description: event.description,
-   imageSrc: getEventImage(event),
-   imageAlt: event.title,
-   badges: [
-    ...(event.category ? [{ label: event.category }] : []),
-    ...(event.is_featured ? [{ label: 'Öne Çıkan', tone: 'accent' as const }] : []),
-   ],
-   metaItems: [
-    { label: `${formatDate(event.start_date)}${event.end_date ? ` — ${formatDate(event.end_date)}` : ''}`, icon: 'lucide:calendar' },
-    ...(event.location ? [{ label: event.location, icon: 'lucide:map-pin' }] : []),
-   ],
-  }))}
+  items={events.map((event) => toCollectionItem(event))}
  />
  ) : (
  <div class="et-empty">
@@ -225,7 +299,7 @@ try {
  <script type="application/ld+json" set:html={JSON.stringify({
  '@context': 'https://schema.org', '@type': 'ItemList',
  name: 'Şanlıurfa Etkinlik Listesi',
- itemListElement: events.slice(0, 12).map((event, index) => ({
+ itemListElement: events.slice(0, 8).map((event, index) => ({
  '@type': 'ListItem', position: index + 1,
  name: event.title, url: `${baseUrl}/etkinlikler/${event.slug}`,
  })),

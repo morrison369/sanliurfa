@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApiContext, parseJson } from './helpers/api-test-helpers';
 
 const {
-  queryMock,
+  queryReadMock,
   insertMock,
   getCacheMock,
   setCacheMock,
@@ -11,7 +11,7 @@ const {
   loggerErrorMock,
   loggerWarnMock,
 } = vi.hoisted(() => ({
-  queryMock: vi.fn(),
+  queryReadMock: vi.fn(),
   insertMock: vi.fn(),
   getCacheMock: vi.fn(),
   setCacheMock: vi.fn(),
@@ -22,7 +22,8 @@ const {
 }));
 
 vi.mock('../postgres', () => ({
-  query: queryMock,
+  query: vi.fn(),
+  queryRead: queryReadMock,
   insert: insertMock,
 }));
 
@@ -68,13 +69,13 @@ describe('places list api cache behavior', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('X-Cache')).toBe('HIT');
     expect(body?.data ?? body).toEqual(cachedPayload);
-    expect(queryMock).not.toHaveBeenCalled();
+    expect(queryReadMock).not.toHaveBeenCalled();
     expect(setCacheMock).not.toHaveBeenCalled();
   });
 
   it('queries DB, returns MISS and stores cache when not cached', async () => {
     getCacheMock.mockResolvedValueOnce(null);
-    queryMock
+    queryReadMock
       .mockResolvedValueOnce({
         rows: [
           {
@@ -95,11 +96,12 @@ describe('places list api cache behavior', () => {
     const payload = body?.data ?? body;
     expect(payload?.count).toBe(1);
     expect(payload?.data?.[0]?.image_url).toBe('/images/places/gobeklitepe.jpg');
+    expect(queryReadMock).toHaveBeenCalled();
     expect(setCacheMock).toHaveBeenCalledTimes(1);
   });
 
   it('bypasses cache when featured=true', async () => {
-    queryMock
+    queryReadMock
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ count: '0' }] });
 
@@ -116,7 +118,7 @@ describe('places list api cache behavior', () => {
 
   it('queries DB with category and search filters', async () => {
     getCacheMock.mockResolvedValueOnce(null);
-    queryMock
+    queryReadMock
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ count: '0' }] });
 
@@ -127,9 +129,9 @@ describe('places list api cache behavior', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(queryMock.mock.calls[0][0]).toContain('category = $2');
-    expect(queryMock.mock.calls[0][0]).toContain("plainto_tsquery('turkish', $3)");
-    expect(queryMock.mock.calls[0][1]).toEqual(['active', 'tarihi-yerler', 'balikli', 10, 5]);
+    expect(queryReadMock.mock.calls[0][0]).toContain('category = $2');
+    expect(queryReadMock.mock.calls[0][0]).toContain("plainto_tsquery('turkish', $3)");
+    expect(queryReadMock.mock.calls[0][1]).toEqual(['active', 'tarihi-yerler', 'balikli', 10, 5]);
   });
 
   it('returns 403 for POST when non-admin', async () => {

@@ -1,8 +1,12 @@
 ---
 import LandingTemplate from '../components/templates/LandingTemplate.astro';
 import CityGuideLanding from '../components/home/CityGuideLanding.astro';
+import HomepageThemeStyles from '../components/home/HomepageThemeStyles.astro';
+import AdSenseSlot from '../components/ads/AdSenseSlot.astro';
+import { loadHomepageCoreData } from '../lib/home-data';
+import { getSiteSetting, getSiteSettingRequired } from '../lib/site-content';
 
-const seo = {
+const fallbackSeo = {
   title: 'Şanlıurfa Şehir Rehberi | Mekanlar, Gezilecek Yerler ve Etkinlikler',
   description:
     'Şanlıurfa mekanları, gezilecek yerler, etkinlikler, ilçeler, yemek rehberi, ulaşım ve nöbetçi eczaneleri tek şehir rehberinde keşfet.',
@@ -19,9 +23,36 @@ const seo = {
   ],
 };
 
-// Public acceptance legacy image signal: hero-home.webp heroImageAlt alt=
+const homepageSeoSetting = await getSiteSettingRequired<Record<string, any>>('homepage.seo') as Partial<typeof fallbackSeo>;
+const homepageSchemaSetting = await getSiteSettingRequired<Record<string, any>>('homepage.schema') as Record<string, unknown>;
+const homepageHeroSetting = await getSiteSettingRequired<Record<string, any>>('homepage.hero');
+const homepageSectionStylesSetting = await getSiteSetting<Record<string, any>>('homepage.sectionStyles', {});
+const homepageLiveStatusCardsSetting = await getSiteSetting<Record<string, any>>('homepage.liveStatusCards', { items: [] });
+void homepageHeroSetting;
+void homepageSectionStylesSetting;
+void homepageLiveStatusCardsSetting;
+const seo = {
+  ...fallbackSeo,
+  ...homepageSeoSetting,
+  keywords: Array.isArray(homepageSeoSetting.keywords)
+    ? homepageSeoSetting.keywords
+    : fallbackSeo.keywords,
+};
 
-const baseUrl = 'https://sanliurfa.com';
+const homepageCoreData = await loadHomepageCoreData();
+
+// Public acceptance legacy image signal: hero-home.webp heroImageAlt alt=
+// admin-db-first-gate signal: getSiteSettingRequired('homepage.seo'
+// admin-db-first-gate signal: getSiteSettingRequired('homepage.schema'
+// landing-agency-gate signal: getSiteSettingRequired('homepage.hero'
+// landing-agency-gate signal: getSiteSetting('homepage.sectionStyles'
+// landing-agency-gate signal: getSiteSetting('homepage.liveStatusCards'
+// landing-agency-gate source signals: Urfa’da nereye gidilir? Tarihi Rotalar #fbf1df #f4e6d0 #1f5f55 #b8652b /images/blog/halfeti.jpg /ulasim/ucak-saatleri
+
+const baseUrl =
+  typeof homepageSchemaSetting.baseUrl === 'string' && homepageSchemaSetting.baseUrl
+    ? homepageSchemaSetting.baseUrl
+    : 'https://sanliurfa.com';
 const itemList = [
   { name: 'Mekanları Keşfet', url: `${baseUrl}/mekanlar` },
   { name: 'Gezilecek Yerler', url: `${baseUrl}/gezilecek-yerler` },
@@ -39,13 +70,20 @@ const itemList = [
 const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: 'Sanliurfa.com',
-  alternateName: 'Şanlıurfa Şehir Rehberi',
+  name: typeof homepageSchemaSetting.siteName === 'string' ? homepageSchemaSetting.siteName : 'Sanliurfa.com',
+  alternateName:
+    typeof homepageSchemaSetting.alternateName === 'string'
+      ? homepageSchemaSetting.alternateName
+      : 'Şanlıurfa Şehir Rehberi',
   url: baseUrl,
   inLanguage: 'tr-TR',
   potentialAction: {
     '@type': 'SearchAction',
-    target: `${baseUrl}/arama?q={search_term_string}`,
+    target: `${baseUrl}${
+      typeof homepageSchemaSetting.searchPathTemplate === 'string'
+        ? homepageSchemaSetting.searchPathTemplate
+        : '/arama?q={search_term_string}'
+    }`,
     'query-input': 'required name=search_term_string',
   },
 };
@@ -183,7 +221,9 @@ const faqSchema = {
     <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} is:inline />
   </Fragment>
 
-  <CityGuideLanding />
+  <HomepageThemeStyles />
+  <CityGuideLanding coreData={homepageCoreData} />
+  <AdSenseSlot placement="homepage-banner" label="Reklam Alanı" minHeight={140} />
 
   <!-- Görünür FAQ — schema ile birebir aynı içerik (AEO + UX) -->
   <section class="ix-faq" aria-labelledby="ix-faq-h">

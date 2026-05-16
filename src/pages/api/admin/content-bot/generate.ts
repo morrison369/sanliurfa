@@ -8,31 +8,11 @@ import { requireRole } from '../../../../lib/auth';
 import { query, queryOne } from '../../../../lib/postgres';
 import { createPost } from '../../../../lib/blog/db';
 import { apiResponse, problemJson, HttpStatus, safeErrorDetail } from '../../../../lib/api';
-
-// Content templates
-const CONTENT_TEMPLATES = {
-  'tarihi-yerler': {
-    intro: [
-      '{name}, Şanlıurfa\'nın en önemli tarihi miraslarından biri olarak ziyaretçilerini büyülemeye devam ediyor.',
-      'Binlerce yıllık geçmişiyle {name}, medeniyetlerin beşiği Şanlıurfa\'da görülmesi gereken yerlerin başında geliyor.',
-    ],
-    sections: ['Tarihçe', 'Mimari Özellikler', 'Ziyaret Bilgileri', 'Nasıl Gidilir?', 'Tavsiyeler'],
-  },
-  'restoran': {
-    intro: [
-      'Şanlıurfa mutfağının eşsiz lezzetlerini tatmak için {name} mükemmel bir adres.',
-      'Geleneksel Urfa lezzetlerini modern sunumla birleştiren {name}, damak çatlatan tatlar sunuyor.',
-    ],
-    sections: ['Menü', 'Öne Çıkan Lezzetler', 'Fiyat Aralığı', 'Çalışma Saatleri', 'Konum'],
-  },
-  'otel': {
-    intro: [
-      'Konaklama arayışınıza kaliteli çözümler sunan {name}, Şanlıurfa\'nın merkezi konumunda yer alıyor.',
-      'Rahat ve konforlu bir konaklama deneyimi için {name} ideal bir tercih.',
-    ],
-    sections: ['Oda Seçenekleri', 'Olanaklar', 'Fiyatlar', 'Rezervasyon', 'Ulaşım'],
-  },
-};
+import {
+  generateBlogContentHTMLWithContext,
+  generateSeoMetaDescription,
+} from '../../../../lib/ai/ollama';
+import { sanitizeHTML, stripHTML } from '../../../../lib/security/xss';
 
 interface PlaceRow {
   id?: string | number;
@@ -43,95 +23,83 @@ interface PlaceRow {
   website?: string;
   description?: string;
   slug?: string;
+  opening_hours?: string | Record<string, string> | null;
+  rating?: string | number | null;
+  review_count?: string | number | null;
+  district_name?: string | null;
 }
 
-function generatePlaceContent(place: PlaceRow): { title: string; content: string; excerpt: string } {
-  const template = CONTENT_TEMPLATES[place.category as keyof typeof CONTENT_TEMPLATES] || CONTENT_TEMPLATES['tarihi-yerler'];
-  const intro = template.intro[Math.floor(Math.random() * template.intro.length)].replace('{name}', place.name);
-  
-  const sections = template.sections.map(section => {
-    return `## ${section}
-
-${generateSectionContent(section)}
-`;
-  }).join('\n');
-
-  const content = `${intro}
-
-${sections}
-
-## Sonuç
-
-${place.name}, Şanlıurfa ziyaretinizde mutlaka uğramanız gereken yerlerden biri. Unutulmaz deneyimler için bu mekanı listenize ekleyin.
-
----
-
-**Adres:** ${place.address || 'Şanlıurfa'}  
-**Telefon:** ${place.phone || 'Belirtilmemiş'}  
-**Web:** ${place.website || 'Belirtilmemiş'}
-`;
-
-  return {
-    title: `${place.name} - Şanlıurfa Rehberi`,
-    content,
-    excerpt: `${place.name} hakkında detaylı bilgi, ziyaret saatleri ve tavsiyeler.`,
-  };
+function placeContext(place: PlaceRow): string {
+  return [
+    `Mekan adı: ${place.name}`,
+    `Kategori: ${place.category || 'Belirtilmemiş'}`,
+    `İlçe: ${place.district_name || 'Şanlıurfa'}`,
+    `Adres: ${place.address || 'Belirtilmemiş'}`,
+    `Telefon: ${place.phone || 'Belirtilmemiş'}`,
+    `Web sitesi: ${place.website || 'Belirtilmemiş'}`,
+    `Çalışma saatleri: ${place.opening_hours ? JSON.stringify(place.opening_hours) : 'Belirtilmemiş'}`,
+    `Puan: ${place.rating || 'Belirtilmemiş'}`,
+    `Yorum sayısı: ${place.review_count || 'Belirtilmemiş'}`,
+    `Mevcut açıklama: ${place.description || 'Belirtilmemiş'}`,
+  ].join('\n');
 }
 
-function generateSectionContent(section: string): string {
-  const contents: Record<string, string[]> = {
-    'Tarihçe': [
-      'Bu mekan, binlerce yıllık geçmişiyle Şanlıurfa\'nın en önemli tarihi yapılarından biridir.',
-      'Tarihi kaynaklarda ilk defa MS 3. yüzyılda bahsedilen bu yapı, birçok medeniyete ev sahipliği yapmıştır.',
-      'Arkeolojik kazılarda ortaya çıkarılan bulgular, buranın ne kadar eski olduğunu göstermektedir.',
-    ],
-    'Mimari Özellikler': [
-      'Geleneksel Şanlıurfa mimarisinin en güzel örneklerinden biri olarak dikkat çeker.',
-      'Taş işçiliği ve süslemeleriyle göz kamaştıran bu yapı, ustaların ustalığını gözler önüne serer.',
-      'Restore edilmiş bölümler orijinal dokuyu korumaktadır.',
-    ],
-    'Ziyaret Bilgileri': [
-      'Giriş ücretsizdir.',
-      'Rehberli tur almak isteyenler için girişte bilgi verilmektedir.',
-      'Fotoğraf çekmek serbesttir.',
-    ],
-    'Nasıl Gidilir?': [
-      'Şehir merkezine 15 dakika mesafededir.',
-      'Toplu taşıma ile ulaşım mümkündür.',
-      'Otopark imkanı mevcuttur.',
-    ],
-    'Tavsiyeler': [
-      'Erken saatlerde ziyaret ederek kalabalıktan kaçının.',
-      'Yakındaki diğer tarihi mekanları da geziyi uzatabilirsiniz.',
-      'Yerel rehberlerden bilgi almanız önerilir.',
-    ],
-    'Menü': [
-      'Geleneksel Urfa mutfağından seçkin lezzetler sunulmaktadır.',
-      'Ciğer kebabı, lahmacun ve çiğ köfte öne çıkan tatlardır.',
-      'Günlük taze malzemeler kullanılmaktadır.',
-    ],
-    'Öne Çıkan Lezzetler': [
-      'Ciğer Kebabı: Meşhur Urfa ciğeri',
-      'Lahmacun: Fındık lahmacun',
-      'Çiğ Köfte: Efsane lezzet',
-    ],
-    'Fiyat Aralığı': [
-      'Ortalama fiyatlar uygun seviyededir.',
-      'Kişi başı 200-400 TL arası değişmektedir.',
-    ],
-    'Oda Seçenekleri': [
-      'Standart, deluxe ve suit oda seçenekleri mevcuttur.',
-      'Tüm odalarda klima, Wi-Fi ve mini bar bulunmaktadır.',
-    ],
-    'Olanaklar': [
-      'Ücretsiz Wi-Fi ve otopark',
-      '7/24 resepsiyon hizmeti',
-      'Kahvaltı dahil konaklama',
-    ],
-  };
+function assertGeneratedContentQuality(content: string, title: string) {
+  const plain = stripHTML(content).replace(/\s+/g, ' ').trim();
+  const wordCount = plain.split(/\s+/).filter(Boolean).length;
+  const h2Count = (content.match(/<h2\b/gi) || []).length;
+  const h3Count = (content.match(/<h3\b/gi) || []).length;
+  const hasFaq = /Sık Sorulan Sorular/i.test(plain);
 
-  const options = contents[section] || ['Detaylı bilgi için mekanı ziyaret edebilirsiniz.'];
-  return options[Math.floor(Math.random() * options.length)];
+  if (wordCount < 450) {
+    throw new Error(`Ollama içerik kalite eşiği geçilemedi: ${title} için ${wordCount} kelime üretildi.`);
+  }
+  if (h2Count < 3) {
+    throw new Error(`Ollama içerik kalite eşiği geçilemedi: ${title} için en az 3 H2 gerekli.`);
+  }
+  if (h3Count < 3 || !hasFaq) {
+    throw new Error(`Ollama içerik kalite eşiği geçilemedi: ${title} için FAQ/H3 yapısı eksik.`);
+  }
+}
+
+async function generatePlaceContent(place: PlaceRow): Promise<{ title: string; content: string; excerpt: string; metaDescription: string }> {
+  const title = `${place.name} Şanlıurfa Rehberi: Adres, Özellikler ve Ziyaret Notları`;
+  const keywords = [
+    place.name,
+    `Şanlıurfa ${place.name}`,
+    place.category || 'Şanlıurfa mekanları',
+    place.address || 'Şanlıurfa',
+  ].filter((value): value is string => Boolean(value));
+  const rawContent = await generateBlogContentHTMLWithContext(title, keywords, placeContext(place), 850);
+  const content = sanitizeHTML(rawContent);
+  assertGeneratedContentQuality(content, title);
+  const plain = stripHTML(content).replace(/\s+/g, ' ').trim();
+  const excerpt = plain.slice(0, 220) || `${place.name} hakkında adres, iletişim, çalışma saatleri ve ziyaret notları.`;
+  const metaDescription = await generateSeoMetaDescription(title, 'mekan blog yazısı');
+
+  return { title, content, excerpt, metaDescription };
+}
+
+async function generateCategoryGuideContent(category: string, places: PlaceRow[]): Promise<{ title: string; slug: string; content: string; excerpt: string; metaDescription: string }> {
+  const title = `Şanlıurfa ${category} Rehberi: Öne Çıkan Mekanlar ve Yerel Tavsiyeler`;
+  const slug = `sanliurfa-${category}-rehberi`;
+  const placeList = places
+    .map((place, index) => `${index + 1}. ${place.name} - ${place.address || 'Şanlıurfa'} - ${place.description || place.category || ''}`)
+    .join('\n');
+  const keywords = [`Şanlıurfa ${category}`, `${category} rehberi`, 'Şanlıurfa mekanları', ...places.slice(0, 5).map((p) => p.name)];
+  const rawContent = await generateBlogContentHTMLWithContext(
+    title,
+    keywords,
+    `Kategori: ${category}\nDoğrulanmış mekan listesi:\n${placeList}`,
+    1100,
+  );
+  const content = sanitizeHTML(rawContent);
+  assertGeneratedContentQuality(content, title);
+  const plain = stripHTML(content).replace(/\s+/g, ' ').trim();
+  const excerpt = plain.slice(0, 220) || `Şanlıurfa ${category} kategorisinde öne çıkan mekanlar ve pratik öneriler.`;
+  const metaDescription = await generateSeoMetaDescription(title, 'kategori rehberi');
+
+  return { title, slug, content, excerpt, metaDescription };
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -153,7 +121,11 @@ export const POST: APIRoute = async ({ request }) => {
     if (type === 'places') {
       // Generate content for specific places
       const places = await query(
-        'SELECT * FROM places WHERE id = ANY($1)',
+        `SELECT p.*, c.name AS category_name, d.name AS district_name
+         FROM places p
+         LEFT JOIN categories c ON c.id = p.category_id
+         LEFT JOIN districts d ON d.id = p.district_id
+         WHERE p.id = ANY($1)`,
         [placeIds]
       );
 
@@ -172,7 +144,8 @@ export const POST: APIRoute = async ({ request }) => {
 
       const generated = [];
       for (const place of places.rows) {
-        const { title, content, excerpt } = generatePlaceContent(place);
+        const normalizedPlace = { ...place, category: place.category_name || place.category };
+        const { title, content, excerpt, metaDescription } = await generatePlaceContent(normalizedPlace);
 
         // Create slug
         const slug = place.name
@@ -196,10 +169,13 @@ export const POST: APIRoute = async ({ request }) => {
             slug,
             excerpt,
             content,
+            content_html: content,
             ...(catResult?.id ? { category_id: catResult.id } : {}),
             author_id: auth.user.id,
-            author_name: 'Content Bot',
+            author_name: 'Ollama İçerik Botu',
             status: 'draft',
+            meta_title: title.slice(0, 65),
+            meta_description: metaDescription,
           });
           generated.push({ place: place.name, status: 'created', postId: post.id });
         } catch (dupErr: any) {
@@ -221,31 +197,21 @@ export const POST: APIRoute = async ({ request }) => {
         [category]
       );
 
-      const title = `Şanlıurfa’da ${places.rows.length} En İyi ${category}`;
-      const slug = `en-iyi-${category}-sanliurfa`;
-
-      let content = `# ${title}\n\n`;
-      content += `${category} kategorisinde Şanlıurfa’da görülmesi gereken yerleri sizin için derledik.\n\n`;
-
-      places.rows.forEach((place: PlaceRow, index: number) => {
-        content += `## ${index + 1}. ${place.name}\n\n`;
-        content += `${place.description || `${place.name} hakkında bilgi.`}\n\n`;
-        content += `**Adres:** ${place.address || 'Şanlıurfa'}\n\n`;
-      });
-
-      content += `\n## Sonuç\n\n`;
-      content += `Şanlıurfa’da ${category} deneyimi yaşamak için bu rehberi kullanabilirsiniz.\n`;
+      const { title, slug, content, excerpt, metaDescription } = await generateCategoryGuideContent(category, places.rows);
 
       const post = await createPost({
         title,
         slug,
-        excerpt: `Şanlıurfa’da ${category} kategorisinde ${places.rows.length} mekan hakkında detaylı bilgi.`,
+        excerpt,
         content,
+        content_html: content,
         category_id: (await queryOne('SELECT id FROM blog_categories WHERE slug = $1', [category === 'restoran' ? 'yemek' : 'gezi']))?.id,
         author_id: auth.user.id,
-        author_name: 'Content Bot',
+        author_name: 'Ollama İçerik Botu',
         status: 'draft',
         is_featured: true,
+        meta_title: title.slice(0, 65),
+        meta_description: metaDescription,
       });
 
       return apiResponse({ 

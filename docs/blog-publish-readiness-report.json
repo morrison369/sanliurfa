@@ -1,0 +1,719 @@
+{
+  "generatedAt": "2026-05-15T12:07:56.974Z",
+  "status": "published",
+  "policy": {
+    "autoPublish": false,
+    "adminReviewRequired": true,
+    "localStorageOnly": true,
+    "indexingApiForBlogAllowed": false,
+    "sitemapAndLlmsAutoUpdateRequired": true
+  },
+  "summary": {
+    "pendingBlogDrafts": 0,
+    "sourcePendingBlogDrafts": 26,
+    "appliedDrafts": 26,
+    "localDraftFiles": 40,
+    "publishedOrExisting": 40,
+    "publishApplyPublished": 40,
+    "publishApplyUpdated": 0,
+    "publishApplySkippedExisting": 0,
+    "publishApplyInvalid": 0,
+    "richResultsOk": 40,
+    "draftQualityOk": 40,
+    "selectedTopics": 0,
+    "llmsSitemapStatus": "ok",
+    "pagespeedApiStatus": "ok",
+    "pagespeedLiveStatus": "review",
+    "pagespeedQuotaLimited": 1
+  },
+  "issues": [],
+  "drafts": [
+    {
+      "slug": "balikligol-cevresi-yuruyus-rotasi-2026",
+      "title": "Balıklıgöl Çevresi Yürüyüş Rotası 2026: Dergah, Çarşı ve Gümrük Hanı Planı",
+      "wordCount": 2096,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/balikligol-cevresi-yuruyus-rotasi-2026",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/balikligol-cevresi-yuruyus-rotasi-2026",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "birecik-kelaynak-firat-gezi-rotasi",
+      "title": "Birecik Kelaynak ve Fırat Günübirlik Gezi Rotası",
+      "wordCount": 1839,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/birecik-kelaynak-firat-gezi-rotasi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/birecik-kelaynak-firat-gezi-rotasi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "bozova-ataturk-baraji-gunubirlik-gezi",
+      "title": "Bozova ve Atatürk Barajı Günübirlik Gezi Rotası",
+      "wordCount": 1683,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/bozova-ataturk-baraji-gunubirlik-gezi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/bozova-ataturk-baraji-gunubirlik-gezi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "haleplibahce-mozaik-muzesi-rehberi",
+      "title": "Haleplibahçe Mozaik Müzesi Rehberi",
+      "wordCount": 1595,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/haleplibahce-mozaik-muzesi-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/haleplibahce-mozaik-muzesi-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "halfeti-tekne-turu-rehberi-2026",
+      "title": "Halfeti Tekne Turu Rehberi 2026: Rumkale, Savaşan Köyü ve Siyah Gül Rotası",
+      "wordCount": 2022,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/halfeti-tekne-turu-rehberi-2026",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/halfeti-tekne-turu-rehberi-2026",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "harran-konik-evleri-fotograf-gezi-rehberi",
+      "title": "Harran Konik Evleri Fotoğraf ve Gezi Rehberi: Işık, Rota ve Ziyaret İpuçları",
+      "wordCount": 1658,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/harran-konik-evleri-fotograf-gezi-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/harran-konik-evleri-fotograf-gezi-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "karahantepe-tas-tepeler-rehberi-2026",
+      "title": "Karahantepe ve Taş Tepeler Rehberi 2026: Göbeklitepe’den Sonra Nereye Gidilir?",
+      "wordCount": 1907,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/karahantepe-tas-tepeler-rehberi-2026",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/karahantepe-tas-tepeler-rehberi-2026",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "kizilkoyun-nekropolu-gezi-rehberi",
+      "title": "Kızılkoyun Nekropolü Gezi Rehberi: Kaya Mezarları ve Fotoğraf Noktaları",
+      "wordCount": 1565,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/kizilkoyun-nekropolu-gezi-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/kizilkoyun-nekropolu-gezi-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-2-gunluk-gezi-plani-2026",
+      "title": "Şanlıurfa 2 Günlük Gezi Planı 2026: İlk Kez Gelenler İçin Gün Gün Rota",
+      "wordCount": 2017,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-2-gunluk-gezi-plani-2026",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-2-gunluk-gezi-plani-2026",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-arkeoloji-muzesi-derin-rehber",
+      "title": "Şanlıurfa Arkeoloji Müzesi Derin Rehber: Ne Görülür, Kaç Saat Ayrılır?",
+      "wordCount": 1688,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-arkeoloji-muzesi-derin-rehber",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-arkeoloji-muzesi-derin-rehber",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi",
+      "title": "Şanlıurfa Bilim Merkezi ve Çocuklarla Teknoloji Gezisi",
+      "wordCount": 1812,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-carsilari-rehberi",
+      "title": "Şanlıurfa Çarşıları Rehberi: Bakırcılar, Gümrük Hanı ve Baharatçılar",
+      "wordCount": 1669,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-carsilari-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-carsilari-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-cografi-isaretli-lezzetler",
+      "title": "Şanlıurfa’da Coğrafi İşaretli Lezzetler Rehberi: Keme, Pencer, İsot ve Sadeyağ",
+      "wordCount": 1637,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-cografi-isaretli-lezzetler",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-cografi-isaretli-lezzetler",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-fotograf-rotasi",
+      "title": "Şanlıurfa Fotoğraf Rotası: Gün Doğumu, Gün Batımı ve Gece Çekimleri",
+      "wordCount": 1776,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-fotograf-rotasi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-fotograf-rotasi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-gap-havalimani-ulasim-rehberi",
+      "title": "Şanlıurfa GAP Havalimanı Ulaşım Rehberi: Merkez, Siverek ve Etkinlik Dönemi Planı",
+      "wordCount": 1777,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-gap-havalimani-ulasim-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-gap-havalimani-ulasim-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir",
+      "title": "Şanlıurfa’da Resmi Kaynaklarla Güncel Gezi Bilgisi Nasıl Kontrol Edilir?",
+      "wordCount": 1785,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-hediyelik-alisveris-rehberi",
+      "title": "Şanlıurfa Hediyelik ve Yerel Alışveriş Rehberi: İsot, Bakır, Mırra ve Çarşılar",
+      "wordCount": 1672,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-hediyelik-alisveris-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-hediyelik-alisveris-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-kultur-yolu-festivali-rehberi",
+      "title": "Şanlıurfa Kültür Yolu Festivali Rehberi: Konserler, Sergiler ve Tarihi Merkez Rotası",
+      "wordCount": 1733,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-kultur-yolu-festivali-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-kultur-yolu-festivali-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-muzekart-muze-ziyaret-rehberi",
+      "title": "Şanlıurfa MüzeKart ve Müze Ziyaret Rehberi 2026: Saat, Bilet ve Rota Kontrolü",
+      "wordCount": 1719,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-muzekart-muze-ziyaret-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-muzekart-muze-ziyaret-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfa-pencer-boranisi-rehberi",
+      "title": "Şanlıurfa Pencer Boranısı Rehberi: Pazı, Yuvalak Köfte ve Yoğurtlu Sofra Kültürü",
+      "wordCount": 1592,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfa-pencer-boranisi-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfa-pencer-boranisi-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfada-cocukla-gezilecek-yerler",
+      "title": "Şanlıurfa’da Çocukla Gezilecek Yerler: Aileler İçin Güvenli ve Kolay Rotalar",
+      "wordCount": 1654,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfada-cocukla-gezilecek-yerler",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfada-cocukla-gezilecek-yerler",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfada-gezilecek-yerler-2026",
+      "title": "Şanlıurfa’da Gezilecek Yerler 2026: Balıklıgöl, Göbeklitepe, Harran ve Halfeti Rotası",
+      "wordCount": 1905,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfada-gezilecek-yerler-2026",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfada-gezilecek-yerler-2026",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfada-ne-yenir-2026",
+      "title": "Şanlıurfa’da Ne Yenir 2026: Urfa Kebabı, Ciğer, Lahmacun ve Sıra Gecesi Sofrası",
+      "wordCount": 2066,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfada-ne-yenir-2026",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfada-ne-yenir-2026",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfada-ramazan-iftar-kulturu",
+      "title": "Şanlıurfa’da Ramazan ve İftar Kültürü Rehberi",
+      "wordCount": 1600,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfada-ramazan-iftar-kulturu",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfada-ramazan-iftar-kulturu",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfada-sabah-kahvaltisi-rehberi",
+      "title": "Şanlıurfa’da Sabah Kahvaltısı Rehberi: Ciğer, Katmer ve Yerel Lezzetler",
+      "wordCount": 1755,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfada-sabah-kahvaltisi-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfada-sabah-kahvaltisi-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfada-sicak-havada-gezi-plani",
+      "title": "Şanlıurfa’da Sıcak Havada Gezi Planı: Sabah-Erken Rota, Mola ve Akşam Önerileri",
+      "wordCount": 1801,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfada-sicak-havada-gezi-plani",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfada-sicak-havada-gezi-plani",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "sanliurfada-yagmurlu-soguk-havada-ne-yapilir",
+      "title": "Şanlıurfa’da Yağmurlu veya Soğuk Havada Ne Yapılır?",
+      "wordCount": 1655,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/sanliurfada-yagmurlu-soguk-havada-ne-yapilir",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/sanliurfada-yagmurlu-soguk-havada-ne-yapilir",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "siverek-takoran-disi-gezi-noktalari",
+      "title": "Siverek Takoran Dışı Gezi Noktaları: Nissibi, Karacadağ ve Fırat Hattı",
+      "wordCount": 1777,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/siverek-takoran-disi-gezi-noktalari",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/siverek-takoran-disi-gezi-noktalari",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "takoran-vadisi-rehberi-2026",
+      "title": "Takoran Vadisi Rehberi 2026: Siverek’te Tekne, Fotoğraf ve Fırat Rotası",
+      "wordCount": 1734,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/takoran-vadisi-rehberi-2026",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/takoran-vadisi-rehberi-2026",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "tas-tepeler-rotasi-sanliurfa",
+      "title": "Taş Tepeler Rotası: Göbeklitepe, Karahantepe ve Yakın Arkeoloji Noktaları",
+      "wordCount": 1580,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/tas-tepeler-rotasi-sanliurfa",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/tas-tepeler-rotasi-sanliurfa",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "teknofest-2026-3-gunluk-sanliurfa-gezi-plani",
+      "title": "TEKNOFEST 2026 İçin 3 Günlük Şanlıurfa Gezi Planı",
+      "wordCount": 1735,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/teknofest-2026-3-gunluk-sanliurfa-gezi-plani",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/teknofest-2026-3-gunluk-sanliurfa-gezi-plani",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "teknofest-2026-aile-cocuk-rehberi",
+      "title": "TEKNOFEST 2026 Şanlıurfa Aile ve Çocuk Rehberi: Giriş, Güvenlik ve Gün Planı",
+      "wordCount": 1594,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/teknofest-2026-aile-cocuk-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/teknofest-2026-aile-cocuk-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "teknofest-2026-hyperloop-sanliurfa-final-rehberi",
+      "title": "TEKNOFEST 2026 Hyperloop Yarışması Şanlıurfa Final Rehberi",
+      "wordCount": 1630,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/teknofest-2026-hyperloop-sanliurfa-final-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/teknofest-2026-hyperloop-sanliurfa-final-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "teknofest-2026-sanliurfa-konaklama-bolgeleri",
+      "title": "TEKNOFEST 2026 Şanlıurfa Konaklama Bölgeleri Rehberi",
+      "wordCount": 1625,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/teknofest-2026-sanliurfa-konaklama-bolgeleri",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/teknofest-2026-sanliurfa-konaklama-bolgeleri",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "teknofest-2026-sanliurfa-rehberi",
+      "title": "TEKNOFEST 2026 Şanlıurfa Rehberi: GAP Havalimanı, Ulaşım, Konaklama ve Gezi Planı",
+      "wordCount": 1674,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/teknofest-2026-sanliurfa-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/teknofest-2026-sanliurfa-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "teknofest-2026-world-drone-cup-sanliurfa",
+      "title": "TEKNOFEST 2026 World Drone Cup Şanlıurfa Rehberi",
+      "wordCount": 1716,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/teknofest-2026-world-drone-cup-sanliurfa",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/teknofest-2026-world-drone-cup-sanliurfa",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "teknofest-2026-yarismalari-sanliurfa",
+      "title": "TEKNOFEST 2026 Şanlıurfa Yarışmaları: Başvuru, Takvim ve Hazırlık Rehberi",
+      "wordCount": 1732,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/teknofest-2026-yarismalari-sanliurfa",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/teknofest-2026-yarismalari-sanliurfa",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "urfa-keme-boranisi-rehberi",
+      "title": "Urfa Keme Boranısı Rehberi: Mevsimi, Malzemesi ve Nerede Denenir?",
+      "wordCount": 1703,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/urfa-keme-boranisi-rehberi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/urfa-keme-boranisi-rehberi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "urfa-kultur-gecesi-rezervasyon-kontrol-listesi",
+      "title": "Urfa Kültür Gecesi Rezervasyon Kontrol Listesi: Aile Ortamı, Menü ve Ulaşım",
+      "wordCount": 1720,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/urfa-kultur-gecesi-rezervasyon-kontrol-listesi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/urfa-kultur-gecesi-rezervasyon-kontrol-listesi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    },
+    {
+      "slug": "viransehir-gezi-rehberi-eyyup-nebi",
+      "title": "Viranşehir Gezi Rehberi: Eyyüp Nebi, Tarih ve Yol Planı",
+      "wordCount": 1706,
+      "status": "ready-for-admin-review",
+      "richResultsOk": true,
+      "publishedOrExisting": true,
+      "autoPublish": false,
+      "adminReviewRequired": true,
+      "publishUrl": "https://sanliurfa.com/blog/viransehir-gezi-rehberi-eyyup-nebi",
+      "gscAfterPublish": {
+        "sitemapSubmitCommand": "npm run -s gsc:sitemap:submit",
+        "urlInspectCommand": "npm run -s gsc:url:inspect -- https://sanliurfa.com/blog/viransehir-gezi-rehberi-eyyup-nebi",
+        "indexingApiAllowed": false,
+        "indexingApiReason": "Google Indexing API sadece JobPosting/BroadcastEvent icin guvenli; blog post icin sitemap/GSC inspect kullanilmali."
+      }
+    }
+  ],
+  "publishChecklist": [
+    "Admin editor icerigi ve kaynak notlarini kontrol eder.",
+    "Gorsel/alt text ve local storage referanslari kontrol edilir.",
+    "Publish sonrasi /sitemap-blog.xml, /sitemap.xml, /llms.txt ve /llms-full.txt dinamik olarak yansir.",
+    "Publish sonrasi GSC sitemap submit ve URL inspect kullanilir.",
+    "Blog postlar icin Google Indexing API kullanilmaz."
+  ]
+}

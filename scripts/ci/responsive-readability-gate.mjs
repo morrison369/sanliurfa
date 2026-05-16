@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { execSync } from 'node:child_process';
 import { chromium } from 'playwright';
 
 const args = new Map();
@@ -11,6 +12,11 @@ for (const raw of process.argv.slice(2)) {
 const mode = args.get('mode') || process.env.RESPONSIVE_GATE_MODE || 'local';
 const defaultBaseUrl = mode === 'prod' ? 'https://sanliurfa.com' : 'http://127.0.0.1:4321';
 const baseUrl = new URL(args.get('base-url') || process.env.RESPONSIVE_GATE_BASE_URL || defaultBaseUrl);
+const localDefaultBaseUrl = baseUrl.hostname === '127.0.0.1' && baseUrl.port === '4321';
+let startedIsolatedDev = false;
+const verbose =
+  args.get('verbose') === '1' ||
+  process.env.RESPONSIVE_GATE_VERBOSE === '1';
 const routes = (args.get('routes') || process.env.RESPONSIVE_GATE_ROUTES || [
   '/',
   '/blog',
@@ -32,12 +38,66 @@ function fail(message, details = []) {
   process.exit(1);
 }
 
+function runNpmScript(script) {
+  execSync(`npm run -s ${script}`, {
+    cwd: process.cwd(),
+    stdio: 'inherit',
+    windowsHide: true,
+  });
+}
+
+function getNpmScriptOutput(script) {
+  try {
+    return execSync(`npm run -s ${script}`, {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+    });
+  } catch (error) {
+    return `${error.stdout || ''}\n${error.stderr || ''}`;
+  }
+}
+
+function cleanupIsolatedDev() {
+  if (!startedIsolatedDev) return;
+  try {
+    runNpmScript('dev:isolated:stop');
+  } catch {
+    // Best-effort cleanup.
+  }
+  try {
+    runNpmScript('redis:isolated:stop');
+  } catch {
+    // Best-effort cleanup for preflight-started local Redis.
+  }
+}
+
+process.on('exit', cleanupIsolatedDev);
+process.on('SIGINT', () => {
+  cleanupIsolatedDev();
+  process.exit(130);
+});
+process.on('SIGTERM', () => {
+  cleanupIsolatedDev();
+  process.exit(143);
+});
+
 function routeUrl(route) {
   return new URL(route.startsWith('/') ? route : `/${route}`, baseUrl).href;
 }
 
+if (mode === 'local' && localDefaultBaseUrl) {
+  const statusBefore = getNpmScriptOutput('dev:isolated:status');
+  if (!/dev isolated status: running/.test(statusBefore)) {
+    startedIsolatedDev = true;
+    runNpmScript('dev:isolated:ensure');
+  }
+}
+
 const browser = await chromium.launch({ headless: true });
 const failures = [];
+const checks = [];
 
 try {
   for (const viewport of viewports) {
@@ -106,7 +166,21 @@ try {
       if (result.brokenImages.length > 0) failures.push(`${viewport.name} ${route}: broken images ${result.brokenImages.join(', ')}`);
       if (result.tinyTapTargets.length > 0) failures.push(`${viewport.name} ${route}: tiny tap targets ${result.tinyTapTargets.join(', ')}`);
       if (result.bodyHeight < 500) failures.push(`${viewport.name} ${route}: body height too low (${result.bodyHeight}px)`);
-      console.log(`ok ${viewport.name} ${route}`);
+      checks.push({
+        viewport: viewport.name,
+        route,
+        ok:
+          result.overflowX <= 2 &&
+          result.h1Count === 1 &&
+          result.headingCount >= 2 &&
+          !(result.paragraphCount > 0 && result.smallParagraphs > 0) &&
+          result.brokenImages.length === 0 &&
+          result.tinyTapTargets.length === 0 &&
+          result.bodyHeight >= 500,
+      });
+      if (verbose) {
+        console.log(`ok ${viewport.name} ${route}`);
+      }
     }
     await page.close();
   }
@@ -116,6 +190,14 @@ try {
 
 if (failures.length > 0) {
   fail('responsive/readability gate başarısız', failures);
+}
+
+if (!verbose) {
+  const passedChecks = checks.filter((check) => check.ok).length;
+  const failedChecks = checks.length - passedChecks;
+  console.log(
+    `responsive-readability-gate: checked ${checks.length} surfaces (${mode}, ok=${passedChecks}, fail=${failedChecks})`,
+  );
 }
 
 console.log(`responsive-readability-gate: PASS (${mode}, routes=${routes.length}, viewports=${viewports.length})`);

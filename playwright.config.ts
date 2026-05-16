@@ -25,6 +25,7 @@ const e2eRedisUrl =
     ? `redis://:${encodeURIComponent(e2eRedisPassword)}@${e2eHost}:${e2eRedisPort}`
     : `redis://${e2eHost}:${e2eRedisPort}`);
 const disableWebServer = process.env.PLAYWRIGHT_DISABLE_WEBSERVER === '1';
+const includeVisual = process.env.PLAYWRIGHT_INCLUDE_VISUAL === '1';
 const fullMatrix = process.env.PLAYWRIGHT_FULL_MATRIX === '1';
 const projects = fullMatrix
   ? [
@@ -60,6 +61,7 @@ export default defineConfig({
   testDir: './e2e',
   testIgnore: [
     '**/tests/**',
+    ...(includeVisual ? [] : ['**/*.visual.spec.ts']),
     '**/payment.spec.ts',
     '**/stripe-integration.spec.ts',
     '**/subscription.spec.ts',

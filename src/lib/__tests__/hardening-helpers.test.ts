@@ -119,7 +119,7 @@ describe('buildCSPHeader', () => {
       frameSrc: [],
       upgradeInsecureRequests: false,
     });
-    expect(csp).toBe('');
+    expect(csp).toBe('report-uri /api/security/csp-report');
   });
 
   it('default-src directive', () => {
@@ -133,7 +133,7 @@ describe('buildCSPHeader', () => {
       frameSrc: [],
       upgradeInsecureRequests: false,
     });
-    expect(csp).toBe("default-src 'self'");
+    expect(csp).toBe("default-src 'self'; report-uri /api/security/csp-report");
   });
 
   it('multiple directive — "; " ile birleşir', () => {
@@ -147,7 +147,7 @@ describe('buildCSPHeader', () => {
       frameSrc: [],
       upgradeInsecureRequests: false,
     });
-    expect(csp).toBe("default-src 'self'; script-src 'self' 'unsafe-inline'");
+    expect(csp).toBe("default-src 'self'; script-src 'self' 'unsafe-inline'; report-uri /api/security/csp-report");
   });
 
   it('upgradeInsecureRequests=true → directive eklenir (value yok)', () => {
@@ -161,7 +161,7 @@ describe('buildCSPHeader', () => {
       frameSrc: [],
       upgradeInsecureRequests: true,
     });
-    expect(csp).toBe('upgrade-insecure-requests');
+    expect(csp).toBe('upgrade-insecure-requests; report-uri /api/security/csp-report');
   });
 
   it('camelCase → kebab-case (defaultSrc → default-src)', () => {
@@ -199,6 +199,6 @@ describe('buildCSPHeader', () => {
       frameSrc: [],
       upgradeInsecureRequests: false,
     });
-    expect(csp).toBe("script-src 'self' 'unsafe-inline' 'unsafe-eval'");
+    expect(csp).toBe("script-src 'self' 'unsafe-inline' 'unsafe-eval'; report-uri /api/security/csp-report");
   });
 });

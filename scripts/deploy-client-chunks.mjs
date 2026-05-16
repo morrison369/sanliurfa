@@ -8,7 +8,7 @@ import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import SftpClient from 'ssh2-sftp-client';
-import { Client } from 'ssh2';
+import { restartRemotePm2AndCheck } from './lib/remote-pm2.mjs';
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const shouldRestart = process.argv.includes('--restart');
@@ -33,6 +33,7 @@ const SSH_PORT = parseInt(process.env.SSH_PORT || '22');
 const SSH_USER = process.env.SSH_USER;
 const SSH_PASS = process.env.SSH_PASS;
 const REMOTE_DIR = process.env.REMOTE_APP_DIR || '/home/sanliur/public_html';
+const PM2_NAME = process.env.PM2_NAME || 'sanliurfa-app';
 
 const localAstroDir = resolve(scriptDir, '..', 'dist', 'client', '_astro');
 
@@ -49,21 +50,6 @@ function getAllFiles(dir) {
     else files.push(full);
   }
   return files;
-}
-
-function runRemoteCommand(connection, command) {
-  return new Promise((res, rej) => {
-    connection.exec(command, (err, stream) => {
-      if (err) return rej(err);
-      let out = '';
-      stream.on('data', d => { out += d; });
-      stream.stderr.on('data', d => { out += d; });
-      stream.on('close', code => {
-        if (code !== 0) return rej(new Error(`exit ${code}: ${out.trim()}`));
-        res(out.trim());
-      });
-    });
-  });
 }
 
 async function main() {
@@ -92,7 +78,7 @@ async function main() {
     .filter((f) => existsSync(f.path));
   console.log(`Top-level static dosyalar: ${topLevelExisting.length}`);
 
-  // Vendor klasörü: self-hosted CDN (Swagger UI, Leaflet) — admin CSP için kritik
+  // Vendor klasoru: self-hosted static vendor asset'leri (Swagger UI, Leaflet).
   const localVendorDir = resolve(localClientDir, 'vendor');
   const vendorFiles = existsSync(localVendorDir) ? getAllFiles(localVendorDir) : [];
   console.log(`Vendor dosyaları: ${vendorFiles.length}`);
@@ -134,7 +120,7 @@ async function main() {
     }
   }
 
-  // Vendor klasörü (Swagger UI + Leaflet) — admin sayfaları için kritik
+  // Vendor klasoru (Swagger UI + Leaflet) — admin sayfalari icin kritik
   if (vendorFiles.length > 0) {
     const remoteVendorDir = `${remoteClientDir}/vendor`;
     try { await sftp.mkdir(remoteVendorDir, true); } catch {}
@@ -166,25 +152,16 @@ async function main() {
 
   // SSH ile PM2 restart + health check
   console.log('\nPM2 restart...');
-  await new Promise((res, rej) => {
-    const connection = new Client();
-    connection.connect({ host: SSH_HOST, port: SSH_PORT, username: SSH_USER, password: SSH_PASS });
-    connection.on('ready', async () => {
-      try {
-        const r1 = await runRemoteCommand(connection, 'pm2 restart sanliurfa-com 2>&1 || pm2 restart all 2>&1');
-        console.log('PM2:', r1.split('\n').slice(-2).join(' ').trim());
-        await new Promise(r => setTimeout(r, 3000));
-        const r2 = await runRemoteCommand(connection, 'curl -sf http://localhost:4321/api/health | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get(\'status\',\'ok\'))" 2>/dev/null || echo ok');
-        console.log('Health:', r2);
-        connection.end();
-        res();
-      } catch (e) {
-        connection.end();
-        rej(e);
-      }
-    });
-    connection.on('error', rej);
+  const { restartOutput, healthOutput } = await restartRemotePm2AndCheck({
+    sshConfig: { host: SSH_HOST, port: SSH_PORT, username: SSH_USER, password: SSH_PASS },
+    remoteDir: REMOTE_DIR,
+    pm2Name: PM2_NAME,
+    healthMode: 'json-status',
+    restartFallback: true,
+    settleMs: 3000,
   });
+  console.log('PM2:', restartOutput.split('\n').slice(-2).join(' ').trim());
+  console.log('Health:', healthOutput);
 
   console.log(`\n✓ ${ok} chunk yüklendi, PM2 restart tamamlandı.`);
 }

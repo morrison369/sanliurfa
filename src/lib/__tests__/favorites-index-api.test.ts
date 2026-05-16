@@ -194,6 +194,6 @@ describe('DELETE /api/favorites', () => {
     expect(resp.status).toBe(200);
     const sql = queryMock.mock.calls[0][0];
     expect(sql).toContain('DELETE FROM user_favorites WHERE place_id = $1 AND user_id = $2');
-    expect(deleteCacheMock).toHaveBeenCalledWith('user_favorites:user:user-1');
+    expect(deleteCacheMock).toHaveBeenCalledWith('favorites:user:user-1');
   });
 });

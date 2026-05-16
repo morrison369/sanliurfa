@@ -1,0 +1,13 @@
+{
+  "generatedAt": "2026-05-15T12:07:47.714Z",
+  "status": "ok",
+  "detail": "",
+  "summary": {
+    "unresolvedCount": 0,
+    "unresolvedOccurrences": 0,
+    "resolvedCount": 1,
+    "autoResolvedThisRun": 0
+  },
+  "topUnresolved": [],
+  "byType": []
+}

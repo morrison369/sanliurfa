@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { query, queryOne } from '../../../lib/postgres';
+import { queryOne } from '../../../lib/postgres';
 import { apiResponse, apiError, safeErrorDetail } from '../../../lib/api';
 import { logger } from '../../../lib/logging';
 

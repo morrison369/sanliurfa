@@ -139,7 +139,6 @@ export function setupInstallPrompt(
   let deferredPrompt: Event | null = null;
 
   window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
     deferredPrompt = e;
     logger.info('[PWA] Install prompt ready');
     onPromptReady(e);

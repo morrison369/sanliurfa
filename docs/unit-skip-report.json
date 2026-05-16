@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-05-15T12:08:14.100Z",
+  "status": "ok",
+  "source": "static skip declaration scan",
+  "observedUnitSkips": {
+    "testFiles": 0,
+    "tests": 0
+  },
+  "summary": {
+    "declarationCount": 4,
+    "undocumentedCount": 0,
+    "byReason": {
+      "build artifact dependent": 4
+    }
+  },
+  "items": [
+    {
+      "file": "src/lib/__tests__/bundle-size-baseline.test.ts",
+      "line": 58,
+      "expression": "it.skipIf(!sizes)('CSS bundle within budget (≤ 400 KB)', () => {",
+      "reason": "build artifact dependent"
+    },
+    {
+      "file": "src/lib/__tests__/bundle-size-baseline.test.ts",
+      "line": 62,
+      "expression": "it.skipIf(!sizes)('JS bundle total within budget (≤ 1900 KB)', () => {",
+      "reason": "build artifact dependent"
+    },
+    {
+      "file": "src/lib/__tests__/bundle-size-baseline.test.ts",
+      "line": 66,
+      "expression": "it.skipIf(!sizes)('JS chunk count within budget (≤ 130)', () => {",
+      "reason": "build artifact dependent"
+    },
+    {
+      "file": "src/lib/__tests__/bundle-size-baseline.test.ts",
+      "line": 70,
+      "expression": "it.skipIf(!sizes)('reports current sizes (informational)', () => {",
+      "reason": "build artifact dependent"
+    }
+  ]
+}

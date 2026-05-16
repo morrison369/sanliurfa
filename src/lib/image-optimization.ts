@@ -138,8 +138,8 @@ export function generateSizes(
 export function getBlurPlaceholderUrl(originalUrl: string, blurWidth: number = 16): string {
   if (typeof window === 'undefined') return originalUrl;
 
-  // URL parametreleri ile küçük versiyon oluştur
-  // Cloudinary/Imgix tarzı servisler için ?w=16&q=10 parametresi
+  // URL parametreleri ile küçük versiyon oluştur.
+  // Local/static origin bu parametreleri yok sayabilir; helper fail-safe kalır.
   const separator = originalUrl.includes('?') ? '&' : '?';
   return `${originalUrl}${separator}w=${blurWidth}&q=10&blur=100`;
 }

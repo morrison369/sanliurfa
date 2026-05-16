@@ -165,8 +165,8 @@ export function sanitizeSlug(slug: string): string {
  */
 export const CSP_HEADER = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.quilljs.com",
-  "style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.quilljs.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https: blob:",
   "font-src 'self'",
   "connect-src 'self' https://api.openstreetmap.org",

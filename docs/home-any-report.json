@@ -1,79 +1,15 @@
 {
-  "generatedAt": "2026-05-07T14:08:18.673Z",
+  "generatedAt": "2026-05-14T18:44:27.865Z",
   "maxAnyThreshold": 200,
-  "totalAny": 4,
+  "totalAny": 3,
   "pass": true,
   "report": [
-    {
-      "file": "AgencyBlogSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "AgencyDistrictsSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "AgencyFeaturedPlacesSection.astro",
-      "anyCount": 0
-    },
     {
       "file": "AgencyHeroSection.astro",
       "anyCount": 0
     },
     {
-      "file": "AgencyHistoricalSitesSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "AgencyMainCategoriesSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "AgencyRecipesSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "AudiencePlansSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "BlogSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "DailyPicks.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "DistrictServiceSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "DistrictSpotlightsSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "DistrictsSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "FaqSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "FeaturedPlacesSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "GuidesCommunitySection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "HeroSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "HistoricalSitesSection.astro",
+      "file": "CityGuideLanding.astro",
       "anyCount": 0
     },
     {
@@ -81,88 +17,12 @@
       "anyCount": 0
     },
     {
-      "file": "LandingCtaSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "LiveCityDataSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "LiveStatusSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "LiveStatusStrip.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "MainCategoriesSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "MainCtaSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "MapPreview.astro",
-      "anyCount": 1
-    },
-    {
-      "file": "MvpQuickStartSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "PersonaChips.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "PopularCategoriesSection.astro",
-      "anyCount": 0
-    },
-    {
       "file": "PwaInstallSection.astro",
       "anyCount": 0
     },
     {
-      "file": "QuickActionsSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "RecentPlacesSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "RecentReviewsSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "RecipesSection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "ReviewsCarousel.astro",
-      "anyCount": 1
-    },
-    {
       "file": "SmartSearchBar.astro",
-      "anyCount": 1
-    },
-    {
-      "file": "StoriesStrip.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "TrendDensitySection.astro",
-      "anyCount": 0
-    },
-    {
-      "file": "TrendingMarquee.astro",
-      "anyCount": 1
-    },
-    {
-      "file": "TrustSignalsSection.astro",
-      "anyCount": 0
+      "anyCount": 3
     }
   ]
 }

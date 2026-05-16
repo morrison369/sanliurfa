@@ -13,10 +13,10 @@
  *   node scripts/admin-pages-audit.mjs
  */
 import https from 'node:https';
+import { getAdminCredentials } from './lib/admin-script-auth.mjs';
 
 const BASE = 'https://sanliurfa.com';
-const EMAIL = 'admin@sanliurfa.com';
-const PASS = 'Urfa2026!';
+const { email: EMAIL, password: PASS } = getAdminCredentials();
 
 const ROUTES = [
  '/admin', '/admin/analytics', '/admin/api-docs', '/admin/audit-logs',

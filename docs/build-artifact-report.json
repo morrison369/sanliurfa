@@ -1,0 +1,421 @@
+{
+  "generatedAt": "2026-05-15T12:07:46.786Z",
+  "status": "ok",
+  "budgets": {
+    "distClientSoftMaxBytes": 272629760,
+    "astroCssMaxBytes": 409600,
+    "astroJsMaxBytesTotal": 1945600,
+    "astroJsMaxChunks": 130
+  },
+  "distClient": {
+    "exists": true,
+    "totalBytes": 15349901,
+    "totalMb": 14.64,
+    "totalFiles": 368,
+    "withinSoftBudget": true,
+    "topChildren": [
+      {
+        "name": "images",
+        "type": "directory",
+        "bytes": 13455644,
+        "mb": 12.83,
+        "fileCount": 202
+      },
+      {
+        "name": "_astro",
+        "type": "directory",
+        "bytes": 1482873,
+        "mb": 1.41,
+        "fileCount": 130
+      },
+      {
+        "name": "vendor",
+        "type": "directory",
+        "bytes": 158658,
+        "mb": 0.15,
+        "fileCount": 2
+      },
+      {
+        "name": "~partytown",
+        "type": "directory",
+        "bytes": 96205,
+        "mb": 0.09,
+        "fileCount": 4
+      },
+      {
+        "name": "icons",
+        "type": "directory",
+        "bytes": 42844,
+        "mb": 0.04,
+        "fileCount": 9
+      },
+      {
+        "name": "logo.png",
+        "type": "file",
+        "bytes": 32824,
+        "mb": 0.03,
+        "fileCount": 1
+      },
+      {
+        "name": "og-image.png",
+        "type": "file",
+        "bytes": 27971,
+        "mb": 0.03,
+        "fileCount": 1
+      },
+      {
+        "name": "sitemap-0.xml",
+        "type": "file",
+        "bytes": 10801,
+        "mb": 0.01,
+        "fileCount": 1
+      },
+      {
+        "name": "sw-advanced.js",
+        "type": "file",
+        "bytes": 9260,
+        "mb": 0.01,
+        "fileCount": 1
+      },
+      {
+        "name": "openapi.json",
+        "type": "file",
+        "bytes": 8118,
+        "mb": 0.01,
+        "fileCount": 1
+      },
+      {
+        "name": "sw.js",
+        "type": "file",
+        "bytes": 5917,
+        "mb": 0.01,
+        "fileCount": 1
+      },
+      {
+        "name": "service-worker.js",
+        "type": "file",
+        "bytes": 3818,
+        "mb": 0,
+        "fileCount": 1
+      }
+    ],
+    "largestFiles": [
+      {
+        "path": "dist/client/images/places/balikligol/main-hero.webp",
+        "bytes": 304910,
+        "mb": 0.29
+      },
+      {
+        "path": "dist/client/images/hero/sanliurfa-landing.jpg",
+        "bytes": 302364,
+        "mb": 0.29
+      },
+      {
+        "path": "dist/client/images/hero/hero-hotel.webp",
+        "bytes": 300156,
+        "mb": 0.29
+      },
+      {
+        "path": "dist/client/images/hero/sanliurfa-landing.avif",
+        "bytes": 287787,
+        "mb": 0.27
+      },
+      {
+        "path": "dist/client/images/hero/sanliurfa-landing.webp",
+        "bytes": 282986,
+        "mb": 0.27
+      },
+      {
+        "path": "dist/client/images/places/balikligol/main.webp",
+        "bytes": 277776,
+        "mb": 0.26
+      },
+      {
+        "path": "dist/client/images/hero/hero-food.webp",
+        "bytes": 271781,
+        "mb": 0.26
+      },
+      {
+        "path": "dist/client/images/places/balikligol/main.jpg",
+        "bytes": 261721,
+        "mb": 0.25
+      },
+      {
+        "path": "dist/client/images/places/gobeklitepe/hero.jpg",
+        "bytes": 243022,
+        "mb": 0.23
+      },
+      {
+        "path": "dist/client/images/places/gobeklitepe.jpg",
+        "bytes": 240528,
+        "mb": 0.23
+      },
+      {
+        "path": "dist/client/images/tarihi-yerler/harran-kumbet-evleri.webp",
+        "bytes": 237504,
+        "mb": 0.23
+      },
+      {
+        "path": "dist/client/images/blog/balikligol-gezi.webp",
+        "bytes": 235151,
+        "mb": 0.22
+      },
+      {
+        "path": "dist/client/images/places/hanehan-otel/room.jpg",
+        "bytes": 233065,
+        "mb": 0.22
+      },
+      {
+        "path": "dist/client/images/blog/mozaik-muzesi.jpg",
+        "bytes": 229876,
+        "mb": 0.22
+      },
+      {
+        "path": "dist/client/images/blog/sanliurfa-otel-2026.webp",
+        "bytes": 228795,
+        "mb": 0.22
+      }
+    ]
+  },
+  "publicUploads": {
+    "exists": true,
+    "totalBytes": 210451254,
+    "totalMb": 200.7,
+    "totalFiles": 928,
+    "oversizedFileCount": 0,
+    "topChildren": [
+      {
+        "name": "places",
+        "type": "directory",
+        "bytes": 118909873,
+        "mb": 113.4,
+        "fileCount": 534
+      },
+      {
+        "name": "blogs",
+        "type": "directory",
+        "bytes": 59081274,
+        "mb": 56.34,
+        "fileCount": 278
+      },
+      {
+        "name": "historical",
+        "type": "directory",
+        "bytes": 12406737,
+        "mb": 11.83,
+        "fileCount": 39
+      },
+      {
+        "name": "recipes",
+        "type": "directory",
+        "bytes": 10860134,
+        "mb": 10.36,
+        "fileCount": 57
+      },
+      {
+        "name": "events",
+        "type": "directory",
+        "bytes": 9193236,
+        "mb": 8.77,
+        "fileCount": 20
+      }
+    ],
+    "byExtension": [
+      {
+        "extension": ".jpg",
+        "bytes": 210451254,
+        "fileCount": 928,
+        "mb": 200.7
+      }
+    ],
+    "oversizedFiles": [],
+    "largestFiles": [
+      {
+        "path": "public/uploads/events/harran-arkeoloji-okulu-seminerleri-2026-kasim.jpg",
+        "bytes": 1027563,
+        "mb": 0.98
+      },
+      {
+        "path": "public/uploads/recipes/sini-koftesi.jpg",
+        "bytes": 1001670,
+        "mb": 0.96
+      },
+      {
+        "path": "public/uploads/events/sanliurfa-kitap-fuari-2026-kasim.jpg",
+        "bytes": 903796,
+        "mb": 0.86
+      },
+      {
+        "path": "public/uploads/events/harran-gunes-festivali-sonbahar-2026.jpg",
+        "bytes": 897415,
+        "mb": 0.86
+      },
+      {
+        "path": "public/uploads/events/gobeklitepe-fotograf-yarismasi-sergi-2026.jpg",
+        "bytes": 755728,
+        "mb": 0.72
+      },
+      {
+        "path": "public/uploads/recipes/bittim-corbasi.jpg",
+        "bytes": 723241,
+        "mb": 0.69
+      },
+      {
+        "path": "public/uploads/blogs/sanliurfadan-gaziantep-gunubirlik-gezi-rehberi.jpg",
+        "bytes": 721821,
+        "mb": 0.69
+      },
+      {
+        "path": "public/uploads/events/sanliurfa-kultur-turizm-festivali-2026-ekim.jpg",
+        "bytes": 652890,
+        "mb": 0.62
+      },
+      {
+        "path": "public/uploads/events/halfeti-kis-turu-kara-guller-2026-kasim.jpg",
+        "bytes": 641161,
+        "mb": 0.61
+      },
+      {
+        "path": "public/uploads/places/firat-nehri-piknik.jpg",
+        "bytes": 633419,
+        "mb": 0.6
+      }
+    ]
+  },
+  "publicImages": {
+    "exists": true,
+    "totalBytes": 13456803,
+    "totalMb": 12.83,
+    "totalFiles": 202,
+    "oversizedFileCount": 0,
+    "topChildren": [
+      {
+        "name": "blog",
+        "type": "directory",
+        "bytes": 4808621,
+        "mb": 4.59,
+        "fileCount": 101
+      },
+      {
+        "name": "places",
+        "type": "directory",
+        "bytes": 4547815,
+        "mb": 4.34,
+        "fileCount": 64
+      },
+      {
+        "name": "hero",
+        "type": "directory",
+        "bytes": 1669260,
+        "mb": 1.59,
+        "fileCount": 6
+      },
+      {
+        "name": "tarihi-yerler",
+        "type": "directory",
+        "bytes": 574685,
+        "mb": 0.55,
+        "fileCount": 4
+      },
+      {
+        "name": "foods",
+        "type": "directory",
+        "bytes": 551403,
+        "mb": 0.53,
+        "fileCount": 7
+      },
+      {
+        "name": "historical",
+        "type": "directory",
+        "bytes": 539232,
+        "mb": 0.51,
+        "fileCount": 4
+      },
+      {
+        "name": "home",
+        "type": "directory",
+        "bytes": 355621,
+        "mb": 0.34,
+        "fileCount": 8
+      },
+      {
+        "name": "etkinlikler",
+        "type": "directory",
+        "bytes": 204169,
+        "mb": 0.19,
+        "fileCount": 2
+      },
+      {
+        "name": "placeholder-blog.jpg",
+        "type": "file",
+        "bytes": 41812,
+        "mb": 0.04,
+        "fileCount": 1
+      },
+      {
+        "name": "placeholder-place.jpg",
+        "type": "file",
+        "bytes": 41589,
+        "mb": 0.04,
+        "fileCount": 1
+      },
+      {
+        "name": "placeholder-event.jpg",
+        "type": "file",
+        "bytes": 40529,
+        "mb": 0.04,
+        "fileCount": 1
+      },
+      {
+        "name": "placeholder.jpg",
+        "type": "file",
+        "bytes": 40529,
+        "mb": 0.04,
+        "fileCount": 1
+      }
+    ],
+    "byExtension": [
+      {
+        "extension": ".jpg",
+        "bytes": 6723555,
+        "fileCount": 122,
+        "mb": 6.41
+      },
+      {
+        "extension": ".webp",
+        "bytes": 5374667,
+        "fileCount": 63,
+        "mb": 5.13
+      },
+      {
+        "extension": ".avif",
+        "bytes": 836391,
+        "fileCount": 9,
+        "mb": 0.8
+      },
+      {
+        "extension": ".png",
+        "bytes": 511693,
+        "fileCount": 6,
+        "mb": 0.49
+      },
+      {
+        "extension": ".json",
+        "bytes": 10497,
+        "fileCount": 2,
+        "mb": 0.01
+      }
+    ],
+    "oversizedFiles": []
+  },
+  "astroAssets": {
+    "exists": true,
+    "cssBytes": 372330,
+    "cssMb": 0.36,
+    "cssCount": 28,
+    "jsBytes": 1110543,
+    "jsMb": 1.06,
+    "jsCount": 102,
+    "withinBudget": true
+  }
+}

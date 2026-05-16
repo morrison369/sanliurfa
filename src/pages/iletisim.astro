@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import { actions, isInputError } from 'astro:actions';
 import { getPublicAppUrl } from '../lib/public-app-url';
+import { PUBLISHER_PROFILE } from '../lib/transparency';
 
 const baseUrl = getPublicAppUrl();
 
@@ -11,13 +12,14 @@ const seo = {
  keywords: ['sanliurfa.com iletişim', 'şanlıurfa rehber destek', 'urfa mekan ekle'],
  ogImage: '/images/blog/urfa-tarihi.webp',
  canonical: '/iletisim',
+ modifiedTime: PUBLISHER_PROFILE.transparencyReviewedAtIso,
 };
 
 const contactInfo = [
- { icon: '📧', title: 'E-posta', value: 'info@sanliurfa.com', link: 'mailto:info@sanliurfa.com' },
- { icon: '📱', title: 'Telefon', value: '+90 (414) 123 45 67', link: 'tel:+904141234567' },
- { icon: '📍', title: 'Adres', value: 'Eyyübiye, Şanlıurfa', link: '#' },
- { icon: '💼', title: 'İşletme Başvurusu', value: 'business@sanliurfa.com', link: 'mailto:business@sanliurfa.com' },
+ { icon: '📰', title: 'Yayıncı', value: PUBLISHER_PROFILE.publisherName, link: '/yazarlar#editoryel-ekip' },
+ { icon: '📧', title: 'E-posta', value: PUBLISHER_PROFILE.generalEmail, link: `mailto:${PUBLISHER_PROFILE.generalEmail}` },
+ { icon: '📍', title: 'Adres', value: PUBLISHER_PROFILE.address, link: '#' },
+ { icon: '💼', title: 'İşletme Başvurusu', value: PUBLISHER_PROFILE.businessEmail, link: `mailto:${PUBLISHER_PROFILE.businessEmail}` },
 ];
 
 const contactTypes = [
@@ -37,7 +39,7 @@ const contactSubmitError =
  : null;
 
 const faqItems = [
- { S: 'Sanliurfa.com ile nasıl iletişime geçebilirim?', C: 'İletişim formunu doldurup mesajınızı gönderebilir veya info@sanliurfa.com adresine e-posta atabilirsiniz.' },
+ { S: 'Sanliurfa.com ile nasıl iletişime geçebilirim?', C: `İletişim formunu doldurup mesajınızı gönderebilir veya ${PUBLISHER_PROFILE.generalEmail} adresine e-posta atabilirsiniz.` },
  { S: 'İşletmemi siteye nasıl ekleyebilirim?', C: 'İşletme Ekle sayfasından başvurunuzu ücretsiz olarak yapabilirsiniz. Başvurular incelendikten sonra yayına alınır.' },
  { S: 'Yanlış bilgi bildirmek istiyorum, ne yapmalıyım?', C: 'İletişim formu üzerinden yanlış bilgi içeren mekanı ve doğru bilgiyi belirterek bize ulaşabilirsiniz.' },
 ];
@@ -201,11 +203,16 @@ const faqItems = [
  '@context': 'https://schema.org', '@type': 'ContactPage',
  name: 'Sanliurfa.com İletişim', url: `${baseUrl}/iletisim`,
  mainEntity: {
- '@type': 'Organization', name: 'Sanliurfa.com', url: baseUrl,
- email: 'iletisim@sanliurfa.com',
- address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressCountry: 'TR' },
+ '@type': 'Organization', name: PUBLISHER_PROFILE.siteName, url: baseUrl,
+ email: PUBLISHER_PROFILE.generalEmail,
+ address: { '@type': 'PostalAddress', addressLocality: 'Şanlıurfa', addressRegion: 'Şanlıurfa', addressCountry: 'TR', streetAddress: 'Eyyübiye' },
+ contactPoint: [
+  { '@type': 'ContactPoint', contactType: 'customer service', email: PUBLISHER_PROFILE.generalEmail, availableLanguage: 'Turkish' },
+  { '@type': 'ContactPoint', contactType: 'business inquiry', email: PUBLISHER_PROFILE.businessEmail, availableLanguage: 'Turkish' },
+  { '@type': 'ContactPoint', contactType: 'privacy', email: PUBLISHER_PROFILE.privacyEmail, availableLanguage: 'Turkish' },
+ ],
  },
- })} is:inline />
+})} is:inline />
  <script type="application/ld+json" set:html={JSON.stringify({
  '@context': 'https://schema.org', '@type': 'FAQPage',
  mainEntity: faqItems.map(item => ({

@@ -61,7 +61,15 @@ const publicSeoSignals = [
 ];
 
 const publicImageSignals = [
-  ['src/components/home/CityGuideLanding.astro', ['/images/places/balikligol.jpg', '/images/places/gobeklitepe.jpg', '/images/tarihi-yerler/harran-kumbet-evleri.jpg']],
+  [
+    'src/components/home/CityGuideLanding.astro',
+    [
+      '/images/home/collage/balikligol.webp',
+      '/images/home/collage/gobeklitepe.webp',
+      '/images/home/collage/harran.webp',
+      '/images/home/collage/halfeti.webp',
+    ],
+  ],
   ['src/pages/etkinlikler/index.astro', ['resolveEventImage', 'imageAlt: event.title', 'PublicCollectionList']],
   ['src/pages/yemek-tarifleri/index.astro', ['resolveRecipeImage', 'alt={recipe.name}', '<Image']],
   ['src/pages/gezilecek-yerler/[slug].astro', ['resolveHistoricalImage', 'imageAlt={site.name}', 'Şanlıurfa Gezilecek Yerler']],

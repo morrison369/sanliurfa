@@ -46,7 +46,7 @@ const LOCAL_TUNNEL_PORT = 15434;
 
 const DRY = process.argv.includes('--dry-run');
 
-if (!ollamaCfg.KEY) { console.error('OLLAMA_API_KEY eksik'); process.exit(1); }
+if (ollamaCfg.IS_CLOUD && !ollamaCfg.KEY) { console.error('OLLAMA_API_KEY eksik'); process.exit(1); }
 if (!SSH_PASS)      { console.error('SSH_PASS eksik (.env.scripts)'); process.exit(1); }
 
 function openSshTunnel() {

@@ -12,7 +12,7 @@
 
 import type { APIRoute } from 'astro';
 import { query } from '../../../lib/postgres';
-import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId, safeErrorDetail } from '../../../lib/api';
+import { apiResponse, apiError, HttpStatus, ErrorCode, getRequestId } from '../../../lib/api';
 import { logger } from '../../../lib/logger';
 import { deleteCachePattern } from '../../../lib/cache';
 
@@ -56,9 +56,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .map((id: unknown) => ({ id: String(id), reason: 'invalid_uuid_format' as const }));
 
     if (safeItems.length === 0) {
-      return apiResponse(
-        { success: true, affected: 0, action, count: items.length, skipped: items.length, skipped_details: skippedInvalid },
-        HttpStatus.OK,
+      return apiError(
+        ErrorCode.VALIDATION_ERROR,
+        'Geçerli UUID içeren en az bir öğe gereklidir',
+        HttpStatus.BAD_REQUEST,
+        { skipped: items.length, skipped_details: skippedInvalid },
         requestId,
       );
     }
@@ -122,7 +124,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     let affectedIds: string[] = [];
     if (sql) {
       const result = await query<{ id: string }>(sql, safeItems);
-      affectedIds = result.rows.map((r) => r.id);
+      const rows = Array.isArray(result.rows) ? result.rows : [];
+      affectedIds =
+        rows.length > 0
+          ? rows.map((r) => r.id)
+          : safeItems.slice(0, Math.max(0, result.rowCount ?? 0));
     }
     const affected = affectedIds.length;
 
@@ -162,7 +168,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     logger.error('Bulk action failed', error instanceof Error ? error : new Error(String(error)));
     return apiError(
       ErrorCode.INTERNAL_ERROR,
-      safeErrorDetail(error, 'Toplu işlem başarısız'),
+      'Toplu işlem başarısız',
       HttpStatus.INTERNAL_SERVER_ERROR,
       undefined,
       requestId,

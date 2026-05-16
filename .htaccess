@@ -10,6 +10,9 @@ RewriteRule ^/?(.*) "ws://127.0.0.1:4321/$1" [P,L]
 
 # Tüm istekleri Node.js'e yönlendir
 RewriteCond %{REQUEST_URI} !^/\.well-known/ [NC]
+RewriteCond %{REQUEST_URI} !^/ads\.txt$ [NC]
+RewriteCond %{REQUEST_URI} !^/images/ [NC]
+RewriteCond %{REQUEST_URI} !^/uploads/ [NC]
 RewriteRule ^(.*)$ http://127.0.0.1:4321/$1 [P,L]
 
 # Güvenlik Header'ları
@@ -31,6 +34,16 @@ RewriteRule ^(.*)$ http://127.0.0.1:4321/$1 [P,L]
     
     # Permissions Policy
     Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+
+    <FilesMatch "\.(avif|webp|jpe?g|png|gif|svg|ico)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    <Files "ads.txt">
+        Header set Content-Type "text/plain; charset=utf-8"
+        Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+        Header set X-Robots-Tag "all"
+    </Files>
 </IfModule>
 
 # Gzip Sıkıştırma

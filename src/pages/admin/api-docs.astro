@@ -1,14 +1,55 @@
 ---
 import { Icon } from 'astro-icon/components';
+import fs from 'node:fs';
+import path from 'node:path';
 import AdminLayout from '../../layouts/AdminLayoutV2.astro';
+
+const methodOrder = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
+const apiRoot = path.join(process.cwd(), 'src', 'pages', 'api');
+
+function walkApiFiles(dir: string): string[] {
+ if (!fs.existsSync(dir)) return [];
+ return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+  const absolute = path.join(dir, entry.name);
+  if (entry.isDirectory()) return walkApiFiles(absolute);
+  if (!/\.(ts|js|mjs)$/.test(entry.name)) return [];
+  if (absolute.endsWith(path.join('docs', 'openapi.json.ts'))) return [];
+  return [absolute];
+ });
+}
+
+function filePathToRoute(filePath: string): string {
+ const apiRelativePath = path.relative(apiRoot, filePath).replace(/\\/g, '/').replace(/\.(ts|js|mjs)$/, '');
+ let route = `/${apiRelativePath}`;
+ route = route.replace(/\/index$/, '');
+ route = route.replace(/\[\.\.\.([^\]]+)\]/g, '{$1}');
+ route = route.replace(/\[([^\]]+)\]/g, '{$1}');
+ return `/api${route === '/' ? '' : route}`;
+}
+
+const apiRoutes = walkApiFiles(apiRoot)
+ .map((filePath) => {
+  const source = fs.readFileSync(filePath, 'utf8');
+  const route = filePathToRoute(filePath);
+  return {
+   route,
+   methods: methodOrder.filter((method) => new RegExp(`export\\s+const\\s+${method}\\b`).test(source)),
+   tag: route.split('/')[2] || 'root',
+  };
+ })
+ .sort((a, b) => a.route.localeCompare(b.route, 'tr'));
+
+const totalMethods = apiRoutes.reduce((sum, item) => sum + item.methods.length, 0);
+const tagCount = new Set(apiRoutes.map((item) => item.tag)).size;
+const secureEstimate = apiRoutes.filter((item) => item.route.startsWith('/api/admin')).length;
 ---
 
 <AdminLayout
  title="API Dokümantasyonu"
- subtitle="Tüm API endpoint'lerini inceleyin ve test edin (Swagger UI)"
+ subtitle="OpenAPI çıktısını inceleyin ve route yüzeyini hızlı tarayın"
  seo={{ title: 'API Dokümantasyonu - Admin', noIndex: true }}
 >
- <a slot="page-actions" href="/api/docs" target="_blank" rel="noopener" class="ad-action">
+ <a slot="page-actions" href="/api/docs/openapi.json" target="_blank" rel="noopener" class="ad-action">
   <Icon name="lucide:download" class="w-4 h-4" />
   OpenAPI JSON
  </a>
@@ -17,38 +58,73 @@ import AdminLayout from '../../layouts/AdminLayoutV2.astro';
   <div class="ad-info">
    <Icon name="lucide:info" class="w-4 h-4 ad-info-icon" />
    <span>
-    <strong>İnteraktif API gezgini.</strong>
-    Endpoint'leri buradan test edebilirsiniz. Auth gereken çağrılar admin oturumunuzu kullanır.
+    <strong>Hafif OpenAPI özeti.</strong>
+    Bu sayfa ağır dokümantasyon bundle'ı yüklemeden route, method ve tag yüzeyini gösterir.
    </span>
   </div>
 
-  <div class="ad-swagger-wrap">
-   <div id="swagger-ui"></div>
+  <div class="ad-toolbar">
+   <label class="ad-search">
+    <Icon name="lucide:search" class="w-4 h-4" />
+    <input id="api-search" type="search" placeholder="Route, tag veya method ara" autocomplete="off" />
+   </label>
+   <span id="api-count" class="ad-count">{apiRoutes.length} route</span>
+  </div>
+
+  <div class="ad-summary-grid" id="api-summary" aria-live="polite">
+   <div class="ad-summary"><strong>{apiRoutes.length}</strong><span>Route</span></div>
+   <div class="ad-summary"><strong>{totalMethods}</strong><span>Method</span></div>
+   <div class="ad-summary"><strong>{tagCount}</strong><span>Tag</span></div>
+   <div class="ad-summary"><strong>{secureEstimate}</strong><span>Admin route</span></div>
+  </div>
+
+  <div class="ad-route-list" id="api-routes" aria-live="polite">
+   {apiRoutes.map((item) => (
+    <article
+     class="ad-route"
+     data-route={item.route}
+     data-search={`${item.route} ${item.tag} ${item.methods.join(' ')}`}
+    >
+     <div class="ad-methods">
+      {item.methods.length > 0
+       ? item.methods.map((method) => (
+          <span class={`ad-method ad-method-${method.toLowerCase()}`}>{method}</span>
+         ))
+       : <span class="ad-method ad-method-unknown">ANY</span>}
+     </div>
+     <div>
+      <code>{item.route}</code>
+      <p>{item.tag} route grubu</p>
+      <div class="ad-tags">
+       <span>{item.tag}</span>
+       {item.route.startsWith('/api/admin') && <span>admin</span>}
+      </div>
+     </div>
+    </article>
+   ))}
   </div>
  </div>
 </AdminLayout>
 
-<link rel="stylesheet" href="/vendor/swagger-ui/swagger-ui.css" />
-<script is:inline src="/vendor/swagger-ui/swagger-ui-bundle.js"></script>
 <script is:inline>
- window.addEventListener('load', () => {
-  SwaggerUIBundle({
-   url: '/api/docs',
-   dom_id: '#swagger-ui',
-   deepLinking: true,
-   presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.presets.standalone],
-   plugins: [SwaggerUIBundle.plugins.DownloadUrl],
-   requestInterceptor: (req) => req
-  });
- });
-</script>
+ function normalize(value) {
+  return String(value || '').toLocaleLowerCase('tr-TR');
+ }
 
-<style is:global>
- .swagger-ui { padding: 20px; }
- .swagger-ui .topbar { display: none; }
- .swagger-ui .info { margin: 30px 0; }
- .swagger-ui .info hgroup.main a { display: none; }
-</style>
+ function applySearch() {
+  const q = normalize(document.getElementById('api-search').value);
+  const routes = Array.from(document.querySelectorAll('.ad-route'));
+  let visibleCount = 0;
+  routes.forEach((route) => {
+   const isVisible = !q || normalize(route.dataset.search).includes(q);
+   route.hidden = !isVisible;
+   if (isVisible) visibleCount += 1;
+  });
+  document.getElementById('api-count').textContent = `${visibleCount} route`;
+ }
+
+ document.getElementById('api-search').addEventListener('input', applySearch);
+</script>
 
 <style>
  .ad-page { display: flex; flex-direction: column; gap: 1rem; }
@@ -76,10 +152,125 @@ import AdminLayout from '../../layouts/AdminLayoutV2.astro';
  .ad-info-icon { color: rgb(2,132,199); flex-shrink: 0; }
  .ad-info strong { color: var(--adm-text); font-weight: 600; }
 
- .ad-swagger-wrap {
+ .ad-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+ }
+
+ .ad-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  max-width: 520px;
   background: var(--adm-bg-elev);
   border: 1px solid var(--adm-border);
-  border-radius: 12px;
-  overflow: hidden;
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  color: var(--adm-muted);
+ }
+
+ .ad-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--adm-text);
+  font: inherit;
+ }
+
+ .ad-count { color: var(--adm-muted); font-size: 0.85rem; }
+
+ .ad-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+ }
+
+ .ad-summary {
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+ }
+
+ .ad-summary strong { display: block; font-size: 1.35rem; color: var(--adm-text); }
+ .ad-summary span { color: var(--adm-muted); font-size: 0.78rem; }
+
+ .ad-route-list { display: grid; gap: 0.65rem; }
+
+ .ad-route {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 0.8rem;
+  align-items: start;
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  padding: 0.8rem;
+ }
+
+ .ad-route code {
+  display: block;
+  color: var(--adm-text);
+  overflow-wrap: anywhere;
+  font-size: 0.86rem;
+ }
+
+ .ad-route p {
+  margin: 0.3rem 0 0;
+  color: var(--adm-muted);
+  font-size: 0.82rem;
+ }
+
+ .ad-method {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: white;
+ }
+
+ .ad-methods { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+ .ad-method-get { background: #0f766e; }
+ .ad-method-post { background: #2563eb; }
+ .ad-method-put, .ad-method-patch { background: #b45309; }
+ .ad-method-delete { background: #b91c1c; }
+ .ad-method-unknown { background: #475569; }
+
+ .ad-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+ }
+
+ .ad-tags span {
+  border: 1px solid var(--adm-border);
+  border-radius: 999px;
+  padding: 0.16rem 0.45rem;
+  color: var(--adm-muted);
+  font-size: 0.7rem;
+ }
+
+ .ad-empty {
+  margin: 0;
+  color: var(--adm-muted);
+  background: var(--adm-bg-elev);
+  border: 1px solid var(--adm-border);
+  border-radius: 8px;
+  padding: 1rem;
+ }
+
+ @media (max-width: 640px) {
+  .ad-toolbar { align-items: stretch; flex-direction: column; }
+  .ad-route { grid-template-columns: 1fr; }
+  .ad-method { width: 72px; }
  }
 </style>

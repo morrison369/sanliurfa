@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-05-15T12:07:47.401Z",
+  "status": "observing",
+  "policy": {
+    "observationDays": 14,
+    "cadenceHours": 24,
+    "staleAfterHours": 36,
+    "automaticDropAllowed": false,
+    "cronCommand": "npm run -s db:retirement:observe && npm run -s db:p0:quarantine:plan && npm run -s db:observation:cadence"
+  },
+  "summary": {
+    "snapshotCount": 3,
+    "missingDays": 11,
+    "stableEnoughForAction": false,
+    "latestSnapshot": "docs/db-retirement-observations/2026-05-15.json",
+    "latestAt": "2026-05-15T12:07:47.159Z",
+    "latestAgeHours": 0,
+    "earliestActionAt": "2026-05-29T12:07:47.159Z",
+    "p0QuarantineCandidateCount": 2,
+    "p0RuntimeHoldCount": 1
+  },
+  "snapshots": [
+    {
+      "file": "docs/db-retirement-observations/2026-05-13.json",
+      "generatedAt": "2026-05-13T23:57:23.643Z",
+      "p0QuarantineCandidateCount": 2,
+      "p0RuntimeHoldCount": 1
+    },
+    {
+      "file": "docs/db-retirement-observations/2026-05-14.json",
+      "generatedAt": "2026-05-14T21:20:59.354Z",
+      "p0QuarantineCandidateCount": 2,
+      "p0RuntimeHoldCount": 1
+    },
+    {
+      "file": "docs/db-retirement-observations/2026-05-15.json",
+      "generatedAt": "2026-05-15T12:07:47.159Z",
+      "p0QuarantineCandidateCount": 2,
+      "p0RuntimeHoldCount": 1
+    }
+  ]
+}

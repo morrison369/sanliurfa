@@ -57,6 +57,7 @@ interface SwipeQuota {
  dailyLimit: number;
  usedToday: number;
  remaining: number;
+ resetAt?: string | null;
 }
 
 interface SocialCapabilities {
@@ -98,6 +99,31 @@ export default function SwipeMatchExperience() {
  const topCandidate = useMemo(() => candidates[0] || null, [candidates]);
  const stackCandidates = useMemo(() => candidates.slice(0, 3), [candidates]);
  const hasQuotaExhausted = quota ? quota.remaining <= 0 : false;
+ const quotaResetLabel = useMemo(() => {
+ if (!quota?.resetAt) return '';
+ return new Date(quota.resetAt).toLocaleString('tr-TR', {
+ day: 'numeric',
+ month: 'short',
+ hour: '2-digit',
+ minute: '2-digit',
+ });
+ }, [quota?.resetAt]);
+ const profileActions = useMemo(() => {
+ const actions: string[] = [];
+ if (!profile.bio || profile.bio.trim().length < 40) actions.push('Bio alanını en az 40 karakterle güçlendirin.');
+ if (!Array.isArray(profile.photos) || profile.photos.length < 2) actions.push('En az 2 yerel profil fotoğrafı ekleyin.');
+ if (!Array.isArray(profile.interests) || profile.interests.length < 3) actions.push('En az 3 ilgi alanı seçin.');
+ if (!profile.preferred_district) actions.push('Tercih ettiğiniz ilçeyi belirtin.');
+ if (!profile.looking_for) actions.push('Ne aradığınızı seçin.');
+ return actions;
+ }, [profile]);
+ const activityIdeas = useMemo(() => {
+ if (!topCandidate) return [];
+ const reasons = Array.isArray(topCandidate.matchReasons) ? topCandidate.matchReasons : [];
+ if (reasons.some((reason) => reason.toLowerCase().includes('kahve'))) return ['Kahve için Balıklıgöl çevresinde kısa bir rota önerin.', 'İlk mesajda sakin bir kafe tercihi sorun.'];
+ if (reasons.some((reason) => reason.toLowerCase().includes('tarih') || reason.toLowerCase().includes('göbeklitepe'))) return ['Göbeklitepe veya Harran gezisi üzerine sohbet başlatın.', 'Tarihi mekan favorilerini sorun.'];
+ return ['Şanlıurfa’da sevdiği mekanları sorun.', 'Kısa ve güvenli bir gündüz buluşması önerin.'];
+ }, [topCandidate]);
 
  async function loadProfile() {
  const res = await fetch('/api/social/match-profile');
@@ -229,12 +255,6 @@ export default function SwipeMatchExperience() {
  }
  }
 
- function updatePhoto(index: number, value: string) {
- const next = [...profile.photos];
- next[index] = value;
- setProfile((prev) => ({ ...prev, photos: next.slice(0, 4) }));
- }
-
  const uploadTinderPhoto = useCallback(async (index: number, file: File) => {
  if (uploadingIndex !== null) return;
  setUploadingIndex(index);
@@ -364,6 +384,7 @@ export default function SwipeMatchExperience() {
  {quota && (
  <div className="mt-2 text-sm">
  Günlük swipe: {quota.usedToday}/{quota.dailyLimit} (kalan: {quota.remaining})
+ {quotaResetLabel && hasQuotaExhausted ? ` · Yenilenme: ${quotaResetLabel}` : ''}
  </div>
  )}
  {capabilities?.features?.tinderEnabled === false && (
@@ -507,6 +528,16 @@ export default function SwipeMatchExperience() {
  </div>
  </div>
  )}
+ {profileActions.length > 0 && (
+ <div className="rounded-sm border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-[#7A6B58]">
+ <p className="mb-2 font-semibold text-[#1F1410]">Profil güçlendirme kontrolü</p>
+ <ul className="space-y-1">
+ {profileActions.slice(0, 5).map((action) => (
+ <li key={action}>• {action}</li>
+ ))}
+ </ul>
+ </div>
+ )}
 
  <p className="text-xs text-[#7A6B58]">Fotoğraflar (en fazla 4) — profil fotoğraflarınız swipe kartında görünür</p>
 
@@ -571,8 +602,19 @@ export default function SwipeMatchExperience() {
 
  <div className="relative h-[420px] overflow-hidden rounded-sm border border-[rgba(184,115,51,0.14)] bg-[rgba(184,115,51,0.04)]">
  {candidates.length === 0 && (
- <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#7A6B58]">
- Yeni aday kalmadı. Daha sonra tekrar deneyin.
+ <div className="flex h-full flex-col items-center justify-center gap-3 p-4 text-center text-sm text-[#7A6B58]">
+ <strong className="text-base text-[#1F1410]">Yeni aday kalmadı.</strong>
+ <span>İlgi alanlarınızı ve ilçe tercihinizi güncelleyin ya da daha sonra tekrar deneyin.</span>
+ <button
+ type="button"
+ onClick={() => {
+ void loadCandidates();
+ void loadCapabilities();
+ }}
+ className="rounded-sm bg-urfa-600 px-3 py-2 text-xs font-semibold text-white hover:bg-urfa-700"
+ >
+ Adayları yenile
+ </button>
  </div>
  )}
 
@@ -631,7 +673,9 @@ export default function SwipeMatchExperience() {
  )}
  </div>
  {Array.isArray(candidate.matchReasons) && candidate.matchReasons.length > 0 && (
- <div className="mt-1.5 flex flex-wrap gap-1">
+ <div className="mt-1.5">
+ <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-[#7A6B58]">Neden bu kişi?</p>
+ <div className="flex flex-wrap gap-1">
  {candidate.matchReasons.slice(0, 3).map((reason, idx) => (
  <span
  key={idx}
@@ -641,8 +685,17 @@ export default function SwipeMatchExperience() {
  </span>
  ))}
  </div>
+ </div>
  )}
  <p className="mt-2 text-sm text-[#7A6B58]">{candidate.bio || 'Henüz biyografi yok.'}</p>
+ {isTop && activityIdeas.length > 0 && (
+ <div className="mt-3 rounded-sm bg-[rgba(184,115,51,0.06)] p-2 text-xs text-[#7A6B58]">
+ <p className="mb-1 font-semibold text-[#1F1410]">İlk sohbet fikri</p>
+ {activityIdeas.map((idea) => (
+ <p key={idea}>• {idea}</p>
+ ))}
+ </div>
+ )}
  </article>
  );
  })}
@@ -666,7 +719,7 @@ export default function SwipeMatchExperience() {
  Sağa Kaydır
  </button>
  </div>
- <p className="mt-2 text-xs text-[#7A6B58]">Klavye: ← geç, → beğen</p>
+ <p className="mt-2 text-xs text-[#7A6B58]">Klavye: ← geç, → beğen{quotaResetLabel ? ` · Kota yenilenme: ${quotaResetLabel}` : ''}</p>
  {!!swipeHint && <p className="mt-2 text-xs text-amber-400">{swipeHint}</p>}
  <p className="mt-2 text-sm text-[#7A6B58]">{info}</p>
  </section>
@@ -682,10 +735,11 @@ export default function SwipeMatchExperience() {
  <a
  key={m.otherUserId}
  className="block rounded-sm border border-[rgba(184,115,51,0.14)] p-3 hover:bg-[rgba(184,115,51,0.04)]"
- href={m.conversationId ? `/mesajlar?conversation=${m.conversationId}` : `/mesajlar?user=${m.otherUserId}`}
+ href={m.conversationId ? `/mesajlar?conversation=${m.conversationId}&starter=${encodeURIComponent('Merhaba, eşleştiğimize sevindim. Şanlıurfa’da en sevdiğin mekan neresi?')}` : `/mesajlar?user=${m.otherUserId}&starter=${encodeURIComponent('Merhaba, eşleştiğimize sevindim. Şanlıurfa’da en sevdiğin mekan neresi?')}`}
  >
  <strong>{m.otherUserName}</strong>{' '}
  <span className="text-[#7A6B58]">@{m.otherUsername || 'uye'}</span>
+ <span className="mt-1 block text-xs text-[#7A6B58]">Mesaja hazır başlangıç önerisiyle açılır.</span>
  </a>
  ))
  )}

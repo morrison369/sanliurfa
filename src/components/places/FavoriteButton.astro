@@ -28,7 +28,7 @@ const loginRedirect = placeSlug ? `/giris?redirect=/isletme/${placeSlug}` : '/gi
     class:list={['fav-btn', `fav-btn--${variant}`]}
     title="Favorilere eklemek için giriş yapın"
     aria-label="Favoriye eklemek için giriş yap"
-    onclick="event.stopPropagation()"
+    data-sf-favorite-login
   >
     <Icon name="lucide:heart" class="fav-btn__icon" aria-hidden="true" />
   </a>
@@ -37,10 +37,10 @@ const loginRedirect = placeSlug ? `/giris?redirect=/isletme/${placeSlug}` : '/gi
     type="button"
     class:list={['fav-btn', `fav-btn--${variant}`, initialFavorited && 'fav-btn--active']}
     data-place-id={placeId}
+    data-sf-favorite-toggle
     aria-pressed={initialFavorited}
     aria-label={initialFavorited ? 'Favorilerden çıkar' : 'Favorilere ekle'}
     title={initialFavorited ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-    onclick="event.stopPropagation();event.preventDefault();window.__sfToggleFavorite(this)"
   >
     <Icon name="lucide:heart" class="fav-btn__icon" aria-hidden="true" />
   </button>
@@ -118,5 +118,21 @@ const loginRedirect = placeSlug ? `/giris?redirect=/isletme/${placeSlug}` : '/gi
         btn.dataset.busy = '0';
       }
     };
+  }
+
+  if (!window.__sfFavoriteEventsBound) {
+    document.addEventListener('click', (event) => {
+      const trigger =
+        event.target instanceof Element
+          ? event.target.closest('[data-sf-favorite-login], [data-sf-favorite-toggle]')
+          : null;
+      if (!trigger) return;
+      event.stopPropagation();
+      if (trigger.hasAttribute('data-sf-favorite-toggle')) {
+        event.preventDefault();
+        window.__sfToggleFavorite(trigger);
+      }
+    });
+    window.__sfFavoriteEventsBound = true;
   }
 </script>

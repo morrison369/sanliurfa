@@ -16,4 +16,4 @@ Astro SSR, Tailwind ve TypeScript hattı kurulu. Tasarım probleminin nedeni eks
 - Yeni public section eski koyu tema hexlerini veya emoji placeholder kullanmaz.
 - Görsel seçimi `public-image-resolvers.ts`, `seo-image.ts` veya `image-map.ts` üzerinden yapılır.
 - `/`, `/arama`, `/harita`, `/saglik/nobetci-eczaneler`, `/topluluk`, `/eslesme` gate kapsamındadır.
-- Bir frontend batch `astro check`, `public:city:gate`, `test:e2e:astro:preview` ve `release:astro:gate` geçmeden tamam sayılmaz.
+- Bir frontend batch `astro check`, `public:city:gate`, preview modda `node scripts/e2e/astro-homepage-a11y.mjs` ve `release:astro:gate` geçmeden tamam sayılmaz.

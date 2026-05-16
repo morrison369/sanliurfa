@@ -32,18 +32,40 @@ export async function addReviewResponse(
 ): Promise<ReviewResponse> {
   try {
     // Verify ownership
-    const place = await queryOne('SELECT user_id FROM places WHERE id = $1', [placeId]);
-    if (!place || place.user_id !== ownerId) {
+    const place = await queryOne<{ owner_id: string | null }>(
+      'SELECT COALESCE(owner_id, user_id) as owner_id FROM places WHERE id = $1',
+      [placeId]
+    );
+    if (!place || place.owner_id !== ownerId) {
       throw new Error('Access denied');
+    }
+
+    const review = await queryOne<{ id: string; user_id: string; place_id: string }>(
+      'SELECT id, user_id, place_id FROM reviews WHERE id = $1',
+      [reviewId]
+    );
+    if (!review || review.place_id !== placeId) {
+      throw new Error('Review not found');
     }
 
     const response = await insert('review_responses', {
       review_id: reviewId,
       place_id: placeId,
       owner_id: ownerId,
+      vendor_id: ownerId,
       response_text: responseText,
+      response: responseText,
       is_public: true
     });
+
+    await query(
+      `UPDATE reviews
+       SET owner_response = $1,
+           owner_responded_at = COALESCE(owner_responded_at, NOW()),
+           updated_at = NOW()
+       WHERE id = $2`,
+      [responseText, reviewId]
+    );
 
     // Clear review caches (paralel)
     await Promise.all([
@@ -52,7 +74,6 @@ export async function addReviewResponse(
     ]);
 
     // Get reviewer info to send notification
-    const review = await queryOne('SELECT user_id FROM reviews WHERE id = $1', [reviewId]);
     if (review) {
       const ownerUser = await queryOne('SELECT full_name FROM users WHERE id = $1', [ownerId]);
       const ownerName = ownerUser?.full_name || 'İşletme Sahibi';
@@ -88,7 +109,17 @@ export async function getReviewResponses(reviewId: string): Promise<ReviewRespon
     if (cached) return cached;
 
     const responses = await queryMany(
-      `SELECT * FROM review_responses
+      `SELECT
+         id,
+         review_id,
+         place_id,
+         COALESCE(owner_id, vendor_id) as owner_id,
+         COALESCE(response_text, response) as response_text,
+         COALESCE(is_public, true) as is_public,
+         is_edited,
+         created_at,
+         updated_at
+       FROM review_responses
        WHERE review_id = $1 AND is_public = true
        ORDER BY created_at DESC`,
       [reviewId]
@@ -254,8 +285,13 @@ export async function updateReviewResponse(
 ): Promise<ReviewResponse> {
   try {
     // Verify ownership
-    const response = await queryOne(
-      'SELECT owner_id, review_id, place_id FROM review_responses WHERE id = $1',
+    const response = await queryOne<{ owner_id: string | null; review_id: string; place_id: string }>(
+      `SELECT
+         COALESCE(owner_id, vendor_id) as owner_id,
+         review_id,
+         place_id
+       FROM review_responses
+       WHERE id = $1`,
       [responseId]
     );
 
@@ -268,10 +304,20 @@ export async function updateReviewResponse(
       { id: responseId },
       {
         response_text: newText,
+        response: newText,
         is_edited: true,
         edited_at: new Date(),
         updated_at: new Date()
       }
+    );
+
+    await query(
+      `UPDATE reviews
+       SET owner_response = $1,
+           owner_responded_at = COALESCE(owner_responded_at, NOW()),
+           updated_at = NOW()
+       WHERE id = $2`,
+      [newText, response.review_id]
     );
 
     // Clear cache
@@ -292,8 +338,13 @@ export async function updateReviewResponse(
 export async function deleteReviewResponse(responseId: string, ownerId: string): Promise<boolean> {
   try {
     // Verify ownership
-    const response = await queryOne(
-      'SELECT owner_id, review_id, place_id FROM review_responses WHERE id = $1',
+    const response = await queryOne<{ owner_id: string | null; review_id: string; place_id: string }>(
+      `SELECT
+         COALESCE(owner_id, vendor_id) as owner_id,
+         review_id,
+         place_id
+       FROM review_responses
+       WHERE id = $1`,
       [responseId]
     );
 
@@ -302,6 +353,14 @@ export async function deleteReviewResponse(responseId: string, ownerId: string):
     }
 
     const result = await query('DELETE FROM review_responses WHERE id = $1', [responseId]);
+    await query(
+      `UPDATE reviews
+       SET owner_response = NULL,
+           owner_responded_at = NULL,
+           updated_at = NOW()
+       WHERE id = $1`,
+      [response.review_id]
+    );
 
     // Clear cache
     await deleteCachePattern(`review:${response.review_id}:*`);

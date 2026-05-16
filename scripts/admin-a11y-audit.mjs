@@ -16,10 +16,10 @@
  */
 import { chromium } from 'playwright';
 import { AxeBuilder } from '@axe-core/playwright';
+import { getAdminCredentials } from './lib/admin-script-auth.mjs';
 
 const BASE = 'https://sanliurfa.com';
-const EMAIL = 'admin@sanliurfa.com';
-const PASS = 'Urfa2026!';
+const { email: EMAIL, password: PASS } = getAdminCredentials();
 
 const TARGETS = [
  '/admin', '/admin/places', '/admin/users', '/admin/blog/posts',

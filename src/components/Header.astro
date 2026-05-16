@@ -1,5 +1,6 @@
 ---
 import NotificationBadge from './NotificationBadge';
+import { getSiteSetting } from '../lib/site-content';
 
 interface Props {
   user?: { id: string; email?: string; fullName?: string; role?: string } | null;
@@ -9,7 +10,7 @@ const { user } = Astro.props;
 const path = Astro.url.pathname;
 
 // Primary nav — 1024-1279px (lg breakpoint): 6 items show
-const navLinks = [
+const fallbackNavLinks = [
   { href: '/mekanlar', label: 'Mekanlar', primary: true },
   { href: '/yeme-icme', label: 'Yeme İçme', primary: true },
   { href: '/gezilecek-yerler', label: 'Gezilecek', primary: true },
@@ -22,6 +23,12 @@ const navLinks = [
   { href: '/ilceler', label: 'İlçeler', primary: false },
   { href: '/topluluk', label: 'Topluluk', primary: false },
 ];
+
+const headerNavSetting = await getSiteSetting('header.navLinks', { items: fallbackNavLinks });
+const navLinks =
+  Array.isArray(headerNavSetting.items) && headerNavSetting.items.length > 0
+    ? headerNavSetting.items
+    : fallbackNavLinks;
 
 const isActive = (href: string) => href !== '/' && path.startsWith(href);
 ---
@@ -59,6 +66,12 @@ const isActive = (href: string) => href !== '/' && path.startsWith(href);
         class="flex h-10 w-10 items-center justify-center rounded-full border border-[#d9c5a7] bg-white text-[#5c4938] transition hover:border-[#78331d] hover:text-[#78331d]"
       >
         <span aria-hidden="true">⌕</span>
+      </a>
+      <a
+        href="/ilanlar"
+        class="rounded-full border border-[#d9c5a7] px-3 py-2 text-sm font-bold text-[#7b4129] transition hover:border-[#78331d] hover:bg-white"
+      >
+        İlanlar
       </a>
       <a
         href="/eslesme"
@@ -116,6 +129,9 @@ const isActive = (href: string) => href !== '/' && path.startsWith(href);
           ))}
           <a href="/isletme-kayit" class="mt-2 rounded-xl bg-[#78331d] px-3 py-3 text-center text-sm font-bold text-white">
             İşletmeni Ekle
+          </a>
+          <a href="/ilanlar" class="rounded-xl border border-[#d9c5a7] px-3 py-3 text-center text-sm font-bold text-[#7b4129]">
+            Ücretsiz İlanlar
           </a>
         </nav>
       </div>

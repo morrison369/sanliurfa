@@ -25,29 +25,110 @@ const userId = user.id;
 
 let placesResult: any = { rows: [] };
 let subResult: any = { rows: [] };
+let analyticsResult: any = { rows: [] };
 try {
  [placesResult, subResult] = await Promise.all([
  query(
- `SELECT id, slug, name FROM places WHERE owner_id = $1 AND status != 'deleted' ORDER BY created_at DESC`,
+ `SELECT id, slug, name, rating, review_count
+  FROM places
+  WHERE owner_id = $1 AND status != 'deleted'
+  ORDER BY created_at DESC`,
  [userId]
  ),
  query(
- `SELECT st.name as plan FROM subscriptions s
+ `SELECT
+    st.name as plan,
+    st.display_name,
+    st.monthly_price,
+    s.next_billing_date
+  FROM subscriptions s
  JOIN subscription_tiers st ON st.id = s.tier_id
  WHERE s.user_id = $1 AND s.status = 'active'
  ORDER BY s.created_at DESC LIMIT 1`,
  [userId]
  ),
  ]);
+
+ if (placesResult.rows[0]?.id) {
+ analyticsResult = await query(
+ `SELECT
+    COALESCE(SUM(CASE WHEN date >= CURRENT_DATE - INTERVAL '30 days' THEN views ELSE 0 END), 0) AS views_30d,
+    COALESCE(SUM(CASE WHEN date >= CURRENT_DATE - INTERVAL '60 days' AND date < CURRENT_DATE - INTERVAL '30 days' THEN views ELSE 0 END), 0) AS views_prev_30d,
+    COALESCE(SUM(CASE WHEN date >= CURRENT_DATE - INTERVAL '30 days' THEN phone_clicks ELSE 0 END), 0) AS phone_clicks_30d,
+    COALESCE(SUM(CASE WHEN date >= CURRENT_DATE - INTERVAL '60 days' AND date < CURRENT_DATE - INTERVAL '30 days' THEN phone_clicks ELSE 0 END), 0) AS phone_clicks_prev_30d,
+    COALESCE(SUM(CASE WHEN date >= CURRENT_DATE - INTERVAL '30 days' THEN direction_clicks ELSE 0 END), 0) AS direction_clicks_30d,
+    COALESCE(SUM(CASE WHEN date >= CURRENT_DATE - INTERVAL '60 days' AND date < CURRENT_DATE - INTERVAL '30 days' THEN direction_clicks ELSE 0 END), 0) AS direction_clicks_prev_30d
+  FROM place_daily_analytics
+  WHERE place_id = $1
+    AND date >= CURRENT_DATE - INTERVAL '60 days'`,
+ [placesResult.rows[0].id]
+ );
+ }
 } catch (e) {
  logger.error('Business panel query failed:', e instanceof Error ? e : new Error(String(e)));
 }
+
+const calculateChange = (current: number, previous: number) => {
+ if (previous === 0) {
+  return current > 0 ? 100 : 0;
+ }
+
+ return Math.round(((current - previous) / previous) * 100);
+};
+
+const formatTrend = (value: number) => {
+ if (value > 0) return `↑ %${value} artış`;
+ if (value < 0) return `↓ %${Math.abs(value)} düşüş`;
+ return 'Son 30 günde değişim yok';
+};
+
+const analyticsRow = analyticsResult.rows[0] || {};
+const stats = {
+ monthViews: Number(analyticsRow.views_30d || 0),
+ monthViewsChange: calculateChange(
+ Number(analyticsRow.views_30d || 0),
+ Number(analyticsRow.views_prev_30d || 0)
+ ),
+ phoneClicks: Number(analyticsRow.phone_clicks_30d || 0),
+ phoneClicksChange: calculateChange(
+ Number(analyticsRow.phone_clicks_30d || 0),
+ Number(analyticsRow.phone_clicks_prev_30d || 0)
+ ),
+ rating: Number(placesResult.rows[0]?.rating || 0),
+ reviewCount: Number(placesResult.rows[0]?.review_count || 0),
+ directionClicks: Number(analyticsRow.direction_clicks_30d || 0),
+ directionClicksChange: calculateChange(
+ Number(analyticsRow.direction_clicks_30d || 0),
+ Number(analyticsRow.direction_clicks_prev_30d || 0)
+ ),
+};
+
+const activeSubscription = subResult.rows[0] || null;
+const planDisplayName = activeSubscription?.display_name || 'Ücretsiz';
+const planPriceLabel =
+ activeSubscription?.monthly_price !== undefined && activeSubscription?.monthly_price !== null
+ ? new Intl.NumberFormat('tr-TR', {
+ style: 'currency',
+ currency: 'TRY',
+ maximumFractionDigits: 0,
+ }).format(Number(activeSubscription.monthly_price))
+ : 'Ücretsiz';
+const renewalLabel = activeSubscription?.next_billing_date
+ ? new Date(activeSubscription.next_billing_date).toLocaleDateString('tr-TR', {
+ day: 'numeric',
+ month: 'long',
+ year: 'numeric',
+ })
+ : 'Aktif yenileme yok';
 
 const vendor = {
  id: userId,
  name: user.fullName || 'İşletme Sahibi',
  email: user.email,
- plan: subResult.rows[0]?.plan || 'free',
+ plan: activeSubscription?.plan || 'free',
+ planDisplayName,
+ planPriceLabel,
+ renewalLabel,
  places: placesResult.rows.map((p: any) => p.id),
  firstPlace: placesResult.rows[0] || null,
 };
@@ -117,7 +198,7 @@ const vendor = {
  </div>
  <div class="vd-hero-actions">
  <span class="vd-plan-badge">
- {vendor.plan !== 'free' ? `${vendor.plan} Plan` : 'Ücretsiz Plan'}
+ {vendor.plan !== 'free' ? `${vendor.planDisplayName} Plan` : 'Ücretsiz Plan'}
  </span>
  {vendor.firstPlace && (
  <a
@@ -138,24 +219,24 @@ const vendor = {
  <div class="sf-container">
  <div class="vd-stats">
  <div class="vd-stat">
- <div class="vd-stat-num">2,847</div>
+ <div class="vd-stat-num">{stats.monthViews.toLocaleString('tr-TR')}</div>
  <div class="vd-stat-label">Bu Ay Görüntülenme</div>
- <div class="vd-stat-growth">↑ %15 artış</div>
+ <div class="vd-stat-growth">{formatTrend(stats.monthViewsChange)}</div>
  </div>
  <div class="vd-stat">
- <div class="vd-stat-num">89</div>
+ <div class="vd-stat-num">{stats.phoneClicks.toLocaleString('tr-TR')}</div>
  <div class="vd-stat-label">Telefon Tıklaması</div>
- <div class="vd-stat-growth">↑ %8 artış</div>
+ <div class="vd-stat-growth">{formatTrend(stats.phoneClicksChange)}</div>
  </div>
  <div class="vd-stat">
- <div class="vd-stat-num">4.8</div>
+ <div class="vd-stat-num">{stats.rating.toFixed(1)}</div>
  <div class="vd-stat-label">Ortalama Puan</div>
- <div class="vd-stat-growth vd-stat-growth--neutral">1,247 yorum</div>
+ <div class="vd-stat-growth vd-stat-growth--neutral">{stats.reviewCount.toLocaleString('tr-TR')} yorum</div>
  </div>
  <div class="vd-stat">
- <div class="vd-stat-num">156</div>
+ <div class="vd-stat-num">{stats.directionClicks.toLocaleString('tr-TR')}</div>
  <div class="vd-stat-label">Yol Tarifi</div>
- <div class="vd-stat-growth">↑ %22 artış</div>
+ <div class="vd-stat-growth">{formatTrend(stats.directionClicksChange)}</div>
  </div>
  </div>
 
@@ -164,12 +245,14 @@ const vendor = {
  {vendor.firstPlace ? (
  <>
  <PlaceManager placeId={vendor.firstPlace.id} client:visible />
- <div class="vd-card">
+ <div class="vd-card" id="fotograflar">
  <h2 class="vd-card-title">Fotoğraflar</h2>
  <PhotoUpload placeId={vendor.firstPlace.id} photos={[]} client:visible />
  </div>
  <ReservationManager placeId={vendor.firstPlace.id} client:visible />
+ <div id="kampanyalar">
  <PromotionManager placeId={vendor.firstPlace.id} client:visible />
+ </div>
  <ReviewManager placeId={vendor.firstPlace.id} client:visible />
  </>
  ) : (
@@ -188,15 +271,15 @@ const vendor = {
  <div style="display:flex;flex-direction:column;gap:.75rem">
  <div class="vd-plan-row">
  <span class="vd-plan-label">Plan</span>
- <span class="vd-plan-val">Premium</span>
+ <span class="vd-plan-val">{vendor.planDisplayName}</span>
  </div>
  <div class="vd-plan-row">
  <span class="vd-plan-label">Aylık Ücret</span>
- <span class="vd-plan-price">₺500</span>
+ <span class="vd-plan-price">{vendor.planPriceLabel}</span>
  </div>
  <div class="vd-plan-row">
  <span class="vd-plan-label">Yenileme Tarihi</span>
- <span class="vd-plan-price">15 Mayıs 2026</span>
+ <span class="vd-plan-price">{vendor.renewalLabel}</span>
  </div>
  </div>
  <hr class="vd-divider" />
@@ -212,14 +295,14 @@ const vendor = {
  <div class="vd-card">
  <h3 class="vd-qa-title">Hızlı İşlemler</h3>
  <div>
- <button class="vd-qa-btn">
+ <a href="#fotograflar" class="vd-qa-btn">
  <span class="vd-qa-icon">📸</span>
  <span class="vd-qa-text">Fotoğraf Ekle</span>
- </button>
- <button class="vd-qa-btn">
+ </a>
+ <a href="#kampanyalar" class="vd-qa-btn">
  <span class="vd-qa-icon">🏷️</span>
  <span class="vd-qa-text">Kampanya Oluştur</span>
- </button>
+ </a>
  <a href="/isletme/analytics" class="vd-qa-btn">
  <span class="vd-qa-icon">📊</span>
  <span class="vd-qa-text">Detaylı Rapor İndir</span>

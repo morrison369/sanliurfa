@@ -52,6 +52,8 @@ Bu dosya hangi konuda hangi belgenin **authoritative** olduğunu belirtir. Repo 
 | Public route cache | [`docs/PUBLIC_ROUTE_CACHE_CONTRACT.md`](PUBLIC_ROUTE_CACHE_CONTRACT.md) | Public route cache kontratı |
 | Public sitemap integrity | [`docs/PUBLIC_SITEMAP_ROUTE_INTEGRITY.md`](PUBLIC_SITEMAP_ROUTE_INTEGRITY.md) | Sitemap doğruluğu |
 | Script surface reduction | [`docs/SCRIPT_SURFACE_REDUCTION_PLAN.md`](SCRIPT_SURFACE_REDUCTION_PLAN.md) | npm script azaltma planı |
+| Otomatik rapor indeksi | [`docs/REPORT_INDEX.md`](REPORT_INDEX.md) | Quality/release/test/upload raporlarının tek indeksi |
+| Local upload lifecycle | [`docs/LOCAL_UPLOAD_LIFECYCLE.md`](LOCAL_UPLOAD_LIFECYCLE.md) | Local filesystem upload durumları ve manuel arşiv/silme kuralları |
 | Content pipeline ops | [`docs/CONTENT_PIPELINE_OPERATIONS.md`](CONTENT_PIPELINE_OPERATIONS.md) | İçerik üretim hattı operasyon |
 | Content pipeline standard | [`docs/CONTENT_PIPELINE_STANDARD.md`](CONTENT_PIPELINE_STANDARD.md) | İçerik standartları |
 | Şehir içerik ajanları | [`docs/SEHIR_ICERIK_AJANLARI.md`](SEHIR_ICERIK_AJANLARI.md) | Şehir içerik üretici ajan tanımları |
@@ -91,6 +93,10 @@ Bu dosya hangi konuda hangi belgenin **authoritative** olduğunu belirtir. Repo 
 - Güvenlik kuralları (53 HARD RULE) → [`docs/SECURITY.md`](SECURITY.md)
 - Astro framework patterns → [`docs/ASTRO_DETAILED.md`](ASTRO_DETAILED.md)
 - DB index audit + öneriler → [`DB-INDEX-AUDIT.md`](../DB-INDEX-AUDIT.md)
+- DB retirement/drop kararları → [`docs/REPORT_INDEX.md`](REPORT_INDEX.md) içindeki DB retirement raporu; otomatik drop/index silme yok, en az 14 gün production gözlemi ve 30 günlük snapshot rotasyonu gerekir.
+- Local media storage → [`docs/LOCAL_UPLOAD_LIFECYCLE.md`](LOCAL_UPLOAD_LIFECYCLE.md) ve [`docs/REPORT_INDEX.md`](REPORT_INDEX.md). CDN/object storage önerilmez; upload quota ve bucket ownership parity raporunda takip edilir.
+- Release final artefakt tazeliği → [`docs/REPORT_INDEX.md`](REPORT_INDEX.md) içindeki freshness raporu; eski raporla release geçmek yasaktır.
+- Logger runtime profili → `src/lib/logger.ts`; test profili `debug`, production profili `info`, release profili `warn` seviyesinden başlar.
 - Manuel test senaryoları → [`TEST.md`](../TEST.md)
 - Cron job kurulum → [`CRON-SETUP.md`](../CRON-SETUP.md)
 - Deploy checklist → [`DEPLOY-CHECKLIST.md`](../DEPLOY-CHECKLIST.md) ve [`DEPLOYMENT-CHECKLIST-2026.md`](../DEPLOYMENT-CHECKLIST-2026.md)
@@ -122,6 +128,7 @@ Aşağıdaki özelliklerden birini taşıyan belge otomatik olarak şüpheli kab
 - Public tasarım için eski koyu tema veya hazır liste sitesi dili öneriyor
 - Şanlıurfa şehir rehberi yerine başka sektör, demo ticaret veya farklı proje dili kullanıyor
 - `hero-home.webp`, emoji placeholder veya alakasız görsel fallback'i public hedef gibi sunuyor
+- Cloudflare/CDN/object storage/S3/R2 gibi medya dağıtım önerilerini kanonik çözüm gibi anlatıyor
 - Docker veya Kubernetes'i kanonik production gibi anlatıyor
 - `npm run migrate` gibi artık var olmayan script isimleri kullanıyor
 - `vendor` ve `places` yüzeylerini tek doğru public rota gibi sunuyor

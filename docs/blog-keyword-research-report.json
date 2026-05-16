@@ -1,0 +1,1486 @@
+{
+  "generatedAt": "2026-05-15T12:07:56.799Z",
+  "status": "ok",
+  "sourcePolicy": {
+    "language": "tr",
+    "noDuplicateProdBlogs": true,
+    "autoPublish": false,
+    "exactSearchVolumeRequiresGoogleAdsApi": true,
+    "volumeFallback": "intent-priority-and-coverage-gap"
+  },
+  "googleCloud": {
+    "gcloudInstalled": true,
+    "activeProject": "indirimli-com-20260506",
+    "targetProject": "sanliurfa-com-2026",
+    "requiredServices": {
+      "googleads.googleapis.com": true,
+      "customsearch.googleapis.com": true,
+      "searchconsole.googleapis.com": true,
+      "pagespeedonline.googleapis.com": true,
+      "siteverification.googleapis.com": true,
+      "indexing.googleapis.com": true,
+      "analytics.googleapis.com": true,
+      "analyticsdata.googleapis.com": true
+    }
+  },
+  "googleAds": {
+    "ready": false,
+    "env": {
+      "developerToken": false,
+      "customerId": false,
+      "loginCustomerId": false,
+      "clientId": false,
+      "clientSecret": false,
+      "refreshToken": false
+    },
+    "note": "Arama hacmi için Google Ads developer token, customer id ve OAuth bilgileri gerekir; Google Cloud CLI tek başına hacim vermez."
+  },
+  "prodBlogInventory": {
+    "path": "docs/prod-blog-inventory.json",
+    "total": 314,
+    "loadedRows": 314
+  },
+  "generatedDraftInventory": {
+    "path": "docs/generated-blog-drafts",
+    "total": 40,
+    "loadedRows": 40
+  },
+  "summary": {
+    "totalCandidates": 43,
+    "selected": 0,
+    "duplicateRisk": 43,
+    "coverageComplete": true
+  },
+  "selectedTopics": [],
+  "skippedTopics": [
+    {
+      "priority": 100,
+      "title": "Şanlıurfa’da Gezilecek Yerler 2026: Balıklıgöl, Göbeklitepe, Harran ve Halfeti Rotası",
+      "slug": "sanliurfada-gezilecek-yerler-2026",
+      "focusKeyword": "Şanlıurfa’da gezilecek yerler",
+      "secondaryKeywords": [
+        "Şanlıurfa gezi rehberi",
+        "Urfa gezilecek yerler",
+        "Balıklıgöl gezilecek yerler",
+        "Göbeklitepe gezi",
+        "Harran gezilecek yerler",
+        "Halfeti tekne turu"
+      ],
+      "category": "Gezi",
+      "intent": "informational-local",
+      "reason": "Rakip arama sonuçlarında 2026 güncel gezi rehberi formatı tekrar ediyor; ana turizm rotası en geniş içerik kümelerini besler.",
+      "internalLinks": [
+        "/gezilecek-yerler",
+        "/balikligol-gezi-rehberi",
+        "/gobeklitepe-gezi-rehberi",
+        "/halfeti-gezi-rehberi",
+        "/harran-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://www.etstur.com/letsgo/sanliurfada-gezilecek-yerler/",
+        "https://www.yolculuk.com.tr/sanliurfa/sanliurfada-gezilecek-yerler/",
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfada-gezilecek-yerler-2026",
+        "title": "Şanlıurfa’da Gezilecek Yerler 2026: Balıklıgöl, Göbeklitepe, Harran ve Halfeti Rotası",
+        "score": 1
+      }
+    },
+    {
+      "priority": 96,
+      "title": "Şanlıurfa’da Ne Yenir 2026: Urfa Kebabı, Ciğer, Lahmacun ve Sıra Gecesi Sofrası",
+      "slug": "sanliurfada-ne-yenir-2026",
+      "focusKeyword": "Şanlıurfa’da ne yenir",
+      "secondaryKeywords": [
+        "Urfa kebabı",
+        "Şanlıurfa ciğer",
+        "Şanlıurfa lahmacun",
+        "Urfa sıra gecesi",
+        "Şanlıurfa yemekleri",
+        "Şanlıurfa kahvaltı"
+      ],
+      "category": "Gastronomi",
+      "intent": "informational-commercial-local",
+      "reason": "Gezi içerikleriyle birlikte yemek niyeti sık geçiyor; mekan kategori sayfalarına güçlü iç link köprüsü sağlar.",
+      "internalLinks": [
+        "/sanliurfada-ne-yenir",
+        "/en-iyi-kebapcilar",
+        "/en-iyi-cigerciler",
+        "/sanliurfa-sira-gecesi-mekanlari",
+        "/yemek-tarifleri"
+      ],
+      "sourceUrls": [
+        "https://www.gezipgeliyorum.com/urfada-gezilecek-yerler-ve-meshur-lezzetler/",
+        "https://www.yolculuk.com.tr/sanliurfa/sanliurfada-gezilecek-yerler/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfada-ne-yenir-2026",
+        "title": "Şanlıurfa’da Ne Yenir 2026: Urfa Kebabı, Ciğer, Lahmacun ve Sıra Gecesi Sofrası",
+        "score": 1
+      }
+    },
+    {
+      "priority": 94,
+      "title": "Göbeklitepe Ziyaret Rehberi 2026: Ulaşım, Müze, Bilet ve Gezi Planı",
+      "slug": "gobeklitepe-ziyaret-rehberi-2026",
+      "focusKeyword": "Göbeklitepe ziyaret rehberi",
+      "secondaryKeywords": [
+        "Göbeklitepe nasıl gidilir",
+        "Göbeklitepe bilet",
+        "Göbeklitepe müze",
+        "Göbeklitepe ziyaret saatleri",
+        "Şanlıurfa Göbeklitepe turu"
+      ],
+      "category": "Gezi",
+      "intent": "informational-transactional",
+      "reason": "Göbeklitepe, Şanlıurfa arama talebinin ana marka varlığı; güncel ziyaret planı ayrı long-tail yakalar.",
+      "internalLinks": [
+        "/gobeklitepe-gezi-rehberi",
+        "/gezilecek-yerler/gobeklitepe",
+        "/sanliurfa-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf",
+        "https://www.etstur.com/letsgo/sanliurfada-gezilecek-yerler/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "gobeklitepe-rehberi-ziyaret-bilgileri",
+        "title": "Göbeklitepe Rehberi: Ziyaret Bilgileri",
+        "score": 0.75
+      }
+    },
+    {
+      "priority": 91,
+      "title": "Halfeti Tekne Turu Rehberi 2026: Rumkale, Savaşan Köyü ve Siyah Gül Rotası",
+      "slug": "halfeti-tekne-turu-rehberi-2026",
+      "focusKeyword": "Halfeti tekne turu",
+      "secondaryKeywords": [
+        "Halfeti gezi rehberi",
+        "Halfeti gezilecek yerler",
+        "Rumkale tekne turu",
+        "Savaşan Köyü",
+        "Halfeti siyah gül"
+      ],
+      "category": "Gezi",
+      "intent": "informational-commercial-local",
+      "reason": "Halfeti tekne turu, gezi + rezervasyon niyetini birleştirir; mevcut Halfeti sayfasını destekler.",
+      "internalLinks": [
+        "/halfeti-gezi-rehberi",
+        "/ilceler/halfeti",
+        "/blog/halfetide-1-gun-tekne-turu"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.com/halfeti-gezi-rehberi/",
+        "https://www.memurlar.net/haber/742808/sanliurfa-halfeti-harran-gobeklitepe-gezi-rehberi.html"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "halfeti-tekne-turu-rehberi-2026",
+        "title": "Halfeti Tekne Turu Rehberi 2026: Rumkale, Savaşan Köyü ve Siyah Gül Rotası",
+        "score": 1
+      }
+    },
+    {
+      "priority": 88,
+      "title": "Şanlıurfa Sıra Gecesi Rehberi 2026: Mekan Seçimi, Menü ve Rezervasyon İpuçları",
+      "slug": "sanliurfa-sira-gecesi-rehberi-2026",
+      "focusKeyword": "Şanlıurfa sıra gecesi",
+      "secondaryKeywords": [
+        "Urfa sıra gecesi mekanları",
+        "sıra gecesi rezervasyon",
+        "Şanlıurfa sıra gecesi fiyat",
+        "Urfa sıra gecesi menü",
+        "Şanlıurfa kültür gecesi"
+      ],
+      "category": "Kültür",
+      "intent": "commercial-local",
+      "reason": "Sıra gecesi hem gezi hem yeme-içme karar niyetine sahip; AdSense ve mekan iç linkleri için güçlü hub.",
+      "internalLinks": [
+        "/sanliurfa-sira-gecesi-mekanlari",
+        "/etkinlikler",
+        "/yeme-icme"
+      ],
+      "sourceUrls": [
+        "https://gezilecekrota.com/sanliurfada-sira-gecesi-deneyimi-icin-en-iyi-10-mekan-nereler-gezilir",
+        "https://www.yolculuk.com.tr/sanliurfa/sanliurfada-gezilecek-yerler/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "near-title:sanliurfa-sira-gecesi-mekanlari",
+      "closestExisting": {
+        "slug": "sanliurfa-sira-gecesi-mekanlari",
+        "title": "Şanlıurfa Sıra Gecesi Mekanları",
+        "score": 0.75
+      }
+    },
+    {
+      "priority": 84,
+      "title": "Balıklıgöl Çevresi Yürüyüş Rotası 2026: Dergah, Çarşı ve Gümrük Hanı Planı",
+      "slug": "balikligol-cevresi-yuruyus-rotasi-2026",
+      "focusKeyword": "Balıklıgöl çevresi yürüyüş rotası",
+      "secondaryKeywords": [
+        "Balıklıgöl gezi rehberi",
+        "Dergah çevresi",
+        "Gümrük Hanı",
+        "Şanlıurfa tarihi çarşı",
+        "Eyyübiye gezi rotası"
+      ],
+      "category": "Gezi",
+      "intent": "informational-local",
+      "reason": "Balıklıgöl ana sayfaları var; yürüyüş rotası farklı arama niyetini ve harita iç linklerini yakalar.",
+      "internalLinks": [
+        "/balikligol-gezi-rehberi",
+        "/ilceler/eyyubiye",
+        "/gezilecek-yerler/balikligol"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.com/balikligol-gezi-rehberi/",
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "balikligol-cevresi-yuruyus-rotasi-2026",
+        "title": "Balıklıgöl Çevresi Yürüyüş Rotası 2026: Dergah, Çarşı ve Gümrük Hanı Planı",
+        "score": 1
+      }
+    },
+    {
+      "priority": 80,
+      "title": "Şanlıurfa 2 Günlük Gezi Planı 2026: İlk Kez Gelenler İçin Gün Gün Rota",
+      "slug": "sanliurfa-2-gunluk-gezi-plani-2026",
+      "focusKeyword": "Şanlıurfa 2 günlük gezi planı",
+      "secondaryKeywords": [
+        "Şanlıurfa hafta sonu rotası",
+        "Şanlıurfa gezi planı",
+        "Şanlıurfa kaç günde gezilir",
+        "Balıklıgöl Göbeklitepe Harran Halfeti rotası"
+      ],
+      "category": "Gezi",
+      "intent": "informational-itinerary",
+      "reason": "Plan/rota formatı yüksek karar niyetli kullanıcıyı yakalar ve tüm ana şehir sayfalarına iç link dağıtır.",
+      "internalLinks": [
+        "/sanliurfa-gezi-rehberi",
+        "/bugun-sanliurfada-ne-yapilir",
+        "/gezilecek-yerler"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.com/blog/sanliurfa-3-gunluk-gezi-plani-rota",
+        "https://www.quixoticguide.com/sanliurfa-urfa-travel-guide-gobekli-tepe-balikligol-harran/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-2-gunluk-gezi-plani-2026",
+        "title": "Şanlıurfa 2 Günlük Gezi Planı 2026: İlk Kez Gelenler İçin Gün Gün Rota",
+        "score": 1
+      }
+    },
+    {
+      "priority": 76,
+      "title": "Karahantepe ve Taş Tepeler Rehberi 2026: Göbeklitepe’den Sonra Nereye Gidilir?",
+      "slug": "karahantepe-tas-tepeler-rehberi-2026",
+      "focusKeyword": "Karahantepe Taş Tepeler",
+      "secondaryKeywords": [
+        "Karahantepe gezi",
+        "Taş Tepeler Şanlıurfa",
+        "Göbeklitepe alternatifi",
+        "Şanlıurfa arkeoloji rotası"
+      ],
+      "category": "Tarih",
+      "intent": "informational-heritage",
+      "reason": "Yeni arkeoloji ilgisi Göbeklitepe kümesini genişletir; uzmanlık ve GEO sinyali üretir.",
+      "internalLinks": [
+        "/gobeklitepe-gezi-rehberi",
+        "/tarihi-yerler",
+        "/sanliurfa-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://gidiyorum.com/blog/sanliurfada-gezilecek-yerler-rehberi",
+        "https://www.etstur.com/letsgo/sanliurfada-gezilecek-yerler/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "karahantepe-tas-tepeler-rehberi-2026",
+        "title": "Karahantepe ve Taş Tepeler Rehberi 2026: Göbeklitepe’den Sonra Nereye Gidilir?",
+        "score": 1
+      }
+    },
+    {
+      "priority": 98,
+      "title": "TEKNOFEST 2026 Şanlıurfa Rehberi: GAP Havalimanı, Ulaşım, Konaklama ve Gezi Planı",
+      "slug": "teknofest-2026-sanliurfa-rehberi",
+      "focusKeyword": "TEKNOFEST 2026 Şanlıurfa",
+      "secondaryKeywords": [
+        "TEKNOFEST Şanlıurfa GAP Havalimanı",
+        "TEKNOFEST 2026 ulaşım",
+        "Şanlıurfa TEKNOFEST konaklama",
+        "TEKNOFEST gezi planı",
+        "Şanlıurfa etkinlik rehberi"
+      ],
+      "category": "Etkinlik",
+      "intent": "event-informational-local",
+      "reason": "Prod blog envanterinde Teknofest yok; resmi 30 Eylül-4 Ekim 2026 etkinliği yüksek dönemsel arama talebi ve şehir içi gezi/yeme-içme iç linkleri üretir.",
+      "internalLinks": [
+        "/etkinlikler",
+        "/sanliurfa-gezi-rehberi",
+        "/sanliurfada-ne-yenir",
+        "/mekanlar",
+        "/gezilecek-yerler"
+      ],
+      "sourceUrls": [
+        "https://www.teknofest.org/tr/duyurular/teknofest-2026-yilinda-sanliurfada/",
+        "https://www.teknofest.org/tr/content/teknofest-events/",
+        "https://www.dhmi.gov.tr/Sayfalar/Havalimani/Gap/Ulasim.aspx"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "teknofest-2026-sanliurfa-rehberi",
+        "title": "TEKNOFEST 2026 Şanlıurfa Rehberi: GAP Havalimanı, Ulaşım, Konaklama ve Gezi Planı",
+        "score": 1
+      }
+    },
+    {
+      "priority": 95,
+      "title": "Şanlıurfa Kültür Yolu Festivali Rehberi: Konserler, Sergiler ve Tarihi Merkez Rotası",
+      "slug": "sanliurfa-kultur-yolu-festivali-rehberi",
+      "focusKeyword": "Şanlıurfa Kültür Yolu Festivali",
+      "secondaryKeywords": [
+        "Şanlıurfa festival programı",
+        "Şanlıurfa konserler",
+        "Kültür Yolu Festivali Şanlıurfa",
+        "Şanlıurfa etkinlikleri",
+        "Balıklıgöl festival rotası"
+      ],
+      "category": "Etkinlik",
+      "intent": "event-informational-local",
+      "reason": "Prod blogda Kültür Yolu başlığı yok; etkinlik niyeti Balıklıgöl, müzeler, sıra gecesi ve yeme-içme sayfalarına güçlü iç link köprüsü sağlar.",
+      "internalLinks": [
+        "/etkinlikler",
+        "/balikligol-gezi-rehberi",
+        "/sanliurfa-da-muzeler-ziyaret-rehberi-saatler-ve-oneriler",
+        "/sanliurfa-sira-gecesi-mekanlari"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.ktb.gov.tr/TR-371875/sanliurfa-kultur-yolu-festivali-programi.html",
+        "https://sanliurfa.ktb.gov.tr/TR-371855/sanliurfa-kultur-yolu-festivali-konserler.html",
+        "https://sanliurfa.ktb.gov.tr/TR-397932/kultur-yolu-festivali-sanliurfa-2025.html"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-kultur-yolu-festivali-rehberi",
+        "title": "Şanlıurfa Kültür Yolu Festivali Rehberi: Konserler, Sergiler ve Tarihi Merkez Rotası",
+        "score": 1
+      }
+    },
+    {
+      "priority": 92,
+      "title": "Takoran Vadisi Rehberi 2026: Siverek’te Tekne, Fotoğraf ve Fırat Rotası",
+      "slug": "takoran-vadisi-rehberi-2026",
+      "focusKeyword": "Takoran Vadisi",
+      "secondaryKeywords": [
+        "Takoran Vadisi tekne turu",
+        "Siverek gezilecek yerler",
+        "Fırat Nehri rotası",
+        "Nissibi Köprüsü",
+        "Şanlıurfa doğa rotası"
+      ],
+      "category": "Doğa",
+      "intent": "informational-local-itinerary",
+      "reason": "Prod blogda Takoran yok; Siverek ilçe rehberini destekleyen doğa/fotoğraf/tekne long-tail kümesi oluşturur.",
+      "internalLinks": [
+        "/siverek-gezi-rehberi",
+        "/gezilecek-yerler",
+        "/sanliurfa-gezi-rehberi",
+        "/sanliurfada-piknik-yerleri-ve-doga-meknlari-rehberi"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/turkiye/sanliurfa/gezilecekyer/takoran-vadisi",
+        "https://okuldisiogrenme.eba.gov.tr/place-detail-test151020251/takoran-vadisi-1583"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "takoran-vadisi-rehberi-2026",
+        "title": "Takoran Vadisi Rehberi 2026: Siverek’te Tekne, Fotoğraf ve Fırat Rotası",
+        "score": 1
+      }
+    },
+    {
+      "priority": 90,
+      "title": "Şanlıurfa GAP Havalimanı Ulaşım Rehberi: Merkez, Siverek ve Etkinlik Dönemi Planı",
+      "slug": "sanliurfa-gap-havalimani-ulasim-rehberi",
+      "focusKeyword": "Şanlıurfa GAP Havalimanı ulaşım",
+      "secondaryKeywords": [
+        "Şanlıurfa havalimanı şehir merkezi",
+        "GAP Havalimanı HAVAŞ",
+        "Şanlıurfa havalimanı otobüs",
+        "TEKNOFEST GAP Havalimanı ulaşım",
+        "Şanlıurfa transfer rehberi"
+      ],
+      "category": "Ulaşım",
+      "intent": "transport-informational-local",
+      "reason": "Prod blogda havalimanı ulaşım boşluğu var; Teknofest ve gezi planı kullanıcılarının pratik sorununu çözer.",
+      "internalLinks": [
+        "/ulasim",
+        "/sanliurfa-gezi-rehberi",
+        "/etkinlikler",
+        "/mekanlar"
+      ],
+      "sourceUrls": [
+        "https://www.dhmi.gov.tr/Sayfalar/Havalimani/Gap/Ulasim.aspx",
+        "https://www.teknofest.org/tr/content/teknofest-events/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-gap-havalimani-ulasim-rehberi",
+        "title": "Şanlıurfa GAP Havalimanı Ulaşım Rehberi: Merkez, Siverek ve Etkinlik Dönemi Planı",
+        "score": 1
+      }
+    },
+    {
+      "priority": 87,
+      "title": "Urfa Keme Boranısı Rehberi: Mevsimi, Malzemesi ve Nerede Denenir?",
+      "slug": "urfa-keme-boranisi-rehberi",
+      "focusKeyword": "Urfa keme boranısı",
+      "secondaryKeywords": [
+        "Şanlıurfa keme boranısı",
+        "keme mantarı Urfa",
+        "Şanlıurfa yöresel yemekleri",
+        "Urfa boranı çeşitleri",
+        "coğrafi işaretli Urfa yemekleri"
+      ],
+      "category": "Gastronomi",
+      "intent": "food-informational-local",
+      "reason": "Prod blogda keme boranısı yok; coğrafi işaretli yerel yemek kaynaklı GEO/AIO bilgi kutuları için uygundur.",
+      "internalLinks": [
+        "/sanliurfada-ne-yenir",
+        "/yemek-tarifleri",
+        "/mekanlar",
+        "/sanliurfa-ne-yenir-mutlaka-tatmaniz-gereken-lezzetler"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/portal/urfa-keme-boranisi-yemegi-sanliurfa-keme-boranisi-yemegi",
+        "https://www.kulturportali.gov.tr/turkiye/sanliurfa/neyenir/urfa--sanliurfa--pencer--pazi--boranisi"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "urfa-keme-boranisi-rehberi",
+        "title": "Urfa Keme Boranısı Rehberi: Mevsimi, Malzemesi ve Nerede Denenir?",
+        "score": 1
+      }
+    },
+    {
+      "priority": 85,
+      "title": "Şanlıurfa Pencer Boranısı Rehberi: Pazı, Yuvalak Köfte ve Yoğurtlu Sofra Kültürü",
+      "slug": "sanliurfa-pencer-boranisi-rehberi",
+      "focusKeyword": "Şanlıurfa pencer boranısı",
+      "secondaryKeywords": [
+        "Urfa pencer boranısı",
+        "pazı boranısı",
+        "Şanlıurfa geleneksel mutfak",
+        "boranı köftesi",
+        "Urfa yöresel yemekleri"
+      ],
+      "category": "Gastronomi",
+      "intent": "food-informational-local",
+      "reason": "Prod blogda pencer boranısı yok; tarif niyeti ile kültürel yemek rehberi niyetini birleştirir.",
+      "internalLinks": [
+        "/sanliurfada-ne-yenir",
+        "/yemek-tarifleri",
+        "/mekanlar",
+        "/sanliurfa-ne-yenir-mutlaka-tatmaniz-gereken-lezzetler"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/turkiye/sanliurfa/neyenir/urfa--sanliurfa--pencer--pazi--boranisi",
+        "https://www.kulturportali.gov.tr/portal/urfa-keme-boranisi-yemegi-sanliurfa-keme-boranisi-yemegi"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-pencer-boranisi-rehberi",
+        "title": "Şanlıurfa Pencer Boranısı Rehberi: Pazı, Yuvalak Köfte ve Yoğurtlu Sofra Kültürü",
+        "score": 1
+      }
+    },
+    {
+      "priority": 82,
+      "title": "Şanlıurfa’da Sıcak Havada Gezi Planı: Sabah-Erken Rota, Mola ve Akşam Önerileri",
+      "slug": "sanliurfada-sicak-havada-gezi-plani",
+      "focusKeyword": "Şanlıurfa sıcak havada gezi",
+      "secondaryKeywords": [
+        "Şanlıurfa yazın gezilir mi",
+        "Şanlıurfa yaz gezi planı",
+        "Balıklıgöl sabah rotası",
+        "Şanlıurfa akşam gezisi",
+        "sıcakta gezi önerileri"
+      ],
+      "category": "Gezi",
+      "intent": "seasonal-informational-local",
+      "reason": "Prod blogda havuz/doğal yüzme ve iklim var; ancak pratik saatli yaz gezi planı ayrı AEO sorularını hedefler.",
+      "internalLinks": [
+        "/sanliurfa-gezi-rehberi",
+        "/balikligol-gezi-rehberi",
+        "/sanliurfada-havuz-ve-dogal-yuzme-yerleri-yazin-serin-kalma-rehberi",
+        "/bugun-sanliurfada-ne-yapilir"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.ktb.gov.tr/",
+        "https://www.etstur.com/letsgo/sanliurfada-gezilecek-yerler/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfada-sicak-havada-gezi-plani",
+        "title": "Şanlıurfa’da Sıcak Havada Gezi Planı: Sabah-Erken Rota, Mola ve Akşam Önerileri",
+        "score": 1
+      }
+    },
+    {
+      "priority": 78,
+      "title": "Şanlıurfa’da Resmi Kaynaklarla Güncel Gezi Bilgisi Nasıl Kontrol Edilir?",
+      "slug": "sanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir",
+      "focusKeyword": "Şanlıurfa güncel gezi bilgisi",
+      "secondaryKeywords": [
+        "Şanlıurfa müze saatleri kontrol",
+        "Şanlıurfa etkinlik programı",
+        "Şanlıurfa resmi turizm kaynakları",
+        "gezi öncesi kontrol listesi",
+        "Şanlıurfa ziyaret bilgileri"
+      ],
+      "category": "Gezi",
+      "intent": "trust-informational",
+      "reason": "AEO/GEO için kaynak şeffaflığı üretir; saat/fiyat gibi değişken bilgileri uydurmadan resmi kaynak kontrol akışı sunar.",
+      "internalLinks": [
+        "/sanliurfa-gezi-rehberi",
+        "/etkinlikler",
+        "/gezilecek-yerler",
+        "/sanliurfa-da-muzeler-ziyaret-rehberi-saatler-ve-oneriler"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.ktb.gov.tr/",
+        "https://www.dhmi.gov.tr/Sayfalar/Havalimani/Gap/Ulasim.aspx"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir",
+        "title": "Şanlıurfa’da Resmi Kaynaklarla Güncel Gezi Bilgisi Nasıl Kontrol Edilir?",
+        "score": 1
+      }
+    },
+    {
+      "priority": 97,
+      "title": "TEKNOFEST 2026 Şanlıurfa Yarışmaları: Başvuru, Takvim ve Hazırlık Rehberi",
+      "slug": "teknofest-2026-yarismalari-sanliurfa",
+      "focusKeyword": "TEKNOFEST 2026 yarışmaları Şanlıurfa",
+      "secondaryKeywords": [
+        "TEKNOFEST yarışma başvurusu",
+        "TEKNOFEST 2026 takvimi",
+        "Şanlıurfa teknoloji yarışmaları",
+        "TEKNOFEST finalist takvimi",
+        "TEKNOFEST öğrenci hazırlık rehberi"
+      ],
+      "category": "Etkinlik",
+      "intent": "event-informational-student",
+      "reason": "Ana TEKNOFEST rehberi ulaşım/gezi niyetini kapsıyor; yarışma başvuru ve hazırlık niyeti ayrı arama kümesi oluşturur.",
+      "internalLinks": [
+        "/etkinlikler",
+        "/blog/teknofest-2026-sanliurfa-rehberi",
+        "/sanliurfa-gezi-rehberi",
+        "/iletisim"
+      ],
+      "sourceUrls": [
+        "https://teknofest.org/tr/content/duyurular/teknofest-2026-yilinda-sanliurfada/",
+        "https://teknofest.org/tr/competitions/",
+        "https://www.sanliurfa.gov.tr/teknofest-2026-duyuru-calismalari"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "teknofest-2026-yarismalari-sanliurfa",
+        "title": "TEKNOFEST 2026 Şanlıurfa Yarışmaları: Başvuru, Takvim ve Hazırlık Rehberi",
+        "score": 1
+      }
+    },
+    {
+      "priority": 93,
+      "title": "TEKNOFEST 2026 Şanlıurfa Aile ve Çocuk Rehberi: Giriş, Güvenlik ve Gün Planı",
+      "slug": "teknofest-2026-aile-cocuk-rehberi",
+      "focusKeyword": "TEKNOFEST 2026 aile çocuk rehberi",
+      "secondaryKeywords": [
+        "TEKNOFEST çocukla gidilir mi",
+        "TEKNOFEST aile hazırlık listesi",
+        "Şanlıurfa TEKNOFEST çocuk etkinlikleri",
+        "TEKNOFEST güvenlik ipuçları",
+        "TEKNOFEST günübirlik plan"
+      ],
+      "category": "Etkinlik",
+      "intent": "event-family-informational",
+      "reason": "Aile/çocuk arama niyeti ulaşım rehberinden farklıdır; kısa cevap blokları ve kontrol listeleriyle AEO uyumu yüksektir.",
+      "internalLinks": [
+        "/etkinlikler",
+        "/blog/teknofest-2026-sanliurfa-rehberi",
+        "/sanliurfada-cocukla-gezilecek-yerler",
+        "/mekanlar"
+      ],
+      "sourceUrls": [
+        "https://teknofest.org/tr/content/duyurular/teknofest-2026-yilinda-sanliurfada/",
+        "https://www.teknofest.org/tr/content/teknofest-events/",
+        "https://www.dhmi.gov.tr/Sayfalar/Havalimani/Gap/Ulasim.aspx"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "teknofest-2026-aile-cocuk-rehberi",
+        "title": "TEKNOFEST 2026 Şanlıurfa Aile ve Çocuk Rehberi: Giriş, Güvenlik ve Gün Planı",
+        "score": 1
+      }
+    },
+    {
+      "priority": 89,
+      "title": "Şanlıurfa’da Coğrafi İşaretli Lezzetler Rehberi: Keme, Pencer, İsot ve Sadeyağ",
+      "slug": "sanliurfa-cografi-isaretli-lezzetler",
+      "focusKeyword": "Şanlıurfa coğrafi işaretli lezzetler",
+      "secondaryKeywords": [
+        "Urfa keme boranısı",
+        "Urfa pencer boranısı",
+        "Şanlıurfa biberi",
+        "Urfa sadeyağı",
+        "Şanlıurfa yöresel yemekleri"
+      ],
+      "category": "Gastronomi",
+      "intent": "food-informational-hub",
+      "reason": "Tek tek yemek yazılarından farklı olarak coğrafi işaret hub sayfası üretir ve gastronomi iç linklerini toplar.",
+      "internalLinks": [
+        "/sanliurfada-ne-yenir",
+        "/yemek-tarifleri",
+        "/blog/urfa-keme-boranisi-rehberi",
+        "/blog/sanliurfa-pencer-boranisi-rehberi",
+        "/mekanlar"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/portal/urfa-keme-boranisi-yemegi-sanliurfa-keme-boranisi-yemegi",
+        "https://www.kulturportali.gov.tr/turkiye/sanliurfa/neyenir/urfa--sanliurfa--pencer--pazi--boranisi",
+        "https://ci.turkpatent.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-cografi-isaretli-lezzetler",
+        "title": "Şanlıurfa’da Coğrafi İşaretli Lezzetler Rehberi: Keme, Pencer, İsot ve Sadeyağ",
+        "score": 1
+      }
+    },
+    {
+      "priority": 86,
+      "title": "Şanlıurfa Hediyelik ve Yerel Alışveriş Rehberi: İsot, Bakır, Mırra ve Çarşılar",
+      "slug": "sanliurfa-hediyelik-alisveris-rehberi",
+      "focusKeyword": "Şanlıurfa hediyelik alışveriş rehberi",
+      "secondaryKeywords": [
+        "Şanlıurfa çarşıları",
+        "Urfa isot nereden alınır",
+        "Bakırcılar Çarşısı Şanlıurfa",
+        "Gümrük Hanı alışveriş",
+        "Şanlıurfa yöresel ürünler"
+      ],
+      "category": "Alışveriş",
+      "intent": "commercial-local-shopping",
+      "reason": "Gezi sonrası satın alma niyetini hedefler; çarşı, yemek ve mekan sayfalarına güçlü iç link sağlar.",
+      "internalLinks": [
+        "/gezilecek-yerler",
+        "/balikligol-gezi-rehberi",
+        "/mekanlar",
+        "/sanliurfada-ne-yenir"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.ktb.gov.tr/",
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-hediyelik-alisveris-rehberi",
+        "title": "Şanlıurfa Hediyelik ve Yerel Alışveriş Rehberi: İsot, Bakır, Mırra ve Çarşılar",
+        "score": 1
+      }
+    },
+    {
+      "priority": 83,
+      "title": "Harran Konik Evleri Fotoğraf ve Gezi Rehberi: Işık, Rota ve Ziyaret İpuçları",
+      "slug": "harran-konik-evleri-fotograf-gezi-rehberi",
+      "focusKeyword": "Harran konik evleri fotoğraf rehberi",
+      "secondaryKeywords": [
+        "Harran gezilecek yerler",
+        "Harran konik kubbeli evleri",
+        "Harran fotoğraf noktaları",
+        "Şanlıurfa Harran rotası",
+        "Harran gezi ipuçları"
+      ],
+      "category": "Gezi",
+      "intent": "visual-itinerary-local",
+      "reason": "Harran genel gezi niyetinden ayrışan fotoğraf ve ziyaret planı long-tail aramaları hedefler.",
+      "internalLinks": [
+        "/harran-gezi-rehberi",
+        "/gezilecek-yerler",
+        "/sanliurfa-gezi-rehberi",
+        "/blog/sanliurfa-2-gunluk-gezi-plani-2026"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/turkiye/sanliurfa/gezilecekyer/harran-evleri",
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "harran-konik-evleri-fotograf-gezi-rehberi",
+        "title": "Harran Konik Evleri Fotoğraf ve Gezi Rehberi: Işık, Rota ve Ziyaret İpuçları",
+        "score": 1
+      }
+    },
+    {
+      "priority": 81,
+      "title": "Birecik Kelaynak ve Fırat Günübirlik Gezi Rotası",
+      "slug": "birecik-kelaynak-firat-gezi-rotasi",
+      "focusKeyword": "Birecik Kelaynak gezi rotası",
+      "secondaryKeywords": [
+        "Birecik gezilecek yerler",
+        "Kelaynak üretme istasyonu",
+        "Fırat Nehri günübirlik rota",
+        "Şanlıurfa Birecik turu",
+        "Birecik Halfeti rotası"
+      ],
+      "category": "Doğa",
+      "intent": "day-trip-informational-local",
+      "reason": "Halfeti ve Takoran dışında Fırat hattını genişletir; doğa ve aile gezisi niyetini destekler.",
+      "internalLinks": [
+        "/gezilecek-yerler",
+        "/halfeti-gezi-rehberi",
+        "/sanliurfa-gezi-rehberi",
+        "/blog/takoran-vadisi-rehberi-2026"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/turkiye/sanliurfa/gezilecekyer/birecik-kelaynak-uretim-istasyonu",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "birecik-kelaynak-firat-gezi-rotasi",
+        "title": "Birecik Kelaynak ve Fırat Günübirlik Gezi Rotası",
+        "score": 1
+      }
+    },
+    {
+      "priority": 79,
+      "title": "Şanlıurfa MüzeKart ve Müze Ziyaret Rehberi 2026: Saat, Bilet ve Rota Kontrolü",
+      "slug": "sanliurfa-muzekart-muze-ziyaret-rehberi",
+      "focusKeyword": "Şanlıurfa MüzeKart müze rehberi",
+      "secondaryKeywords": [
+        "Şanlıurfa müze saatleri",
+        "Göbeklitepe MüzeKart",
+        "Şanlıurfa Arkeoloji Müzesi bilet",
+        "Şanlıurfa müze rotası",
+        "müze ziyaret bilgisi kontrol"
+      ],
+      "category": "Kültür",
+      "intent": "museum-transactional-informational",
+      "reason": "Bilet/saat gibi değişken bilgileri güvenli kaynak kontrolüyle verir; gezi planı içeriklerine pratik destek sağlar.",
+      "internalLinks": [
+        "/gobeklitepe-gezi-rehberi",
+        "/sanliurfa-gezi-rehberi",
+        "/gezilecek-yerler",
+        "/blog/sanliurfa-guncel-gezi-bilgisi-nasil-kontrol-edilir"
+      ],
+      "sourceUrls": [
+        "https://muze.gov.tr/",
+        "https://sanliurfa.ktb.gov.tr/",
+        "https://www.kulturportali.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-muzekart-muze-ziyaret-rehberi",
+        "title": "Şanlıurfa MüzeKart ve Müze Ziyaret Rehberi 2026: Saat, Bilet ve Rota Kontrolü",
+        "score": 1
+      }
+    },
+    {
+      "priority": 77,
+      "title": "Şanlıurfa’da Çocukla Gezilecek Yerler: Aileler İçin Güvenli ve Kolay Rotalar",
+      "slug": "sanliurfada-cocukla-gezilecek-yerler",
+      "focusKeyword": "Şanlıurfa çocukla gezilecek yerler",
+      "secondaryKeywords": [
+        "Şanlıurfa aile gezi rehberi",
+        "çocukla Balıklıgöl gezisi",
+        "Şanlıurfa çocuk etkinlikleri",
+        "aile dostu Şanlıurfa rotası",
+        "Şanlıurfa hafta sonu aile planı"
+      ],
+      "category": "Aile",
+      "intent": "family-informational-local",
+      "reason": "Aile arama niyeti mevcut gezi rehberlerinden ayrışır; güvenlik, gölge, mola ve ulaşım kararlarını cevaplar.",
+      "internalLinks": [
+        "/gezilecek-yerler",
+        "/balikligol-gezi-rehberi",
+        "/etkinlikler",
+        "/blog/sanliurfada-sicak-havada-gezi-plani"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.ktb.gov.tr/",
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfada-cocukla-gezilecek-yerler",
+        "title": "Şanlıurfa’da Çocukla Gezilecek Yerler: Aileler İçin Güvenli ve Kolay Rotalar",
+        "score": 1
+      }
+    },
+    {
+      "priority": 75,
+      "title": "Şanlıurfa’da Yağmurlu veya Soğuk Havada Ne Yapılır?",
+      "slug": "sanliurfada-yagmurlu-soguk-havada-ne-yapilir",
+      "focusKeyword": "Şanlıurfa yağmurlu havada ne yapılır",
+      "secondaryKeywords": [
+        "Şanlıurfa kış gezi planı",
+        "Şanlıurfa kapalı mekanlar",
+        "yağmurda Balıklıgöl gezisi",
+        "Şanlıurfa müze rotası",
+        "soğuk havada Şanlıurfa gezisi"
+      ],
+      "category": "Gezi",
+      "intent": "seasonal-weather-informational",
+      "reason": "Sıcak hava yazısının mevsimsel tamamlayıcısıdır; hava durumuna göre karar veren kullanıcıyı yakalar.",
+      "internalLinks": [
+        "/bugun-sanliurfada-ne-yapilir",
+        "/sanliurfa-gezi-rehberi",
+        "/etkinlikler",
+        "/mekanlar",
+        "/gobeklitepe-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.ktb.gov.tr/",
+        "https://www.kulturportali.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfada-yagmurlu-soguk-havada-ne-yapilir",
+        "title": "Şanlıurfa’da Yağmurlu veya Soğuk Havada Ne Yapılır?",
+        "score": 1
+      }
+    },
+    {
+      "priority": 74,
+      "title": "Şanlıurfa Çarşıları Rehberi: Bakırcılar, Gümrük Hanı ve Baharatçılar",
+      "slug": "sanliurfa-carsilari-rehberi",
+      "focusKeyword": "Şanlıurfa çarşıları rehberi",
+      "secondaryKeywords": [
+        "Bakırcılar Çarşısı Şanlıurfa",
+        "Gümrük Hanı",
+        "Şanlıurfa baharatçılar çarşısı",
+        "Urfa isot alışveriş",
+        "Şanlıurfa tarihi çarşı"
+      ],
+      "category": "Kültür",
+      "intent": "shopping-cultural-local",
+      "reason": "Balıklıgöl yürüyüş rotasından ayrışan çarşı/alışveriş hub yazısı oluşturur.",
+      "internalLinks": [
+        "/balikligol-gezi-rehberi",
+        "/gezilecek-yerler",
+        "/blog/sanliurfa-hediyelik-alisveris-rehberi",
+        "/sanliurfada-ne-yenir"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.ktb.gov.tr/",
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-carsilari-rehberi",
+        "title": "Şanlıurfa Çarşıları Rehberi: Bakırcılar, Gümrük Hanı ve Baharatçılar",
+        "score": 1
+      }
+    },
+    {
+      "priority": 73,
+      "title": "Taş Tepeler Rotası: Göbeklitepe, Karahantepe ve Yakın Arkeoloji Noktaları",
+      "slug": "tas-tepeler-rotasi-sanliurfa",
+      "focusKeyword": "Taş Tepeler rotası Şanlıurfa",
+      "secondaryKeywords": [
+        "Göbeklitepe Karahantepe rotası",
+        "Şanlıurfa arkeoloji gezi planı",
+        "Taş Tepeler projesi",
+        "Karahantepe nasıl gidilir",
+        "Şanlıurfa tarih rotası"
+      ],
+      "category": "Tarih",
+      "intent": "heritage-itinerary-informational",
+      "reason": "Karahantepe yazısından daha geniş pillar içerik olur; arkeoloji kümesinin ana iç link dağıtım sayfası olarak çalışır.",
+      "internalLinks": [
+        "/gobeklitepe-gezi-rehberi",
+        "/blog/karahantepe-tas-tepeler-rehberi-2026",
+        "/tarihi-yerler",
+        "/sanliurfa-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "tas-tepeler-rotasi-sanliurfa",
+        "title": "Taş Tepeler Rotası: Göbeklitepe, Karahantepe ve Yakın Arkeoloji Noktaları",
+        "score": 1
+      }
+    },
+    {
+      "priority": 72,
+      "title": "Urfa Kültür Gecesi Rezervasyon Kontrol Listesi: Aile Ortamı, Menü ve Ulaşım",
+      "slug": "urfa-kultur-gecesi-rezervasyon-kontrol-listesi",
+      "focusKeyword": "Urfa kültür gecesi rezervasyon kontrol listesi",
+      "secondaryKeywords": [
+        "sıra gecesi rezervasyon kontrol listesi",
+        "Urfa kültür gecesi aile ortamı",
+        "sıra gecesi menü kontrolü",
+        "Şanlıurfa akşam etkinliği",
+        "kültür gecesi ulaşım planı"
+      ],
+      "category": "Kültür",
+      "intent": "commercial-local-decision",
+      "reason": "Mevcut mekan listesinden farklı olarak rezervasyon öncesi kontrol, aile uygunluğu, menü teyidi ve ulaşım planını hedefler.",
+      "internalLinks": [
+        "/sanliurfa-sira-gecesi-mekanlari",
+        "/etkinlikler",
+        "/sanliurfada-ne-yenir",
+        "/mekanlar"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.ktb.gov.tr/",
+        "https://www.kulturportali.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "urfa-kultur-gecesi-rezervasyon-kontrol-listesi",
+        "title": "Urfa Kültür Gecesi Rezervasyon Kontrol Listesi: Aile Ortamı, Menü ve Ulaşım",
+        "score": 1
+      }
+    },
+    {
+      "priority": 96,
+      "title": "TEKNOFEST 2026 World Drone Cup Şanlıurfa Rehberi",
+      "slug": "teknofest-2026-world-drone-cup-sanliurfa",
+      "focusKeyword": "TEKNOFEST 2026 World Drone Cup Şanlıurfa",
+      "secondaryKeywords": [
+        "World Drone Cup Şanlıurfa",
+        "TEKNOFEST drone yarışması",
+        "Şanlıurfa drone cup finali",
+        "TEKNOFEST 2026 yarışma takvimi",
+        "drone yarışması izleme rehberi"
+      ],
+      "category": "Etkinlik",
+      "intent": "event-competition-informational",
+      "reason": "TEKNOFEST ana yazılarından ayrışan resmi yarışma alt kümesi; drone ve teknoloji meraklıları için yüksek güncel niyet taşır.",
+      "internalLinks": [
+        "/etkinlikler",
+        "/blog/teknofest-2026-sanliurfa-rehberi",
+        "/blog/teknofest-2026-yarismalari-sanliurfa",
+        "/sanliurfa-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://www.teknofest.org/tr/competitions/competition/47",
+        "https://www.teknofest.org/tr/season/2026",
+        "https://teknofest.org/tr/content/duyurular/teknofest-2026-yilinda-sanliurfada/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "teknofest-2026-world-drone-cup-sanliurfa",
+        "title": "TEKNOFEST 2026 World Drone Cup Şanlıurfa Rehberi",
+        "score": 1
+      }
+    },
+    {
+      "priority": 94,
+      "title": "TEKNOFEST 2026 Hyperloop Yarışması Şanlıurfa Final Rehberi",
+      "slug": "teknofest-2026-hyperloop-sanliurfa-final-rehberi",
+      "focusKeyword": "TEKNOFEST 2026 Hyperloop Şanlıurfa",
+      "secondaryKeywords": [
+        "Hyperloop Geliştirme Yarışması",
+        "TEKNOFEST Hyperloop finali",
+        "Şanlıurfa teknoloji yarışmaları",
+        "TEKNOFEST ulaşım teknolojileri",
+        "Hyperloop yarışma takvimi"
+      ],
+      "category": "Etkinlik",
+      "intent": "event-technology-informational",
+      "reason": "TEKNOFEST teknoloji yarışmaları içinde niş ve haber değeri yüksek bir alt başlık; AEO soruları için uygundur.",
+      "internalLinks": [
+        "/etkinlikler",
+        "/blog/teknofest-2026-yarismalari-sanliurfa",
+        "/blog/teknofest-2026-sanliurfa-rehberi",
+        "/ulasim"
+      ],
+      "sourceUrls": [
+        "https://teknofest.org/tr/yarismalar/hyperloop-gelistirme-yarismasi/",
+        "https://www.teknofest.org/tr/season/2026",
+        "https://teknofest.org/tr/content/duyurular/teknofest-2026-yilinda-sanliurfada/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "teknofest-2026-hyperloop-sanliurfa-final-rehberi",
+        "title": "TEKNOFEST 2026 Hyperloop Yarışması Şanlıurfa Final Rehberi",
+        "score": 1
+      }
+    },
+    {
+      "priority": 92,
+      "title": "TEKNOFEST 2026 Şanlıurfa Konaklama Bölgeleri Rehberi",
+      "slug": "teknofest-2026-sanliurfa-konaklama-bolgeleri",
+      "focusKeyword": "TEKNOFEST 2026 Şanlıurfa konaklama",
+      "secondaryKeywords": [
+        "TEKNOFEST Şanlıurfa otel bölgeleri",
+        "Şanlıurfa GAP Havalimanı konaklama",
+        "Balıklıgöl çevresi oteller",
+        "TEKNOFEST için nerede kalınır",
+        "Şanlıurfa etkinlik konaklama rehberi"
+      ],
+      "category": "Konaklama",
+      "intent": "commercial-local-accommodation",
+      "reason": "Etkinlik döneminde yüksek ticari niyet üretir; otel, ulaşım ve mekan sayfalarına doğal iç link sağlar.",
+      "internalLinks": [
+        "/oteller",
+        "/mekanlar",
+        "/blog/teknofest-2026-sanliurfa-rehberi",
+        "/blog/sanliurfa-gap-havalimani-ulasim-rehberi"
+      ],
+      "sourceUrls": [
+        "https://teknofest.org/tr/content/duyurular/teknofest-2026-yilinda-sanliurfada/",
+        "https://www.dhmi.gov.tr/Sayfalar/Havalimani/Gap/Ulasim.aspx"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "teknofest-2026-sanliurfa-konaklama-bolgeleri",
+        "title": "TEKNOFEST 2026 Şanlıurfa Konaklama Bölgeleri Rehberi",
+        "score": 1
+      }
+    },
+    {
+      "priority": 90,
+      "title": "TEKNOFEST 2026 İçin 3 Günlük Şanlıurfa Gezi Planı",
+      "slug": "teknofest-2026-3-gunluk-sanliurfa-gezi-plani",
+      "focusKeyword": "TEKNOFEST 2026 Şanlıurfa 3 günlük gezi planı",
+      "secondaryKeywords": [
+        "TEKNOFEST Şanlıurfa gezi rotası",
+        "TEKNOFEST sonrası Şanlıurfa gezisi",
+        "Göbeklitepe Balıklıgöl TEKNOFEST planı",
+        "Şanlıurfa etkinlik gezi planı",
+        "TEKNOFEST hafta sonu rotası"
+      ],
+      "category": "Gezi",
+      "intent": "event-itinerary-local",
+      "reason": "Genel 2 günlük rota ve TEKNOFEST rehberinden farklı olarak etkinlik odaklı 3 günlük plan sunar.",
+      "internalLinks": [
+        "/blog/teknofest-2026-sanliurfa-rehberi",
+        "/blog/sanliurfa-2-gunluk-gezi-plani-2026",
+        "/gobeklitepe-gezi-rehberi",
+        "/balikligol-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://teknofest.org/tr/content/duyurular/teknofest-2026-yilinda-sanliurfada/",
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "teknofest-2026-3-gunluk-sanliurfa-gezi-plani",
+        "title": "TEKNOFEST 2026 İçin 3 Günlük Şanlıurfa Gezi Planı",
+        "score": 1
+      }
+    },
+    {
+      "priority": 88,
+      "title": "Şanlıurfa Bilim Merkezi ve Çocuklarla Teknoloji Gezisi",
+      "slug": "sanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi",
+      "focusKeyword": "Şanlıurfa Bilim Merkezi çocuk gezisi",
+      "secondaryKeywords": [
+        "Şanlıurfa çocuk teknoloji etkinliği",
+        "Şanlıurfa Bilim Merkezi gezi",
+        "çocuklarla bilim gezisi",
+        "Şanlıurfa aile etkinlikleri",
+        "TEKNOFEST çocuk teknoloji hazırlığı"
+      ],
+      "category": "Aile",
+      "intent": "family-education-local",
+      "reason": "Aile ve çocuk gezi kümesini teknoloji/eğitim tarafına genişletir; TEKNOFEST dönemiyle semantik bağ kurar.",
+      "internalLinks": [
+        "/etkinlikler",
+        "/blog/sanliurfada-cocukla-gezilecek-yerler",
+        "/blog/teknofest-2026-aile-cocuk-rehberi",
+        "/topluluk"
+      ],
+      "sourceUrls": [
+        "https://www.sanliurfa.bel.tr/uploads/2026/20260506131611-47809-74868.pdf",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-bilim-merkezi-cocuk-teknoloji-gezisi",
+        "title": "Şanlıurfa Bilim Merkezi ve Çocuklarla Teknoloji Gezisi",
+        "score": 1
+      }
+    },
+    {
+      "priority": 86,
+      "title": "Kızılkoyun Nekropolü Gezi Rehberi: Kaya Mezarları ve Fotoğraf Noktaları",
+      "slug": "kizilkoyun-nekropolu-gezi-rehberi",
+      "focusKeyword": "Kızılkoyun Nekropolü gezi rehberi",
+      "secondaryKeywords": [
+        "Kızılkoyun kaya mezarları",
+        "Şanlıurfa kaya mezarları",
+        "Kızılkoyun fotoğraf noktaları",
+        "Şanlıurfa tarihi rota",
+        "Balıklıgöl yakın gezilecek yerler"
+      ],
+      "category": "Tarih",
+      "intent": "heritage-visual-local",
+      "reason": "Belediye gezi rehberinde yer alan spesifik tarih noktası; genel şehir yazılarından farklı niş rota oluşturur.",
+      "internalLinks": [
+        "/gezilecek-yerler",
+        "/balikligol-gezi-rehberi",
+        "/tarihi-yerler",
+        "/blog/sanliurfa-carsilari-rehberi"
+      ],
+      "sourceUrls": [
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "kizilkoyun-nekropolu-gezi-rehberi",
+        "title": "Kızılkoyun Nekropolü Gezi Rehberi: Kaya Mezarları ve Fotoğraf Noktaları",
+        "score": 1
+      }
+    },
+    {
+      "priority": 84,
+      "title": "Şanlıurfa Arkeoloji Müzesi Derin Rehber: Ne Görülür, Kaç Saat Ayrılır?",
+      "slug": "sanliurfa-arkeoloji-muzesi-derin-rehber",
+      "focusKeyword": "Şanlıurfa Arkeoloji Müzesi rehberi",
+      "secondaryKeywords": [
+        "Şanlıurfa Arkeoloji Müzesi ne görülür",
+        "Göbeklitepe eserleri müze",
+        "Şanlıurfa müze gezi planı",
+        "arkeoloji müzesi kaç saat",
+        "Şanlıurfa müzeleri"
+      ],
+      "category": "Müze",
+      "intent": "museum-informational-local",
+      "reason": "MüzeKart rehberinden farklı olarak içeride ne görüleceği ve zaman planı odaklı derin rehberdir.",
+      "internalLinks": [
+        "/blog/sanliurfa-muzekart-muze-ziyaret-rehberi",
+        "/gobeklitepe-gezi-rehberi",
+        "/blog/tas-tepeler-rotasi-sanliurfa",
+        "/gezilecek-yerler"
+      ],
+      "sourceUrls": [
+        "https://muze.gov.tr/",
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-arkeoloji-muzesi-derin-rehber",
+        "title": "Şanlıurfa Arkeoloji Müzesi Derin Rehber: Ne Görülür, Kaç Saat Ayrılır?",
+        "score": 1
+      }
+    },
+    {
+      "priority": 82,
+      "title": "Haleplibahçe Mozaik Müzesi Rehberi",
+      "slug": "haleplibahce-mozaik-muzesi-rehberi",
+      "focusKeyword": "Haleplibahçe Mozaik Müzesi rehberi",
+      "secondaryKeywords": [
+        "Haleplibahçe mozaikleri",
+        "Şanlıurfa mozaik müzesi",
+        "Amazonlar mozaiği",
+        "Şanlıurfa müze rotası",
+        "Haleplibahçe ziyaret rehberi"
+      ],
+      "category": "Müze",
+      "intent": "museum-heritage-informational",
+      "reason": "Arkeoloji Müzesi içeriğinden ayrışan mozaik/müze alt niyeti; kültür aramalarına uygundur.",
+      "internalLinks": [
+        "/blog/sanliurfa-muzekart-muze-ziyaret-rehberi",
+        "/blog/sanliurfa-arkeoloji-muzesi-derin-rehber",
+        "/gezilecek-yerler",
+        "/sanliurfa-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://muze.gov.tr/",
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "haleplibahce-mozaik-muzesi-rehberi",
+        "title": "Haleplibahçe Mozaik Müzesi Rehberi",
+        "score": 1
+      }
+    },
+    {
+      "priority": 80,
+      "title": "Bozova ve Atatürk Barajı Günübirlik Gezi Rotası",
+      "slug": "bozova-ataturk-baraji-gunubirlik-gezi",
+      "focusKeyword": "Bozova Atatürk Barajı gezi rotası",
+      "secondaryKeywords": [
+        "Bozova gezilecek yerler",
+        "Atatürk Barajı Şanlıurfa",
+        "Fırat kıyısı gezi",
+        "Şanlıurfa günübirlik doğa rotası",
+        "Bozova piknik rotası"
+      ],
+      "category": "Doğa",
+      "intent": "day-trip-nature-local",
+      "reason": "Halfeti, Takoran ve Birecik dışı Fırat hattını tamamlar; ilçe SEO kapsamını genişletir.",
+      "internalLinks": [
+        "/gezilecek-yerler",
+        "/blog/birecik-kelaynak-firat-gezi-rotasi",
+        "/blog/takoran-vadisi-rehberi-2026",
+        "/sanliurfa-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/Common/DownloadFile.aspx?f=anlurfakultur_turizm_rehberi_20160113122541271.pdf",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "bozova-ataturk-baraji-gunubirlik-gezi",
+        "title": "Bozova ve Atatürk Barajı Günübirlik Gezi Rotası",
+        "score": 1
+      }
+    },
+    {
+      "priority": 78,
+      "title": "Suruç Gezi Rehberi: Tarih, Çarşı ve Yakın Rotalar",
+      "slug": "suruc-gezi-rehberi",
+      "focusKeyword": "Suruç gezi rehberi",
+      "secondaryKeywords": [
+        "Suruç gezilecek yerler",
+        "Şanlıurfa Suruç rotası",
+        "Suruç çarşısı",
+        "Suruç tarihi yerler",
+        "Suruç günübirlik gezi"
+      ],
+      "category": "İlçe",
+      "intent": "district-informational-local",
+      "reason": "İlçe SEO kapsamını genişletir; merkez dışı arama niyetlerinde site mimarisini güçlendirir.",
+      "internalLinks": [
+        "/gezilecek-yerler",
+        "/sanliurfa-gezi-rehberi",
+        "/ilceler",
+        "/mekanlar"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/Common/DownloadFile.aspx?f=anlurfakultur_turizm_rehberi_20160113122541271.pdf",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "suruc-gezi-rehberi-tarih-ve-topragin-sehri-suruc-ta-yapilacaklar",
+        "title": "Suruç Gezi Rehberi: Tarih ve Toprağın Şehri Suruç'ta Yapılacaklar",
+        "score": 0.5555555555555556
+      }
+    },
+    {
+      "priority": 76,
+      "title": "Viranşehir Gezi Rehberi: Eyyüp Nebi, Tarih ve Yol Planı",
+      "slug": "viransehir-gezi-rehberi-eyyup-nebi",
+      "focusKeyword": "Viranşehir Eyyüp Nebi gezi rehberi",
+      "secondaryKeywords": [
+        "Viranşehir gezilecek yerler",
+        "Eyyüp Nebi makamı",
+        "Şanlıurfa inanç turizmi",
+        "Viranşehir yol planı",
+        "Şanlıurfa Viranşehir rotası"
+      ],
+      "category": "İnanç",
+      "intent": "faith-tourism-local",
+      "reason": "İnanç turizmi ve ilçe SEO için merkez dışı güçlü long-tail içerik üretir.",
+      "internalLinks": [
+        "/gezilecek-yerler",
+        "/sanliurfa-gezi-rehberi",
+        "/tarihi-yerler",
+        "/ilceler"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/Common/DownloadFile.aspx?f=anlurfakultur_turizm_rehberi_20160113122541271.pdf",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "viransehir-gezi-rehberi-eyyup-nebi",
+        "title": "Viranşehir Gezi Rehberi: Eyyüp Nebi, Tarih ve Yol Planı",
+        "score": 1
+      }
+    },
+    {
+      "priority": 74,
+      "title": "Siverek Takoran Dışı Gezi Noktaları: Nissibi, Karacadağ ve Fırat Hattı",
+      "slug": "siverek-takoran-disi-gezi-noktalari",
+      "focusKeyword": "Siverek Takoran dışı gezi noktaları",
+      "secondaryKeywords": [
+        "Siverek gezilecek yerler",
+        "Nissibi Köprüsü",
+        "Karacadağ gezi",
+        "Siverek Fırat rotası",
+        "Şanlıurfa doğa rotaları"
+      ],
+      "category": "Doğa",
+      "intent": "district-nature-itinerary",
+      "reason": "Takoran içeriğini tamamlar; Siverek ilçe ve doğa rotası aramalarında yeni sayfa derinliği sağlar.",
+      "internalLinks": [
+        "/blog/takoran-vadisi-rehberi-2026",
+        "/siverek-gezi-rehberi",
+        "/gezilecek-yerler",
+        "/sanliurfa-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://www.kulturportali.gov.tr/turkiye/sanliurfa/gezilecekyer/takoran-vadisi",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "siverek-takoran-disi-gezi-noktalari",
+        "title": "Siverek Takoran Dışı Gezi Noktaları: Nissibi, Karacadağ ve Fırat Hattı",
+        "score": 1
+      }
+    },
+    {
+      "priority": 72,
+      "title": "Şanlıurfa’da Sabah Kahvaltısı Rehberi: Ciğer, Katmer ve Yerel Lezzetler",
+      "slug": "sanliurfada-sabah-kahvaltisi-rehberi",
+      "focusKeyword": "Şanlıurfa sabah kahvaltısı rehberi",
+      "secondaryKeywords": [
+        "Urfa sabah ciğeri",
+        "Şanlıurfa kahvaltı mekanları",
+        "katmer kahvaltı",
+        "Şanlıurfa yöresel kahvaltı",
+        "Urfa kahvaltıda ne yenir"
+      ],
+      "category": "Gastronomi",
+      "intent": "food-commercial-local",
+      "reason": "Genel ne yenir yazısından farklı olarak sabah/ciğer/kahvaltı niyetini hedefler.",
+      "internalLinks": [
+        "/sanliurfada-ne-yenir",
+        "/en-iyi-cigerciler",
+        "/mekanlar",
+        "/blog/sanliurfada-ne-yenir-2026"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.ktb.gov.tr/",
+        "https://www.kulturportali.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfada-sabah-kahvaltisi-rehberi",
+        "title": "Şanlıurfa’da Sabah Kahvaltısı Rehberi: Ciğer, Katmer ve Yerel Lezzetler",
+        "score": 1
+      }
+    },
+    {
+      "priority": 70,
+      "title": "Şanlıurfa’da Ramazan ve İftar Kültürü Rehberi",
+      "slug": "sanliurfada-ramazan-iftar-kulturu",
+      "focusKeyword": "Şanlıurfa Ramazan iftar kültürü",
+      "secondaryKeywords": [
+        "Şanlıurfa iftar mekanları",
+        "Ramazanda Urfa yemekleri",
+        "Şanlıurfa sahur kültürü",
+        "Urfa Ramazan gelenekleri",
+        "Şanlıurfa iftar önerileri"
+      ],
+      "category": "Gastronomi",
+      "intent": "seasonal-food-cultural",
+      "reason": "Sezonsal arama niyeti güçlü; yemek, etkinlik ve kültür içeriklerini destekler.",
+      "internalLinks": [
+        "/sanliurfada-ne-yenir",
+        "/etkinlikler",
+        "/mekanlar",
+        "/blog/sanliurfa-cografi-isaretli-lezzetler"
+      ],
+      "sourceUrls": [
+        "https://sanliurfa.ktb.gov.tr/",
+        "https://www.kulturportali.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfada-ramazan-iftar-kulturu",
+        "title": "Şanlıurfa’da Ramazan ve İftar Kültürü Rehberi",
+        "score": 1
+      }
+    },
+    {
+      "priority": 68,
+      "title": "Şanlıurfa Fotoğraf Rotası: Gün Doğumu, Gün Batımı ve Gece Çekimleri",
+      "slug": "sanliurfa-fotograf-rotasi",
+      "focusKeyword": "Şanlıurfa fotoğraf rotası",
+      "secondaryKeywords": [
+        "Şanlıurfa fotoğraf noktaları",
+        "Balıklıgöl gün batımı",
+        "Harran fotoğraf rotası",
+        "Halfeti fotoğraf noktaları",
+        "Şanlıurfa gece çekimi"
+      ],
+      "category": "Gezi",
+      "intent": "visual-itinerary-local",
+      "reason": "Görsel arama ve sosyal medya paylaşım niyetini hedefler; mevcut gezi yazılarına yeni iç link ağı kurar.",
+      "internalLinks": [
+        "/gezilecek-yerler",
+        "/balikligol-gezi-rehberi",
+        "/blog/harran-konik-evleri-fotograf-gezi-rehberi",
+        "/halfeti-gezi-rehberi"
+      ],
+      "sourceUrls": [
+        "https://www.sanliurfa.bel.tr/files/1/bsb_sonra/2021_gezi_rehberi.pdf",
+        "https://sanliurfa.ktb.gov.tr/"
+      ],
+      "duplicateRisk": true,
+      "duplicateReason": "exact-slug",
+      "closestExisting": {
+        "slug": "sanliurfa-fotograf-rotasi",
+        "title": "Şanlıurfa Fotoğraf Rotası: Gün Doğumu, Gün Batımı ve Gece Çekimleri",
+        "score": 1
+      }
+    }
+  ]
+}
