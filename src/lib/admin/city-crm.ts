@@ -39,6 +39,8 @@ export async function getAdminCrmCounts(): Promise<CountMap> {
     count('submissionsPending', "SELECT COUNT(*)::int AS count FROM place_claims WHERE status = 'pending'"),
     count('reportsOpen', "SELECT COUNT(*)::int AS count FROM content_reports WHERE status IN ('pending','open','review')"),
     count('siteSettings', 'SELECT COUNT(*)::int AS count FROM site_settings'),
+    count('recipesTotal', 'SELECT COUNT(*)::int AS count FROM recipes'),
+    count('historicalSitesTotal', "SELECT COUNT(*)::int AS count FROM historical_sites WHERE status IN ('active','published')"),
   ]);
 
   return Object.fromEntries(entries) as CountMap;
