@@ -1,0 +1,254 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+const QUICK_LINKS = [
+  { href: '/admin/businesses', label: 'Mekanlar CRM', icon: '🏪', group: 'CRM' },
+  { href: '/admin/submissions', label: 'Başvurular', icon: '📋', group: 'CRM' },
+  { href: '/admin/blog', label: 'Blog', icon: '📝', group: 'İçerik' },
+  { href: '/admin/events', label: 'Etkinlikler', icon: '📅', group: 'İçerik' },
+  { href: '/admin/community/users', label: 'Kullanıcılar', icon: '👥', group: 'Topluluk' },
+  { href: '/admin/community/reports', label: 'Şikayetler', icon: '🚨', group: 'Topluluk' },
+  { href: '/admin/bots/seo', label: 'SEO Botu', icon: '🔍', group: 'Botlar' },
+  { href: '/admin/bots/content', label: 'İçerik Botu', icon: '📝', group: 'Botlar' },
+  { href: '/admin/ads', label: 'Reklamlar', icon: '📣', group: 'Gelir' },
+  { href: '/admin/audit-log', label: 'Audit Log', icon: '📜', group: 'Sistem' },
+  { href: '/admin/seo', label: 'SEO Merkezi', icon: '🎯', group: 'Sistem' },
+  { href: '/admin/integrations', label: 'Entegrasyonlar', icon: '🔌', group: 'Sistem' },
+];
+---
+
+<AdminLayoutV2
+  title="Komut Merkezi"
+  subtitle="Global admin arama — mekan, kullanıcı, blog, kategori, etkinlik, eczane ve reklamları ara"
+  breadcrumbs={[{ label: 'Komuta', href: '/admin' }, { label: 'Komut Merkezi' }]}
+  seo={{ title: 'Komut Merkezi - Admin', noIndex: true }}
+>
+  <div class="cmd-page">
+
+    <!-- Search box -->
+    <div class="cmd-search-wrap">
+      <div class="cmd-search-box">
+        <svg class="cmd-search-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          id="cmd-input"
+          type="text"
+          class="cmd-input"
+          placeholder="Mekan, kullanıcı, blog, kategori, etkinlik arayın…"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+          aria-label="Admin arama"
+          autofocus
+        />
+        <span class="cmd-shortcut">Ctrl+K</span>
+      </div>
+      <div class="cmd-hint">En az 2 karakter yazın — sonuçlar otomatik gelir</div>
+    </div>
+
+    <!-- Live results (populated via JS safe DOM) -->
+    <div id="cmd-results" class="cmd-results" aria-live="polite" aria-label="Arama sonuçları"></div>
+
+    <!-- Quick links -->
+    <div class="cmd-quick">
+      <div class="cmd-quick-title">Hızlı Erişim</div>
+      <div class="cmd-quick-grid">
+        {QUICK_LINKS.map(link => (
+          <a href={link.href} class="cmd-quick-item">
+            <span class="cmd-quick-ico" aria-hidden="true">{link.icon}</span>
+            <span class="cmd-quick-label">{link.label}</span>
+            <span class="cmd-quick-group">{link.group}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</AdminLayoutV2>
+
+<script is:inline>
+(function () {
+  var input = document.getElementById('cmd-input');
+  var container = document.getElementById('cmd-results');
+  if (!input || !container) return;
+
+  var debounceTimer = null;
+  var lastQuery = '';
+
+  function clearContainer() {
+    while (container.firstChild) container.removeChild(container.firstChild);
+  }
+
+  function setStatus(text) {
+    clearContainer();
+    var div = document.createElement('div');
+    div.className = 'cmd-no-results';
+    div.textContent = text;
+    container.appendChild(div);
+  }
+
+  function makeEl(tag, className, text) {
+    var el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text !== undefined) el.textContent = text;
+    return el;
+  }
+
+  function renderResults(results, query) {
+    clearContainer();
+
+    if (!results.length) {
+      setStatus('«' + query + '» için sonuç bulunamadı');
+      return;
+    }
+
+    var byType = {};
+    var typeOrder = [];
+    results.forEach(function (r) {
+      if (!byType[r.type]) { byType[r.type] = []; typeOrder.push(r.type); }
+      byType[r.type].push(r);
+    });
+
+    var groupsDiv = makeEl('div', 'cmd-result-groups');
+
+    typeOrder.forEach(function (type) {
+      var group = makeEl('div', 'cmd-result-group');
+      var title = makeEl('div', 'cmd-result-group-title', type + ' (' + byType[type].length + ')');
+      group.appendChild(title);
+
+      byType[type].forEach(function (r) {
+        var item = document.createElement('a');
+        item.className = 'cmd-result-item';
+        item.href = r.adminHref || '#';
+
+        var label = makeEl('div', 'cmd-result-label', r.label || '—');
+        item.appendChild(label);
+
+        if (r.description) {
+          item.appendChild(makeEl('div', 'cmd-result-desc', r.description));
+        }
+
+        var links = makeEl('div', 'cmd-result-links');
+        links.appendChild(makeEl('span', 'cmd-result-admin-link', 'Admin →'));
+
+        if (r.href) {
+          var pub = document.createElement('a');
+          pub.className = 'cmd-result-public-link';
+          pub.href = r.href;
+          pub.textContent = 'Public ↗';
+          pub.addEventListener('click', function (e) { e.stopPropagation(); });
+          links.appendChild(pub);
+        }
+
+        item.appendChild(links);
+        group.appendChild(item);
+      });
+
+      groupsDiv.appendChild(group);
+    });
+
+    container.appendChild(groupsDiv);
+  }
+
+  function doSearch(q) {
+    if (q.length < 2) { clearContainer(); return; }
+    if (q === lastQuery) return;
+    lastQuery = q;
+
+    clearContainer();
+    var loading = makeEl('div', 'cmd-loading', 'Aranıyor…');
+    container.appendChild(loading);
+
+    fetch('/api/admin/command?q=' + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.success) renderResults(d.results || [], q);
+        else setStatus('Hata: ' + (d.error || 'bilinmeyen'));
+      })
+      .catch(function () { setStatus('Bağlantı hatası'); });
+  }
+
+  input.addEventListener('input', function () {
+    clearTimeout(debounceTimer);
+    var q = input.value.trim();
+    debounceTimer = setTimeout(function () { doSearch(q); }, 250);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      input.focus();
+      input.select();
+    }
+    if (e.key === 'Escape') {
+      input.value = '';
+      clearContainer();
+      lastQuery = '';
+    }
+  });
+})();
+</script>
+
+<style is:global>
+.cmd-page { display: flex; flex-direction: column; gap: 20px; }
+
+.cmd-search-wrap { display: flex; flex-direction: column; gap: 6px; }
+
+.cmd-search-box {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--adm-bg); border: 2px solid var(--adm-border);
+  border-radius: 12px; padding: 10px 16px;
+  transition: border-color 0.15s;
+}
+.cmd-search-box:focus-within { border-color: var(--adm-text); }
+.cmd-search-ico { flex-shrink: 0; color: var(--adm-text-muted); }
+.cmd-input {
+  flex: 1; border: none; background: transparent; outline: none;
+  font-size: 15px; color: var(--adm-text); min-width: 0;
+}
+.cmd-input::placeholder { color: var(--adm-text-muted); }
+.cmd-shortcut {
+  font-size: 10px; font-weight: 600; color: var(--adm-text-muted);
+  border: 1px solid var(--adm-border); border-radius: 4px;
+  padding: 2px 6px; white-space: nowrap;
+}
+.cmd-hint { font-size: 12px; color: var(--adm-text-muted); padding-left: 4px; }
+
+.cmd-results { min-height: 0; }
+
+.cmd-loading { padding: 24px; text-align: center; color: var(--adm-text-muted); font-size: 13px; }
+.cmd-no-results { padding: 24px; text-align: center; color: var(--adm-text-muted); font-size: 13px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; }
+
+.cmd-result-groups { display: flex; flex-direction: column; gap: 12px; }
+.cmd-result-group { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.cmd-result-group-title { padding: 8px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--adm-text-muted); background: var(--adm-bg-hover); border-bottom: 1px solid var(--adm-border); }
+.cmd-result-item { display: flex; flex-direction: column; gap: 3px; padding: 10px 14px; text-decoration: none; border-bottom: 1px solid var(--adm-border); transition: background 0.1s; }
+.cmd-result-item:last-child { border-bottom: none; }
+.cmd-result-item:hover { background: var(--adm-bg-hover); }
+.cmd-result-label { font-size: 13px; font-weight: 600; color: var(--adm-text); }
+.cmd-result-desc { font-size: 11px; color: var(--adm-text-muted); }
+.cmd-result-links { display: flex; gap: 10px; margin-top: 2px; }
+.cmd-result-admin-link { font-size: 10px; color: var(--adm-text-muted); }
+.cmd-result-public-link { font-size: 10px; color: #1976d2; text-decoration: none; }
+.cmd-result-public-link:hover { text-decoration: underline; }
+
+.cmd-quick { display: flex; flex-direction: column; gap: 10px; }
+.cmd-quick-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--adm-text-muted); }
+.cmd-quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+.cmd-quick-item {
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--adm-bg); border: 1px solid var(--adm-border);
+  border-radius: 8px; padding: 12px; text-decoration: none;
+  transition: background 0.1s, border-color 0.1s;
+}
+.cmd-quick-item:hover { background: var(--adm-bg-hover); border-color: var(--adm-text-muted); }
+.cmd-quick-ico { font-size: 20px; }
+.cmd-quick-label { font-size: 12px; font-weight: 600; color: var(--adm-text); }
+.cmd-quick-group { font-size: 10px; color: var(--adm-text-muted); }
+</style>

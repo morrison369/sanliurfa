@@ -1,0 +1,188 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || user.role !== 'admin') {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type SiteSetting = { key: string; value: unknown; updated_at: Date | null };
+
+let settings: SiteSetting[] = [];
+let integrations: Record<string, unknown> = {};
+
+try {
+  const res = await query(`
+    SELECT key, value, updated_at
+    FROM site_settings
+    ORDER BY key
+    LIMIT 100
+  `);
+  settings = res.rows;
+
+  for (const s of settings) {
+    if (typeof s.key === 'string' && s.key.startsWith('integrations.')) {
+      integrations[s.key.replace('integrations.', '')] = s.value;
+    }
+  }
+} catch (_) { /* graceful */ }
+
+function fmtDate(d: Date | null): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+type Section = { key: string; title: string; desc: string; href: string; icon: string; settingKeys: string[]; lastUpdated: Date | null };
+
+const SETTING_SECTIONS_RAW = [
+  {
+    key: 'marketing',
+    title: 'Marketing & Tracking',
+    desc: 'Google Search Console, Bing Webmaster, Microsoft Clarity, Yandex Metrika doğrulama kodları.',
+    href: '/admin/settings/marketing',
+    icon: '📊',
+    settingKeys: ['integrations.verification', 'integrations.clarity', 'integrations.yandex'],
+  },
+  {
+    key: 'integrations',
+    title: 'Harici Entegrasyonlar',
+    desc: 'Resend, Stripe, Pexels, Unsplash API anahtarları ve OAuth yapılandırması.',
+    href: '/admin/integrations',
+    icon: '🔌',
+    settingKeys: ['integrations.resend', 'integrations.stripe', 'integrations.pexels'],
+  },
+  {
+    key: 'seo',
+    title: 'SEO Merkezi',
+    desc: 'Meta açıklama kalitesi, sitemap sağlığı, yapısal veri ve canonical sorunları.',
+    href: '/admin/seo',
+    icon: '🔍',
+    settingKeys: [],
+  },
+  {
+    key: 'bots',
+    title: 'Botlar Merkezi',
+    desc: 'İçerik kalite, koordinat, görsel, spam ve duplikasyon analiz botları.',
+    href: '/admin/bots',
+    icon: '🤖',
+    settingKeys: [],
+  },
+];
+
+// Precompute lastUpdated in frontmatter to avoid complex logic in template
+const SETTING_SECTIONS: Section[] = SETTING_SECTIONS_RAW.map(sec => {
+  let lastUpdated: Date | null = null;
+  for (const s of settings) {
+    if (!sec.settingKeys.includes(s.key) || !s.updated_at) continue;
+    const d = new Date(s.updated_at as Date);
+    if (!lastUpdated || d > lastUpdated) lastUpdated = d;
+  }
+  return { ...sec, lastUpdated };
+});
+---
+
+<AdminLayoutV2
+  title="Frontend Yönetimi"
+  subtitle="Site ayarları, entegrasyon yapılandırması ve sistem parametreleri"
+  breadcrumbs={[{ label: 'Komuta', href: '/admin' }, { label: 'Frontend Yönetimi' }]}
+  seo={{ title: 'Frontend Yönetimi - Admin', noIndex: true }}
+>
+  <div class="sets-page">
+
+    <!-- Setting sections grid -->
+    <div class="sets-grid">
+      {SETTING_SECTIONS.map(sec => (
+        <a href={sec.href} class="sets-card">
+          <div class="sets-card-head">
+            <span class="sets-card-icon" aria-hidden="true">{sec.icon}</span>
+            <div>
+              <div class="sets-card-title">{sec.title}</div>
+              {sec.lastUpdated && <div class="sets-card-updated">Güncellendi: {fmtDate(sec.lastUpdated)}</div>}
+            </div>
+          </div>
+          <p class="sets-card-desc">{sec.desc}</p>
+          <div class="sets-card-footer">Git →</div>
+        </a>
+      ))}
+    </div>
+
+    <!-- Raw settings table -->
+    {settings.length > 0 && (
+      <div class="sets-raw-card">
+        <div class="sets-raw-title">
+          Tüm site_settings Kayıtları
+          <span class="sets-raw-count">{settings.length} kayıt</span>
+        </div>
+        <div class="sets-raw-wrap">
+          <table class="sets-raw-table">
+            <thead>
+              <tr>
+                <th class="sets-raw-th">Anahtar</th>
+                <th class="sets-raw-th">Değer (önizleme)</th>
+                <th class="sets-raw-th">Güncellenme</th>
+              </tr>
+            </thead>
+            <tbody>
+              {settings.map(s => (
+                <tr class="sets-raw-tr">
+                  <td class="sets-raw-td sets-raw-key">{s.key}</td>
+                  <td class="sets-raw-td sets-raw-val">
+                    {JSON.stringify(s.value).substring(0, 80)}{JSON.stringify(s.value).length > 80 ? '…' : ''}
+                  </td>
+                  <td class="sets-raw-td sets-raw-date">{fmtDate(s.updated_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    )}
+
+    {settings.length === 0 && (
+      <div class="sets-empty">
+        <span>⚙️</span>
+        <p>Henüz site_settings kaydı yok. Entegrasyonlar ve marketing sayfaları aracılığıyla ayarlar eklenebilir.</p>
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.sets-page { display: flex; flex-direction: column; gap: 20px; }
+
+.sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+
+.sets-card {
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--adm-bg); border: 1px solid var(--adm-border);
+  border-radius: 10px; padding: 16px; text-decoration: none;
+  transition: border-color 0.15s, background 0.1s;
+}
+.sets-card:hover { border-color: var(--adm-text-muted); background: var(--adm-bg-hover); }
+.sets-card-head { display: flex; align-items: flex-start; gap: 12px; }
+.sets-card-icon { font-size: 28px; flex-shrink: 0; }
+.sets-card-title { font-size: 14px; font-weight: 600; color: var(--adm-text); }
+.sets-card-updated { font-size: 10px; color: var(--adm-text-muted); margin-top: 2px; }
+.sets-card-desc { font-size: 12px; color: var(--adm-text-muted); line-height: 1.5; margin: 0; flex: 1; }
+.sets-card-footer { font-size: 12px; color: var(--adm-text-muted); margin-top: auto; }
+.sets-card:hover .sets-card-footer { color: var(--adm-text); }
+
+.sets-raw-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.sets-raw-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); display: flex; align-items: center; gap: 8px; }
+.sets-raw-count { font-size: 11px; font-weight: 400; color: var(--adm-text-muted); background: var(--adm-bg); border-radius: 10px; padding: 1px 7px; border: 1px solid var(--adm-border); }
+.sets-raw-wrap { overflow-x: auto; max-height: 400px; overflow-y: auto; }
+.sets-raw-table { width: 100%; border-collapse: collapse; }
+.sets-raw-th { padding: 7px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.sets-raw-td { padding: 7px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: top; }
+.sets-raw-tr:last-child .sets-raw-td { border-bottom: none; }
+.sets-raw-tr:hover .sets-raw-td { background: var(--adm-bg-hover); }
+.sets-raw-key { font-family: monospace; font-size: 11px; white-space: nowrap; color: var(--adm-text-muted); }
+.sets-raw-val { font-family: monospace; font-size: 11px; color: var(--adm-text-muted); max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sets-raw-date { font-size: 11px; color: var(--adm-text-muted); white-space: nowrap; }
+
+.sets-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: var(--adm-text-muted); text-align: center; }
+.sets-empty span { font-size: 40px; }
+.sets-empty p { font-size: 13px; max-width: 400px; }
+</style>

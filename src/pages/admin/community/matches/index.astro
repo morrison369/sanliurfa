@@ -1,0 +1,218 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type Match = {
+  id: number | string;
+  user1_name: string | null;
+  user1_email: string | null;
+  user2_name: string | null;
+  user2_email: string | null;
+  status: string;
+  compatibility_score: number | null;
+  matched_at: Date | null;
+};
+
+let matches: Match[] = [];
+let stats = { total: 0, active: 0, rejected: 0, pending: 0 };
+let tableExists = true;
+
+const statusFilter = Astro.url.searchParams.get('status') || '';
+
+try {
+  const [matchRes, statsRes] = await Promise.all([
+    query(`
+      SELECT m.id, m.status,
+             m.compatibility_score,
+             m.matched_at,
+             m.created_at,
+             u1.full_name as user1_name, u1.email as user1_email,
+             u2.full_name as user2_name, u2.email as user2_email
+      FROM social_matches m
+      LEFT JOIN users u1 ON u1.id = m.user1_id
+      LEFT JOIN users u2 ON u2.id = m.user2_id
+      ${statusFilter ? 'WHERE m.status = $1' : ''}
+      ORDER BY m.created_at DESC
+      LIMIT 200
+    `, statusFilter ? [statusFilter] : []),
+    query(`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE status = 'active')::int as active,
+        COUNT(*) FILTER (WHERE status = 'rejected')::int as rejected,
+        COUNT(*) FILTER (WHERE status = 'pending')::int as pending
+      FROM social_matches
+    `),
+  ]);
+
+  matches = matchRes.rows;
+  stats = statsRes.rows[0] || stats;
+} catch (err: unknown) {
+  if ((err as { message?: string })?.message?.includes('does not exist')) {
+    tableExists = false;
+  }
+}
+
+function fmtDate(d: Date | null): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  active: 'Aktif', rejected: 'Reddedildi', pending: 'Bekliyor', expired: 'Süresi Doldu',
+};
+const STATUS_COLORS: Record<string, string> = {
+  active: '#2e7d32', rejected: '#c62828', pending: '#e65100', expired: '#757575',
+};
+---
+
+<AdminLayoutV2
+  title="Eşleşmeler"
+  subtitle="Kullanıcı eşleşme çiftleri ve uyum skoru yönetimi"
+  breadcrumbs={[{ label: 'Topluluk', href: '/admin' }, { label: 'Eşleşmeler' }]}
+  seo={{ title: 'Eşleşmeler - Admin', noIndex: true }}
+>
+  <div class="match-page">
+
+    {!tableExists ? (
+      <div class="match-empty-state">
+        <span>💘</span>
+        <p>
+          <strong>social_matches</strong> tablosu henüz oluşturulmamış.
+          Eşleşme modülü aktif değil.
+        </p>
+        <p class="match-empty-note">Profilleri yönetmek için: <a href="/admin/community/profiles" class="match-link">Eşleşme Profilleri →</a></p>
+      </div>
+    ) : (
+      <>
+        <!-- Stats -->
+        <div class="match-stats">
+          <div class="match-stat">
+            <span class="match-stat-val">{stats.total}</span>
+            <span class="match-stat-lbl">Toplam</span>
+          </div>
+          <div class="match-stat">
+            <span class="match-stat-val" style="color:#2e7d32">{stats.active}</span>
+            <span class="match-stat-lbl">Aktif</span>
+          </div>
+          <div class="match-stat">
+            <span class="match-stat-val" style="color:#e65100">{stats.pending}</span>
+            <span class="match-stat-lbl">Bekliyor</span>
+          </div>
+          <div class="match-stat">
+            <span class="match-stat-val" style="color:#757575">{stats.rejected}</span>
+            <span class="match-stat-lbl">Reddedildi</span>
+          </div>
+        </div>
+
+        <!-- Status filter tabs -->
+        <div class="match-tabs">
+          <a href="?status=" class={`match-tab ${!statusFilter ? 'match-tab--active' : ''}`}>
+            Tümü ({stats.total})
+          </a>
+          {(['active', 'pending', 'rejected'] as const).map(s => (
+            <a
+              href={`?status=${s}`}
+              class={`match-tab ${statusFilter === s ? 'match-tab--active' : ''}`}
+              style={statusFilter === s ? `color:${STATUS_COLORS[s]}` : ''}
+            >
+              {STATUS_LABELS[s]} ({stats[s as keyof typeof stats]})
+            </a>
+          ))}
+        </div>
+
+        <!-- Table -->
+        <div class="match-table-wrap">
+          {matches.length > 0 ? (
+            <table class="match-table">
+              <thead>
+                <tr>
+                  <th class="match-th">Kullanıcı 1</th>
+                  <th class="match-th">Kullanıcı 2</th>
+                  <th class="match-th">Uyum</th>
+                  <th class="match-th">Durum</th>
+                  <th class="match-th">Eşleşme Tarihi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {matches.map(m => (
+                  <tr class="match-tr">
+                    <td class="match-td">
+                      <div class="match-user">{m.user1_name || <span class="match-muted">—</span>}</div>
+                      <div class="match-email">{m.user1_email || ''}</div>
+                    </td>
+                    <td class="match-td">
+                      <div class="match-user">{m.user2_name || <span class="match-muted">—</span>}</div>
+                      <div class="match-email">{m.user2_email || ''}</div>
+                    </td>
+                    <td class="match-td">
+                      {m.compatibility_score !== null ? (
+                        <span class="match-score" style={m.compatibility_score >= 70 ? 'color:#2e7d32' : m.compatibility_score >= 50 ? 'color:#e65100' : 'color:#757575'}>
+                          %{m.compatibility_score}
+                        </span>
+                      ) : <span class="match-muted">—</span>}
+                    </td>
+                    <td class="match-td">
+                      <span
+                        class="match-status"
+                        style={`background:${STATUS_COLORS[m.status] || '#757575'}18;color:${STATUS_COLORS[m.status] || '#757575'}`}
+                      >
+                        {STATUS_LABELS[m.status] || m.status}
+                      </span>
+                    </td>
+                    <td class="match-td match-muted">{fmtDate(m.matched_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div class="match-empty">
+              {stats.total === 0 ? '💘 Henüz eşleşme oluşmamış' : 'Bu filtre için eşleşme bulunamadı'}
+            </div>
+          )}
+        </div>
+      </>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.match-page { display: flex; flex-direction: column; gap: 14px; }
+
+.match-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.match-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 18px; min-width: 90px; }
+.match-stat-val { font-size: 22px; font-weight: 700; color: var(--adm-text); line-height: 1; }
+.match-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.match-tabs { display: flex; gap: 4px; flex-wrap: wrap; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 8px; }
+.match-tab { padding: 5px 12px; font-size: 12px; color: var(--adm-text-muted); text-decoration: none; border-radius: 6px; }
+.match-tab:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.match-tab--active { background: var(--adm-bg-hover); color: var(--adm-text); font-weight: 600; }
+
+.match-table-wrap { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; overflow: hidden; }
+.match-table { width: 100%; border-collapse: collapse; }
+.match-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.match-td { padding: 9px 12px; font-size: 13px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.match-tr:last-child .match-td { border-bottom: none; }
+.match-tr:hover .match-td { background: var(--adm-bg-hover); }
+.match-user { font-size: 13px; font-weight: 500; }
+.match-email { font-size: 11px; color: var(--adm-text-muted); }
+.match-muted { color: var(--adm-text-muted); font-size: 12px; }
+.match-score { font-size: 15px; font-weight: 700; }
+.match-status { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; display: inline-block; }
+
+.match-empty { padding: 48px; text-align: center; color: var(--adm-text-muted); font-size: 14px; }
+
+.match-empty-state { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: var(--adm-text-muted); text-align: center; }
+.match-empty-state span { font-size: 48px; }
+.match-empty-state p { font-size: 14px; }
+.match-empty-note { font-size: 13px; }
+.match-link { color: var(--adm-text-muted); }
+.match-link:hover { color: var(--adm-text); }
+</style>
