@@ -16,10 +16,21 @@ import {
 
 // ─── GET ──────────────────────────────────────────────────────────────────────
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export const GET: APIRoute = async ({ url }) => {
   try {
-    const placeId = url.searchParams.get('placeId');
-    const userId  = url.searchParams.get('userId');
+    const rawPlaceId = url.searchParams.get('placeId');
+    const rawUserId  = url.searchParams.get('userId');
+    // Reject non-UUID IDs early — prevents DB type error and avoids leaking all reviews
+    if (rawPlaceId && !UUID_RE.test(rawPlaceId)) {
+      return apiResponse({ reviews: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } });
+    }
+    if (rawUserId && !UUID_RE.test(rawUserId)) {
+      return apiResponse({ reviews: [], pagination: { page: 1, limit: 20, total: 0, totalPages: 0 } });
+    }
+    const placeId = rawPlaceId || null;
+    const userId  = rawUserId || null;
     const stats   = url.searchParams.get('stats');
     const VALID_SORT_OPTIONS = new Set(['newest', 'oldest', 'highest', 'lowest', 'helpful']);
     const rawSortBy = url.searchParams.get('sortBy') || 'newest';
