@@ -61,4 +61,10 @@ export const PUBLIC_ROUTE_SMOKE_ROUTES = [
   { path: '/topluluk/fotolar', timeoutMs: 45000 },
   { path: '/hakkinda', timeoutMs: 45000 },
   { path: '/iletisim', timeoutMs: 45000 },
+  // SEO & crawler routes — brand match is on response.url (sanliurfa.com)
+  { path: '/sitemap.xml', timeoutMs: 15000 },
+  { path: '/sitemap-dynamic.xml', timeoutMs: 15000 },
+  { path: '/robots.txt', timeoutMs: 15000 },
+  { path: '/llms.txt', timeoutMs: 15000 },
+  { path: '/rss.xml', timeoutMs: 15000 },
 ];
