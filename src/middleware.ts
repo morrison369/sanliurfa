@@ -66,7 +66,7 @@ const PUBLIC_PATHS = [
   '/api/social/stats',
   '/isletme-kayit', '/etkinlik-ekle', '/ara',
   '/kullanicilar', '/trend', '/siralamalar', '/liderlik-tablosu', '/oneriler',
-  '/sitemap.xml', '/sitemap-pages.xml', '/sitemap-categories.xml', '/sitemap-ilceler.xml',
+  '/sitemap.xml', '/sitemap-dynamic.xml', '/sitemap-pages.xml', '/sitemap-categories.xml', '/sitemap-ilceler.xml',
   '/sitemap-places.xml', '/sitemap-historical.xml', '/sitemap-blog.xml',
   '/sitemap-events.xml', '/sitemap-recipes.xml', '/sitemap-guides.xml',
   '/rss.xml', '/robots.txt', '/llms.txt', '/llms-full.txt', '/ads.txt', '/publisher-center.json',
