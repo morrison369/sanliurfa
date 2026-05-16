@@ -1,0 +1,318 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type Listing = {
+  id: string;
+  title: string;
+  district: string;
+  status: string;
+  price: number | null;
+  currency: string;
+  condition: string;
+  view_count: number;
+  published_at: Date | null;
+  expires_at: Date | null;
+  created_at: Date;
+  user_email: string | null;
+  user_name: string | null;
+  category_name: string | null;
+  moderation_note: string | null;
+};
+
+const statusFilter = Astro.url.searchParams.get('status') || 'pending';
+const searchQ = Astro.url.searchParams.get('q') || '';
+const page = Math.max(1, parseInt(Astro.url.searchParams.get('page') || '1', 10));
+const PER_PAGE = 40;
+
+let listings: Listing[] = [];
+let total = 0;
+let stats = { total: 0, pending: 0, active: 0, rejected: 0, expired: 0 };
+
+try {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  let pi = 1;
+
+  if (statusFilter) { conditions.push(`cl.status = $${pi++}`); params.push(statusFilter); }
+  if (searchQ) {
+    conditions.push(`(cl.title ILIKE $${pi} OR cl.district ILIKE $${pi} OR u.email ILIKE $${pi})`);
+    params.push(`%${searchQ}%`);
+    pi++;
+  }
+  const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+  const [listRes, cntRes, statsRes] = await Promise.all([
+    query(
+      `SELECT cl.id, cl.title, cl.district, cl.status, cl.price, cl.currency,
+              cl.condition, cl.view_count, cl.published_at, cl.expires_at, cl.created_at,
+              cl.moderation_note,
+              u.email as user_email, u.full_name as user_name,
+              cc.name as category_name
+       FROM classified_listings cl
+       LEFT JOIN users u ON u.id = cl.user_id
+       LEFT JOIN classified_categories cc ON cc.id = cl.category_id
+       ${where}
+       ORDER BY cl.created_at DESC
+       LIMIT $${pi} OFFSET $${pi + 1}`,
+      [...params, PER_PAGE, (page - 1) * PER_PAGE]
+    ),
+    query(`SELECT COUNT(*)::int as n FROM classified_listings cl LEFT JOIN users u ON u.id = cl.user_id ${where}`, params),
+    query(`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE status = 'pending')::int as pending,
+        COUNT(*) FILTER (WHERE status = 'active')::int as active,
+        COUNT(*) FILTER (WHERE status = 'rejected')::int as rejected,
+        COUNT(*) FILTER (WHERE status = 'expired')::int as expired
+      FROM classified_listings
+    `),
+  ]);
+  listings = listRes.rows;
+  total = cntRes.rows[0]?.n || 0;
+  stats = statsRes.rows[0] || stats;
+} catch (_) { /* graceful */ }
+
+const totalPages = Math.ceil(total / PER_PAGE);
+
+function fmtDate(d: Date | null): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function fmtPrice(p: number | null, cur: string): string {
+  if (!p) return 'Ücretsiz';
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: cur || 'TRY', maximumFractionDigits: 0 }).format(p);
+}
+
+const STATUSES = [
+  { key: 'pending',  label: 'Bekleyen', color: '#e65100' },
+  { key: 'active',   label: 'Yayında',  color: '#2e7d32' },
+  { key: 'rejected', label: 'Reddedildi', color: '#c62828' },
+  { key: 'expired',  label: 'Süresi Doldu', color: '#757575' },
+  { key: 'archived', label: 'Arşiv', color: '#9e9e9e' },
+];
+---
+
+<AdminLayoutV2
+  title="Ücretsiz İlanlar"
+  subtitle="Üye ilanları moderasyonu — yayına almak için admin onayı gerekir"
+  breadcrumbs={[{ label: 'CRM', href: '/admin' }, { label: 'Ücretsiz İlanlar' }]}
+  seo={{ title: 'Ücretsiz İlanlar - Admin', noIndex: true }}
+>
+  <div slot="page-actions">
+    <a href="/ilanlar" target="_blank" rel="noopener noreferrer" class="cl-btn-ghost">Siteye Git ↗</a>
+  </div>
+
+  <div class="cl-page">
+
+    <!-- Stats -->
+    <div class="cl-stats">
+      <div class="cl-stat">
+        <span class="cl-stat-val">{stats.total}</span>
+        <span class="cl-stat-lbl">Toplam İlan</span>
+      </div>
+      <div class="cl-stat">
+        <span class="cl-stat-val" style="color:#e65100">{stats.pending}</span>
+        <span class="cl-stat-lbl">Bekleyen</span>
+      </div>
+      <div class="cl-stat">
+        <span class="cl-stat-val" style="color:#2e7d32">{stats.active}</span>
+        <span class="cl-stat-lbl">Yayında</span>
+      </div>
+      <div class="cl-stat">
+        <span class="cl-stat-val" style="color:#c62828">{stats.rejected}</span>
+        <span class="cl-stat-lbl">Reddedildi</span>
+      </div>
+      <div class="cl-stat">
+        <span class="cl-stat-val" style="color:#757575">{stats.expired}</span>
+        <span class="cl-stat-lbl">Süresi Doldu</span>
+      </div>
+    </div>
+
+    <!-- Status tabs -->
+    <div class="cl-tabs">
+      <a href="?status=" class={`cl-tab ${!statusFilter ? 'cl-tab--active' : ''}`}>Tümü ({stats.total})</a>
+      {STATUSES.map(s => (
+        <a href={`?status=${s.key}`} class={`cl-tab ${statusFilter === s.key ? 'cl-tab--active' : ''}`}
+           style={statusFilter === s.key ? `color:${s.color}` : ''}>
+          {s.label} ({stats[s.key as keyof typeof stats] || 0})
+        </a>
+      ))}
+    </div>
+
+    <!-- Search -->
+    <form method="GET" class="cl-search">
+      <input name="q" value={searchQ} placeholder="İlan başlığı, ilçe veya e-posta ara…" class="cl-input" />
+      {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+      <button type="submit" class="cl-btn">Ara</button>
+      {searchQ && <a href={`?status=${statusFilter}`} class="cl-btn-ghost">Temizle</a>}
+    </form>
+
+    <!-- Table -->
+    {listings.length === 0 && stats.total === 0 ? (
+      <div class="cl-empty">
+        <div class="cl-empty-icon">📋</div>
+        <div class="cl-empty-title">Henüz ücretsiz ilan yok</div>
+        <div class="cl-empty-sub">
+          <code>classified_listings</code> ve <code>classified_categories</code> tabloları hazır.
+          Üyeler ilan göndermeye başladığında burada görünecek.
+        </div>
+      </div>
+    ) : (
+      <div class="cl-table-wrap">
+        <table class="cl-table">
+          <thead>
+            <tr>
+              <th class="cl-th">İlan</th>
+              <th class="cl-th">Kategori</th>
+              <th class="cl-th">İlçe</th>
+              <th class="cl-th">Fiyat</th>
+              <th class="cl-th">Üye</th>
+              <th class="cl-th">Tarih</th>
+              <th class="cl-th">Görüntülenme</th>
+              <th class="cl-th">Durum</th>
+              <th class="cl-th">İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>
+            {listings.map(l => (
+              <tr class="cl-tr">
+                <td class="cl-td">
+                  <div class="cl-title">{l.title}</div>
+                  {l.moderation_note && <div class="cl-mod-note">{l.moderation_note.substring(0, 60)}</div>}
+                </td>
+                <td class="cl-td cl-td-muted">{l.category_name || '—'}</td>
+                <td class="cl-td cl-td-muted">{l.district}</td>
+                <td class="cl-td cl-td-price">{fmtPrice(l.price, l.currency)}</td>
+                <td class="cl-td cl-td-muted">{l.user_name || l.user_email || '—'}</td>
+                <td class="cl-td cl-td-muted">{fmtDate(l.created_at)}</td>
+                <td class="cl-td cl-td-center">{l.view_count}</td>
+                <td class="cl-td">
+                  <span class={`cl-status cl-status--${l.status}`}>
+                    {STATUSES.find(s => s.key === l.status)?.label || l.status}
+                  </span>
+                </td>
+                <td class="cl-td cl-td-acts">
+                  {l.status === 'pending' && (
+                    <>
+                      <button class="cl-act cl-act--approve" data-id={l.id} data-action="approve" type="button">Onayla</button>
+                      <button class="cl-act cl-act--reject" data-id={l.id} data-action="reject" type="button">Reddet</button>
+                    </>
+                  )}
+                  {l.status !== 'pending' && (
+                    <button class="cl-act" data-id={l.id} data-action="archive" type="button">Arşivle</button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {listings.length === 0 && (
+          <div class="cl-no-results">Bu filtre için ilan bulunamadı</div>
+        )}
+      </div>
+    )}
+
+    <!-- Pagination -->
+    {totalPages > 1 && (
+      <div class="cl-pag">
+        <span class="cl-pag-info">{total} ilan — Sayfa {page}/{totalPages}</span>
+        <div class="cl-pag-btns">
+          {page > 1 && <a href={`?status=${statusFilter}&q=${searchQ}&page=${page-1}`} class="cl-pag-btn">← Önceki</a>}
+          {page < totalPages && <a href={`?status=${statusFilter}&q=${searchQ}&page=${page+1}`} class="cl-pag-btn">Sonraki →</a>}
+        </div>
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<script is:inline>
+(function () {
+  document.querySelectorAll('[data-action]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.dataset.id;
+      var action = btn.dataset.action;
+      var newStatus = action === 'approve' ? 'active' : action === 'reject' ? 'rejected' : 'archived';
+      btn.disabled = true;
+      fetch('/api/admin/classifieds/' + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.success) { location.reload(); }
+          else { btn.disabled = false; alert('Hata: ' + (d.error || 'bilinmeyen')); }
+        })
+        .catch(function () { btn.disabled = false; });
+    });
+  });
+})();
+</script>
+
+<style is:global>
+.cl-page { display: flex; flex-direction: column; gap: 14px; }
+.cl-btn-ghost { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 7px; font-size: 13px; color: var(--adm-text); text-decoration: none; }
+.cl-btn-ghost:hover { background: var(--adm-bg-hover); }
+
+.cl-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.cl-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 16px; min-width: 90px; }
+.cl-stat-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.cl-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.cl-tabs { display: flex; gap: 4px; flex-wrap: wrap; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 6px; }
+.cl-tab { padding: 5px 12px; font-size: 12px; color: var(--adm-text-muted); text-decoration: none; border-radius: 6px; }
+.cl-tab:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.cl-tab--active { background: var(--adm-bg-hover); color: var(--adm-text); font-weight: 600; }
+
+.cl-search { display: flex; gap: 8px; align-items: center; }
+.cl-input { flex: 1; padding: 7px 10px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 13px; background: var(--adm-bg); color: var(--adm-text); outline: none; min-width: 200px; }
+.cl-input:focus { border-color: var(--adm-text-muted); }
+.cl-btn { padding: 7px 14px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
+
+.cl-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 64px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; text-align: center; }
+.cl-empty-icon { font-size: 40px; }
+.cl-empty-title { font-size: 16px; font-weight: 600; color: var(--adm-text); }
+.cl-empty-sub { font-size: 13px; color: var(--adm-text-muted); }
+.cl-empty-sub code { background: var(--adm-bg-hover); padding: 1px 4px; border-radius: 3px; }
+
+.cl-table-wrap { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; overflow: hidden; }
+.cl-table { width: 100%; border-collapse: collapse; }
+.cl-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.cl-td { padding: 9px 12px; font-size: 13px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.cl-tr:last-child .cl-td { border-bottom: none; }
+.cl-tr:hover .cl-td { background: var(--adm-bg-hover); }
+.cl-title { font-weight: 500; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cl-mod-note { font-size: 11px; color: #e65100; margin-top: 2px; }
+.cl-td-muted { color: var(--adm-text-muted); font-size: 12px; }
+.cl-td-price { font-weight: 600; white-space: nowrap; }
+.cl-td-center { text-align: center; color: var(--adm-text-muted); }
+.cl-td-acts { display: flex; gap: 4px; }
+
+.cl-status { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; }
+.cl-status--pending  { background: rgba(230,81,0,.1);   color: #e65100; }
+.cl-status--active   { background: rgba(46,125,50,.1);  color: #2e7d32; }
+.cl-status--rejected { background: rgba(198,40,40,.1);  color: #c62828; }
+.cl-status--expired  { background: rgba(117,117,117,.1); color: #757575; }
+.cl-status--archived { background: var(--adm-bg-hover); color: var(--adm-text-muted); }
+
+.cl-act { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--adm-border); cursor: pointer; background: transparent; color: var(--adm-text-muted); white-space: nowrap; }
+.cl-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.cl-act--approve:hover { border-color: #2e7d32; color: #2e7d32; }
+.cl-act--reject:hover  { border-color: #c62828; color: #c62828; }
+
+.cl-no-results { padding: 40px; text-align: center; color: var(--adm-text-muted); font-size: 14px; }
+
+.cl-pag { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.cl-pag-info { font-size: 12px; color: var(--adm-text-muted); }
+.cl-pag-btns { display: flex; gap: 8px; }
+.cl-pag-btn { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; padding: 5px 12px; border: 1px solid var(--adm-border); border-radius: 6px; }
+.cl-pag-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+</style>

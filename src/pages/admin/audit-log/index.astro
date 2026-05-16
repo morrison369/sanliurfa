@@ -1,0 +1,228 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type AuditEntry = {
+  id: string;
+  action: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  description: string | null;
+  severity: string | null;
+  status: string | null;
+  ip_address: string | null;
+  user_name: string | null;
+  user_email: string | null;
+  created_at: Date;
+};
+
+const actionFilter = Astro.url.searchParams.get('action') || '';
+const severityFilter = Astro.url.searchParams.get('severity') || '';
+const page = Math.max(1, parseInt(Astro.url.searchParams.get('page') || '1', 10));
+const PER_PAGE = 50;
+
+let entries: AuditEntry[] = [];
+let total = 0;
+let stats = { total: 0, errors: 0, warnings: 0, today: 0 };
+
+try {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  let pi = 1;
+  if (actionFilter) { conditions.push(`al.action ILIKE $${pi++}`); params.push(`%${actionFilter}%`); }
+  if (severityFilter) { conditions.push(`al.severity = $${pi++}`); params.push(severityFilter); }
+  const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+  const [listRes, cntRes, statsRes] = await Promise.all([
+    query(
+      `SELECT al.id, al.action, al.resource_type, al.resource_id,
+              al.description, al.severity, al.status, al.ip_address,
+              COALESCE(al.user_name, u.full_name, u.username) as user_name,
+              u.email as user_email,
+              al.created_at
+       FROM audit_logs al
+       LEFT JOIN users u ON u.id = al.user_id
+       ${where}
+       ORDER BY al.created_at DESC
+       LIMIT $${pi} OFFSET $${pi + 1}`,
+      [...params, PER_PAGE, (page - 1) * PER_PAGE]
+    ),
+    query(`SELECT COUNT(*)::int as n FROM audit_logs al ${where}`, params),
+    query(`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE severity = 'error')::int as errors,
+        COUNT(*) FILTER (WHERE severity = 'warning')::int as warnings,
+        COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE)::int as today
+      FROM audit_logs
+    `),
+  ]);
+  entries = listRes.rows;
+  total = cntRes.rows[0]?.n || 0;
+  stats = statsRes.rows[0] || stats;
+} catch (_) { /* graceful */ }
+
+const totalPages = Math.ceil(total / PER_PAGE);
+
+function fmtDateTime(d: Date): string {
+  return new Date(d).toLocaleString('tr-TR', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function severityColor(s: string | null): string {
+  if (s === 'error')   return '#c62828';
+  if (s === 'warning') return '#e65100';
+  if (s === 'info')    return '#1565c0';
+  return 'var(--adm-text-muted)';
+}
+---
+
+<AdminLayoutV2
+  title="Audit Log"
+  subtitle="Sistem değişiklik kaydı — tüm admin aksiyonları"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Audit Log' }]}
+  seo={{ title: 'Audit Log - Admin', noIndex: true }}
+>
+  <div class="alog-page">
+
+    <!-- Stats -->
+    <div class="alog-stats">
+      <div class="alog-stat">
+        <span class="alog-stat-val">{stats.total.toLocaleString('tr-TR')}</span>
+        <span class="alog-stat-lbl">Toplam Kayıt</span>
+      </div>
+      <div class="alog-stat">
+        <span class="alog-stat-val" style="color:#c62828">{stats.errors}</span>
+        <span class="alog-stat-lbl">Hata</span>
+      </div>
+      <div class="alog-stat">
+        <span class="alog-stat-val" style="color:#e65100">{stats.warnings}</span>
+        <span class="alog-stat-lbl">Uyarı</span>
+      </div>
+      <div class="alog-stat">
+        <span class="alog-stat-val" style="color:#1565c0">{stats.today}</span>
+        <span class="alog-stat-lbl">Bugün</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="GET" class="alog-filters">
+      <input name="action" value={actionFilter} placeholder="Aksiyon ara (login, update, delete…)" class="alog-input" />
+      <select name="severity" class="alog-select">
+        <option value="">Tüm Severity</option>
+        <option value="info"    selected={severityFilter === 'info'}>Info</option>
+        <option value="warning" selected={severityFilter === 'warning'}>Warning</option>
+        <option value="error"   selected={severityFilter === 'error'}>Error</option>
+      </select>
+      <button type="submit" class="alog-btn">Filtrele</button>
+      {(actionFilter || severityFilter) && <a href="/admin/audit-log" class="alog-btn-ghost">Temizle</a>}
+    </form>
+
+    <!-- Timeline table -->
+    {stats.total === 0 ? (
+      <div class="alog-empty">
+        <div class="alog-empty-icon">📜</div>
+        <div class="alog-empty-title">Henüz audit log kaydı yok</div>
+        <div class="alog-empty-sub"><code>audit_logs</code> tablosu mevcut — admin aksiyonları kayıt edildiğinde burada görünecek.</div>
+      </div>
+    ) : (
+      <div class="alog-table-wrap">
+        <table class="alog-table">
+          <thead>
+            <tr>
+              <th class="alog-th">Zaman</th>
+              <th class="alog-th">Severity</th>
+              <th class="alog-th">Aksiyon</th>
+              <th class="alog-th">Kaynak</th>
+              <th class="alog-th">Açıklama</th>
+              <th class="alog-th">Kullanıcı</th>
+              <th class="alog-th">IP</th>
+            </tr>
+          </thead>
+          <tbody>
+            {entries.map(e => (
+              <tr class="alog-tr">
+                <td class="alog-td alog-td-time">{fmtDateTime(e.created_at)}</td>
+                <td class="alog-td">
+                  <span class="alog-sev" style={`color:${severityColor(e.severity)}`}>
+                    {e.severity || 'info'}
+                  </span>
+                </td>
+                <td class="alog-td alog-td-action">{e.action}</td>
+                <td class="alog-td alog-td-muted">
+                  {e.resource_type && <span class="alog-resource">{e.resource_type}</span>}
+                  {e.resource_id && <span class="alog-resource-id">{e.resource_id.substring(0, 8)}…</span>}
+                </td>
+                <td class="alog-td alog-td-desc">{e.description || '—'}</td>
+                <td class="alog-td alog-td-muted">{e.user_name || e.user_email || 'Sistem'}</td>
+                <td class="alog-td alog-td-ip">{e.ip_address || '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    <!-- Pagination -->
+    {totalPages > 1 && (
+      <div class="alog-pag">
+        <span class="alog-pag-info">{total.toLocaleString('tr-TR')} kayıt — Sayfa {page}/{totalPages}</span>
+        <div class="alog-pag-btns">
+          {page > 1 && <a href={`?action=${actionFilter}&severity=${severityFilter}&page=${page-1}`} class="alog-pag-btn">← Önceki</a>}
+          {page < totalPages && <a href={`?action=${actionFilter}&severity=${severityFilter}&page=${page+1}`} class="alog-pag-btn">Sonraki →</a>}
+        </div>
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.alog-page { display: flex; flex-direction: column; gap: 14px; }
+
+.alog-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.alog-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 18px; min-width: 90px; }
+.alog-stat-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.alog-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.alog-filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.alog-input { flex: 1; min-width: 200px; padding: 7px 10px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 13px; background: var(--adm-bg); color: var(--adm-text); outline: none; }
+.alog-input:focus { border-color: var(--adm-text-muted); }
+.alog-select { padding: 7px 10px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 13px; background: var(--adm-bg); color: var(--adm-text); outline: none; cursor: pointer; }
+.alog-btn { padding: 7px 14px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 6px; font-size: 12px; cursor: pointer; }
+.alog-btn-ghost { padding: 7px 14px; background: transparent; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; color: var(--adm-text-muted); text-decoration: none; }
+
+.alog-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 64px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; text-align: center; }
+.alog-empty-icon { font-size: 40px; }
+.alog-empty-title { font-size: 15px; font-weight: 600; color: var(--adm-text); }
+.alog-empty-sub { font-size: 13px; color: var(--adm-text-muted); }
+.alog-empty-sub code { background: var(--adm-bg-hover); padding: 1px 4px; border-radius: 3px; }
+
+.alog-table-wrap { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; overflow: auto; }
+.alog-table { width: 100%; border-collapse: collapse; min-width: 700px; }
+.alog-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); white-space: nowrap; }
+.alog-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.alog-tr:last-child .alog-td { border-bottom: none; }
+.alog-tr:hover .alog-td { background: var(--adm-bg-hover); }
+
+.alog-td-time { white-space: nowrap; color: var(--adm-text-muted); font-size: 11px; font-family: monospace; }
+.alog-sev { font-size: 10px; font-weight: 700; text-transform: uppercase; }
+.alog-td-action { font-family: monospace; font-size: 11px; font-weight: 600; color: var(--adm-text); }
+.alog-td-muted { color: var(--adm-text-muted); font-size: 11px; }
+.alog-resource { font-size: 10px; background: var(--adm-bg-hover); border-radius: 4px; padding: 1px 5px; color: var(--adm-text); }
+.alog-resource-id { font-family: monospace; font-size: 10px; color: var(--adm-text-muted); margin-left: 4px; }
+.alog-td-desc { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--adm-text-muted); }
+.alog-td-ip { font-family: monospace; font-size: 11px; color: var(--adm-text-muted); white-space: nowrap; }
+
+.alog-pag { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.alog-pag-info { font-size: 12px; color: var(--adm-text-muted); }
+.alog-pag-btns { display: flex; gap: 8px; }
+.alog-pag-btn { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; padding: 5px 12px; border: 1px solid var(--adm-border); border-radius: 6px; }
+.alog-pag-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+</style>

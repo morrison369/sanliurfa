@@ -1,0 +1,267 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+// SEO Bot Analysis — runs on demand, returns structured issues
+type PlaceIssue = {
+  id: number;
+  name: string;
+  slug: string;
+  issues: string[];
+  score: number;
+};
+
+let issues: PlaceIssue[] = [];
+let ran = false;
+let blogIssues: Array<{ id: number; title: string; slug: string; issues: string[] }> = [];
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const [placesRes, blogRes] = await Promise.all([
+      query(`
+        SELECT p.id, p.name, p.slug,
+               p.meta_description, p.short_description, p.thumbnail_url,
+               p.images, p.latitude, p.longitude
+        FROM places p
+        WHERE p.status IN ('active','published')
+        ORDER BY p.name
+        LIMIT 300
+      `),
+      query(`
+        SELECT b.id, b.title, b.slug, b.meta_description, b.featured_image, b.read_time
+        FROM blog_posts b
+        WHERE b.status = 'published'
+        ORDER BY b.published_at DESC
+        LIMIT 100
+      `),
+    ]);
+
+    for (const p of placesRes.rows) {
+      const pIssues: string[] = [];
+      if (!p.meta_description || p.meta_description.length < 50) pIssues.push('Meta açıklama eksik/kısa (<50k)');
+      if (!p.short_description || p.short_description.length < 50) pIssues.push('Kısa açıklama eksik');
+      if (!p.thumbnail_url && (!p.images || !p.images.length)) pIssues.push('Görsel yok');
+      if (!p.latitude || !p.longitude) pIssues.push('Koordinat eksik');
+
+      const issueCount = pIssues.length;
+      const score = Math.max(0, 100 - issueCount * 25);
+
+      if (pIssues.length > 0) {
+        issues.push({ id: p.id, name: p.name, slug: p.slug, issues: pIssues, score });
+      }
+    }
+
+    // Sort by worst score first
+    issues.sort((a, b) => a.score - b.score);
+
+    for (const b of blogRes.rows) {
+      const bIssues: string[] = [];
+      if (!b.meta_description || b.meta_description.length < 50) bIssues.push('Meta açıklama eksik/kısa');
+      if (!b.featured_image) bIssues.push('Öne çıkan görsel yok');
+      if (!b.read_time) bIssues.push('Okuma süresi eksik');
+      if (bIssues.length > 0) blogIssues.push({ id: b.id, title: b.title, slug: b.slug, issues: bIssues });
+    }
+  } catch (_) { /* graceful */ }
+}
+
+const scoreColor = (s: number) => s >= 75 ? '#2e7d32' : s >= 50 ? '#e65100' : '#c62828';
+---
+
+<AdminLayoutV2
+  title="SEO Botu"
+  subtitle="Eksik meta, görsel, koordinat ve slug sorunlarını tespit eder"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'SEO Botu' }]}
+  seo={{ title: 'SEO Botu - Admin', noIndex: true }}
+>
+  <div class="sbot-page">
+
+    <!-- Info banner -->
+    <div class="sbot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>
+        <strong>Manuel çalıştır.</strong> Bot sadece analiz yapar. Hiçbir veri otomatik değiştirilmez. Admin onayı olmadan güncelleme yapılmaz.
+      </span>
+    </div>
+
+    <!-- Run form -->
+    {!ran ? (
+      <div class="sbot-run-card">
+        <div class="sbot-run-icon">🔍</div>
+        <div class="sbot-run-body">
+          <div class="sbot-run-title">SEO Botu — Analizi Başlat</div>
+          <div class="sbot-run-desc">
+            Aktif mekanlar ve yayında blog yazıları taranır. Eksik meta açıklama, görsel, koordinat sorunları listelenir. Her mekan için 0–100 SEO skoru hesaplanır.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="sbot-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="sbot-results">
+
+        <!-- Summary -->
+        <div class="sbot-summary">
+          <div class="sbot-sum-stat">
+            <span class="sbot-sum-val" style={`color:${scoreColor(100 - Math.round(issues.length * 10))}`}>
+              {issues.length}
+            </span>
+            <span class="sbot-sum-lbl">Sorunlu Mekan</span>
+          </div>
+          <div class="sbot-sum-stat">
+            <span class="sbot-sum-val">{blogIssues.length}</span>
+            <span class="sbot-sum-lbl">Sorunlu Blog</span>
+          </div>
+          <div class="sbot-sum-stat">
+            <span class="sbot-sum-val" style="color:#c62828">
+              {issues.filter(i => i.issues.some(x => x.includes('Meta'))).length}
+            </span>
+            <span class="sbot-sum-lbl">Meta Eksik</span>
+          </div>
+          <div class="sbot-sum-stat">
+            <span class="sbot-sum-val" style="color:#e65100">
+              {issues.filter(i => i.issues.some(x => x.includes('Görsel'))).length}
+            </span>
+            <span class="sbot-sum-lbl">Görselsiz</span>
+          </div>
+          <form method="POST" class="sbot-rerun">
+            <button type="submit" class="sbot-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        <!-- Place issues table -->
+        {issues.length > 0 && (
+          <div class="sbot-section">
+            <div class="sbot-section-title">Mekan SEO Sorunları ({issues.length})</div>
+            <div class="sbot-table-wrap">
+              <table class="sbot-table">
+                <thead>
+                  <tr>
+                    <th class="sbot-th">Skor</th>
+                    <th class="sbot-th">Mekan</th>
+                    <th class="sbot-th">Sorunlar</th>
+                    <th class="sbot-th">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {issues.slice(0, 100).map(p => (
+                    <tr class="sbot-tr">
+                      <td class="sbot-td">
+                        <span class="sbot-score" style={`color:${scoreColor(p.score)}`}>{p.score}</span>
+                      </td>
+                      <td class="sbot-td sbot-td-name">{p.name}</td>
+                      <td class="sbot-td">
+                        <div class="sbot-issues">
+                          {p.issues.map(issue => (
+                            <span class="sbot-issue">{issue}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td class="sbot-td">
+                        <a href={`/admin/businesses/${p.id}/edit`} class="sbot-act">Düzenle</a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <!-- Blog issues -->
+        {blogIssues.length > 0 && (
+          <div class="sbot-section">
+            <div class="sbot-section-title">Blog SEO Sorunları ({blogIssues.length})</div>
+            <div class="sbot-table-wrap">
+              <table class="sbot-table">
+                <thead>
+                  <tr>
+                    <th class="sbot-th">Blog Yazısı</th>
+                    <th class="sbot-th">Sorunlar</th>
+                    <th class="sbot-th">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {blogIssues.slice(0, 50).map(b => (
+                    <tr class="sbot-tr">
+                      <td class="sbot-td sbot-td-name">{b.title}</td>
+                      <td class="sbot-td">
+                        <div class="sbot-issues">
+                          {b.issues.map(issue => <span class="sbot-issue">{issue}</span>)}
+                        </div>
+                      </td>
+                      <td class="sbot-td">
+                        <a href={`/admin/blog/edit/${b.id}`} class="sbot-act">Düzenle</a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {issues.length === 0 && blogIssues.length === 0 && (
+          <div class="sbot-all-ok">
+            <span>✓</span>
+            <p>Tüm aktif içerikler SEO standartlarını karşılıyor!</p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.sbot-page { display: flex; flex-direction: column; gap: 14px; }
+
+.sbot-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.sbot-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.sbot-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.sbot-run-icon { font-size: 36px; flex-shrink: 0; }
+.sbot-run-body { flex: 1; min-width: 200px; }
+.sbot-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.sbot-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.sbot-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.sbot-run-btn:hover { opacity: 0.85; }
+
+.sbot-results { display: flex; flex-direction: column; gap: 14px; }
+
+.sbot-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.sbot-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.sbot-sum-val { font-size: 22px; font-weight: 700; color: var(--adm-text); }
+.sbot-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.sbot-rerun { margin-left: auto; }
+.sbot-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.sbot-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.sbot-section { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.sbot-section-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.sbot-table-wrap { overflow-x: auto; max-height: 500px; overflow-y: auto; }
+.sbot-table { width: 100%; border-collapse: collapse; }
+.sbot-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.sbot-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: top; }
+.sbot-tr:last-child .sbot-td { border-bottom: none; }
+.sbot-tr:hover .sbot-td { background: var(--adm-bg-hover); }
+.sbot-score { font-size: 16px; font-weight: 700; }
+.sbot-td-name { font-weight: 500; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sbot-issues { display: flex; flex-wrap: wrap; gap: 4px; }
+.sbot-issue { font-size: 10px; background: rgba(198,40,40,.08); color: #c62828; border-radius: 4px; padding: 2px 6px; }
+.sbot-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; white-space: nowrap; }
+.sbot-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.sbot-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.sbot-all-ok span { font-size: 36px; }
+.sbot-all-ok p { font-size: 14px; }
+</style>

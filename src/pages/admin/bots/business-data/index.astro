@@ -1,0 +1,207 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type PlaceGap = {
+  id: number;
+  name: string;
+  slug: string;
+  district_name: string | null;
+  category_name: string | null;
+  missing: string[];
+  priority: number;
+};
+
+let gaps: PlaceGap[] = [];
+let ran = false;
+let summary = { noPhone: 0, noAddress: 0, noCoords: 0, noHours: 0, noDesc: 0 };
+
+const runBot = Astro.request.method === 'POST';
+
+if (runBot) {
+  ran = true;
+  try {
+    const result = await query(`
+      SELECT p.id, p.name, p.slug,
+             p.phone, p.address, p.latitude, p.longitude,
+             p.short_description, p.meta_description,
+             d.name as district_name, c.name as category_name,
+             EXISTS(SELECT 1 FROM place_hours ph WHERE ph.place_id = p.id) as has_hours
+      FROM places p
+      LEFT JOIN districts d ON d.id = p.district_id
+      LEFT JOIN categories c ON c.id = p.category_id
+      WHERE p.status IN ('active','published')
+      ORDER BY p.name
+      LIMIT 500
+    `);
+
+    for (const p of result.rows) {
+      const missing: string[] = [];
+      if (!p.phone) { missing.push('Telefon'); summary.noPhone++; }
+      if (!p.address) { missing.push('Adres'); summary.noAddress++; }
+      if (!p.latitude || !p.longitude) { missing.push('Koordinat'); summary.noCoords++; }
+      if (!p.has_hours) { missing.push('Çalışma saati'); summary.noHours++; }
+      if (!p.short_description || p.short_description.length < 50) { missing.push('Açıklama'); summary.noDesc++; }
+
+      if (missing.length > 0) {
+        gaps.push({
+          id: p.id, name: p.name, slug: p.slug,
+          district_name: p.district_name, category_name: p.category_name,
+          missing, priority: missing.length,
+        });
+      }
+    }
+
+    // Sort by most missing fields first
+    gaps.sort((a, b) => b.priority - a.priority);
+  } catch (_) { /* graceful */ }
+}
+
+const PRIORITY_COLORS: Record<number, string> = {
+  5: '#c62828', 4: '#c62828', 3: '#e65100', 2: '#e65100', 1: '#757575',
+};
+---
+
+<AdminLayoutV2
+  title="İşletme Veri Botu"
+  subtitle="Eksik telefon, adres, koordinat, çalışma saati ve açıklama tespiti"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar', href: '/admin/bots' }, { label: 'İşletme Veri Botu' }]}
+  seo={{ title: 'İşletme Veri Botu - Admin', noIndex: true }}
+>
+  <div class="bdb-page">
+
+    <div class="bdb-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span><strong>Manuel çalıştır.</strong> Bot sadece eksiklikleri listeler, değiştirmez.</span>
+    </div>
+
+    {!ran ? (
+      <div class="bdb-run-card">
+        <div class="bdb-run-icon">🏪</div>
+        <div class="bdb-run-body">
+          <div class="bdb-run-title">İşletme Veri Botu — Analizi Başlat</div>
+          <div class="bdb-run-desc">
+            Aktif mekanlar taranır. Eksik telefon, adres, koordinat, çalışma saati ve açıklama öncelik sırasıyla listelenir.
+          </div>
+        </div>
+        <form method="POST">
+          <button type="submit" class="bdb-run-btn">Botu Çalıştır →</button>
+        </form>
+      </div>
+    ) : (
+      <div class="bdb-results">
+
+        <div class="bdb-summary">
+          <div class="bdb-sum-stat"><span class="bdb-sum-val">{gaps.length}</span><span class="bdb-sum-lbl">Eksik Veri Var</span></div>
+          <div class="bdb-sum-stat"><span class="bdb-sum-val" style="color:#c62828">{summary.noPhone}</span><span class="bdb-sum-lbl">Telefonsuz</span></div>
+          <div class="bdb-sum-stat"><span class="bdb-sum-val" style="color:#c62828">{summary.noCoords}</span><span class="bdb-sum-lbl">Koordinatsız</span></div>
+          <div class="bdb-sum-stat"><span class="bdb-sum-val" style="color:#e65100">{summary.noAddress}</span><span class="bdb-sum-lbl">Adrессiz</span></div>
+          <div class="bdb-sum-stat"><span class="bdb-sum-val" style="color:#e65100">{summary.noHours}</span><span class="bdb-sum-lbl">Saatsiz</span></div>
+          <div class="bdb-sum-stat"><span class="bdb-sum-val">{summary.noDesc}</span><span class="bdb-sum-lbl">Açıklamasız</span></div>
+          <form method="POST" style="margin-left:auto">
+            <button type="submit" class="bdb-rerun-btn">Tekrar Çalıştır</button>
+          </form>
+        </div>
+
+        {gaps.length > 0 ? (
+          <div class="bdb-table-card">
+            <div class="bdb-table-title">Eksik Veri Listesi ({gaps.length} mekan)</div>
+            <div class="bdb-table-wrap">
+              <table class="bdb-table">
+                <thead>
+                  <tr>
+                    <th class="bdb-th">Öncelik</th>
+                    <th class="bdb-th">Mekan</th>
+                    <th class="bdb-th">İlçe / Kategori</th>
+                    <th class="bdb-th">Eksik Alanlar</th>
+                    <th class="bdb-th">İşlemler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gaps.slice(0, 200).map(g => (
+                    <tr class="bdb-tr">
+                      <td class="bdb-td">
+                        <span class="bdb-priority" style={`color:${PRIORITY_COLORS[g.priority] || '#757575'}`}>
+                          {'●'.repeat(g.priority)}
+                        </span>
+                      </td>
+                      <td class="bdb-td bdb-td-name">{g.name}</td>
+                      <td class="bdb-td bdb-td-muted">
+                        {g.district_name && <span>{g.district_name}</span>}
+                        {g.category_name && <span class="bdb-cat">{g.category_name}</span>}
+                      </td>
+                      <td class="bdb-td">
+                        <div class="bdb-missing">
+                          {g.missing.map(m => <span class="bdb-miss-tag">{m}</span>)}
+                        </div>
+                      </td>
+                      <td class="bdb-td">
+                        <a href={`/admin/businesses/${g.id}/edit`} class="bdb-act">Düzenle</a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div class="bdb-all-ok">
+            <span>✓</span>
+            <p>Tüm aktif mekanların veri bütünlüğü tam!</p>
+          </div>
+        )}
+
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.bdb-page { display: flex; flex-direction: column; gap: 14px; }
+
+.bdb-info { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.bdb-info svg { flex-shrink: 0; margin-top: 2px; }
+
+.bdb-run-card { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px; flex-wrap: wrap; }
+.bdb-run-icon { font-size: 36px; flex-shrink: 0; }
+.bdb-run-body { flex: 1; min-width: 200px; }
+.bdb-run-title { font-size: 15px; font-weight: 600; color: var(--adm-text); margin-bottom: 4px; }
+.bdb-run-desc { font-size: 13px; color: var(--adm-text-muted); }
+.bdb-run-btn { padding: 9px 20px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.bdb-run-btn:hover { opacity: 0.85; }
+
+.bdb-results { display: flex; flex-direction: column; gap: 14px; }
+
+.bdb-summary { display: flex; align-items: center; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.bdb-sum-stat { display: flex; flex-direction: column; gap: 2px; }
+.bdb-sum-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.bdb-sum-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.bdb-rerun-btn { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; background: transparent; color: var(--adm-text-muted); cursor: pointer; }
+.bdb-rerun-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.bdb-table-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.bdb-table-title { padding: 12px 14px; font-size: 13px; font-weight: 600; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.bdb-table-wrap { overflow-x: auto; max-height: 600px; overflow-y: auto; }
+.bdb-table { width: 100%; border-collapse: collapse; }
+.bdb-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.bdb-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.bdb-tr:last-child .bdb-td { border-bottom: none; }
+.bdb-tr:hover .bdb-td { background: var(--adm-bg-hover); }
+.bdb-priority { font-size: 10px; letter-spacing: -2px; }
+.bdb-td-name { font-weight: 500; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bdb-td-muted { color: var(--adm-text-muted); font-size: 11px; }
+.bdb-cat { margin-left: 4px; background: var(--adm-bg-hover); border-radius: 4px; padding: 1px 5px; font-size: 10px; }
+.bdb-missing { display: flex; flex-wrap: wrap; gap: 4px; }
+.bdb-miss-tag { font-size: 10px; background: rgba(198,40,40,.08); color: #c62828; border-radius: 4px; padding: 2px 6px; }
+.bdb-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; white-space: nowrap; }
+.bdb-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.bdb-all-ok { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; color: #2e7d32; text-align: center; }
+.bdb-all-ok span { font-size: 36px; }
+.bdb-all-ok p { font-size: 14px; }
+</style>
