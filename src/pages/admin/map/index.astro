@@ -1,0 +1,273 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type PlaceRow = {
+  id: number;
+  name: string;
+  slug: string;
+  status: string;
+  latitude: number | null;
+  longitude: number | null;
+  district_name: string | null;
+  category_name: string | null;
+};
+
+type DistrictStat = {
+  district_name: string;
+  total: number;
+  with_coords: number;
+};
+
+let noCoords: PlaceRow[] = [];
+let districtStats: DistrictStat[] = [];
+let totalActive = 0;
+let totalWithCoords = 0;
+
+try {
+  const [noCoordsRes, distRes, totalRes] = await Promise.all([
+    query(`
+      SELECT p.id, p.name, p.slug, p.status, p.latitude, p.longitude,
+             d.name as district_name, c.name as category_name
+      FROM places p
+      LEFT JOIN districts d ON d.id = p.district_id
+      LEFT JOIN categories c ON c.id = p.category_id
+      WHERE p.status IN ('active','published')
+        AND (p.latitude IS NULL OR p.longitude IS NULL)
+      ORDER BY d.name, p.name
+      LIMIT 200
+    `),
+    query(`
+      SELECT
+        COALESCE(d.name, 'Belirsiz') as district_name,
+        COUNT(p.id)::int as total,
+        COUNT(p.id) FILTER (WHERE p.latitude IS NOT NULL AND p.longitude IS NOT NULL)::int as with_coords
+      FROM places p
+      LEFT JOIN districts d ON d.id = p.district_id
+      WHERE p.status IN ('active','published')
+      GROUP BY d.name
+      ORDER BY COUNT(p.id) DESC
+    `),
+    query(`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE latitude IS NOT NULL AND longitude IS NOT NULL)::int as with_coords
+      FROM places WHERE status IN ('active','published')
+    `),
+  ]);
+  noCoords = noCoordsRes.rows;
+  districtStats = distRes.rows;
+  totalActive = totalRes.rows[0]?.total || 0;
+  totalWithCoords = totalRes.rows[0]?.with_coords || 0;
+} catch (_) { /* graceful */ }
+
+const coveragePct = totalActive > 0 ? Math.round((totalWithCoords / totalActive) * 100) : 0;
+const missingCount = totalActive - totalWithCoords;
+---
+
+<AdminLayoutV2
+  title="Harita Yönetimi"
+  subtitle="Koordinat durumu, ilçe dağılımı ve eksik koordinat listesi"
+  breadcrumbs={[{ label: 'CRM', href: '/admin' }, { label: 'Harita' }]}
+  seo={{ title: 'Harita Yönetimi - Admin', noIndex: true }}
+>
+  <div slot="page-actions">
+    <a href="/harita" target="_blank" rel="noopener noreferrer" class="map-btn-ghost">Haritayı Gör ↗</a>
+  </div>
+
+  <div class="map-page">
+
+    <!-- Coverage summary -->
+    <div class="map-coverage">
+      <div class="map-cov-score" style={`color:${coveragePct >= 80 ? '#2e7d32' : coveragePct >= 50 ? '#e65100' : '#c62828'}`}>
+        %{coveragePct}
+      </div>
+      <div class="map-cov-info">
+        <div class="map-cov-label">Koordinat Kapsamı</div>
+        <div class="map-cov-sub">{totalWithCoords} / {totalActive} aktif mekan koordinatlı</div>
+        <div class="map-cov-bar">
+          <div class="map-cov-fill" style={`width:${coveragePct}%;background:${coveragePct >= 80 ? '#2e7d32' : coveragePct >= 50 ? '#e65100' : '#c62828'}`}></div>
+        </div>
+      </div>
+      <div class="map-cov-stats">
+        <div class="map-stat">
+          <span class="map-stat-val">{totalActive}</span>
+          <span class="map-stat-lbl">Aktif Mekan</span>
+        </div>
+        <div class="map-stat">
+          <span class="map-stat-val" style="color:#2e7d32">{totalWithCoords}</span>
+          <span class="map-stat-lbl">Koordinatlı</span>
+        </div>
+        <div class="map-stat">
+          <span class="map-stat-val" style="color:#c62828">{missingCount}</span>
+          <span class="map-stat-lbl">Koordinatsız</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-grid">
+
+      <!-- District breakdown -->
+      <div class="map-card">
+        <div class="map-card-hdr">
+          <span class="map-card-title">İlçe Bazlı Dağılım</span>
+          <span class="map-card-sub">{districtStats.length} ilçe</span>
+        </div>
+        <div class="map-dist-list">
+          {districtStats.map(d => {
+            const pct = d.total > 0 ? Math.round((d.with_coords / d.total) * 100) : 0;
+            return (
+              <div class="map-dist-row">
+                <div class="map-dist-name">{d.district_name}</div>
+                <div class="map-dist-bar-wrap">
+                  <div class="map-dist-bar" style={`width:${pct}%;background:${pct >= 80 ? '#2e7d32' : pct >= 50 ? '#e65100' : '#c62828'}`}></div>
+                </div>
+                <div class="map-dist-nums">
+                  <span style={`color:${pct >= 80 ? '#2e7d32' : pct >= 50 ? '#e65100' : '#c62828'}`}>{d.with_coords}</span>
+                  <span class="map-dist-sep">/</span>
+                  <span>{d.total}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <!-- Missing coords list -->
+      <div class="map-card map-card--wide">
+        <div class="map-card-hdr">
+          <span class="map-card-title">Koordinatsız Mekanlar</span>
+          <span class="map-card-sub">{noCoords.length} mekan</span>
+        </div>
+        {noCoords.length === 0 ? (
+          <div class="map-empty">
+            <span>✓</span>
+            <p>Tüm aktif mekanların koordinatı mevcut!</p>
+          </div>
+        ) : (
+          <div class="map-table-wrap">
+            <table class="map-table">
+              <thead>
+                <tr>
+                  <th class="map-th">Mekan</th>
+                  <th class="map-th">İlçe</th>
+                  <th class="map-th">Kategori</th>
+                  <th class="map-th">Durum</th>
+                  <th class="map-th">İşlemler</th>
+                </tr>
+              </thead>
+              <tbody>
+                {noCoords.map(p => (
+                  <tr class="map-tr">
+                    <td class="map-td map-td-name">{p.name}</td>
+                    <td class="map-td">{p.district_name || <span class="map-miss">—</span>}</td>
+                    <td class="map-td map-td-cat">{p.category_name || <span class="map-miss">—</span>}</td>
+                    <td class="map-td">
+                      <span class={`map-status map-status--${p.status}`}>{p.status}</span>
+                    </td>
+                    <td class="map-td map-td-acts">
+                      <a href={`/admin/businesses/${p.id}/edit`} class="map-act">Düzenle</a>
+                      {p.slug && (
+                        <a
+                          href={`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(p.name + ' Şanlıurfa')}&format=json`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="map-act"
+                        >
+                          Nominatim ↗
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+    </div>
+
+    <!-- Harita Koordinat Botu -->
+    <div class="map-bot-banner">
+      <div class="map-bot-info">
+        <span class="map-bot-icon">📍</span>
+        <div>
+          <div class="map-bot-title">Harita Koordinat Botu</div>
+          <div class="map-bot-desc">Adreslerden koordinat önerisi sunar, yanlış ilçeye düşen mekanları uyarı gösterir</div>
+        </div>
+      </div>
+      <a href="/admin/bots" class="map-bot-link">Botlar Merkezine Git →</a>
+    </div>
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.map-page { display: flex; flex-direction: column; gap: 16px; }
+.map-btn-ghost { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 7px; font-size: 13px; color: var(--adm-text); text-decoration: none; }
+.map-btn-ghost:hover { background: var(--adm-bg-hover); }
+
+.map-coverage { display: flex; align-items: center; gap: 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px 24px; flex-wrap: wrap; }
+.map-cov-score { font-size: 52px; font-weight: 800; line-height: 1; flex-shrink: 0; }
+.map-cov-label { font-size: 16px; font-weight: 600; color: var(--adm-text); }
+.map-cov-sub { font-size: 12px; color: var(--adm-text-muted); margin-top: 2px; }
+.map-cov-bar { width: 200px; height: 6px; background: var(--adm-border); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.map-cov-fill { height: 100%; border-radius: 3px; }
+.map-cov-stats { display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+.map-stat { display: flex; flex-direction: column; gap: 2px; text-align: center; }
+.map-stat-val { font-size: 22px; font-weight: 700; color: var(--adm-text); }
+.map-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.map-grid { display: grid; grid-template-columns: 280px 1fr; gap: 12px; }
+@media (max-width: 900px) { .map-grid { grid-template-columns: 1fr; } }
+
+.map-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.map-card--wide { overflow: hidden; }
+.map-card-hdr { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.map-card-title { font-size: 13px; font-weight: 600; color: var(--adm-text); }
+.map-card-sub { font-size: 11px; color: var(--adm-text-muted); }
+
+.map-dist-list { padding: 8px 14px; display: flex; flex-direction: column; gap: 8px; max-height: 500px; overflow-y: auto; }
+.map-dist-row { display: grid; grid-template-columns: 1fr 80px auto; align-items: center; gap: 8px; }
+.map-dist-name { font-size: 12px; color: var(--adm-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-dist-bar-wrap { height: 4px; background: var(--adm-border); border-radius: 2px; overflow: hidden; }
+.map-dist-bar { height: 100%; border-radius: 2px; }
+.map-dist-nums { font-size: 11px; display: flex; gap: 2px; align-items: center; white-space: nowrap; }
+.map-dist-sep { color: var(--adm-border); }
+
+.map-table-wrap { overflow-x: auto; max-height: 500px; overflow-y: auto; }
+.map-table { width: 100%; border-collapse: collapse; }
+.map-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); position: sticky; top: 0; }
+.map-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); }
+.map-tr:last-child .map-td { border-bottom: none; }
+.map-tr:hover .map-td { background: var(--adm-bg-hover); }
+.map-td-name { font-weight: 500; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-td-cat { color: var(--adm-text-muted); }
+.map-td-acts { display: flex; gap: 4px; }
+.map-miss { color: var(--adm-text-muted); }
+
+.map-status { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px; }
+.map-status--active    { background: rgba(46,125,50,.1);  color: #2e7d32; }
+.map-status--published { background: rgba(21,101,192,.1); color: #1565c0; }
+
+.map-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 2px 6px; border: 1px solid var(--adm-border); border-radius: 4px; white-space: nowrap; }
+.map-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.map-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 24px; color: #2e7d32; }
+.map-empty span { font-size: 32px; }
+.map-empty p { font-size: 14px; }
+
+.map-bot-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.map-bot-info { display: flex; align-items: center; gap: 12px; }
+.map-bot-icon { font-size: 24px; }
+.map-bot-title { font-size: 13px; font-weight: 600; color: var(--adm-text); }
+.map-bot-desc { font-size: 12px; color: var(--adm-text-muted); }
+.map-bot-link { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; padding: 6px 12px; border: 1px solid var(--adm-border); border-radius: 6px; white-space: nowrap; }
+.map-bot-link:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+</style>

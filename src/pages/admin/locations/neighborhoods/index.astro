@@ -1,0 +1,134 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type Neighborhood = {
+  id: number;
+  name: string;
+  slug: string | null;
+  district_id: number | null;
+  district_name: string | null;
+  place_count: number;
+};
+
+let neighborhoods: Neighborhood[] = [];
+
+try {
+  const result = await query(`
+    SELECT n.id, n.name, n.slug, n.district_id,
+           d.name as district_name,
+           COUNT(p.id) FILTER (WHERE p.status IN ('active','published')) as place_count
+    FROM neighborhoods n
+    LEFT JOIN districts d ON d.id = n.district_id
+    LEFT JOIN places p ON p.neighborhood_id = n.id
+    GROUP BY n.id, d.name
+    ORDER BY d.name, n.name
+  `);
+  neighborhoods = result.rows;
+} catch (_) { /* graceful */ }
+
+const byDistrict = neighborhoods.reduce<Record<string, Neighborhood[]>>((acc, n) => {
+  const key = n.district_name || 'Belirsiz';
+  if (!acc[key]) acc[key] = [];
+  acc[key].push(n);
+  return acc;
+}, {});
+---
+
+<AdminLayoutV2
+  title="Mahalle Yönetimi"
+  subtitle="İlçe bazlı mahalle listesi"
+  breadcrumbs={[{ label: 'CRM', href: '/admin' }, { label: 'İlçeler', href: '/admin/locations/districts' }, { label: 'Mahalleler' }]}
+  seo={{ title: 'Mahalle Yönetimi - Admin', noIndex: true }}
+>
+  <div class="nbh-page">
+
+    <div class="nbh-summary">
+      <div class="nbh-stat">
+        <span class="nbh-stat-val">{neighborhoods.length}</span>
+        <span class="nbh-stat-lbl">Toplam Mahalle</span>
+      </div>
+      <div class="nbh-stat">
+        <span class="nbh-stat-val">{Object.keys(byDistrict).length}</span>
+        <span class="nbh-stat-lbl">İlçe</span>
+      </div>
+      <div class="nbh-stat">
+        <span class="nbh-stat-val">{neighborhoods.reduce((a, n) => a + (n.place_count || 0), 0)}</span>
+        <span class="nbh-stat-lbl">Toplam Mekan</span>
+      </div>
+    </div>
+
+    {Object.entries(byDistrict).map(([distName, nbhs]) => (
+      <div class="nbh-group">
+        <div class="nbh-group-header">
+          <span class="nbh-group-title">{distName}</span>
+          <span class="nbh-group-count">{nbhs.length} mahalle</span>
+        </div>
+        <div class="nbh-table-wrap">
+          <table class="nbh-table">
+            <thead>
+              <tr>
+                <th class="nbh-th">Mahalle Adı</th>
+                <th class="nbh-th">Slug</th>
+                <th class="nbh-th">Mekan Sayısı</th>
+                <th class="nbh-th">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              {nbhs.map(n => (
+                <tr class="nbh-tr">
+                  <td class="nbh-td nbh-td-name">{n.name}</td>
+                  <td class="nbh-td nbh-td-slug">{n.slug || <span class="nbh-miss">Eksik</span>}</td>
+                  <td class="nbh-td">{n.place_count || 0}</td>
+                  <td class="nbh-td">
+                    <a href={`/admin/locations/neighborhoods/${n.id}/edit`} class="nbh-act">Düzenle</a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    ))}
+
+    {neighborhoods.length === 0 && (
+      <div class="nbh-empty">
+        <p>Mahalle verisi bulunamadı</p>
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.nbh-page { display: flex; flex-direction: column; gap: 16px; }
+
+.nbh-summary { display: flex; gap: 10px; flex-wrap: wrap; }
+.nbh-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 12px 18px; min-width: 110px; }
+.nbh-stat-val { font-size: 22px; font-weight: 700; color: var(--adm-text); }
+.nbh-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.nbh-group { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; overflow: hidden; }
+.nbh-group-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.nbh-group-title { font-size: 13px; font-weight: 600; color: var(--adm-text); }
+.nbh-group-count { font-size: 11px; color: var(--adm-text-muted); background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 2px 8px; }
+
+.nbh-table-wrap { overflow-x: auto; }
+.nbh-table { width: 100%; border-collapse: collapse; }
+.nbh-th { padding: 8px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.nbh-td { padding: 9px 14px; font-size: 13px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); }
+.nbh-tr:last-child .nbh-td { border-bottom: none; }
+.nbh-tr:hover .nbh-td { background: var(--adm-bg-hover); }
+.nbh-td-name { font-weight: 500; }
+.nbh-td-slug { font-size: 12px; color: var(--adm-text-muted); font-family: monospace; }
+.nbh-miss { color: #c62828; font-style: normal; }
+.nbh-act { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 8px; border: 1px solid var(--adm-border); border-radius: 4px; }
+.nbh-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.nbh-empty { display: flex; justify-content: center; padding: 48px; color: var(--adm-text-muted); font-size: 14px; }
+</style>

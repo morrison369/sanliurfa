@@ -1,0 +1,192 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type District = {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  population: number | null;
+  image: string | null;
+  is_central: boolean;
+  sort_order: number;
+  place_count: number;
+};
+
+let districts: District[] = [];
+
+try {
+  const result = await query(`
+    SELECT d.*,
+      COUNT(p.id) FILTER (WHERE p.status IN ('active','published')) as place_count
+    FROM districts d
+    LEFT JOIN places p ON p.district_id = d.id
+    GROUP BY d.id
+    ORDER BY d.sort_order, d.name
+  `);
+  districts = result.rows;
+} catch (_) { /* graceful */ }
+
+const hasMissingCoords = districts.filter(d => !d.latitude || !d.longitude).length;
+const hasMissingDesc   = districts.filter(d => !d.description).length;
+const hasMissingImg    = districts.filter(d => !d.image).length;
+---
+
+<AdminLayoutV2
+  title="İlçe Yönetimi"
+  subtitle="Şanlıurfa'nın 13 ilçesini görüntüleyin ve düzenleyin"
+  breadcrumbs={[{ label: 'CRM', href: '/admin' }, { label: 'İlçeler' }]}
+  seo={{ title: 'İlçe Yönetimi - Admin', noIndex: true }}
+>
+  <div slot="page-actions" class="dist-acts">
+    {hasMissingCoords > 0 && <span class="dist-warn">⚠ {hasMissingCoords} koordinatsız</span>}
+    {hasMissingDesc > 0   && <span class="dist-warn">⚠ {hasMissingDesc} açıklamasız</span>}
+    {hasMissingImg > 0    && <span class="dist-warn dist-warn--soft">⚠ {hasMissingImg} görselsiz</span>}
+  </div>
+
+  <div class="dist-page">
+
+    <!-- Summary stats -->
+    <div class="dist-stats">
+      <div class="dist-stat">
+        <span class="dist-stat-val">{districts.length}</span>
+        <span class="dist-stat-lbl">Toplam İlçe</span>
+      </div>
+      <div class="dist-stat dist-stat--blue">
+        <span class="dist-stat-val">{districts.reduce((a, d) => a + (d.place_count || 0), 0)}</span>
+        <span class="dist-stat-lbl">Toplam Mekan</span>
+      </div>
+      <div class="dist-stat dist-stat--amber">
+        <span class="dist-stat-val">{hasMissingCoords}</span>
+        <span class="dist-stat-lbl">Koordinatsız</span>
+      </div>
+      <div class="dist-stat dist-stat--muted">
+        <span class="dist-stat-val">{hasMissingDesc}</span>
+        <span class="dist-stat-lbl">Açıklamasız</span>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="dist-grid">
+      {districts.map(d => (
+        <div class="dist-card">
+          <div class="dist-card-header">
+            {d.image
+              ? <img src={d.image} alt={d.name} loading="lazy" class="dist-img" width="48" height="48" />
+              : <div class="dist-img-ph">🗺</div>
+            }
+            <div>
+              <div class="dist-name">{d.name}</div>
+              <div class="dist-slug">{d.slug}</div>
+            </div>
+            {d.is_central && <span class="dist-badge dist-badge--center">Merkez</span>}
+          </div>
+
+          <div class="dist-card-body">
+            <div class="dist-kv">
+              <span>Mekan sayısı</span>
+              <strong>{d.place_count || 0}</strong>
+            </div>
+            {d.population && (
+              <div class="dist-kv">
+                <span>Nüfus</span>
+                <strong>{Number(d.population).toLocaleString('tr-TR')}</strong>
+              </div>
+            )}
+            <div class="dist-kv">
+              <span>Koordinat</span>
+              {d.latitude && d.longitude
+                ? <span class="dist-ok">{Number(d.latitude).toFixed(4)}, {Number(d.longitude).toFixed(4)}</span>
+                : <span class="dist-miss">Eksik</span>
+              }
+            </div>
+            <div class="dist-kv">
+              <span>Açıklama</span>
+              {d.description
+                ? <span class="dist-ok">Mevcut</span>
+                : <span class="dist-miss">Eksik</span>
+              }
+            </div>
+            <div class="dist-kv">
+              <span>Meta desc.</span>
+              {d.meta_description
+                ? <span class="dist-ok">Mevcut</span>
+                : <span class="dist-miss">Eksik</span>
+              }
+            </div>
+          </div>
+
+          <div class="dist-card-footer">
+            <a href={`/admin/locations/districts/${d.id}/edit`} class="dist-act dist-act--primary">Düzenle</a>
+            <a href={`/sehir-rehberi/${d.slug}`} target="_blank" rel="noopener noreferrer" class="dist-act">Önizle</a>
+            {d.latitude && d.longitude && (
+              <a href={`https://www.openstreetmap.org/?mlat=${d.latitude}&mlon=${d.longitude}&zoom=12`} target="_blank" rel="noopener noreferrer" class="dist-act">Harita</a>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {districts.length === 0 && (
+      <div class="dist-empty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <p>İlçe verisi bulunamadı</p>
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.dist-page { display: flex; flex-direction: column; gap: 16px; }
+.dist-acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.dist-warn { font-size: 12px; color: #e65100; background: rgba(230,81,0,.1); border: 1px solid rgba(230,81,0,.2); border-radius: 6px; padding: 4px 10px; }
+.dist-warn--soft { color: var(--adm-text-muted); background: var(--adm-bg-hover); border-color: var(--adm-border); }
+
+/* Stats */
+.dist-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.dist-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 12px 18px; min-width: 110px; }
+.dist-stat-val { font-size: 22px; font-weight: 700; color: var(--adm-text); }
+.dist-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.dist-stat--blue  .dist-stat-val { color: #1565c0; }
+.dist-stat--amber .dist-stat-val { color: #e65100; }
+.dist-stat--muted .dist-stat-val { color: var(--adm-text-muted); }
+
+/* Grid */
+.dist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.dist-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+.dist-card-header { display: flex; align-items: center; gap: 12px; padding: 14px 14px 10px; border-bottom: 1px solid var(--adm-border); }
+.dist-img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.dist-img-ph { width: 48px; height: 48px; border-radius: 8px; background: var(--adm-bg-hover); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.dist-name { font-size: 15px; font-weight: 600; color: var(--adm-text); }
+.dist-slug { font-size: 11px; color: var(--adm-text-muted); }
+.dist-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; margin-left: auto; }
+.dist-badge--center { background: rgba(21,101,192,.12); color: #1565c0; }
+
+.dist-card-body { padding: 10px 14px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+.dist-kv { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+.dist-kv span:first-child { color: var(--adm-text-muted); }
+.dist-kv strong { font-weight: 600; color: var(--adm-text); }
+.dist-ok   { color: #2e7d32; font-size: 11px; }
+.dist-miss { color: #c62828; font-size: 11px; }
+
+.dist-card-footer { display: flex; gap: 6px; padding: 10px 14px; border-top: 1px solid var(--adm-border); }
+.dist-act { font-size: 12px; text-decoration: none; padding: 5px 10px; border-radius: 6px; border: 1px solid var(--adm-border); color: var(--adm-text-muted); transition: all 0.15s; }
+.dist-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.dist-act--primary { background: var(--adm-text); color: var(--adm-bg); border-color: var(--adm-text); }
+.dist-act--primary:hover { opacity: 0.85; color: var(--adm-bg); }
+
+.dist-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 60px 24px; color: var(--adm-text-muted); }
+.dist-empty svg { opacity: 0.35; }
+.dist-empty p { font-size: 14px; }
+</style>

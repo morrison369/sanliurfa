@@ -1,0 +1,290 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+// Parallel SEO health queries across all content types
+const [placesRows, blogRows, eventsRows, districtsRows] = await Promise.all([
+  query(`
+    SELECT
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE meta_description IS NULL OR length(meta_description) < 50) as no_meta,
+      COUNT(*) FILTER (WHERE short_description IS NULL OR length(short_description) < 50) as no_short,
+      COUNT(*) FILTER (WHERE thumbnail_url IS NULL AND (images IS NULL OR array_length(images,1) IS NULL)) as no_image,
+      COUNT(*) FILTER (WHERE slug IS NULL OR slug = '') as no_slug
+    FROM places WHERE status IN ('active','published')
+  `).catch(() => ({ rows: [{}] })),
+
+  query(`
+    SELECT
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE meta_description IS NULL OR length(meta_description) < 50) as no_meta,
+      COUNT(*) FILTER (WHERE featured_image IS NULL) as no_image,
+      COUNT(*) FILTER (WHERE slug IS NULL OR slug = '') as no_slug,
+      COUNT(*) FILTER (WHERE read_time IS NULL) as no_read_time
+    FROM blog_posts WHERE status = 'published'
+  `).catch(() => ({ rows: [{}] })),
+
+  query(`
+    SELECT
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE description IS NULL OR length(description) < 100) as no_desc,
+      COUNT(*) FILTER (WHERE image_url IS NULL) as no_image,
+      COUNT(*) FILTER (WHERE slug IS NULL OR slug = '') as no_slug
+    FROM events WHERE status = 'published' AND start_date >= NOW()
+  `).catch(() => ({ rows: [{}] })),
+
+  query(`
+    SELECT
+      COUNT(*) as total,
+      COUNT(*) FILTER (WHERE meta_description IS NULL OR length(meta_description) < 50) as no_meta,
+      COUNT(*) FILTER (WHERE description IS NULL OR length(description) < 50) as no_desc,
+      COUNT(*) FILTER (WHERE image IS NULL) as no_image
+    FROM districts
+  `).catch(() => ({ rows: [{}] })),
+]);
+
+function toInt(v: unknown) { return parseInt(String(v || '0'), 10); }
+
+const places = {
+  total: toInt(placesRows.rows[0]?.total),
+  noMeta: toInt(placesRows.rows[0]?.no_meta),
+  noShort: toInt(placesRows.rows[0]?.no_short),
+  noImage: toInt(placesRows.rows[0]?.no_image),
+  noSlug: toInt(placesRows.rows[0]?.no_slug),
+};
+const blog = {
+  total: toInt(blogRows.rows[0]?.total),
+  noMeta: toInt(blogRows.rows[0]?.no_meta),
+  noImage: toInt(blogRows.rows[0]?.no_image),
+  noSlug: toInt(blogRows.rows[0]?.no_slug),
+};
+const events = {
+  total: toInt(eventsRows.rows[0]?.total),
+  noDesc: toInt(eventsRows.rows[0]?.no_desc),
+  noImage: toInt(eventsRows.rows[0]?.no_image),
+};
+const districts = {
+  total: toInt(districtsRows.rows[0]?.total),
+  noMeta: toInt(districtsRows.rows[0]?.no_meta),
+  noDesc: toInt(districtsRows.rows[0]?.no_desc),
+  noImage: toInt(districtsRows.rows[0]?.no_image),
+};
+
+// Overall SEO health score (0–100)
+const totalItems = places.total + blog.total + events.total + districts.total;
+const totalIssues = places.noMeta + places.noImage + blog.noMeta + blog.noImage + events.noDesc + districts.noMeta;
+const healthScore = totalItems > 0 ? Math.round((1 - totalIssues / (totalItems * 2)) * 100) : 0;
+
+type Section = {
+  id: string;
+  label: string;
+  icon: string;
+  href: string;
+  total: number;
+  issues: Array<{ label: string; count: number; severity: 'high' | 'medium' | 'low' }>;
+};
+
+const sections: Section[] = [
+  {
+    id: 'places', label: 'Mekanlar', icon: '🏪', href: '/admin/businesses',
+    total: places.total,
+    issues: [
+      { label: 'Eksik meta açıklama (<50k)', count: places.noMeta, severity: 'high' },
+      { label: 'Eksik kısa açıklama', count: places.noShort, severity: 'medium' },
+      { label: 'Görselsiz mekan', count: places.noImage, severity: 'high' },
+      { label: 'Slug eksik', count: places.noSlug, severity: 'high' },
+    ],
+  },
+  {
+    id: 'blog', label: 'Blog / Rehber', icon: '📝', href: '/admin/blog',
+    total: blog.total,
+    issues: [
+      { label: 'Eksik meta açıklama (<50k)', count: blog.noMeta, severity: 'high' },
+      { label: 'Öne çıkan görsel eksik', count: blog.noImage, severity: 'medium' },
+      { label: 'Slug eksik', count: blog.noSlug, severity: 'high' },
+    ],
+  },
+  {
+    id: 'events', label: 'Etkinlikler', icon: '📅', href: '/admin/events',
+    total: events.total,
+    issues: [
+      { label: 'Kısa/eksik açıklama', count: events.noDesc, severity: 'medium' },
+      { label: 'Görsel eksik', count: events.noImage, severity: 'low' },
+    ],
+  },
+  {
+    id: 'districts', label: 'İlçeler', icon: '🗺', href: '/admin/locations/districts',
+    total: districts.total,
+    issues: [
+      { label: 'Eksik meta açıklama', count: districts.noMeta, severity: 'high' },
+      { label: 'Açıklama eksik', count: districts.noDesc, severity: 'medium' },
+      { label: 'Görsel eksik', count: districts.noImage, severity: 'low' },
+    ],
+  },
+];
+
+function scoreColor(score: number): string {
+  if (score >= 80) return '#2e7d32';
+  if (score >= 60) return '#e65100';
+  return '#c62828';
+}
+
+function severityClass(s: string) {
+  if (s === 'high')   return 'sev-high';
+  if (s === 'medium') return 'sev-med';
+  return 'sev-low';
+}
+---
+
+<AdminLayoutV2
+  title="SEO Merkezi"
+  subtitle="Tüm içerik tiplerinin SEO sağlık durumu"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'SEO Merkezi' }]}
+  seo={{ title: 'SEO Merkezi - Admin', noIndex: true }}
+>
+  <div slot="page-actions">
+    <a href="/admin/bots/seo" class="seo-btn-ghost">SEO Botunu Çalıştır →</a>
+  </div>
+
+  <div class="seo-page">
+
+    <!-- Overall health -->
+    <div class="seo-health-card">
+      <div class="seo-health-score" style={`color:${scoreColor(healthScore)}`}>{healthScore}</div>
+      <div>
+        <div class="seo-health-label">Genel SEO Skoru</div>
+        <div class="seo-health-sub">{totalIssues} sorun / {totalItems} toplam içerik</div>
+        <div class="seo-health-bar">
+          <div class="seo-health-fill" style={`width:${healthScore}%;background:${scoreColor(healthScore)}`}></div>
+        </div>
+      </div>
+      <div class="seo-health-links">
+        <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" class="seo-ext-link">Sitemap ↗</a>
+        <a href="/robots.txt" target="_blank" rel="noopener noreferrer" class="seo-ext-link">robots.txt ↗</a>
+        <a href="/llms.txt" target="_blank" rel="noopener noreferrer" class="seo-ext-link">llms.txt ↗</a>
+      </div>
+    </div>
+
+    <!-- Sections -->
+    <div class="seo-grid">
+      {sections.map(section => {
+        const issueCount = section.issues.reduce((a, i) => a + i.count, 0);
+        const sectionScore = section.total > 0 ? Math.round((1 - issueCount / (section.total * section.issues.length)) * 100) : 100;
+        return (
+          <div class="seo-section-card">
+            <div class="seo-section-header">
+              <span class="seo-section-icon">{section.icon}</span>
+              <div>
+                <div class="seo-section-title">{section.label}</div>
+                <div class="seo-section-sub">{section.total} içerik</div>
+              </div>
+              <div class="seo-section-score" style={`color:${scoreColor(Math.max(0, sectionScore))}`}>
+                {Math.max(0, sectionScore)}
+              </div>
+            </div>
+            <div class="seo-issues">
+              {section.issues.map(issue => (
+                <div class="seo-issue">
+                  <span class={`seo-sev ${severityClass(issue.severity)}`}>{issue.severity === 'high' ? '●' : issue.severity === 'medium' ? '◐' : '○'}</span>
+                  <span class="seo-issue-label">{issue.label}</span>
+                  <span class={`seo-issue-count ${issue.count > 0 ? 'seo-issue-count--bad' : 'seo-issue-count--ok'}`}>
+                    {issue.count > 0 ? issue.count : '✓'}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div class="seo-section-footer">
+              <a href={section.href} class="seo-section-link">
+                {issueCount > 0 ? `${issueCount} sorunu gör` : 'Yönet'} →
+              </a>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- Quick tips -->
+    <div class="seo-tips">
+      <div class="seo-tips-title">SEO Öncelikleri</div>
+      <div class="seo-tips-list">
+        {places.noMeta > 0 && (
+          <div class="seo-tip seo-tip--high">
+            <strong>{places.noMeta} mekan</strong> meta açıklama eksik — Mekanlar CRM'den filtrele ve güncelle
+          </div>
+        )}
+        {places.noImage > 0 && (
+          <div class="seo-tip seo-tip--high">
+            <strong>{places.noImage} mekan</strong> görselsiz — Pexels backfill scripti ile toplu ekle
+          </div>
+        )}
+        {blog.noMeta > 0 && (
+          <div class="seo-tip seo-tip--medium">
+            <strong>{blog.noMeta} blog yazısı</strong> meta açıklama eksik — Blog yönetiminden düzenle
+          </div>
+        )}
+        {(places.noMeta === 0 && places.noImage === 0 && blog.noMeta === 0) && (
+          <div class="seo-tip seo-tip--ok">
+            ✓ Kritik SEO eksikleri yok — İyi iş!
+          </div>
+        )}
+      </div>
+    </div>
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.seo-page { display: flex; flex-direction: column; gap: 16px; }
+.seo-btn-ghost { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 7px; font-size: 13px; color: var(--adm-text); text-decoration: none; }
+.seo-btn-ghost:hover { background: var(--adm-bg-hover); }
+
+/* Health card */
+.seo-health-card { display: flex; align-items: center; gap: 20px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 20px 24px; flex-wrap: wrap; }
+.seo-health-score { font-size: 52px; font-weight: 800; line-height: 1; flex-shrink: 0; }
+.seo-health-label { font-size: 16px; font-weight: 600; color: var(--adm-text); }
+.seo-health-sub   { font-size: 12px; color: var(--adm-text-muted); margin-top: 2px; }
+.seo-health-bar   { width: 220px; height: 6px; background: var(--adm-border); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+.seo-health-fill  { height: 100%; border-radius: 3px; transition: width 0.6s; }
+.seo-health-links { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.seo-ext-link { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; padding: 5px 10px; border: 1px solid var(--adm-border); border-radius: 6px; }
+.seo-ext-link:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+/* Section grid */
+.seo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.seo-section-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.seo-section-header { display: flex; align-items: center; gap: 12px; padding: 14px; border-bottom: 1px solid var(--adm-border); }
+.seo-section-icon { font-size: 24px; }
+.seo-section-title { font-size: 14px; font-weight: 600; color: var(--adm-text); }
+.seo-section-sub { font-size: 11px; color: var(--adm-text-muted); }
+.seo-section-score { font-size: 26px; font-weight: 700; margin-left: auto; line-height: 1; }
+
+.seo-issues { padding: 10px 14px; display: flex; flex-direction: column; gap: 7px; }
+.seo-issue { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.seo-sev { font-size: 10px; flex-shrink: 0; }
+.sev-high { color: #c62828; }
+.sev-med  { color: #e65100; }
+.sev-low  { color: var(--adm-text-muted); }
+.seo-issue-label { flex: 1; color: var(--adm-text-muted); }
+.seo-issue-count { font-weight: 700; font-size: 13px; min-width: 28px; text-align: right; }
+.seo-issue-count--bad { color: #c62828; }
+.seo-issue-count--ok  { color: #2e7d32; }
+
+.seo-section-footer { padding: 10px 14px; border-top: 1px solid var(--adm-border); }
+.seo-section-link { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; }
+.seo-section-link:hover { color: var(--adm-text); }
+
+/* Tips */
+.seo-tips { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 16px 18px; }
+.seo-tips-title { font-size: 13px; font-weight: 600; color: var(--adm-text); margin-bottom: 10px; }
+.seo-tips-list { display: flex; flex-direction: column; gap: 8px; }
+.seo-tip { font-size: 13px; padding: 8px 12px; border-radius: 6px; }
+.seo-tip strong { font-weight: 600; }
+.seo-tip--high   { background: rgba(198,40,40,.08); color: #c62828; border-left: 3px solid #c62828; }
+.seo-tip--medium { background: rgba(230,81,0,.08); color: #e65100; border-left: 3px solid #e65100; }
+.seo-tip--ok     { background: rgba(46,125,50,.08); color: #2e7d32; border-left: 3px solid #2e7d32; }
+</style>

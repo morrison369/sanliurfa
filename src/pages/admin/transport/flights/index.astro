@@ -1,0 +1,186 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+// Static flight schedule data (mirrors ucak-saatleri.astro public page)
+const ROUTES = [
+  {
+    route: 'GNY → İstanbul (IST)',
+    airline: 'Türk Hava Yolları',
+    code: 'TK',
+    color: '#D41829',
+    departures: ['06:10', '08:45', '11:30', '14:15', '17:00', '20:30', '22:50'],
+    duration: '~1s 55dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'İstanbul (IST) → GNY',
+    airline: 'Türk Hava Yolları',
+    code: 'TK',
+    color: '#D41829',
+    departures: ['08:00', '10:35', '13:20', '16:05', '18:50', '22:20', '00:50'],
+    duration: '~1s 55dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'GNY → İstanbul (SAW)',
+    airline: 'Pegasus Hava Yolları',
+    code: 'PC',
+    color: '#F26522',
+    departures: ['07:20', '11:50', '15:40', '19:05', '23:00'],
+    duration: '~2s 00dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'İstanbul (SAW) → GNY',
+    airline: 'Pegasus Hava Yolları',
+    code: 'PC',
+    color: '#F26522',
+    departures: ['09:15', '13:45', '17:35', '21:00', '01:05'],
+    duration: '~2s 00dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'GNY → Ankara (ESB)',
+    airline: 'Türk Hava Yolları',
+    code: 'TK',
+    color: '#D41829',
+    departures: ['09:30', '15:45', '19:20'],
+    duration: '~1s 20dk',
+    frequency: 'Hergün',
+  },
+  {
+    route: 'Ankara (ESB) → GNY',
+    airline: 'Türk Hava Yolları',
+    code: 'TK',
+    color: '#D41829',
+    departures: ['07:50', '14:05', '17:40'],
+    duration: '~1s 20dk',
+    frequency: 'Hergün',
+  },
+] as const;
+
+const totalFlights = ROUTES.reduce((a, r) => a + r.departures.length, 0);
+const airlines = [...new Set(ROUTES.map(r => r.airline))];
+---
+
+<AdminLayoutV2
+  title="Uçak Saatleri Yönetimi"
+  subtitle="GAP Havalimanı uçuş tarifesi — statik veri, kaynak dosyadan düzenlenir"
+  breadcrumbs={[{ label: 'Ulaşım', href: '/admin' }, { label: 'Uçak Saatleri' }]}
+  seo={{ title: 'Uçak Saatleri - Admin', noIndex: true }}
+>
+  <div slot="page-actions">
+    <a href="/ulasim/ucak-saatleri" target="_blank" rel="noopener noreferrer" class="flt-btn-ghost">Siteye Git ↗</a>
+  </div>
+
+  <div class="flt-page">
+
+    <!-- Stats -->
+    <div class="flt-stats">
+      <div class="flt-stat">
+        <span class="flt-stat-val">{ROUTES.length}</span>
+        <span class="flt-stat-lbl">Güzergah</span>
+      </div>
+      <div class="flt-stat">
+        <span class="flt-stat-val">{totalFlights}</span>
+        <span class="flt-stat-lbl">Günlük Sefer</span>
+      </div>
+      <div class="flt-stat">
+        <span class="flt-stat-val">{airlines.length}</span>
+        <span class="flt-stat-lbl">Havayolu</span>
+      </div>
+    </div>
+
+    <!-- Static data notice -->
+    <div class="flt-notice">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <div>
+        <strong>Statik veri.</strong> Uçuş tarifesi
+        <code>src/pages/ulasim/ucak-saatleri.astro</code> dosyasında hardcoded tutulmaktadır.
+        Güncelleme için bu dosyayı düzenleyin. Tarifeler mevsimlik değişebilir (kış/yaz tarifesi).
+      </div>
+    </div>
+
+    <!-- Routes grid -->
+    <div class="flt-grid">
+      {ROUTES.map(r => (
+        <div class="flt-card">
+          <div class="flt-card-header" style={`border-left: 3px solid ${r.color}`}>
+            <div>
+              <div class="flt-route-name">{r.route}</div>
+              <div class="flt-airline">
+                <span class="flt-code" style={`background:${r.color}20;color:${r.color}`}>{r.code}</span>
+                {r.airline}
+              </div>
+            </div>
+            <div class="flt-card-meta">
+              <span class="flt-freq">{r.frequency}</span>
+              <span class="flt-dur">{r.duration}</span>
+            </div>
+          </div>
+          <div class="flt-departures">
+            {r.departures.map(t => (
+              <span class="flt-time">{t}</span>
+            ))}
+          </div>
+          <div class="flt-dep-count">{r.departures.length} sefer/gün</div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Edit guidance -->
+    <div class="flt-edit-guide">
+      <div class="flt-guide-title">Tarife Güncellemek İçin</div>
+      <ol class="flt-guide-steps">
+        <li>Havayolu resmi sitesinden güncel seferleri kontrol edin</li>
+        <li><code>src/pages/ulasim/ucak-saatleri.astro</code> dosyasını açın</li>
+        <li>Kalkış saatlerini <code>departures</code> dizisinde güncelleyin</li>
+        <li>Siteyi yeniden build edin (<code>npm run build</code>)</li>
+        <li>Deploy edin (<code>npm run ops:cwp:deploy:full</code>)</li>
+      </ol>
+    </div>
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.flt-page { display: flex; flex-direction: column; gap: 14px; }
+.flt-btn-ghost { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 7px; font-size: 13px; color: var(--adm-text); text-decoration: none; }
+.flt-btn-ghost:hover { background: var(--adm-bg-hover); }
+
+.flt-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.flt-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 18px; min-width: 100px; }
+.flt-stat-val { font-size: 22px; font-weight: 700; color: var(--adm-text); }
+.flt-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.flt-notice { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px; background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted); }
+.flt-notice svg { flex-shrink: 0; margin-top: 2px; }
+.flt-notice code { background: var(--adm-bg); padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+
+.flt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.flt-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; }
+.flt-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--adm-border); }
+.flt-route-name { font-size: 13px; font-weight: 600; color: var(--adm-text); }
+.flt-airline { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--adm-text-muted); margin-top: 2px; }
+.flt-code { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+.flt-card-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.flt-freq { font-size: 10px; color: #2e7d32; font-weight: 600; }
+.flt-dur { font-size: 10px; color: var(--adm-text-muted); }
+
+.flt-departures { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 14px; }
+.flt-time { font-size: 12px; font-weight: 600; font-family: monospace; background: var(--adm-bg-hover); border: 1px solid var(--adm-border); border-radius: 5px; padding: 3px 8px; color: var(--adm-text); }
+.flt-dep-count { padding: 0 14px 10px; font-size: 11px; color: var(--adm-text-muted); }
+
+.flt-edit-guide { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 16px 18px; }
+.flt-guide-title { font-size: 13px; font-weight: 600; color: var(--adm-text); margin-bottom: 10px; }
+.flt-guide-steps { list-style: decimal; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.flt-guide-steps li { font-size: 13px; color: var(--adm-text-muted); }
+.flt-guide-steps code { background: var(--adm-bg-hover); padding: 1px 4px; border-radius: 3px; font-size: 12px; color: var(--adm-text); }
+</style>

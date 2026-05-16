@@ -1,0 +1,720 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+let categories: Array<{ id: number; name: string }> = [];
+let districts: Array<{ id: number; name: string }> = [];
+let stats = { total: 0, active: 0, pending: 0, noImage: 0, noPhone: 0 };
+
+try {
+  const [catResult, distResult, statsResult] = await Promise.all([
+    query(`SELECT id, name FROM categories WHERE is_active = true AND parent_id IS NULL ORDER BY name LIMIT 50`),
+    query(`SELECT id, name FROM districts ORDER BY sort_order, name`),
+    query(`
+      SELECT
+        COUNT(*) FILTER (WHERE TRUE) as total,
+        COUNT(*) FILTER (WHERE status IN ('active', 'published')) as active,
+        COUNT(*) FILTER (WHERE status IN ('pending', 'draft')) as pending,
+        COUNT(*) FILTER (WHERE thumbnail_url IS NULL AND (images IS NULL OR array_length(images,1) IS NULL)) as no_image,
+        COUNT(*) FILTER (WHERE phone IS NULL) as no_phone
+      FROM places
+    `),
+  ]);
+  categories = catResult.rows;
+  districts = distResult.rows;
+  const s = statsResult.rows[0] || {};
+  stats = {
+    total: parseInt(s.total || '0', 10),
+    active: parseInt(s.active || '0', 10),
+    pending: parseInt(s.pending || '0', 10),
+    noImage: parseInt(s.no_image || '0', 10),
+    noPhone: parseInt(s.no_phone || '0', 10),
+  };
+} catch (_) {
+  // SSR stats optional — table loads client-side
+}
+---
+
+<AdminLayoutV2
+  title="Mekanlar CRM"
+  subtitle="İşletmeleri yönetin, filtreleyin ve toplu işlem yapın"
+  breadcrumbs={[{ label: 'CRM', href: '/admin' }, { label: 'Mekanlar' }]}
+  seo={{ title: 'Mekanlar CRM - Admin', noIndex: true }}
+>
+  <div slot="page-actions">
+    <a href="/admin/businesses/new" class="biz-btn-primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Yeni İşletme
+    </a>
+  </div>
+
+  <div class="biz-page">
+
+    <!-- Stats row -->
+    <div class="biz-stats" role="list">
+      <div class="biz-stat" role="listitem">
+        <span class="biz-stat-val" id="sTotal">{stats.total}</span>
+        <span class="biz-stat-lbl">Toplam</span>
+      </div>
+      <div class="biz-stat biz-stat--green" role="listitem">
+        <span class="biz-stat-val" id="sActive">{stats.active}</span>
+        <span class="biz-stat-lbl">Aktif</span>
+      </div>
+      <div class="biz-stat biz-stat--amber" role="listitem">
+        <span class="biz-stat-val" id="sPending">{stats.pending}</span>
+        <span class="biz-stat-lbl">Bekleyen</span>
+      </div>
+      <button class="biz-stat biz-stat--red biz-stat-btn" id="sSNoImageWrap" type="button" title="Görselsizi filtrele">
+        <span class="biz-stat-val" id="sNoImage">{stats.noImage}</span>
+        <span class="biz-stat-lbl">Görselsiz</span>
+      </button>
+      <button class="biz-stat biz-stat--muted biz-stat-btn" id="sSNoPhoneWrap" type="button" title="Telefonsuzları filtrele">
+        <span class="biz-stat-val" id="sNoPhone">{stats.noPhone}</span>
+        <span class="biz-stat-lbl">Telefonsuz</span>
+      </button>
+    </div>
+
+    <!-- Filter Toolbar -->
+    <div class="biz-toolbar">
+      <div class="biz-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="bizSearch" type="search" placeholder="İşletme, adres veya slug ara…" autocomplete="off" />
+      </div>
+
+      <div class="biz-chip-group" role="group" aria-label="Durum filtresi">
+        <button class="biz-chip biz-chip--on" data-status="all" type="button">Tümü</button>
+        <button class="biz-chip" data-status="active" type="button">Aktif</button>
+        <button class="biz-chip" data-status="published" type="button">Yayında</button>
+        <button class="biz-chip" data-status="pending" type="button">Bekliyor</button>
+        <button class="biz-chip" data-status="suspended" type="button">Askıda</button>
+        <button class="biz-chip" data-status="rejected" type="button">Reddedildi</button>
+      </div>
+
+      <div class="biz-selects">
+        <select id="bizCat" aria-label="Kategori filtresi">
+          <option value="">Tüm Kategoriler</option>
+          {categories.map(c => <option value={c.id}>{c.name}</option>)}
+        </select>
+        <select id="bizDist" aria-label="İlçe filtresi">
+          <option value="">Tüm İlçeler</option>
+          {districts.map(d => <option value={d.id}>{d.name}</option>)}
+        </select>
+      </div>
+
+      <div class="biz-toggles">
+        <label class="biz-toggle">
+          <input type="checkbox" id="missingImage" />
+          <span>Görselsiz</span>
+        </label>
+        <label class="biz-toggle">
+          <input type="checkbox" id="missingCoords" />
+          <span>Koordinatsız</span>
+        </label>
+        <label class="biz-toggle">
+          <input type="checkbox" id="missingPhone" />
+          <span>Telefonsuz</span>
+        </label>
+        <label class="biz-toggle">
+          <input type="checkbox" id="filterFeatured" />
+          <span>Öne Çıkan</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="biz-table-wrap">
+      <table class="biz-table" aria-label="Mekanlar listesi">
+        <thead>
+          <tr>
+            <th class="biz-th biz-th-cb">
+              <input type="checkbox" id="selectAll" aria-label="Sayfadaki tümünü seç" />
+            </th>
+            <th class="biz-th">İşletme</th>
+            <th class="biz-th biz-th-dist">İlçe</th>
+            <th class="biz-th biz-th-status">Durum</th>
+            <th class="biz-th biz-th-stat">Yorum / Puan</th>
+            <th class="biz-th biz-th-act">İşlemler</th>
+          </tr>
+        </thead>
+        <tbody id="bizBody">
+          {Array.from({ length: 10 }).map(() => (
+            <tr class="biz-skel">
+              <td class="biz-td"><span class="sk sk-sq" /></td>
+              <td class="biz-td">
+                <div class="biz-name-cell">
+                  <span class="sk sk-img" />
+                  <div><span class="sk sk-line sk-80" /><span class="sk sk-line sk-50" /></div>
+                </div>
+              </td>
+              <td class="biz-td"><span class="sk sk-line sk-60" /></td>
+              <td class="biz-td"><span class="sk sk-pill" /></td>
+              <td class="biz-td"><span class="sk sk-line sk-40" /></td>
+              <td class="biz-td"><span class="sk sk-line sk-60" /></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div id="bizEmpty" class="biz-state" hidden>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <p>Filtrelerle eşleşen işletme bulunamadı</p>
+        <button class="biz-ghost-btn" id="clearFilters" type="button">Filtreleri temizle</button>
+      </div>
+
+      <div id="bizError" class="biz-state biz-state--err" hidden>
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <p id="bizErrMsg">Veri yüklenirken hata oluştu</p>
+        <button class="biz-ghost-btn" id="retryBtn" type="button">Tekrar dene</button>
+      </div>
+
+      <div class="biz-pagination" id="bizPag" hidden>
+        <p class="biz-pag-info">
+          <span id="bizFrom">0</span>–<span id="bizTo">0</span> / <strong id="bizTotal">0</strong>
+        </p>
+        <div class="biz-pag-btns" id="bizPagBtns" role="navigation" aria-label="Sayfalama"></div>
+      </div>
+    </div>
+
+    <!-- Bulk Action Bar -->
+    <div id="bizBulk" class="biz-bulk" hidden role="toolbar" aria-label="Toplu işlemler">
+      <span class="biz-bulk-info"><strong id="bizSelCnt">0</strong> seçildi</span>
+      <div class="biz-bulk-acts">
+        <button class="biz-bulk-btn" data-bulk-action="approve" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          Onayla
+        </button>
+        <button class="biz-bulk-btn" data-bulk-action="feature" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Öne Çıkar
+        </button>
+        <button class="biz-bulk-btn biz-bulk-btn--warn" data-bulk-action="suspend" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          Askıya Al
+        </button>
+        <button class="biz-bulk-btn biz-bulk-btn--danger" data-bulk-action="reject" type="button">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          Reddet
+        </button>
+      </div>
+      <button class="biz-bulk-close" id="clearSel" type="button" aria-label="Seçimi temizle">✕</button>
+    </div>
+
+  </div>
+</AdminLayoutV2>
+
+<script is:inline>
+(function () {
+  var page = 1, status = 'all', catId = '', distId = '';
+  var missing = [], featured = false, searchTimer;
+  var selected = new Set();
+
+  var STATUS = {
+    active:    { text: 'Aktif',      cls: 'bdg-green' },
+    published: { text: 'Yayında',    cls: 'bdg-green' },
+    pending:   { text: 'Bekliyor',   cls: 'bdg-amber' },
+    draft:     { text: 'Taslak',     cls: 'bdg-muted' },
+    suspended: { text: 'Askıda',     cls: 'bdg-red'   },
+    rejected:  { text: 'Reddedildi', cls: 'bdg-red'   },
+    archived:  { text: 'Arşiv',      cls: 'bdg-muted' },
+    deleted:   { text: 'Silindi',    cls: 'bdg-muted' },
+  };
+
+  var $body    = document.getElementById('bizBody');
+  var $empty   = document.getElementById('bizEmpty');
+  var $err     = document.getElementById('bizError');
+  var $errMsg  = document.getElementById('bizErrMsg');
+  var $pag     = document.getElementById('bizPag');
+  var $bulk    = document.getElementById('bizBulk');
+  var $selCnt  = document.getElementById('bizSelCnt');
+  var $selAll  = document.getElementById('selectAll');
+
+  // ── Fetch ──────────────────────────────────────────────────
+  function load() {
+    $empty.hidden = $err.hidden = true;
+    var p = new URLSearchParams({ page: page, limit: '25' });
+    if (status !== 'all') p.set('status', status);
+    var q = document.getElementById('bizSearch').value.trim();
+    if (q) p.set('search', q);
+    if (catId)   p.set('category_id', catId);
+    if (distId)  p.set('district_id', distId);
+    if (featured) p.set('is_featured', 'true');
+    if (missing.length) p.set('missing', missing.join(','));
+
+    fetch('/api/admin/places?' + p)
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) {
+        if (!d.success) throw new Error(d.error || 'API hatası');
+        render(d.places);
+        renderPag(d.pagination);
+      })
+      .catch(function (e) {
+        $body.textContent = '';
+        $errMsg.textContent = e.message || 'Bilinmeyen hata';
+        $err.hidden = false;
+        $pag.hidden = true;
+      });
+  }
+
+  // ── Row builder (safe DOM only) ────────────────────────────
+  function buildRow(p) {
+    var tr = document.createElement('tr');
+    tr.dataset.id = p.id;
+    if (selected.has(p.id)) tr.classList.add('biz-row--sel');
+
+    // Checkbox
+    var tdCb = document.createElement('td'); tdCb.className = 'biz-td biz-td-cb';
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = p.id;
+    cb.checked = selected.has(p.id);
+    cb.addEventListener('change', function () { toggleRow(p.id, tr, cb); });
+    tdCb.appendChild(cb);
+
+    // Name + meta
+    var tdN = document.createElement('td'); tdN.className = 'biz-td';
+    var nameCell = document.createElement('div'); nameCell.className = 'biz-name-cell';
+
+    var thumb = document.createElement('div'); thumb.className = 'biz-thumb';
+    if (p.image_url) {
+      var img = document.createElement('img'); img.src = p.image_url; img.alt = ''; img.loading = 'lazy'; img.width = 36; img.height = 36;
+      thumb.appendChild(img);
+    } else {
+      thumb.textContent = '🏪'; thumb.classList.add('biz-thumb--ph');
+    }
+
+    var info = document.createElement('div');
+    var nameEl = document.createElement('div'); nameEl.className = 'biz-item-name'; nameEl.textContent = p.name;
+    var metaEl = document.createElement('div'); metaEl.className = 'biz-item-meta';
+    metaEl.textContent = (p.category_name || p.category || '—') + (p.slug ? ' · ' + p.slug : '');
+
+    var misses = document.createElement('div'); misses.className = 'biz-misses';
+    if (!p.image_url)  { var m1 = document.createElement('span'); m1.className = 'biz-miss biz-miss--img';   m1.textContent = 'G'; m1.title = 'Görsel eksik';    misses.appendChild(m1); }
+    if (!p.latitude)   { var m2 = document.createElement('span'); m2.className = 'biz-miss biz-miss--coord'; m2.textContent = 'K'; m2.title = 'Koordinat eksik'; misses.appendChild(m2); }
+    if (!p.phone)      { var m3 = document.createElement('span'); m3.className = 'biz-miss biz-miss--phone'; m3.textContent = 'T'; m3.title = 'Telefon eksik';   misses.appendChild(m3); }
+
+    info.appendChild(nameEl); info.appendChild(metaEl);
+    if (misses.children.length) info.appendChild(misses);
+    nameCell.appendChild(thumb); nameCell.appendChild(info);
+    tdN.appendChild(nameCell);
+
+    // District
+    var tdD = document.createElement('td'); tdD.className = 'biz-td biz-td-dist'; tdD.textContent = p.district_name || '—';
+
+    // Status
+    var tdS = document.createElement('td'); tdS.className = 'biz-td biz-td-status';
+    var lbl = STATUS[p.status] || { text: p.status, cls: 'bdg-muted' };
+    var bdg = document.createElement('span'); bdg.className = 'biz-badge ' + lbl.cls; bdg.textContent = lbl.text;
+    tdS.appendChild(bdg);
+    if (p.is_featured || p.featured) {
+      var star = document.createElement('span'); star.className = 'biz-badge bdg-star'; star.title = 'Öne çıkan'; star.textContent = '★';
+      tdS.appendChild(star);
+    }
+
+    // Stats
+    var tdSt = document.createElement('td'); tdSt.className = 'biz-td biz-td-stat';
+    var revEl = document.createElement('span'); revEl.textContent = (parseInt(p.review_count, 10) || 0) + ' yorum';
+    var ratEl = document.createElement('span'); ratEl.className = 'biz-rating';
+    var ratVal = parseFloat(p.avg_rating || p.rating || 0);
+    ratEl.textContent = ratVal > 0 ? ratVal.toFixed(1) + ' ★' : '—';
+    tdSt.appendChild(revEl); tdSt.appendChild(ratEl);
+
+    // Actions
+    var tdA = document.createElement('td'); tdA.className = 'biz-td biz-td-act';
+    var grp = document.createElement('div'); grp.className = 'biz-act-grp';
+
+    var editA = document.createElement('a');
+    editA.href = '/admin/businesses/' + p.id + '/edit';
+    editA.className = 'biz-act biz-act--edit'; editA.title = 'Düzenle';
+    editA.setAttribute('aria-label', p.name + ' düzenle');
+    editA.appendChild(makeSvg('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>'));
+    grp.appendChild(editA);
+
+    if (p.slug) {
+      var prevA = document.createElement('a');
+      prevA.href = '/isletme/' + p.slug; prevA.target = '_blank'; prevA.rel = 'noopener noreferrer';
+      prevA.className = 'biz-act'; prevA.title = 'Önizle';
+      prevA.setAttribute('aria-label', p.name + ' önizle');
+      prevA.appendChild(makeSvg('<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>'));
+      grp.appendChild(prevA);
+    }
+
+    if (p.latitude && p.longitude) {
+      var mapA = document.createElement('a');
+      mapA.href = 'https://www.openstreetmap.org/?mlat=' + p.latitude + '&mlon=' + p.longitude + '&zoom=17';
+      mapA.target = '_blank'; mapA.rel = 'noopener noreferrer';
+      mapA.className = 'biz-act'; mapA.title = 'Haritada gör';
+      mapA.setAttribute('aria-label', p.name + ' haritada gör');
+      mapA.appendChild(makeSvg('<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>'));
+      grp.appendChild(mapA);
+    }
+
+    tdA.appendChild(grp);
+
+    tr.appendChild(tdCb); tr.appendChild(tdN); tr.appendChild(tdD);
+    tr.appendChild(tdS); tr.appendChild(tdSt); tr.appendChild(tdA);
+    return tr;
+  }
+
+  function makeSvg(paths) {
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '14'); svg.setAttribute('height', '14');
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor'); svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('aria-hidden', 'true');
+    var tmp = document.createElement('div');
+    tmp.setAttribute('style', 'display:none');
+    document.body.appendChild(tmp);
+    var holder = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    holder.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    tmp.appendChild(holder);
+    holder.outerHTML; // force parse
+    tmp.remove();
+    // Safe: we create path elements via DOM API instead
+    var parser = new DOMParser();
+    var svgDoc = parser.parseFromString('<svg xmlns="http://www.w3.org/2000/svg">' + paths + '</svg>', 'image/svg+xml');
+    var children = svgDoc.documentElement.childNodes;
+    for (var i = 0; i < children.length; i++) {
+      svg.appendChild(svg.ownerDocument.adoptNode(children[i].cloneNode(true)));
+    }
+    return svg;
+  }
+
+  function render(places) {
+    if (!places || !places.length) {
+      $body.textContent = '';
+      $empty.hidden = false;
+      $pag.hidden = true;
+      return;
+    }
+    $empty.hidden = true; $err.hidden = true;
+    var frag = document.createDocumentFragment();
+    places.forEach(function (p) { frag.appendChild(buildRow(p)); });
+    $body.replaceChildren(frag);
+    $selAll.checked = false; $selAll.indeterminate = false;
+  }
+
+  function renderPag(p) {
+    if (!p || p.totalPages <= 1) { $pag.hidden = true; return; }
+    $pag.hidden = false;
+    document.getElementById('bizFrom').textContent = ((p.page - 1) * p.limit) + 1;
+    document.getElementById('bizTo').textContent = Math.min(p.page * p.limit, p.total);
+    document.getElementById('bizTotal').textContent = p.total;
+
+    var btns = document.getElementById('bizPagBtns');
+    var frag = document.createDocumentFragment();
+    var start = Math.max(1, p.page - 4);
+    var end   = Math.min(p.totalPages, start + 9);
+    if (start > 1) { frag.appendChild(pagBtn(1, false, p)); if (start > 2) { var d1 = document.createElement('span'); d1.className = 'pag-dots'; d1.textContent = '…'; frag.appendChild(d1); } }
+    for (var i = start; i <= end; i++) frag.appendChild(pagBtn(i, i === p.page, p));
+    if (end < p.totalPages) { if (end < p.totalPages - 1) { var d2 = document.createElement('span'); d2.className = 'pag-dots'; d2.textContent = '…'; frag.appendChild(d2); } frag.appendChild(pagBtn(p.totalPages, false, p)); }
+    btns.replaceChildren(frag);
+  }
+
+  function pagBtn(n, active) {
+    var b = document.createElement('button'); b.type = 'button';
+    b.textContent = n; b.className = 'pag-btn' + (active ? ' pag-btn--on' : '');
+    if (!active) b.addEventListener('click', function () { page = n; load(); });
+    return b;
+  }
+
+  // ── Selection ─────────────────────────────────────────────
+  function toggleRow(id, tr, cb) {
+    if (cb.checked) { selected.add(id); tr.classList.add('biz-row--sel'); }
+    else { selected.delete(id); tr.classList.remove('biz-row--sel'); }
+    $selCnt.textContent = selected.size;
+    $bulk.hidden = selected.size === 0;
+    var cbs = $body.querySelectorAll('input[type=checkbox]');
+    var chk = Array.prototype.filter.call(cbs, function (c) { return c.checked; }).length;
+    $selAll.checked = chk > 0 && chk === cbs.length;
+    $selAll.indeterminate = chk > 0 && chk < cbs.length;
+  }
+
+  $selAll.addEventListener('change', function () {
+    $body.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+      cb.checked = $selAll.checked;
+      var tr = cb.closest('tr');
+      if ($selAll.checked) { selected.add(cb.value); tr.classList.add('biz-row--sel'); }
+      else { selected.delete(cb.value); tr.classList.remove('biz-row--sel'); }
+    });
+    $selCnt.textContent = selected.size;
+    $bulk.hidden = selected.size === 0;
+  });
+
+  document.getElementById('clearSel').addEventListener('click', function () {
+    selected.clear();
+    $body.querySelectorAll('input[type=checkbox]').forEach(function (cb) { cb.checked = false; cb.closest('tr').classList.remove('biz-row--sel'); });
+    $selAll.checked = false; $selAll.indeterminate = false;
+    $selCnt.textContent = '0'; $bulk.hidden = true;
+  });
+
+  // ── Bulk actions ───────────────────────────────────────────
+  document.querySelectorAll('[data-bulk-action]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var action = btn.dataset.bulkAction;
+      if (!confirm(selected.size + ' işletme için bu işlemi yapmak istiyor musunuz?')) return;
+      btn.disabled = true;
+      fetch('/api/admin/places', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ placeIds: Array.from(selected), action: action }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.success) { selected.clear(); $selCnt.textContent = '0'; $bulk.hidden = true; load(); }
+          else alert('Hata: ' + (d.error || 'bilinmeyen'));
+        })
+        .catch(function () { alert('İstek gönderilemedi.'); })
+        .finally(function () { btn.disabled = false; });
+    });
+  });
+
+  // ── Filter events ──────────────────────────────────────────
+  function resetPage() { page = 1; }
+
+  document.querySelectorAll('.biz-chip[data-status]').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      document.querySelectorAll('.biz-chip[data-status]').forEach(function (c) { c.classList.remove('biz-chip--on'); });
+      chip.classList.add('biz-chip--on');
+      status = chip.dataset.status; resetPage(); load();
+    });
+  });
+
+  document.getElementById('bizSearch').addEventListener('input', function () {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () { resetPage(); load(); }, 350);
+  });
+
+  document.getElementById('bizCat').addEventListener('change', function (e) { catId = e.target.value; resetPage(); load(); });
+  document.getElementById('bizDist').addEventListener('change', function (e) { distId = e.target.value; resetPage(); load(); });
+
+  function updateMissing() {
+    missing = [];
+    if (document.getElementById('missingImage').checked)  missing.push('image');
+    if (document.getElementById('missingCoords').checked)  missing.push('coords');
+    if (document.getElementById('missingPhone').checked)   missing.push('phone');
+    resetPage(); load();
+  }
+  ['missingImage','missingCoords','missingPhone'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', updateMissing);
+  });
+
+  document.getElementById('filterFeatured').addEventListener('change', function (e) {
+    featured = e.target.checked; resetPage(); load();
+  });
+
+  document.getElementById('clearFilters').addEventListener('click', function () {
+    document.getElementById('bizSearch').value = '';
+    document.querySelectorAll('.biz-chip[data-status]').forEach(function (c) { c.classList.remove('biz-chip--on'); });
+    document.querySelector('.biz-chip[data-status="all"]').classList.add('biz-chip--on');
+    document.getElementById('bizCat').value = '';
+    document.getElementById('bizDist').value = '';
+    ['missingImage','missingCoords','missingPhone','filterFeatured'].forEach(function (id) { document.getElementById(id).checked = false; });
+    status = 'all'; catId = ''; distId = ''; missing = []; featured = false;
+    resetPage(); load();
+  });
+
+  document.getElementById('retryBtn').addEventListener('click', function () { $err.hidden = true; load(); });
+
+  // Stat card quick filters
+  document.getElementById('sSNoImageWrap').addEventListener('click', function () {
+    document.getElementById('missingImage').checked = true; missing = ['image']; resetPage(); load();
+  });
+  document.getElementById('sSNoPhoneWrap').addEventListener('click', function () {
+    document.getElementById('missingPhone').checked = true; missing = ['phone']; resetPage(); load();
+  });
+
+  // ── Init ──────────────────────────────────────────────────
+  load();
+})();
+</script>
+
+<style is:global>
+/* ── Page wrapper ── */
+.biz-page { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Stats ── */
+.biz-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.biz-stat {
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px;
+  padding: 12px 18px; min-width: 110px;
+}
+.biz-stat-btn {
+  cursor: pointer; text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.biz-stat-btn:hover { border-color: var(--adm-text-muted); box-shadow: 0 0 0 1px var(--adm-text-muted); }
+.biz-stat-val { font-size: 22px; font-weight: 700; color: var(--adm-text); line-height: 1; }
+.biz-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+.biz-stat--green .biz-stat-val { color: #2e7d32; }
+.biz-stat--amber .biz-stat-val { color: #e65100; }
+.biz-stat--red   .biz-stat-val { color: #c62828; }
+.biz-stat--muted .biz-stat-val { color: var(--adm-text-muted); }
+
+/* ── Toolbar ── */
+.biz-toolbar {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 12px 14px;
+}
+.biz-search {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid var(--adm-border); border-radius: 6px;
+  padding: 0 10px; background: var(--adm-bg-hover); flex: 1 1 200px; min-width: 160px;
+}
+.biz-search input {
+  border: none; outline: none; background: transparent;
+  color: var(--adm-text); font-size: 13px; width: 100%; padding: 7px 0;
+}
+.biz-search input::placeholder { color: var(--adm-text-muted); }
+
+.biz-chip-group { display: flex; gap: 4px; flex-wrap: wrap; }
+.biz-chip {
+  padding: 5px 10px; border-radius: 20px; border: 1px solid var(--adm-border);
+  background: transparent; color: var(--adm-text-muted); font-size: 12px; cursor: pointer; white-space: nowrap;
+}
+.biz-chip:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.biz-chip--on { background: var(--adm-text); color: var(--adm-bg); border-color: var(--adm-text); }
+
+.biz-selects { display: flex; gap: 8px; }
+.biz-selects select {
+  padding: 6px 10px; border: 1px solid var(--adm-border); border-radius: 6px;
+  background: var(--adm-bg-hover); color: var(--adm-text); font-size: 12px; cursor: pointer; max-width: 160px;
+}
+
+.biz-toggles { display: flex; gap: 10px; flex-wrap: wrap; }
+.biz-toggle { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 12px; color: var(--adm-text-muted); user-select: none; }
+.biz-toggle input { cursor: pointer; accent-color: var(--adm-text); }
+.biz-toggle:hover { color: var(--adm-text); }
+
+/* ── Table ── */
+.biz-table-wrap { border: 1px solid var(--adm-border); border-radius: 8px; overflow: hidden; }
+.biz-table { width: 100%; border-collapse: collapse; }
+.biz-th {
+  padding: 10px 14px; font-size: 11px; font-weight: 600; color: var(--adm-text-muted);
+  text-transform: uppercase; letter-spacing: 0.04em; text-align: left;
+  border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); white-space: nowrap;
+}
+.biz-th-cb   { width: 38px; }
+.biz-th-dist { width: 120px; }
+.biz-th-status { width: 140px; }
+.biz-th-stat { width: 110px; }
+.biz-th-act  { width: 100px; }
+
+.biz-td { padding: 10px 14px; border-bottom: 1px solid var(--adm-border); vertical-align: middle; font-size: 13px; color: var(--adm-text); }
+.biz-td-cb   { width: 38px; }
+.biz-td-dist { color: var(--adm-text-muted); font-size: 12px; white-space: nowrap; }
+.biz-td-status { white-space: nowrap; }
+.biz-td-stat { white-space: nowrap; }
+.biz-td-act  { white-space: nowrap; }
+
+.biz-table tbody tr:last-child .biz-td { border-bottom: none; }
+.biz-table tbody tr:hover .biz-td { background: var(--adm-bg-hover); }
+.biz-row--sel .biz-td { background: color-mix(in srgb, var(--adm-bg-active, rgba(0,0,0,0.05)) 70%, transparent); }
+
+/* ── Name cell ── */
+.biz-name-cell { display: flex; align-items: center; gap: 10px; }
+.biz-thumb {
+  width: 36px; height: 36px; border-radius: 6px; overflow: hidden; flex-shrink: 0;
+  background: var(--adm-bg-hover); display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.biz-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.biz-thumb--ph { color: var(--adm-text-muted); }
+.biz-item-name { font-weight: 500; color: var(--adm-text); line-height: 1.2; }
+.biz-item-meta { font-size: 11px; color: var(--adm-text-muted); margin-top: 1px; }
+.biz-rating { margin-left: 8px; color: #b8741a; font-size: 11px; }
+
+/* Missing badges */
+.biz-misses { display: flex; gap: 3px; margin-top: 3px; }
+.biz-miss { font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 3px; }
+.biz-miss--img   { background: rgba(198,40,40,.12);  color: #c62828; }
+.biz-miss--coord { background: rgba(230,81,0,.12);   color: #e65100; }
+.biz-miss--phone { background: rgba(21,101,192,.12); color: #1565c0; }
+
+/* Status / feature badges */
+.biz-badge { display: inline-block; padding: 2px 7px; border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap; margin-right: 4px; }
+.bdg-green { background: rgba(46,125,50,.12);  color: #2e7d32; }
+.bdg-amber { background: rgba(230,81,0,.12);   color: #e65100; }
+.bdg-red   { background: rgba(198,40,40,.12);  color: #c62828; }
+.bdg-muted { background: var(--adm-bg-hover);  color: var(--adm-text-muted); }
+.bdg-star  { background: rgba(184,116,26,.15); color: #b8741a; padding: 2px 5px; }
+
+/* Actions */
+.biz-act-grp { display: flex; gap: 4px; align-items: center; }
+.biz-act {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 5px; color: var(--adm-text-muted);
+  border: 1px solid var(--adm-border); background: transparent; text-decoration: none; transition: all 0.15s;
+}
+.biz-act:hover { color: var(--adm-text); background: var(--adm-bg-hover); border-color: var(--adm-text-muted); }
+.biz-act--edit:hover { color: #1565c0; border-color: #1565c0; }
+
+/* Skeleton */
+.biz-skel .biz-td { background: var(--adm-bg); }
+.sk { display: inline-block; background: var(--adm-border); animation: skPulse 1.4s ease-in-out infinite; }
+.sk-sq   { width: 14px; height: 14px; border-radius: 3px; }
+.sk-img  { width: 36px; height: 36px; border-radius: 6px; flex-shrink: 0; }
+.sk-line { display: block; height: 10px; border-radius: 5px; margin-bottom: 5px; }
+.sk-80   { width: 80%; }
+.sk-60   { width: 60%; }
+.sk-50   { width: 50%; }
+.sk-40   { width: 40%; }
+.sk-pill { width: 64px; height: 20px; border-radius: 10px; }
+@keyframes skPulse { 0%,100% { opacity: 1 } 50% { opacity: 0.4 } }
+
+/* Empty / Error */
+.biz-state { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 60px 24px; color: var(--adm-text-muted); }
+.biz-state svg { opacity: 0.4; }
+.biz-state p { font-size: 14px; }
+.biz-state--err { color: #c62828; }
+.biz-ghost-btn {
+  padding: 7px 16px; border: 1px solid var(--adm-border); border-radius: 6px;
+  background: transparent; color: var(--adm-text); font-size: 12px; cursor: pointer;
+}
+.biz-ghost-btn:hover { background: var(--adm-bg-hover); }
+
+/* Pagination */
+.biz-pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-top: 1px solid var(--adm-border); }
+.biz-pag-info { font-size: 12px; color: var(--adm-text-muted); }
+.biz-pag-btns { display: flex; gap: 4px; align-items: center; }
+.pag-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--adm-border); background: transparent; color: var(--adm-text-muted); font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.pag-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.pag-btn--on { background: var(--adm-text); color: var(--adm-bg); border-color: var(--adm-text); cursor: default; }
+.pag-dots { font-size: 12px; color: var(--adm-text-muted); padding: 0 4px; }
+
+/* Bulk bar */
+.biz-bulk {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px;
+  background: var(--adm-text); color: var(--adm-bg);
+  padding: 10px 16px; border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.25); z-index: 50; white-space: nowrap;
+}
+.biz-bulk-info { font-size: 13px; font-weight: 500; }
+.biz-bulk-acts { display: flex; gap: 6px; }
+.biz-bulk-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 12px; border-radius: 6px;
+  background: rgba(255,255,255,.12); border: none; color: inherit; font-size: 12px; cursor: pointer;
+  transition: background 0.15s;
+}
+.biz-bulk-btn:hover { background: rgba(255,255,255,.22); }
+.biz-bulk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.biz-bulk-btn--warn   { background: rgba(230,81,0,.28); }
+.biz-bulk-btn--warn:hover { background: rgba(230,81,0,.42); }
+.biz-bulk-btn--danger { background: rgba(198,40,40,.28); }
+.biz-bulk-btn--danger:hover { background: rgba(198,40,40,.42); }
+.biz-bulk-close { background: transparent; border: none; color: inherit; font-size: 14px; cursor: pointer; opacity: 0.6; padding: 0 4px; }
+.biz-bulk-close:hover { opacity: 1; }
+
+/* Page actions btn */
+.biz-btn-primary {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; background: var(--adm-text); color: var(--adm-bg);
+  border-radius: 7px; font-size: 13px; font-weight: 500; text-decoration: none;
+  transition: opacity 0.15s;
+}
+.biz-btn-primary:hover { opacity: 0.85; }
+</style>

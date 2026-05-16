@@ -1,0 +1,312 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type MediaAsset = {
+  id: string;
+  asset_key: string;
+  url: string;
+  alt: string | null;
+  mime_type: string | null;
+  width: number | null;
+  height: number | null;
+  created_at: Date;
+};
+
+type PlaceMedia = {
+  id: number;
+  slug: string;
+  name: string;
+  thumbnail_url: string | null;
+  images: string[] | null;
+};
+
+const viewMode = Astro.url.searchParams.get('view') || 'grid';
+const typeFilter = Astro.url.searchParams.get('type') || '';
+
+let assets: MediaAsset[] = [];
+let placeImages: PlaceMedia[] = [];
+let stats = { total: 0, withAlt: 0, noAlt: 0, images: 0 };
+
+try {
+  const conditions: string[] = [];
+  if (typeFilter) conditions.push(`mime_type LIKE '${typeFilter}%'`);
+  const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+  const [assetsRes, statsRes, placesRes] = await Promise.all([
+    query(`
+      SELECT id, asset_key, url, alt, mime_type, width, height, created_at
+      FROM site_media_assets
+      ${where}
+      ORDER BY created_at DESC
+      LIMIT 100
+    `),
+    query(`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE alt IS NOT NULL AND alt != '')::int as with_alt,
+        COUNT(*) FILTER (WHERE alt IS NULL OR alt = '')::int as no_alt,
+        COUNT(*) FILTER (WHERE mime_type LIKE 'image/%')::int as images
+      FROM site_media_assets
+    `),
+    query(`
+      SELECT id, slug, name, thumbnail_url, images
+      FROM places
+      WHERE status IN ('active','published')
+        AND (thumbnail_url IS NOT NULL OR images IS NOT NULL)
+      ORDER BY name
+      LIMIT 20
+    `),
+  ]);
+
+  assets = assetsRes.rows;
+  stats = statsRes.rows[0] || stats;
+  placeImages = placesRes.rows;
+} catch (_) { /* graceful */ }
+
+function fmtDate(d: Date): string {
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+}
+
+function fmtDim(w: number | null, h: number | null): string {
+  if (!w || !h) return '—';
+  return `${w}×${h}`;
+}
+
+// Check if URL is local
+function isLocal(url: string): boolean {
+  return url?.startsWith('/') || url?.includes('sanliurfa.com');
+}
+---
+
+<AdminLayoutV2
+  title="Medya Kütüphanesi"
+  subtitle="Site görselleri, yüklenen dosyalar ve medya varlıkları"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Medya' }]}
+  seo={{ title: 'Medya Kütüphanesi - Admin', noIndex: true }}
+>
+  <div slot="page-actions">
+    <div class="med-act-row">
+      <a href="?view=grid" class={`med-view-btn ${viewMode === 'grid' ? 'med-view-btn--active' : ''}`} title="Grid görünümü">⊞</a>
+      <a href="?view=list" class={`med-view-btn ${viewMode === 'list' ? 'med-view-btn--active' : ''}`} title="Liste görünümü">☰</a>
+    </div>
+  </div>
+
+  <div class="med-page">
+
+    <!-- Stats -->
+    <div class="med-stats">
+      <div class="med-stat">
+        <span class="med-stat-val">{stats.total}</span>
+        <span class="med-stat-lbl">Medya Varlığı</span>
+      </div>
+      <div class="med-stat">
+        <span class="med-stat-val">{stats.images}</span>
+        <span class="med-stat-lbl">Görsel</span>
+      </div>
+      <div class="med-stat">
+        <span class="med-stat-val" style="color:#2e7d32">{stats.withAlt}</span>
+        <span class="med-stat-lbl">Alt Text Var</span>
+      </div>
+      <div class="med-stat">
+        <span class="med-stat-val" style="color:#c62828">{stats.noAlt}</span>
+        <span class="med-stat-lbl">Alt Text Eksik</span>
+      </div>
+    </div>
+
+    <!-- Type filter -->
+    <div class="med-filter-row">
+      <a href="/admin/media" class={`med-filter-chip ${!typeFilter ? 'med-filter-chip--active' : ''}`}>Tümü</a>
+      <a href="?type=image" class={`med-filter-chip ${typeFilter === 'image' ? 'med-filter-chip--active' : ''}`}>Görseller</a>
+      <a href="?type=video" class={`med-filter-chip ${typeFilter === 'video' ? 'med-filter-chip--active' : ''}`}>Videolar</a>
+    </div>
+
+    <!-- Asset display -->
+    {assets.length === 0 ? (
+      <div class="med-empty">
+        <span class="med-empty-icon">🖼</span>
+        <div class="med-empty-title">site_media_assets tablosunda henüz kayıt yok</div>
+        <div class="med-empty-sub">Mekan görselleri <code>/uploads/</code> dizininde saklanıyor. Admin araçlarıyla yüklenen görseller burada görünecek.</div>
+      </div>
+    ) : viewMode === 'grid' ? (
+      <div class="med-grid">
+        {assets.map(a => (
+          <div class="med-card">
+            {a.mime_type?.startsWith('image/') ? (
+              <div class="med-thumb">
+                <img src={a.url} alt={a.alt || ''} loading="lazy" class="med-img" />
+              </div>
+            ) : (
+              <div class="med-thumb med-thumb-ph">
+                <span>📄</span>
+              </div>
+            )}
+            <div class="med-card-body">
+              <div class="med-key" title={a.asset_key}>{a.asset_key.split('/').pop()}</div>
+              <div class="med-meta">
+                <span>{fmtDim(a.width, a.height)}</span>
+                <span>{a.mime_type?.split('/')[1]?.toUpperCase() || '—'}</span>
+              </div>
+              {(!a.alt) && <div class="med-no-alt">⚠ Alt text eksik</div>}
+              {a.alt && <div class="med-alt" title={a.alt}>{a.alt.substring(0, 40)}</div>}
+              <div class="med-date">{fmtDate(a.created_at)}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="med-table-wrap">
+        <table class="med-table">
+          <thead>
+            <tr>
+              <th class="med-th">Görsel</th>
+              <th class="med-th">Anahtar</th>
+              <th class="med-th">Boyut</th>
+              <th class="med-th">Tip</th>
+              <th class="med-th">Alt Text</th>
+              <th class="med-th">Tarih</th>
+            </tr>
+          </thead>
+          <tbody>
+            {assets.map(a => (
+              <tr class="med-tr">
+                <td class="med-td">
+                  {a.mime_type?.startsWith('image/') ? (
+                    <img src={a.url} alt={a.alt || ''} loading="lazy" class="med-table-thumb" />
+                  ) : (
+                    <span class="med-table-icon">📄</span>
+                  )}
+                </td>
+                <td class="med-td med-td-key">{a.asset_key}</td>
+                <td class="med-td med-td-muted">{fmtDim(a.width, a.height)}</td>
+                <td class="med-td">
+                  <span class="med-type">{a.mime_type?.split('/')[1]?.toUpperCase() || '—'}</span>
+                </td>
+                <td class="med-td">
+                  {a.alt
+                    ? <span class="med-alt-ok">{a.alt.substring(0, 50)}</span>
+                    : <span class="med-alt-miss">Eksik</span>
+                  }
+                </td>
+                <td class="med-td med-td-muted">{fmtDate(a.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    <!-- Local place images section -->
+    <div class="med-section">
+      <div class="med-section-title">Mekan Görselleri (yerel /uploads/)</div>
+      <div class="med-section-sub">
+        Mekan görselleri <code>public/uploads/places/</code> altında slug-bazlı saklanıyor.
+        WebP + AVIF formatları mevcut. Detay için <a href="/admin/businesses" class="med-link">Mekanlar CRM</a>'e git.
+      </div>
+      <div class="med-place-grid">
+        {placeImages.slice(0, 12).map(p => (
+          <div class="med-place-card">
+            {p.thumbnail_url ? (
+              <img src={p.thumbnail_url} alt={p.name} loading="lazy" class="med-place-img" />
+            ) : (
+              <div class="med-place-ph">🏪</div>
+            )}
+            <div class="med-place-name">{p.name}</div>
+            <div class="med-place-meta">
+              {isLocal(p.thumbnail_url || '') ? <span class="med-local">✓ Lokal</span> : <span class="med-ext">Harici</span>}
+              {p.images && <span class="med-img-count">+{p.images.length} görsel</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Bot banner -->
+    <div class="med-bot-banner">
+      <div class="med-bot-info">
+        <span>🖼</span>
+        <div>
+          <div class="med-bot-title">Görsel / Alt Text Botu</div>
+          <div class="med-bot-desc">Eksik alt text, büyük dosyalar, yanlış oran ve tekrar görselleri tespit eder</div>
+        </div>
+      </div>
+      <a href="/admin/bots" class="med-bot-link">Botlar Merkezine Git →</a>
+    </div>
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.med-page { display: flex; flex-direction: column; gap: 14px; }
+.med-act-row { display: flex; gap: 4px; }
+.med-view-btn { padding: 6px 10px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 14px; color: var(--adm-text-muted); text-decoration: none; }
+.med-view-btn--active { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.med-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.med-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 16px; min-width: 100px; }
+.med-stat-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.med-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.med-filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.med-filter-chip { padding: 5px 12px; border: 1px solid var(--adm-border); border-radius: 20px; font-size: 12px; color: var(--adm-text-muted); text-decoration: none; }
+.med-filter-chip:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.med-filter-chip--active { background: var(--adm-text); color: var(--adm-bg); border-color: var(--adm-text); }
+
+.med-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 60px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; text-align: center; }
+.med-empty-icon { font-size: 40px; }
+.med-empty-title { font-size: 15px; font-weight: 600; color: var(--adm-text); }
+.med-empty-sub { font-size: 13px; color: var(--adm-text-muted); max-width: 400px; }
+.med-empty-sub code { background: var(--adm-bg-hover); padding: 1px 4px; border-radius: 3px; font-size: 12px; }
+
+.med-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.med-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; overflow: hidden; }
+.med-thumb { aspect-ratio: 4/3; overflow: hidden; background: var(--adm-bg-hover); }
+.med-thumb-ph { display: flex; align-items: center; justify-content: center; font-size: 28px; }
+.med-img { width: 100%; height: 100%; object-fit: cover; }
+.med-card-body { padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; }
+.med-key { font-size: 11px; color: var(--adm-text); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.med-meta { display: flex; gap: 6px; font-size: 10px; color: var(--adm-text-muted); }
+.med-no-alt { font-size: 10px; color: #c62828; }
+.med-alt { font-size: 10px; color: var(--adm-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.med-date { font-size: 10px; color: var(--adm-text-muted); }
+
+.med-table-wrap { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; overflow: auto; }
+.med-table { width: 100%; border-collapse: collapse; }
+.med-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.med-td { padding: 8px 12px; font-size: 12px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.med-tr:last-child .med-td { border-bottom: none; }
+.med-table-thumb { width: 48px; height: 36px; object-fit: cover; border-radius: 4px; }
+.med-table-icon { font-size: 20px; }
+.med-td-key { font-family: monospace; font-size: 11px; color: var(--adm-text-muted); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.med-td-muted { color: var(--adm-text-muted); }
+.med-type { font-size: 10px; font-weight: 600; background: var(--adm-bg-hover); padding: 2px 6px; border-radius: 4px; }
+.med-alt-ok { font-size: 12px; color: var(--adm-text-muted); }
+.med-alt-miss { font-size: 11px; color: #c62828; font-weight: 600; }
+
+.med-section { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 16px; }
+.med-section-title { font-size: 13px; font-weight: 600; color: var(--adm-text); margin-bottom: 6px; }
+.med-section-sub { font-size: 12px; color: var(--adm-text-muted); margin-bottom: 14px; }
+.med-section-sub code { background: var(--adm-bg-hover); padding: 1px 4px; border-radius: 3px; }
+.med-link { color: var(--adm-text-muted); text-decoration: underline; }
+.med-place-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.med-place-card { background: var(--adm-bg-hover); border: 1px solid var(--adm-border); border-radius: 6px; overflow: hidden; }
+.med-place-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; }
+.med-place-ph { aspect-ratio: 4/3; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+.med-place-name { font-size: 11px; font-weight: 500; color: var(--adm-text); padding: 5px 7px 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.med-place-meta { display: flex; gap: 4px; padding: 0 7px 6px; flex-wrap: wrap; }
+.med-local { font-size: 10px; color: #2e7d32; }
+.med-ext { font-size: 10px; color: #e65100; }
+.med-img-count { font-size: 10px; color: var(--adm-text-muted); }
+
+.med-bot-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.med-bot-info { display: flex; align-items: center; gap: 12px; font-size: 22px; }
+.med-bot-title { font-size: 13px; font-weight: 600; color: var(--adm-text); }
+.med-bot-desc { font-size: 12px; color: var(--adm-text-muted); }
+.med-bot-link { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; padding: 6px 12px; border: 1px solid var(--adm-border); border-radius: 6px; white-space: nowrap; }
+.med-bot-link:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+</style>

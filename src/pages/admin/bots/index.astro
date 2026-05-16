@@ -1,0 +1,169 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type Bot = {
+  key: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+  href: string;
+  risk: 'low' | 'medium' | 'high';
+};
+
+const BOTS: Bot[] = [
+  { key: 'seo',            name: 'SEO Botu',                description: 'Eksik meta açıklama, kısa başlık, duplicate slug, canonical sorunlarını tespit eder. Her sayfaya 0-100 SEO skoru verir.',             icon: '🔍', category: 'İçerik',          href: '/admin/bots/seo',            risk: 'low'    },
+  { key: 'content',        name: 'İçerik Botu',             description: 'İnce içerik, eksik H2/H3, FAQ eksikliği, iç link önerisi sunar. Blog ve mekan açıklamalarını analiz eder.',                            icon: '📝', category: 'İçerik',          href: '/admin/bots/content',        risk: 'low'    },
+  { key: 'business-data',  name: 'İşletme Veri Botu',       description: 'Eksik telefon, adres, koordinat, çalışma saati, açıklama bulunan mekanları listeler. Öncelik sıralamasıyla sunar.',                     icon: '🏪', category: 'Mekanlar',         href: '/admin/bots/business-data',  risk: 'low'    },
+  { key: 'submission',     name: 'Başvuru Kontrol Botu',     description: 'Bekleyen başvuruları kontrol eder, eksik bilgileri belirler, başvuruyu işletmeye dönüştürmek için öneri sunar.',                         icon: '📋', category: 'Başvurular',       href: '/admin/bots/submission',     risk: 'low'    },
+  { key: 'pharmacy-check', name: 'Eczane Veri Botu',         description: 'Eski tarihli eczane listesini tespit eder, eksik telefon/adres uyarısı verir, tekrar eden eczane kayıtlarını bulur.',                   icon: '💊', category: 'Nöbetçi Eczane',  href: '/admin/bots/pharmacy-check', risk: 'low'    },
+  { key: 'transport',      name: 'Ulaşım Veri Botu',         description: 'Eski ulaşım verisi, eksik saat, hatalı format, eksik rota uyarısı verir. Otobüs + uçak verilerini kontrol eder.',                       icon: '🚌', category: 'Ulaşım',           href: '/admin/bots/transport',      risk: 'low'    },
+  { key: 'map-check',      name: 'Harita Koordinat Botu',    description: 'Koordinatsız mekanları listeler, adreslerden koordinat önerisi sunar, yanlış ilçeye düşen mekanları uyarı gösterir.',                    icon: '📍', category: 'Harita',           href: '/admin/bots/map-check',      risk: 'medium' },
+  { key: 'image-alt',      name: 'Görsel / Alt Text Botu',   description: 'Eksik alt text, çok büyük görsel, hatalı kapak oranı, aynı görsel tekrarı olan içerikleri bulur.',                                       icon: '🖼', category: 'Medya',            href: '/admin/bots/image-alt',      risk: 'low'    },
+  { key: 'moderation',     name: 'Yorum Moderasyon Botu',    description: 'Spam, küfür, tekrar yorum, sahte yorum sinyallerini tespit eder. Admin\'e risk skoru ve öneri gösterir.',                                icon: '💬', category: 'Topluluk',         href: '/admin/bots/moderation',     risk: 'low'    },
+  { key: 'community',      name: 'Topluluk Güvenlik Botu',   description: 'Uygunsuz profil/fotoğraf uyarısı, spam mesaj, sahte profil sinyali tespit eder. Otomatik ban atmaz, admin onayı ister.',                 icon: '🛡', category: 'Topluluk',         href: '/admin/bots/community',      risk: 'medium' },
+  { key: 'ads-check',      name: 'Reklam Kontrol Botu',      description: 'Süresi bitmek üzere olan reklamları uyarır, hatalı görsel boyutu olan reklamları listeler, boş reklam alanlarını gösterir.',             icon: '📣', category: 'Gelir',            href: '/admin/bots/ads-check',      risk: 'low'    },
+  { key: 'duplicate',      name: 'Duplicate Veri Botu',      description: 'Aynı isme sahip mekanları, tekrar eden kategorileri, benzer blog başlıklarını ve slug çakışmalarını tespit eder.',                       icon: '🔀', category: 'Kalite',           href: '/admin/bots/duplicate',      risk: 'low'    },
+  { key: 'internal-links', name: 'İç Link Botu',             description: 'İç linksiz blog yazılarını, mekan sayfalarına bağlı olmayan kategorileri bulur ve iç link önerisi sunar.',                               icon: '🔗', category: 'SEO',              href: '/admin/bots/internal-links', risk: 'low'    },
+];
+
+const categories = [...new Set(BOTS.map(b => b.category))];
+---
+
+<AdminLayoutV2
+  title="Botlar Merkezi"
+  subtitle="Manuel tetiklenen analiz ve öneri araçları — hiçbiri otomatik çalışmaz, admin onayı gerektirir"
+  breadcrumbs={[{ label: 'Sistem', href: '/admin' }, { label: 'Botlar Merkezi' }]}
+  seo={{ title: 'Botlar Merkezi - Admin', noIndex: true }}
+>
+  <div class="bot-page">
+
+    <div class="bot-info">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>
+        <strong>Manuel tetiklemeli araçlar.</strong>
+        Botlar sadece analiz yapar ve öneri sunar. Hiçbir veri otomatik değiştirilmez.
+        Her öneri admin onayına düşer, uygulanan öneriler loglanır.
+      </span>
+    </div>
+
+    {categories.map(cat => (
+      <div class="bot-group">
+        <div class="bot-group-title">{cat}</div>
+        <div class="bot-grid">
+          {BOTS.filter(b => b.category === cat).map(bot => (
+            <div class="bot-card">
+              <div class="bot-card-header">
+                <span class="bot-icon" aria-hidden="true">{bot.icon}</span>
+                <div>
+                  <div class="bot-name">{bot.name}</div>
+                  <span class={`bot-risk bot-risk--${bot.risk}`}>
+                    {bot.risk === 'high' ? 'Yüksek risk' : bot.risk === 'medium' ? 'Orta risk' : 'Düşük risk'}
+                  </span>
+                </div>
+              </div>
+              <p class="bot-desc">{bot.description}</p>
+              <div class="bot-status-row" data-bot-status={bot.key}>Son çalışma: —</div>
+              <div class="bot-footer">
+                <button
+                  class="bot-run-btn"
+                  data-bot-key={bot.key}
+                  type="button"
+                  aria-label={`${bot.name} çalıştır`}
+                >
+                  Çalıştır
+                </button>
+                <a href={bot.href} class="bot-detail-link">Detaylar →</a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+
+  </div>
+</AdminLayoutV2>
+
+<script is:inline>
+(function () {
+  document.querySelectorAll('.bot-run-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var key = btn.dataset.botKey;
+      var statusEl = document.querySelector('[data-bot-status="' + key + '"]');
+      btn.disabled = true;
+      btn.textContent = 'Çalışıyor…';
+      if (statusEl) statusEl.textContent = 'Çalışıyor…';
+
+      fetch('/api/admin/bots/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ botKey: key }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          var now = new Date().toLocaleString('tr-TR');
+          btn.disabled = false;
+          btn.textContent = 'Çalıştır';
+          if (statusEl) {
+            if (d.success) {
+              var cnt = d.issueCount || 0;
+              statusEl.textContent = now + ' — ' + cnt + ' sorun bulundu';
+              statusEl.style.color = cnt > 0 ? '#c62828' : '#2e7d32';
+            } else {
+              statusEl.textContent = now + ' — Hata: ' + (d.error || 'bilinmeyen');
+              statusEl.style.color = '#c62828';
+            }
+          }
+        })
+        .catch(function (e) {
+          btn.disabled = false;
+          btn.textContent = 'Çalıştır';
+          if (statusEl) { statusEl.textContent = 'Hata: ' + e.message; statusEl.style.color = '#c62828'; }
+        });
+    });
+  });
+})();
+</script>
+
+<style is:global>
+.bot-page { display: flex; flex-direction: column; gap: 20px; }
+
+.bot-info {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 16px; border: 1px solid var(--adm-border); border-radius: 8px;
+  background: var(--adm-bg-hover); font-size: 13px; color: var(--adm-text-muted);
+}
+.bot-info svg { flex-shrink: 0; margin-top: 1px; }
+
+.bot-group-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--adm-text-muted); margin-bottom: 10px; }
+.bot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+
+.bot-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.bot-card-header { display: flex; align-items: flex-start; gap: 12px; }
+.bot-icon { font-size: 26px; flex-shrink: 0; }
+.bot-name { font-size: 14px; font-weight: 600; color: var(--adm-text); line-height: 1.2; }
+.bot-risk { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 10px; margin-top: 3px; }
+.bot-risk--low    { background: rgba(46,125,50,.1);  color: #2e7d32; }
+.bot-risk--medium { background: rgba(230,81,0,.1);   color: #e65100; }
+.bot-risk--high   { background: rgba(198,40,40,.1);  color: #c62828; }
+
+.bot-desc { font-size: 12px; color: var(--adm-text-muted); line-height: 1.5; margin: 0; flex: 1; }
+
+.bot-status-row { font-size: 11px; padding: 6px 8px; background: var(--adm-bg-hover); border-radius: 5px; color: var(--adm-text-muted); }
+
+.bot-footer { display: flex; align-items: center; gap: 10px; }
+.bot-run-btn {
+  padding: 7px 14px; background: var(--adm-text); color: var(--adm-bg);
+  border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: opacity 0.15s;
+}
+.bot-run-btn:hover { opacity: 0.85; }
+.bot-run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.bot-detail-link { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; }
+.bot-detail-link:hover { color: var(--adm-text); }
+</style>

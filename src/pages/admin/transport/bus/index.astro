@@ -1,0 +1,73 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import BusRouteManager from '../../../../components/admin/BusRouteManager';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+let routeCount = 0;
+let scheduleCount = 0;
+let activeCount = 0;
+
+try {
+  const [rRes, sRes] = await Promise.all([
+    query('SELECT COUNT(*)::int as n, COUNT(*) FILTER (WHERE is_active = true)::int as active FROM bus_routes'),
+    query('SELECT COUNT(*)::int as n FROM bus_schedules'),
+  ]);
+  routeCount = rRes.rows[0]?.n || 0;
+  activeCount = rRes.rows[0]?.active || 0;
+  scheduleCount = sRes.rows[0]?.n || 0;
+} catch (_) { /* graceful */ }
+---
+
+<AdminLayoutV2
+  title="Otobüs Hat Yönetimi"
+  subtitle="Şanlıurfa şehir içi otobüs hatları ve sefer saatleri"
+  breadcrumbs={[{ label: 'Ulaşım', href: '/admin' }, { label: 'Otobüs Hatları' }]}
+  seo={{ title: 'Otobüs Hat Yönetimi - Admin', noIndex: true }}
+>
+  <div slot="page-actions">
+    <a href="/ulasim/otobus-saatleri" target="_blank" rel="noopener noreferrer" class="bus-btn-ghost">Siteye Git ↗</a>
+  </div>
+
+  <div class="bus-page">
+
+    <!-- Stats -->
+    <div class="bus-stats">
+      <div class="bus-stat">
+        <span class="bus-stat-val">{routeCount}</span>
+        <span class="bus-stat-lbl">Toplam Hat</span>
+      </div>
+      <div class="bus-stat">
+        <span class="bus-stat-val" style="color:#2e7d32">{activeCount}</span>
+        <span class="bus-stat-lbl">Aktif Hat</span>
+      </div>
+      <div class="bus-stat">
+        <span class="bus-stat-val">{scheduleCount}</span>
+        <span class="bus-stat-lbl">Sefer Saati</span>
+      </div>
+    </div>
+
+    <!-- Route manager (existing React component) -->
+    <div class="bus-manager-wrap">
+      <BusRouteManager client:idle />
+    </div>
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.bus-page { display: flex; flex-direction: column; gap: 14px; }
+.bus-btn-ghost { padding: 7px 14px; border: 1px solid var(--adm-border); border-radius: 7px; font-size: 13px; color: var(--adm-text); text-decoration: none; }
+.bus-btn-ghost:hover { background: var(--adm-bg-hover); }
+
+.bus-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.bus-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 18px; min-width: 100px; }
+.bus-stat-val { font-size: 22px; font-weight: 700; color: var(--adm-text); }
+.bus-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.bus-manager-wrap { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; overflow: hidden; min-height: 400px; }
+</style>

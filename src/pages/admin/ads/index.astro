@@ -1,0 +1,270 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type Ad = {
+  id: string;
+  title: string;
+  ad_type: string;
+  status: string;
+  budget: number;
+  spent: number;
+  impressions: number;
+  clicks: number;
+  started_at: Date | null;
+  ended_at: Date | null;
+  created_at: Date;
+  vendor_email: string | null;
+  place_name: string | null;
+};
+
+const statusFilter = Astro.url.searchParams.get('status') || '';
+
+let ads: Ad[] = [];
+let stats = { total: 0, active: 0, pending: 0, expired: 0, totalBudget: 0, totalSpent: 0 };
+
+try {
+  const conditions = statusFilter ? ['a.status = $1'] : [];
+  const params = statusFilter ? [statusFilter] : [];
+  const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+  const [adsRes, statsRes] = await Promise.all([
+    query(
+      `SELECT a.id, a.title, a.ad_type, a.status, a.budget, a.spent,
+              a.impressions, a.clicks, a.started_at, a.ended_at, a.created_at,
+              u.email as vendor_email,
+              p.name as place_name
+       FROM advertisements a
+       LEFT JOIN users u ON u.id = a.vendor_id
+       LEFT JOIN places p ON p.id = a.place_id::uuid
+       ${where}
+       ORDER BY a.created_at DESC
+       LIMIT 200`,
+      params
+    ),
+    query(`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE status = 'active')::int as active,
+        COUNT(*) FILTER (WHERE status = 'pending')::int as pending,
+        COUNT(*) FILTER (WHERE status = 'expired' OR (ended_at IS NOT NULL AND ended_at < NOW()))::int as expired,
+        COALESCE(SUM(budget), 0)::numeric as total_budget,
+        COALESCE(SUM(spent), 0)::numeric as total_spent
+      FROM advertisements
+    `),
+  ]);
+
+  ads = adsRes.rows;
+  const r = statsRes.rows[0] || {};
+  stats = {
+    total: r.total || 0,
+    active: r.active || 0,
+    pending: r.pending || 0,
+    expired: r.expired || 0,
+    totalBudget: parseFloat(r.total_budget || '0'),
+    totalSpent: parseFloat(r.total_spent || '0'),
+  };
+} catch (_) { /* graceful */ }
+
+function fmtDate(d: Date | null): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function fmtMoney(n: number): string {
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', minimumFractionDigits: 0 }).format(n);
+}
+
+function ctr(impressions: number, clicks: number): string {
+  if (!impressions) return '0%';
+  return ((clicks / impressions) * 100).toFixed(1) + '%';
+}
+
+const isExpiringSoon = (d: Date | null) => {
+  if (!d) return false;
+  const diff = new Date(d).getTime() - Date.now();
+  return diff > 0 && diff < 7 * 24 * 60 * 60 * 1000;
+};
+
+const AD_TYPES: Record<string, string> = {
+  banner: 'Banner',
+  sponsored: 'Sponsorlu Mekan',
+  featured: 'Öne Çıkan',
+  sidebar: 'Sidebar',
+};
+---
+
+<AdminLayoutV2
+  title="Reklam Yönetimi"
+  subtitle="Reklam kampanyaları, sponsorlu mekanlar ve gelir takibi"
+  breadcrumbs={[{ label: 'Gelir', href: '/admin' }, { label: 'Reklamlar' }]}
+  seo={{ title: 'Reklam Yönetimi - Admin', noIndex: true }}
+>
+  <div class="ads-page">
+
+    <!-- Stats -->
+    <div class="ads-stats">
+      <div class="ads-stat">
+        <span class="ads-stat-val">{stats.total}</span>
+        <span class="ads-stat-lbl">Toplam Reklam</span>
+      </div>
+      <div class="ads-stat">
+        <span class="ads-stat-val" style="color:#2e7d32">{stats.active}</span>
+        <span class="ads-stat-lbl">Aktif</span>
+      </div>
+      <div class="ads-stat">
+        <span class="ads-stat-val" style="color:#1565c0">{stats.pending}</span>
+        <span class="ads-stat-lbl">Bekliyor</span>
+      </div>
+      <div class="ads-stat">
+        <span class="ads-stat-val" style="color:#757575">{stats.expired}</span>
+        <span class="ads-stat-lbl">Süresi Doldu</span>
+      </div>
+      <div class="ads-stat">
+        <span class="ads-stat-val" style="color:#2e7d32">{fmtMoney(stats.totalBudget)}</span>
+        <span class="ads-stat-lbl">Toplam Bütçe</span>
+      </div>
+      <div class="ads-stat">
+        <span class="ads-stat-val">{fmtMoney(stats.totalSpent)}</span>
+        <span class="ads-stat-lbl">Harcanan</span>
+      </div>
+    </div>
+
+    <!-- Status tabs -->
+    <div class="ads-tabs">
+      <a href="/admin/ads" class={`ads-tab ${!statusFilter ? 'ads-tab--active' : ''}`}>Tümü</a>
+      <a href="?status=active"  class={`ads-tab ${statusFilter === 'active'  ? 'ads-tab--active' : ''}`}>Aktif</a>
+      <a href="?status=pending" class={`ads-tab ${statusFilter === 'pending' ? 'ads-tab--active' : ''}`}>Bekleyen</a>
+      <a href="?status=expired" class={`ads-tab ${statusFilter === 'expired' ? 'ads-tab--active' : ''}`}>Süresi Dolmuş</a>
+    </div>
+
+    <!-- Table / empty state -->
+    {ads.length === 0 ? (
+      <div class="ads-empty">
+        <div class="ads-empty-icon">📣</div>
+        <div class="ads-empty-title">Henüz reklam yok</div>
+        <div class="ads-empty-sub">İlk reklam kampanyası başlatıldığında burada görünecek</div>
+        <div class="ads-empty-hint">
+          <strong>advertisements</strong> tablosu mevcut — reklam modülü etkinleştirildiğinde veriler otomatik görünür.
+        </div>
+      </div>
+    ) : (
+      <div class="ads-table-wrap">
+        <table class="ads-table">
+          <thead>
+            <tr>
+              <th class="ads-th">Başlık / Tip</th>
+              <th class="ads-th">Mekan</th>
+              <th class="ads-th">Bütçe / Harcama</th>
+              <th class="ads-th">Gösterim / Tıkl.</th>
+              <th class="ads-th">Bitiş</th>
+              <th class="ads-th">Durum</th>
+              <th class="ads-th">İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ads.map(a => (
+              <tr class="ads-tr">
+                <td class="ads-td">
+                  <div class="ads-title">{a.title}</div>
+                  <span class="ads-type">{AD_TYPES[a.ad_type] || a.ad_type}</span>
+                  {a.vendor_email && <div class="ads-vendor">{a.vendor_email}</div>}
+                </td>
+                <td class="ads-td ads-td-muted">{a.place_name || '—'}</td>
+                <td class="ads-td">
+                  <div class="ads-budget">{fmtMoney(a.budget || 0)}</div>
+                  <div class="ads-spent">{fmtMoney(a.spent || 0)} harcandı</div>
+                </td>
+                <td class="ads-td">
+                  <div>{(a.impressions || 0).toLocaleString('tr-TR')} gösterim</div>
+                  <div class="ads-td-muted">{(a.clicks || 0).toLocaleString('tr-TR')} tıklama · {ctr(a.impressions, a.clicks)} CTR</div>
+                </td>
+                <td class="ads-td ads-td-muted">
+                  {isExpiringSoon(a.ended_at) && <span class="ads-warn">⚠ Yakında bitiyor</span>}
+                  {fmtDate(a.ended_at)}
+                </td>
+                <td class="ads-td">
+                  <span class={`ads-status ads-status--${a.status}`}>{a.status}</span>
+                </td>
+                <td class="ads-td ads-td-acts">
+                  <button class="ads-act" type="button" data-id={a.id}>Düzenle</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    <!-- Bot banner -->
+    <div class="ads-bot-banner">
+      <div class="ads-bot-info">
+        <span class="ads-bot-icon">📣</span>
+        <div>
+          <div class="ads-bot-title">Reklam Kontrol Botu</div>
+          <div class="ads-bot-desc">Süresi bitmek üzere reklamları uyarır, hatalı görsel boyutlarını listeler, boş reklam alanlarını gösterir</div>
+        </div>
+      </div>
+      <a href="/admin/bots" class="ads-bot-link">Botlar Merkezine Git →</a>
+    </div>
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.ads-page { display: flex; flex-direction: column; gap: 14px; }
+
+.ads-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.ads-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 16px; min-width: 90px; }
+.ads-stat-val { font-size: 18px; font-weight: 700; color: var(--adm-text); line-height: 1; }
+.ads-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.ads-tabs { display: flex; gap: 4px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 6px; }
+.ads-tab { padding: 5px 14px; font-size: 12px; color: var(--adm-text-muted); text-decoration: none; border-radius: 6px; }
+.ads-tab:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.ads-tab--active { background: var(--adm-bg-hover); color: var(--adm-text); font-weight: 600; }
+
+.ads-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 60px 24px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; text-align: center; }
+.ads-empty-icon { font-size: 40px; }
+.ads-empty-title { font-size: 16px; font-weight: 600; color: var(--adm-text); }
+.ads-empty-sub { font-size: 13px; color: var(--adm-text-muted); }
+.ads-empty-hint { font-size: 12px; color: var(--adm-text-muted); background: var(--adm-bg-hover); border-radius: 6px; padding: 8px 14px; margin-top: 4px; }
+
+.ads-table-wrap { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; overflow: hidden; }
+.ads-table { width: 100%; border-collapse: collapse; }
+.ads-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.ads-td { padding: 9px 12px; font-size: 13px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.ads-tr:last-child .ads-td { border-bottom: none; }
+.ads-tr:hover .ads-td { background: var(--adm-bg-hover); }
+
+.ads-title { font-weight: 500; font-size: 13px; }
+.ads-type { font-size: 10px; color: var(--adm-text-muted); background: var(--adm-bg-hover); border-radius: 4px; padding: 1px 5px; }
+.ads-vendor { font-size: 11px; color: var(--adm-text-muted); margin-top: 2px; }
+.ads-td-muted { color: var(--adm-text-muted); font-size: 12px; }
+.ads-budget { font-weight: 600; font-size: 13px; }
+.ads-spent { font-size: 11px; color: var(--adm-text-muted); }
+.ads-warn { display: inline-block; font-size: 10px; color: #e65100; margin-bottom: 2px; }
+
+.ads-status { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; }
+.ads-status--active  { background: rgba(46,125,50,.1);  color: #2e7d32; }
+.ads-status--pending { background: rgba(21,101,192,.1); color: #1565c0; }
+.ads-status--expired { background: rgba(117,117,117,.1); color: #757575; }
+.ads-status--paused  { background: rgba(230,81,0,.1);   color: #e65100; }
+
+.ads-td-acts { display: flex; gap: 4px; }
+.ads-act { font-size: 11px; color: var(--adm-text-muted); padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; cursor: pointer; background: transparent; }
+.ads-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.ads-bot-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 14px 18px; flex-wrap: wrap; }
+.ads-bot-info { display: flex; align-items: center; gap: 12px; }
+.ads-bot-icon { font-size: 24px; }
+.ads-bot-title { font-size: 13px; font-weight: 600; color: var(--adm-text); }
+.ads-bot-desc { font-size: 12px; color: var(--adm-text-muted); }
+.ads-bot-link { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; padding: 6px 12px; border: 1px solid var(--adm-border); border-radius: 6px; white-space: nowrap; }
+.ads-bot-link:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+</style>

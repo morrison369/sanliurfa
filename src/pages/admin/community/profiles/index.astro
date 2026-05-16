@@ -1,0 +1,193 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type Profile = {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  username: string | null;
+  is_discoverable: boolean;
+  profile_completeness: number | null;
+  looking_for: string | null;
+  preferred_district: string | null;
+  updated_at: Date;
+};
+
+const discoverableFilter = Astro.url.searchParams.get('discoverable') || '';
+const page = Math.max(1, parseInt(Astro.url.searchParams.get('page') || '1', 10));
+const PER_PAGE = 50;
+
+let profiles: Profile[] = [];
+let total = 0;
+let stats = { total: 0, discoverable: 0, complete: 0 };
+
+try {
+  const conditions: string[] = [];
+  if (discoverableFilter === 'true') conditions.push('mp.is_discoverable = true');
+  if (discoverableFilter === 'false') conditions.push('mp.is_discoverable = false');
+  const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+  const [listRes, cntRes, statsRes] = await Promise.all([
+    query(
+      `SELECT mp.user_id, u.email, u.full_name, u.username,
+              mp.is_discoverable, mp.profile_completeness,
+              mp.looking_for, mp.preferred_district, mp.updated_at
+       FROM user_match_profiles mp
+       JOIN users u ON u.id = mp.user_id
+       ${where}
+       ORDER BY mp.updated_at DESC
+       LIMIT $1 OFFSET $2`,
+      [PER_PAGE, (page - 1) * PER_PAGE]
+    ),
+    query(`SELECT COUNT(*)::int as n FROM user_match_profiles mp ${where}`),
+    query(`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE is_discoverable = true)::int as discoverable,
+        COUNT(*) FILTER (WHERE profile_completeness >= 80)::int as complete
+      FROM user_match_profiles
+    `),
+  ]);
+
+  profiles = listRes.rows;
+  total = cntRes.rows[0]?.n || 0;
+  stats = statsRes.rows[0] || stats;
+} catch (_) { /* graceful */ }
+
+const totalPages = Math.ceil(total / PER_PAGE);
+
+function fmtDate(d: Date): string {
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' });
+}
+---
+
+<AdminLayoutV2
+  title="Eşleşme Profilleri"
+  subtitle="Topluluk eşleşme profilleri ve keşfedilebilirlik moderasyonu"
+  breadcrumbs={[{ label: 'Topluluk', href: '/admin' }, { label: 'Eşleşme Profilleri' }]}
+  seo={{ title: 'Eşleşme Profilleri - Admin', noIndex: true }}
+>
+  <div class="prf-page">
+
+    <!-- Stats -->
+    <div class="prf-stats">
+      <div class="prf-stat">
+        <span class="prf-stat-val">{stats.total}</span>
+        <span class="prf-stat-lbl">Toplam Profil</span>
+      </div>
+      <div class="prf-stat">
+        <span class="prf-stat-val" style="color:#2e7d32">{stats.discoverable}</span>
+        <span class="prf-stat-lbl">Keşfedilebilir</span>
+      </div>
+      <div class="prf-stat">
+        <span class="prf-stat-val" style="color:#1565c0">{stats.complete}</span>
+        <span class="prf-stat-lbl">%80+ Tamamlanmış</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="prf-filter-row">
+      <a href="/admin/community/profiles" class={`prf-chip ${!discoverableFilter ? 'prf-chip--active' : ''}`}>Tümü ({stats.total})</a>
+      <a href="?discoverable=true" class={`prf-chip ${discoverableFilter === 'true' ? 'prf-chip--active' : ''}`}>Keşfedilebilir ({stats.discoverable})</a>
+      <a href="?discoverable=false" class={`prf-chip ${discoverableFilter === 'false' ? 'prf-chip--active' : ''}`}>Gizli</a>
+    </div>
+
+    <!-- Table -->
+    <div class="prf-table-wrap">
+      <table class="prf-table">
+        <thead>
+          <tr>
+            <th class="prf-th">Kullanıcı</th>
+            <th class="prf-th">Keşfedilebilir</th>
+            <th class="prf-th">Tamamlanma</th>
+            <th class="prf-th">Arıyor</th>
+            <th class="prf-th">İlçe Tercihi</th>
+            <th class="prf-th">Son Güncelleme</th>
+          </tr>
+        </thead>
+        <tbody>
+          {profiles.map(p => (
+            <tr class="prf-tr">
+              <td class="prf-td">
+                <div class="prf-name">{p.full_name || p.username || '—'}</div>
+                <div class="prf-email">{p.email}</div>
+              </td>
+              <td class="prf-td">
+                {p.is_discoverable
+                  ? <span class="prf-disc prf-disc--on">Açık</span>
+                  : <span class="prf-disc prf-disc--off">Gizli</span>
+                }
+              </td>
+              <td class="prf-td">
+                <div class="prf-completeness-wrap">
+                  <div class="prf-completeness-bar" style={`width:${p.profile_completeness || 0}%`}></div>
+                </div>
+                <span class="prf-pct">{p.profile_completeness || 0}%</span>
+              </td>
+              <td class="prf-td prf-td-muted">{p.looking_for || '—'}</td>
+              <td class="prf-td prf-td-muted">{p.preferred_district || '—'}</td>
+              <td class="prf-td prf-td-muted">{fmtDate(p.updated_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {profiles.length === 0 && (
+        <div class="prf-empty">Profil bulunamadı</div>
+      )}
+    </div>
+
+    <!-- Pagination -->
+    {totalPages > 1 && (
+      <div class="prf-pag">
+        <span class="prf-pag-info">{total} profil — Sayfa {page}/{totalPages}</span>
+        <div class="prf-pag-btns">
+          {page > 1 && <a href={`?discoverable=${discoverableFilter}&page=${page - 1}`} class="prf-pag-btn">← Önceki</a>}
+          {page < totalPages && <a href={`?discoverable=${discoverableFilter}&page=${page + 1}`} class="prf-pag-btn">Sonraki →</a>}
+        </div>
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.prf-page { display: flex; flex-direction: column; gap: 14px; }
+
+.prf-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.prf-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 16px; min-width: 90px; }
+.prf-stat-val { font-size: 20px; font-weight: 700; color: var(--adm-text); }
+.prf-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.prf-filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.prf-chip { padding: 5px 12px; border: 1px solid var(--adm-border); border-radius: 20px; font-size: 12px; color: var(--adm-text-muted); text-decoration: none; }
+.prf-chip:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.prf-chip--active { background: var(--adm-text); color: var(--adm-bg); border-color: var(--adm-text); }
+
+.prf-table-wrap { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; overflow: hidden; }
+.prf-table { width: 100%; border-collapse: collapse; }
+.prf-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.prf-td { padding: 9px 12px; font-size: 13px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.prf-tr:last-child .prf-td { border-bottom: none; }
+.prf-tr:hover .prf-td { background: var(--adm-bg-hover); }
+.prf-name { font-weight: 500; font-size: 13px; }
+.prf-email { font-size: 11px; color: var(--adm-text-muted); }
+.prf-disc { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; }
+.prf-disc--on  { background: rgba(46,125,50,.1); color: #2e7d32; }
+.prf-disc--off { background: var(--adm-bg-hover); color: var(--adm-text-muted); }
+.prf-completeness-wrap { width: 80px; height: 4px; background: var(--adm-border); border-radius: 2px; overflow: hidden; display: inline-block; vertical-align: middle; }
+.prf-completeness-bar { height: 100%; background: #1565c0; border-radius: 2px; }
+.prf-pct { font-size: 11px; color: var(--adm-text-muted); margin-left: 6px; }
+.prf-td-muted { color: var(--adm-text-muted); font-size: 12px; }
+.prf-empty { padding: 48px; text-align: center; color: var(--adm-text-muted); font-size: 14px; }
+.prf-pag { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.prf-pag-info { font-size: 12px; color: var(--adm-text-muted); }
+.prf-pag-btns { display: flex; gap: 8px; }
+.prf-pag-btn { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; padding: 5px 12px; border: 1px solid var(--adm-border); border-radius: 6px; }
+.prf-pag-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+</style>

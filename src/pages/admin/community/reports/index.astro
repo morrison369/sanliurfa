@@ -1,0 +1,249 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type Report = {
+  id: string;
+  type: string;
+  content_id: string;
+  reason: string;
+  status: string;
+  reporter_email: string | null;
+  reporter_name: string | null;
+  moderator_notes: string | null;
+  resolved_at: Date | null;
+  created_at: Date;
+};
+
+const statusFilter = Astro.url.searchParams.get('status') || 'pending';
+
+let reports: Report[] = [];
+let stats = { total: 0, pending: 0, resolved: 0, dismissed: 0 };
+
+try {
+  const [reportsRes, statsRes] = await Promise.all([
+    query(
+      `SELECT cr.id, cr.type, cr.content_id, cr.reason, cr.status,
+              u.email as reporter_email, u.full_name as reporter_name,
+              cr.moderator_notes, cr.resolved_at, cr.created_at
+       FROM content_reports cr
+       LEFT JOIN users u ON u.id = cr.reporter_id
+       ${statusFilter ? 'WHERE cr.status = $1' : ''}
+       ORDER BY cr.created_at DESC
+       LIMIT 200`,
+      statusFilter ? [statusFilter] : []
+    ),
+    query(`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE status = 'pending')::int as pending,
+        COUNT(*) FILTER (WHERE status = 'resolved')::int as resolved,
+        COUNT(*) FILTER (WHERE status = 'dismissed')::int as dismissed
+      FROM content_reports
+    `),
+  ]);
+  reports = reportsRes.rows;
+  stats = statsRes.rows[0] || stats;
+} catch (_) { /* graceful */ }
+
+function fmtDate(d: Date | null): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+const STATUSES = [
+  { key: 'pending',   label: 'Bekliyor',   color: '#e65100' },
+  { key: 'resolved',  label: 'Çözüldü',    color: '#2e7d32' },
+  { key: 'dismissed', label: 'Reddedildi', color: '#757575' },
+];
+
+const TYPE_LABELS: Record<string, string> = {
+  review: 'Yorum',
+  comment: 'Yorum/Cmt',
+  place: 'Mekan',
+  blog: 'Blog',
+  user: 'Kullanıcı',
+  photo: 'Fotoğraf',
+};
+---
+
+<AdminLayoutV2
+  title="Şikayet Yönetimi"
+  subtitle="Kullanıcı şikayetleri ve moderasyon kuyruğu"
+  breadcrumbs={[{ label: 'Topluluk', href: '/admin' }, { label: 'Şikayetler' }]}
+  seo={{ title: 'Şikayet Yönetimi - Admin', noIndex: true }}
+>
+  <div class="rep-page">
+
+    <!-- Stats -->
+    <div class="rep-stats">
+      <div class="rep-stat">
+        <span class="rep-stat-val">{stats.total}</span>
+        <span class="rep-stat-lbl">Toplam</span>
+      </div>
+      <div class="rep-stat">
+        <span class="rep-stat-val" style="color:#e65100">{stats.pending}</span>
+        <span class="rep-stat-lbl">Bekleyen</span>
+      </div>
+      <div class="rep-stat">
+        <span class="rep-stat-val" style="color:#2e7d32">{stats.resolved}</span>
+        <span class="rep-stat-lbl">Çözüldü</span>
+      </div>
+      <div class="rep-stat">
+        <span class="rep-stat-val" style="color:#757575">{stats.dismissed}</span>
+        <span class="rep-stat-lbl">Reddedildi</span>
+      </div>
+    </div>
+
+    <!-- Status filter tabs -->
+    <div class="rep-tabs">
+      <a href="?status=" class={`rep-tab ${!statusFilter ? 'rep-tab--active' : ''}`}>Tümü ({stats.total})</a>
+      {STATUSES.map(s => (
+        <a href={`?status=${s.key}`} class={`rep-tab ${statusFilter === s.key ? 'rep-tab--active' : ''}`} style={statusFilter === s.key ? `color:${s.color}` : ''}>
+          {s.label} ({stats[s.key as keyof typeof stats]})
+        </a>
+      ))}
+    </div>
+
+    <!-- Table -->
+    <div class="rep-table-wrap">
+      <table class="rep-table">
+        <thead>
+          <tr>
+            <th class="rep-th">İçerik Tipi</th>
+            <th class="rep-th">Sebep</th>
+            <th class="rep-th">Bildiren</th>
+            <th class="rep-th">Tarih</th>
+            <th class="rep-th">Durum</th>
+            <th class="rep-th">İşlemler</th>
+          </tr>
+        </thead>
+        <tbody>
+          {reports.map(r => (
+            <tr class="rep-tr">
+              <td class="rep-td">
+                <span class="rep-type">{TYPE_LABELS[r.type] || r.type}</span>
+                <div class="rep-content-id">{r.content_id?.substring(0, 8)}…</div>
+              </td>
+              <td class="rep-td rep-td-reason">{r.reason || '—'}</td>
+              <td class="rep-td rep-td-muted">
+                {r.reporter_name || r.reporter_email || 'Anonim'}
+              </td>
+              <td class="rep-td rep-td-muted">{fmtDate(r.created_at)}</td>
+              <td class="rep-td">
+                <span class={`rep-status rep-status--${r.status}`}>
+                  {STATUSES.find(s => s.key === r.status)?.label || r.status}
+                </span>
+              </td>
+              <td class="rep-td rep-td-acts">
+                {r.status === 'pending' && (
+                  <>
+                    <button
+                      class="rep-act rep-act--resolve"
+                      data-id={r.id}
+                      data-action="resolve"
+                      type="button"
+                    >
+                      Çöz
+                    </button>
+                    <button
+                      class="rep-act rep-act--dismiss"
+                      data-id={r.id}
+                      data-action="dismiss"
+                      type="button"
+                    >
+                      Reddet
+                    </button>
+                  </>
+                )}
+                {r.status !== 'pending' && r.resolved_at && (
+                  <span class="rep-resolved-at">{fmtDate(r.resolved_at)}</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {reports.length === 0 && (
+        <div class="rep-empty">
+          {stats.pending === 0 ? '✓ Bekleyen şikayet yok' : 'Şikayet bulunamadı'}
+        </div>
+      )}
+    </div>
+
+  </div>
+</AdminLayoutV2>
+
+<script is:inline>
+(function () {
+  document.querySelectorAll('[data-action]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.dataset.id;
+      var action = btn.dataset.action;
+      var status = action === 'resolve' ? 'resolved' : 'dismissed';
+      btn.disabled = true;
+
+      fetch('/api/admin/reports/' + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: status }),
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.success) { location.reload(); }
+          else {
+            btn.disabled = false;
+            alert('Hata: ' + (d.error || 'bilinmeyen'));
+          }
+        })
+        .catch(function () { btn.disabled = false; });
+    });
+  });
+})();
+</script>
+
+<style is:global>
+.rep-page { display: flex; flex-direction: column; gap: 14px; }
+
+.rep-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.rep-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 18px; min-width: 90px; }
+.rep-stat-val { font-size: 22px; font-weight: 700; color: var(--adm-text); line-height: 1; }
+.rep-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.rep-tabs { display: flex; gap: 4px; flex-wrap: wrap; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 8px; }
+.rep-tab { padding: 5px 12px; font-size: 12px; color: var(--adm-text-muted); text-decoration: none; border-radius: 6px; }
+.rep-tab:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.rep-tab--active { background: var(--adm-bg-hover); color: var(--adm-text); font-weight: 600; }
+
+.rep-table-wrap { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; overflow: hidden; }
+.rep-table { width: 100%; border-collapse: collapse; }
+.rep-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.rep-td { padding: 9px 12px; font-size: 13px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.rep-tr:last-child .rep-td { border-bottom: none; }
+.rep-tr:hover .rep-td { background: var(--adm-bg-hover); }
+
+.rep-type { font-size: 11px; font-weight: 600; background: var(--adm-bg-hover); border-radius: 4px; padding: 2px 6px; color: var(--adm-text); }
+.rep-content-id { font-size: 10px; color: var(--adm-text-muted); font-family: monospace; margin-top: 2px; }
+
+.rep-td-reason { max-width: 280px; font-size: 12px; color: var(--adm-text-muted); }
+.rep-td-muted { color: var(--adm-text-muted); font-size: 12px; }
+
+.rep-status { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; }
+.rep-status--pending   { background: rgba(230,81,0,.1);  color: #e65100; }
+.rep-status--resolved  { background: rgba(46,125,50,.1); color: #2e7d32; }
+.rep-status--dismissed { background: rgba(117,117,117,.1); color: #757575; }
+
+.rep-td-acts { display: flex; gap: 4px; align-items: center; }
+.rep-act { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--adm-border); cursor: pointer; background: transparent; color: var(--adm-text-muted); }
+.rep-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.rep-act--resolve:hover { border-color: #2e7d32; color: #2e7d32; }
+.rep-act--dismiss:hover { border-color: #c62828; color: #c62828; }
+.rep-resolved-at { font-size: 11px; color: var(--adm-text-muted); }
+
+.rep-empty { padding: 48px; text-align: center; color: var(--adm-text-muted); font-size: 14px; }
+</style>

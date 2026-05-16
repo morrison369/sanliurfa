@@ -22,7 +22,7 @@ export const GET: APIRoute = async (context) => {
     }
 
     const url = new URL(context.request.url);
-    const VALID_PLACE_STATUSES = new Set(['all', 'active', 'pending', 'rejected', 'suspended', 'deleted']);
+    const VALID_PLACE_STATUSES = new Set(['all', 'active', 'pending', 'rejected', 'suspended', 'deleted', 'published', 'draft', 'archived']);
     const rawStatus = url.searchParams.get('status') || 'all';
     const status = VALID_PLACE_STATUSES.has(rawStatus) ? rawStatus : 'all';
     const rawSearch = url.searchParams.get('search');
@@ -31,17 +31,31 @@ export const GET: APIRoute = async (context) => {
     const limit = safeIntParam(url.searchParams.get('limit'), 20, 1, 1_000);
     const offset = (page - 1) * limit;
 
+    const categoryId = safeIntParam(url.searchParams.get('category_id'), 0, 0, 1_000_000);
+    const districtId = safeIntParam(url.searchParams.get('district_id'), 0, 0, 10_000);
+    const isFeatured = url.searchParams.get('is_featured');
+    const missingRaw = url.searchParams.get('missing') || '';
+    const missing = new Set(missingRaw.split(',').filter(Boolean));
+
     let sql = `
       SELECT
-        p.*,
-        COALESCE(p.thumbnail_url, p.images[1]) as image_url,
+        p.id, p.name, p.slug, p.status, p.category, p.category_id,
+        p.district_id, p.neighborhood_id, p.address, p.phone,
+        p.latitude, p.longitude,
+        p.thumbnail_url, p.images,
+        COALESCE(p.thumbnail_url, p.images[1]) as resolved_image,
+        p.meta_description, p.short_description,
+        p.is_featured, p.featured, p.avg_rating, p.view_count,
+        p.created_at, p.updated_at, p.approved_at,
+        c.name as category_name,
+        d.name as district_name,
         u.name as owner_name, u.email as owner_email,
-        COUNT(DISTINCT r.id) as review_count,
-        COALESCE(SUM(a.views), 0) as total_views
+        COUNT(DISTINCT r.id) as review_count
       FROM places p
+      LEFT JOIN categories c ON c.id = p.category_id
+      LEFT JOIN districts d ON d.id = p.district_id
       LEFT JOIN users u ON p.owner_id = u.id
       LEFT JOIN reviews r ON r.place_id = p.id
-      LEFT JOIN place_daily_analytics a ON a.place_id = p.id
       WHERE 1=1
     `;
     const params: unknown[] = [];
@@ -59,7 +73,38 @@ export const GET: APIRoute = async (context) => {
       paramIndex++;
     }
 
-    sql += ` GROUP BY p.id, u.name, u.email ORDER BY p.created_at DESC`;
+    if (categoryId > 0) {
+      sql += ` AND p.category_id = $${paramIndex}`;
+      params.push(categoryId);
+      paramIndex++;
+    }
+
+    if (districtId > 0) {
+      sql += ` AND p.district_id = $${paramIndex}`;
+      params.push(districtId);
+      paramIndex++;
+    }
+
+    if (isFeatured === 'true') {
+      sql += ` AND (p.is_featured = true OR p.featured = true)`;
+    } else if (isFeatured === 'false') {
+      sql += ` AND (p.is_featured IS NOT TRUE AND p.featured IS NOT TRUE)`;
+    }
+
+    if (missing.has('image')) {
+      sql += ` AND p.thumbnail_url IS NULL AND (p.images IS NULL OR array_length(p.images, 1) IS NULL)`;
+    }
+    if (missing.has('coords')) {
+      sql += ` AND p.latitude IS NULL`;
+    }
+    if (missing.has('seo')) {
+      sql += ` AND p.meta_description IS NULL`;
+    }
+    if (missing.has('phone')) {
+      sql += ` AND p.phone IS NULL`;
+    }
+
+    sql += ` GROUP BY p.id, c.name, d.name, u.name, u.email ORDER BY p.created_at DESC`;
 
     // Count + data in parallel — params not mutated between queries
     const countSql = sql.replace(/SELECT.*?FROM/s, 'SELECT COUNT(DISTINCT p.id) FROM').replace(/GROUP BY.*/, '');
@@ -73,13 +118,14 @@ export const GET: APIRoute = async (context) => {
 
     const places = result.rows.map((row) => ({
       ...row,
+      image_url: row.resolved_image,
       ...derivePlaceCrmFields(row),
     }));
 
     return apiResponse({
       success: true,
       places,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     }, HttpStatus.OK);
 
   } catch (error) {

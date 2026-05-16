@@ -1,0 +1,177 @@
+---
+import AdminLayoutV2 from '../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type Submission = {
+  id: number;
+  title: string;
+  organizer_name: string | null;
+  organizer_email: string | null;
+  organizer_phone: string | null;
+  category: string | null;
+  location: string | null;
+  start_date: Date | null;
+  status: string;
+  admin_note: string | null;
+  created_at: Date;
+};
+
+const STAGES = [
+  { key: 'pending',  label: 'Yeni Başvuru',  color: '#1565c0' },
+  { key: 'review',   label: 'İnceleniyor',   color: '#6a1b9a' },
+  { key: 'info',     label: 'Eksik Bilgi',   color: '#e65100' },
+  { key: 'approved', label: 'Onaylandı',     color: '#2e7d32' },
+  { key: 'published',label: 'Yayınlandı',    color: '#2e7d32' },
+  { key: 'rejected', label: 'Reddedildi',    color: '#c62828' },
+  { key: 'archived', label: 'Arşiv',         color: '#757575' },
+] as const;
+
+let byStage: Record<string, Submission[]> = {};
+let total = 0;
+
+try {
+  const result = await query(`
+    SELECT id, title, organizer_name, organizer_email, organizer_phone,
+           category, location, start_date, status, admin_note, created_at
+    FROM event_submissions
+    ORDER BY created_at DESC
+    LIMIT 500
+  `);
+  for (const row of result.rows as Submission[]) {
+    const s = row.status || 'pending';
+    if (!byStage[s]) byStage[s] = [];
+    byStage[s].push(row);
+  }
+  total = result.rows.length;
+} catch (_) { /* table may not exist */ }
+
+function fmtDate(d: Date | null): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+---
+
+<AdminLayoutV2
+  title="İşletme Başvuruları"
+  subtitle="Başvuru pipeline — yeni başvurudan yayına alınmaya kadar tüm aşamalar"
+  breadcrumbs={[{ label: 'CRM', href: '/admin' }, { label: 'Başvurular' }]}
+  seo={{ title: 'Başvurular - Admin', noIndex: true }}
+>
+  <div slot="page-actions">
+    <span class="sub-badge">{total} başvuru</span>
+  </div>
+
+  <div class="sub-page">
+
+    <!-- Pipeline stats row -->
+    <div class="sub-stats">
+      {STAGES.map(stage => {
+        const count = (byStage[stage.key] || []).length;
+        return (
+          <div class="sub-stat">
+            <span class="sub-stat-val" style={`color:${stage.color}`}>{count}</span>
+            <span class="sub-stat-lbl">{stage.label}</span>
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- Kanban board -->
+    <div class="sub-board">
+      {STAGES.map(stage => {
+        const cards = byStage[stage.key] || [];
+        return (
+          <div class="sub-col">
+            <div class="sub-col-header" style={`border-top-color:${stage.color}`}>
+              <span class="sub-col-label">{stage.label}</span>
+              <span class="sub-col-count">{cards.length}</span>
+            </div>
+            <div class="sub-col-body">
+              {cards.length === 0 && (
+                <div class="sub-empty-col">Başvuru yok</div>
+              )}
+              {cards.map(card => (
+                <div class="sub-card" data-id={card.id}>
+                  <div class="sub-card-title">{card.title || 'İsimsiz başvuru'}</div>
+                  <div class="sub-card-meta">
+                    {card.organizer_name && <span>{card.organizer_name}</span>}
+                    {card.category && <span class="sub-cat">{card.category}</span>}
+                  </div>
+                  {card.location && <div class="sub-card-loc">{card.location}</div>}
+                  <div class="sub-card-footer">
+                    <span class="sub-card-date">{fmtDate(card.start_date || card.created_at)}</span>
+                    <div class="sub-card-acts">
+                      <a href={`/admin/submissions/${card.id}`} class="sub-act">Detay</a>
+                    </div>
+                  </div>
+                  {card.admin_note && (
+                    <div class="sub-note" title={card.admin_note}>
+                      📝 {card.admin_note.substring(0, 60)}{card.admin_note.length > 60 ? '…' : ''}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- Note: place submissions -->
+    {total === 0 && (
+      <div class="sub-info-banner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Henüz etkinlik başvurusu yok. İşletme başvurusu tablosu (place_claims) için <a href="/admin/settings">Migration gerekebilir</a>.
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.sub-page { display: flex; flex-direction: column; gap: 16px; }
+.sub-badge { padding: 4px 10px; background: var(--adm-bg-hover); border: 1px solid var(--adm-border); border-radius: 12px; font-size: 12px; color: var(--adm-text-muted); }
+
+/* Stats */
+.sub-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.sub-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 16px; min-width: 90px; }
+.sub-stat-val { font-size: 20px; font-weight: 700; line-height: 1; }
+.sub-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+/* Board */
+.sub-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  min-height: 400px;
+}
+.sub-col { display: flex; flex-direction: column; background: var(--adm-bg-hover); border: 1px solid var(--adm-border); border-radius: 8px; overflow: hidden; min-height: 200px; }
+.sub-col-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-top: 3px solid; border-bottom: 1px solid var(--adm-border); }
+.sub-col-label { font-size: 12px; font-weight: 600; color: var(--adm-text); }
+.sub-col-count { font-size: 11px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 10px; padding: 1px 7px; color: var(--adm-text-muted); }
+.sub-col-body { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 8px; overflow-y: auto; max-height: 600px; }
+.sub-empty-col { padding: 24px 12px; text-align: center; font-size: 12px; color: var(--adm-text-muted); }
+
+/* Card */
+.sub-card { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 6px; padding: 10px; cursor: pointer; transition: box-shadow 0.15s; }
+.sub-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+.sub-card-title { font-size: 13px; font-weight: 500; color: var(--adm-text); margin-bottom: 4px; }
+.sub-card-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+.sub-card-meta span { font-size: 11px; color: var(--adm-text-muted); }
+.sub-cat { background: var(--adm-bg-hover); border-radius: 4px; padding: 1px 5px; }
+.sub-card-loc { font-size: 11px; color: var(--adm-text-muted); margin-bottom: 6px; }
+.sub-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+.sub-card-date { font-size: 11px; color: var(--adm-text-muted); }
+.sub-card-acts { display: flex; gap: 4px; }
+.sub-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 2px 6px; border: 1px solid var(--adm-border); border-radius: 4px; }
+.sub-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+.sub-note { font-size: 11px; color: var(--adm-text-muted); margin-top: 6px; padding: 5px 7px; background: var(--adm-bg-hover); border-radius: 4px; border-left: 2px solid var(--adm-border); }
+.sub-info-banner { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: rgba(21,101,192,.08); border: 1px solid rgba(21,101,192,.2); border-radius: 8px; font-size: 13px; color: #1565c0; }
+.sub-info-banner a { color: inherit; font-weight: 500; }
+</style>

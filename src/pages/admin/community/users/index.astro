@@ -1,0 +1,282 @@
+---
+import AdminLayoutV2 from '../../../../layouts/AdminLayoutV2.astro';
+import { query } from '../../../../lib/postgres';
+
+const user = Astro.locals.user;
+if (!user || !Astro.locals.isAdmin) {
+  return Astro.redirect(`/giris?redirect=${Astro.url.pathname}`);
+}
+
+type UserRow = {
+  id: string;
+  email: string;
+  full_name: string | null;
+  username: string | null;
+  role: string;
+  status: string | null;
+  is_banned: boolean;
+  email_verified: boolean;
+  points: number;
+  level: number;
+  subscription_tier: string | null;
+  last_login_at: Date | null;
+  created_at: Date;
+};
+
+const roleFilter = Astro.url.searchParams.get('role') || '';
+const statusFilter = Astro.url.searchParams.get('status') || '';
+const searchQ = Astro.url.searchParams.get('q') || '';
+const page = Math.max(1, parseInt(Astro.url.searchParams.get('page') || '1', 10));
+const PER_PAGE = 50;
+
+let users: UserRow[] = [];
+let totalCount = 0;
+let stats = { total: 0, verified: 0, banned: 0, admins: 0, vendors: 0, premium: 0 };
+
+try {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  let pi = 1;
+
+  if (roleFilter) { conditions.push(`role = $${pi++}`); params.push(roleFilter); }
+  if (statusFilter === 'banned') { conditions.push('is_banned = true'); }
+  else if (statusFilter === 'unverified') { conditions.push('email_verified = false'); }
+  else if (statusFilter === 'premium') { conditions.push("subscription_tier NOT IN ('free','') OR subscription_tier IS NOT NULL"); }
+  if (searchQ) {
+    conditions.push(`(email ILIKE $${pi} OR full_name ILIKE $${pi} OR username ILIKE $${pi})`);
+    params.push(`%${searchQ}%`);
+    pi++;
+  }
+
+  const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+  const [listRes, countRes, statsRes] = await Promise.all([
+    query(
+      `SELECT id, email, full_name, username, role, status, is_banned, email_verified,
+              points, level, subscription_tier, last_login_at, created_at
+       FROM users ${where}
+       ORDER BY created_at DESC
+       LIMIT $${pi} OFFSET $${pi + 1}`,
+      [...params, PER_PAGE, (page - 1) * PER_PAGE]
+    ),
+    query(`SELECT COUNT(*)::int as n FROM users ${where}`, params),
+    query(`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE email_verified = true)::int as verified,
+        COUNT(*) FILTER (WHERE is_banned = true)::int as banned,
+        COUNT(*) FILTER (WHERE role = 'admin')::int as admins,
+        COUNT(*) FILTER (WHERE role = 'vendor' OR is_vendor = true)::int as vendors,
+        COUNT(*) FILTER (WHERE subscription_tier IS NOT NULL AND subscription_tier NOT IN ('free',''))::int as premium
+      FROM users
+    `),
+  ]);
+
+  users = listRes.rows;
+  totalCount = countRes.rows[0]?.n || 0;
+  stats = statsRes.rows[0] || stats;
+} catch (_) { /* graceful */ }
+
+const totalPages = Math.ceil(totalCount / PER_PAGE);
+
+function fmtDate(d: Date | null): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+const ROLES = ['user', 'vendor', 'moderator', 'admin', 'editor'];
+---
+
+<AdminLayoutV2
+  title="Kullanıcı Yönetimi"
+  subtitle="Üye listesi, rol ve ban yönetimi"
+  breadcrumbs={[{ label: 'Topluluk', href: '/admin' }, { label: 'Kullanıcılar' }]}
+  seo={{ title: 'Kullanıcı Yönetimi - Admin', noIndex: true }}
+>
+  <div slot="page-actions">
+    <span class="usr-badge">{stats.total.toLocaleString('tr-TR')} üye</span>
+  </div>
+
+  <div class="usr-page">
+
+    <!-- Stats -->
+    <div class="usr-stats">
+      <div class="usr-stat">
+        <span class="usr-stat-val">{stats.total.toLocaleString('tr-TR')}</span>
+        <span class="usr-stat-lbl">Toplam Üye</span>
+      </div>
+      <div class="usr-stat">
+        <span class="usr-stat-val" style="color:#2e7d32">{stats.verified.toLocaleString('tr-TR')}</span>
+        <span class="usr-stat-lbl">Doğrulanmış</span>
+      </div>
+      <div class="usr-stat">
+        <span class="usr-stat-val" style="color:#1565c0">{stats.vendors}</span>
+        <span class="usr-stat-lbl">Satıcı</span>
+      </div>
+      <div class="usr-stat">
+        <span class="usr-stat-val" style="color:#6a1b9a">{stats.premium}</span>
+        <span class="usr-stat-lbl">Premium</span>
+      </div>
+      <div class="usr-stat">
+        <span class="usr-stat-val" style="color:#c62828">{stats.banned}</span>
+        <span class="usr-stat-lbl">Banlı</span>
+      </div>
+      <div class="usr-stat">
+        <span class="usr-stat-val">{stats.admins}</span>
+        <span class="usr-stat-lbl">Admin</span>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="GET" class="usr-filters">
+      <input name="q" value={searchQ} placeholder="E-posta, ad veya kullanıcı adı ara…" class="usr-input" />
+      <select name="role" class="usr-select">
+        <option value="">Tüm Roller</option>
+        {ROLES.map(r => <option value={r} selected={r === roleFilter}>{r}</option>)}
+      </select>
+      <select name="status" class="usr-select">
+        <option value="">Tüm Durumlar</option>
+        <option value="banned" selected={statusFilter === 'banned'}>Banlı</option>
+        <option value="unverified" selected={statusFilter === 'unverified'}>Doğrulanmamış</option>
+        <option value="premium" selected={statusFilter === 'premium'}>Premium</option>
+      </select>
+      <button type="submit" class="usr-btn">Filtrele</button>
+      {(roleFilter || statusFilter || searchQ) && (
+        <a href="/admin/community/users" class="usr-btn-ghost">Temizle</a>
+      )}
+    </form>
+
+    <!-- Table -->
+    <div class="usr-table-wrap">
+      <table class="usr-table">
+        <thead>
+          <tr>
+            <th class="usr-th">Kullanıcı</th>
+            <th class="usr-th">Rol</th>
+            <th class="usr-th">Puan / Seviye</th>
+            <th class="usr-th">Abonelik</th>
+            <th class="usr-th">Son Giriş</th>
+            <th class="usr-th">Kayıt</th>
+            <th class="usr-th">Durum</th>
+            <th class="usr-th">İşlemler</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map(u => (
+            <tr class="usr-tr">
+              <td class="usr-td usr-td-user">
+                <div class="usr-user-name">{u.full_name || u.username || '—'}</div>
+                <div class="usr-user-email">{u.email}</div>
+                {!u.email_verified && <span class="usr-badge-unverified">E-posta doğrulanmamış</span>}
+              </td>
+              <td class="usr-td">
+                <span class={`usr-role usr-role--${u.role}`}>{u.role}</span>
+              </td>
+              <td class="usr-td usr-td-points">
+                <span class="usr-pts">{(u.points || 0).toLocaleString('tr-TR')}</span>
+                <span class="usr-lvl">Lv.{u.level || 1}</span>
+              </td>
+              <td class="usr-td">
+                {u.subscription_tier && u.subscription_tier !== 'free'
+                  ? <span class="usr-premium">{u.subscription_tier}</span>
+                  : <span class="usr-free">Ücretsiz</span>
+                }
+              </td>
+              <td class="usr-td usr-td-muted">{fmtDate(u.last_login_at)}</td>
+              <td class="usr-td usr-td-muted">{fmtDate(u.created_at)}</td>
+              <td class="usr-td">
+                {u.is_banned
+                  ? <span class="usr-status usr-status--banned">Banlı</span>
+                  : <span class="usr-status usr-status--active">Aktif</span>
+                }
+              </td>
+              <td class="usr-td usr-td-acts">
+                <a href={`/admin/users/${u.id}`} class="usr-act">Detay</a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {users.length === 0 && (
+        <div class="usr-empty">Kullanıcı bulunamadı</div>
+      )}
+    </div>
+
+    <!-- Pagination -->
+    {totalPages > 1 && (
+      <div class="usr-pagination">
+        <span class="usr-pag-info">{totalCount} sonuç — Sayfa {page}/{totalPages}</span>
+        <div class="usr-pag-btns">
+          {page > 1 && (
+            <a href={`?q=${searchQ}&role=${roleFilter}&status=${statusFilter}&page=${page - 1}`} class="usr-pag-btn">← Önceki</a>
+          )}
+          {page < totalPages && (
+            <a href={`?q=${searchQ}&role=${roleFilter}&status=${statusFilter}&page=${page + 1}`} class="usr-pag-btn">Sonraki →</a>
+          )}
+        </div>
+      </div>
+    )}
+
+  </div>
+</AdminLayoutV2>
+
+<style is:global>
+.usr-page { display: flex; flex-direction: column; gap: 14px; }
+.usr-badge { padding: 4px 10px; background: var(--adm-bg-hover); border: 1px solid var(--adm-border); border-radius: 12px; font-size: 12px; color: var(--adm-text-muted); }
+
+.usr-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.usr-stat { display: flex; flex-direction: column; gap: 2px; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 10px 16px; min-width: 90px; }
+.usr-stat-val { font-size: 20px; font-weight: 700; color: var(--adm-text); line-height: 1; }
+.usr-stat-lbl { font-size: 11px; color: var(--adm-text-muted); }
+
+.usr-filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; padding: 12px 14px; }
+.usr-input { flex: 1; min-width: 200px; padding: 7px 10px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 13px; background: var(--adm-bg-hover); color: var(--adm-text); outline: none; }
+.usr-input:focus { border-color: var(--adm-text-muted); }
+.usr-select { padding: 7px 10px; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 13px; background: var(--adm-bg-hover); color: var(--adm-text); outline: none; cursor: pointer; }
+.usr-btn { padding: 7px 14px; background: var(--adm-text); color: var(--adm-bg); border: none; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; }
+.usr-btn-ghost { padding: 7px 14px; background: transparent; border: 1px solid var(--adm-border); border-radius: 6px; font-size: 12px; color: var(--adm-text-muted); text-decoration: none; }
+
+.usr-table-wrap { background: var(--adm-bg); border: 1px solid var(--adm-border); border-radius: 8px; overflow: hidden; }
+.usr-table { width: 100%; border-collapse: collapse; }
+.usr-th { padding: 8px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--adm-text-muted); text-align: left; border-bottom: 1px solid var(--adm-border); background: var(--adm-bg-hover); }
+.usr-td { padding: 9px 12px; font-size: 13px; color: var(--adm-text); border-bottom: 1px solid var(--adm-border); vertical-align: middle; }
+.usr-tr:last-child .usr-td { border-bottom: none; }
+.usr-tr:hover .usr-td { background: var(--adm-bg-hover); }
+
+.usr-td-user { min-width: 200px; }
+.usr-user-name { font-weight: 500; font-size: 13px; }
+.usr-user-email { font-size: 11px; color: var(--adm-text-muted); }
+.usr-badge-unverified { display: inline-block; font-size: 10px; color: #e65100; background: rgba(230,81,0,.1); border-radius: 4px; padding: 1px 5px; margin-top: 2px; }
+
+.usr-role { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; }
+.usr-role--admin     { background: rgba(198,40,40,.1);  color: #c62828; }
+.usr-role--moderator { background: rgba(106,27,154,.1); color: #6a1b9a; }
+.usr-role--vendor    { background: rgba(21,101,192,.1); color: #1565c0; }
+.usr-role--editor    { background: rgba(230,81,0,.1);   color: #e65100; }
+.usr-role--user      { background: var(--adm-bg-hover); color: var(--adm-text-muted); }
+
+.usr-td-points { display: flex; align-items: center; gap: 6px; }
+.usr-pts { font-size: 12px; font-weight: 600; color: var(--adm-text); }
+.usr-lvl { font-size: 10px; color: var(--adm-text-muted); background: var(--adm-bg-hover); border-radius: 4px; padding: 1px 5px; }
+
+.usr-premium { font-size: 11px; font-weight: 600; color: #6a1b9a; }
+.usr-free    { font-size: 11px; color: var(--adm-text-muted); }
+
+.usr-td-muted { color: var(--adm-text-muted); font-size: 12px; }
+
+.usr-status { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; }
+.usr-status--active { background: rgba(46,125,50,.1); color: #2e7d32; }
+.usr-status--banned { background: rgba(198,40,40,.1); color: #c62828; }
+
+.usr-td-acts { display: flex; gap: 4px; }
+.usr-act { font-size: 11px; color: var(--adm-text-muted); text-decoration: none; padding: 3px 7px; border: 1px solid var(--adm-border); border-radius: 4px; }
+.usr-act:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+
+.usr-empty { padding: 40px; text-align: center; color: var(--adm-text-muted); font-size: 14px; }
+
+.usr-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.usr-pag-info { font-size: 12px; color: var(--adm-text-muted); }
+.usr-pag-btns { display: flex; gap: 8px; }
+.usr-pag-btn { font-size: 12px; color: var(--adm-text-muted); text-decoration: none; padding: 5px 12px; border: 1px solid var(--adm-border); border-radius: 6px; }
+.usr-pag-btn:hover { background: var(--adm-bg-hover); color: var(--adm-text); }
+</style>
