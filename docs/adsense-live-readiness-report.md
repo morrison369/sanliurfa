@@ -1,9 +1,9 @@
 # AdSense Readiness Report
 
-- Generated at: 2026-05-15T12:06:48.678Z
+- Generated at: 2026-05-16T02:04:50.788Z
 - Mode: live
 - Base URL: https://sanliurfa.com
-- Status: passed
+- Status: failed
 
 | Check | Status | Detail |
 |---|---|---|
@@ -18,5 +18,5 @@
 | live ads.txt no html fallback | ok | `google.com, pub-7160871802649062, DIRECT, f08c47fec0942fa0 ` |
 | live ads.txt crawler variants | ok | `Mediapartners-Google:200:sanliurfa.com, AdsBot-Google:200:sanliurfa.com, Googlebot:200:sanliurfa.com, Mediapartners-Google:200:sanliurfa.com, AdsBot-Google:200:sanliurfa.com, Googlebot:200:sanliurfa.com, Mediapartners-Google:200:www.sanliurfa.com, AdsBot-Google:200:www.sanliurfa.com, Googlebot:200:www.sanliurfa.com` |
 | live adsense meta | ok | `200 https://sanliurfa.com/` |
-| live adsense loader script | ok | `200 https://sanliurfa.com/` |
+| live adsense loader script | failed | `200 https://sanliurfa.com/` |
 | live robots adsense crawler | ok | `200 https://sanliurfa.com/robots.txt` |

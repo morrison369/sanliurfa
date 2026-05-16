@@ -21,8 +21,6 @@ const richResults = readJsonSafe('docs/blog-draft-rich-results-report.json', {})
 const draftQuality = readJsonSafe('docs/blog-draft-quality-report.json', {});
 const llmsSitemap = readJsonSafe('docs/llms-sitemap-auto-update-gate.json', {});
 const keywordResearch = readJsonSafe('docs/blog-keyword-research-report.json', {});
-const pagespeedApi = readJsonSafe('docs/pagespeed-api-research-report.json', {});
-const pagespeedLive = readJsonSafe('docs/pagespeed-live-check-report.json', {});
 
 const richOkSlugs = new Set(
   Array.isArray(richResults?.results)
@@ -72,7 +70,6 @@ if (applySummary?.autoPublish !== false) issues.push('autopublish-not-false');
 if (richResults?.status !== 'ok') issues.push('rich-results-not-ok');
 if (draftQuality?.status !== 'ok') issues.push('draft-quality-not-ok');
 if (llmsSitemap?.status !== 'ok') issues.push('llms-sitemap-not-ok');
-if (pagespeedApi?.status !== 'ok') issues.push('pagespeed-api-not-ok');
 if (drafts.some((draft) => !draft.richResultsOk)) issues.push('draft-rich-results-missing');
 if (drafts.some((draft) => draft.wordCount < 1200)) issues.push('draft-word-count-under-1200');
 if (
@@ -115,9 +112,6 @@ const report = {
     draftQualityOk: draftQuality?.summary?.ok ?? 0,
     selectedTopics: selectedTopics.length,
     llmsSitemapStatus: llmsSitemap?.status ?? 'not-run',
-    pagespeedApiStatus: pagespeedApi?.status ?? 'not-run',
-    pagespeedLiveStatus: pagespeedLive?.status ?? 'not-run',
-    pagespeedQuotaLimited: pagespeedLive?.summary?.quotaLimited ?? 0,
   },
   issues,
   drafts,
@@ -145,8 +139,6 @@ fs.writeFileSync(
     `- Rich results OK: ${report.summary.richResultsOk}`,
     `- Draft quality OK: ${report.summary.draftQualityOk}`,
     `- LLMS/Sitemap: ${report.summary.llmsSitemapStatus}`,
-    `- PageSpeed API: ${report.summary.pagespeedApiStatus}`,
-    `- PageSpeed live: ${report.summary.pagespeedLiveStatus} (quota-limited=${report.summary.pagespeedQuotaLimited})`,
     '',
     '## Policy',
     '',

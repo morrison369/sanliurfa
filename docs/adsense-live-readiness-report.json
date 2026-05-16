@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-05-15T12:06:48.678Z",
+  "generatedAt": "2026-05-16T02:04:50.788Z",
   "mode": "live",
   "baseUrl": "https://sanliurfa.com",
-  "status": "passed",
+  "status": "failed",
   "checks": [
     {
       "name": "public ads.txt exists",
@@ -61,7 +61,7 @@
     },
     {
       "name": "live adsense loader script",
-      "ok": true,
+      "ok": false,
       "detail": "200 https://sanliurfa.com/"
     },
     {

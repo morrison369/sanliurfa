@@ -52,7 +52,7 @@ export const GET: APIRoute = async ({ locals, request }) => {
   const adsenseSummary = await getAdSenseAdminSummary();
   const actions = Array.isArray(nextActions?.actions) ? nextActions.actions : [];
   const dbAction = findAction(actions, 'database');
-  const pagespeedAction = findAction(actions, 'pagespeed');
+  const lighthouseAction = findAction(actions, 'pagespeed');
   const adsenseAction = findAction(actions, 'adsense');
   const storageAction = findAction(actions, 'storage');
 
@@ -113,14 +113,14 @@ export const GET: APIRoute = async ({ locals, request }) => {
       href: '/admin/social-risk',
     },
     {
-      key: 'pagespeed',
-      label: 'PageSpeed',
-      status: metrics?.pagespeedQuotaManagement?.status || 'unknown',
-      tone: statusTone(metrics?.pagespeedQuotaManagement?.status),
-      metric: metrics?.pagespeedLiveCheck?.quotaLimited ? 'Kota' : 'OK',
-      detail: `live=${metrics?.pagespeedLiveCheck?.status ?? 'not-run'} · quota=${metrics?.pagespeedLiveCheck?.quotaLimited ?? 0} · ${metrics?.pagespeedApiLessLighthouse?.reviewClassification ?? 'classification=n/a'}`,
-      command: pagespeedAction?.command || 'npm run -s pagespeed:api-less',
-      nextDue: pagespeedAction?.dueAfter || null,
+      key: 'lighthouse',
+      label: 'Lighthouse CI',
+      status: metrics?.pagespeedApiLessLighthouse?.status || 'unknown',
+      tone: statusTone(metrics?.pagespeedApiLessLighthouse?.status),
+      metric: metrics?.pagespeedApiLessLighthouse?.performance != null ? String(metrics.pagespeedApiLessLighthouse.performance) : 'OK',
+      detail: `${metrics?.pagespeedApiLessLighthouse?.reviewClassification ?? 'classification=n/a'}`,
+      command: lighthouseAction?.command || 'npm run -s lighthouse:ci',
+      nextDue: lighthouseAction?.dueAfter || null,
       href: '/admin/release-readiness',
     },
     {

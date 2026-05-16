@@ -21,7 +21,7 @@ const steps = [
   'npm run -s blog:keyword:research',
   'npm run -s blog:duplicate-risk:gate',
   'npm run -s content:agents:drafts:report',
-  'npm run -s pagespeed:api-less',
+  'npm run -s lighthouse:ci',
   'npm run -s adsense:readiness:live',
   'npm run -s publisher:center:readiness:live',
   'npm run -s quality:reports:refresh',

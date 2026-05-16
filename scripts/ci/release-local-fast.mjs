@@ -7,7 +7,7 @@ const steps = [
   'npm run -s media:readiness',
   'npm run -s admin:strict-role:gate',
   'npm run -s blog:duplicate-risk:gate',
-  'npm run -s pagespeed:api-less',
+  'npm run -s lighthouse:ci',
   'npm run -s adsense:readiness:live',
   'npm run -s publisher:center:readiness:live',
   'npm run -s home:images:html:prod',

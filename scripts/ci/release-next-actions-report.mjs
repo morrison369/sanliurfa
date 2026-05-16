@@ -26,7 +26,6 @@ const localMediaStorage = readJsonSafe('docs/local-media-storage-gate.json');
 const adsenseLive = readJsonSafe('docs/adsense-live-readiness-report.json');
 const scriptCanonical = readJsonSafe('docs/script-canonical-surface-report.json');
 const cronReadiness = readJsonSafe('docs/cron-readiness-report.json');
-const pagespeedQuota = readJsonSafe('docs/pagespeed-quota-management-report.json');
 
 const actions = [];
 const now = Date.now();
@@ -158,21 +157,6 @@ if (scriptCanonical?.status) {
   });
 }
 
-if (pagespeedQuota?.status) {
-  const quotaLimited = Number(pagespeedQuota?.liveCheck?.quotaLimited ?? 0);
-  const liveOk = pagespeedQuota.status === 'managed_live_ok';
-  actions.push({
-    priority: quotaLimited > 0 ? 'P2' : 'P3',
-    area: 'pagespeed',
-    title: quotaLimited > 0 ? 'PageSpeed live quota yenilenince tekrar kontrol et' : 'PageSpeed quota kanıtını periyodik tazele',
-    status: liveOk || quotaLimited === 0 ? 'ok' : 'observed',
-    blocker: null,
-    dueAfter: pagespeedQuota?.nextRetryAt || null,
-    destructive: false,
-    command: 'npm run -s pagespeed:live && npm run -s pagespeed:quota:management',
-    detail: `quotaLimited=${quotaLimited}, live=${pagespeedQuota?.liveCheck?.status || 'unknown'}, service=${pagespeedQuota?.service?.enabled ? 'enabled' : 'review'}. Quota-limited advisory; release blocker değil.`,
-  });
-}
 
 if (cronReadiness?.status !== 'ok') {
   actions.push({

@@ -1,8 +1,8 @@
 # Script Canonical Surface Report
 
-- Generated at: 2026-05-15T12:07:46.713Z
+- Generated at: 2026-05-16T01:54:09.408Z
 - Status: ok
-- Total scripts: 370
+- Total scripts: 371
 - Families: 65
 - Missing canonical commands: 0
 

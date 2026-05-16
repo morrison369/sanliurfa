@@ -1,6 +1,6 @@
 # Local Media Storage Gate
 
-- Generated at: 2026-05-15T12:07:48.669Z
+- Generated at: 2026-05-16T01:54:00.840Z
 - Status: ok
 - Local storage only: yes
 - External object storage configured: no

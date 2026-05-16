@@ -154,10 +154,7 @@ const blogDraftQuality = readJsonSafe('docs/blog-draft-quality-report.json');
 const blogDraftRichResults = readJsonSafe('docs/blog-draft-rich-results-report.json');
 const blogPublishReadiness = readJsonSafe('docs/blog-publish-readiness-report.json');
 const blogAdminPublishQueue = readJsonSafe('docs/blog-admin-publish-queue-report.json');
-const pagespeedApiResearch = readJsonSafe('docs/pagespeed-api-research-report.json');
 const pagespeedApiLessLighthouse = readJsonSafe('docs/pagespeed-api-less-lighthouse-report.json');
-const pagespeedLiveCheck = readJsonSafe('docs/pagespeed-live-check-report.json');
-const pagespeedQuotaManagement = readJsonSafe('docs/pagespeed-quota-management-report.json');
 const backendFrontendImprovements = readJsonSafe('docs/backend-frontend-improvement-report.json');
 const socialUxReport = readJsonSafe('docs/social-ux-report.json');
 const adminStrictRoleGate = readJsonSafe('docs/admin-strict-role-gate.json');
@@ -238,12 +235,7 @@ const metrics = {
     ),
     blogAdminPublishQueueOk: ['ready_for_admin_review', 'published'].includes(blogAdminPublishQueue?.status),
     dbAdvisoryEvidenceOk: ['observation_required', 'manual_review_ready'].includes(dbAdvisoryEvidence?.status),
-    pagespeedApiResearchOk: pagespeedApiResearch?.status === 'ok',
     pagespeedApiLessLighthouseOk: ['ok', 'review'].includes(pagespeedApiLessLighthouse?.status),
-    pagespeedLiveCheckOk: ['ok', 'review'].includes(pagespeedLiveCheck?.status),
-    pagespeedQuotaManagementOk: ['managed_live_ok', 'managed_with_live_quota_review'].includes(
-      pagespeedQuotaManagement?.status,
-    ),
     backendFrontendImprovementsOk: backendFrontendImprovements?.status === 'ok',
     socialUxReportOk: socialUxReport?.status === 'ok',
     blogDraftApplyOk:
@@ -733,15 +725,6 @@ const metrics = {
         autoPublish: blogDuplicateRiskGate?.policy?.autoPublish ?? true,
       }
     : null,
-  pagespeedLiveCheck: pagespeedLiveCheck
-    ? {
-        status: pagespeedLiveCheck.status ?? 'unknown',
-        checks: pagespeedLiveCheck?.summary?.checks ?? 0,
-        ok: pagespeedLiveCheck?.summary?.ok ?? 0,
-        review: pagespeedLiveCheck?.summary?.review ?? 0,
-        quotaLimited: pagespeedLiveCheck?.summary?.quotaLimited ?? 0,
-      }
-    : null,
   pagespeedApiLessLighthouse: pagespeedApiLessLighthouse
     ? {
         status: pagespeedApiLessLighthouse.status ?? 'unknown',
@@ -755,15 +738,6 @@ const metrics = {
         seo: pagespeedApiLessLighthouse?.results?.[0]?.scores?.seo ?? null,
         reviewClassification: pagespeedApiLessLighthouse?.results?.[0]?.reviewClassification?.bestPractices?.classification ?? null,
         externalExpectedReview: pagespeedApiLessLighthouse?.results?.[0]?.reviewClassification?.bestPractices?.classification === 'external_expected_review',
-      }
-    : null,
-  pagespeedQuotaManagement: pagespeedQuotaManagement
-    ? {
-        status: pagespeedQuotaManagement.status ?? 'unknown',
-        managementMarked: pagespeedQuotaManagement.managementMarked ?? false,
-        quotaManagementCompleted: pagespeedQuotaManagement.quotaManagementCompleted ?? false,
-        liveStatus: pagespeedQuotaManagement?.liveCheck?.status ?? 'unknown',
-        quotaLimited: pagespeedQuotaManagement?.liveCheck?.quotaLimited ?? 0,
       }
     : null,
   backendFrontendImprovements: backendFrontendImprovements
@@ -925,14 +899,8 @@ const summary = [
   ...(metrics.blogAdminPublishQueue
     ? [`- Blog admin publish queue: ${metrics.blogAdminPublishQueue.status} (${metrics.blogAdminPublishQueue.draftCount} drafts, quality=${metrics.blogAdminPublishQueue.qualityOk}, rich=${metrics.blogAdminPublishQueue.richResultsOk}, issues=${metrics.blogAdminPublishQueue.issues})`]
     : []),
-  ...(metrics.pagespeedLiveCheck
-    ? [`- PageSpeed live check: ${metrics.pagespeedLiveCheck.status} (${metrics.pagespeedLiveCheck.ok}/${metrics.pagespeedLiveCheck.checks} ok, review=${metrics.pagespeedLiveCheck.review}, quota-limited=${metrics.pagespeedLiveCheck.quotaLimited})`]
-    : []),
   ...(metrics.pagespeedApiLessLighthouse
     ? [`- PageSpeed API-less Lighthouse: ${metrics.pagespeedApiLessLighthouse.status} (${metrics.pagespeedApiLessLighthouse.ok}/${metrics.pagespeedApiLessLighthouse.checks} ok, review=${metrics.pagespeedApiLessLighthouse.review}, failed=${metrics.pagespeedApiLessLighthouse.failed}, api=${metrics.pagespeedApiLessLighthouse.apiUsed ? 'yes' : 'no'}, perf=${metrics.pagespeedApiLessLighthouse.performance ?? 'n/a'}, best=${metrics.pagespeedApiLessLighthouse.bestPractices ?? 'n/a'}, seo=${metrics.pagespeedApiLessLighthouse.seo ?? 'n/a'}, classification=${metrics.pagespeedApiLessLighthouse.reviewClassification ?? 'n/a'})`]
-    : []),
-  ...(metrics.pagespeedQuotaManagement
-    ? [`- PageSpeed quota management: ${metrics.pagespeedQuotaManagement.status} (marked=${metrics.pagespeedQuotaManagement.managementMarked ? 'yes' : 'no'}, completed=${metrics.pagespeedQuotaManagement.quotaManagementCompleted ? 'yes' : 'no'}, live=${metrics.pagespeedQuotaManagement.liveStatus}, quota-limited=${metrics.pagespeedQuotaManagement.quotaLimited})`]
     : []),
   ...(metrics.backendFrontendImprovements
     ? [`- Backend/frontend improvements: ${metrics.backendFrontendImprovements.status} (${metrics.backendFrontendImprovements.passed}/${metrics.backendFrontendImprovements.total} checks, backend=${metrics.backendFrontendImprovements.backendPassed}/${metrics.backendFrontendImprovements.backendTotal}, frontend=${metrics.backendFrontendImprovements.frontendPassed}/${metrics.backendFrontendImprovements.frontendTotal})`]

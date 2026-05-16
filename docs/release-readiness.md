@@ -1,6 +1,6 @@
 # Release Readiness
 
-- Generated At: 2026-05-15T12:08:15.833Z
+- Generated At: 2026-05-16T02:05:07.017Z
 - Status: ready_with_advisories
 - OpenAPI P0 Total Missing: 0
 - Migration Duplicate Number Groups: 3
@@ -56,10 +56,7 @@
 | Blog publish readiness report | ok | `docs/blog-publish-readiness-report.json` |
 | Blog admin publish queue report | ok | `docs/blog-admin-publish-queue-report.json` |
 | Publish all content drafts report | ok | `docs/publish-all-content-drafts-report.json` |
-| PageSpeed API research report | ok | `docs/pagespeed-api-research-report.json` |
-| PageSpeed API-less Lighthouse report | ok | `docs/pagespeed-api-less-lighthouse-report.json` |
-| PageSpeed live check report | ok | `docs/pagespeed-live-check-report.json` |
-| PageSpeed quota management report | ok | `docs/pagespeed-quota-management-report.json` |
+| Lighthouse CI report | ok | `docs/pagespeed-api-less-lighthouse-report.json` |
 | Backend/frontend improvement report | ok | `docs/backend-frontend-improvement-report.json` |
 | Unit skip report | ok | `docs/unit-skip-report.json` |
 | Image manifest | ok | `public/images/image-manifest.json` |
@@ -80,12 +77,12 @@
 |---|---|---|---|
 | Immutable migration duplicate baseline | info | 3 duplicate number group(s), 14 duplicate slug group(s). Dosya rename prod schema_migrations versiyonlarını etkileyebileceği için docs/MIGRATION_DUPLICATE_REMEDIATION.md planıyla yönetilmeli. Baseline ile birebir eşleşiyor; yeni regresyon yok. | `docs/migration-duplicate-report.json` |
 | Migration duplicate drift | info | Duplicate baseline uyumlu; 3 number group, 14 slug group immutable baseline içinde. | `docs/migration-duplicate-drift-report.json` |
-| Script canonical surface | info | 15 canonical command, 0 missing, 370 total package scripts. | `docs/script-canonical-surface-report.json` |
+| Script canonical surface | info | 15 canonical command, 0 missing, 371 total package scripts. | `docs/script-canonical-surface-report.json` |
 | Blog duplicate risk gate | info | 0 selected duplicate-risk topic; 43 duplicate-risk topic skipped, auto-publish kapali. | `docs/blog-duplicate-risk-gate.json` |
 | Build artifact budget snapshot | info | dist/client 14.64 MB, _astro budget uyumlu. | `docs/build-artifact-report.json` |
 | Release next actions | info | 7 aksiyon, 0 kanıt/gözlem bekleyen madde. | `docs/release-next-actions-report.json` |
 | Release artifact freshness | info | passed; stale/missing=0, max age=180 minutes. | `docs/release-artifact-freshness.json` |
-| Release handoff summary | info | Generated at 2026-05-15T12:05:13.615Z; status=ready_with_advisories, local-storage=ok, pagespeed-api-less=review. | `docs/release-handoff-summary.json` |
+| Release handoff summary | info | Generated at 2026-05-15T12:08:16.602Z; status=ready_with_advisories, local-storage=ok, lighthouse-ci=review. | `docs/release-handoff-summary.json` |
 | Unit tests | info | 381/381 test file, 4957/4957 test passed. | `docs/unit-test-report.json` |
 | API contract groups | info | 11 API contract group passed. | `docs/api-contract-group-report.json` |
 | API release gate report | info | 5/5 API release checks passed. | `docs/api-release-gate-report.json` |
@@ -111,7 +108,7 @@
 | Local upload candidate classification | info | 0 candidate: 0 observed, 0 archive candidate, 0 delete-review. Otomatik silme yok. | `docs/local-upload-candidate-classification.json` |
 | Local upload archive candidates | info | 0 manual archive PR candidate, 0 delete-review. Otomatik silme yok. | `docs/local-upload-archive-candidates.json` |
 | Local media storage gate | info | local-only=yes, external-object-storage=no, live checks=5/5, failed patterns=0. | `docs/local-media-storage-gate.json` |
-| Static image integrity gate | info | 200 local public image checked; failed=0, review=0. CDN/object-storage varsayımı yok. | `docs/static-image-integrity-report.json` |
+| Static image integrity gate | info | 209 local public image checked; failed=0, review=0. CDN/object-storage varsayımı yok. | `docs/static-image-integrity-report.json` |
 | Media readiness | info | 5/5 media checks passed; uploads=928, public-images=200, local-storage-only=yes. | `docs/media-readiness-report.json` |
 | Admin strict role gate | info | 32/32 high-impact admin endpoint strict role checks passed; review=0. | `docs/admin-strict-role-gate.json` |
 | Unit skip report | info | 0 skipped test file, 0 skipped test, 0 undocumented skip declaration. | `docs/unit-skip-report.json` |
@@ -124,10 +121,7 @@
 | Blog publish readiness | info | 40 blog draft prod ortamda published/existing; issues=0, autoPublish=false. | `docs/blog-publish-readiness-report.json` |
 | Blog admin publish queue | info | 40 blog draft admin review kuyrugunda; quality=40, rich=40, autoPublish=false. | `docs/blog-admin-publish-queue-report.json` |
 | Publish all content drafts | info | 0 draft-like content remains; city_content_drafts updated=0, moderation auto-approved=no. | `docs/publish-all-content-drafts-report.json` |
-| PageSpeed API research | info | PageSpeed API service enabled=yes, local-storage policy=documented. | `docs/pagespeed-api-research-report.json` |
-| PageSpeed API-less Lighthouse | info | 0/1 Lighthouse CLI check ok; API used=no, status=review, perf=0.85, best=0.77, seo=1. | `docs/pagespeed-api-less-lighthouse-report.json` |
-| PageSpeed live check | advisory | 0/0 live checks ok; quota-limited=1. | `docs/pagespeed-live-check-report.json` |
-| PageSpeed quota management | info | Quota management marked=yes, completed=yes, live status=review, quota-limited=1. | `docs/pagespeed-quota-management-report.json` |
+| Lighthouse CI report | info | 0/1 Lighthouse CLI check ok; API used=no, status=review, perf=0.85, best=0.77, seo=1. | `docs/pagespeed-api-less-lighthouse-report.json` |
 | Backend/frontend improvements | info | 14/14 improvement checks passed; backend=9/9, frontend=5/5. | `docs/backend-frontend-improvement-report.json` |
 
 ## DB P0 Advisory Detail

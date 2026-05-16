@@ -71,10 +71,7 @@ const checks = [
   { name: 'Blog publish readiness report', ok: exists('docs/blog-publish-readiness-report.json'), artifact: 'docs/blog-publish-readiness-report.json' },
   { name: 'Blog admin publish queue report', ok: exists('docs/blog-admin-publish-queue-report.json'), artifact: 'docs/blog-admin-publish-queue-report.json' },
   { name: 'Publish all content drafts report', ok: exists('docs/publish-all-content-drafts-report.json'), artifact: 'docs/publish-all-content-drafts-report.json' },
-  { name: 'PageSpeed API research report', ok: exists('docs/pagespeed-api-research-report.json'), artifact: 'docs/pagespeed-api-research-report.json' },
-  { name: 'PageSpeed API-less Lighthouse report', ok: exists('docs/pagespeed-api-less-lighthouse-report.json'), artifact: 'docs/pagespeed-api-less-lighthouse-report.json' },
-  { name: 'PageSpeed live check report', ok: exists('docs/pagespeed-live-check-report.json'), artifact: 'docs/pagespeed-live-check-report.json' },
-  { name: 'PageSpeed quota management report', ok: exists('docs/pagespeed-quota-management-report.json'), artifact: 'docs/pagespeed-quota-management-report.json' },
+  { name: 'Lighthouse CI report', ok: exists('docs/pagespeed-api-less-lighthouse-report.json'), artifact: 'docs/pagespeed-api-less-lighthouse-report.json' },
   { name: 'Backend/frontend improvement report', ok: exists('docs/backend-frontend-improvement-report.json'), artifact: 'docs/backend-frontend-improvement-report.json' },
   { name: 'Unit skip report', ok: exists('docs/unit-skip-report.json'), artifact: 'docs/unit-skip-report.json' },
   { name: 'Image manifest', ok: exists('public/images/image-manifest.json'), artifact: 'public/images/image-manifest.json' },
@@ -127,10 +124,7 @@ const blogDraftQuality = readJsonSafe('docs/blog-draft-quality-report.json');
 const blogPublishReadiness = readJsonSafe('docs/blog-publish-readiness-report.json');
 const blogAdminPublishQueue = readJsonSafe('docs/blog-admin-publish-queue-report.json');
 const publishAllContentDrafts = readJsonSafe('docs/publish-all-content-drafts-report.json');
-const pagespeedApiResearch = readJsonSafe('docs/pagespeed-api-research-report.json');
-const pagespeedApiLessLighthouse = readJsonSafe('docs/pagespeed-api-less-lighthouse-report.json');
-const pagespeedLiveCheck = readJsonSafe('docs/pagespeed-live-check-report.json');
-const pagespeedQuotaManagement = readJsonSafe('docs/pagespeed-quota-management-report.json');
+const lighthouseCi = readJsonSafe('docs/pagespeed-api-less-lighthouse-report.json');
 const backendFrontendImprovements = readJsonSafe('docs/backend-frontend-improvement-report.json');
 const migrationDuplicates = readJsonSafe('docs/migration-duplicate-report.json');
 const migrationDuplicateBaseline = readJsonSafe('docs/migration-duplicate-baseline.json');
@@ -245,7 +239,7 @@ if (releaseHandoffSummary?.generatedAt) {
   notes.push({
     name: 'Release handoff summary',
     severity: 'info',
-    detail: `Generated at ${releaseHandoffSummary.generatedAt}; status=${releaseHandoffSummary.releaseStatus || 'unknown'}, local-storage=${releaseHandoffSummary.gates?.localMediaStorage || 'unknown'}, pagespeed-api-less=${releaseHandoffSummary.gates?.pagespeedApiLessLighthouse || 'unknown'}.`,
+    detail: `Generated at ${releaseHandoffSummary.generatedAt}; status=${releaseHandoffSummary.releaseStatus || 'unknown'}, local-storage=${releaseHandoffSummary.gates?.localMediaStorage || 'unknown'}, lighthouse-ci=${releaseHandoffSummary.gates?.pagespeedApiLessLighthouse || 'unknown'}.`,
     artifact: 'docs/release-handoff-summary.json',
   });
 }
@@ -646,39 +640,12 @@ if (publishAllContentDrafts?.status) {
   });
 }
 
-if (pagespeedApiResearch?.status) {
+if (lighthouseCi?.status) {
   notes.push({
-    name: 'PageSpeed API research',
-    severity: pagespeedApiResearch.status === 'ok' ? 'info' : 'advisory',
-    detail: `PageSpeed API service enabled=${pagespeedApiResearch?.service?.enabled ? 'yes' : 'no'}, local-storage policy=${pagespeedApiResearch?.usagePolicy?.localStorageRule ? 'documented' : 'missing'}.`,
-    artifact: 'docs/pagespeed-api-research-report.json',
-  });
-}
-
-if (pagespeedApiLessLighthouse?.status) {
-  notes.push({
-    name: 'PageSpeed API-less Lighthouse',
-    severity: pagespeedApiLessLighthouse.status === 'failed' ? 'advisory' : 'info',
-    detail: `${pagespeedApiLessLighthouse?.summary?.ok ?? 0}/${pagespeedApiLessLighthouse?.summary?.checks ?? 0} Lighthouse CLI check ok; API used=${pagespeedApiLessLighthouse.apiUsed ? 'yes' : 'no'}, status=${pagespeedApiLessLighthouse.status}, perf=${pagespeedApiLessLighthouse?.results?.[0]?.scores?.performance ?? 'n/a'}, best=${pagespeedApiLessLighthouse?.results?.[0]?.scores?.bestPractices ?? 'n/a'}, seo=${pagespeedApiLessLighthouse?.results?.[0]?.scores?.seo ?? 'n/a'}.`,
+    name: 'Lighthouse CI report',
+    severity: lighthouseCi.status === 'failed' ? 'advisory' : 'info',
+    detail: `${lighthouseCi?.summary?.ok ?? 0}/${lighthouseCi?.summary?.checks ?? 0} Lighthouse CLI check ok; API used=${lighthouseCi.apiUsed ? 'yes' : 'no'}, status=${lighthouseCi.status}, perf=${lighthouseCi?.results?.[0]?.scores?.performance ?? 'n/a'}, best=${lighthouseCi?.results?.[0]?.scores?.bestPractices ?? 'n/a'}, seo=${lighthouseCi?.results?.[0]?.scores?.seo ?? 'n/a'}.`,
     artifact: 'docs/pagespeed-api-less-lighthouse-report.json',
-  });
-}
-
-if (pagespeedLiveCheck?.status) {
-  notes.push({
-    name: 'PageSpeed live check',
-    severity: pagespeedLiveCheck.status === 'ok' ? 'info' : 'advisory',
-    detail: `${pagespeedLiveCheck?.summary?.ok ?? 0}/${pagespeedLiveCheck?.summary?.checks ?? 0} live checks ok; quota-limited=${pagespeedLiveCheck?.summary?.quotaLimited ?? 0}.`,
-    artifact: 'docs/pagespeed-live-check-report.json',
-  });
-}
-
-if (pagespeedQuotaManagement?.status) {
-  notes.push({
-    name: 'PageSpeed quota management',
-    severity: pagespeedQuotaManagement.status === 'review' ? 'advisory' : 'info',
-    detail: `Quota management marked=${pagespeedQuotaManagement.managementMarked ? 'yes' : 'no'}, completed=${pagespeedQuotaManagement.quotaManagementCompleted ? 'yes' : 'no'}, live status=${pagespeedQuotaManagement?.liveCheck?.status ?? 'unknown'}, quota-limited=${pagespeedQuotaManagement?.liveCheck?.quotaLimited ?? 0}.`,
-    artifact: 'docs/pagespeed-quota-management-report.json',
   });
 }
 

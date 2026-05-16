@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-15T12:08:15.833Z",
+  "generatedAt": "2026-05-16T02:05:07.017Z",
   "status": "ready_with_advisories",
   "checks": [
     {
@@ -233,24 +233,9 @@
       "artifact": "docs/publish-all-content-drafts-report.json"
     },
     {
-      "name": "PageSpeed API research report",
-      "ok": true,
-      "artifact": "docs/pagespeed-api-research-report.json"
-    },
-    {
-      "name": "PageSpeed API-less Lighthouse report",
+      "name": "Lighthouse CI report",
       "ok": true,
       "artifact": "docs/pagespeed-api-less-lighthouse-report.json"
-    },
-    {
-      "name": "PageSpeed live check report",
-      "ok": true,
-      "artifact": "docs/pagespeed-live-check-report.json"
-    },
-    {
-      "name": "PageSpeed quota management report",
-      "ok": true,
-      "artifact": "docs/pagespeed-quota-management-report.json"
     },
     {
       "name": "Backend/frontend improvement report",
@@ -319,7 +304,7 @@
     {
       "name": "Script canonical surface",
       "severity": "info",
-      "detail": "15 canonical command, 0 missing, 370 total package scripts.",
+      "detail": "15 canonical command, 0 missing, 371 total package scripts.",
       "artifact": "docs/script-canonical-surface-report.json"
     },
     {
@@ -349,7 +334,7 @@
     {
       "name": "Release handoff summary",
       "severity": "info",
-      "detail": "Generated at 2026-05-15T12:05:13.615Z; status=ready_with_advisories, local-storage=ok, pagespeed-api-less=review.",
+      "detail": "Generated at 2026-05-15T12:08:16.602Z; status=ready_with_advisories, local-storage=ok, lighthouse-ci=review.",
       "artifact": "docs/release-handoff-summary.json"
     },
     {
@@ -505,7 +490,7 @@
     {
       "name": "Static image integrity gate",
       "severity": "info",
-      "detail": "200 local public image checked; failed=0, review=0. CDN/object-storage varsayımı yok.",
+      "detail": "209 local public image checked; failed=0, review=0. CDN/object-storage varsayımı yok.",
       "artifact": "docs/static-image-integrity-report.json"
     },
     {
@@ -581,28 +566,10 @@
       "artifact": "docs/publish-all-content-drafts-report.json"
     },
     {
-      "name": "PageSpeed API research",
-      "severity": "info",
-      "detail": "PageSpeed API service enabled=yes, local-storage policy=documented.",
-      "artifact": "docs/pagespeed-api-research-report.json"
-    },
-    {
-      "name": "PageSpeed API-less Lighthouse",
+      "name": "Lighthouse CI report",
       "severity": "info",
       "detail": "0/1 Lighthouse CLI check ok; API used=no, status=review, perf=0.85, best=0.77, seo=1.",
       "artifact": "docs/pagespeed-api-less-lighthouse-report.json"
-    },
-    {
-      "name": "PageSpeed live check",
-      "severity": "advisory",
-      "detail": "0/0 live checks ok; quota-limited=1.",
-      "artifact": "docs/pagespeed-live-check-report.json"
-    },
-    {
-      "name": "PageSpeed quota management",
-      "severity": "info",
-      "detail": "Quota management marked=yes, completed=yes, live status=review, quota-limited=1.",
-      "artifact": "docs/pagespeed-quota-management-report.json"
     },
     {
       "name": "Backend/frontend improvements",

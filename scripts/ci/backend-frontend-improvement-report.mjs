@@ -75,10 +75,9 @@ const checks = [
   },
   {
     area: 'backend',
-    name: 'PageSpeed quota management tracked separately',
-    ok: metrics?.pagespeedQuotaManagement?.quotaManagementCompleted === true &&
-      metrics?.pagespeedQuotaManagement?.liveStatus === metrics?.pagespeedLiveCheck?.status,
-    detail: `quota-management=${metrics?.pagespeedQuotaManagement?.status ?? 'not-run'}; live=${metrics?.pagespeedLiveCheck?.status ?? 'not-run'}`,
+    name: 'Lighthouse CI tracked separately',
+    ok: ['ok', 'review'].includes(metrics?.pagespeedApiLessLighthouse?.status),
+    detail: `lighthouse-ci=${metrics?.pagespeedApiLessLighthouse?.status ?? 'not-run'}; perf=${metrics?.pagespeedApiLessLighthouse?.performance ?? 'n/a'}`,
   },
   {
     area: 'backend',
@@ -124,7 +123,7 @@ const checks = [
     name: 'Admin operations center coverage',
     ok: dashboard?.contentAgentDrafts &&
       dashboard?.gmapsDiscoveryDrafts &&
-      dashboard?.pagespeedQuotaManagement &&
+      dashboard?.pagespeedApiLessLighthouse &&
       exists('src/pages/admin/release-readiness.astro'),
     detail: `decision=${dashboard?.decision ?? 'not-run'}; content=${dashboard?.contentAgentDrafts?.status ?? 'not-run'}; gmaps=${dashboard?.gmapsDiscoveryDrafts?.status ?? 'not-run'}`,
   },

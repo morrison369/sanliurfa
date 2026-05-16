@@ -72,10 +72,7 @@ const publishAllContentDrafts = readJsonSafe('docs/publish-all-content-drafts-re
 const llmsSitemapAutoUpdate = readJsonSafe('docs/llms-sitemap-auto-update-gate.json');
 const blogDuplicateRiskGate = readJsonSafe('docs/blog-duplicate-risk-gate.json');
 const blogDraftRichResults = readJsonSafe('docs/blog-draft-rich-results-report.json');
-const pagespeedApiResearch = readJsonSafe('docs/pagespeed-api-research-report.json');
 const pagespeedApiLessLighthouse = readJsonSafe('docs/pagespeed-api-less-lighthouse-report.json');
-const pagespeedLiveCheck = readJsonSafe('docs/pagespeed-live-check-report.json');
-const pagespeedQuotaManagement = readJsonSafe('docs/pagespeed-quota-management-report.json');
 const backendFrontendImprovements = readJsonSafe('docs/backend-frontend-improvement-report.json');
 
 const result = {
@@ -139,17 +136,13 @@ const result = {
     llmsSitemapAutoUpdate: llmsSitemapAutoUpdate?.status ?? 'not-run',
     blogDuplicateRiskGate: blogDuplicateRiskGate?.status ?? 'not-run',
     blogDraftRichResults: blogDraftRichResults?.status ?? 'not-run',
-    pagespeedApiResearch: pagespeedApiResearch?.status ?? 'not-run',
     pagespeedApiLessLighthouse: pagespeedApiLessLighthouse?.status ?? 'not-run',
     pagespeedApiLessClassification:
       pagespeedApiLessLighthouse?.results?.[0]?.reviewClassification?.bestPractices?.classification ?? 'none',
     pagespeedApiLessExternalExpected:
       pagespeedApiLessLighthouse?.results?.[0]?.reviewClassification?.bestPractices?.classification ===
       'external_expected_review',
-    pagespeedLiveCheck: pagespeedLiveCheck?.status ?? 'not-run',
-    pagespeedQuotaManagement: pagespeedQuotaManagement?.status ?? 'not-run',
     backendFrontendImprovements: backendFrontendImprovements?.status ?? 'not-run',
-    pagespeedQuotaLimited: pagespeedLiveCheck?.summary?.quotaLimited ?? 0,
     searchZeroUnresolved: searchZeroResult?.summary?.unresolvedCount ?? 0,
   },
   qualityRefresh: {
@@ -495,12 +488,6 @@ const result = {
         autoPublish: blogDuplicateRiskGate?.policy?.autoPublish ?? true,
       }
     : null,
-  pagespeedApiResearch: pagespeedApiResearch
-    ? {
-        status: pagespeedApiResearch.status ?? 'unknown',
-        enabled: pagespeedApiResearch?.service?.enabled ?? false,
-      }
-    : null,
   pagespeedApiLessLighthouse: pagespeedApiLessLighthouse
     ? {
         status: pagespeedApiLessLighthouse.status ?? 'unknown',
@@ -528,24 +515,6 @@ const result = {
         review: adminStrictRoleGate?.summary?.review ?? 0,
       }
     : null,
-  pagespeedLiveCheck: pagespeedLiveCheck
-    ? {
-        status: pagespeedLiveCheck.status ?? 'unknown',
-        checks: pagespeedLiveCheck?.summary?.checks ?? 0,
-        ok: pagespeedLiveCheck?.summary?.ok ?? 0,
-        review: pagespeedLiveCheck?.summary?.review ?? 0,
-        quotaLimited: pagespeedLiveCheck?.summary?.quotaLimited ?? 0,
-      }
-    : null,
-  pagespeedQuotaManagement: pagespeedQuotaManagement
-    ? {
-        status: pagespeedQuotaManagement.status ?? 'unknown',
-        managementMarked: pagespeedQuotaManagement.managementMarked ?? false,
-        quotaManagementCompleted: pagespeedQuotaManagement.quotaManagementCompleted ?? false,
-        liveStatus: pagespeedQuotaManagement?.liveCheck?.status ?? 'unknown',
-        quotaLimited: pagespeedQuotaManagement?.liveCheck?.quotaLimited ?? 0,
-      }
-    : null,
   backendFrontendImprovements: backendFrontendImprovements
     ? {
         status: backendFrontendImprovements.status ?? 'unknown',
@@ -568,10 +537,6 @@ const result = {
 };
 const pagespeedApiLessExpectedExternal =
   result.pagespeedApiLessLighthouse?.externalExpectedReview === true;
-const pagespeedLiveQuotaManaged =
-  result.pagespeedLiveCheck?.status === 'review' &&
-  result.pagespeedLiveCheck?.quotaLimited > 0 &&
-  result.pagespeedQuotaManagement?.quotaManagementCompleted === true;
 const releaseHandoffOnlyExpectedExternal =
   result.releaseHandoffSummary?.releaseStatus === 'ready_with_advisories' &&
   result.releaseHandoffSummary?.pagespeedApiLessLighthouse === 'review' &&
@@ -616,7 +581,6 @@ const blockers = [
   result.llmsSitemapAutoUpdate?.status && result.llmsSitemapAutoUpdate.status !== 'ok',
   result.blogDraftRichResults?.status && result.blogDraftRichResults.status !== 'ok',
   result.blogDuplicateRiskGate?.status && result.blogDuplicateRiskGate.status !== 'ok',
-  result.pagespeedApiResearch?.status && result.pagespeedApiResearch.status !== 'ok',
   result.pagespeedApiLessLighthouse?.status && result.pagespeedApiLessLighthouse.status === 'failed',
 ];
 const advisories = [
@@ -643,7 +607,6 @@ const advisories = [
   result.contentAgentDrafts?.status === 'review',
   result.publishAllContentDrafts?.moderationPending > 0,
   result.blogDuplicateRiskGate?.status && result.blogDuplicateRiskGate.status !== 'ok',
-  result.pagespeedLiveCheck?.status === 'review' && !pagespeedLiveQuotaManaged,
   result.pagespeedApiLessLighthouse?.status === 'review' && !pagespeedApiLessExpectedExternal,
   result.e2eSkips.undocumentedCount > 0,
 ];
@@ -655,7 +618,7 @@ result.advisoryReasons = [
     ? [{ code: 'release-next-actions-advisory', detail: `${result.releaseNextActions.blockingActionCount} aksiyon kanıt/gözlem bekliyor.` }]
     : []),
   ...(result.releaseHandoffSummary?.releaseStatus === 'ready_with_advisories' && !releaseHandoffOnlyExpectedExternal
-    ? [{ code: 'release-handoff-advisory', detail: `Handoff status=${result.releaseHandoffSummary.releaseStatus}; local-storage=${result.releaseHandoffSummary.localMediaStorage}, pagespeed-api-less=${result.releaseHandoffSummary.pagespeedApiLessLighthouse}.` }]
+    ? [{ code: 'release-handoff-advisory', detail: `Handoff status=${result.releaseHandoffSummary.releaseStatus}; local-storage=${result.releaseHandoffSummary.localMediaStorage}, lighthouse-ci=${result.releaseHandoffSummary.pagespeedApiLessLighthouse}.` }]
     : []),
   ...(result.gateSummary.e2eStatus === 'not-run'
     ? [{ code: 'e2e-not-run', detail: 'E2E raporu henuz uretilmemis.' }]
@@ -725,9 +688,6 @@ result.advisoryReasons = [
     : []),
   ...(result.blogDuplicateRiskGate?.status && result.blogDuplicateRiskGate.status !== 'ok'
     ? [{ code: 'blog-duplicate-risk', detail: `${result.blogDuplicateRiskGate.selectedDuplicateRisk} selected duplicate-risk topic; auto-publish=${result.blogDuplicateRiskGate.autoPublish ? 'yes' : 'no'}.` }]
-    : []),
-  ...(result.pagespeedLiveCheck?.status === 'review' && !pagespeedLiveQuotaManaged
-    ? [{ code: 'pagespeed-live-review', detail: `${result.pagespeedLiveCheck.ok}/${result.pagespeedLiveCheck.checks} PageSpeed live check ok; quota-limited=${result.pagespeedLiveCheck.quotaLimited}.` }]
     : []),
   ...(result.pagespeedApiLessLighthouse?.status === 'review' && !pagespeedApiLessExpectedExternal
     ? [{ code: 'pagespeed-api-less-review', detail: `${result.pagespeedApiLessLighthouse.ok}/${result.pagespeedApiLessLighthouse.checks} Lighthouse CLI check ok; api=${result.pagespeedApiLessLighthouse.apiUsed ? 'yes' : 'no'}, perf=${result.pagespeedApiLessLighthouse.performance ?? 'n/a'}, classification=${result.pagespeedApiLessLighthouse.reviewClassification || 'none'}.` }]

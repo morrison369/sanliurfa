@@ -1,6 +1,6 @@
 # DB Index Review Plan
 
-- Generated at: 2026-05-15T12:07:47.618Z
+- Generated at: 2026-05-16T01:53:58.108Z
 - Status: advisory
 - Reviewable indexes: 766
 - High risk keep/review: 505

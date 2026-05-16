@@ -262,10 +262,6 @@ type ReadinessDashboard = {
   ok?: number;
   review?: number;
  } | null;
- pagespeedApiResearch?: {
-  status?: string;
-  enabled?: boolean;
- } | null;
  pagespeedApiLessLighthouse?: {
   status?: string;
   checks?: number;
@@ -285,20 +281,6 @@ type ReadinessDashboard = {
   checked?: number;
   ok?: number;
   review?: number;
- } | null;
- pagespeedLiveCheck?: {
-  status?: string;
-  checks?: number;
-  ok?: number;
-  review?: number;
-  quotaLimited?: number;
- } | null;
- pagespeedQuotaManagement?: {
-  status?: string;
-  managementMarked?: boolean;
-  quotaManagementCompleted?: boolean;
-  liveStatus?: string;
-  quotaLimited?: number;
  } | null;
  searchZeroResult?: {
   status?: string;
@@ -428,9 +410,7 @@ const sectionsActive = homepageSectionSummary.filter(s => s.enabled).length;
    { label: 'İçerik Draft', value: String(dashboard.contentAgentDrafts?.pending ?? '—'), icon: 'lucide:file-pen-line', color: dashboard.contentAgentDrafts?.status === 'ok' && dashboard.contentAgentDrafts?.pending === 0 && dashboard.contentAgentDrafts?.autoPublish === false ? 'emerald' : 'amber' },
    { label: 'Toplu Yayın', value: String(dashboard.publishAllContentDrafts?.remainingDraftLike ?? '—'), icon: 'lucide:send-horizontal', color: dashboard.publishAllContentDrafts?.status === 'ok' && dashboard.publishAllContentDrafts?.remainingDraftLike === 0 ? 'emerald' : 'amber' },
    { label: 'Rich Results', value: `${dashboard.blogDraftRichResults?.ok ?? '—'}/${dashboard.blogDraftRichResults?.drafts ?? '—'}`, icon: 'lucide:sparkles', color: dashboard.blogDraftRichResults?.status === 'ok' ? 'emerald' : 'amber' },
-   { label: 'PageSpeed', value: dashboard.pagespeedLiveCheck?.status || '—', icon: 'lucide:gauge', color: dashboard.pagespeedLiveCheck?.status === 'ok' ? 'emerald' : dashboard.pagespeedLiveCheck?.quotaLimited ? 'amber' : 'rose' },
-   { label: 'PS API-less', value: dashboard.pagespeedApiLessLighthouse?.externalExpectedReview ? 'expected' : dashboard.pagespeedApiLessLighthouse?.performance != null ? String(dashboard.pagespeedApiLessLighthouse.performance) : dashboard.pagespeedApiLessLighthouse?.status || '—', icon: 'lucide:activity', color: dashboard.pagespeedApiLessLighthouse?.status === 'ok' || dashboard.pagespeedApiLessLighthouse?.externalExpectedReview ? 'emerald' : dashboard.pagespeedApiLessLighthouse?.status === 'review' ? 'amber' : 'rose' },
-   { label: 'PS Kota', value: dashboard.pagespeedQuotaManagement?.status === 'managed_with_live_quota_review' ? 'managed' : dashboard.pagespeedQuotaManagement?.status || '—', icon: 'lucide:gauge-circle', color: dashboard.pagespeedQuotaManagement?.quotaManagementCompleted ? 'emerald' : 'amber' },
+   { label: 'Lighthouse CI', value: dashboard.pagespeedApiLessLighthouse?.externalExpectedReview ? 'expected' : dashboard.pagespeedApiLessLighthouse?.performance != null ? String(dashboard.pagespeedApiLessLighthouse.performance) : dashboard.pagespeedApiLessLighthouse?.status || '—', icon: 'lucide:activity', color: dashboard.pagespeedApiLessLighthouse?.status === 'ok' || dashboard.pagespeedApiLessLighthouse?.externalExpectedReview ? 'emerald' : dashboard.pagespeedApiLessLighthouse?.status === 'review' ? 'amber' : 'rose' },
    { label: 'Scripts', value: String(dashboard.scriptCanonicalSurface?.totalScripts ?? '—'), icon: 'lucide:terminal-square', color: (dashboard.scriptCanonicalSurface?.missingCanonicalCount ?? 0) === 0 ? 'emerald' : 'rose' },
    { label: 'Migration Drift', value: dashboard.migrationDuplicateDrift?.status || '—', icon: 'lucide:git-compare-arrows', color: dashboard.migrationDuplicateDrift?.status === 'ok' ? 'emerald' : 'rose' },
   ]} />
@@ -517,7 +497,7 @@ const sectionsActive = homepageSectionSummary.filter(s => s.enabled).length;
     <h2 class="rr-section-title">
      <Icon name="lucide:search-check" class="w-4 h-4" /> SEO, AEO, GEO ve AIO Gate Özeti
     </h2>
-    <span class="rr-section-meta">llms / sitemap / rich results / pagespeed</span>
+    <span class="rr-section-meta">llms / sitemap / rich results / lighthouse</span>
    </header>
    <div class="rr-list">
     <div class:list={['rr-row', dashboard.llmsSitemapAutoUpdate?.status === 'ok' && 'rr-row--ok', dashboard.llmsSitemapAutoUpdate?.status !== 'ok' && 'rr-row--err']}>
@@ -542,48 +522,15 @@ const sectionsActive = homepageSectionSummary.filter(s => s.enabled).length;
       {dashboard.blogDraftRichResults?.status || 'not-run'}
      </span>
     </div>
-    <div class:list={['rr-row', dashboard.pagespeedApiResearch?.status === 'ok' && 'rr-row--ok', dashboard.pagespeedApiResearch?.status !== 'ok' && 'rr-row--warn']}>
-     <div class="rr-row-info">
-      <code class="rr-row-key">pagespeed api research</code>
-      <span class="rr-row-resolution">
-       API service {dashboard.pagespeedApiResearch?.enabled ? 'enabled' : 'disabled'} · local storage policy korunur
-      </span>
-     </div>
-     <span class:list={['rr-row-status', dashboard.pagespeedApiResearch?.status === 'ok' ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
-      {dashboard.pagespeedApiResearch?.status || 'not-run'}
-     </span>
-    </div>
     <div class:list={['rr-row', (dashboard.pagespeedApiLessLighthouse?.status === 'ok' || dashboard.pagespeedApiLessLighthouse?.externalExpectedReview) && 'rr-row--ok', dashboard.pagespeedApiLessLighthouse?.status === 'review' && !dashboard.pagespeedApiLessLighthouse?.externalExpectedReview && 'rr-row--warn', dashboard.pagespeedApiLessLighthouse?.status === 'failed' && 'rr-row--err']}>
      <div class="rr-row-info">
-      <code class="rr-row-key">pagespeed api-less lighthouse</code>
+      <code class="rr-row-key">lighthouse ci</code>
       <span class="rr-row-resolution">
        {dashboard.pagespeedApiLessLighthouse?.ok ?? 0}/{dashboard.pagespeedApiLessLighthouse?.checks ?? 0} CLI check OK · API={dashboard.pagespeedApiLessLighthouse?.apiUsed ? 'yes' : 'no'} · perf={dashboard.pagespeedApiLessLighthouse?.performance ?? 'n/a'} · a11y={dashboard.pagespeedApiLessLighthouse?.accessibility ?? 'n/a'} · best={dashboard.pagespeedApiLessLighthouse?.bestPractices ?? 'n/a'} · seo={dashboard.pagespeedApiLessLighthouse?.seo ?? 'n/a'} · classification={dashboard.pagespeedApiLessLighthouse?.reviewClassification || 'none'} · blocker={dashboard.pagespeedApiLessLighthouse?.externalExpectedReview ? 'no' : dashboard.pagespeedApiLessLighthouse?.status === 'failed' ? 'yes' : 'review'}
       </span>
      </div>
      <span class:list={['rr-row-status', dashboard.pagespeedApiLessLighthouse?.status === 'ok' || dashboard.pagespeedApiLessLighthouse?.externalExpectedReview ? 'rr-row-status--ok' : dashboard.pagespeedApiLessLighthouse?.status === 'failed' ? 'rr-row-status--err' : 'rr-row-status--warn']}>
       {dashboard.pagespeedApiLessLighthouse?.status || 'not-run'}
-     </span>
-    </div>
-    <div class:list={['rr-row', dashboard.pagespeedLiveCheck?.status === 'ok' && 'rr-row--ok', dashboard.pagespeedLiveCheck?.status === 'review' && 'rr-row--warn', dashboard.pagespeedLiveCheck?.status === 'failed' && 'rr-row--err']}>
-     <div class="rr-row-info">
-      <code class="rr-row-key">pagespeed live check</code>
-      <span class="rr-row-resolution">
-       {dashboard.pagespeedLiveCheck?.ok ?? 0}/{dashboard.pagespeedLiveCheck?.checks ?? 0} live check OK · review={dashboard.pagespeedLiveCheck?.review ?? 0} · quota-limited={dashboard.pagespeedLiveCheck?.quotaLimited ?? 0}
-      </span>
-     </div>
-     <span class:list={['rr-row-status', dashboard.pagespeedLiveCheck?.status === 'ok' ? 'rr-row-status--ok' : dashboard.pagespeedLiveCheck?.status === 'failed' ? 'rr-row-status--err' : 'rr-row-status--warn']}>
-      {dashboard.pagespeedLiveCheck?.status || 'not-run'}
-     </span>
-    </div>
-    <div class:list={['rr-row', dashboard.pagespeedQuotaManagement?.quotaManagementCompleted && 'rr-row--ok', !dashboard.pagespeedQuotaManagement?.quotaManagementCompleted && 'rr-row--warn']}>
-     <div class="rr-row-info">
-      <code class="rr-row-key">pagespeed quota management</code>
-      <span class="rr-row-resolution">
-       marked={dashboard.pagespeedQuotaManagement?.managementMarked ? 'yes' : 'no'} · completed={dashboard.pagespeedQuotaManagement?.quotaManagementCompleted ? 'yes' : 'no'} · live={dashboard.pagespeedQuotaManagement?.liveStatus || 'unknown'} · quota-limited={dashboard.pagespeedQuotaManagement?.quotaLimited ?? 0} · live OK zorla yazılmaz
-      </span>
-     </div>
-     <span class:list={['rr-row-status', dashboard.pagespeedQuotaManagement?.quotaManagementCompleted ? 'rr-row-status--ok' : 'rr-row-status--warn']}>
-      {dashboard.pagespeedQuotaManagement?.status || 'not-run'}
      </span>
     </div>
    </div>
