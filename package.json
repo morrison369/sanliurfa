@@ -240,14 +240,14 @@
     "security:headers:snapshot": "node scripts/security/headers-snapshot.mjs"
   },
   "dependencies": {
-    "@astrojs/mdx": "^5.0.3",
-    "@astrojs/node": "^10.0.6",
+    "@astrojs/mdx": "^5.0.6",
+    "@astrojs/node": "^10.1.1",
     "@astrojs/partytown": "^2.1.7",
-    "@astrojs/react": "^5.0.4",
+    "@astrojs/react": "^5.0.5",
     "@iconify-json/heroicons": "^1.2.3",
     "@iconify-json/lucide": "^1.2.104",
     "@types/leaflet": "^1.9.21",
-    "astro": "^6.1.10",
+    "astro": "^6.3.3",
     "astro-icon": "^1.1.5",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.1.0",
